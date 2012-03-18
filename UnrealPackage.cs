@@ -540,30 +540,30 @@ namespace UELib
 
 									return pkg;
 
-									try
-									{
-										UPackageStream outStream = new UPackageStream( packagePath + ".dec", System.IO.FileMode.Create, FileAccess.ReadWrite );
-										//File.SetAttributes( packagePath + ".dec", FileAttributes.Temporary );
-										outStream.Package = pkg;
-										outStream._BigEndianCode = stream._BigEndianCode;
+									//try
+									//{
+									//    UPackageStream outStream = new UPackageStream( packagePath + ".dec", System.IO.FileMode.Create, FileAccess.ReadWrite );
+									//    //File.SetAttributes( packagePath + ".dec", FileAttributes.Temporary );
+									//    outStream.Package = pkg;
+									//    outStream._BigEndianCode = stream._BigEndianCode;
 									
-										var headerBytes = new byte[uncookedSize];
-										stream.Seek( 0, SeekOrigin.Begin );
-										stream.Read( headerBytes, 0, (int)uncookedSize );
-										outStream.Write( headerBytes, 0, (int)uncookedSize );   
-										foreach( var chunk in pkg.CompressedChunks )
-										{
-											chunk.Decompress( stream, outStream );
-										}
-										outStream.Flush();
-										pkg.Stream = outStream;
-										stream = outStream;
-										return pkg;
-									}
-									catch( Exception e )
-									{
-										throw new DecompressPackageException();
-									}
+									//    var headerBytes = new byte[uncookedSize];
+									//    stream.Seek( 0, SeekOrigin.Begin );
+									//    stream.Read( headerBytes, 0, (int)uncookedSize );
+									//    outStream.Write( headerBytes, 0, (int)uncookedSize );   
+									//    foreach( var chunk in pkg.CompressedChunks )
+									//    {
+									//        chunk.Decompress( stream, outStream );
+									//    }
+									//    outStream.Flush();
+									//    pkg.Stream = outStream;
+									//    stream = outStream;
+									//    return pkg;
+									//}
+									//catch( Exception e )
+									//{
+									//    throw new DecompressPackageException();
+									//}
 								}
 							}
 						}
