@@ -191,7 +191,7 @@ namespace UELib.Core
 							}
 						}
 					}
-					catch( ArgumentOutOfRangeException e )
+					catch( ArgumentOutOfRangeException )
 					{
 						Output += "/* INDEX:" + _ChildProperties[i].CategoryIndex + " */";
 					}
