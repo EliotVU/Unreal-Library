@@ -246,7 +246,7 @@ namespace UELib.Core
 						}
 					}
 
-					if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) )
+					if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) || Package.Version < 200 )
 					{
 						HideCategoriesList = DeserializeGroup();
 						NoteRead( "HideCategoriesList", HideCategoriesList );
