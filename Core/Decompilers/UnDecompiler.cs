@@ -12,30 +12,6 @@ using UELib.Tokens;
 
 namespace UELib.Core
 {
-	public static class UDecompiler
-	{
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
-		public static string Tabs = String.Empty;
-
-		public static void AddTabs( byte count )
-		{
-			for( int i = 0; i < count; ++ i )
-			{
-				Tabs += "\t";
-			}
-		}
-
-		public static void RemoveTabs( byte count )
-		{
-			Tabs = count > Tabs.Length ? String.Empty : Tabs.Substring( 0, (Tabs.Length) - count );
-		}
-
-		public static void ResetTabs()
-		{
-			Tabs = String.Empty;
-		}
-	}
-
 	public partial class UStruct
 	{
 		/// <summary>
@@ -1075,7 +1051,9 @@ namespace UELib.Core
 						#if DEBUG && DEBUG_NESTS
 							return "\r\n" + UDecompiler.Tabs + "// BEGIN_NEST:TYPE:" + Type;
 						#endif
-						return Type != NestType.Case && Type != NestType.Default ? "\r\n" + UDecompiler.Tabs + "{" : String.Empty;
+						return Type != NestType.Case && Type != NestType.Default 
+							? UnrealConfig.PrintBeginBracket() 
+							: String.Empty;
 					}
 				}
 
@@ -1086,7 +1064,9 @@ namespace UELib.Core
 						#if DEBUG && DEBUG_NESTS
 							return "\r\n" + UDecompiler.Tabs + "// END_NEST:TYPE:" + Type;
 						#endif
-						return Type != NestType.Case && Type != NestType.Default ? "\r\n" + UDecompiler.Tabs + "}" : String.Empty;
+						return Type != NestType.Case && Type != NestType.Default 
+							? UnrealConfig.PrintEndBracket() 
+							: String.Empty;
 					}
 				}
 

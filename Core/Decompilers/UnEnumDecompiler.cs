@@ -23,10 +23,9 @@ namespace UELib.Core
 		public override string Decompile()
 		{
 			return UDecompiler.Tabs + FormatHeader() +
-				"\r\n" + 
-				UDecompiler.Tabs + "{" +
+				UnrealConfig.PrintBeginBracket() +
 				FormatNames() +
-				UDecompiler.Tabs + "};";
+				UnrealConfig.PrintEndBracket()  + ";";
 		}
 
 		protected override string FormatHeader()
@@ -40,7 +39,7 @@ namespace UELib.Core
 			UDecompiler.AddTabs( 1 );
 			foreach( int Index in _NamesIndex )
 			{
-				Output += UDecompiler.Tabs + Package.NameTableList[Index].Name + (Index != _NamesIndex.Last() ? ",\r\n" : "\r\n");
+				Output += UDecompiler.Tabs + Package.NameTableList[Index].Name + (Index != _NamesIndex.Last() ? ",\r\n" : String.Empty);
 			}
 			UDecompiler.RemoveTabs( 1 );
 			return Output;

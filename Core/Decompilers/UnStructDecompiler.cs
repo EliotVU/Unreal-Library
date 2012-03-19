@@ -25,19 +25,23 @@ namespace UELib.Core
 		/// <returns></returns>
 		public override string Decompile()
 		{
-			string Content = UDecompiler.Tabs + FormatHeader() +
-			"\r\n" + UDecompiler.Tabs + "{";
+			string content = UDecompiler.Tabs + FormatHeader() +
+				UnrealConfig.PrintBeginBracket();
 			UDecompiler.AddTabs( 1 );
-			string Props = FormatProperties();
+			string props = FormatProperties();
 
-			string defprops = FormatDefaultProperties();
-			if( defprops.Length != 0 )
+			string defProps = FormatDefaultProperties();
+			if( defProps.Length != 0 )
 			{
-				defprops += "\r\n";
+				defProps += "\r\n";
 			}
 			UDecompiler.RemoveTabs( 1 );
-			return Content + Props + defprops + 
-			UDecompiler.Tabs + "};";
+			content += props + defProps;
+			if( content.EndsWith( "\r\n" ) )
+			{
+				content = content.TrimEnd( '\r', '\n' );
+			}
+			return content + UnrealConfig.PrintEndBracket();
 		}
 
 		protected override string FormatHeader()

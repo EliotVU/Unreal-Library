@@ -23,20 +23,16 @@ namespace UELib.Core
 		/// <returns></returns>
 		public override string Decompile()
 		{	
-			string Code = String.Empty;
-			// Don't decompile statements for native functions, because native functions are definitly empty!
-			/*if( !HasFunctionFlag( Flags.FunctionFlags.Native ) )
-			{*/
-				try
-				{
-					Code = FormatCode();
-				}
-				catch( Exception e )
-				{
-					Code = e.Message;
-				}
-			//}
-			return FormatHeader() + (String.IsNullOrEmpty( Code ) ? ";" : "\r\n" + Code);
+			string code = String.Empty;
+			try
+			{
+				code = FormatCode();
+			}
+			catch( Exception e )
+			{
+				code = e.Message;
+			}
+			return FormatHeader() + (String.IsNullOrEmpty( code ) ? ";" : code);
 		}
 
 		private string FormatFlags()
@@ -257,10 +253,10 @@ namespace UELib.Core
 				return String.Empty;
 			}
 
-			return UDecompiler.Tabs + "{\r\n" + 
+			return UnrealConfig.PrintBeginBracket() + "\r\n" + 
 				locals + 
 				code + 
-			"\r\n" + UDecompiler.Tabs + "}"; 
+				UnrealConfig.PrintEndBracket(); 
 		}
 	}
 }

@@ -25,17 +25,16 @@ namespace UELib.Core
 		/// </summary>
 		/// <returns></returns>
 		public override string Decompile()
-		{
+		{	
+			string content = FormatHeader() + UnrealConfig.PrintBeginBracket();
 			UDecompiler.AddTabs( 1 );
-			string Content = FormatHeader() +
-				"\r\n{" + 
-				FormatIgnores() +
-				FormatConstants() +
-				FormatFunctions() + (_ChildFunctions.Count == 0 ? "\r\n" : String.Empty) + 
-				DecompileStateCode() + 
-				"\r\n}";
+				content += FormatIgnores() +
+					FormatConstants() +
+					FormatFunctions() + (_ChildFunctions.Count == 0 ? "\r\n" : String.Empty) + 
+					DecompileStateCode();
 			UDecompiler.RemoveTabs( 1 );
-			return Content;
+			content += UnrealConfig.PrintEndBracket();	
+			return content;
 		}
 
 		private string GetAuto()
