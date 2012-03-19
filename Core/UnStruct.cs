@@ -152,11 +152,11 @@ namespace UELib.Core
 			base.Deserialize();
 
 			// --SuperField
-			/*if( !Package.IsCooked() || Package.Version < UnrealPackage.VCookedPackages )
-			{*/
+			if( !Package.IsConsoleCooked() )
+			{
 				ScriptText = _Buffer.ReadObjectIndex();
 				NoteRead( "ScriptText", ScriptText );
-			//}
+			}
 
 			Children = _Buffer.ReadObjectIndex();
 			NoteRead( "Children", Children );
@@ -164,7 +164,7 @@ namespace UELib.Core
 			// TODO: Correct version
 			if( _Buffer.Version > 154 /* UE3 */ )
 			{
-				if( _Buffer.Version > 189 /*&& (!Package.IsCooked() || Package.Version < UnrealPackage.VCookedPackages)*/ )
+				if( _Buffer.Version > 189 && !Package.IsConsoleCooked() )
 				{
 					CppText = _Buffer.ReadInt32();
 					NoteRead( "CppText", CppText );
@@ -199,14 +199,13 @@ namespace UELib.Core
 			}
 #endif
 
-			/*if( !Package.IsCooked() || Package.Version < UnrealPackage.VCookedPackages )
-			{*/
+			if( !Package.IsConsoleCooked() )
+			{
 				Line = _Buffer.ReadUInt32();
 				NoteRead( "Line", Line );
 				TextPos = _Buffer.ReadUInt32();
 				NoteRead( "TextPos", TextPos );
-			//}
-
+			}
 
 
 			// TODO: Corrigate Version

@@ -178,7 +178,7 @@ namespace UELib.Core
 					Output += "\r\n" + _ChildProperties[i].PreDecompile() + UDecompiler.Tabs + "var"; 
 					try
 					{
-						if( String.Compare( _ChildProperties[i].CategoryName, "None", 
+						if( _ChildProperties[i].CategoryIndex > -1 && String.Compare( _ChildProperties[i].CategoryName, "None", 
 							true, System.Globalization.CultureInfo.InvariantCulture ) != 0 )
 						{
 							if( _ChildProperties[i].CategoryName != Name )

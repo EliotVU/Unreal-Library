@@ -239,49 +239,54 @@ namespace UELib.Core
 							NoteRead( "ImplementedInterfacesList", ImplementedInterfacesList );
 						}}
 
+						
+					}
+
+					if( !Package.IsConsoleCooked() )
+					{
 						if( Package.Version >= 603 )
 						{
 							DontSortCategoriesList = DeserializeGroup();
 							NoteRead( "DontSortCategoriesList", DontSortCategoriesList );
 						}
-					}
 
-					if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) || Package.Version < 200 )
-					{
-						HideCategoriesList = DeserializeGroup();
-						NoteRead( "HideCategoriesList", HideCategoriesList );
-					}
-
-					if( Package.Version >= 185 )
-					{
-						AutoExpandCategoriesList = DeserializeGroup();
-						NoteRead( "AutoExpandCategoriesList", AutoExpandCategoriesList );
-
-						if( Package.Version >= 655 )
+						if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) || Package.Version < 200 )
 						{
-							if( Package.Version > 670 )
+							HideCategoriesList = DeserializeGroup();
+							NoteRead( "HideCategoriesList", HideCategoriesList );
+						}
+
+						if( Package.Version >= 185 )
+						{
+							AutoExpandCategoriesList = DeserializeGroup();
+							NoteRead( "AutoExpandCategoriesList", AutoExpandCategoriesList );
+
+							if( Package.Version >= 655 )
 							{
-								AutoCollapseCategoriesList = DeserializeGroup();
-								NoteRead( "AutoCollapseCategoriesList", AutoCollapseCategoriesList );
-
-								if( Package.Version >= 749 )
+								if( Package.Version > 670 )
 								{
-									// bForceScriptOrder
-									int unk1 = _Buffer.ReadInt32();
-									NoteRead( "bForceScriptOrder", unk1 );
+									AutoCollapseCategoriesList = DeserializeGroup();
+									NoteRead( "AutoCollapseCategoriesList", AutoCollapseCategoriesList );
 
-									// TODO: Figure out what determines if DLLBind and/or ClassGroup deserializiation.
-									if( Package.Version >= UnrealPackage.VClassGroup ) // V:789 HasClassFlag( Flags.ClassFlags.CacheExempt )
+									if( Package.Version >= 749 )
 									{
-										ClassGroupsList = DeserializeGroup();
-										NoteRead( "ClassGroupsList", ClassGroupsList );
+										// bForceScriptOrder
+										int unk1 = _Buffer.ReadInt32();
+										NoteRead( "bForceScriptOrder", unk1 );
 
-										if( Package.Version >= 813 )
+										// TODO: Figure out what determines if DLLBind and/or ClassGroup deserializiation.
+										if( Package.Version >= UnrealPackage.VClassGroup ) // V:789 HasClassFlag( Flags.ClassFlags.CacheExempt )
 										{
-											if( HasObjectFlag( Flags.ObjectFlagsLO.Native ) )
+											ClassGroupsList = DeserializeGroup();
+											NoteRead( "ClassGroupsList", ClassGroupsList );
+
+											if( Package.Version >= 813 )
 											{
-												NativeClassName = _Buffer.ReadName();
-												NoteRead( "NativeClassName", NativeClassName );
+												if( HasObjectFlag( Flags.ObjectFlagsLO.Native ) )
+												{
+													NativeClassName = _Buffer.ReadName();
+													NoteRead( "NativeClassName", NativeClassName );
+												}
 											}
 										}
 									}
@@ -293,14 +298,14 @@ namespace UELib.Core
 							{
 								// TODO: Unknown
 								int unk2 = _Buffer.ReadInt32();
-							}
+							}	
+						}					
+					}
 
-							if( Package.Version >= UnrealPackage.VDLLBind )	// V:664
-							{
-								_DLLNameIndex = _Buffer.ReadNameIndex();
-								NoteRead( "_DLLNameIndex", _DLLNameIndex );
-							}
-						}
+					if( Package.Version >= UnrealPackage.VDLLBind )	// V:664
+					{
+						_DLLNameIndex = _Buffer.ReadNameIndex();
+						NoteRead( "_DLLNameIndex", _DLLNameIndex );
 					}
 				}
 			}	

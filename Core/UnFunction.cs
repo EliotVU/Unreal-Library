@@ -105,7 +105,7 @@ namespace UELib.Core
 			}
 
 			// UStruct::FriendlyName is moved to UFunction in UE3
-			if( Package.Version >= 189 )
+			if( Package.Version >= 189 && !Package.IsConsoleCooked() )
 			{
 				_FriendlyNameIndex = _Buffer.ReadNameIndex();
 				NoteRead( "_FriendlyNameIndex", _FriendlyNameIndex );

@@ -1069,6 +1069,11 @@ namespace UELib
 			return HasPackageFlag( Flags.PackageFlags.Cooked ) && Version >= VCookedPackages;
 		}
 
+		public bool IsConsoleCooked()
+		{
+			return IsCooked() && HasPackageFlag( 0x20000000 );
+		}
+
 		public bool IsMap()
 		{
 			return HasPackageFlag( Flags.PackageFlags.Map );

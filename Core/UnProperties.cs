@@ -96,11 +96,15 @@ namespace UELib.Core
 			// TODO: Find out what version this was converted from DWORD to QWORD; This was a QWORD way before version 200!
 			PropertyFlags = _Buffer.UR.ReadQWORDFlags();
 			NoteRead( "PropertyFlags", PropertyFlags );
-			CategoryIndex = _Buffer.ReadNameIndex();
-			NoteRead( "CategoryIndex", CategoryIndex );
+			if( !Package.IsConsoleCooked() )
+			{
+				CategoryIndex = _Buffer.ReadNameIndex();
+				NoteRead( "CategoryIndex", CategoryIndex );
+			}
+			else CategoryIndex = -1;
 
 			// TODO: UNKNOWN!
-			if( Package.Version > 480 )
+			if( Package.Version > 480 && !Package.IsConsoleCooked())
 			{
 				int unk = _Buffer.ReadInt32();
 				NoteRead( "Unknown", unk );
