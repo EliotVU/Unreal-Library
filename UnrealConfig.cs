@@ -26,7 +26,7 @@ namespace UELib
 		}
 	}
 
-	public static class UDecompiler
+	internal static class UDecompiler
 	{
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
 		public static string Tabs = String.Empty;
