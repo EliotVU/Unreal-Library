@@ -24,7 +24,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Represents a unreal object. 
 	/// </summary>
-	public partial class UObject : Object, ISupportsBuffer, IUnrealDeserializableObject, IDisposable
+	public partial class UObject : Object, ISupportsBuffer, IUnrealDeserializableObject, IDisposable, IComparable
 	{
 		#region PostConstruct Members
 		/// <summary>
@@ -327,6 +327,12 @@ namespace UELib.Core
 			}
 #endif
 
+			if( _Buffer.Version > 400 && GetClassName() != "Component" && GetClassName().EndsWith( "Component" ) )
+			{
+				var componentClass = _Buffer.ReadObjectIndex();
+				var componentName = _Buffer.ReadNameIndex();
+			}
+
 			// TODO: Corrigate Version
 			if( _Buffer.Version >= 322 )
 			{
@@ -401,7 +407,9 @@ namespace UELib.Core
 		{
 		}
 
-		// Save this buffer to the package stream. NOTE:The size must be equal as the original buffer.
+		/// <summary>
+		/// Save this buffer to the package stream. NOTE:The size must be equal as the original buffer.
+		/// </summary>
 		public virtual void CopyToPackageStream()
 		{
 			Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
@@ -416,23 +424,45 @@ namespace UELib.Core
 		#endregion
 
 		#region Methods
+		/// <summary>
+		/// Checks if the object contains the specified @flag or one of the specified flags.
+		/// 
+		/// Checks the lower bits of ObjectFlags.
+		/// </summary>
+		/// <param name="flag">The flag(s) to compare to.</param>
+		/// <returns>Whether it contained one of the specified flags.</returns>
 		public bool HasObjectFlag( Flags.ObjectFlagsLO flag )
 		{
 			return ((uint)ObjectFlags & (uint)flag) != 0;
 		}
 
+		/// <summary>
+		/// Checks if the object contains the specified @flag or one of the specified flags.
+		/// 
+		/// Checks the higher bits of ObjectFlags.
+		/// </summary>
+		/// <param name="flag">The flag(s) to compare to.</param>
+		/// <returns>Whether it contained one of the specified flags.</returns>
 		public bool HasObjectFlag( Flags.ObjectFlagsHO flag )
 		{
 			return ((ObjectFlags >> 32) & (uint)flag) != 0;
 		}
 
 		// 32bit aligned.
+		/// <summary>
+		/// Returns a copy of the ObjectFlags.
+		/// </summary>
+		/// <returns>A copy of @ObjectFlags.</returns>
 		public ulong GetObjectFlags()
 		{
 			return ObjectFlags;
 		}
 
 		// OBJECTFLAG:PUBLIC
+		/// <summary>
+		/// Whether object is publically accessable.
+		/// </summary>
+		/// <returns>Whether it is publically accessable.</returns>
 		public bool IsPublic()
 		{
 			return HasObjectFlag( Flags.ObjectFlagsLO.Public );
@@ -464,6 +494,11 @@ namespace UELib.Core
 			return Name;
 		}
 
+		/// <summary>
+		/// Gets the highest outer relative from the specified @offset.
+		/// </summary>
+		/// <param name="offset">Optional relative offset.</param>
+		/// <returns>The highest outer.</returns>
 		public UObject GetHighestOuter( byte offset = (byte)0 )
 		{
 			var parents = new List<UObject>();
@@ -519,6 +554,11 @@ namespace UELib.Core
 			return String.Compare( GetClassName(), className, true ) == 0; 
 		}
 
+		/// <summary>
+		/// Checks if this object's class equals @className, parents included.
+		/// </summary>
+		/// <param name="className">The name of the class to compare to.</param>
+		/// <returns>Whether it extends class @className.</returns>
 		public bool IsClass( string className )
 		{
 			for( var c = Table.ClassTable; c != null; c = c.ClassTable )
@@ -537,6 +577,11 @@ namespace UELib.Core
 			return Package.GetIndexObject( index );
 		}
 
+		/// <summary>
+		/// Try to get the object located @index.
+		/// </summary>
+		/// <param name="index">The object's index.</param>
+		/// <returns>The reference of the specified object's index. NULL if none.</returns>
 		protected UObject TryGetIndexObject( int index )
 		{
 			try
@@ -549,6 +594,12 @@ namespace UELib.Core
 			}
 		}
 
+		/// <summary>
+		/// Gets the specified object's name along with the instance number.
+		/// </summary>
+		/// <param name="index">The object's nameIndex.</param>
+		/// <param name="number">The instance number.</param>
+		/// <returns></returns>
 		public string GetIndexName( int index, int number = -1 )
 		{
 			return number > 0 ? Package.GetIndexName( index ) + "_" + number : Package.GetIndexName( index ); 
@@ -586,6 +637,10 @@ namespace UELib.Core
 			return pkg;
 		}
 
+		/// <summary>
+		/// Return a copy of this object's serialized bytes.
+		/// </summary>
+		/// <returns>This object's serialized bytes.</returns>
 		public virtual byte[] GetBuffer()
 		{
 			var buff = new byte[ExportTable.SerialSize];
@@ -593,13 +648,34 @@ namespace UELib.Core
 			Package.Stream.Read( buff, 0, ExportTable.SerialSize );
 			return buff;
 		}
+
+		public int CompareTo( object obj )
+		{
+			return NameIndex - ((UObject)obj).NameIndex;
+		}
 		#endregion
 
+		/// <summary>
+		/// Outputs the present position and the value of the parsed object.
+		/// 
+		/// Only called in the DEBUGBUILD!
+		/// </summary>
+		/// <param name="varName">The struct that was read from the previous buffer position.</param>
+		/// <param name="varObject">The struct's value that was read.</param>
 		[System.Diagnostics.DebuggerHidden()]
 		[System.Diagnostics.Conditional( "DEBUG" )]
 		internal void NoteRead( string varName, object varObject )
 		{
-			Console.WriteLine( _Buffer.Position + ":".PadLeft( 4, ' ' ) + varName.PadRight( 32, ' ' ) + " => " + (varObject != null ? varObject.ToString() : "null") );
+			Console.WriteLine( _Buffer.Position 
+				+ ":".PadLeft( 4, ' ' ) 
+				+ varName.PadRight( 32, ' ' ) 
+				+ " => " + (varObject != null ? varObject.ToString() : "null") );
+		}
+
+		[System.Diagnostics.Conditional( "DEBUG_TEST" )]
+		internal void TestNoteRead( string varName, object varObject )
+		{
+			NoteRead( varName, varObject );
 		}
 
 		public void SwitchPackage( UnrealPackage newPackage )
