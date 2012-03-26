@@ -88,9 +88,10 @@ namespace UELib.Core
 			base.Deserialize();
 
 			// TODO: Read as Int32 then shift.
-			ArrayDim = _Buffer.ReadUShort();
+			var info = _Buffer.ReadUInt32();
+			ArrayDim = (ushort)(info & 0x0000FFFFU);
 			NoteRead( "ArrayDim", ArrayDim );
-			ElementSize = _Buffer.ReadUShort();
+			ElementSize = (ushort)(info >> 16);
 			NoteRead( "ElementSize", ElementSize );
 
 			// TODO: Find out what version this was converted from DWORD to QWORD; This was a QWORD way before version 200!
