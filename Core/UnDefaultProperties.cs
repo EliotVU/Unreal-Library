@@ -141,13 +141,14 @@ namespace UELib.Core
 
 			int num;
 			NameIndex = _Buffer.ReadNameIndex( out num );
-			//_Owner.NoteRead( "NameIndex", NameIndex );
+			_Owner.TestNoteRead( "NameIndex", NameIndex );
 			Name = _Owner.GetIndexName( NameIndex, num );
 			if( Name.Equals( "None", StringComparison.OrdinalIgnoreCase ) )
 			{
 				return false;
 			}
 
+			// Unreal Engine 1 and 2
 			if( _Buffer.Version < 220 )
 			{
 				// Packed byte
@@ -166,10 +167,11 @@ namespace UELib.Core
 					ArrayIndex = DeserializeArrayIndex();
 				}
 			}
+			// Unreal Engine 3
 			else
 			{
 				string typeName = _Owner.Package.GetIndexName( _Buffer.ReadNameIndex() );
-				//_Owner.NoteRead( "typeName", typeName );
+				_Owner.TestNoteRead( "typeName", typeName );
 				try
 				{
 					Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );
@@ -180,14 +182,14 @@ namespace UELib.Core
 				}				
 
 				Size = _Buffer.ReadInt32();
-				//_Owner.NoteRead( "Size", Size );
+				_Owner.TestNoteRead( "Size", Size );
 				ArrayIndex = _Buffer.ReadInt32();
-				//_Owner.NoteRead( "ArrayIndex", ArrayIndex );
+				_Owner.TestNoteRead( "ArrayIndex", ArrayIndex );
 
 				if( Type == PropertyType.StructProperty )
 				{
 					ItemName = _Owner.GetIndexName( _Buffer.ReadNameIndex( out num ), num );
-					//_Owner.NoteRead( "ItemName", ItemName );
+					_Owner.TestNoteRead( "ItemName", ItemName );
 				}
 			}
 
@@ -302,11 +304,12 @@ namespace UELib.Core
 						{
 							case 8:				
 								int enumType = _Buffer.ReadNameIndex();
-								// TODO: Corrigate Version
+								// TODO: Corrigate Version	  (>=633?)
 								if( _Buffer.Version > 512 )		// > UT3
 								{
 									int enumValue = _Buffer.ReadNameIndex();
-									propertyValue = _Owner.Package.GetIndexName( enumType ) + "." + _Owner.Package.GetIndexName( enumValue );
+									propertyValue = _Owner.Package.GetIndexName( enumType ) + "." 
+										+ _Owner.Package.GetIndexName( enumValue );
 								}
 								else
 								{
@@ -369,7 +372,8 @@ namespace UELib.Core
 							else
 							{
 								string classname = obj.GetClassName();
-								propertyValue = (String.IsNullOrEmpty( classname ) ? "class" : classname) + "\'" + obj.GetOuterGroup() + "\'";
+								propertyValue = (String.IsNullOrEmpty( classname ) ? "class" : classname) 
+									+ "\'" + obj.GetOuterGroup() + "\'";
 							}
 						}
 						else
