@@ -269,6 +269,10 @@ namespace UELib.Core
 				var buff = new byte[ExportTable.SerialSize];
 				Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin ); 
 				Package.Stream.Read( buff, 0, ExportTable.SerialSize ); 
+				if( Package.Stream._BigEndianCode )
+				{
+					Array.Reverse( buff );
+				}
 				_Buffer = new UObjectStream( Package.Stream, ref buff );
 
 				Deserialize();
@@ -337,6 +341,7 @@ namespace UELib.Core
 			if( _Buffer.Version >= 322 )
 			{
 				NetIndex = _Buffer.ReadObjectIndex();
+				NoteRead( "NetIndex", NetIndex );
 			}
 
 			if( !IsClassType( "Class" ) )
@@ -646,6 +651,10 @@ namespace UELib.Core
 			var buff = new byte[ExportTable.SerialSize];
 			Package.Stream.Seek( ExportTable.SerialOffset, System.IO.SeekOrigin.Begin );
 			Package.Stream.Read( buff, 0, ExportTable.SerialSize );
+			if( Package.Stream._BigEndianCode )
+			{
+				Array.Reverse( buff );
+			}
 			return buff;
 		}
 
