@@ -48,7 +48,7 @@ namespace UELib.Core
 		protected virtual void InitNodes( TreeNode node )
 		{			
 			_ParentNode = AddSectionNode( node, typeof(UObject).Name );
-			foreach( System.Reflection.PropertyInfo PI in GetType().GetProperties() )
+			/*foreach( System.Reflection.PropertyInfo PI in GetType().GetProperties() )
 			{
 				// Only properties that are from UObject i.e. ignore properties of children.
 				// Flags
@@ -56,11 +56,11 @@ namespace UELib.Core
 				{
 					AddTextNode( _ParentNode, PI.Name + ":" + String.Format( "0x{0:x4}", PI.GetValue( this, null ) ) );
 				}
-				/*else if( PI.PropertyType != null && !PI.PropertyType.IsArray )
+				else if( PI.PropertyType != null && !PI.PropertyType.IsArray )
 				{
 					AddTextNode( _ParentNode, PI.Name + ":" + PI.GetValue( this, null ).ToString() );
-				}*/
-			}
+				}
+			}*/
 
 			TextNode flagNode = AddTextNode( _ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
 			flagNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), ObjectFlags ) );
