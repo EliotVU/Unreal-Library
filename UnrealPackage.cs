@@ -1071,7 +1071,8 @@ namespace UELib
 
 		public bool IsConsoleCooked()
 		{
-			return IsCooked() && HasPackageFlag( 0x20000000 ) && LicenseeVersion == 1;
+			return IsCooked() && HasPackageFlag( 0x20000000 ) 
+				&& (LicenseeVersion == 1 || LicenseeVersion == 29);
 		}
 
 		public bool IsMap()
