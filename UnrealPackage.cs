@@ -206,6 +206,40 @@ namespace UELib
 			Swat4 = 27,
 		}
 
+		public class GameBuild
+		{
+			public enum ID
+			{
+				Default,
+				APB,		
+			}
+
+			public ID GameID
+			{
+				get;
+				set;
+			}
+
+			public GameBuild()
+			{
+
+			}
+
+			public GameBuild( uint version, uint licenseeVersion )
+			{
+				if( version >= 547 && licenseeVersion >= 28 && licenseeVersion <= 31 )
+				{
+					GameID = ID.APB;
+				}
+				else
+				{
+					GameID = ID.Default;
+				}
+			}
+		}
+
+		public GameBuild Build;
+
 		/// <summary>
 		/// The bitflags of this package.
 		/// </summary>
@@ -246,18 +280,28 @@ namespace UELib
 				ExportCount = stream.ReadUInt32();
 				ExportOffset = stream.ReadUInt32();
 
+#if APB
+				if( stream.Package.Build.GameID == GameBuild.ID.APB )
+				{
+					stream.Skip( 24 );
+				}
+#endif
+
 				ImportCount = stream.ReadUInt32();
 				ImportOffset = stream.ReadUInt32();
 
 				if( stream.Version >= 415 )
 				{
 					DependsOffset = stream.ReadUInt32();
-					if( stream.Version >= 584 )	// 623?
+					if( stream.Version >= 584 )
 					{
-						stream.ReadUInt32();	// ImportExportGuidsOffset
-						stream.ReadUInt32();	// ImportGuidsCount
-						stream.ReadUInt32();	// ExportGuidsCount
-						stream.ReadUInt32();	// ThumbnailTableOffset
+						if( stream.Version >= 623 )
+						{
+							stream.ReadUInt32();	// ImportExportGuidsOffset
+							stream.ReadUInt32();	// ImportGuidsCount
+							stream.ReadUInt32();	// ExportGuidsCount
+						}
+						stream.ReadUInt32();		// ThumbnailTableOffset
 					}
 				}	
 			}
@@ -438,6 +482,7 @@ namespace UELib
 			var stream = new UPackageStream( packagePath, System.IO.FileMode.Open, fileAccess );
 			var pkg = new UnrealPackage( stream );
 			stream.Package = pkg;	 // Very important so the stream Version will not throw a lot exceptions :P
+			Console.Write( "Package:" + pkg.PackageName );
 
 			// File Type
 			// Signature is tested in UPackageStream
@@ -446,6 +491,10 @@ namespace UELib
 			pkg.Version = stream.ReadUInt32();
 			pkg.LicenseeVersion = (ushort)(pkg.Version >> 16);
 			pkg.Version = (pkg.Version & 0xFFFFU);
+			Console.Write( "\r\n\t" + "PackageVersion:" + pkg.Version + "/" + pkg.LicenseeVersion );
+
+			pkg.Build = new GameBuild( pkg.Version, pkg.LicenseeVersion );
+			Console.Write( "\r\n\t" + "Build:" + pkg.Build.GameID );
 
 			if( pkg.Version >= 249 )
 			{
@@ -460,18 +509,14 @@ namespace UELib
 
 			// Bitflags such as AllowDownload.
 			pkg.PackageFlags = stream.ReadUInt32();
+			Console.Write( "\r\n\tPackageFlags:" + pkg.PackageFlags );
 
 			// Summary data such as ObjectCount.
 			pkg.Data = new PackageSummary();
 			pkg.Data.Deserialize( stream );
-
-			Console.Write( "Package:" + pkg.PackageName 
-				+ "\r\n\t" + "PackageVersion:" + pkg.Version + "/" + pkg.LicenseeVersion 
-				+ "\r\n\tPackageFlags:" + pkg.PackageFlags
-				+ "\r\n\tNameCount:" + pkg.Data.NameCount + " NameOffset:" + pkg.Data.NameOffset 
+			Console.Write( "\r\n\tNameCount:" + pkg.Data.NameCount + " NameOffset:" + pkg.Data.NameOffset 
 				+ "\r\n\tExportCount:" + pkg.Data.ExportCount + " ExportOffset:" + pkg.Data.ExportOffset 
 				+ "\r\n\tImportCount:" + pkg.Data.ImportCount + " ImportOffset:" + pkg.Data.ImportOffset 
-				+ "\r\n\r\n"
 			);
 	
 			if( pkg.Version < 68 )
@@ -489,15 +534,15 @@ namespace UELib
 			else
 			{
 				// thief-deadly shadows.
-				if( pkg.LicenseeVersion == (ushort)LicenseeVersions.ThiefDeadlyShadows )
+				if( pkg.LicenseeVersion == (ushort)LicenseeVersions.ThiefDeadlyShadows 
+					|| pkg.LicenseeVersion == (ushort)LicenseeVersions.Borderlands
+
+					)
 				{
 					// Unknown
 					stream.Skip( 4 );
 				}
-				else if( pkg.LicenseeVersion == (ushort)LicenseeVersions.Borderlands )
-				{
-					stream.Skip( 4 );
-				}
+
 
 				pkg.GUID = stream.ReadGuid();
 				Console.WriteLine( "\tGUID:" + pkg.GUID );
@@ -744,7 +789,7 @@ namespace UELib
 				}
 				catch
 				{
-					throw new LinkingObjectsException();
+					//throw new LinkingObjectsException();
 				}
 			}
 		}
@@ -845,7 +890,7 @@ namespace UELib
 		{
 			// Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
 			OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Link ) );
-			foreach( var exp in _ExportTableList )
+			foreach( var exp in _ExportTableList )		
 			{
 				try
 				{
@@ -880,7 +925,6 @@ namespace UELib
 		{
 			// Object...
 			RegisterClass( "MetaData", typeof(UMetaData) );
-			RegisterClass( "DrawLightConeComponent", typeof(UComponent) );
 			RegisterClass( "Field", typeof(UField) );
 				RegisterClass( "Const", typeof(UConst) );
 				RegisterClass( "Enum", typeof(UEnum) );
