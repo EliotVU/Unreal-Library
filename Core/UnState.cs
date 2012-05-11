@@ -39,7 +39,7 @@ namespace UELib.Core
 			private set;
 		}
 									   
-		internal Dictionary<int,int> _FuncMap;
+		//internal Dictionary<int,int> _FuncMap;
 		#endregion
 
 		#region PostInitializedMembers
@@ -82,7 +82,7 @@ namespace UELib.Core
 				else // When it's a UClass
 				{		
 					// TODO: Corrigate Version
-					if( _Buffer.Version > 638 && _Buffer.Version < 700 )
+					if( _Buffer.Version > 584 && _Buffer.Version < 700 )
 					{
 						// TODO: Unknown!
 						_Buffer.ReadInt32();
@@ -119,16 +119,29 @@ namespace UELib.Core
 			if( _Buffer.Version < 224 ) 
 				return;
 
-			int mapcount = _Buffer.ReadIndex();
-			NoteRead( "mapcount", mapcount );
-			if( mapcount > 0 )
+			int mapCount = _Buffer.ReadIndex();
+			NoteRead( "mapcount", mapCount );
+			if( mapCount > 0 )
 			{
-				_FuncMap = new Dictionary<int,int>( mapcount );
-				for( int i = 0; i < mapcount; ++ i )
+				TestEndOfStream( mapCount * 12, "Maps" );
+				_Buffer.Skip( mapCount * 12 );
+				// We don't have to store this.
+				// We don't use it and all that could happen is a OutOfMemory exception!
+				/*_FuncMap = new Dictionary<int,int>( mapCount );
+				for( int i = 0; i < mapCount; ++ i )
 				{
 					_FuncMap.Add( _Buffer.ReadNameIndex(), _Buffer.ReadObjectIndex() );
-				}
+				} */
 			}
+		}
+
+		protected void TestEndOfStream( int size, string testSubject = "" )
+		{
+			if( size > (_Buffer.Length - _Buffer.Position) )
+			{
+				throw new SerializationException( Name + ": Allocation past end of stream detected! Size:" + size + " Subject:" + testSubject );
+			}
+			//System.Diagnostics.Debug.Assert( size <= (_Buffer.Length - _Buffer.Position), Name + ": Allocation past end of stream detected! " + size );
 		}
 
 		protected override void FindChildren()
