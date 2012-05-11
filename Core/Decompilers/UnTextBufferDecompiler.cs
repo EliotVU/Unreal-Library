@@ -16,7 +16,23 @@ namespace UELib.Core
 			{
 				BeginDeserializing();
 			}
-			return (ScriptText.Length != 0 ? ScriptText : "TextBuffer is empty!");	
+
+			if( ScriptText.Length != 0 )
+			{
+				if( Outer is UStruct )
+				{
+					try
+					{
+						return ScriptText + ((UClass)Outer).FormatDefaultProperties();
+					}
+					catch
+					{
+						return ScriptText + "\r\n// Failed to decompile defaultproperties for this object.";
+					}
+				}
+				return ScriptText;
+			}
+			return "TextBuffer is empty!";
 		}
 	}	
 }
