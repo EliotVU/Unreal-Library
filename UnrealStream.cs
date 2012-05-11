@@ -23,6 +23,7 @@ namespace UELib
 
 	public interface IUnrealStream
 	{
+		UnrealPackage Package{ get; }
 		UnrealReader UR{ get; }
 		UnrealWriter UW{ get; }
 
@@ -137,16 +138,6 @@ namespace UELib
 			MyEncoding = enc;
 		}
 
-		public override int Read( byte[] buffer, int index, int count )
-		{
-			int result = base.Read( buffer, index, count );		 
-			if( MyEncoding == Encoding.BigEndianUnicode && count > 1 )
-			{
-				Array.Reverse( buffer );
-			}
-			return result;
-		}
-
 		public string ReadName( int size )
 		{
 			// Note size 0 is ignored!
@@ -166,6 +157,10 @@ namespace UELib
 				//BinReader.ReadByte();
 
 				// Convert Byte Str to a String type
+				if( MyEncoding == Encoding.BigEndianUnicode )
+				{
+					Array.Reverse( strBytes );
+				}
 				return Encoding.ASCII.GetString( strBytes );
 			}
 			#if !PUBLICRELEASE
@@ -183,6 +178,10 @@ namespace UELib
 				BaseStream.Position += 2;
 
 				// Convert Byte Str to a String type
+				if( MyEncoding == Encoding.BigEndianUnicode )
+				{
+					Array.Reverse( strBytes );
+				}
 				return Encoding.Unicode.GetString( strBytes );
 			}
 #endif
@@ -219,7 +218,12 @@ namespace UELib
 				}
 				break;
 			}
-			return Encoding.ASCII.GetString( strBytes.ToArray() );
+			string s = Encoding.ASCII.GetString( strBytes.ToArray() );
+			if( MyEncoding == Encoding.BigEndianUnicode )
+			{
+				s.Reverse();
+			}
+			return s;
 		}
 
 		public string ReadUnicodeString()
@@ -236,7 +240,12 @@ namespace UELib
 				}
 				break;
 			}
-			return Encoding.Unicode.GetString( strBytes.ToArray() );
+			string s = Encoding.Unicode.GetString( strBytes.ToArray() );
+			if( MyEncoding == Encoding.BigEndianUnicode )
+			{
+				s.Reverse();
+			}
+			return s;
 		}
 
 		public int ReadIndex()
@@ -273,6 +282,18 @@ namespace UELib
 				: ((index << 6) + (b0 & 0x3F));
 		}
 
+		public long ReadNameIndex()
+		{
+			if( _Version >= 343 )
+			{
+				//var index = ReadInt64();	  // BigEndian?
+				var index = ReadInt32();
+				var num = ReadInt32();
+				return (long)index | ((long)num << 32);		
+			}
+			return ReadIndex();
+		}
+
 		public static int ReadIndexFromBuffer( byte[] bytes, UnrealPackage package )
 		{
 			if( package.Version >= UELib.UnrealPackage.VIndexDeprecated )
@@ -307,16 +328,20 @@ namespace UELib
 				: ((index << 6) + (b0 & 0x3F));
 		}
 
-		// Some flags have become a QWORD since Unreal Engine 3 however they are not exactly 64bit flags 
-		// but actually two 32bit flags next to each(or 32bit alignmented).
 		public ulong ReadQWORDFlags()
 		{
-			ulong flags = ReadUInt32();
-			if( _Version > 200 ) // This isn't true for all flags, just ObjectFlags, thus not ClassFlags etc!
+			if( _Version >= 195 )   // This isn't true for all flags, just ObjectFlags, thus not ClassFlags etc!
 			{
-				flags |= ((ulong)(ReadUInt32()) << 32);
+				ulong flags = ReadUInt64();
+				//ulong flags = BitConverter.ToUInt64(BitConverter.GetBytes( ReadUInt64() ).Reverse().ToArray(), 0);
+				//flags = ((uint)(flags & 0x00000000FFFFFFFFU) << 32 ) | (uint)((flags & 0xFFFFFFFF00000000U) >> 32);
+				return flags;
 			}
-			return flags;
+			else
+			{
+				ulong flags = ReadUInt32();
+				return flags;
+			}
 		}
 
 		public string ReadGuid()
@@ -334,7 +359,7 @@ namespace UELib
 		/// <summary>
 		/// The package I am streaming for.
 		/// </summary>
-		public UnrealPackage Package;
+		public UnrealPackage Package{ get; set; }
 
 		/// <inheritdoc/>
 		public uint Version
@@ -367,22 +392,32 @@ namespace UELib
 				uint sig = BitConverter.ToUInt32( bytes, 0 );
 				if( sig == UnrealPackage.Signature_BigEndian )
 				{
+					Console.WriteLine( "\t\tEncoding:BigEndian" );
 					_BigEndianCode = true;
 				}
 
-				if( sig != UnrealPackage.Signature && !_BigEndianCode )
+				if( sig != UnrealPackage.Signature && sig != UnrealPackage.Signature_BigEndian )
 				{
 					throw new System.IO.FileLoadException( path + " isn't a UnrealPackage file!" );
 				}
-
-				_UR = new UnrealReader( this, _BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
 				Position = 4;
+				_UR = new UnrealReader( this, _BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );		
 			}
 
 			if(	CanWrite )
 			{
 				_UW = new UnrealWriter( this );
 			}
+		}
+
+		public override int Read( byte[] array, int offset, int count )
+		{
+			int r = base.Read( array, offset, count ); 
+			if( _BigEndianCode && r > 1 )
+			{
+				Array.Reverse( array, 0, r );
+			}
+			return r;
 		}
 
 		/// <summary>
@@ -517,13 +552,7 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex()
 		{
-			if( Version >= 343 )
-			{
-				int index = _UR.ReadInt32();	 // Number. For example Model_1.
-				Skip( sizeof(int) );	
-				return index;
-			}
-			return _UR.ReadIndex();
+			return (int)_UR.ReadNameIndex();
 		}
 
 		/// <summary>
@@ -532,14 +561,14 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex( out int num )
 		{
+			var index = _UR.ReadNameIndex();
 			if( Version >= 343 )
 			{
-				int index = _UR.ReadInt32();	 // Number. For example Model_1.
-				num = _UR.ReadInt32()-1;
-				return index;
+				num = (int)((ulong)(index) & 0xFFFFFFFF00000000) - 1;
 			}
+
 			num = -1;
-			return _UR.ReadIndex();
+			return (int)index;
 		}
 
 		/// <summary>
@@ -595,8 +624,7 @@ namespace UELib
 		/// <summary>
 		/// The package I am streaming for.
 		/// </summary>
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
-		public readonly UnrealPackage Package;
+		public UnrealPackage Package{ get; set; }
 
 		/// <inheritdoc/>
 		public uint Version
@@ -617,19 +645,31 @@ namespace UELib
 		}
 
 		private long _PeekStartPosition = 0;
+		private bool _BigEndianCode = false;
 
 		public UObjectStream( UPackageStream str, ref byte[] buffer ) : base( buffer )
 		{
 			Package = str.Package;
+			_BigEndianCode = str._BigEndianCode;
 			if( CanRead )
 			{
-				_UR = new UnrealReader( this, str._BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
+				_UR = new UnrealReader( this, _BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
 			}
 
 			if( CanWrite )
 			{
 				_UW = new UnrealWriter( this );
 			}
+		}
+
+		public override int Read( byte[] array, int offset, int count )
+		{
+			int r = base.Read( array, offset, count ); 
+			if( _BigEndianCode && r > 1 )
+			{
+				Array.Reverse( array, 0, r );
+			}
+			return r;
 		}
 
 		/// <summary>
@@ -768,7 +808,7 @@ namespace UELib
 			{
 				int index = _UR.ReadInt32();
 				Skip( 4 );	// NAME_index if > 0
-				return index;
+				return index;		
 			}
 			return _UR.ReadIndex();
 		}
@@ -779,7 +819,7 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex( out int num )
 		{
-			if( Version >= 343 )
+			if( Version >= 343 )				
 			{
 				int index = _UR.ReadInt32();	 // Number. For example Model_1.
 				num = _UR.ReadInt32()-1;
