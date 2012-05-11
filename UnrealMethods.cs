@@ -31,7 +31,7 @@ namespace UELib
 			Output = "SerializationException";
 		}
 
-		public SerializationException( string output )
+		public SerializationException( string output ) : base( output )
 		{
 			Output = output;
 		}

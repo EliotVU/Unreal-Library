@@ -230,11 +230,28 @@ namespace UELib
 				ArchetypeIndex = stream.ReadInt32();
 			}
 
-			_ObjectFlagsOffset = stream.Position;
+			_ObjectFlagsOffset = stream.Position;	
+			//if( stream.Version >= 195 )
+			//{
+			//    var flags = stream.ReadUInt64();
+			//    System.Console.WriteLine( "flags:" + flags );
+			//    var hoFlags = ((ulong)(((uint)flags)) << 32);
+			//    var loFlags = ((ulong)(flags & 0xFFFFFFFF00000000U) >> 32);
+			//    System.Console.WriteLine( "hoFlags:" + hoFlags );
+			//    System.Console.WriteLine( "loFlags:" + loFlags );
+
+			//    ObjectFlags =  hoFlags | loFlags;
+			//    System.Console.WriteLine( "ObjectFlags:" + ObjectFlags );
+			//}
+			//else
+			//{
+			//    ObjectFlags = stream.ReadUInt32();
+			//}
+
 			ObjectFlags = stream.ReadUInt32();
 			if( stream.Version >= 195 )
 			{
-				ObjectFlags = (ObjectFlags << 32) | (ulong)stream.ReadUInt32();
+			    ObjectFlags = (ObjectFlags << 32) | (ulong)stream.ReadUInt32();
 			}
 
 			SerialSize = stream.ReadIndex();
