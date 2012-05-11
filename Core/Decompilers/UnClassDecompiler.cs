@@ -326,7 +326,7 @@ namespace UELib.Core
 				UClass parentClass = (UClass)Super;
 				if( parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0 )
 				{
-					output += "\r\n\tnoeditinlinenew";
+					output += "\r\n\tnoteditinlinenew";
 				}
 			}
 
