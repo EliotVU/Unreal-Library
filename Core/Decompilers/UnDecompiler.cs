@@ -129,7 +129,7 @@ namespace UELib.Core
 			}
 
 			// Greater Than or Equal Than!
-			internal const uint ObjectIndexVirtualSizeVersion = 639;
+			internal const uint ObjectIndexVirtualSizeVersion = 585;//639;	  (definitely NOT since Singularity version)
 
 			private void AddObjectIndexCodeSize()
 			{
@@ -1945,9 +1945,10 @@ namespace UELib.Core
 			#region ContextTokens
 			public class ContextToken : Token
 			{
-				public const ushort VSizeByteMoved = 520;
+				// Definitely not in UT3(512)
+				// Greater or Equal than
+				public const ushort VSizeByteMoved = 548;  // > APB
 
-				// TODO: Fix the extra . in InterfaceContext scripts
 				public override void Deserialize()
 				{
 					// A.?
@@ -1956,6 +1957,8 @@ namespace UELib.Core
 					// SkipSize
 					Buffer.ReadUShort();
 					Decompiler.AddCodeSize( sizeof(ushort) );
+
+					// Doesn't seem to exist in APB
 					if( Buffer.Version >= VSizeByteMoved )
 					{
 						// Property
@@ -1966,6 +1969,13 @@ namespace UELib.Core
 					// PropertyType
 					Buffer.ReadByte();
 					Decompiler.AddCodeSize( sizeof(byte) );	
+
+					// Additional byte in APB?
+					if( Buffer.Version > 512 && Buffer.Version < VSizeByteMoved )
+					{
+						Buffer.ReadByte();
+						Decompiler.AddCodeSize( sizeof(byte) );	
+					}
 
 					// ?.B
 					DeserializeNext();
@@ -2131,6 +2141,19 @@ namespace UELib.Core
 
 				public override string Decompile()
 				{
+					#region CaseToken Support
+					// HACK: for case's that end with a return instead of a break.
+					if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
+					{
+						Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position + Size );
+					}
+					else if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+					{
+						Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
+						Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
+					}
+					#endregion
+
 					Decompiler.AddSemicolon = true;	
 					return ReturnObjectIndex > -1 ? Decompiler.Owner.Package.GetIndexObjectName( ReturnObjectIndex ) : String.Empty;
 				}
@@ -2217,9 +2240,9 @@ namespace UELib.Core
 						//==================We're inside a Default and at the end of it!
 						if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
 						{
+							ClearLabel();
 							Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
 							Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position );
-							ClearLabel();
 							Decompiler.PreComment = String.Format( "// End:0x{0:x2} Break;", CodeOffset );
 							Decompiler.AddSemicolon = true;	
 							return "break";
@@ -2368,9 +2391,13 @@ namespace UELib.Core
 				public int ObjectIndex;
 				public byte BlockSize;
 
+				// Greater Than
+				public const ushort ObjectIndexVersion = 600;
+
 				public override void Deserialize()
 				{
-					if( Buffer.Version > 600 )
+					// TODO: Corrigate Version
+					if( Buffer.Version > ObjectIndexVersion )
 					{
 						// Points to the object that was passed to the switch, beware that the followed token chain contains it as well!
 						ObjectIndex = Buffer.ReadObjectIndex();
@@ -2412,7 +2439,7 @@ namespace UELib.Core
 					// Ends at: JumpToken -> Decompile()
 
 					// TODO: Corrigate Version
-					if( Buffer.Version > 600 )
+					if( Buffer.Version > ObjectIndexVersion )
 					{
 						Decompiler.PreComment = "// ObjectIndex:" + ObjectIndex + " BlockSize:" + BlockSize;
 					}
@@ -2585,18 +2612,20 @@ namespace UELib.Core
 
 			#region FieldTokens
 			public class FieldToken : Token
-			{								
+			{							
 				public int ObjectIndex;
+				public UObject Object;
 
 				public override void Deserialize()
 				{
-					ObjectIndex = Buffer.ReadObjectIndex();
+					ObjectIndex = Buffer.ReadObjectIndex(); 
 					Decompiler.AddObjectIndexCodeSize();
+					Object = Decompiler.Owner.TryGetIndexObject( ObjectIndex );	
 				}
 
 				public override string Decompile()
 				{
-					return Decompiler.Owner.Package.GetIndexObjectName( ObjectIndex );
+					return Object != null ? Object.Name : "@NULL(" + ObjectIndex + ")";
 				}
 			}
 
@@ -2702,7 +2731,7 @@ namespace UELib.Core
 			{
 				public override string Decompile()
 				{
-					return "Unknown: " + ObjectIndex;
+					return "Unknown: " + Object;
 				}
 			}
 			#endregion

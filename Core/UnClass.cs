@@ -148,6 +148,9 @@ namespace UELib.Core
 			_bReleaseBuffer = false;
 		}
 
+		// 584?
+		public const uint UNKByteVersion = 547;
+
 		protected override void Deserialize()
 		{
 			base.Deserialize();
@@ -160,7 +163,7 @@ namespace UELib.Core
 			ClassFlags = _Buffer.ReadUInt32();
 			NoteRead( "ClassFlags", ClassFlags );
 			// TODO: Corrigate Version
-			if( (Package.Version > 480 && Package.Version < 600) && Package.LicenseeVersion != (ushort)UnrealPackage.LicenseeVersions.CrimeCraft )
+			if( (Package.Version > 480 && Package.Version < UNKByteVersion) && Package.LicenseeVersion != (ushort)UnrealPackage.LicenseeVersions.CrimeCraft )
 			{
 				_UNKNOWNBYTE = _Buffer.ReadByte();	
 				NoteRead( "_UNKNOWNBYTE", _UNKNOWNBYTE );
@@ -204,11 +207,16 @@ namespace UELib.Core
 							NoteRead( "componentsCount", componentsCount );
 						if( componentsCount > 0 )
 						{
+							TestEndOfStream( componentsCount * 12, "Components" );
 							ComponentsList = new List<int>( componentsCount );
 							for( int i = 0; i < componentsCount; ++ i )
 							{
 								_Buffer.ReadNameIndex();
-								ComponentsList.Add( _Buffer.ReadObjectIndex() );	
+								// TODO: Corrigate Version
+								if( Package.Version > 490 )	// GOW
+								{
+									ComponentsList.Add( _Buffer.ReadObjectIndex() );	
+								}
 							}
 							NoteRead( "ComponentsList", ComponentsList );
 						}}
@@ -225,6 +233,7 @@ namespace UELib.Core
 							NoteRead( "InterfacesCount", interfacesCount );
 						if( interfacesCount > 0 )
 						{
+							TestEndOfStream( interfacesCount * 8, "Interfaces" );
 							ImplementedInterfacesList = new List<int>( interfacesCount );
 							for( int i = 0; i < interfacesCount; ++ i )
 							{
@@ -238,8 +247,6 @@ namespace UELib.Core
 							}
 							NoteRead( "ImplementedInterfacesList", ImplementedInterfacesList );
 						}}
-
-						
 					}
 
 					if( !Package.IsConsoleCooked() )
