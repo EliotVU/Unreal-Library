@@ -305,7 +305,7 @@ namespace UELib.Core
 							case 8:				
 								int enumType = _Buffer.ReadNameIndex();
 								// TODO: Corrigate Version	  (>=633?)
-								if( _Buffer.Version > 512 )		// > UT3
+								if( _Buffer.Version > 584 )		// > UT3&Singularity
 								{
 									int enumValue = _Buffer.ReadNameIndex();
 									propertyValue = _Owner.Package.GetIndexName( enumType ) + "." 
@@ -319,7 +319,7 @@ namespace UELib.Core
 
 							case 1:
 								// TODO: Corrigate Version
-								if( _Buffer.Version > 512 )
+								if( _Buffer.Version > 584 )		// > UT3&Singularity
 									_Buffer.ReadNameIndex();
 
 								propertyValue = _Buffer.ReadByte().ToString( CultureInfo.InvariantCulture );
@@ -648,8 +648,17 @@ namespace UELib.Core
 								: obj.Name == Name && obj.IsClassType( "ArrayProperty" ) && obj.Outer == _Owner.Class 
 						) as UArrayProperty;
 
+						// TODO:FIXME
+						/*foreach( var varType in UnrealConfig.VariableTypes )
+						{
+							if( varType.VName.Equals( Name, StringComparison.OrdinalIgnoreCase ) )
+							{
+								arrayType = (PropertyType)Enum.Parse( typeof(PropertyType), varType.VType );
+							}
+						} */
 						// This is hardcoded for testing purpose.
-						if( String.Compare( Name, "Controls", StringComparison.OrdinalIgnoreCase ) == 0 || String.Compare( Name, "Components", StringComparison.OrdinalIgnoreCase ) == 0 )
+						if( String.Compare( Name, "Controls", StringComparison.OrdinalIgnoreCase ) == 0 
+							|| String.Compare( Name, "Components", StringComparison.OrdinalIgnoreCase ) == 0 )
 						{
 							arrayType = PropertyType.ObjectProperty;
 						}

@@ -213,7 +213,8 @@ namespace UELib.Core
 			{
 				// TEMP: FIX: For Mirrors Edge and UT3
 				// TODO: Corrigate Version
-				if( Package.Version >= UByteCodeDecompiler.ObjectIndexVirtualSizeVersion || !(this is UFunction) )
+				if( Package.Version >= UByteCodeDecompiler.ObjectIndexVirtualSizeVersion 
+					|| !(this is UFunction) )
 				{
 					// ScriptSize
 					_MinAlignment = _Buffer.ReadInt32();
@@ -253,7 +254,7 @@ namespace UELib.Core
 			if( _Buffer.Version >= 220 )
 			{
 				// TODO: Corrigate Version
-				if( Package.Version >= 639 )
+				if( Package.Version > 584 )
 				{
 					_Buffer.ReadUInt32();
 				}
