@@ -13,6 +13,20 @@ namespace UELib
 		public static bool SuppressComments;
 		public static string PreBeginBracket = NewLine + "{0}";
 		public static string PreEndBracket = NewLine + "{0}";
+
+		public struct VariableType
+		{
+			public string VName;
+			public string VType;
+		}
+
+		public static List<VariableType> VariableTypes = new List<VariableType>()
+		{
+			new VariableType{VName = "Skins", VType = "ObjectProperty"},
+			new VariableType{VName = "Controls", VType = "ObjectProperty"},
+			new VariableType{VName = "Components", VType = "ObjectProperty"},
+			new VariableType{VName = "Points", VType = "StructProperty"}
+		};
 		#endregion
 
 		internal static string PrintBeginBracket()
