@@ -323,7 +323,7 @@ namespace UELib.Core
 			}
 
 #if SWAT4
-			if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.Swat4 )
+			if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
 			{
 				// 8 bytes: Value: 3
 				// 4 bytes: Value: 1
@@ -356,7 +356,7 @@ namespace UELib.Core
 
 				// REMINDER:Ends with a NameIndex referencing to "None"; 1/4/8 bytes
 #if SWAT4
-				if( Package.LicenseeVersion != (ushort)UnrealPackage.LicenseeVersions.Swat4 )
+				if( Package.Build != UnrealPackage.GameBuild.ID.Swat4 )
 				{
 					DeserializeProperties();
 				}
@@ -367,7 +367,7 @@ namespace UELib.Core
 #endif
 			}
 #if UNREAL2
-			else if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.Unreal2 )
+			else if( Package.Build == UnrealPackage.GameBuild.ID.Unreal2 )
 			{
 				int count = _Buffer.ReadIndex();
 				for( int i = 0; i < count; ++ i )

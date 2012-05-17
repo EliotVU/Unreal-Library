@@ -211,7 +211,11 @@ namespace UELib
 			public enum ID
 			{
 				Default,
-				APB,		
+				Unknown,
+				APB,	
+				Swat4,
+				Unreal2,
+				CrimeCraft,
 			}
 
 			public ID GameID
@@ -220,21 +224,42 @@ namespace UELib
 				set;
 			}
 
-			public GameBuild()
-			{
-
-			}
-
 			public GameBuild( uint version, uint licenseeVersion )
 			{
-				if( version >= 547 && licenseeVersion >= 28 && licenseeVersion <= 31 )
+				if( version == 547 && licenseeVersion >= 28 && licenseeVersion <= 32 )
 				{
 					GameID = ID.APB;
 				}
-				else
+				else if( version == 129 && licenseeVersion == 27 )
+				{
+					GameID = ID.Swat4;
+				}
+				else if( version == 110 && licenseeVersion == 2609 )
+				{
+					GameID = ID.Unreal2;
+				}
+				else if( version == 576 && licenseeVersion == 5 )
+				{
+					GameID = ID.CrimeCraft;
+				}
+				else if( licenseeVersion == 0 )
 				{
 					GameID = ID.Default;
 				}
+				else
+				{
+					GameID = ID.Unknown;
+				}
+			}
+
+			public static bool operator ==(GameBuild b, ID i)
+			{
+				return b.GameID == i;
+			}
+
+			public static bool operator !=(GameBuild b, ID i)
+			{
+				return b.GameID != i;
 			}
 		}
 
@@ -281,7 +306,7 @@ namespace UELib
 				ExportOffset = stream.ReadUInt32();
 
 #if APB
-				if( stream.Package.Build.GameID == GameBuild.ID.APB )
+				if( stream.Package.Build == GameBuild.ID.APB )
 				{
 					stream.Skip( 24 );
 				}
@@ -339,7 +364,7 @@ namespace UELib
 				if( stream.Version >= 322 )
 				{
 					NetObjectCount = stream.ReadInt32();
-				}
+				}		
 			}
 		}
 
@@ -546,7 +571,15 @@ namespace UELib
 
 				pkg.GUID = stream.ReadGuid();
 				Console.WriteLine( "\tGUID:" + pkg.GUID );
-				pkg._GenerationInfoList = new UArray<GenerationInfo>( stream, stream.ReadInt32() );	
+
+				int generationCount = stream.ReadInt32();
+				#if APB
+				if( pkg.Build == UnrealPackage.GameBuild.ID.APB && pkg.LicenseeVersion >= 32 )
+				{
+					stream.Skip( 16 );
+				}
+				#endif
+				pkg._GenerationInfoList = new UArray<GenerationInfo>( stream, generationCount );	
 
 				if( pkg.Version >= 245 )
 				{
@@ -1116,6 +1149,7 @@ namespace UELib
 		public bool IsConsoleCooked()
 		{
 			return IsCooked() && HasPackageFlag( 0x20000000 ) 
+				// Infinity Blade
 				&& (LicenseeVersion == 1 || LicenseeVersion == 29);
 		}
 

@@ -176,7 +176,7 @@ namespace UELib.Core
 				_FriendlyNameIndex = _Buffer.ReadIndex();
 				NoteRead( "_FriendlyNameIndex", _FriendlyNameIndex );
 #if SWAT4
-				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.Swat4 )
+				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
 				{
 					_Buffer.ReadIndex();
 				}
@@ -191,7 +191,7 @@ namespace UELib.Core
 			}
 
 #if SWAT4
-			if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.Swat4 )
+			if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
 			{
 
 				int processedText = _Buffer.ReadObjectIndex();
@@ -207,20 +207,28 @@ namespace UELib.Core
 				NoteRead( "TextPos", TextPos );
 			}
 
-
 			// TODO: Corrigate Version
 			if( _Buffer.Version > 154 && !IsPureStruct() )
 			{
 				// TEMP: FIX: For Mirrors Edge and UT3
 				// TODO: Corrigate Version
-				if( Package.Version >= UByteCodeDecompiler.ObjectIndexVirtualSizeVersion 
-					|| !(this is UFunction) )
+				if( (Package.Version >= UByteCodeDecompiler.ObjectIndexVirtualSizeVersion 
+					|| !(this is UFunction))
+					)
 				{
 					// ScriptSize
 					_MinAlignment = _Buffer.ReadInt32();
 					NoteRead( "_MinAlignment", _MinAlignment );
 				}
 			}
+
+#if APB
+			if( Package.Build == UnrealPackage.GameBuild.ID.APB && (GetType() == typeof(UState)) )
+			{
+				_MinAlignment = 0;
+				_Buffer.Position -= 4;
+			}
+#endif
 
 			// ScriptSize
 			_ScriptSize = _Buffer.ReadUInt32();

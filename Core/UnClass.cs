@@ -149,7 +149,7 @@ namespace UELib.Core
 		}
 
 		// 584?
-		public const uint UNKByteVersion = 547;
+		public const uint UNKByteVersion = 547;	// Definitely not in 547(APB)
 
 		protected override void Deserialize()
 		{
@@ -163,7 +163,7 @@ namespace UELib.Core
 			ClassFlags = _Buffer.ReadUInt32();
 			NoteRead( "ClassFlags", ClassFlags );
 			// TODO: Corrigate Version
-			if( (Package.Version > 480 && Package.Version < UNKByteVersion) && Package.LicenseeVersion != (ushort)UnrealPackage.LicenseeVersions.CrimeCraft )
+			if( (Package.Version > 480 && Package.Version < UNKByteVersion)  )
 			{
 				_UNKNOWNBYTE = _Buffer.ReadByte();	
 				NoteRead( "_UNKNOWNBYTE", _UNKNOWNBYTE );
@@ -201,7 +201,7 @@ namespace UELib.Core
 					// FIXME: CacheExempt == HasComponents?
 
 					//&& HasClassFlag( Flags.ClassFlags.CacheExempt )
-					if( Package.Version > 300  )
+					if( Package.Version > 300 )
 					{
 						{int componentsCount = _Buffer.ReadInt32();
 							NoteRead( "componentsCount", componentsCount );
@@ -301,7 +301,11 @@ namespace UELib.Core
 							}
 
 							// FIXME: UNKNOWN CONDITION(invalid in V:805, V:678(DD)) Found first in(V:655)
-							if( Package.Version <= 678 )
+							if( Package.Version <= 678 
+								#if APB
+									&& Package.Build != UnrealPackage.GameBuild.ID.APB
+								#endif
+								)
 							{
 								// TODO: Unknown
 								int unk2 = _Buffer.ReadInt32();
@@ -335,7 +339,7 @@ namespace UELib.Core
 			else
 			{		
 #if SWAT4
-				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.Swat4 )
+				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
 				{
 					// We are done here!
 					return;
