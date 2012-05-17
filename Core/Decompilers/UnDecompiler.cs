@@ -105,6 +105,7 @@ namespace UELib.Core
 			/// </summary>
 			private byte FixToken( byte token )
 			{
+				// Adjust UE2 tokens to UE3
 				if( Owner.Package.Version >= 184 
 					&& 
 					(
@@ -115,6 +116,38 @@ namespace UELib.Core
 				{
 		  			++ token;
 				}
+
+
+				#if APB
+				if( Owner.Package.Build == UnrealPackage.GameBuild.ID.APB && Owner.Package.LicenseeVersion >= 32 )
+				{
+					if( token == (byte)ExprToken.Return )
+					{
+						token = (byte)ExprToken.LocalVariable;
+					}
+					else if( token == (byte)ExprToken.LocalVariable )
+					{
+						token = (byte)ExprToken.Return;
+					}
+					else if( token == (byte)ExprToken.Jump )
+					{
+						token = (byte)ExprToken.JumpIfNot;
+					}
+					else if( token == (byte)ExprToken.JumpIfNot )
+					{
+						token = (byte)ExprToken.Jump;
+					}
+					else if( token == (byte)ExprToken.Case )
+					{
+						token = (byte)ExprToken.Nothing;
+					}
+					else if( token == (byte)ExprToken.Nothing )
+					{
+						token = (byte)ExprToken.Case;
+					}
+				}
+				#endif
+
 				return token;
 			}
 
@@ -2639,6 +2672,11 @@ namespace UELib.Core
 
 			public class InstanceVariableToken : FieldToken
 			{
+				//public override void Deserialize()
+				//{
+					
+				//    base.Deserialize();
+				//}
 			}
 
 			public class LocalVariableToken : FieldToken
