@@ -23,7 +23,9 @@ namespace UELib.Core
 				{
 					try
 					{
-						return ScriptText + ((UClass)Outer).FormatDefaultProperties();
+						return ScriptText
+							+ (((UClass)Outer).Properties != null && ((UClass)Outer).Properties.Count > 0 ? "// Decompiled with UE Explorer." : "// No DefaultProperties.")
+							+ ((UClass)Outer).FormatDefaultProperties();
 					}
 					catch
 					{
