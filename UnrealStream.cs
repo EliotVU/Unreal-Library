@@ -396,7 +396,7 @@ namespace UELib
 					_BigEndianCode = true;
 				}
 
-				if( sig != UnrealPackage.Signature && sig != UnrealPackage.Signature_BigEndian )
+				if( !UnrealConfig.SuppressSignature && sig != UnrealPackage.Signature && sig != UnrealPackage.Signature_BigEndian )
 				{
 					throw new System.IO.FileLoadException( path + " isn't a UnrealPackage file!" );
 				}

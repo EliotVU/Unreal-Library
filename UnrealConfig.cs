@@ -11,6 +11,7 @@ namespace UELib
 
 		#region Config
 		public static bool SuppressComments;
+		public static bool SuppressSignature;
 		public static string PreBeginBracket = NewLine + "{0}";
 		public static string PreEndBracket = NewLine + "{0}";
 
