@@ -216,6 +216,10 @@ namespace UELib
 				Swat4,
 				Unreal2,
 				CrimeCraft,
+				GoW1,
+				GoW2,
+				GoW3,
+				Singularity,
 			}
 
 			public ID GameID
@@ -223,6 +227,8 @@ namespace UELib
 				get;
 				set;
 			}
+
+			public bool IsConsoleCooked;
 
 			public GameBuild( uint version, uint licenseeVersion )
 			{
@@ -241,6 +247,15 @@ namespace UELib
 				else if( version == 576 && licenseeVersion == 5 )
 				{
 					GameID = ID.CrimeCraft;
+				}
+				else if( version == 828 )
+				{
+					GameID = ID.GoW3;
+					IsConsoleCooked = true;
+				}
+				else if( version == 584 && licenseeVersion == 126 )
+				{
+					GameID = ID.Singularity;
 				}
 				else if( licenseeVersion == 0 )
 				{
@@ -1150,7 +1165,7 @@ namespace UELib
 		{
 			return IsCooked() && HasPackageFlag( 0x20000000 ) 
 				// Infinity Blade
-				&& (LicenseeVersion == 1 || LicenseeVersion == 29);
+				&& (LicenseeVersion == 1 || LicenseeVersion == 29 || Build.IsConsoleCooked);
 		}
 
 		public bool IsMap()
