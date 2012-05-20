@@ -150,7 +150,7 @@ namespace UELib.Core
 
 		public bool IsPost()
 		{
-			return IsPre() && OperPrecedence == 0;
+			return IsOperator() && OperPrecedence == 0;
 		}
 
 		public bool IsPre()
