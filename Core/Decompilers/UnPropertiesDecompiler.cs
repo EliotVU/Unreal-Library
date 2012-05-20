@@ -14,7 +14,21 @@ namespace UELib.Core
 		public virtual string PreDecompile()
 		{
 			UMetaData.UMetaTag tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
-			return tag != null ? UDecompiler.Tabs + "/* " + tag.TagValue + " */\r\n" : String.Empty;
+			if( tag != null )
+			{
+				string comment = "/** ";
+				// Multiline comment?
+				if( tag.TagValue.IndexOf( '\n' ) != -1 )
+				{
+					comment += " \r\n *" + tag.TagValue.Replace( "\n", "\n *" ) + "\r\n";
+				}
+				else
+				{
+					comment += tag.TagValue;
+				}
+				return comment + " */\r\n";
+			}
+			return String.Empty;
 		}
 
 		public override string Decompile()
@@ -297,7 +311,7 @@ namespace UELib.Core
 					copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditConst;
 				}
 
-				// Properties flagged with automated, automaticly get those flags added by the compiler.
+				// Properties flagged with automated, automatically get those flags added by the compiler.
 				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2k4 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Automated) != 0 )
 				{
 					output += "automated ";
@@ -320,7 +334,7 @@ namespace UELib.Core
 						{
 							copyFlags &= ~(ulong)Flags.PropertyFlagsLO.ExportObject;
 						}
-					}			// avoid outputing export when noexport is flagged aswell!
+					}			// avoid outputing export when noexport is flagged as well!
 					else if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.ExportObject) != 0 )
 					{
 						if( !HasPropertyFlag( Flags.PropertyFlagsLO.DuplicateTransient ) )
