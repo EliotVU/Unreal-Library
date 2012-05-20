@@ -2864,6 +2864,11 @@ namespace UELib.Core
 				{
 					Buffer.ReadUShort();	// Line
 					Decompiler.AddCodeSize( sizeof(short) );
+					if( Buffer.Version >= 600 )
+					{
+						Buffer.ReadByte();	// Size?
+						Decompiler.AddCodeSize( sizeof(byte) );
+					}
 					DeserializeNext();
 				}
 
