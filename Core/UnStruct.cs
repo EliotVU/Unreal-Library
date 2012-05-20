@@ -223,7 +223,8 @@ namespace UELib.Core
 			}
 
 #if APB
-			if( Package.Build == UnrealPackage.GameBuild.ID.APB && (GetType() == typeof(UState)) )
+			if( Package.Build == UnrealPackage.GameBuild.ID.APB || Package.Build == UnrealPackage.GameBuild.ID.Singularity 
+				&& (GetType() == typeof(UState)) )
 			{
 				_MinAlignment = 0;
 				_Buffer.Position -= 4;
