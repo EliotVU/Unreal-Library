@@ -14,7 +14,7 @@ namespace UELib.Core
 		public virtual string PreDecompile()
 		{
 			UMetaData.UMetaTag tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
-			return tag != null ? UDecompiler.Tabs + "/*" + tag.TagValue + "*/\r\n" : String.Empty;
+			return tag != null ? UDecompiler.Tabs + "/* " + tag.TagValue + " */\r\n" : String.Empty;
 		}
 
 		public override string Decompile()
