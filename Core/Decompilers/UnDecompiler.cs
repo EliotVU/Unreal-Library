@@ -1978,9 +1978,9 @@ namespace UELib.Core
 			#region ContextTokens
 			public class ContextToken : Token
 			{
-				// Definitely not in UT3(512)
+				// Definitely not in UT3(512), APB, CrimeCraft, GoW2 and Singularity.
 				// Greater or Equal than
-				public const ushort VSizeByteMoved = 548;  // > APB
+				public const ushort VSizeByteMoved = 585;  
 
 				public override void Deserialize()
 				{
