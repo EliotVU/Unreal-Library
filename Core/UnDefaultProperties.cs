@@ -126,11 +126,14 @@ namespace UELib.Core
 			}
 			else if( (b & 0xC0) == 0x80 )
 			{
-				arrayIndex = ((int)(b & 0x7F) << 8) | ((int)_Buffer.ReadByte());
+				arrayIndex = ((int)(b & 0x7F) << 8) + ((int)_Buffer.ReadByte());
 			}
 			else
 			{
-				arrayIndex = ((int)(b & 0x3F) << 24) | ((int)_Buffer.ReadByte() << 16) | ((int)_Buffer.ReadByte() << 8) | ((int)_Buffer.ReadByte());
+				arrayIndex = ((int)(b & 0x3F) << 24) 
+					+ ((int)_Buffer.ReadByte() << 16)
+					+ ((int)_Buffer.ReadByte() << 8) 
+					+ ((int)_Buffer.ReadByte());
 			}
 			return arrayIndex;
 		}
