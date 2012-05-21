@@ -220,6 +220,8 @@ namespace UELib
 				GoW2,
 				GoW3,
 				Singularity,
+				UT2004,
+				UT3,
 			}
 
 			public ID GameID
@@ -256,6 +258,14 @@ namespace UELib
 				else if( version == 584 && licenseeVersion == 126 )
 				{
 					GameID = ID.Singularity;
+				}
+				else if( version == 128 && licenseeVersion == 29 )
+				{
+					GameID = ID.UT2004;
+				}
+				else if( version == 512 )
+				{
+					GameID = ID.UT3;
 				}
 				else if( licenseeVersion == 0 )
 				{
