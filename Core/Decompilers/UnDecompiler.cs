@@ -162,7 +162,8 @@ namespace UELib.Core
 			}
 
 			// Greater Than or Equal Than!
-			internal const uint ObjectIndexVirtualSizeVersion = 585;//639;	  (definitely NOT since Singularity version)
+			// Not in singularity(584), but in moonbase(587)
+			internal const uint ObjectIndexVirtualSizeVersion = 587;
 
 			private void AddObjectIndexCodeSize()
 			{
@@ -1978,9 +1979,9 @@ namespace UELib.Core
 			#region ContextTokens
 			public class ContextToken : Token
 			{
-				// Definitely not in UT3(512), APB, CrimeCraft, GoW2 and Singularity.
+				// Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
 				// Greater or Equal than
-				public const ushort VSizeByteMoved = 585;  
+				public const ushort VSizeByteMoved = 588;  
 
 				public override void Deserialize()
 				{

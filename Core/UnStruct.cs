@@ -9,6 +9,8 @@ namespace UELib.Core
 	/// </summary>
 	public partial class UStruct : UField
 	{
+		// Greater or equal than:
+		// Definitely not after 110
 		internal const int PrimitveCastVersion = 100;
 
 		#region Serialized Members
@@ -207,12 +209,15 @@ namespace UELib.Core
 				NoteRead( "TextPos", TextPos );
 			}
 
+			// Actually another ScriptSize variable.
+			// Definitely not in moonbase(587).
+			const uint MinAlignmentVersion = 587;
+
 			// TODO: Corrigate Version
 			if( _Buffer.Version > 154 && !IsPureStruct() )
 			{
-				// TEMP: FIX: For Mirrors Edge and UT3
 				// TODO: Corrigate Version
-				if( (Package.Version >= UByteCodeDecompiler.ObjectIndexVirtualSizeVersion 
+				if( (_Buffer.Version > MinAlignmentVersion 
 					|| (!(this is UFunction) && GetType() != typeof(UState)))
 					)
 				{
@@ -254,7 +259,8 @@ namespace UELib.Core
 			if( _Buffer.Version >= 220 )
 			{
 				// TODO: Corrigate Version
-				if( Package.Version > 584 )
+				// Definitely not in moonbase(587)
+				if( _Buffer.Version > 587 )
 				{
 					_Buffer.ReadUInt32();
 				}

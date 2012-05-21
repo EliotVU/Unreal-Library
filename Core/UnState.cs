@@ -82,7 +82,8 @@ namespace UELib.Core
 				else // When it's a UClass
 				{		
 					// TODO: Corrigate Version
-					if( _Buffer.Version > 584 && _Buffer.Version < 700 )
+					// Definitely not in moonbase(587)
+					if( _Buffer.Version > 587 && _Buffer.Version < 700 )
 					{
 						// TODO: Unknown!
 						_Buffer.ReadInt32();
@@ -109,7 +110,7 @@ namespace UELib.Core
 			_LabelTableOffset = _Buffer.ReadUShort();
 			NoteRead( "_LabelTableOffset", _LabelTableOffset );
 			// TODO: Corrigate Version
-			if( _Buffer.Version < 400 || GetType() == typeof(UState) )
+			if( _Buffer.Version < 369 || GetType() == typeof(UState) )
 			{	
 				StateFlags = _Buffer.ReadUInt32();
 				NoteRead( "StateFlags", StateFlags );

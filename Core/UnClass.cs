@@ -162,12 +162,6 @@ namespace UELib.Core
 	
 			ClassFlags = _Buffer.ReadUInt32();
 			NoteRead( "ClassFlags", ClassFlags );
-			// TODO: Corrigate Version
-			if( (Package.Version > 480 && Package.Version < UNKByteVersion)  )
-			{
-				_UNKNOWNBYTE = _Buffer.ReadByte();	
-				NoteRead( "_UNKNOWNBYTE", _UNKNOWNBYTE );
-			}
 
 			// Both were deprecated since then
 			if( Package.Version < 186 )
@@ -189,6 +183,14 @@ namespace UELib.Core
 
 			if( Package.Version >= 62 )
 			{
+				// TODO: Corrigate Version
+				// At least since RoboBlitz(369)
+				if( (Package.Version >= 369 && Package.Version < UNKByteVersion)  )
+				{
+					_UNKNOWNBYTE = _Buffer.ReadByte();	
+					NoteRead( "_UNKNOWNBYTE", _UNKNOWNBYTE );
+				}
+
 				// Class Name Extends Super.Name Within _WithinIndex
 				//		Config(_ConfigIndex);
 				_WithinIndex = _Buffer.ReadObjectIndex();
@@ -226,7 +228,8 @@ namespace UELib.Core
 						//ComponentNameToDefaultObjectMap = _Buffer.ReadObjectIndex();
 					}
 
-					if( Package.Version > 400 )
+					// RoboBlitz(369)
+					if( Package.Version >= 369 )
 					{
 						// FIXME: Invalid in UT3? Swapped with HideCategories?
 						{int interfacesCount = _Buffer.ReadInt32();
