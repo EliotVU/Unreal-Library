@@ -301,14 +301,11 @@ namespace UELib.Core
 							}
 
 							// FIXME: UNKNOWN CONDITION(invalid in V:805, V:678(DD)) Found first in(V:655)
-							if( Package.Version <= 678 
-								#if APB
-									&& Package.Build != UnrealPackage.GameBuild.ID.APB
-								#endif
-								)
+							if( Package.Version > 547 && Package.Version <= 678 )
 							{
 								// TODO: Unknown
 								int unk2 = _Buffer.ReadInt32();
+								NoteRead( "unk2", unk2 );
 							}	
 						}					
 					}
