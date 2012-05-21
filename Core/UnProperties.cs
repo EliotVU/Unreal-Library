@@ -467,7 +467,7 @@ namespace UELib.Core
 		/// <inheritdoc/>
 		public override string GetFriendlyType()
 		{
-			return StructObject != null ? StructObject.GetOuterGroup() : "@NULL";
+			return StructObject != null ? StructObject.GetFriendlyType() : "@NULL";
 		}
 	}
 
