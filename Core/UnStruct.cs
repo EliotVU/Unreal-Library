@@ -213,7 +213,7 @@ namespace UELib.Core
 				// TEMP: FIX: For Mirrors Edge and UT3
 				// TODO: Corrigate Version
 				if( (Package.Version >= UByteCodeDecompiler.ObjectIndexVirtualSizeVersion 
-					|| !(this is UFunction))
+					|| (!(this is UFunction) && GetType() != typeof(UState)))
 					)
 				{
 					// ScriptSize
@@ -221,15 +221,6 @@ namespace UELib.Core
 					NoteRead( "_MinAlignment", _MinAlignment );
 				}
 			}
-
-#if APB
-			if( Package.Build == UnrealPackage.GameBuild.ID.APB || Package.Build == UnrealPackage.GameBuild.ID.Singularity 
-				&& (GetType() == typeof(UState)) )
-			{
-				_MinAlignment = 0;
-				_Buffer.Position -= 4;
-			}
-#endif
 
 			// ScriptSize
 			_ScriptSize = _Buffer.ReadUInt32();
