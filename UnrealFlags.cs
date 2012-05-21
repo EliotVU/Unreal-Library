@@ -104,10 +104,15 @@ namespace UELib.Flags
 		/// </summary>
 		Cooked				= 0x00000008U,		// @Redefined
 
+		/// <summary>
+		/// ???
+		/// <= UT
+		/// </summary>
 		Unsecure 			= 0x00000010U,
 
 		/// <summary>
 		/// The package is encrypted.
+		/// <= UT
 		/// </summary>
 		Encrypted 			= 0x00000020U,
 
@@ -353,8 +358,9 @@ namespace UELib.Flags
 		/// 
 		/// => UE3
 		/// </summary>
-		Component			= 0x00080000U,
-		OnDemand 			= 0x00100000U,		// @Removed(UE3) Load on demand
+		Component			= 0x00080000U,		// NetAlways in 61 <=
+		OnDemand 			= 0x00100000U,		// @Redefined(UE3, Init) Load on demand
+		Init				= 0x00100000U,		// 
 
 		New 				= 0x00200000U,		// Inner object. @Removed(UE3)
 		DuplicateTransient	= 0x00200000U,
@@ -411,6 +417,7 @@ namespace UELib.Flags
 		PrivateWrite		= 0x00000040U,
 		ProtectedWrite		= 0x00000080U,
 		Archetype			= 0x00000100U,	
+		EditHide			= 0x00000200U,
 		EditTextBox			= 0x00000400U,
 		CrossLevelPassive	= 0x00001000U,
 	}

@@ -117,6 +117,11 @@ namespace UELib.Core
 						output += "const ";
 						copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Const;
 					}
+
+					if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Init) != 0 )
+					{
+						output += "init ";
+					}
 				}
 
 				if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.CoerceParm) != 0 )
@@ -202,6 +207,12 @@ namespace UELib.Core
 					{
 						copyFlags &= ~(ulong)Flags.PropertyFlagsLO.DataBinding;
 						output += "databinding ";
+					}
+
+					if( HasPropertyFlag( Flags.PropertyFlagsHO.EditHide ) )
+					{
+						copyFlags &= ~(ulong)Flags.PropertyFlagsHO.EditHide << 32;
+						output += "edithide ";
 					}
 
 					if( HasPropertyFlag( Flags.PropertyFlagsHO.EditTextBox ) )
