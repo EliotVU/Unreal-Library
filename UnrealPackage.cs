@@ -212,16 +212,21 @@ namespace UELib
 			{
 				Default,
 				Unknown,
-				APB,	
-				Swat4,
-				Unreal2,
-				CrimeCraft,
+				APB,				// Has custom support!
+				Swat4,				// Has custom support!
+				Unreal2,			// Has custom support!
+				RoboBlitz,
+				CrimeCraft,			// Has custom support!
 				GoW1,
 				GoW2,
 				GoW3,
 				Singularity,
 				UT2004,
 				UT3,
+				InfinityBlade,
+				InfinityBlade2,
+				BulletStorm,
+				MirrorsEdge,		// Has custom support!
 			}
 
 			public ID GameID
@@ -246,13 +251,39 @@ namespace UELib
 				{
 					GameID = ID.Unreal2;
 				}
+				else if( version == 369 && licenseeVersion == 6 )
+				{
+					GameID = ID.RoboBlitz;
+				}
+				else if( version == 490 && licenseeVersion == 9 )
+				{
+					GameID = ID.GoW1;
+				}
+				else if( version == 536 && licenseeVersion == 43 )
+				{
+					GameID = ID.MirrorsEdge;
+				}
 				else if( version == 576 && licenseeVersion == 5 )
 				{
 					GameID = ID.CrimeCraft;
 				}
+				else if( version == 575 )
+				{
+					GameID = ID.GoW2;
+				}
 				else if( version == 828 )
 				{
 					GameID = ID.GoW3;
+					IsConsoleCooked = true;
+				}
+				else if( version == 842 && licenseeVersion == 1 )
+				{
+					GameID = ID.InfinityBlade2;
+					IsConsoleCooked = true;
+				}
+				else if( version == 742 && licenseeVersion == 29 )
+				{
+					GameID = ID.BulletStorm;
 					IsConsoleCooked = true;
 				}
 				else if( version == 584 && licenseeVersion == 126 )
@@ -1173,9 +1204,7 @@ namespace UELib
 
 		public bool IsConsoleCooked()
 		{
-			return IsCooked() && HasPackageFlag( 0x20000000 ) 
-				// Infinity Blade
-				&& (LicenseeVersion == 1 || LicenseeVersion == 29 || Build.IsConsoleCooked);
+			return IsCooked() && HasPackageFlag( Flags.PackageFlags.MetaData ) && Build.IsConsoleCooked;
 		}
 
 		public bool IsMap()

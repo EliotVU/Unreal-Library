@@ -127,7 +127,12 @@ namespace UELib.Flags
 		/// </summary>
 		/// 
 
+		/// Package holds map data.
 		Map					= 0x00020000U,
+
+		/// <summary>
+		/// Package contains classes.
+		/// </summary>
 		Script				= 0x00200000U,
 
 		/// <summary>
@@ -135,6 +140,17 @@ namespace UELib.Flags
 		/// </summary>
 		Debug				= 0x00400000U,
 
+		Compressed			= 0x02000000U,
+		ConsoleCooked		= 0x04000000U,
+
+		/// <summary>
+		/// Whether package has metadata exported(anything related to the editor).
+		/// </summary>
+		MetaData 			= 0x20000000U,
+
+		/// <summary>
+		/// Package's source is stripped.
+		/// </summary>
 		Stripped 			= 0x40000000U,
 
 		Protected			= 0x80000000U,
