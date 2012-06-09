@@ -183,23 +183,21 @@ namespace UELib.Core
 					_Buffer.ReadIndex();
 				}
 #endif
-				// Guessed...
 				// TODO: Corrigate Version
 				if( _Buffer.Version > 69 )
 				{
 					StructFlags = _Buffer.ReadUInt32();
 					NoteRead( "StructFlags", StructFlags );	
 				}
-			}
 
 #if SWAT4
-			if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
-			{
-
-				int processedText = _Buffer.ReadObjectIndex();
-				NoteRead( "ProcessedText", processedText );
-			}
+				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
+				{
+					int processedText = _Buffer.ReadObjectIndex();
+					NoteRead( "ProcessedText", processedText );
+				}
 #endif
+			}
 
 			if( !Package.IsConsoleCooked() )
 			{
@@ -209,22 +207,15 @@ namespace UELib.Core
 				NoteRead( "TextPos", TextPos );
 			}
 
-			// Actually another ScriptSize variable.
-			// Definitely not in moonbase(587).
-			const uint MinAlignmentVersion = 587;
-
+			// HINT: This code is terrible!
 			// TODO: Corrigate Version
-			if( _Buffer.Version > 154 && !IsPureStruct() )
+			if( !IsPureStruct() && 
+				(_Buffer.Version >= 639 || (!(this is UFunction) && GetType() != typeof(UState))) 
+			)
 			{
-				// TODO: Corrigate Version
-				if( (_Buffer.Version > MinAlignmentVersion 
-					|| (!(this is UFunction) && GetType() != typeof(UState)))
-					)
-				{
-					// ScriptSize
-					_MinAlignment = _Buffer.ReadInt32();
-					NoteRead( "_MinAlignment", _MinAlignment );
-				}
+				// ScriptSize
+				_MinAlignment = _Buffer.ReadInt32();
+				NoteRead( "_MinAlignment", _MinAlignment );
 			}
 
 			// ScriptSize
@@ -236,7 +227,8 @@ namespace UELib.Core
 			if( _ScriptSize > 0 )
 			{
 				ByteCodeManager = new UByteCodeDecompiler( this );
-				if( _Buffer.Version >= UnrealPackage.VIndexDeprecated )
+				// ScriptSize is not a true size in UT2004 and below and MoonBase's version (587)
+				if( _Buffer.Version >= UnrealPackage.VIndexDeprecated && _Buffer.Version != 587 )	// 587(MoonBase)
 				{
 					_Buffer.Skip( (int)_ScriptSize );
 				}

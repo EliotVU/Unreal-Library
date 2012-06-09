@@ -105,7 +105,7 @@ namespace UELib.Core
 			else CategoryIndex = -1;
 
 			// TODO: UNKNOWN!
-			if( Package.Version > 480 && !Package.IsConsoleCooked())
+			if( Package.Version > 400 && !Package.IsConsoleCooked())
 			{
 				int unk = _Buffer.ReadInt32();
 				NoteRead( "Unknown", unk );
@@ -117,7 +117,7 @@ namespace UELib.Core
 				NoteRead( "RepOffset", RepOffset );
 			}
 
-			if( HasPropertyFlag( Flags.PropertyFlagsLO.New ) && Package.Version <= (uint)UnrealPackage.GameVersions.UT2K4 )
+			if( HasPropertyFlag( Flags.PropertyFlagsLO.New ) && Package.Version <= 128 )
 			{
 				string unknown = _Buffer.ReadName();
 				Console.WriteLine( "Found a property flagged with New:" + unknown );
@@ -189,7 +189,7 @@ namespace UELib.Core
 		/// <inheritdoc/>
 		public override string GetFriendlyType()
 		{
-			return "interface";
+			return InterfaceObject != null ? InterfaceObject.GetFriendlyType() : "@NULL";
 		}
 	}
 

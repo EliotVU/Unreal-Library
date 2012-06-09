@@ -109,7 +109,7 @@ namespace UELib.Core
 
 			_LabelTableOffset = _Buffer.ReadUShort();
 			NoteRead( "_LabelTableOffset", _LabelTableOffset );
-			// TODO: Corrigate Version
+			// TODO: Corrigate Version(Roboblitz)
 			if( _Buffer.Version < 369 || GetType() == typeof(UState) )
 			{	
 				StateFlags = _Buffer.ReadUInt32();

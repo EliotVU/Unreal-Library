@@ -78,6 +78,8 @@ namespace UELib.Core
 
 		public string NativeClassName = String.Empty;
 
+		public bool ForceScriptOrder = false;
+
 		/// <summary>
 		/// A list of class dependencies that this class depends on. Includes Imports and Exports.
 		/// 
@@ -148,9 +150,6 @@ namespace UELib.Core
 			_bReleaseBuffer = false;
 		}
 
-		// 584?
-		public const uint UNKByteVersion = 547;	// Definitely not in 547(APB)
-
 		protected override void Deserialize()
 		{
 			base.Deserialize();
@@ -184,8 +183,8 @@ namespace UELib.Core
 			if( Package.Version >= 62 )
 			{
 				// TODO: Corrigate Version
-				// At least since RoboBlitz(369)
-				if( (Package.Version >= 369 && Package.Version < UNKByteVersion)  )
+				// At least since RoboBlitz(369) - 547(APB)
+				if( Package.Version >= 369 && Package.Version < 547  )
 				{
 					_UNKNOWNBYTE = _Buffer.ReadByte();	
 					NoteRead( "_UNKNOWNBYTE", _UNKNOWNBYTE );
@@ -200,9 +199,6 @@ namespace UELib.Core
 
 				if( Package.Version >= 100 )
 				{
-					// FIXME: CacheExempt == HasComponents?
-
-					//&& HasClassFlag( Flags.ClassFlags.CacheExempt )
 					if( Package.Version > 300 )
 					{
 						{int componentsCount = _Buffer.ReadInt32();
@@ -223,9 +219,14 @@ namespace UELib.Core
 							NoteRead( "ComponentsList", ComponentsList );
 						}}
 
-						// FIXME: When was this removed. This exists for sure around 180+
-						//ComponentClassToNameMap = _Buffer.ReadObjectIndex();
-						//ComponentNameToDefaultObjectMap = _Buffer.ReadObjectIndex();
+						// FIXME: Unknown condition
+						//if( HasClassFlag( Flags.ClassFlags.CacheExempt ) )
+						//{
+						//    // ComponentClassToNameMap
+						//     _Buffer.ReadObjectIndex();
+						//    // ComponentNameToDefaultObjectMap
+						//     _Buffer.ReadObjectIndex();
+						//}
 					}
 
 					// RoboBlitz(369)
@@ -281,11 +282,11 @@ namespace UELib.Core
 									if( Package.Version >= 749 )
 									{
 										// bForceScriptOrder
-										int unk1 = _Buffer.ReadInt32();
-										NoteRead( "bForceScriptOrder", unk1 );
+										ForceScriptOrder = _Buffer.ReadInt32() > 0;
+										NoteRead( "bForceScriptOrder", ForceScriptOrder );
 
 										// TODO: Figure out what determines if DLLBind and/or ClassGroup deserializiation.
-										if( Package.Version >= UnrealPackage.VClassGroup ) // V:789 HasClassFlag( Flags.ClassFlags.CacheExempt )
+										if( Package.Version >= UnrealPackage.VClassGroup ) // V:789
 										{
 											ClassGroupsList = DeserializeGroup();
 											NoteRead( "ClassGroupsList", ClassGroupsList );
@@ -303,8 +304,8 @@ namespace UELib.Core
 								}
 							}
 
-							// FIXME: UNKNOWN CONDITION(invalid in V:805, V:678(DD)) Found first in(V:655)
-							if( Package.Version > 547 && Package.Version <= 678 )
+							// FIXME: Found first in(V:655), Definitely not in APB and GoW 2
+							if( Package.Version > 575 && Package.Version <= 678 )
 							{
 								// TODO: Unknown
 								int unk2 = _Buffer.ReadInt32();

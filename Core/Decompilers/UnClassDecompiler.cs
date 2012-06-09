@@ -355,7 +355,7 @@ namespace UELib.Core
 			{
 				if( (ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0 )
 				{
-					output += Package.Version > 120 ? "\r\n\tplaceable" : "\r\n\tusercreate";
+					output += Package.Version > PlaceableVersion ? "\r\n\tplaceable" : "\r\n\tusercreate";
 				}
 				else
 				{
@@ -363,7 +363,7 @@ namespace UELib.Core
 					/*UClass ParentClass = (UClass)Super;
 					if( ParentClass != null && (ParentClass.ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0 )
 					{*/
-					output += Package.Version > 120 ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
+					output += Package.Version > PlaceableVersion ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
 					//}
 				}
 			}
@@ -384,12 +384,22 @@ namespace UELib.Core
 				output += "\r\n\thidedropdown";
 			}
 
-			if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2k4 )
+			if( Package.Build == UnrealPackage.GameBuild.ID.UT2004 )
 			{
 				if( HasClassFlag( Flags.ClassFlags.CacheExempt ) )
 				{
 					output += "\r\n\tcacheexempt";
 				}
+			}
+
+			if( Package.Version >= 749 && ((UClass)Super) != null )
+			{
+				if( ForceScriptOrder && !((UClass)Super).ForceScriptOrder )
+				{
+					output += "\r\n\tforcescriptorder(true)";
+				}
+				else if( !ForceScriptOrder && ((UClass)Super).ForceScriptOrder ) 
+					output += "\r\n\tforcescriptorder(false)";
 			}
 
 			//Output += "\n\tguid(" + ClassGuid + ")";

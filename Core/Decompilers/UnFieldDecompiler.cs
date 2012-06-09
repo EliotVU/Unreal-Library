@@ -19,6 +19,7 @@ namespace UELib.Core
 		protected const uint NativeVersion = 100;
 		// Introduction of the change from expands to extends.
 		protected const uint ExtendsVersion = 100;
+		protected const uint PlaceableVersion = 100;
 
 		protected string FormatNative()
 		{
