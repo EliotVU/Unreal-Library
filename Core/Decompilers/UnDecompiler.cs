@@ -158,7 +158,10 @@ namespace UELib.Core
 
 			private void AddNameIndexCodeSize()
 			{
-				_CodePosition += (_Buffer.Version >= UnrealPackage.VNameIndex ? sizeof(long) : (uint)sizeof(int));
+				_CodePosition += (_Buffer.Version >= UnrealPackage.VNameIndex 
+					? sizeof(long) 
+					: (uint)sizeof(int)
+				);
 			}
 
 			// Greater Than or Equal Than!
@@ -167,7 +170,10 @@ namespace UELib.Core
 
 			private void AddObjectIndexCodeSize()
 			{
-				_CodePosition += (_Buffer.Version >= ObjectIndexVirtualSizeVersion ? sizeof(long) : (uint)sizeof(int));
+				_CodePosition += (_Buffer.Version >= ObjectIndexVirtualSizeVersion 
+					? sizeof(long) 
+					: (uint)sizeof(int)
+				);
 			}
 
 			private bool _Deserialized;
@@ -179,14 +185,15 @@ namespace UELib.Core
 				_Deserialized = true;
 				_Buffer.Seek( Owner._ScriptOffset, System.IO.SeekOrigin.Begin );
 				_CodePosition = 0;
-				var codeSize = Owner.Package.Version < ObjectIndexVirtualSizeVersion ? Owner._ScriptSize : (uint)Owner._MinAlignment;
-				
+				var codeSize = Owner.Package.Version <= ObjectIndexVirtualSizeVersion 
+					? Owner._ScriptSize 
+					: (uint)Owner._MinAlignment;
+
+		
 				_CurToken = -1;
 				_Tokens = new List<Token>();
 				_Labels = new List<ULabelEntry>();
-				while( Owner.Package.Version > 300 
-					? _Buffer.Position - Owner._ScriptOffset < Owner._ScriptSize 
-					: CodePosition < codeSize )
+				while( CodePosition < codeSize )
  				{
 					try
 					{
@@ -1845,8 +1852,8 @@ namespace UELib.Core
 
 				public override void Deserialize()
 				{
-					// TODO: Corrigate Version (Definitely not in GoW(490))
-					if( Buffer.Version >= 178 && Buffer.Version < 490 )
+					// TODO: Corrigate Version (Definitely not in MOHA, but in roboblitz(369))
+					if( Buffer.Version >= 178 && Buffer.Version < 421/*MOHA*/ )
 					{
 						byte super = Buffer.ReadByte();
 						Decompiler.AddCodeSize( sizeof(byte) );
@@ -2048,15 +2055,23 @@ namespace UELib.Core
 					Decompiler.AddObjectIndexCodeSize();
 
 					// TODO: Corrigate Version
-					if( Buffer.Version > 300 )
+					if( Buffer.Version > 369/*Roboblitz*/ )
 					{
 						// StructIndex?
 						Buffer.ReadObjectIndex();	
 						Decompiler.AddObjectIndexCodeSize();
 
-						// SkipSize?
-						Buffer.ReadUShort();
-						Decompiler.AddCodeSize( sizeof(short) );
+						if( Buffer.Version > 521/*MOHA*/ )
+						{
+							// SkipSize?
+							Buffer.ReadUShort();
+							Decompiler.AddCodeSize( sizeof( short ) );
+						}
+						else
+						{
+							Buffer.ReadByte();
+							Decompiler.AddCodeSize( sizeof( byte ) );
+						}
 					}
 					DeserializeNext();
 				}
@@ -2423,23 +2438,33 @@ namespace UELib.Core
 			public class SwitchToken : Token
 			{
 				public int ObjectIndex;
-				public byte BlockSize;
+				public ushort BlockSize;
 
+				// TODO: Corrigate Version
 				// Greater Than
-				public const ushort ObjectIndexVersion = 600;
+				public const ushort ObjectIndexVersion = 600; // MoonBase? 
 
 				public override void Deserialize()
 				{
-					// TODO: Corrigate Version
-					if( Buffer.Version > ObjectIndexVersion )
+					if( Buffer.Version >= ObjectIndexVersion )
 					{
-						// Points to the object that was passed to the switch, beware that the followed token chain contains it as well!
+						// Points to the object that was passed to the switch, 
+						// beware that the followed token chain contains it as well!
 						ObjectIndex = Buffer.ReadObjectIndex();
 						Decompiler.AddObjectIndexCodeSize();
 					}
 
-					BlockSize = Buffer.ReadByte();	// Size
-					Decompiler.AddCodeSize( sizeof(byte) );
+					// TODO: Corrigate version
+					if( Buffer.Version >= 536 && Buffer.Version <= 587 )
+					{
+						BlockSize = Buffer.ReadUShort();	// Size
+						Decompiler.AddCodeSize( sizeof(ushort) );
+					}
+					else
+					{
+						BlockSize = Buffer.ReadByte();	// Size
+						Decompiler.AddCodeSize( sizeof(byte) );
+					}
 
 					// Expression
 					DeserializeNext();
@@ -2473,7 +2498,7 @@ namespace UELib.Core
 					// Ends at: JumpToken -> Decompile()
 
 					// TODO: Corrigate Version
-					if( Buffer.Version > ObjectIndexVersion )
+					if( Buffer.Version >= ObjectIndexVersion )
 					{
 						Decompiler.PreComment = "// ObjectIndex:" + ObjectIndex + " BlockSize:" + BlockSize;
 					}
@@ -2716,7 +2741,8 @@ namespace UELib.Core
 				{		  
 					NameIndex = Buffer.ReadNameIndex();
 					Decompiler.AddNameIndexCodeSize();
-					if( Buffer.Version > 184 )
+					// > Mirrors Edge
+					if( Buffer.Version > 536 )
 					{
 						base.Deserialize();
 					}
@@ -2865,7 +2891,8 @@ namespace UELib.Core
 				{
 					Buffer.ReadUShort();	// Line
 					Decompiler.AddCodeSize( sizeof(short) );
-					if( Buffer.Version >= 600 )
+					// Mirrors Edge?
+					if( Buffer.Version >= 536 )
 					{
 						Buffer.ReadByte();	// Size?
 						Decompiler.AddCodeSize( sizeof(byte) );
@@ -3028,16 +3055,16 @@ namespace UELib.Core
 			{
 				public override void Deserialize()
 				{
-					// TODO: Corrigate Version
+					// TODO: Corrigate Version(Lowest known version 369(Roboblitz))
 					if( Buffer.Version > 300 )
 					{
 						Buffer.ReadUShort();	// Size
 						Decompiler.AddCodeSize( sizeof(ushort) );
 
-						// TODO: UNKNOWN:
-						// TODO: Corrigate Version	 (Definitely since UT3(512))
-						if( Buffer.Version >= 490 )
+						// TODO: Corrigate Version	 (Definitely since Roboblitz(369))
+						if( Buffer.Version >= 369 )
 						{
+							// TODO: UNKNOWN:
 							Buffer.ReadUShort();
 							Decompiler.AddCodeSize( sizeof(ushort) );
 						}
@@ -3973,9 +4000,6 @@ namespace UELib.Core
 				}
 			}
 
-			// TODO: Fix the output below 	  (FIXED)
-			//	(0x00C) LetToken(55) -> LocalVariableToken(9) -> DynamicArrayFindToken(45) -> LocalVariableToken(9) -> NoObjectToken(1) -> JumpIfNotToken(32) -> NativeFunctionToken(29) -> DynamicArrayFindToken(18) -> LocalVariableToken(9) -> NoObjectToken(1) -> IntConstToken(5) -> EndFunctionParmsToken(1) -> NativeFunctionToken(9) -> StringConstToken(6) -> NoParmToken(1) -> EndFunctionParmsToken(1)
-			//	I = T.Find(noneif(T.Find(none-1 == ))
 			public class DynamicArrayFindToken : DynamicArrayMethodToken
 			{
 				public override void Deserialize()
