@@ -16,11 +16,13 @@ namespace UELib.Core
 			UMetaData.UMetaTag tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
 			if( tag != null )
 			{
-				string comment = "/** ";
+				string comment = UDecompiler.Tabs + "/** ";
 				// Multiline comment?
 				if( tag.TagValue.IndexOf( '\n' ) != -1 )
 				{
-					comment += " \r\n *" + tag.TagValue.Replace( "\n", "\n *" ) + "\r\n";
+					comment += " \r\n" + UDecompiler.Tabs + " *" 
+						+ tag.TagValue.Replace( "\n", "\n" + UDecompiler.Tabs + " *" ) 
+						+ "\r\n" + UDecompiler.Tabs;
 				}
 				else
 				{
@@ -33,9 +35,8 @@ namespace UELib.Core
 
 		public override string Decompile()
 		{
-			string decompiledmeta = DecompileMeta();
-
-			return FormatFlags() + GetFriendlyType() + " " + Name + (_IsArray ? "[" + ArrayDim + "]" : String.Empty) + decompiledmeta;
+			return FormatFlags() + GetFriendlyType() + " " + Name + (_IsArray ? "[" + ArrayDim + "]" : String.Empty) 
+				+ DecompileMeta();
 		}
 
 		private string FormatAccess()
@@ -105,6 +106,11 @@ namespace UELib.Core
 				copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Component;
 			}
 
+			if( Package.Version > 300 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Init) != 0 )
+			{
+				output += "init ";
+			}
+
 			/** Flags that are valid as parameters only */
 			if( Outer is UFunction && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Parm) != 0 )
 			{
@@ -116,11 +122,6 @@ namespace UELib.Core
 					{
 						output += "const ";
 						copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Const;
-					}
-
-					if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Init) != 0 )
-					{
-						output += "init ";
 					}
 				}
 

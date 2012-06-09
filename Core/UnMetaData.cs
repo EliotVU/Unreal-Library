@@ -60,6 +60,12 @@ namespace UELib.Core
 					tags.Remove( OItag );
 				}
 
+				OItag = GetMetaTag( "ToolTip" );
+				if( OItag != null )
+				{
+					tags.Remove( OItag );
+				}
+
 				/*OItag = GetMetaTag( "ToolTip" );
 				if( OItag != null )
 				{
