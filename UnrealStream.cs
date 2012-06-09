@@ -392,7 +392,7 @@ namespace UELib
 				uint sig = BitConverter.ToUInt32( bytes, 0 );
 				if( sig == UnrealPackage.Signature_BigEndian )
 				{
-					Console.WriteLine( "\t\tEncoding:BigEndian" );
+					Console.WriteLine( "Encoding:BigEndian" );
 					_BigEndianCode = true;
 				}
 

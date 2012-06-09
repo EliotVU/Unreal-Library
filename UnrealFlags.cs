@@ -8,14 +8,14 @@
  * 		---editfixedsize(UE3+)
  * 		---databinding(UE3+)
  * 		---duplicatetransient(UE3+)
- * 		edithide(UE3+)
+ * 		---edithide(UE3+)
  * 		---edfindable
  * 		---edittextbox(UE3+)
  * 		---interp(UE3+)
  * 		---noclear(UE3+)
  * 		---noimport(UE3+)
  * 		---nontransactional(UE3+)
- * 		init(UE3)
+ * 		---init(UE3)
  * 		---repnotify(UE3)
  * 		---crosslevelpassive(UE3+)
  * 		---protectedwrite(UE3+)
@@ -38,7 +38,7 @@
  * 		---hidedropdown(UE3)
  * 		---hidedropdown(UE2)
  * 		---dllbind(UE3)
- * 		inherits(UE3)
+ * 		***inherits(UE3)
  * 		---native(...)(UE3)
  * 		---exportstructs(UE2)
  * 		---instanced
@@ -60,7 +60,7 @@
  *		---dllimport(UE3+)
  *		---server(UE3)
  *		---client(UE3)
- *		noexportheader(UE3*)
+ *		***noexportheader(UE3*)
  *
  */
 using System;
@@ -82,6 +82,10 @@ namespace UELib.Flags
 	[Flags]
 	public enum PackageFlags : uint
 	{
+		// 028A0009 : A cooked and compressed package
+		// 00280009 : A cooked package
+		// 00020001 : A ordinary package
+
 		/// <summary>
 		/// Whether clients are allowed to download the package from the server.
 		/// </summary>
@@ -139,14 +143,15 @@ namespace UELib.Flags
 		/// The package was build with -Debug
 		/// </summary>
 		Debug				= 0x00400000U,
+		Imports			    = 0x00800000U,
 
 		Compressed			= 0x02000000U,
-		ConsoleCooked		= 0x04000000U,
+		FullyCompressed		= 0x04000000U,
 
 		/// <summary>
 		/// Whether package has metadata exported(anything related to the editor).
 		/// </summary>
-		MetaData 			= 0x20000000U,
+		NoExportsData 		= 0x20000000U,
 
 		/// <summary>
 		/// Package's source is stripped.

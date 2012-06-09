@@ -67,74 +67,25 @@ namespace UELib
 		#endregion
 
 		#region Serialized Members
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1008:EnumsShouldHaveZeroValue" )]
-		public enum GameVersions : ushort
-		{
-			/// <summary>
-			/// 1999
-			/// </summary>
-			Unreal1 = (ushort)69U,
-
-			/// <summary>
-			/// 2004
-			/// </summary>
-			ThiefDeadlyShadows = (ushort)95U,
-
-			/// <summary>
-			/// 2002
-			/// </summary>
-			Unreal2 = (ushort)110U,
-
-			/// <summary>
-			/// 2004
-			/// </summary>
-			UT2K4 = (ushort)128U,
-
-			/// <summary>
-			/// 2006
-			/// </summary>
-			Roboblitz = (ushort)369U,
-
-			/// <summary>
-			/// 2006
-			/// </summary>
-			GoW = (ushort)490U,
-
-			/// <summary>
-			/// 2007
-			/// </summary>
-			UT3 = (ushort)512U,
-
-			/// <summary>
-			/// 2008
-			/// </summary>
-			MirrorsEdge = (ushort)536U,
-
-			/// <summary>
-			/// 2009
-			/// </summary>
-			Borderlands = (ushort)584U,
-
-			// UDK 2009 - 2011
-			UDK_11_2009 = (ushort)648U,
-			UDK_12_2009 = (ushort)678U,
-			UDK_01_2010 = (ushort)600U,
-			UDK_02_2010 = (ushort)600U,
-			UDK_03_2010 = (ushort)600U,
-			UDK_04_2010 = (ushort)600U,
-			UDK_05_2010 = (ushort)706U,
-			UDK_06_2010 = (ushort)727U,
-			UDK_07_2010 = (ushort)737U,
-			UDK_08_2010 = (ushort)756U,
-			UDK_09_2010 = (ushort)765U,
-			UDK_10_2010 = (ushort)776U,
-			UDK_11_2010 = (ushort)799U,
-			UDK_12_2010 = (ushort)803U,
-			UDK_01_2011 = (ushort)805U,
-			UDK_02_2011 = (ushort)810U,
-			UDK_04_2011 = (ushort)813U,
-			UDK_06_2011 = (ushort)832U,
-		}
+		// UDK 2009 - 2011
+		//UDK_11_2009 = (ushort)648U,
+		//UDK_12_2009 = (ushort)678U,
+		//UDK_01_2010 = (ushort)600U,
+		//UDK_02_2010 = (ushort)600U,
+		//UDK_03_2010 = (ushort)600U,
+		//UDK_04_2010 = (ushort)600U,
+		//UDK_05_2010 = (ushort)706U,
+		//UDK_06_2010 = (ushort)727U,
+		//UDK_07_2010 = (ushort)737U,
+		//UDK_08_2010 = (ushort)756U,
+		//UDK_09_2010 = (ushort)765U,
+		//UDK_10_2010 = (ushort)776U,
+		//UDK_11_2010 = (ushort)799U,
+		//UDK_12_2010 = (ushort)803U,
+		//UDK_01_2011 = (ushort)805U,
+		//UDK_02_2011 = (ushort)810U,
+		//UDK_04_2011 = (ushort)813U,
+		//UDK_06_2011 = (ushort)832U,
 
 		private uint _Version = 0;
 		public uint Version
@@ -235,10 +186,16 @@ namespace UELib
 				set;
 			}
 
-			public bool IsConsoleCooked;
+			public bool IsConsoleCompressed;
+			public bool IsXenonCompressed;
 
 			public GameBuild( uint version, uint licenseeVersion )
 			{
+				if( UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console )
+				{
+					IsConsoleCompressed = true;
+				}
+
 				if( version == 547 && licenseeVersion >= 28 && licenseeVersion <= 32 )
 				{
 					GameID = ID.APB;
@@ -270,21 +227,21 @@ namespace UELib
 				else if( version == 575 )
 				{
 					GameID = ID.GoW2;
+					IsConsoleCompressed = false;
+					IsXenonCompressed = true;
 				}
 				else if( version == 828 )
 				{
 					GameID = ID.GoW3;
-					IsConsoleCooked = true;
 				}
 				else if( version == 842 && licenseeVersion == 1 )
 				{
 					GameID = ID.InfinityBlade2;
-					IsConsoleCooked = true;
+					IsConsoleCompressed = true;	// FIXME, should be detectable without this.
 				}
 				else if( version == 742 && licenseeVersion == 29 )
 				{
 					GameID = ID.BulletStorm;
-					IsConsoleCooked = true;
 				}
 				else if( version == 584 && licenseeVersion == 126 )
 				{
@@ -308,12 +265,12 @@ namespace UELib
 				}
 			}
 
-			public static bool operator ==(GameBuild b, ID i)
+			public static bool operator ==( GameBuild b, ID i )
 			{
 				return b.GameID == i;
 			}
 
-			public static bool operator !=(GameBuild b, ID i)
+			public static bool operator !=( GameBuild b, ID i )
 			{
 				return b.GameID != i;
 			}
@@ -552,6 +509,8 @@ namespace UELib
 			Stream = stream;
 		}
 
+		public bool IsBigEndian = false;
+
 		/// <summary>
 		/// Load a package and return it with all the basic data that can be found in every unreal package.
 		/// </summary>
@@ -567,6 +526,7 @@ namespace UELib
 
 			// File Type
 			// Signature is tested in UPackageStream
+			pkg.IsBigEndian = stream._BigEndianCode;
 
 			// Read as one variable due Big Endian Encoding.
 			pkg.Version = stream.ReadUInt32();
@@ -626,7 +586,7 @@ namespace UELib
 
 
 				pkg.GUID = stream.ReadGuid();
-				Console.WriteLine( "\tGUID:" + pkg.GUID );
+				Console.Write( "\r\n\tGUID:" + pkg.GUID + "\r\n" );
 
 				int generationCount = stream.ReadInt32();
 				#if APB
@@ -1100,22 +1060,6 @@ namespace UELib
 		/// <returns>The found UELib.Core.UObject if any.</returns>
 		public UObject GetIndexObject( int objectIndex )
 		{
-			// Performance tests
-
-			//return _ObjectsList[index < 0 ? (_ObjectsList.Count - 1) + (index - 1) : index > 0 ? (index - 1) : 0];
-			//UnrealTable UT = GetIndexTable( index );
-			//return (UT != null ? UT.Object : null);
-
-			/*if( index > 0 )
-			{
-				return _ObjectsList[index - 1];
-			}
-			else if( index < 0 )
-			{
-				return _ImportTableList[-index - 1].Object;
-			}
-			else return null;*/
-
 			return (objectIndex < 0 ? _ImportTableList[-objectIndex - 1].Object 
 						: (objectIndex > 0 ? _ExportTableList[objectIndex - 1].Object 
 						: null));
@@ -1202,9 +1146,10 @@ namespace UELib
 			return HasPackageFlag( Flags.PackageFlags.Cooked ) && Version >= VCookedPackages;
 		}
 
+		// TODO: Corrigate conditions.
 		public bool IsConsoleCooked()
 		{
-			return IsCooked() && HasPackageFlag( Flags.PackageFlags.MetaData ) && Build.IsConsoleCooked;
+			return IsCooked() && (IsBigEndian || Build.IsConsoleCompressed) && !Build.IsXenonCompressed;
 		}
 
 		public bool IsMap()
