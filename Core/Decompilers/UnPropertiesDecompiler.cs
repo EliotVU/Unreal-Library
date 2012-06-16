@@ -172,7 +172,7 @@ namespace UELib.Core
 				output += FormatAccess();
 
 				// UE3 flags
-				if( Package.Version > 128 )
+				if( Package.Version > 129 )
 				{
 					if( HasPropertyFlag( Flags.PropertyFlagsHO.PrivateWrite ) )
 					{
@@ -252,6 +252,12 @@ namespace UELib.Core
 					{
 						output += "crosslevelpassive ";
 						copyFlags &= ~(ulong)Flags.PropertyFlagsHO.CrossLevelPassive << 32;
+					}
+
+					if( HasPropertyFlag( Flags.PropertyFlagsHO.CrossLevelActive ) )
+					{
+						output += "crosslevelactive ";
+						copyFlags &= ~(ulong)Flags.PropertyFlagsHO.CrossLevelActive << 32;
 					}
 
 					if( HasPropertyFlag( Flags.PropertyFlagsHO.Archetype ) )

@@ -181,12 +181,14 @@
 		DynArrayInsertItem		= 0x58,	
 		DynArrayIterator		= 0x59,
 		DynArraySort			= 0x5A,
+		FilterEditorOnly		= 0x5B,
 		#endregion
 		#endregion
 
 		// Natives.
 		ExtendedNative			= 0x60,
 		FirstNative				= 0x70,
+		//S						= 0xF80,
 		//0x80
 	}
 

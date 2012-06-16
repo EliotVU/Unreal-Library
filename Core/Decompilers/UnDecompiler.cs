@@ -83,21 +83,7 @@ namespace UELib.Core
 			/// </summary>
 			public uint CodePosition
 			{
-				get
-				{ 
-					/*if( _Buffer.Version >= 220 )
-					{
-						if( _Buffer.Version > 540 )
-						{
-							return (uint)_Buffer.Position;
-						}
-						else
-						{
-							return (uint)_Buffer.Position - (uint)Owner._ScriptOffset;
-						}
-					}*/
-					return _CodePosition; 
-				}
+				get{ return _CodePosition; }
 			}
 
 			/// <summary>
@@ -458,6 +444,11 @@ namespace UELib.Core
 					case (byte)ExprToken.IteratorPop: 
 						tokenItem = new IteratorPopToken();
 						break;
+#if DEBUG
+					case (byte)ExprToken.FilterEditorOnly:
+						tokenItem = new FilterEditorOnlyToken();
+						break;
+#endif
 					#endregion
 
 					#region Variables
@@ -2061,7 +2052,7 @@ namespace UELib.Core
 						Buffer.ReadObjectIndex();	
 						Decompiler.AddObjectIndexCodeSize();
 
-						if( Buffer.Version > 521/*MOHA*/ )
+						if( Buffer.Version > 421/*MOHA*/ )
 						{
 							// SkipSize?
 							Buffer.ReadUShort();
@@ -2157,11 +2148,7 @@ namespace UELib.Core
 				{
 					#region CaseToken Support
 					// HACK: for case's that end with a return instead of a break.
-					if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
-					{
-						Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position + Size );
-					}
-					else if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+					if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
 					{
 						Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
 						Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
@@ -2432,6 +2419,16 @@ namespace UELib.Core
 						Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.If, CodeOffset );
 					}
 					return output;
+				}
+			}
+
+			public class FilterEditorOnlyToken : JumpToken
+			{
+				public override string Decompile()
+				{
+					Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.If, Position );
+					Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.If, CodeOffset );
+					return "filtereditoronly";
 				}
 			}
 

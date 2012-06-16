@@ -440,7 +440,11 @@ namespace UELib.Flags
 		Archetype			= 0x00000100U,	
 		EditHide			= 0x00000200U,
 		EditTextBox			= 0x00000400U,
+		// GAP!
 		CrossLevelPassive	= 0x00001000U,
+		CrossLevelActive	= 0x00002000U,
+
+		// Possible flags: CrossLevel, AllowAbstract
 	}
 		   
 	/// <summary>
@@ -508,6 +512,7 @@ namespace UELib.Flags
 		Deprecated			= 0x01000000U,		// @Redefined Don't save objects of this class when serializing
 		HideDropDown2		= 0x02000000U,		
 		Exported			= 0x04000000U,		
+		NativeOnly			= 0x20000000U,
   		#endregion
 
 		#region Combinations

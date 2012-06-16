@@ -251,6 +251,11 @@ namespace UELib.Core
 				}
 			}
 
+			if( HasClassFlag( Flags.ClassFlags.NativeOnly ) )
+			{
+				output += "\r\n\tnatveonly";
+			}
+
 			if( HasClassFlag( Flags.ClassFlags.NativeReplication ) )
 			{
 				output += "\r\n\tnativereplication";
