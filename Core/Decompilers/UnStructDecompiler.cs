@@ -41,7 +41,7 @@ namespace UELib.Core
 			{
 				content = content.TrimEnd( '\r', '\n' );
 			}
-			return content + UnrealConfig.PrintEndBracket();
+			return content + UnrealConfig.PrintEndBracket() + ";";
 		}
 
 		protected override string FormatHeader()
