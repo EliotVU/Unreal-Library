@@ -178,6 +178,7 @@ namespace UELib
 				InfinityBlade2,
 				BulletStorm,
 				MirrorsEdge,		// Has custom support!
+				Homefront,
 			}
 
 			public ID GameID
@@ -255,6 +256,10 @@ namespace UELib
 				{
 					GameID = ID.UT3;
 				}
+				else if( version == 576 && licenseeVersion == 100 )
+				{
+					GameID = ID.Homefront;
+				}
 				else if( licenseeVersion == 0 )
 				{
 					GameID = ID.Default;
@@ -273,6 +278,16 @@ namespace UELib
 			public static bool operator !=( GameBuild b, ID i )
 			{
 				return b.GameID != i;
+			}
+
+			public override bool Equals( object obj )
+			{
+				return this.GameID == (ID)obj;
+			}
+
+			public override int GetHashCode()
+			{
+				return (int)GameID;
 			}
 		}
 
@@ -488,6 +503,7 @@ namespace UELib
 		/// A Collection of flags describing how a package should be initialized.
 		/// </summary>
 		[Flags]
+		[System.Reflection.ObfuscationAttribute(Exclude = true)]
 		public enum InitFlags : ushort
 		{
 			Construct		=	0x0001,

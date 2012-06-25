@@ -91,10 +91,6 @@ namespace UELib.Core
 
 				// ParmsSize, iNative, NumParms, OperPrecedence, ReturnValueOffset, FunctionFlags
 			}
-			else
-			{
-				
-			}
 
 			FunctionFlags = _Buffer.ReadUInt32();
 			NoteRead( "FunctionFlags", FunctionFlags );

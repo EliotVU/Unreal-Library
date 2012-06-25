@@ -46,6 +46,10 @@ namespace UELib
 		public void Deserialize( IUnrealStream stream )
 		{
 			Name = stream.ReadName();
+			if( Name.IndexOf( "\\" ) != -1 )
+			{
+				Name = Name.Replace( "\0", "N_" + TableIndex );
+			}
 			Flags = stream.UR.ReadQWORDFlags();
 						
 			// De-obfuscate names that contain unprintable characters!

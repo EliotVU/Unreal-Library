@@ -207,20 +207,23 @@ namespace UELib.Core
 				NoteRead( "TextPos", TextPos );
 			}
 
-			// HINT: This code is terrible!
-			// TODO: Corrigate Version
-			if( !IsPureStruct() && 
-				(_Buffer.Version >= 639 || (!(this is UFunction) && GetType() != typeof(UState))) 
-			)
+			var scriptSkipSize = 0;
+			// ScriptSize
+			_ScriptSize = _Buffer.ReadUInt32();
+			NoteRead( "_ScriptSize", _ScriptSize );
+			
+			if( _Buffer.Version >= 639 )   // 639
 			{
 				// ScriptSize
 				_MinAlignment = _Buffer.ReadInt32();
 				NoteRead( "_MinAlignment", _MinAlignment );
-			}
 
-			// ScriptSize
-			_ScriptSize = _Buffer.ReadUInt32();
-			NoteRead( "_ScriptSize", _ScriptSize );
+				scriptSkipSize = _MinAlignment;
+			}
+			else 
+			{
+				scriptSkipSize = (int)_ScriptSize;
+			}
 			_ScriptOffset = _Buffer.Position;
 
 			// Code Statements
@@ -230,7 +233,7 @@ namespace UELib.Core
 				// ScriptSize is not a true size in UT2004 and below and MoonBase's version (587)
 				if( _Buffer.Version >= UnrealPackage.VIndexDeprecated && _Buffer.Version != 587 )	// 587(MoonBase)
 				{
-					_Buffer.Skip( (int)_ScriptSize );
+					_Buffer.Skip( scriptSkipSize );
 				}
 				else // ScriptSize is unaccurate due index sizes
 				{
@@ -242,27 +245,16 @@ namespace UELib.Core
 				_bReleaseBuffer = true; 
 			}
 
-			// StructDefaultProperties
-			// Only since UE3 and should only happen if this is a pure UStruct e.g. not some class that extends UStruct.
-			if( _Buffer.Version <= 154 || !IsPureStruct() ) 
-				return;
-
 			// TODO: Corrigate Version
-			if( _Buffer.Version >= 220 )
+			if( IsPureStruct() && _Buffer.Version >= 220 )
 			{
-				// TODO: Corrigate Version
-				// Definitely not in moonbase(587)
-				if( _Buffer.Version > 587 )
-				{
-					_Buffer.ReadUInt32();
-				}
 				StructFlags = _Buffer.ReadUInt32();
 				NoteRead( "StructFlags", StructFlags );
+
+				_bReleaseBuffer = false;
+				// Introduced somewhere between 129 - 178
+				DeserializeProperties();
 			}
-	
-			_bReleaseBuffer = false;
-			// Introduced somewhere between 129 - 178
-			DeserializeProperties();
 		}
 
 		public override void PostInitialize()

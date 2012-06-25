@@ -288,8 +288,8 @@ namespace UELib
 			{
 				//var index = ReadInt64();	  // BigEndian?
 				var index = ReadInt32();
-				var num = ReadInt32();
-				return (long)index | ((long)num << 32);		
+				var num = ReadUInt32();
+				return (long)((ulong)num << 32) | (uint)index;	
 			}
 			return ReadIndex();
 		}
@@ -564,7 +564,7 @@ namespace UELib
 			var index = _UR.ReadNameIndex();
 			if( Version >= 343 )
 			{
-				num = (int)((ulong)(index) & 0xFFFFFFFF00000000) - 1;
+				num = (int)(((ulong)(index) & 0xFFFFFFFF00000000) >> 32) - 1;
 			}
 
 			num = -1;

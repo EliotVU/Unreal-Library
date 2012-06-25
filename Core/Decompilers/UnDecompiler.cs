@@ -171,10 +171,7 @@ namespace UELib.Core
 				_Deserialized = true;
 				_Buffer.Seek( Owner._ScriptOffset, System.IO.SeekOrigin.Begin );
 				_CodePosition = 0;
-				var codeSize = Owner.Package.Version <= ObjectIndexVirtualSizeVersion 
-					? Owner._ScriptSize 
-					: (uint)Owner._MinAlignment;
-
+				var codeSize = Owner._ScriptSize;
 		
 				_CurToken = -1;
 				_Tokens = new List<Token>();
