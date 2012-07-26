@@ -499,6 +499,11 @@ namespace UELib.Core
 			return Name;
 		}
 
+		public bool ResistsInGroup()
+		{
+			return Outer != null && Outer.GetClassName() == "Package";
+		}
+
 		/// <summary>
 		/// Gets the highest outer relative from the specified @offset.
 		/// </summary>
