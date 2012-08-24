@@ -35,11 +35,6 @@ namespace UELib.Engine
 
 		protected byte[] SoundBuffer;
 
-		public USound()
-		{
-			_bDeserializeOnDemand = true;
-		}
-
 		public bool CompatableExport()
 		{
 			return Package.Version <= 129;
@@ -59,7 +54,6 @@ namespace UELib.Engine
 		{
 			base.Deserialize();
 
-			//var soundFormat = Package.GetIndexName( _Buffer.ReadIndex() );
 			_Buffer.Skip( 9 );
 
 			var soundSize = _Buffer.ReadIndex();
