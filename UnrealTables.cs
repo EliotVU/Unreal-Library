@@ -298,7 +298,7 @@ namespace UELib
 
 						// 000* Guid...
 						Guid = stream.ReadGuid();
-						if( stream.Version >= 475 )
+						if( stream.Version > 486 )	// 475?	 486(> Stargate Worlds)
 						{
 							// Depends?
 							stream.ReadInt32();
