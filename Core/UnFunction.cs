@@ -75,6 +75,14 @@ namespace UELib.Core
 
 		protected override void Deserialize()
 		{
+#if BORDERLANDS2
+			if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+			{
+				var size = _Buffer.ReadUShort();
+				_Buffer.Skip( size * 2 );
+			}
+#endif
+
 			base.Deserialize();
 
 			/*if( Package.Version > 63 )
