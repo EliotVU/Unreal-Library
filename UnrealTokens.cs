@@ -165,6 +165,7 @@
 		// EmptyParmValue
 
 		InstanceDelegate		= 0x4C,
+		UnkToken1				= 0x4E,		// Found in Borderlands 2
 
 		// GAP:					= 0x4C, - 0x52,
 

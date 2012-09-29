@@ -1,4 +1,6 @@
 ﻿//#define SUPPRESS_BOOLINTEXPLOIT
+#define DEBUG_TOKENPOSITIONS
+#define DEBUG_HIDDENTOKENS
 
 using System;
 using System.Collections.Generic;
@@ -648,6 +650,11 @@ namespace UELib.Core
 						{
 							tokenItem = new DynamicArrayFindToken();
 						}
+						break;
+
+					case (byte)0x4F:
+					case (byte)ExprToken.UnkToken1:
+						tokenItem = new UnkToken1Token();
 						break;
 					#endregion
 
@@ -2071,14 +2078,29 @@ namespace UELib.Core
 			}
 			#endregion
 
+			public class UnkToken1Token : Token
+			{
+				protected int Num;
+
+				public override void Deserialize()
+				{
+					Num = Buffer.ReadInt32();		
+				}
+
+				public override string Decompile()
+				{
+					return "UnknownLocal_" + Num;
+				}
+			}
+
 			#region LetTokens
 			public class LetToken : Token
 			{
 				public override void Deserialize()
 				{
 					// A = B
-					DeserializeNext();	   
-					DeserializeNext();	
+					DeserializeNext();	  
+					DeserializeNext();				
 				}
 
 				public override string Decompile()

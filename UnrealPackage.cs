@@ -179,6 +179,8 @@ namespace UELib
 				BulletStorm,
 				MirrorsEdge,		// Has custom support!
 				Homefront,
+				Borderlands,
+				Borderlands2
 			}
 
 			public ID GameID
@@ -259,6 +261,10 @@ namespace UELib
 				else if( version == 576 && licenseeVersion == 100 )
 				{
 					GameID = ID.Homefront;
+				}
+				else if( version == 832 && licenseeVersion >= 46 )
+				{
+					GameID = ID.Borderlands2;
 				}
 				else if( licenseeVersion == 0 )
 				{
