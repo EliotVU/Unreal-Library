@@ -99,7 +99,17 @@ namespace UELib.Core
 
 			_LabelTableOffset = _Buffer.ReadUShort();
 			NoteRead( "_LabelTableOffset", _LabelTableOffset );
+
+#if BORDERLANDS2
+			// FIXME:Temp fix
+			if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+			{
+				StateFlags = _Buffer.ReadUShort();
+				goto skipStateFlags;
+			}
+#endif
 			StateFlags = _Buffer.ReadUInt32();
+			skipStateFlags:
 			NoteRead( "StateFlags", StateFlags );
 
 			if( Package.Version >= 220 )
