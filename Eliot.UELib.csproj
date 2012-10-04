@@ -58,11 +58,46 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE APB</DefineConstants>
+    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
     </DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 DEBUG_TEST APB DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO</DefineConstants>
+    <DocumentationFile>C:\Program Files %28x86%29\UE Explorer\Eliot.UELib.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+    <WarningLevel>0</WarningLevel>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>AnalyzeRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
+    <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
+    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB</DefineConstants>
+    <Optimize>true</Optimize>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MiniLZO">
@@ -163,6 +198,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>if /I "$(ConfigurationName)" == "Release" Eazfuscator.NET.exe "$(TargetPath)" --msbuild-project-path "$(ProjectPath)" --msbuild-project-configuration "$(ConfigurationName)" --msbuild-project-platform "$(PlatformName)" --msbuild-solution-path "$(SolutionPath)" -n --newline-flush -v 3.2</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

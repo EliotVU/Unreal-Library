@@ -1,6 +1,4 @@
 ﻿//#define SUPPRESS_BOOLINTEXPLOIT
-#define DEBUG_TOKENPOSITIONS
-#define DEBUG_HIDDENTOKENS
 
 using System;
 using System.Collections.Generic;
@@ -466,6 +464,13 @@ namespace UELib.Core
 
 					// Referenced variables that are default
 					case (byte)ExprToken.UndefinedVariable:
+						#if BORDERLANDS2
+							if( Owner.Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+							{
+								tokenItem = new DynamicVariableToken();
+								break;
+							}
+						#endif
 						tokenItem = new UndefinedVariableToken();
 						break;
 
@@ -652,9 +657,12 @@ namespace UELib.Core
 						}
 						break;
 
-					case (byte)0x4F:
-					case (byte)ExprToken.UnkToken1:
-						tokenItem = new UnkToken1Token();
+					case (byte)ExprToken.VarInt:
+					case (byte)ExprToken.VarFloat:
+					case (byte)ExprToken.VarByte:
+					case (byte)ExprToken.VarBool:
+					//case (byte)ExprToken.VarObject:	// See UndefinedVariable	
+						tokenItem = new DynamicVariableToken();
 						break;
 					#endregion
 
@@ -1260,9 +1268,9 @@ namespace UELib.Core
 			public string Decompile()
 			{
 				// Make sure that everything is deserialized!
-				if( !_Deserialized )
+				if( !_Deserialized )			   
 				{
-					Deserialize();
+					Deserialize();		
 				}
 
 				string output = String.Empty;
@@ -2078,21 +2086,6 @@ namespace UELib.Core
 			}
 			#endregion
 
-			public class UnkToken1Token : Token
-			{
-				protected int Num;
-
-				public override void Deserialize()
-				{
-					Num = Buffer.ReadInt32();		
-				}
-
-				public override string Decompile()
-				{
-					return "UnknownLocal_" + Num;
-				}
-			}
-
 			#region LetTokens
 			public class LetToken : Token
 			{
@@ -2688,7 +2681,7 @@ namespace UELib.Core
 			#region FieldTokens
 			public class FieldToken : Token
 			{							
-				public int ObjectIndex;
+				protected int ObjectIndex;
 				public UObject Object;
 
 				public override void Deserialize()
@@ -2730,6 +2723,22 @@ namespace UELib.Core
 				public override string Decompile()
 				{
 					return "default." + base.Decompile();
+				}
+			}
+
+			public class DynamicVariableToken : Token
+			{
+				protected int LocalIndex;
+
+				public override void Deserialize()
+				{
+					LocalIndex = Buffer.ReadInt32();	
+					Decompiler.AddCodeSize( sizeof(int) );
+				}
+
+				public override string Decompile()
+				{
+					return "UnknownLocal_" + LocalIndex;
 				}
 			}
 

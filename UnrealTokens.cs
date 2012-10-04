@@ -72,25 +72,25 @@
 		UniStringConst 			= 0x34,		// "UNICODE"
 
 		#region FixedByteCodes
-		// Note:In Unreal Engine 3 all tokens >= 0x35 are one value lower than represented here to remain compatible with older engine generations.
-		// Be aware of CastTokens it applies there as well.
-		// This means that you should increment the read token value, to get it compatible with Unreal Engine 3 bytecode.
-		Unknown					= 0x35,
+			// Note:In Unreal Engine 3 all tokens >= 0x35 are one value lower than represented here to remain compatible with older engine generations.
+			// Be aware of CastTokens it applies there as well.
+			// This means that you should increment the read token value, to get it compatible with Unreal Engine 3 bytecode.
+			Unknown					= 0x35,
 
-		StructMember 			= 0x36,
-		DynArrayLength			= 0x37,		// ARRAY.Length
-		GlobalFunction			= 0x38,		// Global.
+			StructMember 			= 0x36,
+			DynArrayLength			= 0x37,		// ARRAY.Length
+			GlobalFunction			= 0x38,		// Global.
 				
-		/// <summary>
-		/// Redefined(RotatorToVector)
-		/// 
-		/// UE1:RotatorToVector	cast.
-		/// UE2+:Meaning the next bytecode token is the cast version rather than the other meaning.
-		/// </summary>
-		PrimitiveCast 			= 0x39,		// TYPE(EXPRESSION)
+			/// <summary>
+			/// Redefined(RotatorToVector)
+			/// 
+			/// UE1:RotatorToVector	cast.
+			/// UE2+:Meaning the next bytecode token is the cast version rather than the other meaning.
+			/// </summary>
+			PrimitiveCast 			= 0x39,		// TYPE(EXPRESSION)
 
-		// Note:As said before all 0x35 are one value lesser in Unreal Engine 3, however this stops here up to NoDelegate.
-		#endregion
+			// Note:As said before all 0x35 are one value lesser in Unreal Engine 3, however this stops here up to NoDelegate.
+		#endregion	// FixedByteCodes
 		/// <summary>
 		/// Redefined(DynArrayRemove)
 		/// 
@@ -101,90 +101,96 @@
 		ReturnNothing			= 0x3A,		// Redefined, 
 
 		#region UE3ByteCodes
-		DelegateCmpEq			= 0x3B,	
-		DelegateCmpNe			= 0x3C,	
-		DelegateFunctionCmpEq	= 0x3D,		
-		DelegateFunctionCmpNe	= 0x3E,		
-		NoDelegate				= 0x3F,		
+			DelegateCmpEq			= 0x3B,	
+			DelegateCmpNe			= 0x3C,	
+			DelegateFunctionCmpEq	= 0x3D,		
+			DelegateFunctionCmpNe	= 0x3E,		
+			NoDelegate				= 0x3F,		
 
-		#region FixedByteCodes
-		// Note:In UE1, UE2 these values are as what they are set here, but in UE3 they are one number lower!
-		DynArrayInsert			= 0x40,	// Or 0x3F in UE3 (primitive is 0x3E then thus a gap occurrs, see above).
-		DynArrayRemove 			= 0x41, // Or 0x40 in UE3.
-		DebugInfo				= 0x42,	
-		DelegateFunction		= 0x43,
-		DelegateProperty		= 0x44,
-		LetDelegate 			= 0x45,
+			#region FixedByteCodes
+				// Note:In UE1, UE2 these values are as what they are set here, but in UE3 they are one number lower!
+				DynArrayInsert			= 0x40,	// Or 0x3F in UE3 (primitive is 0x3E then thus a gap occurrs, see above).
+				DynArrayRemove 			= 0x41, // Or 0x40 in UE3.
+				DebugInfo				= 0x42,	
+				DelegateFunction		= 0x43,
+				DelegateProperty		= 0x44,
+				LetDelegate 			= 0x45,
 
-		/// <summary>
-		/// An alternative to Else-If statements using A ? B : C;.
-		/// </summary>
-		Conditional				= 0x46,		// CONDITION ? TRUE_LET : FALSE_LET
+				/// <summary>
+				/// An alternative to Else-If statements using A ? B : C;.
+				/// </summary>
+				Conditional				= 0x46,		// CONDITION ? TRUE_LET : FALSE_LET
 
-		/// <summary>
-		/// Find a item within an Array.
-		/// </summary>
-		DynArrayFind			= 0x47,		// ARRAY.Find( EXPRESSION )
+				/// <summary>
+				/// Find a item within an Array.
+				/// </summary>
+				DynArrayFind			= 0x47,		// ARRAY.Find( EXPRESSION )
 
-		/// <summary>
-		/// Redefined(ObjectToBool,DynArrayFind)
-		/// 
-		/// UE1:As a ObjectToBool cast.
-		/// UE2:As a indication of function end(unless preceded by PrimitiveCast then it is treat as a ObjectToBool).
-		/// UE3:See DynArrayFind(See EndOfScript).
-		/// </summary>
-		FunctionEnd				= 0x47,
+				/// <summary>
+				/// Redefined(ObjectToBool,DynArrayFind)
+				/// 
+				/// UE1:As a ObjectToBool cast.
+				/// UE2:As a indication of function end(unless preceded by PrimitiveCast then it is treat as a ObjectToBool).
+				/// UE3:See DynArrayFind(See EndOfScript).
+				/// </summary>
+				FunctionEnd				= 0x47,
 
-		/// <summary>
-		/// Find a item within a struct in an Array.
-		/// </summary>
-		DynArrayFindStruct		= 0x48,		// ARRAY.Find( EXPRESSION, EXPRESSION )
+				/// <summary>
+				/// Find a item within a struct in an Array.
+				/// </summary>
+				DynArrayFindStruct		= 0x48,		// ARRAY.Find( EXPRESSION, EXPRESSION )
 
-		/// <summary>
-		/// In some Unreal Engine 2 games, see Conditional for Unreal Engine 3.
-		/// 
-		/// An alternative to Else-If statements using A ? B : C;.
-		/// </summary>
-		Eval					= 0x48,		// See Conditional
+				/// <summary>
+				/// In some Unreal Engine 2 games, see Conditional for Unreal Engine 3.
+				/// 
+				/// An alternative to Else-If statements using A ? B : C;.
+				/// </summary>
+				Eval					= 0x48,		// See Conditional
 
-		/// <summary>
-		/// Reference to a property with the Out modifier.
-		/// </summary>
-		OutVariable				= 0x49,
+				/// <summary>
+				/// Reference to a property with the Out modifier.
+				/// </summary>
+				OutVariable				= 0x49,
 	
-		/// <summary>
-		/// Default value of a parameter property.
-		/// </summary>
-		DefaultParmValue		= 0x4A,		// PARAMETER = EXPRESSION
+				/// <summary>
+				/// Default value of a parameter property.
+				/// </summary>
+				DefaultParmValue		= 0x4A,		// PARAMETER = EXPRESSION
 
-		/// <summary>
-		///	No parameter value was given e.g: Foo( Foo,, Foo ); 
-		/// </summary>
-		NoParm					= 0x4B,		// ,...,
+				/// <summary>
+				///	No parameter value was given e.g: Foo( Foo,, Foo ); 
+				/// </summary>
+				NoParm					= 0x4B,		// ,...,
 
-		// EmptyParmValue
+				// EmptyParmValue
 
-		InstanceDelegate		= 0x4C,
-		UnkToken1				= 0x4E,		// Found in Borderlands 2
+				InstanceDelegate		= 0x4C,
 
-		// GAP:					= 0x4C, - 0x52,
+				#region CustomTokens
+					VarInt					= 0x4D,		// Found in Borderlands 2
+					VarFloat				= 0x4E,		// Found in Borderlands 2
+					VarByte					= 0x4F,		// Found in Borderlands 2
+					VarBool					= 0x50,		// Found in Borderlands 2
+					VarObject				= 0x51,		// Found in Borderlands 2
 
-		StringRef				= 0x50,	// Or 0x4F in UE3.
-		UndefinedVariable		= 0x51,	// Only found in GoW so far!
-		InterfaceContext		= 0x52,
-		InterfaceCast			= 0x53,
+					StringRef				= 0x50,		// Found in Mirrors Edge
+					UndefinedVariable		= 0x51,		// Found in Gears of War
+				#endregion	// CustomTokens
 
-		EndOfScript				= 0x54,
+				InterfaceContext		= 0x52,
+				InterfaceCast			= 0x53,
 
-		DynArrayAdd				= 0x55,
-		DynArrayAddItem			= 0x56,
-		DynArrayRemoveItem		= 0x57,
-		DynArrayInsertItem		= 0x58,	
-		DynArrayIterator		= 0x59,
-		DynArraySort			= 0x5A,
-		FilterEditorOnly		= 0x5B,
-		#endregion
-		#endregion
+				EndOfScript				= 0x54,
+
+				DynArrayAdd				= 0x55,
+				DynArrayAddItem			= 0x56,
+				DynArrayRemoveItem		= 0x57,
+				DynArrayInsertItem		= 0x58,	
+				DynArrayIterator		= 0x59,
+				DynArraySort			= 0x5A,
+				FilterEditorOnly		= 0x5B,
+			#endregion	// FixedByteCodes
+		#endregion	// UE3ByteCodes
 
 		// Natives.
 		ExtendedNative			= 0x60,
@@ -202,8 +208,8 @@
 	public enum CastToken : byte
 	{
 		#region UE3ByteCodes
-		InterfaceToBool			= 0x36,
-		InterfaceToString		= 0x37,		// ???
+			InterfaceToBool			= 0x36,
+			InterfaceToString		= 0x37,		// ???
 		#endregion
 
 		RotatorToVector 		= 0x39,		// Redefined
