@@ -214,33 +214,39 @@ namespace UELib.Core
 			public NativeFunctionToken FindNT( int nativeIndex )
 			{
 				var t = new NativeFunctionToken();
-				var nt = Owner.Package.NTLPackage != null ? Owner.Package.NTLPackage.FindTable( nativeIndex ) : null;
-				if( nt != null )
+				try
 				{
-					t.NativeTable = nt;
-				}
-				else
-				{
-					var table = Owner.Package.ExportTableList.Find( 
-						e => (e.ClassName == "Function" && ((UFunction)(e.Object)).iNative == nativeIndex) 
-					);
-
-					UFunction f = null;
-					if( table != null )
+					var nt = Owner.Package.NTLPackage != null ? Owner.Package.NTLPackage.FindTable( nativeIndex ) : null;
+					if( nt != null )
 					{
-						f = table.Object as UFunction;
-					}
-
-					if( f != null )
-					{
-						nt = new NativeTable();
-						nt.SetFormat( f );
- 						nt.OperPrecedence = f.OperPrecedence;
-						nt.Name = nt.Format == (byte)NativeType.Function ? f.Name : f.FriendlyName;
-
-						nt.ByteToken = nativeIndex;
 						t.NativeTable = nt;
 					}
+					else
+					{
+						var table = Owner.Package.ExportTableList.Find( 
+							e => (e.ClassName == "Function" && ((UFunction)(e.Object)).iNative == nativeIndex) 
+						);
+
+						UFunction f = null;
+						if( table != null )
+						{
+							f = table.Object as UFunction;
+							if( f != null )
+							{
+								nt = new NativeTable();
+								nt.SetFormat( f );
+ 								nt.OperPrecedence = f.OperPrecedence;
+								nt.Name = nt.Format == (byte)NativeType.Function ? f.Name : f.FriendlyName;
+
+								nt.ByteToken = nativeIndex;
+								t.NativeTable = nt;
+							}
+						}
+					}
+				}
+				catch( ArgumentOutOfRangeException )
+				{
+					// ...
 				}
 				return t;
 			}
@@ -649,7 +655,7 @@ namespace UELib.Core
 					case (byte)ExprToken.FunctionEnd: // case (byte)ExprToken.DynArrayFind:
 						if( _Buffer.Version < 300 )
 						{
-							tokenItem = new FunctionEndToken();
+							tokenItem = new EndOfScriptToken();
 						}
 						else
 						{
@@ -1568,7 +1574,7 @@ namespace UELib.Core
 			#endregion
 
 			#region Tokens
-			public class Token : IUnrealDecompileable
+			public abstract class Token : IUnrealDecompileable
 			{
 				public UByteCodeDecompiler Decompiler;
 
@@ -1894,7 +1900,6 @@ namespace UELib.Core
 				}
 			}
 
-			// TODO: Test on UDK
 			public class DelegateFunctionToken : FunctionToken
 			{
 				public int FunctionNameIndex;
@@ -1904,12 +1909,15 @@ namespace UELib.Core
 					// TODO: Corrigate Version
 					if( Buffer.Version > 180 )
 					{
-						bool bLocalProp = Buffer.UR.ReadBoolean();
-						Decompiler.AddCodeSize( sizeof(bool) );
+						++ Buffer.Position;	// ReadByte()
+						Decompiler.AddCodeSize( sizeof(byte) );
 					}
-					int delegateIndex = Buffer.ReadObjectIndex();
-					Decompiler.AddObjectIndexCodeSize();	 
 
+					// Delegate object index
+					Buffer.ReadObjectIndex();
+					Decompiler.AddObjectIndexCodeSize();	
+ 
+					// Delegate name index
 					FunctionNameIndex = Buffer.ReadNameIndex();
 					Decompiler.AddNameIndexCodeSize();
 
@@ -2042,46 +2050,52 @@ namespace UELib.Core
 				}
 			}
 
-			// Not related at all with BoolVariable but it uses the exact same structure.
-			public class InterfaceContextToken : BoolVariableToken
+			public class InterfaceContextToken : Token
 			{
-			}
-
-			public class StructMemberToken : Token
-			{
-				public int FieldIndex;
-
 				public override void Deserialize()
 				{
-					// ?.B
-					FieldIndex = Buffer.ReadObjectIndex();
-					Decompiler.AddObjectIndexCodeSize();
-
-					// TODO: Corrigate Version
-					if( Buffer.Version > 369/*Roboblitz*/ )
-					{
-						// StructIndex?
-						Buffer.ReadObjectIndex();	
-						Decompiler.AddObjectIndexCodeSize();
-
-						if( Buffer.Version > 421/*MOHA*/ )
-						{
-							// SkipSize?
-							Buffer.ReadUShort();
-							Decompiler.AddCodeSize( sizeof( short ) );
-						}
-						else
-						{
-							Buffer.ReadByte();
-							Decompiler.AddCodeSize( sizeof( byte ) );
-						}
-					}
 					DeserializeNext();
 				}
 
 				public override string Decompile()
 				{
-					return DecompileNext() + "." + Decompiler.Owner.Package.GetIndexObjectName( FieldIndex );
+					return DecompileNext();
+				}
+			}
+
+			public class StructMemberToken : Token
+			{
+				public UField MemberProperty;
+
+				public override void Deserialize()
+				{
+					// Property index
+					MemberProperty = Decompiler.Owner.TryGetIndexObject( Buffer.ReadObjectIndex() ) as UField;
+					Decompiler.AddObjectIndexCodeSize();
+
+					// TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
+					if( Buffer.Version > 369 )
+					{
+						// Struct index
+						Buffer.ReadObjectIndex();	
+						Decompiler.AddObjectIndexCodeSize();
+
+						Buffer.Position ++;
+						Decompiler.AddCodeSize( sizeof(byte) );
+						// TODO: Corrigate version. Definitely didn't exist in MOHA(421)
+						if( Buffer.Version > 421 )
+						{
+							Buffer.Position ++;
+							Decompiler.AddCodeSize( sizeof(byte) );
+						}
+					}
+					// Pre-Context
+					DeserializeNext();
+				}
+
+				public override string Decompile()
+				{
+					return DecompileNext() + "." + MemberProperty.Name;
 				}
 			}
 			#endregion
@@ -2153,6 +2167,7 @@ namespace UELib.Core
 			{
 				public override void Deserialize()
 				{
+					// Expression
 					DeserializeNext();	
 				}
 
@@ -2175,14 +2190,14 @@ namespace UELib.Core
 
 			public class ReturnNothingToken : Token
 			{
-				public int ReturnObjectIndex = -1;
+				public UObject ReturnObject;
 
 				public override void Deserialize()
 				{
-					// TODO: Corrigate Version
+					// TODO: Corrigate version.
 					if( Buffer.Version > 300 )
 					{
-						ReturnObjectIndex = Buffer.ReadObjectIndex();
+						ReturnObject = Decompiler.Owner.TryGetIndexObject( Buffer.ReadObjectIndex() );
 						Decompiler.AddObjectIndexCodeSize();
 					}
 				}
@@ -2203,7 +2218,7 @@ namespace UELib.Core
 					#endregion
 
 					Decompiler.AddSemicolon = true;	
-					return ReturnObjectIndex > -1 ? Decompiler.Owner.Package.GetIndexObjectName( ReturnObjectIndex ) : String.Empty;
+					return ReturnObject != null ? ReturnObject.Name : String.Empty;
 				}
 			}
 
@@ -2211,6 +2226,7 @@ namespace UELib.Core
 			{
 				public override void Deserialize()
 				{
+					// Expression
 					DeserializeNext();	
 				}
 
@@ -2334,7 +2350,7 @@ namespace UELib.Core
 								// Else, Req:In If nest, nestends > 0, curendnest position == Position
 								if( nestEnd.Position - Size == Position )
 								{
-									// HACK: This should be handled by Decompile()
+									// HACK: This should be handled by UByteCodeDecompiler.Decompile()
 									UDecompiler.RemoveTabs( 1 );
 									Decompiler._NestChain.RemoveAt( Decompiler._NestChain.Count - 1 );
 									Decompiler._Nester.Nests.Remove( nestEnd );
@@ -2344,7 +2360,7 @@ namespace UELib.Core
 
 									ClearLabel();
 
-									// HACK: This should be handled by Decompile()
+									// HACK: This should be handled by UByteCodeDecompiler.Decompile()
 									return "}" + "\r\n" + 
 										(UnrealConfig.SuppressComments 
 										? UDecompiler.Tabs + "else" 
@@ -2408,7 +2424,11 @@ namespace UELib.Core
 						}
 					}
 
-					Decompiler.PreComment = String.Format( "// End:0x{0:x2} Loop:{1}", CodeOffset, IsLoop );
+					Decompiler.PreComment = String.Format( "// End:0x{0:x2}", CodeOffset );
+					if( IsLoop )
+					{
+						Decompiler.PreComment += " [While If]";
+					}
 
 					string output = /*(IsLoop ? "while" : "if") +*/ "if(" + condition + ")";
 
@@ -2447,15 +2467,11 @@ namespace UELib.Core
 			public class SwitchToken : Token
 			{
 				public int ObjectIndex;
-				public ushort BlockSize;
-
-				// TODO: Corrigate Version
-				// Greater Than
-				public const ushort ObjectIndexVersion = 600; // MoonBase? 
+				public ushort PropertyType;
 
 				public override void Deserialize()
 				{
-					if( Buffer.Version >= ObjectIndexVersion )
+					if( Buffer.Version >= 600 )
 					{
 						// Points to the object that was passed to the switch, 
 						// beware that the followed token chain contains it as well!
@@ -2466,12 +2482,12 @@ namespace UELib.Core
 					// TODO: Corrigate version
 					if( Buffer.Version >= 536 && Buffer.Version <= 587 )
 					{
-						BlockSize = Buffer.ReadUShort();	// Size
+						PropertyType = Buffer.ReadUShort();
 						Decompiler.AddCodeSize( sizeof(ushort) );
 					}
 					else
 					{
-						BlockSize = Buffer.ReadByte();	// Size
+						PropertyType = Buffer.ReadByte();
 						Decompiler.AddCodeSize( sizeof(byte) );
 					}
 
@@ -2504,18 +2520,10 @@ namespace UELib.Core
 				public override string Decompile()
 				{
 					Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Switch, Position );
-					// Ends at: JumpToken -> Decompile()
 
-					// TODO: Corrigate Version
-					if( Buffer.Version >= ObjectIndexVersion )
-					{
-						Decompiler.PreComment = "// ObjectIndex:" + ObjectIndex + " BlockSize:" + BlockSize;
-					}
-					else Decompiler.PreComment = "// BlockSize:" + BlockSize;
-
-					string output = "switch(" + DecompileNext() + ")";
+					string expr = DecompileNext();
 					Decompiler.AddSemicolon = false;	// In case the decompiled token was a function call
-					return output;
+					return "switch(" + expr + ")";
 				}
 			}
 
@@ -2524,16 +2532,10 @@ namespace UELib.Core
 				public override void Deserialize()
 				{
 					base.Deserialize();
-
 					if( CodeOffset != UInt16.MaxValue )
 					{
-						// Condition
-						DeserializeNext();
-
-						// Return
-					}
-
-					// Default
+						DeserializeNext();	// Condition
+					}	// Else "Default:"
 				}
 
 				// HACK: To avoid from decrementing tabs more than once, 
@@ -2585,9 +2587,7 @@ namespace UELib.Core
 			{
 				public override void Deserialize()
 				{
-					// Expression
-					DeserializeNext();
-
+					DeserializeNext();	// Expression
 					base.Deserialize();
 				}
 
@@ -2679,21 +2679,19 @@ namespace UELib.Core
 			#endregion
 
 			#region FieldTokens
-			public class FieldToken : Token
+			public abstract class FieldToken : Token
 			{							
-				protected int ObjectIndex;
 				public UObject Object;
 
 				public override void Deserialize()
 				{
-					ObjectIndex = Buffer.ReadObjectIndex(); 
-					Decompiler.AddObjectIndexCodeSize();
-					Object = Decompiler.Owner.TryGetIndexObject( ObjectIndex );	
+					Object = Decompiler.Owner.TryGetIndexObject( Buffer.ReadObjectIndex() );
+					Decompiler.AddObjectIndexCodeSize();	
 				}
 
 				public override string Decompile()
 				{
-					return Object != null ? Object.Name : "@NULL(" + ObjectIndex + ")";
+					return Object != null ? Object.Name : "@NULL";
 				}
 			}
 
@@ -2701,22 +2699,16 @@ namespace UELib.Core
 			{
 				public override string Decompile()
 				{
-					return String.Empty;
+#if DEBUG
+					return "native." + base.Decompile();
+#endif
+					return String.Empty;	    
 				}
 			}
 
-			public class InstanceVariableToken : FieldToken
-			{
-				//public override void Deserialize()
-				//{
-					
-				//    base.Deserialize();
-				//}
-			}
-
-			public class LocalVariableToken : FieldToken
-			{
-			}
+			public class InstanceVariableToken : FieldToken{}
+			public class LocalVariableToken : FieldToken{}
+			public class OutVariableToken : FieldToken{}
 
 			public class DefaultVariableToken : FieldToken
 			{
@@ -2744,18 +2736,10 @@ namespace UELib.Core
 
 			public class UndefinedVariableToken : Token
 			{
-				public override void Deserialize()
-				{		  
-				}
-
 				public override string Decompile()
 				{
 					return String.Empty;
 				}
-			}
-
-			public class OutVariableToken : FieldToken
-			{
 			}
 
 			public class DelegatePropertyToken : FieldToken
@@ -2766,7 +2750,7 @@ namespace UELib.Core
 				{		  
 					NameIndex = Buffer.ReadNameIndex();
 					Decompiler.AddNameIndexCodeSize();
-					// > Mirrors Edge
+					// TODO: Corrigate version. Definitely not in Mirrors Edge(536)
 					if( Buffer.Version > 536 )
 					{
 						base.Deserialize();
@@ -2787,20 +2771,26 @@ namespace UELib.Core
 				{
 					Buffer.ReadUShort();	// Size
 					Decompiler.AddCodeSize( sizeof(ushort) );
-
-					// Expression
-					DeserializeNext();	
-
-					// EndParmValue?
-					DeserializeNext();
+					DeserializeNext();	// Expression
+					DeserializeNext();	// EndParmValue
 				}
 
 				public override string Decompile()
 				{
-					string output = ((UFunction)Decompiler.Owner).ChildParams[_paramNum ++].Name + " = " + DecompileNext();			
-					DecompileNext();
+					string propertyName;
+					try
+					{
+						propertyName = ((UFunction)Decompiler.Owner).ChildParams[_paramNum++].Name;
+					}
+					catch( ArgumentOutOfRangeException )
+					{
+						propertyName = "UnknownParm_" + _paramNum;
+					}
+
+					string expr = DecompileNext();		
+					DecompileNext();	// EndParmValue
 					Decompiler.AddSemicolon = true;
-					return output;
+					return propertyName + " = " + expr;
 				}
 			}
 
@@ -2816,21 +2806,9 @@ namespace UELib.Core
 					return DecompileNext();
 				}
 			}
-
-			public class UnknownVariableToken : FieldToken
-			{
-				public override string Decompile()
-				{
-					return "Unknown: " + Object;
-				}
-			}
 			#endregion
 
 			#region OtherTokens
-			public class NothingToken : Token
-			{
-			}
-
 			public class IntZeroToken : Token
 			{
 				public override string Decompile()
@@ -2879,30 +2857,16 @@ namespace UELib.Core
 				}
 			}
 
-			public class NoDelegateToken : NoneToken
-			{
-			}
-
-			public class NoObjectToken : NoneToken
-			{
-			}
+			public class NothingToken : Token{}
+			public class NoDelegateToken : NoneToken{}
+			public class NoObjectToken : NoneToken{}
 
 			// A skipped parameter when calling a function
-			public class NoParmToken : Token
-			{
-			}
+			public class NoParmToken : Token{}
+			public class EndOfScriptToken : Token{}
 
 			public class StopToken : Token
 			{
-				public override void Deserialize()
-				{
- 					/*if( Buffer.Version > 300 )
-					{
-						Buffer.ReadUShort();
-						Decompiler.AddCodeSize( sizeof(short) );
-					}*/
-				}
-
 				public override string Decompile()
 				{
 					Decompiler.AddSemicolon = true;	
@@ -2912,14 +2876,17 @@ namespace UELib.Core
 	
 			public class AssertToken : Token
 			{
+				public bool DebugMode;
+
 				public override void Deserialize()
 				{
 					Buffer.ReadUShort();	// Line
 					Decompiler.AddCodeSize( sizeof(short) );
-					// Mirrors Edge?
+
+					// TODO: Corrigate version, at least known since Mirrors Edge(536)
 					if( Buffer.Version >= 536 )
 					{
-						Buffer.ReadByte();	// Size?
+						DebugMode = Buffer.ReadByte() > 0;
 						Decompiler.AddCodeSize( sizeof(byte) );
 					}
 					DeserializeNext();
@@ -2927,13 +2894,17 @@ namespace UELib.Core
 
 				public override string Decompile()
 				{
+					if( Buffer.Version >= 536 )
+					{
+						Decompiler.PreComment = "// DebugMode:" + DebugMode;
+					}
+					string expr = DecompileNext();
 					Decompiler.AddSemicolon = true;	
- 					return "assert(" + DecompileNext() + ")";
+ 					return "assert(" + expr + ")";
 				}
 			}
 
 			private List<ULabelEntry> _Labels, _TempLabels;
-
 			public class LabelTableToken : Token
 			{
 				public override void Deserialize()
@@ -2958,24 +2929,6 @@ namespace UELib.Core
 				}
 			}
 
-			/// <summary>
-			/// Indication of THE END OF THE FUNCTION's SCRIPT.
-			/// 
-			/// Difference:This is used in UE3, the FunctionEndToken is used in UE2 while UE1 doesn't have neither.
-			/// </summary>
-			public class EndOfScriptToken : Token
-			{
-			}
-
-			/// <summary>
-			/// Indication of THE END OF THE FUNCTION's SCRIPT.
-			/// 
-			/// Difference:This is used in UE2, the EndOfScriptToken is used in UE3 while UE1 doesn't have neither.
-			/// </summary>
-			public class FunctionEndToken : Token
-			{
-			}
-
 			public class SkipToken : Token
 			{
 				public override void Deserialize()
@@ -2992,7 +2945,7 @@ namespace UELib.Core
 				}
 			}
 
-			public class ComparisonToken : Token
+			public abstract class ComparisonToken : Token
 			{
 				public int ObjectIndex;
 
