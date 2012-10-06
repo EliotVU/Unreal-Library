@@ -115,7 +115,7 @@ namespace UELib
 		/// All NameIndex diverse from the standard ReadIndex due an additional 32bit after each index targeted for names.
 		/// </summary>
 		public const ushort VNameIndex				= 500;	// Guessed
-		public const ushort VDLLBind				= 664;
+		public const ushort VDLLBind				= 655;
 
 		/// <summary>
 		/// New class modifier "ClassGroup(Name[,Name])"

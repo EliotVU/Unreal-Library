@@ -307,8 +307,7 @@ namespace UELib.Core
 						{
 							case 8:				
 								int enumType = _Buffer.ReadNameIndex();
-								// TODO: Corrigate Version	  (>=633?)
-								if( _Buffer.Version > 587 )		// > UT3&Singularity&MoonBase
+								if( _Buffer.Version >= 633 )
 								{
 									int enumValue = _Buffer.ReadNameIndex();
 									propertyValue = _Owner.Package.GetIndexName( enumType ) + "." 
@@ -321,8 +320,7 @@ namespace UELib.Core
 								break;
 
 							case 1:
-								// TODO: Corrigate Version
-								if( _Buffer.Version > 587 )		// > UT3&Singularity&MoonBase
+								if( _Buffer.Version >= 633 )
 									_Buffer.ReadNameIndex();
 
 								propertyValue = _Buffer.ReadByte().ToString( CultureInfo.InvariantCulture );

@@ -270,11 +270,12 @@ namespace UELib.Flags
 		Obsolete				= 0x00000020U,   	
 		Final					= 0x00000080U,		
 		PerObjectLocalized		= 0x00000100U,		
-		PropertiesObject		= 0x00000200U,		
-		EliminateObject			= 0x00000400U,		
+		PropertiesObject		= 0x00000200U,
+		ArchetypeObject			= 0x00000400U,
+		//EliminateObject		= 0x00000400U,		
 		RemappedName			= 0x00000800U,   	
-		StateChanged			= 0x00001000U,   	
-		EdSelected				= 0x00080000U,		
+		//StateChanged			= 0x00001000U,   	
+		//EdSelected			= 0x00080000U,		
 	}
 
 	/// <summary>
