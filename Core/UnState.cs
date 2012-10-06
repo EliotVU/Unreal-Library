@@ -147,10 +147,9 @@ namespace UELib.Core
 			{
 				if( child.IsClassType( "Function" ) )
 				{
-				 	_ChildFunctions.Add( (UFunction)child );
+				 	_ChildFunctions.Insert( 0, (UFunction)child );
 				}
 			}
-			_ChildFunctions.Reverse();
 		}
 
 		#region Methods

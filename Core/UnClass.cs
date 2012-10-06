@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define TDS
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -201,56 +203,52 @@ namespace UELib.Core
 				{
 					if( Package.Version > 300 )
 					{
-						{int componentsCount = _Buffer.ReadInt32();
-							NoteRead( "componentsCount", componentsCount );
+						int componentsCount = _Buffer.ReadInt32();
+						NoteRead( "componentsCount", componentsCount );
+
 						if( componentsCount > 0 )
 						{
-							TestEndOfStream( componentsCount * 12, "Components" );
-							ComponentsList = new List<int>( componentsCount );
-							for( int i = 0; i < componentsCount; ++ i )
-							{
-								_Buffer.ReadNameIndex();
-								// TODO: Corrigate Version
-								if( Package.Version > 490 )	// GOW
-								{
-									ComponentsList.Add( _Buffer.ReadObjectIndex() );	
-								}
-							}
-							NoteRead( "ComponentsList", ComponentsList );
-						}}
+							int bytes = componentsCount * (Package.Version > 490 ? 12 : 8);
+							TestEndOfStream( bytes, "Components" );
+							_Buffer.Skip( bytes );
 
-						// FIXME: Unknown condition
-						//if( HasClassFlag( Flags.ClassFlags.CacheExempt ) )
-						//{
-						//    // ComponentClassToNameMap
-						//     _Buffer.ReadObjectIndex();
-						//    // ComponentNameToDefaultObjectMap
-						//     _Buffer.ReadObjectIndex();
-						//}
-					}
+							//ComponentsList = new List<int>( componentsCount );
+							//for( int i = 0; i < componentsCount; ++ i )
+							//{
+							//    _Buffer.ReadNameIndex();
+							//    // TODO: Corrigate version. Definitely not in GoW 1(490)
+							//    if( Package.Version > 490 )	// GOW
+							//    {
+							//        ComponentsList.Add( _Buffer.ReadObjectIndex() );	
+							//    }
+							//}
+							//NoteRead( "ComponentsList", ComponentsList );
+						}
 
-					// RoboBlitz(369)
-					if( Package.Version >= 369 )
-					{
-						// FIXME: Invalid in UT3? Swapped with HideCategories?
-						{int interfacesCount = _Buffer.ReadInt32();
-							NoteRead( "InterfacesCount", interfacesCount );
-						if( interfacesCount > 0 )
+						// RoboBlitz(369)
+						if( Package.Version >= 369 )
 						{
-							TestEndOfStream( interfacesCount * 8, "Interfaces" );
-							ImplementedInterfacesList = new List<int>( interfacesCount );
-							for( int i = 0; i < interfacesCount; ++ i )
+							// FIXME: Invalid in UT3? Swapped with HideCategories?
+							int interfacesCount = _Buffer.ReadInt32();
+							NoteRead( "InterfacesCount", interfacesCount );
+
+							if( interfacesCount > 0 )
 							{
-								// Taken from UDN @ http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
-								// In C++, a native interface variable is represented as a TScriptInterface, 
-								// declared in UnTemplate.h. 
-								// This struct stores two pointers to the same object - a UObject pointer and a pointer of the interface type. 
-								int interfaceIndex = _Buffer.ReadInt32();
-								int typeIndex = _Buffer.ReadInt32();
-								ImplementedInterfacesList.Add( interfaceIndex ); 
+								TestEndOfStream( interfacesCount * 8, "Interfaces" );
+								ImplementedInterfacesList = new List<int>( interfacesCount );
+								for( int i = 0; i < interfacesCount; ++ i )
+								{
+									// Taken from UDN @ http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
+									// In C++, a native interface variable is represented as a TScriptInterface, 
+									// declared in UnTemplate.h. 
+									// This struct stores two pointers to the same object - a UObject pointer and a pointer of the interface type. 
+									int interfaceIndex = _Buffer.ReadInt32();
+									int typeIndex = _Buffer.ReadInt32();
+									ImplementedInterfacesList.Add( interfaceIndex ); 
+								}
+								NoteRead( "ImplementedInterfacesList", ImplementedInterfacesList );
 							}
-							NoteRead( "ImplementedInterfacesList", ImplementedInterfacesList );
-						}}
+						}
 					}
 
 					if( !Package.IsConsoleCooked() )
@@ -261,44 +259,34 @@ namespace UELib.Core
 							NoteRead( "DontSortCategoriesList", DontSortCategoriesList );
 						}
 
-						if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) || Package.Version < 200 )
-						{
-							HideCategoriesList = DeserializeGroup();
-							NoteRead( "HideCategoriesList", HideCategoriesList );
-						}
+						HideCategoriesList = DeserializeGroup();
+						NoteRead( "HideCategoriesList", HideCategoriesList );
 
 						if( Package.Version >= 185 )
 						{
 							AutoExpandCategoriesList = DeserializeGroup();
 							NoteRead( "AutoExpandCategoriesList", AutoExpandCategoriesList );
 
-							if( Package.Version >= 655 )
+							if( Package.Version > 670 )
 							{
-								if( Package.Version > 670 )
+								AutoCollapseCategoriesList = DeserializeGroup();
+								NoteRead( "AutoCollapseCategoriesList", AutoCollapseCategoriesList );
+
+								if( Package.Version >= 749 )
 								{
-									AutoCollapseCategoriesList = DeserializeGroup();
-									NoteRead( "AutoCollapseCategoriesList", AutoCollapseCategoriesList );
+									// bForceScriptOrder
+									ForceScriptOrder = _Buffer.ReadInt32() > 0;
+									NoteRead( "bForceScriptOrder", ForceScriptOrder );
 
-									if( Package.Version >= 749 )
+									if( Package.Version >= UnrealPackage.VClassGroup )
 									{
-										// bForceScriptOrder
-										ForceScriptOrder = _Buffer.ReadInt32() > 0;
-										NoteRead( "bForceScriptOrder", ForceScriptOrder );
+										ClassGroupsList = DeserializeGroup();
+										NoteRead( "ClassGroupsList", ClassGroupsList );
 
-										// TODO: Figure out what determines if DLLBind and/or ClassGroup deserializiation.
-										if( Package.Version >= UnrealPackage.VClassGroup ) // V:789
+										if( Package.Version >= 813 )
 										{
-											ClassGroupsList = DeserializeGroup();
-											NoteRead( "ClassGroupsList", ClassGroupsList );
-
-											if( Package.Version >= 813 )
-											{
-												if( HasObjectFlag( Flags.ObjectFlagsLO.Native ) )
-												{
-													NativeClassName = _Buffer.ReadName();
-													NoteRead( "NativeClassName", NativeClassName );
-												}
-											}
+											NativeClassName = _Buffer.ReadName();
+											NoteRead( "NativeClassName", NativeClassName );
 										}
 									}
 								}
@@ -314,10 +302,18 @@ namespace UELib.Core
 						}					
 					}
 
-					if( Package.Version >= UnrealPackage.VDLLBind )	// V:664
+					if( Package.Version >= UnrealPackage.VDLLBind )
 					{
 						_DLLNameIndex = _Buffer.ReadNameIndex();
 						NoteRead( "_DLLNameIndex", _DLLNameIndex );
+
+#if BORDERLANDS2
+						if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+						{ 
+							var unkval = _Buffer.ReadByte();
+							NoteRead( "unkval", unkval );
+						}
+#endif
 					}
 				}
 			}	
@@ -385,10 +381,9 @@ namespace UELib.Core
 			{
 				if( child.IsClassType( "State" ) )
 				{
-					_ChildStates.Add( (UState)child );
+					_ChildStates.Insert( 0, (UState)child );
 				}			
 			}
-			_ChildStates.Reverse();
 		}
 
 		#region Methods
@@ -404,9 +399,8 @@ namespace UELib.Core
 		#region Serialized Members
 		protected uint _Top;
 		protected uint _Pos;
-		#endregion
-
 		public string ScriptText = String.Empty;
+		#endregion
 
 		private long _ScriptOffset;
 
@@ -422,11 +416,13 @@ namespace UELib.Core
 	  		_Top = _Buffer.ReadUInt32();
 			_Pos = _Buffer.ReadUInt32();
 
+#if TDS
 			if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.ThiefDeadlyShadows )
 			{
 				// TODO: Unknown
 				_Buffer.Skip( 8 );
 			}
+#endif
 
 			_ScriptOffset = _Buffer.Position;
 			ScriptText = _Buffer.ReadName();

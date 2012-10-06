@@ -136,9 +136,6 @@ namespace UELib.Core
 					_ChildLocals.Add( property );
 				}
 			}
-			// Force to same order as they were compiled.
-			_ChildParams.Reverse();
-			_ChildLocals.Reverse();
 		}
 
 		#region Methods

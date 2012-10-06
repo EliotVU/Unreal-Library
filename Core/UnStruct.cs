@@ -300,26 +300,17 @@ namespace UELib.Core
 				}
 				else if( child.IsClassType( "Const" ) )
 				{
-					_ChildConstants.Add( (UConst)child );
+					_ChildConstants.Insert( 0, (UConst)child );
 				}
 				else if( child.IsClassType( "Enum" ) )
 				{
-					_ChildEnums.Add( (UEnum)child );
+					_ChildEnums.Insert( 0, (UEnum)child );
 				}	
 				else if( child.IsClassType( "Struct" ) || child.IsClassType( "ScriptStruct" ) )
 				{
-					_ChildStructs.Add( (UStruct)child );
+					_ChildStructs.Insert( 0, (UStruct)child );
 				}
 			}
-
-			// For some reason the order is different between functions and structs*.
-			if( IsClassType( "Function" ) )
-			{
-				_ChildProperties.Reverse();
-			}
-			_ChildConstants.Reverse();
-			_ChildEnums.Reverse();
-			_ChildStructs.Reverse();	
 		}	
 
 		#region Methods
