@@ -251,7 +251,11 @@ namespace UELib.Core
 						}
 					}
 
-					if( !Package.IsConsoleCooked() )
+					if( !Package.IsConsoleCooked() 
+#if GOW2
+						&& Package.Build != UnrealPackage.GameBuild.ID.GoW2
+#endif
+					)
 					{
 						if( Package.Version >= 603 )
 						{
