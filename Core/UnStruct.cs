@@ -231,7 +231,7 @@ namespace UELib.Core
 			{
 				ByteCodeManager = new UByteCodeDecompiler( this );
 				// ScriptSize is not a true size in UT2004 and below and MoonBase's version (587)
-				if( _Buffer.Version >= UnrealPackage.VIndexDeprecated && _Buffer.Version != 587 )	// 587(MoonBase)
+				if( _Buffer.Version >= UnrealPackage.VINDEXDEPRECATED && _Buffer.Version != 587 )	// 587(MoonBase)
 				{
 					_Buffer.Skip( scriptSkipSize );
 				}

@@ -49,7 +49,7 @@ namespace UELib.Core
 				output += "protected ";
 			}
 
-			if( Package.Version >= UnrealPackage.VDLLBind && HasFunctionFlag( Flags.FunctionFlags.DLLImport ) )
+			if( Package.Version >= UnrealPackage.VDLLBIND && HasFunctionFlag( Flags.FunctionFlags.DLLImport ) )
 			{
 				output += "dllimport ";
 			}

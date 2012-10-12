@@ -87,14 +87,12 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			// TODO: Read as Int32 then shift.
 			var info = _Buffer.ReadUInt32();
 			ArrayDim = (ushort)(info & 0x0000FFFFU);
 			NoteRead( "ArrayDim", ArrayDim );
 			ElementSize = (ushort)(info >> 16);
 			NoteRead( "ElementSize", ElementSize );
 
-			// TODO: Find out what version this was converted from DWORD to QWORD; This was a QWORD way before version 200!
 			PropertyFlags = _Buffer.UR.ReadQWORDFlags();
 			NoteRead( "PropertyFlags", PropertyFlags );
 			if( !Package.IsConsoleCooked() )
@@ -164,7 +162,7 @@ namespace UELib.Core
 	{
 		#region Serialized Members
 		public UClass InterfaceObject = null;
-		public UInterfaceProperty InterfaceType = null;
+		//public UInterfaceProperty InterfaceType = null;
 		#endregion
 
 		/// <summary>

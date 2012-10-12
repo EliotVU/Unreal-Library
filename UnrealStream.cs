@@ -190,7 +190,7 @@ namespace UELib
 
 		public string ReadName()
 		{
-			if( _Version < UnrealPackage.VSizePrefixDeprecated )
+			if( _Version < UnrealPackage.VSIZEPREFIXDEPRECATED )
 			{
 				return ReadASCIIString();
 			}
@@ -250,7 +250,7 @@ namespace UELib
 
 		public int ReadIndex()
 		{
-			if( _Version >= UnrealPackage.VIndexDeprecated )
+			if( _Version >= UnrealPackage.VINDEXDEPRECATED )
 			{
 				return ReadInt32();
 			}
@@ -296,7 +296,7 @@ namespace UELib
 
 		public static int ReadIndexFromBuffer( byte[] bytes, UnrealPackage package )
 		{
-			if( package.Version >= UELib.UnrealPackage.VIndexDeprecated )
+			if( package.Version >= UELib.UnrealPackage.VINDEXDEPRECATED )
 			{
 				return BitConverter.ToInt32( bytes, 0 );
 			}

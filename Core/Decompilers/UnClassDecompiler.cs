@@ -213,7 +213,7 @@ namespace UELib.Core
 		{
 			string output = String.Empty;
 
-			try{if( Package.Version >= UnrealPackage.VDLLBind && _DLLNameIndex != 0 && String.Compare( DLLName, "None", true ) != 0 )
+			try{if( Package.Version >= UnrealPackage.VDLLBIND && _DLLNameIndex != 0 && String.Compare( DLLName, "None", true ) != 0 )
 			{output += "\r\n\tdllbind(" + DLLName + ")";}}catch{}
 
 			if( ClassDependenciesList != null )

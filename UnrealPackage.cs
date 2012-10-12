@@ -67,38 +67,11 @@ namespace UELib
 		#endregion
 
 		#region Serialized Members
-		// UDK 2009 - 2011
-		//UDK_11_2009 = (ushort)648U,
-		//UDK_12_2009 = (ushort)678U,
-		//UDK_01_2010 = (ushort)600U,
-		//UDK_02_2010 = (ushort)600U,
-		//UDK_03_2010 = (ushort)600U,
-		//UDK_04_2010 = (ushort)600U,
-		//UDK_05_2010 = (ushort)706U,
-		//UDK_06_2010 = (ushort)727U,
-		//UDK_07_2010 = (ushort)737U,
-		//UDK_08_2010 = (ushort)756U,
-		//UDK_09_2010 = (ushort)765U,
-		//UDK_10_2010 = (ushort)776U,
-		//UDK_11_2010 = (ushort)799U,
-		//UDK_12_2010 = (ushort)803U,
-		//UDK_01_2011 = (ushort)805U,
-		//UDK_02_2011 = (ushort)810U,
-		//UDK_04_2011 = (ushort)813U,
-		//UDK_06_2011 = (ushort)832U,
-
 		private uint _Version = 0;
 		public uint Version
 		{
-			get
-			{
-				return OverrideVersion > 0 ? OverrideVersion : _Version;
-			}
-
-			private set
-			{
-				_Version = value;
-			}
+			get{ return OverrideVersion > 0 ? OverrideVersion : _Version; }
+			private set{ _Version = value; }
 		}
 
 		/// <summary>
@@ -107,33 +80,28 @@ namespace UELib
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
 		public static ushort OverrideVersion = 0;
 
-		public const ushort VSizePrefixDeprecated	= 64;
-		public const ushort VIndexDeprecated		= 178;
-		public const ushort VCookedPackages			= 277;
+		#region Version history
+			public const ushort VSIZEPREFIXDEPRECATED	= 64;
+			public const ushort VINDEXDEPRECATED		= 178;
+			public const ushort VCOOKEDPACKAGES			= 277;
 
-		/// <summary>
-		/// All NameIndex diverse from the standard ReadIndex due an additional 32bit after each index targeted for names.
-		/// </summary>
-		public const ushort VNameIndex				= 500;	// Guessed
-		public const ushort VDLLBind				= 655;
+			/// <summary>
+			/// All NameIndex diverse from the standard ReadIndex due an additional 32bit after each index targeted for names.
+			/// </summary>
+			public const ushort VNAMEINDEX				= 500;
+			public const ushort VDLLBIND				= 655;
 
-		/// <summary>
-		/// New class modifier "ClassGroup(Name[,Name])"
-		/// </summary>
-		public const ushort VClassGroup				= 789;//799;
+			/// <summary>
+			/// New class modifier "ClassGroup(Name[,Name])"
+			/// </summary>
+			public const ushort VCLASSGROUP				= 789;
+		#endregion
 
 		private ushort _LicenseeVersion = 0;
 		public ushort LicenseeVersion
 		{
-			get
-			{
-				return OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion;
-			}
-
-			private set
-			{
-				_LicenseeVersion = value;
-			}
+			get{ return OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion; }
+			private set{ _LicenseeVersion = value; }
 		}
 
 		/// <summary>
@@ -169,7 +137,7 @@ namespace UELib
 				RoboBlitz,
 				CrimeCraft,			// Has custom support!
 				GoW1,
-				GoW2,
+				GoW2,				// Has custom support!
 				GoW3,
 				Singularity,
 				UT2004,
@@ -180,7 +148,7 @@ namespace UELib
 				MirrorsEdge,		// Has custom support!
 				Homefront,
 				Borderlands,
-				Borderlands2
+				Borderlands2,		// Has custom support!
 			}
 
 			public ID GameID
@@ -412,7 +380,7 @@ namespace UELib
 		/// </summary>
 		public UArray<GenerationInfo> GenerationsList
 		{
-			get{ return _GenerationInfoList; }
+			get{ return _GenerationInfoList; }	   
 		}
 
 		/// <summary>
@@ -624,7 +592,7 @@ namespace UELib
 					// The Engine Version this package was created with
 					pkg.EngineVersion = stream.ReadInt32();
 					Console.WriteLine( "\tEngineVersion:" + pkg.EngineVersion );
-					if( pkg.Version >= VCookedPackages )
+					if( pkg.Version >= VCOOKEDPACKAGES )
 					{
 						// The Cooker Version this package was cooked with
 						pkg.CookerVersion = stream.ReadInt32();
@@ -1165,7 +1133,7 @@ namespace UELib
 		/// <returns>True if cooked or False if not.</returns>
 		public bool IsCooked()
 		{
-			return HasPackageFlag( Flags.PackageFlags.Cooked ) && Version >= VCookedPackages;
+			return HasPackageFlag( Flags.PackageFlags.Cooked ) && Version >= VCOOKEDPACKAGES;
 		}
 
 		// TODO: Corrigate conditions.

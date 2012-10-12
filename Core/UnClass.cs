@@ -282,7 +282,7 @@ namespace UELib.Core
 									ForceScriptOrder = _Buffer.ReadInt32() > 0;
 									NoteRead( "bForceScriptOrder", ForceScriptOrder );
 
-									if( Package.Version >= UnrealPackage.VClassGroup )
+									if( Package.Version >= UnrealPackage.VCLASSGROUP )
 									{
 										ClassGroupsList = DeserializeGroup();
 										NoteRead( "ClassGroupsList", ClassGroupsList );
@@ -306,7 +306,7 @@ namespace UELib.Core
 						}					
 					}
 
-					if( Package.Version >= UnrealPackage.VDLLBind )
+					if( Package.Version >= UnrealPackage.VDLLBIND )
 					{
 						_DLLNameIndex = _Buffer.ReadNameIndex();
 						NoteRead( "_DLLNameIndex", _DLLNameIndex );
