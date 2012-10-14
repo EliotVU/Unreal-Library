@@ -784,7 +784,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Represents a Decompileable UPropertyTag.
 	/// </summary>
-	public sealed class UDefaultProperty : IUnrealDecompileable
+	public sealed class UDefaultProperty : IUnrealDecompilable
 	{
 		/// <summary>
 		/// Serialized Info

@@ -9,7 +9,7 @@ namespace UELib.Engine
 	{
 		public UContent()
 		{
-			_bDeserializeOnDemand = true;
+			ShouldDeserializeOnDemand = true;
 		}
 
 		public virtual void View()

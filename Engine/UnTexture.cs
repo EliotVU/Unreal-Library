@@ -38,35 +38,35 @@ namespace UELib.Engine
 			public byte BitsWidth;
 			public byte BitsHeight;
 
-			public void Deserialize( IUnrealStream buffer )
+			public void Deserialize( IUnrealStream stream )
 			{
-				if( buffer.Version >= 63 )
+				if( stream.Version >= 63 )
 				{
 					// Offset to (Width = ...)
-					WidthOffset = buffer.ReadUInt32();
+					WidthOffset = stream.ReadUInt32();
 
-					long opos = buffer.Position;
-					buffer.Seek( WidthOffset, System.IO.SeekOrigin.Begin );
-					Width = buffer.ReadUInt32();
-					Height = buffer.ReadUInt32();
-					buffer.Seek( opos, System.IO.SeekOrigin.Begin );
+					long opos = stream.Position;
+					stream.Seek( WidthOffset, System.IO.SeekOrigin.Begin );
+					Width = stream.ReadUInt32();
+					Height = stream.ReadUInt32();
+					stream.Seek( opos, System.IO.SeekOrigin.Begin );
 				}
 
-				int MipMapSize = buffer.ReadIndex();
+				int MipMapSize = stream.ReadIndex();
 				Pixels = new int[MipMapSize];
 				switch( Owner._Format.Decompile().Substring( 6 ) )
 				{
 					case "TEXF_RGBA8": case "5":
 						for( int i = 0; i < MipMapSize; ++ i )
 						{				
-	  						Pixels[i] = buffer.ReadInt32();
+	  						Pixels[i] = stream.ReadInt32();
 						}
 						break;
 
 					case "TEXF_DXT1": case "3":
 						for( int i = 0; i < MipMapSize / 2; ++ i )
 						{		
-							byte c = buffer.ReadByte();
+							byte c = stream.ReadByte();
 							Pixels[i ++] = c & 0xF0;
 							Pixels[i] = c & 0x0F; 
 						}
@@ -78,9 +78,9 @@ namespace UELib.Engine
 				}
 
 				// Width, Height. See above!
-				buffer.Skip( 8 );
-				BitsWidth = buffer.ReadByte();
-				BitsHeight = buffer.ReadByte();
+				stream.Skip( 8 );
+				BitsWidth = stream.ReadByte();
+				BitsHeight = stream.ReadByte();
 			}
 		}
 	}

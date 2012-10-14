@@ -12,7 +12,7 @@ namespace UELib.Core
 	{
 		public override string Decompile()
 		{
-			if( _bDeserializeOnDemand )
+			if( ShouldDeserializeOnDemand )
 			{
 				BeginDeserializing();
 			}

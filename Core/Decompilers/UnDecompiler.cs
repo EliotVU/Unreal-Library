@@ -14,7 +14,7 @@ namespace UELib.Core
 		/// <summary>
 		/// Decompiles the bytecodes from the 'Owner'
 		/// </summary>
-		public class UByteCodeDecompiler : IUnrealDecompileable
+		public class UByteCodeDecompiler : IUnrealDecompilable
 		{
 			/// <summary>
 			/// The Struct that contains the bytecode that we have to deserialize and decompile!
@@ -168,7 +168,7 @@ namespace UELib.Core
 				_WasDeserialized = true;
 				Buffer.Seek( Owner._ScriptOffset, System.IO.SeekOrigin.Begin );
 				CodePosition = 0;
-				var codeSize = Owner._ScriptSize;
+				var codeSize = Owner.ScriptSize;
 		
 				CurrentTokenIndex = -1;
 				DeserializedTokens = new List<Token>();
@@ -221,7 +221,7 @@ namespace UELib.Core
 					else
 					{
 						var table = Owner.Package.ExportTableList.Find( 
-							e => (e.ClassName == "Function" && ((UFunction)(e.Object)).iNative == nativeIndex) 
+							e => (e.ClassName == "Function" && ((UFunction)(e.Object)).NativeToken == nativeIndex) 
 						);
 
 						UFunction f = null;
@@ -604,7 +604,7 @@ namespace UELib.Core
 						tokenItem = new StructCmpEqToken();
 						break;
 
-					case (byte)ExprToken.StructCmpNe:
+					case (byte)ExprToken.StructCmpNE:
 						tokenItem = new StructCmpNeToken();
 						break;
 
@@ -623,18 +623,18 @@ namespace UELib.Core
 						}
 						break;
 				
-					case (byte)ExprToken.DelegateCmpNe:
-						tokenItem = new DelegateCmpNeToken();
+					case (byte)ExprToken.DelegateCmpNE:
+						tokenItem = new DelegateCmpNEToken();
 						break;
 
-					case (byte)ExprToken.DelegateFunctionCmpNe:
+					case (byte)ExprToken.DelegateFunctionCmpNE:
 						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new IntToBoolToken();
 						}
 						else
 						{
-							tokenItem = new DelegateFunctionCmpNeToken();
+							tokenItem = new DelegateFunctionCmpNEToken();
 						}
 						break;
 
@@ -1051,7 +1051,7 @@ namespace UELib.Core
 			{
 				public UByteCodeDecompiler Decompiler;
 
-				public class Nest : IUnrealDecompileable
+				public class Nest : IUnrealDecompilable
 				{
 					[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1008:EnumsShouldHaveZeroValue" )]
 					public enum NestType : byte
@@ -1513,7 +1513,7 @@ namespace UELib.Core
 				{
 					if( DeserializedTokens[CurrentTokenIndex + 1].Position >= _TempLabels[i].Position )
 					{
-						if( ((isStateLabel && !_TempLabels[i].Name.StartsWith( "J0x" )) || (!isStateLabel && _TempLabels[i].Name.StartsWith( "J0x" ))) )
+						if( ((isStateLabel && !_TempLabels[i].Name.StartsWith( "J0x", StringComparison.Ordinal )) || (!isStateLabel && _TempLabels[i].Name.StartsWith( "J0x", StringComparison.Ordinal ))) )
 						{
 							output += "\r\n" + (isStateLabel ? _TempLabels[i].Name : UDecompiler.Tabs + _TempLabels[i].Name) + ":\r\n";
 
@@ -1576,7 +1576,7 @@ namespace UELib.Core
 			#endregion
 
 			#region Tokens
-			public abstract class Token : IUnrealDecompileable
+			public abstract class Token : IUnrealDecompilable
 			{
 				public UByteCodeDecompiler Decompiler
 				{
@@ -3019,7 +3019,7 @@ namespace UELib.Core
 				}
 			}
 
-			public class DelegateCmpNeToken : DelegateComparisonToken
+			public class DelegateCmpNEToken : DelegateComparisonToken
 			{
 				public override string Decompile()
 				{
@@ -3029,7 +3029,7 @@ namespace UELib.Core
 				}
 			}
 
-			public class DelegateFunctionCmpNeToken : DelegateComparisonToken
+			public class DelegateFunctionCmpNEToken : DelegateComparisonToken
 			{
 				public override string Decompile()
 				{
@@ -3374,26 +3374,21 @@ namespace UELib.Core
 
 			public class VectorConstToken : Token
 			{
-				public struct Vector
-				{
-					public float X, Y, Z;
-				}
-
-				public Vector Value;
+				public float X, Y, Z;
 
 				public override void Deserialize()
 				{
-					Value.X = Buffer.UR.ReadSingle();
+					X = Buffer.UR.ReadSingle();
 					Decompiler.AddCodeSize( sizeof(float) );
-					Value.Y = Buffer.UR.ReadSingle();
+					Y = Buffer.UR.ReadSingle();
 					Decompiler.AddCodeSize( sizeof(float) );
-					Value.Z = Buffer.UR.ReadSingle();
+					Z = Buffer.UR.ReadSingle();
 					Decompiler.AddCodeSize( sizeof(float) );
 				}
 
 				public override string Decompile()
 				{
-					return "vect(" + String.Format( "{0:f}", Value.X ).Replace( ',', '.' ) + ", " + String.Format( "{0:f}", Value.Y ).Replace( ',', '.' ) + ", " + String.Format( "{0:f}", Value.Z ).Replace( ',', '.' ) + ")";
+					return String.Format( "vect({0:f}, {1:f}, {2:f})", X, Y, Z ).Replace( ',', '.' );
 				}
 			}
 			#endregion

@@ -27,7 +27,7 @@ namespace UELib.Core
 				AddTextNode( _ParentNode, "Line:" + this.Line );
 				AddTextNode( _ParentNode, "TextPos:" + this.TextPos );
 				AddTextNode( _ParentNode, "_MinAlignment:" + this._MinAlignment );		
-				AddTextNode( _ParentNode, "Script Size:" + _ScriptSize );
+				AddTextNode( _ParentNode, "Script Size:" + ScriptSize );
 			#endif
 			base.InitNodes( _ParentNode );
 		}

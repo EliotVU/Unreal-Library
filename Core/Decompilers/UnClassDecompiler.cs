@@ -421,7 +421,7 @@ namespace UELib.Core
 		public const byte ObjectsPerLine = 2;
 		public string FormatReplication()
 		{
-			if( _ScriptSize <= 0 )
+			if( ScriptSize <= 0 )
 			{
 				return String.Empty;
 			}
@@ -434,11 +434,11 @@ namespace UELib.Core
 					if( (prop.PropertyFlags & (uint)Flags.PropertyFlagsLO.Net) != 0 )
 					{
 						// Could be a replicated property from parent class.
-						if( prop.RepOffset > (ushort)_ScriptSize )
+						if( prop.RepOffset > (ushort)ScriptSize )
 						{
 							continue;
 						}
-						var ro = new ReplicatedObject {Name = prop.Name, Offset = Math.Min( prop.RepOffset, (ushort)_ScriptSize )};
+						var ro = new ReplicatedObject {Name = prop.Name, Offset = Math.Min( prop.RepOffset, (ushort)ScriptSize )};
 						replicationList.Add( ro );
 					}
 				}
@@ -451,7 +451,7 @@ namespace UELib.Core
 					if( (func.FunctionFlags & (uint)Flags.FunctionFlags.Net) != 0 )
 					{
 						// Could be a replicated function from parent class.
-						if( func.RepOffset > (ushort)_ScriptSize )
+						if( func.RepOffset > (ushort)ScriptSize )
 						{
 							continue;
 						}

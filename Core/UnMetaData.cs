@@ -16,7 +16,7 @@ namespace UELib.Core
 	public sealed class UMetaData : UObject
 	{
 		#region Serialized Members
-		public sealed class UMetaField : IUnrealDecompileable, IUnrealDeserializableClass
+		public sealed class UMetaField : IUnrealDecompilable, IUnrealDeserializableClass
 		{
 			public int					FieldIndex;			// ObjectIndex		
 			public string				FieldName;			// UT3, Mirrors Edge
@@ -95,7 +95,7 @@ namespace UELib.Core
 			}
 		}															    
 
-		public sealed class UMetaTag : IUnrealDecompileable, IUnrealDeserializableClass
+		public sealed class UMetaTag : IUnrealDecompilable, IUnrealDeserializableClass
 		{
 			public int				TagNameIndex;
 			public string 			TagValue;
