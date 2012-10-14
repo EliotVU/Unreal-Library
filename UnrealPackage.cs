@@ -113,7 +113,7 @@ namespace UELib
 		public enum LicenseeVersions : ushort
 		{
 			UnrealEngine = 0,
-			UT2k4 = 29,
+			UT2K4 = 29,
 			Unreal2 = 2609,	// 3
 			Borderlands = 58,
 			MirrorsEdge = 43,
@@ -127,27 +127,115 @@ namespace UELib
 
 		public class GameBuild
 		{
+			public sealed class GameIDAttribute : Attribute
+			{
+				private readonly int _MinVersion;
+				private readonly int _MaxVersion;
+				private readonly uint _MinLicensee;
+				private readonly byte _IsConsoleCompressed;
+				private readonly byte _IsXenonCompressed;
+				private readonly uint _MaxLicensee;
+
+				private readonly bool _VerifyEqual;
+
+				public GameIDAttribute( int minVersion, uint minLicensee, 
+					byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
+				{
+					_MinVersion = minVersion;
+					_MinLicensee = minLicensee;
+					_IsConsoleCompressed = isConsoleCompressed;
+					_IsXenonCompressed = isXenonCompressed;
+					_VerifyEqual = true;
+				}
+
+				public GameIDAttribute( int minVersion, int maxVersion, uint minLicensee, uint maxLicensee, 
+					byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
+				{
+					_MinVersion = minVersion;
+					_MaxVersion = maxVersion;
+					_MinLicensee = minLicensee;
+					_MaxLicensee = maxLicensee;
+					_IsConsoleCompressed = isConsoleCompressed;
+					_IsXenonCompressed = isXenonCompressed;
+				}
+
+				public bool Verify( GameBuild gb, UnrealPackage package )
+				{
+					if( _VerifyEqual 
+						? package.Version == _MinVersion && package.LicenseeVersion == _MinLicensee
+						: package.Version >= _MinVersion && package.Version <= _MaxVersion
+							&& package.LicenseeVersion >= _MinLicensee && package.LicenseeVersion <= _MaxLicensee )
+					{
+						if( _IsConsoleCompressed < 2 )
+						{
+							gb.IsConsoleCompressed = _IsConsoleCompressed == 1;
+						}
+
+						if( _IsXenonCompressed < 2 )
+						{
+							gb.IsXenonCompressed = _IsXenonCompressed == 1;
+						}	
+						return true;
+					}
+					return false;
+				}
+			}
+
 			public enum ID
 			{
+				Unset,
 				Default,
 				Unknown,
+
+				[GameIDAttribute( 547, 547, 28, 32 )]
 				APB,				// Has custom support!
+
+				[GameIDAttribute( 129, 27 )]
 				Swat4,				// Has custom support!
+
+				[GameIDAttribute( 110, 2609 )]
 				Unreal2,			// Has custom support!
+
+				[GameIDAttribute( 369, 6 )]
 				RoboBlitz,
+
+				[GameIDAttribute( 576, 5 )]
 				CrimeCraft,			// Has custom support!
+
+				[GameIDAttribute( 490, 9 )]
 				GoW1,
+
+				[GameIDAttribute( 575, 0, 0, 1 )]
 				GoW2,				// Has custom support!
+
+				[GameIDAttribute( 828, 0 )]
 				GoW3,
+
+				[GameIDAttribute( 584, 126 )]
 				Singularity,
+
+				[GameIDAttribute( 128, 29 )]
 				UT2004,
+
+				[GameIDAttribute( 512, 0 )]
 				UT3,
+
+				[GameIDAttribute( 828, 0 )]
 				InfinityBlade,
+
+				[GameIDAttribute( 842, 1, 1 )]
 				InfinityBlade2,
+
+				[GameIDAttribute( 742, 29 )]
 				BulletStorm,
+
+				[GameIDAttribute( 536, 43 )]
 				MirrorsEdge,		// Has custom support!
+
+				[GameIDAttribute( 576, 100 )]
 				Homefront,
-				Borderlands,
+
+				[GameIDAttribute( 832, 46 )]
 				Borderlands2,		// Has custom support!
 			}
 
@@ -160,88 +248,44 @@ namespace UELib
 			public bool IsConsoleCompressed;
 			public bool IsXenonCompressed;
 
-			public GameBuild( uint version, uint licenseeVersion )
+			public GameBuild( UnrealPackage package )
 			{
 				if( UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console )
 				{
 					IsConsoleCompressed = true;
 				}
 
-				if( version == 547 && licenseeVersion >= 28 && licenseeVersion <= 32 )
+				var gameBuilds = Enum.GetValues( typeof(ID) ) as ID[];
+				foreach( var gameBuild in gameBuilds )
 				{
-					GameID = ID.APB;
+					var gameBuildMember = typeof(ID).GetMember( gameBuild.ToString() );
+					if( gameBuildMember.Length == 0 )
+						continue;
+
+					var attribs = gameBuildMember[0].GetCustomAttributes( false );
+					if( attribs.Length == 0 )
+						continue;
+
+					var myAttrib = attribs[0] as GameIDAttribute;
+ 					if( myAttrib.Verify( this, package ) )
+ 					{
+						GameID = (ID)Enum.Parse( typeof(ID), Enum.GetName( typeof(ID), gameBuild ) );
+						break;
+ 					}
 				}
-				else if( version == 129 && licenseeVersion == 27 )
+
+				if( GameID == ID.Unset )
 				{
-					GameID = ID.Swat4;
+					if( package.LicenseeVersion == 0 )
+					{
+						GameID = ID.Default;
+					}
+					else
+					{
+						GameID = ID.Unknown;
+					}	
 				}
-				else if( version == 110 && licenseeVersion == 2609 )
-				{
-					GameID = ID.Unreal2;
-				}
-				else if( version == 369 && licenseeVersion == 6 )
-				{
-					GameID = ID.RoboBlitz;
-				}
-				else if( version == 490 && licenseeVersion == 9 )
-				{
-					GameID = ID.GoW1;
-				}
-				else if( version == 536 && licenseeVersion == 43 )
-				{
-					GameID = ID.MirrorsEdge;
-				}
-				else if( version == 576 && licenseeVersion == 5 )
-				{
-					GameID = ID.CrimeCraft;
-				}
-				else if( version == 575 )
-				{
-					GameID = ID.GoW2;
-					IsConsoleCompressed = false;
-					IsXenonCompressed = true;
-				}
-				else if( version == 828 )
-				{
-					GameID = ID.GoW3;
-				}
-				else if( version == 842 && licenseeVersion == 1 )
-				{
-					GameID = ID.InfinityBlade2;
-					IsConsoleCompressed = true;	// FIXME, should be detectable without this.
-				}
-				else if( version == 742 && licenseeVersion == 29 )
-				{
-					GameID = ID.BulletStorm;
-				}
-				else if( version == 584 && licenseeVersion == 126 )
-				{
-					GameID = ID.Singularity;
-				}
-				else if( version == 128 && licenseeVersion == 29 )
-				{
-					GameID = ID.UT2004;
-				}
-				else if( version == 512 )
-				{
-					GameID = ID.UT3;
-				}
-				else if( version == 576 && licenseeVersion == 100 )
-				{
-					GameID = ID.Homefront;
-				}
-				else if( version == 832 && licenseeVersion >= 46 )
-				{
-					GameID = ID.Borderlands2;
-				}
-				else if( licenseeVersion == 0 )
-				{
-					GameID = ID.Default;
-				}
-				else
-				{
-					GameID = ID.Unknown;
-				}
+				
 			}
 
 			public static bool operator ==( GameBuild b, ID i )
@@ -524,7 +568,7 @@ namespace UELib
 			pkg.Version = (pkg.Version & 0xFFFFU);
 			Console.Write( "\r\n\t" + "PackageVersion:" + pkg.Version + "/" + pkg.LicenseeVersion );
 
-			pkg.Build = new GameBuild( pkg.Version, pkg.LicenseeVersion );
+			pkg.Build = new GameBuild( pkg );
 			Console.Write( "\r\n\t" + "Build:" + pkg.Build.GameID );
 
 			if( pkg.Version >= 249 )
@@ -786,7 +830,7 @@ namespace UELib
 		{
 			if( (initFlags & InitFlags.RegisterClasses) != 0 )
 			{
-				RegisterClasses();
+				RegisterAllClasses();
 			}
 
 			if( (initFlags & InitFlags.Construct) == 0 )
@@ -894,7 +938,7 @@ namespace UELib
 			OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Deserialize ) );
 			foreach( var exp in _ExportTableList )
 			{
-				if( !(exp.Object.GetType() == typeof(UnknownObject) || exp.Object.bDeserializeOnDemand) )
+				if( !(exp.Object.GetType() == typeof(UnknownObject) || exp.Object.ShouldDeserializeOnDemand) )
 				{
 					//Console.WriteLine( "Deserializing object:" + exp.ObjectName );
 					exp.Object.BeginDeserializing();
@@ -960,14 +1004,18 @@ namespace UELib
 			return _RegisteredClasses.FindIndex( (o) => o.Name.ToLower() == className.ToLower() ) != -1;
 		}
 
-		public void RegisterClasses()					
+		public void RegisterAllCodeClasses()
 		{
-			// Object...
-			RegisterClass( "MetaData", typeof(UMetaData) );
-			RegisterClass( "Field", typeof(UField) );
+			//RegisterClass( "Field", typeof(UField) );
 				RegisterClass( "Const", typeof(UConst) );
 				RegisterClass( "Enum", typeof(UEnum) );
-				RegisterClass( "Property", typeof(UProperty) );
+				
+				RegisterClass( "Struct", typeof(UStruct) );	 
+					RegisterClass( "ScriptStruct", typeof(UStruct) );
+					RegisterClass( "Function", typeof(UFunction) );
+					RegisterClass( "State", typeof(UState) );
+						RegisterClass( "Class", typeof(UClass) );
+				//RegisterClass( "Property", typeof(UProperty) );
 					RegisterClass( "ArrayProperty", typeof(UArrayProperty) );
 					RegisterClass( "BoolProperty", typeof(UBoolProperty) );
 					RegisterClass( "ByteProperty", typeof(UByteProperty) );
@@ -985,20 +1033,24 @@ namespace UELib
 					RegisterClass( "StringProperty", typeof(UStringProperty) ); 			// UE1
 					RegisterClass( "StrProperty", typeof(UStrProperty) );
 					RegisterClass( "StructProperty", typeof(UStructProperty) );			
-				RegisterClass( "Struct", typeof(UStruct) );	 
-					RegisterClass( "ScriptStruct", typeof(UStruct) );
-						RegisterClass( "Function", typeof(UFunction) );
-						RegisterClass( "State", typeof(UState) );
-							RegisterClass( "Class", typeof(UClass) );
-			RegisterClass( "TextBuffer", typeof(UTextBuffer) );
-			
-			RegisterClass( "Package", typeof(UPackage) );
+		}
 
+		public void RegisterAllContentClasses()
+		{
+			RegisterClass( "Package", typeof(UPackage) );
 			RegisterClass( "Texture", typeof(UTexture) );
 			RegisterClass( "Palette", typeof(UPalette) );
-
 			RegisterClass( "Model", typeof(UModel) );
 			RegisterClass( "Sound", typeof(USound) );
+
+			RegisterClass( "TextBuffer", typeof(UTextBuffer) );
+			RegisterClass( "MetaData", typeof(UMetaData) );
+		}
+
+		public void RegisterAllClasses()					
+		{
+			RegisterAllCodeClasses();
+			RegisterAllContentClasses();
 		}
 
 		private Type GetClassTypeByClassName( string className )
