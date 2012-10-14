@@ -11,14 +11,14 @@ using UELib.Core;
 
 namespace UELib.Core
 {
-	public partial class UObject : IUnrealDecompileable
+	public partial class UObject : IUnrealDecompilable
 	{
 		/// <summary>
 		/// Decompiles this Object into human-readable code
 		/// </summary>
 		public virtual string Decompile()
 		{
-			if( _bDeserializeOnDemand )
+			if( ShouldDeserializeOnDemand )
 			{
 				BeginDeserializing();
 			}

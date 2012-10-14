@@ -45,17 +45,7 @@ namespace UELib.Core
 		public uint Line;
 		public uint TextPos;
 
-		/// <summary>
-		/// UE3 Only
-		/// </summary>
 		protected int _MinAlignment
-		{
-			get;
-			private set;
-		}
-
-		// Script
-		protected uint _ScriptSize
 		{
 			get;
 			private set;
@@ -63,7 +53,8 @@ namespace UELib.Core
 
 		public uint ScriptSize
 		{
-			get{ return _ScriptSize; }
+			get;
+			private set;
 		}
 
 		protected int _FriendlyNameIndex = -1;
@@ -146,7 +137,7 @@ namespace UELib.Core
 		public UStruct()
 		{
 			// Don't release because structs have scripts, but if ScriptSize == 0 this will still be done!
-			_bReleaseBuffer = false;
+			_ShouldReleaseBuffer = false;
 		}
 
 		protected override void Deserialize()
@@ -209,8 +200,8 @@ namespace UELib.Core
 
 			var scriptSkipSize = 0;
 			// ScriptSize
-			_ScriptSize = _Buffer.ReadUInt32();
-			NoteRead( "_ScriptSize", _ScriptSize );
+			ScriptSize = _Buffer.ReadUInt32();
+			NoteRead( "_ScriptSize", ScriptSize );
 			
 			if( _Buffer.Version >= 639 )   // 639
 			{
@@ -222,12 +213,12 @@ namespace UELib.Core
 			}
 			else 
 			{
-				scriptSkipSize = (int)_ScriptSize;
+				scriptSkipSize = (int)ScriptSize;
 			}
 			_ScriptOffset = _Buffer.Position;
 
 			// Code Statements
-			if( _ScriptSize > 0 )
+			if( ScriptSize > 0 )
 			{
 				ByteCodeManager = new UByteCodeDecompiler( this );
 				// ScriptSize is not a true size in UT2004 and below and MoonBase's version (587)
@@ -242,7 +233,7 @@ namespace UELib.Core
 			}
 			else
 			{
-				_bReleaseBuffer = true; 
+				_ShouldReleaseBuffer = true; 
 			}
 
 			// TODO: Corrigate Version
@@ -251,7 +242,7 @@ namespace UELib.Core
 				StructFlags = _Buffer.ReadUInt32();
 				NoteRead( "StructFlags", StructFlags );
 
-				_bReleaseBuffer = false;
+				_ShouldReleaseBuffer = false;
 				// Introduced somewhere between 129 - 178
 				DeserializeProperties();
 			}

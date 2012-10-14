@@ -46,7 +46,7 @@ namespace UELib
 		public void Deserialize( IUnrealStream stream )
 		{
 			Name = stream.ReadName();
-			if( Name.IndexOf( "\\" ) != -1 )
+			if( Name.IndexOf( "\\", System.StringComparison.Ordinal ) != -1 )
 			{
 				Name = Name.Replace( "\0", "N_" + TableIndex );
 			}
@@ -103,7 +103,7 @@ namespace UELib
 	/// <summary>
 	/// Represents a unreal table with general deserialized data from a unreal package header.
 	/// </summary>
-	public class UnrealTable : Table
+	public abstract class UnrealTable : Table
 	{
 		#region PreInitialized Members
 		/// <summary>
@@ -160,7 +160,7 @@ namespace UELib
 		/// </summary>
 		public int OuterIndex = 0;
 		public UnrealTable OuterTable{ get{ return Owner.GetIndexTable( OuterIndex ); } }
-		public string OuterName{ get{ UnrealTable t = OuterTable; return t != null ? t.ObjectName : ""; } }
+		public string OuterName{ get{ UnrealTable table = OuterTable; return table != null ? table.ObjectName : ""; } }
 		#endregion
 	}
 
@@ -176,7 +176,7 @@ namespace UELib
 		/// </summary>
 		public int SuperIndex = 0;
 		public UnrealTable SuperTable{ get{ return Owner.GetIndexTable( SuperIndex ); } }
-		public string SuperName{ get{ UnrealTable t = SuperTable; return t != null ? t.ObjectName : ""; } }
+		public string SuperName{ get{ UnrealTable table = SuperTable; return table != null ? table.ObjectName : ""; } }
 
 		/// <summary>
 		/// Object index.
@@ -184,7 +184,7 @@ namespace UELib
 		/// </summary>
 		public int ArchetypeIndex = 0;
 		public UnrealTable ArchetypeTable{ get{ return Owner.GetIndexTable( ArchetypeIndex ); } }
-		public string ArchetypeName{ get{ UnrealTable t = ArchetypeTable; return t != null ? t.ObjectName : ""; } }
+		public string ArchetypeName{ get{ UnrealTable table = ArchetypeTable; return table != null ? table.ObjectName : ""; } }
 
 		public int UnknownIndex;
 

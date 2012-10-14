@@ -11,13 +11,12 @@ namespace UELib.Core
 {
 	[Serializable]
 	[System.Runtime.InteropServices.ComVisible( false )]
-	public class ObjectNode : TreeNode, IDecompileableObjectNode
+	public class ObjectNode : TreeNode, IDecompilableObjectNode
 	{
-		protected IUnrealDecompileable _Object;
-		public virtual IUnrealDecompileable Object
+		public virtual IUnrealDecompilable Object
 		{
-			get{ return _Object; }
-			set{ _Object = value; }
+			get;
+			set;
 		}
 
 		public virtual bool AllowDecompile
@@ -30,9 +29,9 @@ namespace UELib.Core
 			get{ return true; }
 		}
 
-		public ObjectNode( IUnrealDecompileable objectRef )
+		public ObjectNode( IUnrealDecompilable objectRef )
 		{
-			_Object = objectRef;
+			Object = objectRef;
 		}
 
 		protected ObjectNode(SerializationInfo info, StreamingContext context) : base(info, context)
@@ -43,7 +42,7 @@ namespace UELib.Core
 			try
 			{
 				UDecompiler.ResetTabs();
-				return _Object.Decompile();
+				return Object.Decompile();
 			}
 			catch( Exception e )
 			{
@@ -61,7 +60,7 @@ namespace UELib.Core
 			get{ return false; }
 		}
 
-		public DefaultObjectNode( IUnrealDecompileable objectRef ) : base( objectRef )
+		public DefaultObjectNode( IUnrealDecompilable objectRef ) : base( objectRef )
 		{
 			ImageKey = typeof(UProperty).Name;
 			SelectedImageKey = ImageKey;
@@ -73,7 +72,7 @@ namespace UELib.Core
 
 	[Serializable]
 	[System.Runtime.InteropServices.ComVisible( false )]
-	public class ObjectListNode : TreeNode, IDecompileableNode
+	public class ObjectListNode : TreeNode, IDecompilableNode
 	{
 		public virtual bool AllowDecompile
 		{
@@ -92,7 +91,7 @@ namespace UELib.Core
 		public virtual string Decompile()
 		{
 			string FullView = "";
-			foreach( IDecompileableNode Node in Nodes.OfType<IDecompileableNode>() )
+			foreach( IDecompilableNode Node in Nodes.OfType<IDecompilableNode>() )
 			{
 				if( Node.AllowDecompile )
 				{

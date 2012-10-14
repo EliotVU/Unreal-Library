@@ -149,7 +149,7 @@ namespace UELib.Core
 		/// </summary>
 		public UClass()
 		{
-			_bReleaseBuffer = false;
+			_ShouldReleaseBuffer = false;
 		}
 
 		protected override void Deserialize()
@@ -410,7 +410,7 @@ namespace UELib.Core
 
 		public UTextBuffer()
 		{
-			_bDeserializeOnDemand = true;
+			ShouldDeserializeOnDemand = true;
 		}
 
 		protected override void Deserialize()

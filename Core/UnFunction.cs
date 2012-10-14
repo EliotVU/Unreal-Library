@@ -13,7 +13,7 @@ namespace UELib.Core
 	public partial class UFunction : UStruct
 	{
 		#region Serialized Members
-		public ushort iNative
+		public ushort NativeToken	// Aslo known as iNative.
 		{
 			get;
 			private set;
@@ -89,8 +89,8 @@ namespace UELib.Core
 			{
 			}*/
 
-			iNative = _Buffer.ReadUShort();
-			NoteRead( "iNative", iNative );
+			NativeToken = _Buffer.ReadUShort();
+			NoteRead( "iNative", NativeToken );
 			OperPrecedence = _Buffer.ReadByte();
 			NoteRead( "OperPrecedence", OperPrecedence );
 			if( Package.Version < 69 )

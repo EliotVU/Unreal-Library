@@ -125,7 +125,7 @@ namespace UELib
 	{
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
 		protected readonly IUnrealStream _UnrealStream;
-		private Encoding MyEncoding;
+		private readonly Encoding MyEncoding;
 
 		private uint _Version
 		{
@@ -294,27 +294,27 @@ namespace UELib
 			return ReadIndex();
 		}
 
-		public static int ReadIndexFromBuffer( byte[] bytes, UnrealPackage package )
+		public static int ReadIndexFromBuffer( byte[] value, UnrealPackage package )
 		{
 			if( package.Version >= UELib.UnrealPackage.VINDEXDEPRECATED )
 			{
-				return BitConverter.ToInt32( bytes, 0 );
+				return BitConverter.ToInt32( value, 0 );
 			}
 
 			int index = 0;
-			byte b0 = bytes[0];
+			byte b0 = value[0];
 			if( (b0 & 0x40) != 0 )
 			{
-				byte b1 = bytes[1];
+				byte b1 = value[1];
 				if( (b1 & 0x80) != 0 )
 				{
-					byte b2 = bytes[2];
+					byte b2 = value[2];
 					if( (b2 & 0x80) != 0 )
 					{
-						byte b3 = bytes[3];
+						byte b3 = value[3];
 						if( (b3 & 0x80) != 0 )
 						{
-							byte b4 = bytes[4];
+							byte b4 = value[4];
 							index = b4;
 						}
 						index = (index << 7) + (b3 & 0x7F);
@@ -330,18 +330,9 @@ namespace UELib
 
 		public ulong ReadQWORDFlags()
 		{
-			if( _Version >= 195 )   // This isn't true for all flags, just ObjectFlags, thus not ClassFlags etc!
-			{
-				ulong flags = ReadUInt64();
-				//ulong flags = BitConverter.ToUInt64(BitConverter.GetBytes( ReadUInt64() ).Reverse().ToArray(), 0);
-				//flags = ((uint)(flags & 0x00000000FFFFFFFFU) << 32 ) | (uint)((flags & 0xFFFFFFFF00000000U) >> 32);
-				return flags;
-			}
-			else
-			{
-				ulong flags = ReadUInt32();
-				return flags;
-			}
+			//ulong flags = BitConverter.ToUInt64(BitConverter.GetBytes( ReadUInt64() ).Reverse().ToArray(), 0);
+			//flags = ((uint)(flags & 0x00000000FFFFFFFFU) << 32 ) | (uint)((flags & 0xFFFFFFFF00000000U) >> 32);
+			return _Version >= 195 ? ReadUInt64() : ReadUInt32();
 		}
 
 		public string ReadGuid()
@@ -389,14 +380,16 @@ namespace UELib
 			{
 				byte[] bytes = new byte[4];
 				this.Read( bytes, 0, 4 );
-				uint sig = BitConverter.ToUInt32( bytes, 0 );
-				if( sig == UnrealPackage.Signature_BigEndian )
+				uint readSignature = BitConverter.ToUInt32( bytes, 0 );
+				if( readSignature == UnrealPackage.Signature_BigEndian )
 				{
 					Console.WriteLine( "Encoding:BigEndian" );
 					_BigEndianCode = true;
 				}
 
-				if( !UnrealConfig.SuppressSignature && sig != UnrealPackage.Signature && sig != UnrealPackage.Signature_BigEndian )
+				if( !UnrealConfig.SuppressSignature 
+					&& readSignature != UnrealPackage.Signature 
+					&& readSignature != UnrealPackage.Signature_BigEndian )
 				{
 					throw new System.IO.FileLoadException( path + " isn't a UnrealPackage file!" );
 				}
@@ -586,9 +579,9 @@ namespace UELib
 		/// <summary>
 		///	Skip a amount of bytes.
 		/// </summary>
-		public void Skip( int num )
+		public void Skip( int bytes )
 		{
-			Position += num;
+			Position += bytes;
 		}
 
 		/// <summary>
@@ -845,10 +838,10 @@ namespace UELib
 		/// <summary>
 		///	Skip a amount of bytes.
 		/// </summary>
-		/// <param name="num">The amount of bytes to skip.</param>
-		public void Skip( int num )
+		/// <param name="bytes">The amount of bytes to skip.</param>
+		public void Skip( int bytes )
 		{
-			Position += num;
+			Position += bytes;
 		}
 
 		/// <summary>

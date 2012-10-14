@@ -78,7 +78,7 @@ namespace UELib.Core
 
 			if( HasFunctionFlag( Flags.FunctionFlags.Native ) )
 			{
-				output += iNative > 0 ? FormatNative() + "(" + iNative + ") " : FormatNative() + " ";
+				output += NativeToken > 0 ? FormatNative() + "(" + NativeToken + ") " : FormatNative() + " ";
 			}
 
 			if( HasFunctionFlag( Flags.FunctionFlags.Static ) )

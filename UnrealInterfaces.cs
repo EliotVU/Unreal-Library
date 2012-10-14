@@ -5,7 +5,7 @@ namespace UELib
 	/// <summary>
 	/// Allows an object to decompile itself into text.
 	/// </summary>
-	public interface IUnrealDecompileable
+	public interface IUnrealDecompilable
 	{
 		/// <summary>
 		/// Decompile this object.
@@ -17,7 +17,7 @@ namespace UELib
 	/// <summary>
 	/// Allows an object to be tested whether it can may be decompiled.
 	/// </summary>
-	public interface IDecompileableNode : IUnrealDecompileable
+	public interface IDecompilableNode : IUnrealDecompilable
 	{
 		// FIXME: Internal hack for Unreal Explorer!
 		string Text{ get; set; }
@@ -31,12 +31,12 @@ namespace UELib
 	/// <summary>
 	/// Allows a node to be attached with a decompileable object.
 	/// </summary>
-	public interface IDecompileableObjectNode : IDecompileableNode
+	public interface IDecompilableObjectNode : IDecompilableNode
 	{
 		/// <summary>
 		/// The decompileable object that will be decompiled when this object's Decompile() function is called.
 		/// </summary>
-		IUnrealDecompileable Object{ get; set; }
+		IUnrealDecompilable Object{ get; set; }
 
 		/// <summary>
 		/// Whether the object has a byte's buffer.

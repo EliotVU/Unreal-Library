@@ -330,7 +330,7 @@ namespace UELib.Core
 				}
 
 				// Properties flagged with automated, automatically get those flags added by the compiler.
-				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2k4 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Automated) != 0 )
+				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2K4 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Automated) != 0 )
 				{
 					output += "automated ";
 
@@ -413,7 +413,7 @@ namespace UELib.Core
 					copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Localized;
 				}
 
-				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2k4 )
+				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2K4 )
 				{
 					if( HasPropertyFlag( Flags.PropertyFlagsLO.Cache ) )
 					{

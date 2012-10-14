@@ -211,19 +211,15 @@ namespace UELib.Core
 		/// <summary>
 		/// Whether to release the buffer from memory when this Object is done deserializing.
 		/// </summary>
-		protected bool _bReleaseBuffer = true;
+		protected bool _ShouldReleaseBuffer = true;
 
 		/// <summary>
 		/// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
 		/// </summary>
-		protected bool _bDeserializeOnDemand;
-
-		/// <summary>
-		/// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
-		/// </summary>
-		public bool bDeserializeOnDemand
+		public bool ShouldDeserializeOnDemand
 		{
-			get{ return _bDeserializeOnDemand; }
+			get;
+			set;
 		}
 		#endregion
 
@@ -291,7 +287,7 @@ namespace UELib.Core
 			}
 			finally
 			{
-				if( _bReleaseBuffer )
+				if( _ShouldReleaseBuffer )
 				{
 					_Buffer.Dispose();
 					_Buffer.Close();
@@ -307,58 +303,57 @@ namespace UELib.Core
 		{
 #if DEBUG
 			Console.WriteLine( "" );
-#endif
 			NoteRead( Name, this );
 			NoteRead( "ExportSize", ExportTable.SerialSize );
-			if( HasObjectFlag( Flags.ObjectFlagsLO.HasStack ) )
-			{
-				int node = _Buffer.ReadIndex();
-				/*int StateNode =*/ _Buffer.ReadIndex();
-				/*ulong ProbeMask =*/ _Buffer.ReadUInt64();
-				/*uint LatentAction =*/ _Buffer.ReadUInt32();
-				if( node != 0 )
-				{
-					/*int NodeOffset =*/ _Buffer.ReadIndex();
-				}
-			}
-
-#if SWAT4
-			if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
-			{
-				// 8 bytes: Value: 3
-				// 4 bytes: Value: 1
-				_Buffer.Skip( 12 );
-			}
 #endif
 
-			if( _Buffer.Version > 400 && GetClassName() != "Component" && GetClassName().EndsWith( "Component" ) )
-			{
-				var componentClass = _Buffer.ReadObjectIndex();
-				var componentName = _Buffer.ReadNameIndex();
-			}
-
-			// TODO: Corrigate Version
+			// TODO: Corrigate version
 			if( _Buffer.Version >= 322 )
 			{
+				// TODO: Corrigate version. Fix component detection!
+				if( _Buffer.Version > 400
+					&& HasObjectFlag( Flags.ObjectFlagsHO.PropertiesObject )
+					&& HasObjectFlag( Flags.ObjectFlagsHO.ArchetypeObject ) )
+				{
+					var componentClass = _Buffer.ReadObjectIndex();
+					var componentName = _Buffer.ReadNameIndex();
+				}
+
 				NetIndex = _Buffer.ReadObjectIndex();
 				NoteRead( "NetIndex", NetIndex );
+			}
+			else
+			{
+				if( HasObjectFlag( Flags.ObjectFlagsLO.HasStack ) )
+				{
+					int node = _Buffer.ReadIndex();
+					/*int StateNode =*/ _Buffer.ReadIndex();
+					/*ulong ProbeMask =*/ _Buffer.ReadUInt64();
+					/*uint LatentAction =*/ _Buffer.ReadUInt32();
+					if( node != 0 )
+					{
+						/*int NodeOffset =*/ _Buffer.ReadIndex();
+					}
+				}
+#if SWAT4
+				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
+				{
+					// 8 bytes: Value: 3
+					// 4 bytes: Value: 1
+					_Buffer.Skip( 12 );
+				}
+#endif
 			}
 
 			if( !IsClassType( "Class" ) )
 			{	
-				/*if( Class.Name.EndsWith( "Component" ) ) 
-				{
-					// ComponentClass
-					_Buffer.ReadNameIndex();
-					// ComponentInstance
-					_Buffer.ReadInt32();
-				}*/
-
-				// REMINDER:Ends with a NameIndex referencing to "None"; 1/4/8 bytes
 #if SWAT4
 				if( Package.Build != UnrealPackage.GameBuild.ID.Swat4 )
 				{
+#endif
+					// REMINDER:Ends with a NameIndex referencing to "None"; 1/4/8 bytes
 					DeserializeProperties();
+#if SWAT4
 				}
 				else
 				{
@@ -402,7 +397,7 @@ namespace UELib.Core
 			// because we first deserialize the defaultproperties but we skip the values, which we'll deserialize later on by demand.
 			if( _Properties.Count > 0 )
 			{
-				_bReleaseBuffer = false;
+				_ShouldReleaseBuffer = false;
 			}
 		}
 
@@ -727,8 +722,8 @@ namespace UELib.Core
 	{
 		public bool bReleaseBuffer
 		{
-			get{ return _bReleaseBuffer; }
-			set{ _bReleaseBuffer = value; }
+			get{ return _ShouldReleaseBuffer; }
+			set{ _ShouldReleaseBuffer = value; }
 		}
 
 		/// <summary>
@@ -737,7 +732,7 @@ namespace UELib.Core
 		public UnknownObject()
 		{
 			bReleaseBuffer = false;
-			_bDeserializeOnDemand = true;
+			ShouldDeserializeOnDemand = true;
 		}
 	}
 }

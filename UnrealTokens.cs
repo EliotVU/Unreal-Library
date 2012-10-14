@@ -68,7 +68,7 @@
 		IteratorNext 			= 0x31,		// Continue		(Implied/Explicit)
 
 		StructCmpEq 			= 0x32,		// A == B
-		StructCmpNe 			= 0x33,		// A != B
+		StructCmpNE 			= 0x33,		// A != B
 		UniStringConst 			= 0x34,		// "UNICODE"
 
 		#region FixedByteCodes
@@ -102,9 +102,9 @@
 
 		#region UE3ByteCodes
 			DelegateCmpEq			= 0x3B,	
-			DelegateCmpNe			= 0x3C,	
+			DelegateCmpNE			= 0x3C,	
 			DelegateFunctionCmpEq	= 0x3D,		
-			DelegateFunctionCmpNe	= 0x3E,		
+			DelegateFunctionCmpNE	= 0x3E,		
 			NoDelegate				= 0x3F,		
 
 			#region FixedByteCodes
@@ -277,6 +277,5 @@
 		ContinueLoop		= 0x70,
 		ContinueForeach		= 0x71,
 		ContinueFor			= 0x72,
-		MAX					= 0xFF,
 	}
 }

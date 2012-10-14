@@ -148,7 +148,7 @@ namespace UELib.Core
 
 		private string DecompileStateCode()
 		{
-			if( _ScriptSize <= 0 )
+			if( ScriptSize <= 0 )
 			{
 				return String.Empty;
 			}
