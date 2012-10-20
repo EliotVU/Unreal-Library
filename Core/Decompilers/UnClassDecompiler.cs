@@ -161,7 +161,7 @@ namespace UELib.Core
 				output += " within " + _Within.Name;
 			}
 
-			string rules = FormatFlags();
+			string rules = FormatFlags().Replace( "\t", UnrealConfig.Indention );
 			return output + (String.IsNullOrEmpty( rules ) ? ";" : rules);
 		}
 
