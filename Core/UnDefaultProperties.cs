@@ -240,7 +240,7 @@ namespace UELib.Core
 			{	
 				output = DeserializeDefaultPropertyValue( Type, ref deserializeFlags );	
 			}
-			catch( SerializationException e )
+			catch( DeserializationException e )
 			{
 				output = e.Output;
 			}
@@ -262,7 +262,7 @@ namespace UELib.Core
 		{
 			if( (_Buffer.Position - _ValueOffset) > Size ) 
 			{
-				throw new SerializationException( "end of DefaultProperty reached..." );
+				throw new DeserializationException( "end of DefaultProperty reached..." );
 			}
 
 			string propertyValue = String.Empty;

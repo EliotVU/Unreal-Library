@@ -87,4 +87,15 @@ namespace UELib
 	{
 		UObject ObjectRef{ get; }
 	}
+
+	/// <summary>
+	/// This class is exportable into an non-unreal format
+	/// </summary>
+	public interface IUnrealExportable
+	{
+		string[] ExportableExtensions{ get; }
+
+		bool CompatableExport();
+		void SerializeExport( string desiredExportExtension, System.IO.FileStream exportStream );
+	}
 }

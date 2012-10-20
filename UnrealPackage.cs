@@ -38,7 +38,7 @@ namespace UELib
 	{
 		#region General Members
 		// Reference to the stream used when reading this package
-		public UPackageStream Stream = null;
+		public readonly UPackageStream Stream = null;
 
 		/// <summary>
 		/// The signature of a 'Unreal Package'.
@@ -67,7 +67,7 @@ namespace UELib
 		#endregion
 
 		#region Serialized Members
-		private uint _Version = 0;
+		private uint _Version;
 		public uint Version
 		{
 			get{ return OverrideVersion > 0 ? OverrideVersion : _Version; }
@@ -112,16 +112,10 @@ namespace UELib
 
 		public enum LicenseeVersions : ushort
 		{
-			UnrealEngine = 0,
 			UT2K4 = 29,
-			Unreal2 = 2609,	// 3
 			Borderlands = 58,
 			MirrorsEdge = 43,
 			ThiefDeadlyShadows = 133,
-			Roboblitz = 6,	  
-			GearsOfWar = 9,
-			CrimeCraft = 5,
-			DungeonDefenders = 2,
 			Swat4 = 27,
 		}
 
@@ -187,7 +181,7 @@ namespace UELib
 				Default,
 				Unknown,
 
-				[GameIDAttribute( 547, 547, 28, 32 )]
+				[GameIDAttribute( 547, 547, 28u, 32u )]
 				APB,				// Has custom support!
 
 				[GameIDAttribute( 129, 27 )]
@@ -214,7 +208,16 @@ namespace UELib
 				[GameIDAttribute( 584, 126 )]
 				Singularity,
 
-				[GameIDAttribute( 128, 29 )]
+				[GameIDAttribute( 61, 0 )]
+				Unreal1,
+
+				[GameIDAttribute( 68, 69, 0u, 0u )]
+				UT,
+
+				[GameIDAttribute( 99, 117, 5u, 8u )]
+				UT2003,
+
+				[GameIDAttribute( 118, 128, 25u, 29u )]
 				UT2004,
 
 				[GameIDAttribute( 512, 0 )]
@@ -242,7 +245,7 @@ namespace UELib
 			public ID GameID
 			{
 				get;
-				set;
+				private set;
 			}
 
 			public bool IsConsoleCompressed;
@@ -319,7 +322,7 @@ namespace UELib
 		/// <summary>
 		/// Size of the Header. Basically points to the first Object in the package.
 		/// </summary>
-		public uint HeaderSize;
+		private uint _HeaderSize;
 
 		public string Group;
 
@@ -388,7 +391,7 @@ namespace UELib
 		/// <summary>
 		/// UE1- Only!
 		/// </summary>
-		private List<int> _HeritageTableList = null;
+		private List<int> _HeritageTableList;
 
 		public struct GenerationInfo : IUnrealDeserializableClass
 		{
@@ -415,17 +418,9 @@ namespace UELib
 		}
 
 		/// <summary>
-		/// > UE1 Only!
-		/// </summary>
-		private UArray<GenerationInfo> _GenerationInfoList = null;
-
-		/// <summary>
 		/// List of package generations.
 		/// </summary>
-		public UArray<GenerationInfo> GenerationsList
-		{
-			get{ return _GenerationInfoList; }	   
-		}
+		public UArray<GenerationInfo> GenerationsList{ get; private set; }
 
 		/// <summary>
 		/// The Engine version this package was created with
@@ -440,59 +435,27 @@ namespace UELib
 		public int CookerVersion;
 
 		public uint CompressionFlags;
-		public UArray<CompressedChunk> CompressedChunks = null;
+		public UArray<CompressedChunk> CompressedChunks;
 
 		/// <summary>
 		/// List of unique unreal names.
 		/// </summary>
-		private List<UnrealNameTable> _NameTableList = null;
-
-		/// <summary>
-		/// List of unique unreal names.
-		/// </summary>
-		public List<UnrealNameTable> NameTableList
-		{
-			get{ return _NameTableList; }
-		}
+		public List<UnrealNameTable> NameTableList{ get; private set; }
 
 		/// <summary>
 		/// List of info about exported objects.
 		/// </summary>
-		private List<UnrealExportTable> _ExportTableList = null;
-
-		/// <summary>
-		/// List of info about exported objects.
-		/// </summary>
-		public List<UnrealExportTable> ExportTableList
-		{
-			get{ return _ExportTableList; }
-		}
+		public List<UnrealExportTable> ExportTableList{ get; private set; }
 
 		/// <summary>
 		/// List of info about imported objects.
 		/// </summary>
-		private List<UnrealImportTable> _ImportTableList = null;
-
-		/// <summary>
-		/// List of info about imported objects.
-		/// </summary>
-		public List<UnrealImportTable> ImportTableList
-		{
-			get{ return _ImportTableList; }
-		}
+		public List<UnrealImportTable> ImportTableList{ get; private set; }
 
 		/// <summary>
 		/// List of info about dependency objects.
 		/// </summary>
-		private List<UnrealDependsTable> _DependsTableList = null;
-
-		/// <summary>
-		/// List of info about dependency objects.
-		/// </summary>
-		public List<UnrealDependsTable> DependsTableList
-		{
-			get{ return _DependsTableList; }
-		}
+		public List<UnrealDependsTable> DependsTableList{ get; private set; }
 		#endregion
 
 		#region Initialized Members
@@ -538,12 +501,17 @@ namespace UELib
 		/// <param name="stream">A loaded UELib.PackageStream.</param>
 		private UnrealPackage( UPackageStream stream )
 		{
+			GenerationsList = null;
+			NameTableList = null;
+			ExportTableList = null;
+			ImportTableList = null;
+			DependsTableList = null;
 			ObjectsList = null;
 			_FullPackageName = stream.Name;
 			Stream = stream;
 		}
 
-		public bool IsBigEndian = false;
+		public bool IsBigEndian;
 
 		/// <summary>
 		/// Load a package and return it with all the basic data that can be found in every unreal package.
@@ -574,7 +542,7 @@ namespace UELib
 			if( pkg.Version >= 249 )
 			{
 				// Offset to the first class(not object) in the package.
-				pkg.HeaderSize = stream.ReadUInt32();
+				pkg._HeaderSize = stream.ReadUInt32();
 				if( pkg.Version >= 269 )
 				{
 					// UPK content category e.g. Weapons, Sounds or Meshes.
@@ -629,7 +597,7 @@ namespace UELib
 					stream.Skip( 16 );
 				}
 				#endif
-				pkg._GenerationInfoList = new UArray<GenerationInfo>( stream, generationCount );	
+				pkg.GenerationsList = new UArray<GenerationInfo>( stream, generationCount );	
 
 				if( pkg.Version >= 245 )
 				{
@@ -703,7 +671,7 @@ namespace UELib
 			if( pkg.Data.NameCount > 0 )
 			{
 				stream.Seek( pkg.Data.NameOffset, SeekOrigin.Begin );
-				pkg._NameTableList = new List<UnrealNameTable>( (int)pkg.Data.NameCount );
+				pkg.NameTableList = new List<UnrealNameTable>( (int)pkg.Data.NameCount );
 				for( var i = 0; i < pkg.Data.NameCount; ++ i )
 				{
 					var nameEntry = new UnrealNameTable {TableOffset = stream.Position, TableIndex = i};
@@ -717,7 +685,7 @@ namespace UELib
 			if( pkg.Data.ExportCount > 0 )
 			{
 				stream.Seek( pkg.Data.ExportOffset, SeekOrigin.Begin );
-				pkg._ExportTableList = new List<UnrealExportTable>( (int)pkg.Data.ExportCount );
+				pkg.ExportTableList = new List<UnrealExportTable>( (int)pkg.Data.ExportCount );
 				for( var i = 0; i < pkg.Data.ExportCount; ++ i )
 				{
 					var exp = new UnrealExportTable{TableOffset = stream.Position, TableIndex = i, Owner = pkg};
@@ -743,7 +711,7 @@ namespace UELib
 			if( pkg.Data.ImportCount > 0 )
 			{
 				stream.Seek( pkg.Data.ImportOffset, SeekOrigin.Begin );
-				pkg._ImportTableList = new List<UnrealImportTable>( (int)pkg.Data.ImportCount );
+				pkg.ImportTableList = new List<UnrealImportTable>( (int)pkg.Data.ImportCount );
 				for( var i = 0; i < pkg.Data.ImportCount; ++ i )
 				{
 					var imp = new UnrealImportTable{TableOffset = stream.Position, TableIndex = i, Owner = pkg};
@@ -766,9 +734,6 @@ namespace UELib
 				}
 			}*/
 
-			// AdditionalPackagesToCook
-			// TextureAllocations
-
 			return pkg;
 		}
 
@@ -783,8 +748,8 @@ namespace UELib
 		// Used for importing purposes.
 		public void InitializeExportObjects( InitFlags initFlags = InitFlags.All )
 		{
-			ObjectsList = new List<UObject>( _ExportTableList.Count );
-			foreach( var exp in _ExportTableList )
+			ObjectsList = new List<UObject>( ExportTableList.Count );
+			foreach( var exp in ExportTableList )
 			{
 				CreateObjectForTable( exp );
 			}
@@ -804,8 +769,8 @@ namespace UELib
 		// Used for importing purposes.
 		public void InitializeImportObjects( bool bInitialize = true )
 		{
-			ObjectsList = new List<UObject>( _ImportTableList.Count );
-			foreach( var imp in _ImportTableList )
+			ObjectsList = new List<UObject>( ImportTableList.Count );
+			foreach( var imp in ImportTableList )
 			{
 				CreateObjectForTable( imp );
 			}
@@ -857,7 +822,7 @@ namespace UELib
 						ImportObjects();
 					}
 				}
-				catch
+				catch( Exception )
 				{
 					//can be treat with as a warning!
 					//throw new Exception( "An exception occurred while importing objects" );
@@ -870,7 +835,7 @@ namespace UELib
 						LinkObjects();
 					}
 				}
-				catch
+				catch( Exception )
 				{
 					//throw new LinkingObjectsException();
 				}
@@ -888,7 +853,7 @@ namespace UELib
 				Object = 0xFF,
 			}
 
-			public Id EventId;
+			public readonly Id EventId;
 
 			public PackageEventArgs( Id eventId )
 			{
@@ -918,12 +883,12 @@ namespace UELib
 		{		
 			ObjectsList = new List<UObject>();
 			OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Construct ) );
-			foreach( var exp in _ExportTableList )
+			foreach( var exp in ExportTableList )
 			{
 				CreateObjectForTable( exp );
 			}
 
-			foreach( var imp in _ImportTableList )
+			foreach( var imp in ImportTableList )
 			{
 				CreateObjectForTable( imp );
 			}
@@ -936,9 +901,9 @@ namespace UELib
 		{
 			// Only exports should be deserialized and PostInitialized!
 			OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Deserialize ) );
-			foreach( var exp in _ExportTableList )
+			foreach( var exp in ExportTableList )
 			{
-				if( !(exp.Object.GetType() == typeof(UnknownObject) || exp.Object.ShouldDeserializeOnDemand) )
+				if( !(exp.Object is UnknownObject || exp.Object.ShouldDeserializeOnDemand) )
 				{
 					//Console.WriteLine( "Deserializing object:" + exp.ObjectName );
 					exp.Object.BeginDeserializing();
@@ -973,11 +938,11 @@ namespace UELib
 		{
 			// Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
 			OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Link ) );
-			foreach( var exp in _ExportTableList )		
+			foreach( var exp in ExportTableList )		
 			{
 				try
 				{
-					if( !(exp.Object.GetType() == typeof(UnknownObject)) )
+					if( !(exp.Object is UnknownObject) )
 					{
 						exp.Object.PostInitialize();
 					}
@@ -985,8 +950,7 @@ namespace UELib
 				}
 				catch( InvalidCastException )
 				{
-					//Exp.Object.
-					continue;
+					Console.WriteLine( "InvalidCastException occurred on object: " + exp.Object );
 				}
 			}
 		}
@@ -1072,7 +1036,7 @@ namespace UELib
 		{
 			T.Object = obj;
 			obj.Package = this;
-			obj.NameTable = _NameTableList[T.ObjectIndex];
+			obj.NameTable = NameTableList[T.ObjectIndex];
 			obj.Table = T;
 
 			if( T is UnrealExportTable )
@@ -1102,8 +1066,8 @@ namespace UELib
 		/// <returns>The found UELib.Core.UObject if any.</returns>
 		public UObject GetIndexObject( int objectIndex )
 		{
-			return (objectIndex < 0 ? _ImportTableList[-objectIndex - 1].Object 
-						: (objectIndex > 0 ? _ExportTableList[objectIndex - 1].Object 
+			return (objectIndex < 0 ? ImportTableList[-objectIndex - 1].Object 
+						: (objectIndex > 0 ? ExportTableList[objectIndex - 1].Object 
 						: null));
 		}
 
@@ -1124,7 +1088,7 @@ namespace UELib
 		/// <returns>The name at specified NameIndex.</returns>
 		public string GetIndexName( int nameIndex )
 		{
-			return _NameTableList[nameIndex].Name;
+			return NameTableList[nameIndex].Name;
 		}
 
 		/// <summary>
@@ -1140,13 +1104,13 @@ namespace UELib
 		{
 			try
 			{
-				return 	(tableIndex < 0 ? _ImportTableList[-tableIndex - 1] 
-						: (tableIndex > 0 ? (UnrealTable)_ExportTableList[tableIndex - 1] 
+				return 	(tableIndex < 0 ? ImportTableList[-tableIndex - 1] 
+						: (tableIndex > 0 ? (UnrealTable)ExportTableList[tableIndex - 1] 
 						: null));
 			}
 			catch( ArgumentOutOfRangeException )
 			{
-				return _ExportTableList[0];
+				return ExportTableList[0];
 			}
 		}
 
@@ -1163,7 +1127,7 @@ namespace UELib
 				return null;
 			}
 
-			var obj = ObjectsList.Find( o => String.Compare( o.Name, objectName, true ) == 0 &&
+			var obj = ObjectsList.Find( o => System.String.Compare(o.Name, objectName, System.StringComparison.OrdinalIgnoreCase) == 0 &&
 				(checkForSubclass ? o.GetType().IsSubclassOf( type ) : o.GetType() == type) );
 			return obj;
 		}

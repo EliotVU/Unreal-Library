@@ -21,24 +21,24 @@ namespace UELib
 	}
 
 	[Serializable]
-	public class SerializationException : UnrealException
+	public class DeserializationException : UnrealException
 	{
 		[System.NonSerializedAttribute]
 		public readonly string Output;
 
-		public SerializationException()
+		public DeserializationException()
 		{
 			Output = "SerializationException";
 		}
 
-		public SerializationException( string output ) : base( output )
+		public DeserializationException( string output ) : base( output )
 		{
 			Output = output;
 		}
 	}
 
 	[Serializable]
-	public class DecompilingCastException : SerializationException
+	public class DecompilingCastException : DeserializationException
 	{
 	}
 

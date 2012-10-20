@@ -236,7 +236,7 @@ namespace UELib.Core
 				_ShouldReleaseBuffer = true; 
 			}
 
-			// TODO: Corrigate Version
+			// TODO: Corrigate Version.
 			if( IsPureStruct() && _Buffer.Version >= 220 )
 			{
 				StructFlags = _Buffer.ReadUInt32();

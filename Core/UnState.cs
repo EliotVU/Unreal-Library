@@ -135,7 +135,7 @@ namespace UELib.Core
 		{
 			if( size > (_Buffer.Length - _Buffer.Position) )
 			{
-				throw new SerializationException( Name + ": Allocation past end of stream detected! Size:" + size + " Subject:" + testSubject );
+				throw new DeserializationException( Name + ": Allocation past end of stream detected! Size:" + size + " Subject:" + testSubject );
 			}
 			//System.Diagnostics.Debug.Assert( size <= (_Buffer.Length - _Buffer.Position), Name + ": Allocation past end of stream detected! " + size );
 		}

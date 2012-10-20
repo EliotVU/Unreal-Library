@@ -494,6 +494,11 @@ namespace UELib.Core
 			return Name;
 		}
 
+		public bool ResistsInGroup()
+		{
+			return Outer != null && Outer.GetClassName() == "Package";
+		}
+
 		/// <summary>
 		/// Gets the highest outer relative from the specified @offset.
 		/// </summary>
@@ -671,8 +676,8 @@ namespace UELib.Core
 		internal void NoteRead( string varName, object varObject )
 		{
 			Console.WriteLine( _Buffer.Position 
-				+ ":".PadLeft( 4, ' ' ) 
-				+ varName.PadRight( 32, ' ' ) 
+				+ ":".PadLeft( 6, ' ' ) 
+				+ varName.PadRight( 36, ' ' ) 
 				+ " => " + (varObject != null ? varObject.ToString() : "null") );
 		}
 
@@ -720,18 +725,12 @@ namespace UELib.Core
 	/// </summary>
 	public sealed class UnknownObject : UObject
 	{
-		public bool bReleaseBuffer
-		{
-			get{ return _ShouldReleaseBuffer; }
-			set{ _ShouldReleaseBuffer = value; }
-		}
-
 		/// <summary>
 		///	Creates a new instance of the UELib.Core.UnknownObject class. 
 		/// </summary>
 		public UnknownObject()
 		{
-			bReleaseBuffer = false;
+			_ShouldReleaseBuffer = true;
 			ShouldDeserializeOnDemand = true;
 		}
 	}

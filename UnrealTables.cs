@@ -214,7 +214,6 @@ namespace UELib
 		public Dictionary<int, int> ComponentMap;
 		public List<int> NetObjects;
 		public string Guid;
-
 		#endregion
 
 		#region Writing Related
@@ -228,7 +227,6 @@ namespace UELib
 			OuterIndex 		= stream.ReadInt32();
 			ObjectIndex 	= stream.ReadNameIndex( out ObjectNumber );	
 			
-			// GoW Version
 			if( stream.Version >= 220 )
 			{
 				ArchetypeIndex = stream.ReadInt32();
@@ -268,7 +266,6 @@ namespace UELib
 			{
 				if( stream.Version < 543 )
 				{
-					// ComponentMap
 					int componentMapCount = stream.ReadInt32();
 					if( componentMapCount > 0 )
 					{
