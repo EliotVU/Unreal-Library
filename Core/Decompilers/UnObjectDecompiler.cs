@@ -49,6 +49,11 @@ namespace UELib.Core
 				return UDecompilingState.Tabs + "// This object has no properties!\r\n";
 
 			string output = String.Empty;
+			
+			#if DEBUG
+			output += UDecompilingState.Tabs + "// Object Offset:" + UnrealMethods.FlagToString( (uint)ExportTable.SerialOffset ) + "\r\n";
+			#endif
+
 			for( int i = 0; i < _Properties.Count; ++ i )
 			{
 				string propOutput = _Properties[i].Decompile();
