@@ -50,18 +50,8 @@ namespace UELib.Core
 		/// Whether this property is part of an array, and the index into it
 		/// </summary>
 	   	public int ArrayIndex = -1;
-
-		private long _PropertyOffset;
-		public long PropertyOffset
-		{
-			get{ return _PropertyOffset; }
-		}
-
-		private long _ValueOffset;
-		public long ValueOffset
-		{
-			get{ return _ValueOffset; }
-		}
+		public long PropertyOffset{ get; private set; }
+		public long ValueOffset{ get; private set; }
 
 		internal byte TempFlags;
 
@@ -140,7 +130,7 @@ namespace UELib.Core
 
 		public bool Deserialize()
 		{
-			_PropertyOffset = _Buffer.Position;
+			PropertyOffset = _Buffer.Position;
 
 			int num;
 			NameIndex = _Buffer.ReadNameIndex( out num );
@@ -196,7 +186,7 @@ namespace UELib.Core
 				}
 			}
 
-			_ValueOffset = _Buffer.Position;
+			ValueOffset = _Buffer.Position;
 			try
 			{
 				DeserializeValue();	
@@ -206,7 +196,7 @@ namespace UELib.Core
 				// Size is only accurate before 220
 				if( _Buffer.Version < 220 )
 				{
-					_Buffer.Position = _ValueOffset + Size;
+					_Buffer.Position = ValueOffset + Size;
 				}
 			}
 			return true;
@@ -235,7 +225,7 @@ namespace UELib.Core
 			string bakItemName = ItemName;
 			string bakName = Name;
 
-			_Buffer.Seek( _ValueOffset, System.IO.SeekOrigin.Begin );
+			_Buffer.Seek( ValueOffset, System.IO.SeekOrigin.Begin );
 			try
 			{	
 				output = DeserializeDefaultPropertyValue( Type, ref deserializeFlags );	
@@ -260,7 +250,7 @@ namespace UELib.Core
 		/// <returns>The deserialized value if any.</returns>
 		private string DeserializeDefaultPropertyValue( PropertyType type, ref DeserializeFlags deserializeFlags )
 		{
-			if( (_Buffer.Position - _ValueOffset) > Size ) 
+			if( (_Buffer.Position - ValueOffset) > Size ) 
 			{
 				throw new DeserializationException( "end of DefaultProperty reached..." );
 			}
@@ -350,7 +340,7 @@ namespace UELib.Core
 									obj.BeginDeserializing();										
 									if( obj.Properties != null && obj.Properties.Count > 0 )
 									{
-										propertyValue += obj.Decompile() + "\r\n" + UDecompiler.Tabs;
+										propertyValue += obj.Decompile() + "\r\n" + UDecompilingState.Tabs;
 
 										/*propertyValue = "begin object class=" + obj.GetClassName() + " name=" + obj.Name + "\r\n";
 											UDecompiler.AddTabs( 1 );
@@ -709,8 +699,8 @@ namespace UELib.Core
 
 						if( fallback )
 						{
-							int innerSize = Size - (int)(_Buffer.Position - _ValueOffset);
-							propertyValue += "\r\n" + UDecompiler.Tabs + "\tDataSize:" + innerSize + " */";
+							int innerSize = Size - (int)(_Buffer.Position - ValueOffset);
+							propertyValue += "\r\n" + UDecompilingState.Tabs + "\tDataSize:" + innerSize + " */";
 							break;
 						}
 
@@ -755,7 +745,7 @@ namespace UELib.Core
 								{
 									propertyValue += Name + "(" + i + ")=" + elementvalue + 
 										(i != arraySize - 1 
-											? "\r\n" + UDecompiler.Tabs
+											? "\r\n" + UDecompilingState.Tabs
 											: String.Empty);
 								}
 								// Restore, in case it changed between this loop.
@@ -775,7 +765,7 @@ namespace UELib.Core
 			}
 			catch( Exception e )
 			{             
-                return propertyValue + "// " + e.Message + "\r\n" + UDecompiler.Tabs;                          
+                return propertyValue + "// " + e.Message + "\r\n" + UDecompilingState.Tabs;                          
 			}
 			return propertyValue;
 		}

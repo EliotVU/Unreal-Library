@@ -207,7 +207,7 @@ namespace UELib.Core
 					(
 						curType == nextType 
 						? ((numParms >= 5 && numParms % 5 == 0) 
-						  	? ",\r\n\t" + UDecompiler.Tabs 
+						  	? ",\r\n\t" + UDecompilingState.Tabs 
 						  	: ", "
 						  ) 
 						: ";\r\n"
@@ -216,7 +216,7 @@ namespace UELib.Core
 				}
 				else
 				{
-					output += (numParms >= 5 ? "\r\n" : String.Empty) + UDecompiler.Tabs + "local " + _ChildLocals[i].Decompile() + 
+					output += (numParms >= 5 ? "\r\n" : String.Empty) + UDecompilingState.Tabs + "local " + _ChildLocals[i].Decompile() + 
 					(
 						(nextType != curType || String.IsNullOrEmpty( nextType ) ) 
 						? ";\r\n" 
@@ -231,7 +231,7 @@ namespace UELib.Core
 
 		private string FormatCode()
 		{
-			UDecompiler.AddTabs( 1 );
+			UDecompilingState.AddTabs( 1 );
 			string locals = FormatLocals();
 			string code = String.Empty;
 			try
@@ -244,7 +244,7 @@ namespace UELib.Core
 			}
 			finally
 			{
-				UDecompiler.RemoveTabs( 1 );
+				UDecompilingState.RemoveTabs( 1 );
 			}
 
 			// Empty function!

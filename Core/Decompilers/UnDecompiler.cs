@@ -1275,7 +1275,7 @@ namespace UELib.Core
 
 				var output = new StringBuilder();
 				// Original indention, so that we can restore it later, necessary if decompilation fails to reduce nesting indention.
-				string initTabs = UDecompiler.Tabs;
+				string initTabs = UDecompilingState.Tabs;
 
 #if DEBUG && DEBUG_TOKENPOSITIONS
 				UDecompiler.AddTabs( 3 );
@@ -1342,13 +1342,13 @@ namespace UELib.Core
 								// HACK: for multiple cases for one block of code, etc!
 								if( PreDecrementTabs > 0 )
 								{
-									UDecompiler.RemoveTabs( PreDecrementTabs );
+									UDecompilingState.RemoveTabs( PreDecrementTabs );
 									PreDecrementTabs = 0;
 								}
 
 								if( PreIncrementTabs > 0 )
 								{
-									UDecompiler.AddTabs( PreIncrementTabs );
+									UDecompilingState.AddTabs( PreIncrementTabs );
 									PreIncrementTabs = 0;
 								}
 
@@ -1356,7 +1356,7 @@ namespace UELib.Core
 								{
 									if( PreComment.Length != 0 )
 									{
-										tokenOutput = PreComment + "\r\n" + UDecompiler.Tabs + tokenOutput;
+										tokenOutput = PreComment + "\r\n" + UDecompilingState.Tabs + tokenOutput;
 										PreComment = String.Empty;
 									}
 
@@ -1397,7 +1397,7 @@ namespace UELib.Core
 
 								if( spewOutput )
 								{
-									output.Append( UDecompiler.Tabs + tokenOutput );
+									output.Append( UDecompilingState.Tabs + tokenOutput );
 									// One of the decompiled tokens wanted to be ended.
 									if( CanAddSemicolon )
 									{
@@ -1417,13 +1417,13 @@ namespace UELib.Core
 							//Postprocess output==========
 							if( PostDecrementTabs > 0 )
 							{
-								UDecompiler.RemoveTabs( PostDecrementTabs );
+								UDecompilingState.RemoveTabs( PostDecrementTabs );
 								PostDecrementTabs = 0;
 							}
 
 							if( PostIncrementTabs > 0 )
 							{
-								UDecompiler.AddTabs( PostIncrementTabs );
+								UDecompilingState.AddTabs( PostIncrementTabs );
 								PostIncrementTabs = 0;
 							}
 
@@ -1441,8 +1441,8 @@ namespace UELib.Core
 							}
 							catch( Exception e )
 							{
-								output.Append( "\r\n" + UDecompiler.Tabs + "// Failed to format nests!:" + e + "\r\n" 
-									+ UDecompiler.Tabs + "// " + _Nester.Nests.Count + " & " + _Nester.Nests[_Nester.Nests.Count-1] );
+								output.Append( "\r\n" + UDecompilingState.Tabs + "// Failed to format nests!:" + e + "\r\n" 
+									+ UDecompilingState.Tabs + "// " + _Nester.Nests.Count + " & " + _Nester.Nests[_Nester.Nests.Count-1] );
 								spewOutput = true;		
 							}
 
@@ -1450,11 +1450,11 @@ namespace UELib.Core
 						}
 						catch( Exception e )
 						{
-							output.Append( "\r\n" + UDecompiler.Tabs + "// Failed to decompile this line:\r\n" );
-							UDecompiler.AddTabs( 1 );
-							output.Append( UDecompiler.Tabs + "/* " + FormatTokens( tokenBeginIndex, CurrentTokenIndex ) + " */\r\n" );
-							UDecompiler.RemoveTabs( 1 );
-							output.Append( UDecompiler.Tabs + "// " + FormatTabs( e.Message ) );
+							output.Append( "\r\n" + UDecompilingState.Tabs + "// Failed to decompile this line:\r\n" );
+							UDecompilingState.AddTabs( 1 );
+							output.Append( UDecompilingState.Tabs + "/* " + FormatTokens( tokenBeginIndex, CurrentTokenIndex ) + " */\r\n" );
+							UDecompilingState.RemoveTabs( 1 );
+							output.Append( UDecompilingState.Tabs + "// " + FormatTabs( e.Message ) );
 							spewOutput = true;
 						}
 					}
@@ -1466,8 +1466,8 @@ namespace UELib.Core
 					}
 					catch( Exception e )
 					{
-						output.Append( "\r\n" + UDecompiler.Tabs + "// Failed to format remaining nests!:" + e.ToString() + "\r\n" 
-							+ UDecompiler.Tabs + "// " + _Nester.Nests.Count + " & " + _Nester.Nests[_Nester.Nests.Count-1].ToString() );
+						output.Append( "\r\n" + UDecompilingState.Tabs + "// Failed to format remaining nests!:" + e.ToString() + "\r\n" 
+							+ UDecompilingState.Tabs + "// " + _Nester.Nests.Count + " & " + _Nester.Nests[_Nester.Nests.Count-1].ToString() );
 						spewOutput = true;		
 					}
 					
@@ -1476,15 +1476,15 @@ namespace UELib.Core
 				{
 					output.AppendFormat( 
 						"{0} // Failed to decompile this {1}'s code.\r\n {2} at position {3} \r\n Message: {4} \r\n\r\n StackTrace: {5}",
- 						UDecompiler.Tabs, 
+ 						UDecompilingState.Tabs, 
 						Owner.Class.Name, 
-						UDecompiler.Tabs,
+						UDecompilingState.Tabs,
 						CodePosition, 
 						FormatTabs( e.Message ), 
 						FormatTabs( e.StackTrace )
 					);
 				}
-				UDecompiler.Tabs = initTabs;
+				UDecompilingState.Tabs = initTabs;
 				FunctionToken.lastOperPrecedence = 255;
 				return output.ToString();
 			}
@@ -1493,7 +1493,7 @@ namespace UELib.Core
 
 			private static string FormatTabs( string nonTabbedText )
 			{
-				return nonTabbedText.Replace( "\n", "\n" + UDecompiler.Tabs );
+				return nonTabbedText.Replace( "\n", "\n" + UDecompilingState.Tabs );
 			}
 
 			private string FormatTokens( int beginIndex, int endIndex )
@@ -1501,7 +1501,7 @@ namespace UELib.Core
 				string output = String.Empty;
 				for( int i = beginIndex; i < endIndex; ++ i )
 				{
-					output += DeserializedTokens[i].GetType().Name + (i % 4 == 0 ? "\r\n" + UDecompiler.Tabs : " ");
+					output += DeserializedTokens[i].GetType().Name + (i % 4 == 0 ? "\r\n" + UDecompilingState.Tabs : " ");
 				}
 				return output;
 			}
@@ -1515,7 +1515,7 @@ namespace UELib.Core
 					{
 						if( ((isStateLabel && !_TempLabels[i].Name.StartsWith( "J0x", StringComparison.Ordinal )) || (!isStateLabel && _TempLabels[i].Name.StartsWith( "J0x", StringComparison.Ordinal ))) )
 						{
-							output += "\r\n" + (isStateLabel ? _TempLabels[i].Name : UDecompiler.Tabs + _TempLabels[i].Name) + ":\r\n";
+							output += "\r\n" + (isStateLabel ? _TempLabels[i].Name : UDecompilingState.Tabs + _TempLabels[i].Name) + ":\r\n";
 
 							_TempLabels.RemoveAt( i );
 							-- i;
@@ -1537,7 +1537,7 @@ namespace UELib.Core
 						if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position ) || outputAllRemainingNests )
 						{
 							output += _Nester.Nests[i].Decompile();
-							UDecompiler.AddTabs( 1 );
+							UDecompilingState.AddTabs( 1 );
 
 							_NestChain.Add( _Nester.Nests[i] );
 							_Nester.Nests.RemoveAt( i -- );
@@ -1551,7 +1551,7 @@ namespace UELib.Core
 					{
 						if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position + CurrentToken.Size ) || outputAllRemainingNests )
 						{
-							UDecompiler.RemoveTabs( 1 );
+							UDecompilingState.RemoveTabs( 1 );
 							output += _Nester.Nests[i].Decompile();
 
 							// TODO: This should not happen!
@@ -1679,7 +1679,7 @@ namespace UELib.Core
 
 				public override string ToString()
 				{
-					return String.Format( "\r\nType:{0}\r\nToken:{1:x2}\r\nPosition:{2}\r\nSize:{3}", GetType().Name, RepresentToken, Position, Size ).Replace( "\n", "\n" + UDecompiler.Tabs );
+					return String.Format( "\r\nType:{0}\r\nToken:{1:x2}\r\nPosition:{2}\r\nSize:{3}", GetType().Name, RepresentToken, Position, Size ).Replace( "\n", "\n" + UDecompilingState.Tabs );
 				}
 			}
 
@@ -2361,7 +2361,7 @@ namespace UELib.Core
 								if( nestEnd.Position - Size == Position )
 								{
 									// HACK: This should be handled by UByteCodeDecompiler.Decompile()
-									UDecompiler.RemoveTabs( 1 );
+									UDecompilingState.RemoveTabs( 1 );
 									Decompiler._NestChain.RemoveAt( Decompiler._NestChain.Count - 1 );
 									Decompiler._Nester.Nests.Remove( nestEnd );
 
@@ -2373,9 +2373,9 @@ namespace UELib.Core
 									// HACK: This should be handled by UByteCodeDecompiler.Decompile()
 									return "}" + "\r\n" + 
 										(UnrealConfig.SuppressComments 
-										? UDecompiler.Tabs + "else" 
-										: UDecompiler.Tabs + String.Format( "// End:0x{0:x2}", CodeOffset ) + "\r\n" + 
-											UDecompiler.Tabs + "else");
+										? UDecompilingState.Tabs + "else" 
+										: UDecompilingState.Tabs + String.Format( "// End:0x{0:x2}", CodeOffset ) + "\r\n" + 
+											UDecompilingState.Tabs + "else");
 								}
 							}
 						}
@@ -2446,7 +2446,7 @@ namespace UELib.Core
 					{
 						Decompiler.CanAddSemicolon = true;
 						return output + "\r\n" 
-							+ UDecompiler.Tabs + "\tgoto " + String.Format( "J0x{0:x2}", CodeOffset ); 
+							+ UDecompilingState.Tabs + "\tgoto " + String.Format( "J0x{0:x2}", CodeOffset ); 
 					}
 
 					Decompiler.CanAddSemicolon = false;

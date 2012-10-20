@@ -24,16 +24,16 @@ namespace UELib.Core
 			}
 
 			string output = "begin object name=" + Name + " class=" + Class.Name + " \r\n";
-			UDecompiler.AddTabs( 1 );
+			UDecompilingState.AddTabs( 1 );
 			try
 			{
 				output += DecompileProperties();	
 			}
 			finally
 			{
-				UDecompiler.RemoveTabs( 1 );
+				UDecompilingState.RemoveTabs( 1 );
 			}
-			return output + UDecompiler.Tabs + "object end";		
+			return output + UDecompilingState.Tabs + "object end";		
 		}
 
 		// Ment to be overriden!
@@ -46,7 +46,7 @@ namespace UELib.Core
 		public string DecompileProperties()
 		{
 			if( _Properties == null || _Properties.Count == 0 )
-				return UDecompiler.Tabs + "// This object has no properties!\r\n";
+				return UDecompilingState.Tabs + "// This object has no properties!\r\n";
 
 			string output = String.Empty;
 			for( int i = 0; i < _Properties.Count; ++ i )
@@ -63,7 +63,7 @@ namespace UELib.Core
 				}
 
 				// FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
-				output += UDecompiler.Tabs +
+				output += UDecompilingState.Tabs +
 #if DEBUG
 				"/*" + UnrealMethods.FlagToString( (uint)_Properties[i].Tag.PropertyOffset ) + "*/\t" +
 #endif

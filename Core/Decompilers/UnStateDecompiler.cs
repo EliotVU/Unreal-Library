@@ -27,12 +27,12 @@ namespace UELib.Core
 		public override string Decompile()
 		{	
 			string content = FormatHeader() + UnrealConfig.PrintBeginBracket();
-			UDecompiler.AddTabs( 1 );
+			UDecompilingState.AddTabs( 1 );
 				content += FormatIgnores() +
 					FormatConstants() +
 					FormatFunctions() + (_ChildFunctions.Count == 0 ? "\r\n" : String.Empty) + 
 					DecompileStateCode();
-			UDecompiler.RemoveTabs( 1 );
+			UDecompilingState.RemoveTabs( 1 );
 			content += UnrealConfig.PrintEndBracket();	
 			return content;
 		}
@@ -85,7 +85,7 @@ namespace UELib.Core
 				return String.Empty;
 			}
 
-			string Output = "\r\n" + UDecompiler.Tabs + "ignores ";
+			string Output = "\r\n" + UDecompilingState.Tabs + "ignores ";
 			List<string> ignores = new List<string>();
 			//long ignoremask = _IgnoreMask;
 			foreach( UFunction Func in _ChildFunctions )
@@ -110,7 +110,7 @@ namespace UELib.Core
 			for( int i = 0; i < ignores.Count; ++ i )
 			{
 				Output += ignores[i] + ((ignores[i] != ignores.Last()) ? ((", " + 
-					((i % 5 == 0 && i >= 5) ? "\r\n\t" + UDecompiler.Tabs : String.Empty))) : (";\r\n"));
+					((i % 5 == 0 && i >= 5) ? "\r\n\t" + UDecompilingState.Tabs : String.Empty))) : (";\r\n"));
 			}
 			return (ignores.Count > 0) ? Output : String.Empty;
 		}
@@ -137,7 +137,7 @@ namespace UELib.Core
 			foreach( UFunction Func in functions )
 			{
 				string FuncOutput = String.Empty;
-				FuncOutput = UDecompiler.Tabs + Func.Decompile();
+				FuncOutput = UDecompilingState.Tabs + Func.Decompile();
 
 				// And add a empty line between all functions, except empty functions!
 				Output += (FuncOutput.EndsWith( ");" ) ? ("\r\n" + FuncOutput) : 

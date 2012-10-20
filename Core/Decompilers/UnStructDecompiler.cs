@@ -25,9 +25,9 @@ namespace UELib.Core
 		/// <returns></returns>
 		public override string Decompile()
 		{
-			string content = UDecompiler.Tabs + FormatHeader() +
+			string content = UDecompilingState.Tabs + FormatHeader() +
 				UnrealConfig.PrintBeginBracket();
-			UDecompiler.AddTabs( 1 );
+			UDecompilingState.AddTabs( 1 );
 			string props = FormatProperties();
 
 			string defProps = FormatDefaultProperties();
@@ -35,7 +35,7 @@ namespace UELib.Core
 			{
 				defProps += "\r\n";
 			}
-			UDecompiler.RemoveTabs( 1 );
+			UDecompilingState.RemoveTabs( 1 );
 			content += props + defProps;
 			if( content.EndsWith( "\r\n" ) )
 			{
@@ -118,7 +118,7 @@ namespace UELib.Core
 			{
 				try
 				{
-					Output += "\r\n" + UDecompiler.Tabs + C.Decompile();
+					Output += "\r\n" + UDecompilingState.Tabs + C.Decompile();
 				}
 				catch
 				{
@@ -179,7 +179,7 @@ namespace UELib.Core
 				try
 				{
 					// Fix for properties within structs				   
-					Output += "\r\n" + _ChildProperties[i].PreDecompile() + UDecompiler.Tabs + "var"; 
+					Output += "\r\n" + _ChildProperties[i].PreDecompile() + UDecompilingState.Tabs + "var"; 
 					try
 					{
 						if( _ChildProperties[i].CategoryIndex > -1 
@@ -223,23 +223,23 @@ namespace UELib.Core
  				}
 				else
 				{
-					output += "\r\n" + UDecompiler.Tabs + "structdefaultproperties\r\n" + UDecompiler.Tabs + "{\r\n";
+					output += "\r\n" + UDecompilingState.Tabs + "structdefaultproperties\r\n" + UDecompilingState.Tabs + "{\r\n";
 				}
 
-				UDecompiler.AddTabs( 1 );
+				UDecompilingState.AddTabs( 1 );
 				try
 				{
 					innerOutput = DecompileProperties();
 				}
 				catch( Exception e )
 				{
-					innerOutput = UDecompiler.Tabs + "// " + e.GetType().Name + " occurred while decompiling properties!\r\n";
+					innerOutput = UDecompilingState.Tabs + "// " + e.GetType().Name + " occurred while decompiling properties!\r\n";
 				}
 				finally
 				{
-					UDecompiler.RemoveTabs( 1 );
+					UDecompilingState.RemoveTabs( 1 );
 				}
-				output += innerOutput + UDecompiler.Tabs + "}";
+				output += innerOutput + UDecompilingState.Tabs + "}";
 			}
 			return innerOutput.Length != 0 ? output : String.Empty;
 		}

@@ -41,7 +41,7 @@ namespace UELib.Core
 		{
 			try
 			{
-				UDecompiler.ResetTabs();
+				UDecompilingState.ResetTabs();
 				return Object.Decompile();
 			}
 			catch( Exception e )

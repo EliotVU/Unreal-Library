@@ -14,6 +14,7 @@ namespace UELib
 		public static bool SuppressSignature;
 		public static string PreBeginBracket = NewLine + "{0}";
 		public static string PreEndBracket = NewLine + "{0}";
+		public static string Indention = "\t";
 		public enum CookedPlatform
 		{
 			PC,
@@ -38,16 +39,16 @@ namespace UELib
 
 		internal static string PrintBeginBracket()
 		{
-			return String.Format( PreBeginBracket, UDecompiler.Tabs ) + "{";
+			return String.Format( PreBeginBracket, UDecompilingState.Tabs ) + "{";
 		}
 
 		internal static string PrintEndBracket()
 		{
-			return String.Format( PreEndBracket, UDecompiler.Tabs ) + "}";
+			return String.Format( PreEndBracket, UDecompilingState.Tabs ) + "}";
 		}
 	}
 
-	internal static class UDecompiler
+	internal static class UDecompilingState
 	{
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
 		public static string Tabs = String.Empty;
@@ -56,7 +57,7 @@ namespace UELib
 		{
 			for( int i = 0; i < count; ++ i )
 			{
-				Tabs += "\t";
+				Tabs += UnrealConfig.Indention;
 			}
 		}
 

@@ -16,13 +16,13 @@ namespace UELib.Core
 			UMetaData.UMetaTag tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
 			if( tag != null )
 			{
-				string comment = UDecompiler.Tabs + "/** ";
+				string comment = UDecompilingState.Tabs + "/** ";
 				// Multiline comment?
 				if( tag.TagValue.IndexOf( '\n' ) != -1 )
 				{
-					comment += " \r\n" + UDecompiler.Tabs + " *" 
-						+ tag.TagValue.Replace( "\n", "\n" + UDecompiler.Tabs + " *" ) 
-						+ "\r\n" + UDecompiler.Tabs;
+					comment += " \r\n" + UDecompilingState.Tabs + " *" 
+						+ tag.TagValue.Replace( "\n", "\n" + UDecompilingState.Tabs + " *" ) 
+						+ "\r\n" + UDecompilingState.Tabs;
 				}
 				else
 				{
