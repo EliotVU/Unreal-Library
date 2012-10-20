@@ -169,7 +169,7 @@ namespace UELib
 
 		public static string FlagToString( uint flags )
 		{
-			return flags != 0 ? "0x" + String.Format( "{0:x4}", flags ).PadLeft( 8, '0' ).ToUpper() : String.Empty;
+			return "0x" + String.Format( "{0:x4}", flags ).PadLeft( 8, '0' ).ToUpper();
 		}
 
 		public static string FlagToString( ulong flags )
