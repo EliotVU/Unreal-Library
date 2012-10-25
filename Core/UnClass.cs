@@ -276,7 +276,11 @@ namespace UELib.Core
 								AutoCollapseCategoriesList = DeserializeGroup();
 								NoteRead( "AutoCollapseCategoriesList", AutoCollapseCategoriesList );
 
-								if( Package.Version >= 749 )
+								if( Package.Version >= 749 
+									#if SPECIALFORCE2
+											&& Package.Build != UnrealPackage.GameBuild.ID.SpecialForce2  
+#endif
+									)
 								{
 									// bForceScriptOrder
 									ForceScriptOrder = _Buffer.ReadInt32() > 0;

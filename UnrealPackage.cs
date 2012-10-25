@@ -240,6 +240,9 @@ namespace UELib
 
 				[GameIDAttribute( 832, 46 )]
 				Borderlands2,		// Has custom support!
+
+				[GameIDAttribute( 904, 904, 9u, 9u, 0, 0 )]
+				SpecialForce2,		// Has custom support!
 			}
 
 			public ID GameID

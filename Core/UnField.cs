@@ -75,7 +75,11 @@ namespace UELib.Core
 			// UDK_09_2010?
 
 			// _SuperIndex got moved into UStruct since 700+
-			if( _Buffer.Version < 756 )
+			if( _Buffer.Version < 756 
+#if SPECIALFORCE2
+				|| Package.Build == UnrealPackage.GameBuild.ID.SpecialForce2
+#endif
+				)
 			{
 				// Index to the parent UField object; if any
 				_SuperIndex = _Buffer.ReadObjectIndex();

@@ -42,7 +42,7 @@
     <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -58,7 +58,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2</DefineConstants>
+    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -67,7 +67,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO SPECIALFORCE2</DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
     <Optimize>true</Optimize>
@@ -87,7 +87,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2</DefineConstants>
+    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2</DefineConstants>
     <Optimize>true</Optimize>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
