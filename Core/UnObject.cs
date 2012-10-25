@@ -730,7 +730,7 @@ namespace UELib.Core
 		/// </summary>
 		public UnknownObject()
 		{
-			_ShouldReleaseBuffer = true;
+			_ShouldReleaseBuffer = false;
 			ShouldDeserializeOnDemand = true;
 		}
 	}
