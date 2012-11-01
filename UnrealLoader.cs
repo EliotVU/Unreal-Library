@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UELib.Core;
+﻿using System.Collections.Generic;
 
 namespace UELib
 {
@@ -16,7 +12,7 @@ namespace UELib
 		/// The packages and the list is closed and cleared by the main package that loaded them with ImportObjects(). 
 		/// In any other case the list needs to be cleared manually.
 		/// <summary>
-		private static List<UnrealPackage> CachedPackages = new List<UnrealPackage>();
+		private static readonly List<UnrealPackage> CachedPackages = new List<UnrealPackage>();
 
 		/// <summary>
 		/// Loads the given file specified by PackagePath and
@@ -33,30 +29,30 @@ namespace UELib
 		/// </summary>
 		public static UnrealPackage LoadCachedPackage( string packagePath, System.IO.FileAccess fileAccess = System.IO.FileAccess.Read )
 		{
-			UnrealPackage UPkg = CachedPackages.Find( pkg => pkg.PackageName == System.IO.Path.GetFileNameWithoutExtension( packagePath ) );
-			if( UPkg == null )
+			var package = CachedPackages.Find( pkg => pkg.PackageName == System.IO.Path.GetFileNameWithoutExtension( packagePath ) );
+			if( package == null )
 			{
-				UPkg = LoadPackage( packagePath, fileAccess );
-				if( UPkg != null )
+				package = LoadPackage( packagePath, fileAccess );
+				if( package != null )
 				{
-					CachedPackages.Add( UPkg );
+					CachedPackages.Add( package );
 				}
 			}
-			return UPkg;
+			return package;
 		}
 
 		/// <summary>
 		/// Loads the given file specified by PackagePath and
-		/// returns the serialized UnrealPackage with serialized objects.
+		/// returns the serialized UnrealPackage with deserialized objects.
 		/// </summary>
 		public static UnrealPackage LoadFullPackage( string packagePath, System.IO.FileAccess fileAccess = System.IO.FileAccess.Read )
 		{
-			UnrealPackage UPkg = LoadPackage( packagePath, fileAccess );
-			if( UPkg != null )
+			var package = LoadPackage( packagePath, fileAccess );
+			if( package != null )
 			{
-				UPkg.InitializePackage();
+				package.InitializePackage();
 			}
-			return UPkg;
+			return package;
 		}
 	}
 }
