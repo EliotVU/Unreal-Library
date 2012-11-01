@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany( "" )]
 [assembly: AssemblyProduct( "UELib" )]
-[assembly: AssemblyCopyright( "Copyright 2010 - 2012 Eliot van Uytfanghe." )]
+[assembly: AssemblyCopyright( "© 2012 Eliot van Uytfanghe. All rights reserved." )]
 [assembly: AssemblyTrademark( "" )]
 [assembly: AssemblyCulture( "" )]
 
