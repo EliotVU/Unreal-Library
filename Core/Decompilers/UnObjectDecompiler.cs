@@ -1,6 +1,6 @@
 ﻿/***********************************************************************
  *	Author - Eliot Van Uytfanghe
- *	Copyright - (C) Eliot Van Uytfanghe 2009 - 2010 
+ *	Copyright - (C) Eliot Van Uytfanghe 2009 - 2010
  **********************************************************************/
 using System;
 using System.Collections.Generic;
@@ -23,7 +23,7 @@ namespace UELib.Core
 				BeginDeserializing();
 			}
 
-			string output = "begin object name=" + Name + " class=" + Class.Name + " \r\n";
+			string output = String.Format( "begin object name={0} class={1}\r\n", Name, Class.Name );
 			UDecompilingState.AddTabs( 1 );
 			try
 			{
@@ -33,7 +33,7 @@ namespace UELib.Core
 			{
 				UDecompilingState.RemoveTabs( 1 );
 			}
-			return output + UDecompilingState.Tabs + "object end";		
+			return output + String.Format( "{0}object end\r\n{0}// Reference: {1}'{2}'", UDecompilingState.Tabs, Class.Name, GetOuterGroup() );		
 		}
 
 		// Ment to be overriden!
