@@ -289,7 +289,7 @@ namespace UELib.Core
 						break;
 
 					case PropertyType.FloatProperty:
-						propertyValue = _Buffer.ReadUFloat();
+						propertyValue = _Buffer.ReadFloat().ToUFloat();
 						break;
 
 					case PropertyType.ByteProperty:
@@ -636,7 +636,7 @@ namespace UELib.Core
 						(
 							obj => _Buffer.Version < 513	// UT3 and older 
 								? obj.Name == Name && obj.IsClassType( "ArrayProperty" ) 
-								: obj.Name == Name && obj.IsClassType( "ArrayProperty" ) && obj.Outer == _Owner.Class 
+								: obj.Name == Name && obj.IsClassType( "ArrayProperty" ) 
 						) as UArrayProperty;
 
 						// TODO:FIXME
@@ -772,7 +772,7 @@ namespace UELib.Core
 	}
 
 	/// <summary>
-	/// Represents a Decompileable UPropertyTag.
+	/// Represents a Decompilable UPropertyTag.
 	/// </summary>
 	public sealed class UDefaultProperty : IUnrealDecompilable
 	{

@@ -3268,7 +3268,7 @@ namespace UELib.Core
 
 				public override string Decompile()
 				{
-					return String.Format( "{0:f}", Value ).Replace( ',', '.' ); 
+					return Value.ToUFloat(); 
 				}
 			}
 
@@ -3388,7 +3388,7 @@ namespace UELib.Core
 
 				public override string Decompile()
 				{
-					return String.Format( "vect({0:f}, {1:f}, {2:f})", X, Y, Z ).Replace( ',', '.' );
+					return String.Format( "vect({0}, {1}, {2})", X.ToUFloat(), Y.ToUFloat(), Z.ToUFloat() );
 				}
 			}
 			#endregion

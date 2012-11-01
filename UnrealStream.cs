@@ -72,7 +72,7 @@ namespace UELib
 		/// Reads the next 4 bytes as a float converted to an Unreal float format.
 		/// </summary>
 		/// <returns></returns>
-		string ReadUFloat();
+		float ReadFloat();
 
 		byte ReadByte();
 		ushort ReadUShort();
@@ -125,7 +125,7 @@ namespace UELib
 	{
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
 		protected readonly IUnrealStream _UnrealStream;
-		private readonly Encoding MyEncoding;
+		private readonly Encoding _MyEncoding;
 
 		private uint _Version
 		{
@@ -135,10 +135,10 @@ namespace UELib
 		public UnrealReader( Stream stream, Encoding enc ) : base( stream, enc )
 		{
 			_UnrealStream = stream as IUnrealStream;
-			MyEncoding = enc;
+			_MyEncoding = enc;
 		}
 
-		public string ReadName( int size )
+		private string ReadString( int size )
 		{
 			// Note size 0 is ignored!
 			if( size > 0 ) // ASCII	 	
@@ -157,7 +157,7 @@ namespace UELib
 				//BinReader.ReadByte();
 
 				// Convert Byte Str to a String type
-				if( MyEncoding == Encoding.BigEndianUnicode )
+				if( _MyEncoding == Encoding.BigEndianUnicode )
 				{
 					Array.Reverse( strBytes );
 				}
@@ -178,7 +178,7 @@ namespace UELib
 				BaseStream.Position += 2;
 
 				// Convert Byte Str to a String type
-				if( MyEncoding == Encoding.BigEndianUnicode )
+				if( _MyEncoding == Encoding.BigEndianUnicode )
 				{
 					Array.Reverse( strBytes );
 				}
@@ -195,14 +195,8 @@ namespace UELib
 				return ReadASCIIString();
 			}
 
-			int size =
-			#if !PUBLICRELEASE
-				ReadIndex();
-			#else 
-				ReadByte();
-			#endif
-
-			return ReadName( size );
+			int size = ReadIndex();
+			return ReadString( size );
 		}
 
 		public string ReadASCIIString()
@@ -219,7 +213,7 @@ namespace UELib
 				break;
 			}
 			string s = Encoding.ASCII.GetString( strBytes.ToArray() );
-			if( MyEncoding == Encoding.BigEndianUnicode )
+			if( _MyEncoding == Encoding.BigEndianUnicode )
 			{
 				s.Reverse();
 			}
@@ -241,7 +235,7 @@ namespace UELib
 				break;
 			}
 			string s = Encoding.Unicode.GetString( strBytes.ToArray() );
-			if( MyEncoding == Encoding.BigEndianUnicode )
+			if( _MyEncoding == Encoding.BigEndianUnicode )
 			{
 				s.Reverse();
 			}
@@ -355,27 +349,20 @@ namespace UELib
 		/// <inheritdoc/>
 		public uint Version
 		{
-			get{ return Package != null ? Package.Version : (uint)0; }
+			get{ return Package != null ? Package.Version : 0; }
 		}
 
-		protected UnrealReader _UR = null;
-		public UnrealReader UR
-		{
-			get{ return _UR; }
-		}
+		public UnrealReader UR{ get; protected set; }
+		public UnrealWriter UW{ get; protected set; }
 
-		protected UnrealWriter _UW = null;
-		public UnrealWriter UW
-		{
-			get{ return _UW; }
-		}
+		private long _PeekStartPosition;
 
-		private long _PeekStartPosition = 0;
-
-		internal bool _BigEndianCode = false;
+		public readonly bool BigEndianCode;
 
 		public UPackageStream( string path, FileMode mode, FileAccess access ) : base( path, mode, access )
 		{
+			UR = null;
+			UW = null;
 			if( CanRead && mode == FileMode.Open )
 			{
 				byte[] bytes = new byte[4];
@@ -384,7 +371,7 @@ namespace UELib
 				if( readSignature == UnrealPackage.Signature_BigEndian )
 				{
 					Console.WriteLine( "Encoding:BigEndian" );
-					_BigEndianCode = true;
+					BigEndianCode = true;
 				}
 
 				if( !UnrealConfig.SuppressSignature 
@@ -394,19 +381,19 @@ namespace UELib
 					throw new System.IO.FileLoadException( path + " isn't a UnrealPackage file!" );
 				}
 				Position = 4;
-				_UR = new UnrealReader( this, _BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );		
+				UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );		
 			}
 
 			if(	CanWrite )
 			{
-				_UW = new UnrealWriter( this );
+				UW = new UnrealWriter( this );
 			}
 		}
 
 		public override int Read( byte[] array, int offset, int count )
 		{
 			int r = base.Read( array, offset, count ); 
-			if( _BigEndianCode && r > 1 )
+			if( BigEndianCode && r > 1 )
 			{
 				Array.Reverse( array, 0, r );
 			}
@@ -419,9 +406,9 @@ namespace UELib
 		/// Advances the position.
 		/// </summary>
 		/// <returns>the read float converted to a unreal float string format</returns>
-		public string ReadUFloat()
+		public float ReadFloat()
 		{
-			return String.Format( "{0:f}", _UR.ReadSingle() ).Replace( ',', '.' );
+			return UR.ReadSingle();
 		}
 
 		#region Macros
@@ -434,7 +421,7 @@ namespace UELib
 		/// <returns>the read byte</returns>
 		public new byte ReadByte()
 		{
-			return _UR.ReadByte();
+			return UR.ReadByte();
 		}
 
 		/// <summary>
@@ -445,7 +432,7 @@ namespace UELib
 		/// <returns>the read ushort</returns>
 		public ushort ReadUShort()
 		{
-			return _UR.ReadUInt16();
+			return UR.ReadUInt16();
 		}
 
 		/// <summary>
@@ -456,7 +443,7 @@ namespace UELib
 		/// <returns>the read uint</returns>
 		public uint ReadUInt32()
 		{
-			return _UR.ReadUInt32();
+			return UR.ReadUInt32();
 		}
 
 		/// <summary>
@@ -467,7 +454,7 @@ namespace UELib
 		/// <returns>the read ulong</returns>
 		public ulong ReadUInt64()
 		{
-			return _UR.ReadUInt64();
+			return UR.ReadUInt64();
 		}
 
 		/// <summary>
@@ -478,7 +465,7 @@ namespace UELib
 		/// <returns>the read int</returns>
 		public int ReadInt32()
 		{
-			return _UR.ReadInt32();
+			return UR.ReadInt32();
 		}
 
 		/// <summary>
@@ -489,7 +476,7 @@ namespace UELib
 		/// <returns>the read long</returns>
 		public long ReadInt64()
 		{
-			return _UR.ReadInt64();
+			return UR.ReadInt64();
 		}
 
 		/// <summary>
@@ -500,7 +487,7 @@ namespace UELib
 		/// <returns>the read string without the end \0 char</returns>
 		public string ReadName()
 		{
-			return _UR.ReadName();
+			return UR.ReadName();
 		}
 
 		/// <summary>
@@ -511,7 +498,7 @@ namespace UELib
 		/// <returns>the read string</returns>
 		public string ReadASCIIString()
 		{
-			return _UR.ReadASCIIString();
+			return UR.ReadASCIIString();
 		}
 
 		/// <summary>
@@ -527,7 +514,7 @@ namespace UELib
 		/// <returns>the read index</returns>
 		public int ReadIndex()
 		{
-			return _UR.ReadIndex();
+			return UR.ReadIndex();
 		}
 
 		/// <summary>
@@ -536,7 +523,7 @@ namespace UELib
 		/// <returns></returns>
 		public int ReadObjectIndex()
 		{
-			return _UR.ReadIndex();
+			return UR.ReadIndex();
 		}
 
 		/// <summary>
@@ -545,7 +532,7 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex()
 		{
-			return (int)_UR.ReadNameIndex();
+			return (int)UR.ReadNameIndex();
 		}
 
 		/// <summary>
@@ -554,7 +541,7 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex( out int num )
 		{
-			var index = _UR.ReadNameIndex();
+			var index = UR.ReadNameIndex();
 			if( Version >= 343 )
 			{
 				num = (int)(((ulong)(index) & 0xFFFFFFFF00000000) >> 32) - 1;
@@ -572,7 +559,7 @@ namespace UELib
 		/// <returns>the read guid</returns>
 		public string ReadGuid()
 		{
-			return _UR.ReadGuid();
+			return UR.ReadGuid();
 		}
 		#endregion
 
@@ -617,48 +604,41 @@ namespace UELib
 		/// <summary>
 		/// The package I am streaming for.
 		/// </summary>
-		public UnrealPackage Package{ get; set; }
+		public UnrealPackage Package{ get; private set; }
 
 		/// <inheritdoc/>
 		public uint Version
 		{
-			get { return Package != null ? Package.Version : (uint)0; }
+			get { return Package != null ? Package.Version : 0; }
 		}
 
-		private UnrealReader _UR = null;
-		public UnrealReader UR
-		{
-			get { return _UR; }
-		}
+		public UnrealReader UR{ get; private set; }
+		public UnrealWriter UW{ get; private set; }
 
-		private UnrealWriter _UW = null;
-		public UnrealWriter UW
-		{
-			get { return _UW; }
-		}
-
-		private long _PeekStartPosition = 0;
-		private bool _BigEndianCode = false;
+		private long _PeekStartPosition;
+		public readonly bool BigEndianCode;
 
 		public UObjectStream( UPackageStream str, ref byte[] buffer ) : base( buffer )
 		{
+			UW = null;
+			UR = null;
 			Package = str.Package;
-			_BigEndianCode = str._BigEndianCode;
+			BigEndianCode = str.BigEndianCode;
 			if( CanRead )
 			{
-				_UR = new UnrealReader( this, _BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
+				UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
 			}
 
 			if( CanWrite )
 			{
-				_UW = new UnrealWriter( this );
+				UW = new UnrealWriter( this );
 			}
 		}
 
 		public override int Read( byte[] array, int offset, int count )
 		{
 			int r = base.Read( array, offset, count ); 
-			if( _BigEndianCode && r > 1 )
+			if( BigEndianCode && r > 1 )
 			{
 				Array.Reverse( array, 0, r );
 			}
@@ -671,9 +651,9 @@ namespace UELib
 		/// Advances the position.
 		/// </summary>
 		/// <returns>The read float converted to a unreal float string format</returns>
-		public string ReadUFloat()
+		public float ReadFloat()
 		{
-			return String.Format( "{0:f}", _UR.ReadSingle() ).Replace( ',', '.' );
+			return UR.ReadSingle();
 		}
 
 		#region Macros
@@ -686,7 +666,7 @@ namespace UELib
 		/// <returns>the read byte</returns>
 		public new byte ReadByte()
 		{
-			return _UR.ReadByte();
+			return UR.ReadByte();
 		}
 
 		/// <summary>
@@ -697,7 +677,7 @@ namespace UELib
 		/// <returns>the read ushort</returns>
 		public ushort ReadUShort()
 		{
-			return _UR.ReadUInt16();
+			return UR.ReadUInt16();
 		}
 
 		/// <summary>
@@ -708,7 +688,7 @@ namespace UELib
 		/// <returns>the read uint</returns>
 		public uint ReadUInt32()
 		{
-			return _UR.ReadUInt32();
+			return UR.ReadUInt32();
 		}
 
 		/// <summary>
@@ -719,7 +699,7 @@ namespace UELib
 		/// <returns>the read ulong</returns>
 		public ulong ReadUInt64()
 		{
-			return _UR.ReadUInt64();
+			return UR.ReadUInt64();
 		}
 
 		/// <summary>
@@ -730,7 +710,7 @@ namespace UELib
 		/// <returns>the read int</returns>
 		public int ReadInt32()
 		{
-			return _UR.ReadInt32();
+			return UR.ReadInt32();
 		}
 
 		/// <summary>
@@ -741,7 +721,7 @@ namespace UELib
 		/// <returns>the read long</returns>
 		public long ReadInt64()
 		{
-			return _UR.ReadInt64();
+			return UR.ReadInt64();
 		}
 
 		/// <summary>
@@ -752,7 +732,7 @@ namespace UELib
 		/// <returns>the read string without the end \0 char</returns>
 		public string ReadName()
 		{
-			return _UR.ReadName();
+			return UR.ReadName();
 		}
 
 		/// <summary>
@@ -763,7 +743,7 @@ namespace UELib
 		/// <returns>the read string</returns>
 		public string ReadASCIIString()
 		{
-			return _UR.ReadASCIIString();
+			return UR.ReadASCIIString();
 		}
 
 		/// <summary>
@@ -779,7 +759,7 @@ namespace UELib
 		/// <returns>the read index</returns>
 		public int ReadIndex()
 		{
-			return _UR.ReadIndex();
+			return UR.ReadIndex();
 		}
 
 		/// <summary>
@@ -788,7 +768,7 @@ namespace UELib
 		/// <returns></returns>
 		public int ReadObjectIndex()
 		{
-			return _UR.ReadIndex();
+			return UR.ReadIndex();
 		}
 		
 		/// <summary>
@@ -799,11 +779,11 @@ namespace UELib
 		{
 			if( Version >= 343 )
 			{
-				int index = _UR.ReadInt32();
+				int index = UR.ReadInt32();
 				Skip( 4 );	// NAME_index if > 0
 				return index;		
 			}
-			return _UR.ReadIndex();
+			return UR.ReadIndex();
 		}
 
 		/// <summary>
@@ -814,13 +794,13 @@ namespace UELib
 		{
 			if( Version >= 343 )				
 			{
-				int index = _UR.ReadInt32();	 // Number. For example Model_1.
-				num = _UR.ReadInt32()-1;
+				int index = UR.ReadInt32();	 // Number. For example Model_1.
+				num = UR.ReadInt32()-1;
 				return index;
 			}
 
 			num = -1;
-			return _UR.ReadIndex();
+			return UR.ReadIndex();
 		}
 
 		/// <summary>
@@ -831,7 +811,7 @@ namespace UELib
 		/// <returns>the read guid</returns>
 		public string ReadGuid()
 		{
-			return _UR.ReadGuid();
+			return UR.ReadGuid();
 		}
 		#endregion
 

@@ -7,7 +7,7 @@ namespace UELib
 {
 	public static class UnrealConfig
 	{
-		internal const string NewLine = "\r\n";
+		public const string NewLine = "\r\n";
 
 		#region Config
 		public static bool SuppressComments;
@@ -37,14 +37,19 @@ namespace UELib
 		};
 		#endregion
 
-		internal static string PrintBeginBracket()
+		public static string PrintBeginBracket()
 		{
 			return String.Format( PreBeginBracket, UDecompilingState.Tabs ) + "{";
 		}
 
-		internal static string PrintEndBracket()
+		public static string PrintEndBracket()
 		{
 			return String.Format( PreEndBracket, UDecompilingState.Tabs ) + "}";
+		}
+
+		public static string ToUFloat( this float value )
+		{		
+			return value.ToString( "0.000000" ).TrimEnd( '0' ).Replace( ',', '.' ) + '0';		
 		}
 	}
 

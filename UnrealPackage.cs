@@ -531,7 +531,7 @@ namespace UELib
 
 			// File Type
 			// Signature is tested in UPackageStream
-			pkg.IsBigEndian = stream._BigEndianCode;
+			pkg.IsBigEndian = stream.BigEndianCode;
 
 			// Read as one variable due Big Endian Encoding.
 			pkg.Version = stream.ReadUInt32();
