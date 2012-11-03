@@ -75,12 +75,8 @@ namespace UELib.Core
 			get;
 			private set;
 		}
-	
-		protected UTextBuffer _CppBuffer = null;
-		public UTextBuffer CppBuffer
-		{
-			get{ return _CppBuffer; }
-		}
+
+		public UTextBuffer CppBuffer{ get; protected set; }
 
 		protected List<UConst> _ChildConstants = new List<UConst>();
 		public List<UConst> ChildConstants
@@ -113,20 +109,9 @@ namespace UELib.Core
 		/// </summary>
 		protected long _DefaultPropertiesOffset;
 
-		/// <summary>
-		/// Buffer offset to the start of the struct ByteCodes
-		/// </summary>
-		protected long _ScriptOffset
-		{
-			get;
-			private set;
-		}
 		//protected uint _CodePosition;
 
-		public long ScriptOffset
-		{
-			get{ return _ScriptOffset; }
-		}
+		public long ScriptOffset{ get; protected set; }
 
 		public UStruct.UByteCodeDecompiler ByteCodeManager;
 		#endregion
@@ -139,6 +124,8 @@ namespace UELib.Core
 			// Don't release because structs have scripts, but if ScriptSize == 0 this will still be done!
 			_ShouldReleaseBuffer = false;
 		}
+
+		private const uint VCppText = 190;
 
 		protected override void Deserialize()
 		{
@@ -157,7 +144,7 @@ namespace UELib.Core
 			// TODO: Correct version
 			if( _Buffer.Version > 154 /* UE3 */ )
 			{
-				if( _Buffer.Version > 189 && !Package.IsConsoleCooked() )
+				if( _Buffer.Version >= VCppText && !Package.IsConsoleCooked() )
 				{
 					CppText = _Buffer.ReadInt32();
 					NoteRead( "CppText", CppText );
@@ -215,7 +202,7 @@ namespace UELib.Core
 			{
 				scriptSkipSize = (int)ScriptSize;
 			}
-			_ScriptOffset = _Buffer.Position;
+			ScriptOffset = _Buffer.Position;
 
 			// Code Statements
 			if( ScriptSize > 0 )
@@ -272,7 +259,7 @@ namespace UELib.Core
 
 				if( CppText != 0 )
 				{
-					_CppBuffer = (UTextBuffer)TryGetIndexObject( CppText );
+					CppBuffer = (UTextBuffer)TryGetIndexObject( CppText );
 				}
 			}
 			catch( InvalidCastException ice )

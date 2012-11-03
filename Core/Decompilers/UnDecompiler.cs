@@ -58,8 +58,7 @@ namespace UELib.Core
 			[System.ComponentModel.DefaultValue(-1)]
 			public int CurrentTokenIndex
 			{
-				get;
-				set;
+				get; private set;
 			}
 
 			public uint CurrentTokenCodePosition
@@ -166,7 +165,7 @@ namespace UELib.Core
 					return;
 
 				_WasDeserialized = true;
-				Buffer.Seek( Owner._ScriptOffset, System.IO.SeekOrigin.Begin );
+				Buffer.Seek( Owner.ScriptOffset, System.IO.SeekOrigin.Begin );
 				CodePosition = 0;
 				var codeSize = Owner.ScriptSize;
 		
@@ -850,13 +849,13 @@ namespace UELib.Core
 				tokenItem.Decompiler = this;
 				tokenItem.RepresentToken = tokenCode;
 				tokenItem.Position = tokenPosition;// + (uint)Owner._ScriptOffset;
-				tokenItem.StoragePosition = (uint)Buffer.Position - (uint)Owner._ScriptOffset;
+				tokenItem.StoragePosition = (uint)Buffer.Position - (uint)Owner.ScriptOffset;
 				// IMPORTANT:Add before deserialize, due the possibility that the tokenitem might deserialize other tokens as well.
 				DeserializedTokens.Add( tokenItem );
 				tokenItem.Deserialize();
 				// Includes all sizes of followed tokens as well! e.g. i = i + 1; is summed here but not i = i +1; (not>>)i ++;
 				tokenItem.Size = (ushort)(CodePosition - tokenPosition);
-				tokenItem.StorageSize = (ushort)(tokenItem.StoragePosition - ((uint)Buffer.Position - (uint)Owner._ScriptOffset));
+				tokenItem.StorageSize = (ushort)(tokenItem.StoragePosition - ((uint)Buffer.Position - (uint)Owner.ScriptOffset));
 				tokenItem.PostDeserialized();
 				return tokenItem;
 			}

@@ -350,7 +350,6 @@ namespace UELib.Core
 					return;
 				}
 #endif 
-				NoteRead( "DefaultProperties:", null );
 				DeserializeProperties();
 			}
 		}

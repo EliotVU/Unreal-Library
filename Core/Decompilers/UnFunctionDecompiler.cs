@@ -170,8 +170,19 @@ namespace UELib.Core
 
 		protected override string FormatHeader()
 		{
+			string output = String.Empty;
 			// static function (string?:) Name(Parms)...
-			string output = FormatFlags() + (_ReturnProperty != null ? (_ReturnProperty.GetFriendlyType() + " ") : String.Empty) 
+			if( HasFunctionFlag( Flags.FunctionFlags.Native ) )
+			{
+				// Output native declaration.
+				output = String.Format( "// Export U{0}::exec{1}(FFrame&, void* const)\r\n{2}", 
+					Outer.Name, 
+					Name, 
+					UDecompilingState.Tabs 
+				);			
+			}
+
+			output += FormatFlags() + (_ReturnProperty != null ? (_ReturnProperty.GetFriendlyType() + " ") : String.Empty) 
 				+ FriendlyName + FormatParms();
 			if( HasFunctionFlag( Flags.FunctionFlags.Const ) )
 			{

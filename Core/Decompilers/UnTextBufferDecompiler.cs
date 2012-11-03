@@ -19,17 +19,20 @@ namespace UELib.Core
 
 			if( ScriptText.Length != 0 )
 			{
-				if( Outer is UStruct )
+				// Only ScriptTexts should merge defaultproperties.
+				if( Name == "ScriptText" )
 				{
-					try
+					var outerStruct = Outer as UStruct;
+					if( outerStruct != null && outerStruct.Properties != null && outerStruct.Properties.Count > 0 )
 					{
-						return ScriptText
-							+ (((UClass)Outer).Properties != null && ((UClass)Outer).Properties.Count > 0 ? "// Decompiled with UE Explorer." : "// No DefaultProperties.")
-							+ ((UClass)Outer).FormatDefaultProperties();
-					}
-					catch
-					{
-						return ScriptText + "\r\n// Failed to decompile defaultproperties for this object.";
+						try
+						{
+							return ScriptText + "// Decompiled with UE Explorer." + outerStruct.FormatDefaultProperties();
+						}
+						catch
+						{
+							return ScriptText + "\r\n// Failed to decompile defaultproperties for this object.";
+						}	
 					}
 				}
 				return ScriptText;

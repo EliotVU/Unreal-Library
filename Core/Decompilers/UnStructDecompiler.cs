@@ -11,6 +11,8 @@ namespace UELib.Core
 		/// 
 		///	struct [FLAGS] NAME [extends NAME]
 		///	{
+		///		[STRUCTCPPTEXT]
+		/// 
 		///		[CONSTS]
 		///		
 		///		[ENUMS]
@@ -28,6 +30,7 @@ namespace UELib.Core
 			string content = UDecompilingState.Tabs + FormatHeader() +
 				UnrealConfig.PrintBeginBracket();
 			UDecompilingState.AddTabs( 1 );
+			string cpptext = FormatCPPText();
 			string props = FormatProperties();
 
 			string defProps = FormatDefaultProperties();
@@ -36,7 +39,7 @@ namespace UELib.Core
 				defProps += "\r\n";
 			}
 			UDecompilingState.RemoveTabs( 1 );
-			content += props + defProps;
+			content += cpptext + props + defProps;
 			if( content.EndsWith( "\r\n" ) )
 			{
 				content = content.TrimEnd( '\r', '\n' );
@@ -111,6 +114,27 @@ namespace UELib.Core
 			return Output;
 		}
 
+		protected virtual string CPPTextKeyword
+		{
+			get{ return Package.Version < VCppText ? "cppstruct" : "structcpptext"; }	
+		}
+
+		protected string FormatCPPText()
+		{
+			if( CppBuffer == null )
+			{
+				return String.Empty;
+			}
+
+			string output = String.Format( "\r\n{0}{1}{2}", 
+				UDecompilingState.Tabs, 
+				CPPTextKeyword,
+				UnrealConfig.PrintBeginBracket() 
+			);
+			output += CppBuffer.Decompile() + UnrealConfig.PrintEndBracket() + "\r\n";
+			return output;
+		}
+
 		protected string FormatConstants()
 		{
 			string Output = String.Empty;
@@ -183,7 +207,7 @@ namespace UELib.Core
 					try
 					{
 						if( _ChildProperties[i].CategoryIndex > -1 
-							&& String.Compare( _ChildProperties[i].CategoryName, "None", true ) != 0 )
+							&& String.Compare( _ChildProperties[i].CategoryName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
 						{
 							if( _ChildProperties[i].CategoryName != Name )
 							{

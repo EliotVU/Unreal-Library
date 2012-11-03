@@ -10,10 +10,19 @@ namespace UELib.Core
 {
 	public partial class UClass : UState
 	{
+		protected override string CPPTextKeyword
+		{
+			get{ return "cpptext"; }	
+		}
+
 		/**
 		 * Structure looks like this, even though said XX.GetFriendlyName() actually it's XX.Decompile() which handles then the rest on its own.
 		 * class GetName() extends SuperFieldName
 		 * 		FormatFlags()
+		 * 		
+		 * CPPTEXT
+		 * {
+		 * }
 		 * 		
 		 * Constants
 		 * const C.GetFriendlyName() = C.Value
@@ -69,6 +78,7 @@ namespace UELib.Core
 				"\r\n *******************************************************************************/\r\n";
 
 			content += FormatHeader() +
+				FormatCPPText() +
 				FormatConstants() +
 				FormatEnums() +
 				FormatStructs() +
