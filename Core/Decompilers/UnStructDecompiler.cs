@@ -126,7 +126,7 @@ namespace UELib.Core
 				return String.Empty;
 			}
 
-			string output = String.Format( "\r\n{0}{1}{2}", 
+			string output = String.Format( "\r\n{0}{1}{2}\r\n", 
 				UDecompilingState.Tabs, 
 				CPPTextKeyword,
 				UnrealConfig.PrintBeginBracket() 

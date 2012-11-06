@@ -17,8 +17,15 @@ namespace UELib.Core
 				BeginDeserializing();
 			}
 
-			if( ScriptText.Length != 0 )
+			string output = String.Empty;
+			if( ScriptText.Length <= 2 )
 			{
+				output += "// Stripped";
+			}
+
+			if( ScriptText.Length > 0 )
+			{
+				output = ScriptText + output;
 				// Only ScriptTexts should merge defaultproperties.
 				if( Name == "ScriptText" )
 				{
@@ -27,17 +34,16 @@ namespace UELib.Core
 					{
 						try
 						{
-							return ScriptText + "// Decompiled with UE Explorer." + outerStruct.FormatDefaultProperties();
+							output += "\r\n// Decompiled with UE Explorer." + outerStruct.FormatDefaultProperties();
 						}
 						catch
 						{
-							return ScriptText + "\r\n// Failed to decompile defaultproperties for this object.";
+							output += "\r\n// Failed to decompile defaultproperties for this object.";
 						}	
 					}
 				}
-				return ScriptText;
 			}
-			return "TextBuffer is empty!";
+			return output;
 		}
 	}	
 }
