@@ -1,1 +1,1 @@
-Copyright 2010 - 2012 Eliot van Uytfanghe.
+Copyright 2009-2012 Eliot Van Uytfanghe. All rights reserved.
