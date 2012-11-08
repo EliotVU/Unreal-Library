@@ -2,14 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
-using UELib.Tokens;
 
 namespace UELib.Core
 {
-	public partial class UState : UStruct
+	public partial class UState
 	{
 		/// <summary>
 		/// Decompiles this object into a text format of:
@@ -85,17 +81,17 @@ namespace UELib.Core
 				return String.Empty;
 			}
 
-			string Output = "\r\n" + UDecompilingState.Tabs + "ignores ";
-			List<string> ignores = new List<string>();
+			string output = "\r\n" + UDecompilingState.Tabs + "ignores ";
+			var ignores = new List<string>();
 			//long ignoremask = _IgnoreMask;
-			foreach( UFunction Func in _ChildFunctions )
+			foreach( var func in _ChildFunctions )
 			//foreach( UnrealNameTable N in Owner.NameTableList )
 			{
-				if( (Func.FunctionFlags & (uint)Flags.FunctionFlags.Defined) != 0 )
+				if( (func.FunctionFlags & (uint)Flags.FunctionFlags.Defined) != 0 )
 				{
 					continue;
 				}
-				ignores.Add( Func.Name );
+				ignores.Add( func.Name );
 				/*if( Func.NameIndex >= ProbeMin && 
 					Func.NameIndex < ProbeMax )
 				{
@@ -109,41 +105,40 @@ namespace UELib.Core
 			}		
 			for( int i = 0; i < ignores.Count; ++ i )
 			{
-				Output += ignores[i] + ((ignores[i] != ignores.Last()) ? ((", " + 
+				output += ignores[i] + ((ignores[i] != ignores.Last()) ? ((", " + 
 					((i % 5 == 0 && i >= 5) ? "\r\n\t" + UDecompilingState.Tabs : String.Empty))) : (";\r\n"));
 			}
-			return (ignores.Count > 0) ? Output : String.Empty;
+			return (ignores.Count > 0) ? output : String.Empty;
 		}
 
 		protected string FormatFunctions()
 		{
-			string Output = String.Empty;
+			string output = String.Empty;
 
 			// Remove functions from parent state, e.g. when overriding states.
-			List<UFunction> functions = new List<UFunction>();
-			foreach( UFunction Func in _ChildFunctions )
+			var functions = new List<UFunction>();
+			foreach( var func in _ChildFunctions )
 			{
 				if( GetType() == typeof(UState) )
 				{
 					// Has a body?
-					if( !Func.HasFunctionFlag( Flags.FunctionFlags.Defined ) )
+					if( !func.HasFunctionFlag( Flags.FunctionFlags.Defined ) )
 					{
 						continue;
 					}
 				}
-				functions.Add( Func );
+				functions.Add( func );
 			}
 
-			foreach( UFunction Func in functions )
+			foreach( var func in functions )
 			{
-				string FuncOutput = String.Empty;
-				FuncOutput = UDecompilingState.Tabs + Func.Decompile();
+				string funcOutput = UDecompilingState.Tabs + func.Decompile();
 
 				// And add a empty line between all functions, except empty functions!
-				Output += (FuncOutput.EndsWith( ");" ) ? ("\r\n" + FuncOutput) : 
-					("\r\n" + FuncOutput + (Func != _ChildFunctions.Last() ? "\r\n" : String.Empty)) );
+				output += (funcOutput.EndsWith( ");" ) ? ("\r\n" + funcOutput) : 
+					("\r\n" + funcOutput + (func != _ChildFunctions.Last() ? "\r\n" : String.Empty)) );
 			}
-			return Output + (Output.Length != 0 ? "\r\n" : String.Empty);
+			return output + (output.Length != 0 ? "\r\n" : String.Empty);
 		}
 
 		private string DecompileStateCode()

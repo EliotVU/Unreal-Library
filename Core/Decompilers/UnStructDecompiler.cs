@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace UELib.Core
 {
-	public partial class UStruct : UField
+	public partial class UStruct
 	{
 		/// <summary>
 		/// Decompiles this object into a text format of:
@@ -49,12 +49,13 @@ namespace UELib.Core
 
 		protected override string FormatHeader()
 		{
-			return "struct " + FormatFlags() + Name + (Super != null ? " " + FormatExtends() + " " + Super.Name : String.Empty);
+			return "struct " + FormatFlags() + Name + (Super != null ? " " + FormatExtends() + " " 
+				+ Super.Name : String.Empty);
 		}
 
 		private string FormatFlags()
 		{
-			string Output = String.Empty;
+			string output = String.Empty;
 			if( StructFlags == 0 )
 			{
 				return String.Empty;
@@ -62,56 +63,56 @@ namespace UELib.Core
 
 			if( (StructFlags & (uint)Flags.StructFlags.Native) != 0 )
 			{
-				Output += "native ";
+				output += "native ";
 			}
 
 			if( (StructFlags & (uint)Flags.StructFlags.Export) != 0 )
 			{
-				Output += "export ";
+				output += "export ";
 			}
 
 			if( Package.Version <= 128 )
 			{
 				if( (StructFlags & (uint)Flags.StructFlags.Long) != 0 )
 				{
-					Output += "long ";
+					output += "long ";
 				}
 			}
 
 			if( (StructFlags & (uint)Flags.StructFlags.Init) != 0 && Package.Version < 222 )
 			{
-				Output += "init ";
+				output += "init ";
 			}
 			else if( HasStructFlag( Flags.StructFlags.Transient ) )
 			{
-				Output += "transient ";
+				output += "transient ";
 			}
 
 			if( HasStructFlag( Flags.StructFlags.Atomic ) )
 			{
-				Output += "atomic ";
+				output += "atomic ";
 			}
 
 			if( HasStructFlag( Flags.StructFlags.AtomicWhenCooked ) )
 			{
-				Output += "atomicwhencooked ";
+				output += "atomicwhencooked ";
 			}
 
 			if( HasStructFlag( Flags.StructFlags.Immutable ) )
 			{
-				Output += "immutable ";
+				output += "immutable ";
 			}
 
 			if( HasStructFlag( Flags.StructFlags.ImmutableWhenCooked ) )
 			{
-				Output += "immutablewhencooked ";
+				output += "immutablewhencooked ";
 			}
 
 			if( HasStructFlag( Flags.StructFlags.StrictConfig ) )
 			{
-				Output += "strictconfig ";
+				output += "strictconfig ";
 			}
-			return Output;
+			return output;
 		}
 
 		protected virtual string CPPTextKeyword
@@ -137,55 +138,55 @@ namespace UELib.Core
 
 		protected string FormatConstants()
 		{
-			string Output = String.Empty;
+			string output = String.Empty;
 			foreach( UConst C in _ChildConstants )
 			{
 				try
 				{
-					Output += "\r\n" + UDecompilingState.Tabs + C.Decompile();
+					output += "\r\n" + UDecompilingState.Tabs + C.Decompile();
 				}
 				catch
 				{
-					Output += "\r\nFailed at decompiling const: " + C.Name; 
+					output += string.Format( "\r\nFailed at decompiling const: {0}", C.Name ); 
 				}
 			}
-			return Output + (Output.Length != 0 ? "\r\n" : String.Empty);
+			return output + (output.Length != 0 ? "\r\n" : String.Empty);
 		}
 
 		protected string FormatEnums()
 		{
-			string Output = String.Empty;
+			string output = String.Empty;
 			foreach( UEnum En in _ChildEnums )
 			{
 				try
 				{
 					// And add a empty line between all enums!
-					Output += "\r\n" + En.Decompile() + (En != Enumerable.Last<UEnum>( _ChildEnums ) ? "\r\n" : String.Empty);
+					output += "\r\n" + En.Decompile() + (En != _ChildEnums.Last() ? "\r\n" : String.Empty);
 				}
 				catch
 				{
-					Output += "\r\nFailed at decompiling enum: " + En.Name; 
+					output += string.Format( "\r\nFailed at decompiling enum: {0}", En.Name ); 
 				}
 			}
-			return Output + (Output.Length != 0 ? "\r\n" : String.Empty);
+			return output + (output.Length != 0 ? "\r\n" : String.Empty);
 		}
 
 		protected string FormatStructs()
 		{
-			string Output = String.Empty;
+			string output = String.Empty;
 			foreach( UStruct Str in _ChildStructs )
 			{
 				// And add a empty line between all structs!
 				try
 				{
-					Output += "\r\n" + Str.Decompile() + (Str != Enumerable.Last<UStruct>( _ChildStructs ) ? "\r\n" : String.Empty);
+					output += "\r\n" + Str.Decompile() + (Str != _ChildStructs.Last() ? "\r\n" : String.Empty);
 				}
 				catch
 				{
-					Output += "\r\nFailed at decompiling struct: " + Str.Name; 
+					output += string.Format( "\r\nFailed at decompiling struct: {0}", Str.Name ); 
 				}
 			}
-			return Output + (Output.Length != 0 ? "\r\n" : String.Empty);;
+			return output + (output.Length != 0 ? "\r\n" : String.Empty);
 		}
 
 		protected string FormatProperties()
@@ -207,7 +208,8 @@ namespace UELib.Core
 					try
 					{
 						if( _ChildProperties[i].CategoryIndex > -1 
-							&& String.Compare( _ChildProperties[i].CategoryName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
+							&& String.Compare( _ChildProperties[i].CategoryName, "None", 
+								StringComparison.OrdinalIgnoreCase ) != 0 )
 						{
 							if( _ChildProperties[i].CategoryName != Name )
 							{
@@ -221,14 +223,16 @@ namespace UELib.Core
 					}
 					catch( ArgumentOutOfRangeException )
 					{
-						Output += "/* INDEX:" + _ChildProperties[i].CategoryIndex + " */";
+						Output += string.Format( "/* INDEX:{0} */", _ChildProperties[i].CategoryIndex );
 					}
 
 					Output += " " + _ChildProperties[i].Decompile() + ";";
 				}
 				catch( Exception e )
 				{
-					Output += " /* Property:" + _ChildProperties[i].Name + " throwed the following exception:" + e.Message + " */";
+					Output += string.Format( " /* Property:{0} threw the following exception:{1} */", 
+						_ChildProperties[i].Name, e.Message 
+					);
 				}
 			}
 			return Output + (Output.Length != 0 ? "\r\n" : String.Empty);
@@ -247,7 +251,8 @@ namespace UELib.Core
  				}
 				else
 				{
-					output += "\r\n" + UDecompilingState.Tabs + "structdefaultproperties\r\n" + UDecompilingState.Tabs + "{\r\n";
+					output += "\r\n" + UDecompilingState.Tabs + "structdefaultproperties\r\n" 
+						+ UDecompilingState.Tabs + "{\r\n";
 				}
 
 				UDecompilingState.AddTabs( 1 );
@@ -257,7 +262,9 @@ namespace UELib.Core
 				}
 				catch( Exception e )
 				{
-					innerOutput = UDecompilingState.Tabs + "// " + e.GetType().Name + " occurred while decompiling properties!\r\n";
+					innerOutput = string.Format( "{0}// {1} occurred while decompiling properties!\r\n", 
+						UDecompilingState.Tabs, e.GetType().Name 
+					);
 				}
 				finally
 				{

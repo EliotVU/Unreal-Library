@@ -3,11 +3,6 @@
  *	Copyright - (C) Eliot Van Uytfanghe 2009 - 2010
  **********************************************************************/
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
 
 namespace UELib.Core
 {

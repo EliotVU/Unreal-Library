@@ -1,15 +1,10 @@
 ﻿#if DECOMPILE
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
-using UELib.Flags;
 
 namespace UELib.Core
 {
-	public partial class UEnum : UField
+	public partial class UEnum
 	{
 		/// <summary>
 		/// Decompiles this object into a text format of:
@@ -35,14 +30,14 @@ namespace UELib.Core
 
 		private string FormatNames()
 		{
-			string Output = "\r\n";
+			string output = "\r\n";
 			UDecompilingState.AddTabs( 1 );
 			foreach( int Index in _NamesIndex )
 			{
-				Output += UDecompilingState.Tabs + Package.NameTableList[Index].Name + (Index != _NamesIndex.Last() ? ",\r\n" : String.Empty);
+				output += UDecompilingState.Tabs + Package.NameTableList[Index].Name + (Index != _NamesIndex.Last() ? ",\r\n" : String.Empty);
 			}
 			UDecompilingState.RemoveTabs( 1 );
-			return Output;
+			return output;
 		}
 	}
 }

@@ -2,7 +2,7 @@
 
 namespace UELib.Core
 {
-	public partial class UConst : UField
+	public partial class UConst
 	{
 		/// <summary>
 		/// Decompiles this object into a text format of:

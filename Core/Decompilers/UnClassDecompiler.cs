@@ -2,13 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
 
 namespace UELib.Core
 {
-	public partial class UClass : UState
+	public partial class UClass
 	{
 		protected override string CPPTextKeyword
 		{
@@ -97,12 +94,12 @@ namespace UELib.Core
 				return String.Empty;
 
 			string output = String.Empty;
-			foreach( Dependency Dep in ClassDependenciesList )
+			foreach( var Dep in ClassDependenciesList )
 			{
-				UObject Obj = GetIndexObject( Dep.Class );
-				if( Obj != null )
+				var obj = GetIndexObject( Dep.Class );
+				if( obj != null )
 				{
-					output += " *\t" + Obj.GetClassName() + " " + Obj.GetOuterGroup() + "\r\n";
+					output += " *\t" + obj.GetClassName() + " " + obj.GetOuterGroup() + "\r\n";
 				}
 			}
 			return output.Length != 0 ? "Class Dependencies:\r\n" + output + " *" : String.Empty;
@@ -153,11 +150,13 @@ namespace UELib.Core
 
 		protected override string FormatHeader()
 		{
-			string output = (
-				Super != null && String.Compare( Super.Name, "Interface", true ) == 0 
-				? "interface " 
-				: "class ") 
-				+ Name;
+			string output = 
+			(
+				Super != null 
+				&& String.Compare( Super.Name, "Interface", StringComparison.OrdinalIgnoreCase ) == 0 
+					? "interface " 
+					: "class "
+			) + Name;
 
 			// Object doesn't have an extension so only try add the extension if theres a SuperField
 			if( Super != null )
@@ -191,7 +190,7 @@ namespace UELib.Core
 				}
 				catch
 				{
-					output += "\r\n\t/* An exception occurred while decompiling " + groupName + ". */";
+					output += string.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
 				}
 			}
 			return output;
@@ -213,7 +212,7 @@ namespace UELib.Core
 				}
 				catch
 				{
-					output += "\r\n\t/* An exception occurred while decompiling " + groupName + ". */";
+					output += string.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
 				}
 			}
 			return output;
@@ -223,8 +222,17 @@ namespace UELib.Core
 		{
 			string output = String.Empty;
 
-			try{if( Package.Version >= UnrealPackage.VDLLBIND && _DLLNameIndex != 0 && String.Compare( DLLName, "None", true ) != 0 )
-			{output += "\r\n\tdllbind(" + DLLName + ")";}}catch{}
+			try{
+				if( Package.Version >= UnrealPackage.VDLLBIND && _DLLNameIndex != 0 
+					&& String.Compare(DLLName, "None", StringComparison.OrdinalIgnoreCase) != 0 )
+				{
+					output += "\r\n\tdllbind(" + DLLName + ")";
+				}
+			}
+			catch
+			{
+				output += "\r\n\t// Failed to decompile dllbind";	
+			}
 
 			if( ClassDependenciesList != null )
 			{
@@ -284,7 +292,8 @@ namespace UELib.Core
 			if( (ClassFlags & (uint)Flags.ClassFlags.Config) != 0 )
 			{
 				string inner = ConfigName;
-				if( String.Compare( inner, "None", true ) == 0 || String.Compare( inner, "System", true ) == 0 )
+				if( String.Compare( inner, "None", StringComparison.OrdinalIgnoreCase ) == 0 
+					|| String.Compare( inner, "System", StringComparison.OrdinalIgnoreCase ) == 0 )
 				{
 					inner = String.Empty;
 				}
@@ -407,7 +416,7 @@ namespace UELib.Core
 				}
 			}
 
-			if( Package.Version >= 749 && ((UClass)Super) != null )
+			if( Package.Version >= 749 && Super != null )
 			{
 				if( ForceScriptOrder && !((UClass)Super).ForceScriptOrder )
 				{
@@ -536,7 +545,7 @@ namespace UELib.Core
 					replicatedObjects.Clear();
 				}
 
-				string conditions = String.Empty;
+				string conditions;
 				//codeDec.Goto( offset );
 				//var t = codeDec.CurrentToken;
 				var t = codeDec.NextToken;
@@ -546,7 +555,7 @@ namespace UELib.Core
 				}
 				catch
 				{
-					conditions = "/* Exception occurred while decompiling token:" + t.GetType().Name + "*/";
+					conditions = string.Format( "/* Exception occurred while decompiling token:{0}*/", t.GetType().Name );
 				}
 
 				output += "\r\n\t// Replication block:" + ++ num + "\r\n\t" + 

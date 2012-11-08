@@ -1,14 +1,9 @@
 ﻿#if DECOMPILE
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
 
 namespace UELib.Core
 {
-	public partial class UProperty : UField
+	public partial class UProperty
 	{
 		// Called before the var () is printed.
 		public virtual string PreDecompile()
@@ -148,8 +143,6 @@ namespace UELib.Core
 					output += "skip ";
 					copyFlags &= ~(ulong)Flags.PropertyFlagsLO.SkipParm;
 				}
-
-				// TODO: init flag
 
 				if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.ReturnParm) != 0 )
 				{
@@ -441,7 +434,8 @@ namespace UELib.Core
 				}
 			}
 			// Local's may never output any of their implied flags!
-			if( !IsParm() && _Super != null && String.Compare( _Super.GetClassName(), "Function", true ) == 0 )
+			if( !IsParm() && _Super != null 
+				&& String.Compare( _Super.GetClassName(), "Function", StringComparison.OrdinalIgnoreCase ) == 0 )
 			{
 				return string.Empty;
 			}

@@ -1,14 +1,9 @@
 ﻿#if DECOMPILE
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
 
 namespace UELib.Core
 {
-	public partial class UField : UObject
+	public partial class UField
 	{
 		protected string DecompileMeta()
 		{
@@ -16,9 +11,9 @@ namespace UELib.Core
 		}
 
 		// Introduction of the change from intrinsic to native.
-		protected const uint NativeVersion = 100;
+		private const uint NativeVersion = 100;
 		// Introduction of the change from expands to extends.
-		protected const uint ExtendsVersion = 100;
+		private const uint ExtendsVersion = 100;
 		protected const uint PlaceableVersion = 100;
 
 		protected string FormatNative()

@@ -1,14 +1,10 @@
 ﻿#if DECOMPILE
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
 
 namespace UELib.Core
 {
-	public partial class UFunction : UStruct
+	public partial class UFunction
 	{
 		/// <summary>
 		/// Decompiles this object into a text format of:
@@ -23,7 +19,7 @@ namespace UELib.Core
 		/// <returns></returns>
 		public override string Decompile()
 		{	
-			string code = String.Empty;
+			string code;
 			try
 			{
 				code = FormatCode();
@@ -194,7 +190,7 @@ namespace UELib.Core
 		private string FormatParms()
 		{
 			string parms = "(";
-			foreach( UProperty parm in _ChildParams	)
+			foreach( var parm in _ChildParams	)
 			{
 				parms += parm.Decompile() + (parm != _ChildParams.Last() ? ", " : String.Empty);
 			}
@@ -244,7 +240,7 @@ namespace UELib.Core
 		{
 			UDecompilingState.AddTabs( 1 );
 			string locals = FormatLocals();
-			string code = String.Empty;
+			string code;
 			try
 			{
 				code = ByteCodeManager != null ? ByteCodeManager.Decompile() : String.Empty;
