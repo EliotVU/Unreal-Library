@@ -1,23 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-using UELib;
 
 namespace UELib.Core
 {
 	public class ObjectEventArgs : EventArgs, IRefUObject
 	{
-		protected UObject _Object;
-		public UObject ObjectRef
-		{
-			get{ return _Object; }
-		}
+		public UObject ObjectRef{ get; protected set; }
 
 		public ObjectEventArgs( UObject objectRef )
 		{
-			_Object = objectRef;
+			ObjectRef = objectRef;
 		}
 	}
 
@@ -262,15 +255,7 @@ namespace UELib.Core
 
 			try
 			{
-				var buff = new byte[ExportTable.SerialSize];
-				Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin ); 
-				Package.Stream.Read( buff, 0, ExportTable.SerialSize ); 
-				if( Package.Stream._BigEndianCode )
-				{
-					Array.Reverse( buff );
-				}
-				_Buffer = new UObjectStream( Package.Stream, ref buff );
-
+				ReadBuffer();
 				Deserialize();
 				SerializationState |= ObjectState.Deserialied;
 			}
@@ -289,11 +274,36 @@ namespace UELib.Core
 			{
 				if( _ShouldReleaseBuffer )
 				{
-					_Buffer.Dispose();
-					_Buffer.Close();
-					_Buffer = null;
+					ReleaseBuffer();	
 				}
 			}
+		}
+
+		public void ReadBuffer()
+		{
+			if( _Buffer != null )
+			{
+				ReleaseBuffer();
+			}
+
+			var buff = new byte[ExportTable.SerialSize];
+			Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin ); 
+			Package.Stream.Read( buff, 0, ExportTable.SerialSize ); 
+			if( Package.Stream.BigEndianCode )
+			{
+				Array.Reverse( buff );
+			}
+			_Buffer = new UObjectStream( Package.Stream, ref buff );	
+		}
+
+		protected void ReleaseBuffer()
+		{
+			if( _Buffer == null )
+				return;
+
+			_Buffer.Dispose();
+			_Buffer.Close();
+			_Buffer = null;
 		}
 
 		/// <summary>
@@ -311,13 +321,13 @@ namespace UELib.Core
 			if( _Buffer.Version >= 322 )
 			{
 				// TODO: Corrigate version. Fix component detection!
-				if( _Buffer.Version > 400
-					&& HasObjectFlag( Flags.ObjectFlagsHO.PropertiesObject )
-					&& HasObjectFlag( Flags.ObjectFlagsHO.ArchetypeObject ) )
-				{
-					var componentClass = _Buffer.ReadObjectIndex();
-					var componentName = _Buffer.ReadNameIndex();
-				}
+				//if( _Buffer.Version > 400
+				//    && HasObjectFlag( Flags.ObjectFlagsHO.PropertiesObject )
+				//    && HasObjectFlag( Flags.ObjectFlagsHO.ArchetypeObject ) )
+				//{
+				//    var componentClass = _Buffer.ReadObjectIndex();
+				//    var componentName = _Buffer.ReadNameIndex();
+				//}
 
 				NetIndex = _Buffer.ReadObjectIndex();
 				NoteRead( "NetIndex", NetIndex );
@@ -401,16 +411,20 @@ namespace UELib.Core
 			}
 		}
 
-		// Write this instance to the Owner.Stream at the present position.
-		[Obsolete("TODO")]
+		/// <summary>
+		///	Write this instance to the Owner.Stream at the present position. 
+		/// NOTE: The package's stream must have Write access!
+		/// </summary>
 		public virtual void Serialize()
 		{
+			CopyToPackageStream();
 		}
 
 		/// <summary>
-		/// Save this buffer to the package stream. NOTE:The size must be equal as the original buffer.
+		/// Writes the present Buffer to the package's stream. Saving is not implied.
+		/// NOTE: The package's stream must have Write access!
 		/// </summary>
-		public virtual void CopyToPackageStream()
+		private void CopyToPackageStream()
 		{
 			Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
 			Package.Stream.Write( _Buffer.GetBuffer(), 0, (int)_Buffer.Length );
@@ -556,7 +570,7 @@ namespace UELib.Core
 		/// <returns>TRUE if this object instance class name is equal className, FALSE otherwise.</returns>
 		public bool IsClassType( string className )
 		{
-			return String.Compare( GetClassName(), className, true ) == 0; 
+			return String.Compare( GetClassName(), className, StringComparison.OrdinalIgnoreCase ) == 0; 
 		}
 
 		/// <summary>
@@ -568,9 +582,26 @@ namespace UELib.Core
 		{
 			for( var c = Table.ClassTable; c != null; c = c.ClassTable )
 			{
-				if( String.Compare( c.ObjectName, className, true ) == 0 )
+				if( String.Compare( c.ObjectName, className, StringComparison.OrdinalIgnoreCase ) == 0 )
 					return true;
 			} 
+			return false;
+		}
+
+		/// <summary>
+		/// Tests whether this Object(such as a property) is a member of a specific object, or that of its parent.
+		/// </summary>
+		/// <param name="membersClass">Field to test against.</param>
+		/// <returns>Whether it is a member or not.</returns>
+		public bool IsMember( UField membersClass )
+		{
+			for( var p = membersClass; p != null; p = p.Super )
+			{
+				if( Outer == p )
+				{
+					return true;
+				}
+			}
 			return false;
 		}
 
@@ -651,7 +682,7 @@ namespace UELib.Core
 			var buff = new byte[ExportTable.SerialSize];
 			Package.Stream.Seek( ExportTable.SerialOffset, System.IO.SeekOrigin.Begin );
 			Package.Stream.Read( buff, 0, ExportTable.SerialSize );
-			if( Package.Stream._BigEndianCode )
+			if( Package.Stream.BigEndianCode )
 			{
 				Array.Reverse( buff );
 			}
@@ -673,13 +704,34 @@ namespace UELib.Core
 		/// <param name="varObject">The struct's value that was read.</param>
 		[System.Diagnostics.DebuggerHidden()]
 		[System.Diagnostics.Conditional( "DEBUG" )]
-		internal void NoteRead( string varName, object varObject )
+		internal void NoteRead( string varName, object varObject = null )
 		{
-			Console.WriteLine( _Buffer.Position 
-				+ ":".PadLeft( 6, ' ' ) 
-				+ varName.PadRight( 36, ' ' ) 
-				+ " => " + (varObject != null ? varObject.ToString() : "null") );
+			if( varObject == null )
+			{
+				Console.WriteLine( varName );
+				return;
+			}
+
+			var propertyType = varObject.GetType();
+			Console.WriteLine(
+				"0x" + _Buffer.Position.ToString("x8").ToUpper() 
+				+ " : ".PadLeft( 2, ' ' ) 
+				+ varName.PadRight( 32, ' ' ) + ":" + propertyType.Name.PadRight( 32, ' ' ) 
+				+ " => " + varObject 
+			);
+			//NoteRead( varObject );
 		}
+
+		//internal void NoteRead( object property )
+		//{
+		//    var propertyType = property.GetType();
+		//    Console.WriteLine( 
+		//        _Buffer.Position.ToString("0xx8").ToUpper() 
+		//        + " : ".PadLeft( 2, ' ' ) 
+		//        + propertyType + "::" + propertyType.Name.PadRight( 36, ' ' ) 
+		//        + " => " + property 
+		//    );
+		//}
 
 		[System.Diagnostics.Conditional( "DEBUG_TEST" )]
 		internal void TestNoteRead( string varName, object varObject )
@@ -732,6 +784,23 @@ namespace UELib.Core
 		{
 			_ShouldReleaseBuffer = false;
 			ShouldDeserializeOnDemand = true;
+		}
+
+		protected override void Deserialize()
+		{
+			if( Package.Version > 400 && _Buffer.Length >= 12 )
+			{			 
+				// componentClassIndex
+				_Buffer.Position += sizeof(int);
+				var componentNameIndex = _Buffer.ReadNameIndex();
+				if( componentNameIndex == NameIndex )
+				{
+					base.Deserialize();
+					return;
+				}
+				_Buffer.Position -= 12;
+			}
+			base.Deserialize();
 		}
 	}
 }
