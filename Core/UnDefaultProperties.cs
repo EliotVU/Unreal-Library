@@ -611,8 +611,9 @@ namespace UELib.Core
 								if( tag.Deserialize() )
 								{
 									propertyValue += tag.Name + 
-										(tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty ? "[" + tag.ArrayIndex + "]" : String.Empty) + 
-										"=" + tag.DeserializeValue( deserializeFlags ) + ",";
+										(tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty 
+										? "[" + tag.ArrayIndex + "]" : String.Empty) + 
+											"=" + tag.DeserializeValue( deserializeFlags ) + ",";
 								}
 								else
 								{
@@ -630,30 +631,6 @@ namespace UELib.Core
 
 					case PropertyType.ArrayProperty:
 					{		
-						deserializeFlags |= DeserializeFlags.WithinArray;
-						PropertyType arrayType = PropertyType.None;
-						var arrayObject = _Owner.Package.ObjectsList.Find
-						(
-							obj => _Buffer.Version < 513	// UT3 and older 
-								? obj.Name == Name && obj.IsClassType( "ArrayProperty" ) 
-								: obj.Name == Name && obj.IsClassType( "ArrayProperty" ) 
-						) as UArrayProperty;
-
-						// TODO:FIXME
-						/*foreach( var varType in UnrealConfig.VariableTypes )
-						{
-							if( varType.VName.Equals( Name, StringComparison.OrdinalIgnoreCase ) )
-							{
-								arrayType = (PropertyType)Enum.Parse( typeof(PropertyType), varType.VType );
-							}
-						} */
-						// This is hardcoded for testing purpose.
-						if( String.Compare( Name, "Controls", StringComparison.OrdinalIgnoreCase ) == 0 
-							|| String.Compare( Name, "Components", StringComparison.OrdinalIgnoreCase ) == 0 )
-						{
-							arrayType = PropertyType.ObjectProperty;
-						}
-
 						int arraySize = _Buffer.ReadIndex();
 						if( arraySize <= 0 )
 						{
@@ -661,6 +638,36 @@ namespace UELib.Core
 							break;
 						}
 
+						deserializeFlags |= DeserializeFlags.WithinArray;
+						var arrayType = PropertyType.None;
+
+						// Array type search phase 1-a
+						var firstStruct = _Owner is UStruct ? _Owner as UStruct: _Owner.Class as UStruct;
+						UArrayProperty arrayObject = null;
+						for( var structField = firstStruct; structField != null; structField = structField.Super as UStruct )
+						{
+							arrayObject = structField.ChildProperties.Find( i => i.Name == Name ) as UArrayProperty;
+							if( arrayObject != null )
+							{
+								break;	
+							}
+						}
+
+						// Array type search phase 2
+						if( arrayType == PropertyType.None )
+						{
+							var testType = UnrealConfig.VariableTypes.Find( i => i.Name == Name );
+							if( testType != null )
+							{
+								var obj = _Owner.Package.ObjectsList.Find( i => i.GetOuterGroup() == testType.VFullName ); 
+								if( obj != null )
+								{
+									arrayType = (PropertyType)Enum.Parse( typeof(PropertyType), testType.VType );
+								}
+							}
+						}
+
+						// Array type search phase 1-b
 						bool fallback = false;
 						if( arrayType == PropertyType.None )
 						{
@@ -703,10 +710,6 @@ namespace UELib.Core
 							propertyValue += "\r\n" + UDecompilingState.Tabs + "\tDataSize:" + innerSize + " */";
 							break;
 						}
-
-#if DEBUG
-						//propertyValue = "Type:" + arraytype + " Array.Name:" + AProp.Name + " Inner.Name:" + AProp.InnerProperty.Name + " Inner.Type:" + AProp.InnerProperty.Type + "\r\n" + UDecompiler.Tabs;
-#endif
 
 						string orgName = Name;
 						string orgItemName = ItemName;

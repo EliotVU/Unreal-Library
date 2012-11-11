@@ -22,19 +22,17 @@ namespace UELib
 		}
 		public static CookedPlatform Platform;
 
-		public struct VariableType
+		public class VariableType
 		{
-			public string VName;
+			public string VFullName;
+			public string Name
+			{
+				get{ return VFullName.Substring( VFullName.LastIndexOf( '.' ) + 1 ); }
+			}
 			public string VType;
 		}
 
-		public static List<VariableType> VariableTypes = new List<VariableType>()
-		{
-			new VariableType{VName = "Skins", VType = "ObjectProperty"},
-			new VariableType{VName = "Controls", VType = "ObjectProperty"},
-			new VariableType{VName = "Components", VType = "ObjectProperty"},
-			new VariableType{VName = "Points", VType = "StructProperty"}
-		};
+		public static List<VariableType> VariableTypes;
 		#endregion
 
 		public static string PrintBeginBracket()
