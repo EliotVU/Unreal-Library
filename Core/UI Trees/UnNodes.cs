@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Permissions;
 
 namespace UELib.Core
 {
@@ -34,8 +30,7 @@ namespace UELib.Core
 			Object = objectRef;
 		}
 
-		protected ObjectNode(SerializationInfo info, StreamingContext context) : base(info, context)
-		{}
+		protected ObjectNode(SerializationInfo info, StreamingContext context) : base(info, context){}
 
 		public virtual string Decompile()
 		{
@@ -46,7 +41,8 @@ namespace UELib.Core
 			}
 			catch( Exception e )
 			{
-				return "An " + e.GetType().Name + " occurred in " + Text + " while decompiling.\r\nDetails:\r\n" + e.ToString();
+				return "An " + e.GetType().Name + " occurred in " + Text 
+					+ " while decompiling.\r\nDetails:\r\n" + e;
 			}
 		}
 	}
@@ -85,20 +81,19 @@ namespace UELib.Core
 			SelectedImageKey = ImageKey;
 		}
 
-		protected ObjectListNode(SerializationInfo info, StreamingContext context) : base(info, context)
-		{}
+		protected ObjectListNode(SerializationInfo info, StreamingContext context) : base(info, context){}
 
 		public virtual string Decompile()
 		{
-			string FullView = "";
-			foreach( IDecompilableNode Node in Nodes.OfType<IDecompilableNode>() )
+			string fullView = String.Empty;
+			foreach( IDecompilableNode node in Nodes.OfType<IDecompilableNode>() )
 			{
-				if( Node.AllowDecompile )
+				if( node.AllowDecompile )
 				{
-					FullView += Node.Decompile() + "\r\n";
+					fullView += node.Decompile() + UnrealSyntax.NewLine;
 				}
 			}
-			return FullView;
+			return fullView;
 		}
 	}
 }

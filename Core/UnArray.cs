@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace UELib.Core
 {
@@ -18,7 +16,7 @@ namespace UELib.Core
 		/// Initializes a new instance of the UELib.Core.UArray'T' class
 		/// that is empty and has the default initial capacity.
 		/// </summary>
-		public UArray() : base()
+		public UArray()
 		{
 		}
 
@@ -26,7 +24,7 @@ namespace UELib.Core
 		/// Initialize a new instance based from the specified stream.
 		/// </summary>
 		/// <param name="stream">The stream to use for initializing this array.</param>
-		public UArray( IUnrealStream stream ) : base()
+		public UArray( IUnrealStream stream )
 		{
 			Deserialize( stream );
 		}
@@ -35,7 +33,7 @@ namespace UELib.Core
 		/// Initialize a new instance based from the specified stream.
 		/// </summary>
 		/// <param name="stream">The stream to use for initializing this array.</param>
-		public UArray( IUnrealStream stream, int count ) : base()
+		public UArray( IUnrealStream stream, int count )
 		{
 			Deserialize( stream, count );
 		}
@@ -43,7 +41,7 @@ namespace UELib.Core
 		/// <summary>
 		/// <see cref="System.Collections.Generic.List<T>.List( collection )"/>
 		/// </summary>
-		public UArray( UArray<T> collection ) : base( collection )
+		public UArray( IEnumerable<T> collection ) : base( collection )
 		{
 		}
 
