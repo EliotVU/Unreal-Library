@@ -51,7 +51,7 @@ namespace UELib
 		}
 	}
 
-	internal static class UDecompilingState
+	public static class UDecompilingState
 	{
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
 		public static string Tabs = String.Empty;
@@ -64,9 +64,20 @@ namespace UELib
 			}
 		}
 
-		public static void RemoveTabs( byte count )
+		public static void AddTab()
 		{
+			Tabs += UnrealConfig.Indention;
+		}
+
+		public static void RemoveTabs( int count )
+		{
+			count *= UnrealConfig.Indention.Length;
 			Tabs = count > Tabs.Length ? String.Empty : Tabs.Substring( 0, (Tabs.Length) - count );
+		}
+
+		public static void RemoveTab()
+		{
+			Tabs = Tabs.Substring( 0, Tabs.Length - UnrealConfig.Indention.Length );
 		}
 
 		public static void ResetTabs()
