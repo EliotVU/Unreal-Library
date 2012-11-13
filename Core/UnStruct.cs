@@ -112,7 +112,11 @@ namespace UELib.Core
 
 		//protected uint _CodePosition;
 
-		public long ScriptOffset{ get; protected set; }
+		public long ScriptOffset
+		{
+			get; 
+			private set;
+		}
 
 		public UByteCodeDecompiler ByteCodeManager;
 		#endregion

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace UELib.Core
@@ -9,9 +7,15 @@ namespace UELib.Core
 	public partial class UObject
 	{
 		// Cannot be viewed
-		internal class TextNode:TreeNode{internal TextNode(string n):base(n){}}
-		internal TextNode _ParentNode = null;
-		public bool InitializedNodes = false;
+		internal class TextNode : TreeNode
+		{
+			internal TextNode( string node ) : base(node)
+			{
+			}
+		}
+
+		internal TextNode ParentNode;
+		public bool InitializedNodes;
 
 		public void InitializeNodes( TreeNode node )
 		{
@@ -32,22 +36,14 @@ namespace UELib.Core
 			AddChildren( node );
 			PostAddChildren( node );
 
-			if( GetType().IsSubclassOf( typeof(UProperty) ) )
-			{
-				node.ImageKey = typeof(UProperty).Name;
-			}
-			else
-			{
-				node.ImageKey = GetType().Name;	
-			}
+			node.ImageKey = GetType().IsSubclassOf( typeof(UProperty) ) ? typeof(UProperty).Name : GetType().Name;
 			node.SelectedImageKey = node.ImageKey;
-
 			InitializedNodes = true;
 		}
 
 		protected virtual void InitNodes( TreeNode node )
 		{			
-			_ParentNode = AddSectionNode( node, typeof(UObject).Name );
+			ParentNode = AddSectionNode( node, typeof(UObject).Name );
 			/*foreach( System.Reflection.PropertyInfo PI in GetType().GetProperties() )
 			{
 				// Only properties that are from UObject i.e. ignore properties of children.
@@ -62,11 +58,11 @@ namespace UELib.Core
 				}
 			}*/
 
-			TextNode flagNode = AddTextNode( _ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
+			TextNode flagNode = AddTextNode( ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
 			flagNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), ObjectFlags ) );
 
-			AddTextNode( _ParentNode, "Size:" + ExportTable.SerialSize );
-			AddTextNode( _ParentNode, "Offset:" + ExportTable.SerialOffset );
+			AddTextNode( ParentNode, "Size:" + ExportTable.SerialSize );
+			AddTextNode( ParentNode, "Offset:" + ExportTable.SerialOffset );
 		}
 
 		protected virtual void AddChildren( TreeNode node )
@@ -77,48 +73,43 @@ namespace UELib.Core
 		{
 		}
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic" )]
-		internal TextNode AddSectionNode( TreeNode p, string n )
+		internal static TextNode AddSectionNode( TreeNode p, string n )
 		{
-			var NN = new TextNode( n ){ImageKey = typeof (UObject).Name};
-			NN.SelectedImageKey = NN.ImageKey;
-		   	p.Nodes.Add( NN );
-			return NN;
+			var nn = new TextNode( n ){ImageKey = typeof (UObject).Name};
+			nn.SelectedImageKey = nn.ImageKey;
+		   	p.Nodes.Add( nn );
+			return nn;
 		}
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic" )]
-		internal TextNode AddTextNode( TreeNode p, string n )
+		internal static TextNode AddTextNode( TreeNode p, string n )
 		{
-			TextNode NN = new TextNode( n );
-			NN.ImageKey = "Unknown";
-			NN.SelectedImageKey = NN.ImageKey;
-			p.Nodes.Add( NN );
-			return NN;
+			var nn = new TextNode( n ){ImageKey = "Unknown"};
+			nn.SelectedImageKey = nn.ImageKey;
+			p.Nodes.Add( nn );
+			return nn;
 		}
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic" )]
-		internal ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject )
+		internal static ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject )
 		{
-			ObjectNode ObjN = new ObjectNode( unrealObject );
-			ObjN.Text = unrealObject.Name;
-			unrealObject.InitializeNodes( ObjN );
+			var objN = new ObjectNode( unrealObject ){Text = unrealObject.Name};
+			unrealObject.InitializeNodes( objN );
 
 			if( unrealObject.SerializationState.HasFlag( ObjectState.Errorlized ) )
 			{
-				ObjN.ForeColor = System.Drawing.Color.Red;
+				objN.ForeColor = System.Drawing.Color.Red;
 			}
 
-			parentNode.Nodes.Add( ObjN );
-			return ObjN;
+			parentNode.Nodes.Add( objN );
+			return objN;
 		}
 
-		internal ObjectListNode AddObjectListNode( TreeNode parentNode, string title, IEnumerable<UObject> objects )
+		internal static ObjectListNode AddObjectListNode( TreeNode parentNode, string title, IEnumerable<UObject> objects )
 		{
-			if( objects.Count() > 0 )
+			var uObjects = objects as List<UObject> ?? objects.ToList();
+			if( uObjects.Any() )
 			{	
-				ObjectListNode listNode = new ObjectListNode();
- 				listNode.Text = title;
-				foreach( UObject obj in objects )
+				var listNode = new ObjectListNode{Text = title};
+				foreach( var obj in uObjects )
 				{
 					AddObjectNode( listNode, obj );
 				}

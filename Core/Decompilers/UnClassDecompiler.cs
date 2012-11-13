@@ -94,9 +94,9 @@ namespace UELib.Core
 				return String.Empty;
 
 			string output = String.Empty;
-			foreach( var Dep in ClassDependenciesList )
+			foreach( var dep in ClassDependenciesList )
 			{
-				var obj = GetIndexObject( Dep.Class );
+				var obj = GetIndexObject( dep.Class );
 				if( obj != null )
 				{
 					output += " *\t" + obj.GetClassName() + " " + obj.GetOuterGroup() + "\r\n";
@@ -111,9 +111,9 @@ namespace UELib.Core
 				return String.Empty;
 
 			string output = String.Empty;
-			for( var i = 0; i < PackageImportsList.Count; i ++ )
+			foreach( int packageImport in PackageImportsList )
 			{
-				output += " *\t" + Package.NameTableList[PackageImportsList[i]].Name + "\r\n";
+				output += " *\t" + Package.NameTableList[packageImport].Name + "\r\n";
 				/*for( int j = 1; j < (i + i) && (j + (i + i)) < PackageImportsList.Count; ++ j )
 				{
 					Output += " *\t\t\t" + Owner.NameTableList[PackageImportsList[i + j]].Name + "\r\n";
@@ -177,7 +177,7 @@ namespace UELib.Core
 		private string FormatNameGroup( string groupName, IList<int> enumerableList )
 		{
 			string output = String.Empty;
-			if( enumerableList != null && enumerableList.Count() > 0 )
+			if( enumerableList != null && enumerableList.Any() )
 			{
 				output += "\r\n\t" + groupName + "(";
 				try
@@ -199,7 +199,7 @@ namespace UELib.Core
 		private string FormatObjectGroup( string groupName, IList<int> enumerableList )
 		{
 			string output = String.Empty;
-			if( enumerableList != null && enumerableList.Count() > 0 )
+			if( enumerableList != null && enumerableList.Any() )
 			{
 				output += "\r\n\t" + groupName + "(";
 				try
@@ -237,19 +237,19 @@ namespace UELib.Core
 			if( ClassDependenciesList != null )
 			{
 				var dependson = new List<int>();
-				for( int i = 0; i < ClassDependenciesList.Count; ++ i )
+				foreach( var depedency in ClassDependenciesList )
 				{
-					if( dependson.Exists( dep => dep == ClassDependenciesList[i].Class ) )
+					if( dependson.Exists( dep => dep == depedency.Class ) )
 					{
 						continue;
 					}
-					UClass obj = (UClass)GetIndexObject( ClassDependenciesList[i].Class );
+					var obj = (UClass)GetIndexObject( depedency.Class );
 					// Only exports and those who are further than this class
 					if( obj != null && obj.ExportIndex > ExportIndex )
 					{
 						output += "\r\n\tdependson(" + obj.Name + ")";
 					}
-					dependson.Add( ClassDependenciesList[i].Class );
+					dependson.Add( depedency.Class );
 				}
 			}
 

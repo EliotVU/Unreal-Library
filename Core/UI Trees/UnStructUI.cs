@@ -6,10 +6,10 @@ namespace UELib.Core
 	{
 		protected override void InitNodes( TreeNode node )
 		{
-			_ParentNode = AddSectionNode( node, typeof(UStruct).Name );
+			ParentNode = AddSectionNode( node, typeof(UStruct).Name );
 			if( GetType() == typeof(UStruct) )
 			{
-				var sFlagsNode = AddTextNode( _ParentNode, "Struct Flags:" + UnrealMethods.FlagToString( StructFlags ) );
+				var sFlagsNode = AddTextNode( ParentNode, "Struct Flags:" + UnrealMethods.FlagToString( StructFlags ) );
 				sFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.StructFlags), StructFlags ) );
 			}
 
@@ -20,13 +20,13 @@ namespace UELib.Core
 			}
 
 			#if DEBUG	
-				AddTextNode( _ParentNode, "Script Index:" + ScriptText ); 
-				AddTextNode( _ParentNode, "Children Index:" + Children );
-				AddTextNode( _ParentNode, "CppText Index:" + CppText );
-				AddTextNode( _ParentNode, "FriendlyName Index:" + FriendlyNameIndex );
-				AddTextNode( _ParentNode, "Script Size:" + ScriptSize );
+				AddTextNode( ParentNode, "Script Index:" + ScriptText ); 
+				AddTextNode( ParentNode, "Children Index:" + Children );
+				AddTextNode( ParentNode, "CppText Index:" + CppText );
+				AddTextNode( ParentNode, "FriendlyName Index:" + FriendlyNameIndex );
+				AddTextNode( ParentNode, "Script Size:" + ScriptSize );
 			#endif
-			base.InitNodes( _ParentNode );
+			base.InitNodes( ParentNode );
 		}
 
 		protected override void AddChildren( TreeNode node )

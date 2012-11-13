@@ -47,11 +47,6 @@ namespace UELib.Core
 			{
 				output += "protected ";
 			}
-			else
-			{
-				//Output += "public ";
-			}
-
 			return output;
 		}
 

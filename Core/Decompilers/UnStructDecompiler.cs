@@ -139,15 +139,15 @@ namespace UELib.Core
 		protected string FormatConstants()
 		{
 			string output = String.Empty;
-			foreach( UConst C in _ChildConstants )
+			foreach( UConst c in _ChildConstants )
 			{
 				try
 				{
-					output += "\r\n" + UDecompilingState.Tabs + C.Decompile();
+					output += "\r\n" + UDecompilingState.Tabs + c.Decompile();
 				}
 				catch
 				{
-					output += string.Format( "\r\nFailed at decompiling const: {0}", C.Name ); 
+					output += string.Format( "\r\nFailed at decompiling const: {0}", c.Name ); 
 				}
 			}
 			return output + (output.Length != 0 ? "\r\n" : String.Empty);
@@ -156,16 +156,16 @@ namespace UELib.Core
 		protected string FormatEnums()
 		{
 			string output = String.Empty;
-			foreach( UEnum En in _ChildEnums )
+			foreach( UEnum en in _ChildEnums )
 			{
 				try
 				{
 					// And add a empty line between all enums!
-					output += "\r\n" + En.Decompile() + (En != _ChildEnums.Last() ? "\r\n" : String.Empty);
+					output += "\r\n" + en.Decompile() + (en != _ChildEnums.Last() ? "\r\n" : String.Empty);
 				}
 				catch
 				{
-					output += string.Format( "\r\nFailed at decompiling enum: {0}", En.Name ); 
+					output += string.Format( "\r\nFailed at decompiling enum: {0}", en.Name ); 
 				}
 			}
 			return output + (output.Length != 0 ? "\r\n" : String.Empty);
@@ -174,16 +174,16 @@ namespace UELib.Core
 		protected string FormatStructs()
 		{
 			string output = String.Empty;
-			foreach( UStruct Str in _ChildStructs )
+			foreach( UStruct str in _ChildStructs )
 			{
 				// And add a empty line between all structs!
 				try
 				{
-					output += "\r\n" + Str.Decompile() + (Str != _ChildStructs.Last() ? "\r\n" : String.Empty);
+					output += "\r\n" + str.Decompile() + (str != _ChildStructs.Last() ? "\r\n" : String.Empty);
 				}
 				catch
 				{
-					output += string.Format( "\r\nFailed at decompiling struct: {0}", Str.Name ); 
+					output += string.Format( "\r\nFailed at decompiling struct: {0}", str.Name ); 
 				}
 			}
 			return output + (output.Length != 0 ? "\r\n" : String.Empty);
@@ -191,51 +191,51 @@ namespace UELib.Core
 
 		protected string FormatProperties()
 		{
-			string Output = String.Empty;
+			string output = String.Empty;
 			// Only for pure UStructs because UClass handles this on its own
-			if( (IsClassType( "Struct" ) || IsClassType( "ScriptStruct" )) )
+			if( IsPureStruct() )
 			{
-				Output += FormatConstants() + FormatEnums() + FormatStructs();
+				output += FormatConstants() + FormatEnums() + FormatStructs();
 			}
 
 			// Don't use foreach, screws up order.
-			for( int i = 0; i < _ChildProperties.Count; ++ i )
+			foreach( UProperty property in _ChildProperties )
 			{
 				try
 				{
 					// Fix for properties within structs				   
-					Output += "\r\n" + _ChildProperties[i].PreDecompile() + UDecompilingState.Tabs + "var"; 
+					output += "\r\n" + property.PreDecompile() + UDecompilingState.Tabs + "var"; 
 					try
 					{
-						if( _ChildProperties[i].CategoryIndex > -1 
-							&& String.Compare( _ChildProperties[i].CategoryName, "None", 
-								StringComparison.OrdinalIgnoreCase ) != 0 )
+						if( property.CategoryIndex > -1 
+						    && String.Compare( property.CategoryName, "None", 
+						                       StringComparison.OrdinalIgnoreCase ) != 0 )
 						{
-							if( _ChildProperties[i].CategoryName != Name )
+							if( property.CategoryName != Name )
 							{
-								Output += "(" + _ChildProperties[i].CategoryName + ")";
+								output += "(" + property.CategoryName + ")";
 							}
 							else
 							{
-								Output += "()";
+								output += "()";
 							}
 						}
 					}
 					catch( ArgumentOutOfRangeException )
 					{
-						Output += string.Format( "/* INDEX:{0} */", _ChildProperties[i].CategoryIndex );
+						output += string.Format( "/* INDEX:{0} */", property.CategoryIndex );
 					}
 
-					Output += " " + _ChildProperties[i].Decompile() + ";";
+					output += " " + property.Decompile() + ";";
 				}
 				catch( Exception e )
 				{
-					Output += string.Format( " /* Property:{0} threw the following exception:{1} */", 
-						_ChildProperties[i].Name, e.Message 
-					);
+					output += string.Format( " /* Property:{0} threw the following exception:{1} */", 
+					                         property.Name, e.Message 
+						);
 				}
 			}
-			return Output + (Output.Length != 0 ? "\r\n" : String.Empty);
+			return output + (output.Length != 0 ? "\r\n" : String.Empty);
 		}
 
 		public string FormatDefaultProperties()

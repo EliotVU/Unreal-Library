@@ -32,9 +32,9 @@ namespace UELib.Core
 		{
 			string output = "\r\n";
 			UDecompilingState.AddTabs( 1 );
-			foreach( int Index in _NamesIndex )
+			foreach( int index in _NamesIndex )
 			{
-				output += UDecompilingState.Tabs + Package.NameTableList[Index].Name + (Index != _NamesIndex.Last() ? ",\r\n" : String.Empty);
+				output += UDecompilingState.Tabs + Package.NameTableList[index].Name + (index != _NamesIndex.Last() ? ",\r\n" : String.Empty);
 			}
 			UDecompilingState.RemoveTabs( 1 );
 			return output;

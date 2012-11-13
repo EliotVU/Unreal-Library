@@ -222,16 +222,15 @@ namespace UELib.Core
 							e => (e.ClassName == "Function" && ((UFunction)(e.Object)).NativeToken == nativeIndex) 
 						);
 
-						UFunction f = null;
 						if( table != null )
 						{
-							f = table.Object as UFunction;
-							if( f != null )
+							UFunction func = table.Object as UFunction;
+							if( func != null )
 							{
 								nt = new NativeTable();
-								nt.SetFormat( f );
- 								nt.OperPrecedence = f.OperPrecedence;
-								nt.Name = nt.Format == (byte)NativeType.Function ? f.Name : f.FriendlyName;
+								nt.SetFormat( func );
+ 								nt.OperPrecedence = func.OperPrecedence;
+								nt.Name = nt.Format == (byte)NativeType.Function ? func.Name : func.FriendlyName;
 
 								nt.ByteToken = nativeIndex;
 								t.NativeTable = nt;
@@ -345,7 +344,7 @@ namespace UELib.Core
 
 					// Redefined, can be FloatToBool!(UE1)
 					case (byte)ExprToken.LetDelegate:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{			
 							tokenItem = new FloatToBoolToken();
 						}
@@ -361,7 +360,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.Eval: // case (byte)ExprToken.DynArrayFindStruct: case (byte)ExprToken.Conditional:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new NameToBoolToken();
 						}
@@ -382,7 +381,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.ReturnNothing:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new	ByteToIntToken();
 						}
@@ -418,7 +417,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.DynArrayIterator:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new RotatorToStringToken();
 						}
@@ -487,7 +486,7 @@ namespace UELib.Core
 
 					// Redefined, can be FloatToInt!(UE1)
 					case (byte)ExprToken.DelegateProperty:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new FloatToIntToken();
 						}
@@ -498,7 +497,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.DefaultParmValue:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )	 // StringToInt
+						if( Buffer.Version < PrimitveCastVersion )	 // StringToInt
 						{
 							tokenItem = new StringToIntToken();
 						}
@@ -512,7 +511,7 @@ namespace UELib.Core
 					#region Misc
 					// Redefined, can be BoolToFloat!(UE1)
 					case (byte)ExprToken.DebugInfo:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new BoolToFloatToken();
 						}
@@ -547,7 +546,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.NoDelegate:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new IntToFloatToken();
 						}
@@ -584,7 +583,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.EndOfScript:	//CastToken.BoolToString:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new BoolToStringToken();
 						}
@@ -770,7 +769,7 @@ namespace UELib.Core
 
 					// Redefined, can be BoolToInt!(UE1)
 					case (byte)ExprToken.DynArrayRemove:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new BoolToIntToken();
 						}
@@ -781,7 +780,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.DynArrayRemoveItem:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new NameToStringToken();
 						}
@@ -792,7 +791,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.DynArrayAdd:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new FloatToStringToken();
 						}
@@ -803,7 +802,7 @@ namespace UELib.Core
 						break;
 
 					case (byte)ExprToken.DynArrayAddItem:
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							tokenItem = new ObjectToStringToken();
 						}
@@ -829,7 +828,7 @@ namespace UELib.Core
 					default:
 					{
 						#region Casts
-						if( Buffer.Version < UStruct.PrimitveCastVersion )
+						if( Buffer.Version < PrimitveCastVersion )
 						{
 							// No other token was matched. Check if it matches any of the CastTokens
 							// We don't just use PrimitiveCast detection due compatible with UE1 games
@@ -1131,7 +1130,7 @@ namespace UELib.Core
 				}
 			}
 
-			private NestManager _Nester = null;
+			private NestManager _Nester;
 
 			// Checks if we're currently within a nest of type nestType in any stack!
 			private NestManager.Nest IsWithinNest( NestManager.Nest.NestType nestType )
@@ -1208,9 +1207,9 @@ namespace UELib.Core
 				{
 					var func = _Owner as UFunction;
 					// Step up to the first parameter that is optional, this is where the DefaultParameterToken will get the variable names from!
-					for( DefaultParameterToken._paramNum = 0; DefaultParameterToken._paramNum < func.ChildParams.Count; ++ DefaultParameterToken._paramNum )
+					for( DefaultParameterToken.ParamNum = 0; DefaultParameterToken.ParamNum < func.ChildParams.Count; ++ DefaultParameterToken.ParamNum )
 					{
-						if( func.ChildParams[DefaultParameterToken._paramNum].HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm ) )
+						if( func.ChildParams[DefaultParameterToken.ParamNum].HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm ) )
 						{
 							break;
 						}
@@ -1233,7 +1232,7 @@ namespace UELib.Core
 					for( int i = 0; i < _Labels.Count; ++ i )
 					{
 						// No duplicates, caused by having multiple goto's with the same destination
-						if( !_TempLabels.Exists( (p) => p.Position == _Labels[i].Position ) )
+						if( !_TempLabels.Exists( p => p.Position == _Labels[i].Position ) )
 						{
 							_TempLabels.Add( _Labels[i] );
 						}
@@ -1243,7 +1242,7 @@ namespace UELib.Core
 
 			public void Goto( ushort codeOffset )
 			{
-				CurrentTokenIndex = DeserializedTokens.FindIndex( (t) => t.Position == codeOffset );
+				CurrentTokenIndex = DeserializedTokens.FindIndex( t => t.Position == codeOffset );
 			}
 
 			/// <summary>
@@ -1329,7 +1328,6 @@ namespace UELib.Core
 								{
 									tokenBeginIndex = CurrentTokenIndex;
 									tokenOutput = newToken.Decompile();
-									FunctionToken.lastOperPrecedence = 255;
 								}
 								catch( Exception e )
 								{
@@ -1488,7 +1486,6 @@ namespace UELib.Core
 					);
 				}
 				UDecompilingState.Tabs = initTabs;
-				FunctionToken.lastOperPrecedence = 255;
 				return output.ToString();
 			}
 
@@ -1739,15 +1736,9 @@ namespace UELib.Core
 					return output;
 				}
 
-				internal static byte lastOperPrecedence = 255;
-				protected string DecompileOperator( string operatorName, byte operPrecedence = (byte)0 )
+				protected string DecompileOperator( string operatorName )
 				{
 					string output = DecompileNext() + " " + operatorName + " " + DecompileNext(); 
-					/*if( operPrecedence < lastOperPrecedence )
-					{
-						output = "(" + output + ")";
-					}*/
-					lastOperPrecedence = operPrecedence;
 					DecompileNext(); // )
 					return output;
 				}
@@ -1786,7 +1777,6 @@ namespace UELib.Core
 							continue;
 
 						outputBuilder.Add( t.Decompile() );
-						lastOperPrecedence = 255;
 					} while( !(t is EndFunctionParmsToken) );}
 
 					string output = String.Empty;
@@ -1838,7 +1828,7 @@ namespace UELib.Core
 						}
 						else if( function.IsOperator() )
 						{
-							output = DecompileOperator( function.FriendlyName, function.OperPrecedence );	
+							output = DecompileOperator( function.FriendlyName );	
 						}
 						else
 						{
@@ -1985,7 +1975,7 @@ namespace UELib.Core
 
 				public override string Decompile()
 				{
-					string output = String.Empty;
+					string output;
 					switch( (NativeType)NativeTable.Format )
 					{
 						case NativeType.Function:
@@ -1993,7 +1983,7 @@ namespace UELib.Core
 							break;
 
 						case NativeType.Operator:
-							output = DecompileOperator( NativeTable.Name, NativeTable.OperPrecedence );
+							output = DecompileOperator( NativeTable.Name );
 							break;
 
 						case NativeType.PostOperator:
@@ -2332,19 +2322,18 @@ namespace UELib.Core
 							return "break";
 						}
 
-						var nest = Decompiler.IsInNest( NestManager.Nest.NestType.Loop );
-						if( nest == null )
-							nest = Decompiler.IsInNest( NestManager.Nest.NestType.ForEach );
+						var nest = Decompiler.IsInNest( NestManager.Nest.NestType.Loop ) ??
+						           Decompiler.IsInNest( NestManager.Nest.NestType.ForEach );
 						if( nest != null )
 						{
 							// Continue
-							if( CodeOffset + 10 == (nest.Creator as JumpToken).CodeOffset )
+							if( CodeOffset + 10 == ((JumpToken)nest.Creator).CodeOffset )
 							{
 								Decompiler.PreComment = String.Format( "// End:0x{0:x2} Continue;", CodeOffset );
 								goto gotoJump;
 							}									
 							// Break
-							else if( CodeOffset == (nest.Creator as JumpToken).CodeOffset )
+							else if( CodeOffset == ((JumpToken)nest.Creator).CodeOffset )
 							{
 								if( nest.Type == NestManager.Nest.NestType.ForEach )
 								{
@@ -2404,7 +2393,7 @@ namespace UELib.Core
 
 				protected void ClearLabel()
 				{
-					int i = Decompiler._TempLabels.FindIndex( (p) => p.Position == CodeOffset );
+					int i = Decompiler._TempLabels.FindIndex( p => p.Position == CodeOffset );
 					if( i != -1 )
 					{
 						Decompiler._TempLabels.RemoveAt( i );
@@ -2560,7 +2549,7 @@ namespace UELib.Core
 
 				// HACK: To avoid from decrementing tabs more than once, 
 				//	e.g. in a situation of case a1: case a2: case a3: that use the same block code.
-				private static byte _CaseStack = 0;
+				private static byte _CaseStack;
 				public override string Decompile()
 				{
 					// HACK: If this case is inside another case, end the last case to avoid broken indention.
@@ -2628,7 +2617,7 @@ namespace UELib.Core
 
 			public class ArrayIteratorToken : JumpToken
 			{
-				protected bool _HasSecondParm;
+				protected bool HasSecondParm;
 
 				public override void Deserialize()
 				{
@@ -2638,7 +2627,7 @@ namespace UELib.Core
 					// Param 1
 					DeserializeNext();
 
-					_HasSecondParm = Buffer.ReadByte() > 0;
+					HasSecondParm = Buffer.ReadByte() > 0;
 					Decompiler.AddCodeSize( sizeof(byte) );
 					DeserializeNext();
 
@@ -2655,7 +2644,7 @@ namespace UELib.Core
 
 					// foreach ArrayVariable( Parameters )
 					string output = "foreach " + DecompileNext() + "(" + DecompileNext();
-					output += (_HasSecondParm ? ", " : String.Empty) + DecompileNext();
+					output += (HasSecondParm ? ", " : String.Empty) + DecompileNext();
 					Decompiler._CanAddSemicolon = false;
 					return output + ")";
 				}
@@ -2721,8 +2710,9 @@ namespace UELib.Core
 				{
 #if DEBUG
 					return "native." + base.Decompile();
+#else
+					return String.Empty;	
 #endif
-					return String.Empty;	    
 				}
 			}
 
@@ -2785,7 +2775,7 @@ namespace UELib.Core
 
 			public class DefaultParameterToken : Token
 			{
-				internal static byte _paramNum;
+				internal static byte ParamNum;
 
 				public override void Deserialize()
 				{
@@ -2800,11 +2790,11 @@ namespace UELib.Core
 					string propertyName;
 					try
 					{
-						propertyName = ((UFunction)Decompiler._Owner).ChildParams[_paramNum++].Name;
+						propertyName = ((UFunction)Decompiler._Owner).ChildParams[ParamNum++].Name;
 					}
 					catch( ArgumentOutOfRangeException )
 					{
-						propertyName = "UnknownParm_" + _paramNum;
+						propertyName = "UnknownParm_" + ParamNum;
 					}
 
 					string expr = DecompileNext();		
@@ -2935,7 +2925,13 @@ namespace UELib.Core
 					{
 						if( labelIndex != -1 )
 						{
-							Decompiler._Labels.Add( new ULabelEntry{ Name = Decompiler._Owner.Package.GetIndexName( labelIndex ), Position = labelPos } );
+							Decompiler._Labels.Add( 
+								new ULabelEntry
+								{
+									Name = Decompiler._Owner.Package.GetIndexName( labelIndex ), 
+									Position = labelPos
+								} 
+							);
 						}
 
 						labelIndex = Buffer.ReadNameIndex();
@@ -2945,7 +2941,8 @@ namespace UELib.Core
 						Decompiler.AddCodeSize( sizeof(int) );
 
 
-					} while( System.String.Compare( Decompiler._Owner.Package.GetIndexName( labelIndex ), "None", System.StringComparison.OrdinalIgnoreCase ) != 0 );
+					} while( String.Compare( Decompiler._Owner.Package.GetIndexName( labelIndex ), 
+						"None", StringComparison.OrdinalIgnoreCase ) != 0 );
 				}
 			}
 
@@ -3094,11 +3091,11 @@ namespace UELib.Core
 			{
 				public override void Deserialize()
 				{
-					var topf = Decompiler._Owner as UFunction;
-					Debug.Assert( topf != null, "topf != null" );
-					for( int i = 0; i < topf._ChildProperties.Count; ++ i )
+					var topFunc = Decompiler._Owner as UFunction;
+					Debug.Assert( topFunc != null, "topf != null" );
+					foreach( UProperty property in topFunc._ChildProperties )
 					{
-						if( !topf._ChildProperties[i].HasPropertyFlag( Flags.PropertyFlagsLO.Parm | Flags.PropertyFlagsLO.ReturnParm ) )
+						if( !property.HasPropertyFlag( Flags.PropertyFlagsLO.Parm | Flags.PropertyFlagsLO.ReturnParm ) )
 							continue;
 
 						Buffer.ReadByte(); // Size
@@ -3892,7 +3889,7 @@ namespace UELib.Core
 
 				public override void Deserialize()
 				{
-					this.DeserializeMethodTwo();
+					DeserializeMethodTwo();
 				}
 
 				public override string Decompile()
@@ -3938,7 +3935,7 @@ namespace UELib.Core
 
 				public override void Deserialize()
 				{
-					this.DeserializeMethodTwo();
+					DeserializeMethodTwo();
 				}
 
 				public override string Decompile()
