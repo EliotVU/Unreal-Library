@@ -165,9 +165,9 @@ namespace UELib.Core
 			}
 
 			// Check within because within is Object by default
-			if( _Within != null && !String.Equals( _Within.Name, "Object", StringComparison.OrdinalIgnoreCase ) )
+			if( Within != null && !String.Equals( Within.Name, "Object", StringComparison.OrdinalIgnoreCase ) )
 			{
-				output += " within " + _Within.Name;
+				output += " within " + Within.Name;
 			}
 
 			string rules = FormatFlags().Replace( "\t", UnrealConfig.Indention );

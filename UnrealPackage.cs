@@ -238,6 +238,9 @@ namespace UELib
 				[GameIDAttribute( 576, 100 )]
 				Homefront,
 
+				[GameIDAttribute( 590, 1, 0, 1 )]
+				ShadowComplex,
+
 				[GameIDAttribute( 832, 46 )]
 				Borderlands2,		// Has custom support!
 

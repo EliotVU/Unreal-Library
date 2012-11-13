@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -11,7 +10,7 @@ namespace UELib.Core
 	{
 		// Greater or equal than:
 		// Definitely not after 110
-		internal const int PrimitveCastVersion = 100;
+		private const int PrimitveCastVersion = 100;
 
 		#region Serialized Members
 		/// <summary>
@@ -45,10 +44,9 @@ namespace UELib.Core
 		public uint Line;
 		public uint TextPos;
 
-		protected int _MinAlignment
+		private int _MinAlignment
 		{
-			get;
-			private set;
+			get; set;
 		}
 
 		public uint ScriptSize
@@ -57,15 +55,14 @@ namespace UELib.Core
 			private set;
 		}
 
-		protected int _FriendlyNameIndex = -1;
+		protected int FriendlyNameIndex = -1;
 
 		/// <summary>
 		/// UE2 Only?
 		/// </summary>
-		internal uint StructFlags
+		private uint StructFlags
 		{
-			get;
-			private set;
+			get; set;
 		}
 		#endregion
 
@@ -76,7 +73,11 @@ namespace UELib.Core
 			private set;
 		}
 
-		public UTextBuffer CppBuffer{ get; protected set; }
+		public UTextBuffer CppBuffer
+		{
+			get; 
+			protected set;
+		}
 
 		protected List<UConst> _ChildConstants = new List<UConst>();
 		public List<UConst> ChildConstants
@@ -113,7 +114,7 @@ namespace UELib.Core
 
 		public long ScriptOffset{ get; protected set; }
 
-		public UStruct.UByteCodeDecompiler ByteCodeManager;
+		public UByteCodeDecompiler ByteCodeManager;
 		#endregion
 
 		/// <summary>
@@ -153,8 +154,8 @@ namespace UELib.Core
 			else
 			{		
 				// Moved to UFunction in UE3
-				_FriendlyNameIndex = _Buffer.ReadIndex();
-				NoteRead( "_FriendlyNameIndex", _FriendlyNameIndex );
+				FriendlyNameIndex = _Buffer.ReadIndex();
+				NoteRead( "_FriendlyNameIndex", FriendlyNameIndex );
 #if SWAT4
 				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
 				{
@@ -185,7 +186,7 @@ namespace UELib.Core
 				NoteRead( "TextPos", TextPos );
 			}
 
-			var scriptSkipSize = 0;
+			int scriptSkipSize;
 			// ScriptSize
 			ScriptSize = _Buffer.ReadUInt32();
 			NoteRead( "_ScriptSize", ScriptSize );
@@ -208,12 +209,18 @@ namespace UELib.Core
 			if( ScriptSize > 0 )
 			{
 				ByteCodeManager = new UByteCodeDecompiler( this );
-				// ScriptSize is not a true size in UT2004 and below and MoonBase's version (587)
-				if( _Buffer.Version >= UnrealPackage.VINDEXDEPRECATED && _Buffer.Version != 587 )	// 587(MoonBase)
+
+				const int moonbaseVersion = 587;
+				const int shadowcomplexVersion = 590;
+
+				var isTrueScriptSize = _Buffer.Version >= UnrealPackage.VINDEXDEPRECATED
+					&& (_Buffer.Version < moonbaseVersion && _Buffer.Version > shadowcomplexVersion );
+
+				if( isTrueScriptSize )
 				{
 					_Buffer.Skip( scriptSkipSize );
 				}
-				else // ScriptSize is unaccurate due index sizes
+				else
 				{
 					ByteCodeManager.Deserialize();
 				}
@@ -297,7 +304,7 @@ namespace UELib.Core
 			return (StructFlags & (uint)flag) != 0;
 		}
 
-		public bool IsPureStruct()
+		private bool IsPureStruct()
 		{
 			return IsClassType( "Struct" ) || IsClassType( "ScriptStruct" );
 		}

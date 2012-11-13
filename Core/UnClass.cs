@@ -2,8 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace UELib.Core
 {
@@ -38,10 +36,9 @@ namespace UELib.Core
 		/// 32bit in UE2
 		/// 64bit in UE3
 		/// </value>
-		internal ulong ClassFlags
+		private ulong ClassFlags
 		{
-			get;
-			private set;
+			get; set;
 		}
 
 		/// <summary>
@@ -57,10 +54,10 @@ namespace UELib.Core
 		private byte _UNKNOWNBYTE;
 
 		private int _WithinIndex;
-		protected UClass _Within;
 		public UClass Within
 		{
-			get{ return _Within; }
+			get; 
+			protected set;
 		}
 
 		private int _ConfigIndex;
@@ -80,19 +77,19 @@ namespace UELib.Core
 
 		public string NativeClassName = String.Empty;
 
-		public bool ForceScriptOrder = false;
+		public bool ForceScriptOrder;
 
 		/// <summary>
 		/// A list of class dependencies that this class depends on. Includes Imports and Exports.
 		/// 
 		/// Deprecated @ PackageVersion:186
 		/// </summary>
-		public UArray<Dependency> ClassDependenciesList = null;
+		public UArray<Dependency> ClassDependenciesList;
 
 		/// <summary>
 		/// A list of objects imported from a package.
 		/// </summary>
-		public List<int> PackageImportsList 			= null;
+		public List<int> PackageImportsList;
 
 		/// <summary>
 		/// Index of hidden categories names into the NameTableList.
@@ -104,35 +101,35 @@ namespace UELib.Core
 		/// Index of hidden categories names into the NameTableList.
 		/// UE3
 		/// </summary>
-		public List<int> DontSortCategoriesList			= null;
+		public List<int> DontSortCategoriesList;
 
 		/// <summary>
 		/// Index of hidden categories names into the NameTableList.
 		/// </summary>
-		public List<int> HideCategoriesList 			= null;
+		public List<int> HideCategoriesList;
 
 		/// <summary>
 		/// Index of auto expanded categories names into the NameTableList.
 		/// UE3
 		/// </summary>
-		public List<int> AutoExpandCategoriesList 		= null;
+		public List<int> AutoExpandCategoriesList;
 
 		/// <summary>
 		/// A list of class group.
 		/// </summary>
-		public List<int> ClassGroupsList	 			= null;
+		public List<int> ClassGroupsList;
 
 		/// <summary>
 		/// Index of auto collapsed categories names into the NameTableList.
 		/// UE3
 		/// </summary>
-		public List<int> AutoCollapseCategoriesList 	= null;
+		public List<int> AutoCollapseCategoriesList;
 
 		/// <summary>
 		/// Index of (Object/Name?)
 		/// UE3
 		/// </summary>
-		public List<int> ImplementedInterfacesList		= null;
+		public List<int> ImplementedInterfacesList;
 		#endregion
 
 		#region PostInitialized Members
@@ -251,11 +248,7 @@ namespace UELib.Core
 						}
 					}
 
-					if( !Package.IsConsoleCooked() 
-#if GOW2
-						&& Package.Build != UnrealPackage.GameBuild.ID.GoW2
-#endif
-					)
+					if( !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed )
 					{
 						if( Package.Version >= 603 )
 						{
@@ -279,7 +272,7 @@ namespace UELib.Core
 								if( Package.Version >= 749 
 									#if SPECIALFORCE2
 											&& Package.Build != UnrealPackage.GameBuild.ID.SpecialForce2  
-#endif
+									#endif
 									)
 								{
 									// bForceScriptOrder
@@ -377,7 +370,7 @@ namespace UELib.Core
 			base.PostInitialize();
 			if( _WithinIndex != 0 )
 			{
-				_Within = (UClass)Package.GetIndexObject( _WithinIndex );
+				Within = (UClass)Package.GetIndexObject( _WithinIndex );
 			}
 		}
 

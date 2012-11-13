@@ -178,7 +178,7 @@ namespace UELib.Core
 				);			
 			}
 
-			output += FormatFlags() + (_ReturnProperty != null ? (_ReturnProperty.GetFriendlyType() + " ") : String.Empty) 
+			output += FormatFlags() + (ReturnProperty != null ? (ReturnProperty.GetFriendlyType() + " ") : String.Empty) 
 				+ FriendlyName + FormatParms();
 			if( HasFunctionFlag( Flags.FunctionFlags.Const ) )
 			{

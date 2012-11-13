@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using UELib;
+﻿using System.Collections.Generic;
 
 namespace UELib.Core
 {
@@ -56,16 +51,13 @@ namespace UELib.Core
 			get{ return _ChildParams; }
 		}
 
-		private UProperty _ReturnProperty;
-		public UProperty ReturnProperty
-		{
-			get{ return _ReturnProperty; }
-		}
+		public UProperty ReturnProperty{ get; private set; }
+
 		#endregion
 
 		public string FriendlyName
 		{
-			get{ return _FriendlyNameIndex > -1 ? Package.GetIndexName( _FriendlyNameIndex ) : Name; }
+			get{ return FriendlyNameIndex > -1 ? Package.GetIndexName( FriendlyNameIndex ) : Name; }
 		}
 
 		/// <summary>
@@ -111,8 +103,8 @@ namespace UELib.Core
 			// UStruct::FriendlyName is moved to UFunction in UE3
 			if( Package.Version >= 189 && !Package.IsConsoleCooked() )
 			{
-				_FriendlyNameIndex = _Buffer.ReadNameIndex();
-				NoteRead( "_FriendlyNameIndex", _FriendlyNameIndex );
+				FriendlyNameIndex = _Buffer.ReadNameIndex();
+				NoteRead( "_FriendlyNameIndex", FriendlyNameIndex );
 			}
 		}
 
@@ -123,7 +115,7 @@ namespace UELib.Core
 			{
 				if( property.HasPropertyFlag( Flags.PropertyFlagsLO.ReturnParm ) )
 				{
-					_ReturnProperty = property;
+					ReturnProperty = property;
 					continue;																																  
 				}
 
