@@ -151,7 +151,7 @@ namespace UELib.Core
 
 			private void AddObjectIndexCodeSize()
 			{
-				CodePosition += (Buffer.Version >= ObjectIndexVirtualSizeVersion 
+				CodePosition += ((Buffer.Version >= ObjectIndexVirtualSizeVersion) 
 					? sizeof(long) 
 					: (uint)sizeof(int)
 				);
@@ -386,7 +386,7 @@ namespace UELib.Core
 							tokenItem = new	ByteToIntToken();
 						}
 							// Definitely existed since GoW(490)
-						else if( Buffer.Version > 480 && (DeserializedTokens.Count > 0 && !(DeserializedTokens[DeserializedTokens.Count - 1] is ReturnToken)) ) // Should only be done if the last token wasn't Return
+						else if( Buffer.Version > 420 && (DeserializedTokens.Count > 0 && !(DeserializedTokens[DeserializedTokens.Count - 1] is ReturnToken)) ) // Should only be done if the last token wasn't Return
 						{
 							tokenItem = new DynamicArrayInsertToken();
 						}
@@ -1804,6 +1804,11 @@ namespace UELib.Core
 
 				public override void Deserialize()
 				{
+					if( Buffer.Version == 421 )
+					{
+						Decompiler.AddCodeSize( sizeof(int) );
+					}
+
 					FunctionIndex = Buffer.ReadObjectIndex();
 					Decompiler.AddObjectIndexCodeSize();
 
@@ -1876,6 +1881,11 @@ namespace UELib.Core
 					{
 						byte super = Buffer.ReadByte();
 						Decompiler.AddCodeSize( sizeof(byte) );
+					}
+
+					if( Buffer.Version == 421 )
+					{
+						Decompiler.AddCodeSize( sizeof(int) );
 					}
 
 					FunctionNameIndex = Buffer.ReadNameIndex();
@@ -2758,6 +2768,12 @@ namespace UELib.Core
 
 				public override void Deserialize()
 				{		  
+
+					if( Buffer.Version == 421 )
+					{
+						Decompiler.AddCodeSize( sizeof(int) );
+					}
+
 					NameIndex = Buffer.ReadNameIndex();
 					Decompiler.AddNameIndexCodeSize();
 					// TODO: Corrigate version. Definitely not in Mirrors Edge(536)
@@ -2781,6 +2797,13 @@ namespace UELib.Core
 				{
 					Buffer.ReadUShort();	// Size
 					Decompiler.AddCodeSize( sizeof(ushort) );
+
+					// FIXME: MOHA or general?
+					if( Buffer.Version == 421 )
+					{
+						Decompiler.AddCodeSize( sizeof(ushort) );
+					}
+
 					DeserializeNext();	// Expression
 					DeserializeNext();	// EndParmValue
 				}
@@ -2867,7 +2890,14 @@ namespace UELib.Core
 				}
 			}
 
-			public class NothingToken : Token{}
+			public class NothingToken : Token
+			{
+				public override void Deserialize()
+				{
+					if( Buffer.Version == 421 )
+						Decompiler.AddCodeSize( sizeof(int ) );
+				}
+			}
 			public class NoDelegateToken : NoneToken{}
 			public class NoObjectToken : NoneToken{}
 
@@ -2958,7 +2988,7 @@ namespace UELib.Core
 
 				public override string Decompile()
 				{
- 					 return "(" + DecompileNext() + ")";
+ 					 return DecompileNext();
 				}
 			}
 
