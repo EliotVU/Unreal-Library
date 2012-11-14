@@ -490,6 +490,7 @@ namespace UELib.Core
 				return String.Empty;
 			}
 
+			UDecompilingState.AddTab();
 			// Must be sorted by Offset so that the buffer can read the statements linear!
 			replicationList.Sort( (ro, ro2) => ro.Offset.CompareTo( ro2.Offset ) );
 
@@ -535,13 +536,15 @@ namespace UELib.Core
 				string builtObjects = String.Empty;
 				if( replicatedObjects.Count > 0 )
 				{	
+					UDecompilingState.AddTab();
 					for( int i = 0; i < replicatedObjects.Count; ++ i )
 					{
 						// Write two replicated objects per line.
-						builtObjects += ((i % ObjectsPerLine == 0) ? "\r\n\t\t" : " ") 
+						builtObjects += ((i % ObjectsPerLine == 0) ? "\r\n" + UDecompilingState.Tabs : " ") 
 							+ replicatedObjects[i] 
 							+ ((i != replicatedObjects.Count - 1) ? "," : ";");
 					}
+					UDecompilingState.RemoveTab();
 					replicatedObjects.Clear();
 				}
 
@@ -555,15 +558,28 @@ namespace UELib.Core
 				}
 				catch
 				{
-					conditions = string.Format( "/* Exception occurred while decompiling token:{0}*/", t.GetType().Name );
+					conditions = String.Format( "/* Exception occurred while decompiling token:{0}*/", t.GetType().Name );
 				}
 
-				output += "\r\n\t// Replication block:" + ++ num + "\r\n\t" + 
-					(Package.Version < 189 ? (bReliableState ? "reliable" : "unreliable") : String.Empty) + " if(" + conditions + ")" +
+				if( !UnrealConfig.SuppressComments )
+				{
+					output += "\r\n" + UDecompilingState.Tabs + "// Pos:0x" + offset.ToString( "x2" ); 		
+				}
+
+				output += "\r\n" + UDecompilingState.Tabs 
+					+ (Package.Version < 189 ? (bReliableState ? "reliable" : "unreliable") : String.Empty) 
+					+ " if(" + conditions + ")" +
 						builtObjects + "\r\n";
 			}
 			replicationList.Clear();
-			return (output.Length != 0 ? ("\r\nreplication\r\n{" + output + "}\r\n") : String.Empty);
+			UDecompilingState.RemoveTab();
+			return (output.Length != 0 
+				? ("\r\nreplication" 
+					+ UnrealConfig.PrintBeginBracket() 
+					+ output
+					+ UnrealConfig.PrintEndBracket()
+					+ "\r\n") 
+				: String.Empty);
 		}
 
 		private string FormatStates()
