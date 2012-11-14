@@ -417,6 +417,7 @@ namespace UELib.Core
 			_Pos = _Buffer.ReadUInt32();
 
 #if TDS
+			// FIXME: Use build detection 
 			if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.ThiefDeadlyShadows )
 			{
 				// TODO: Unknown

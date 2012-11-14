@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Collections.Generic;
 using UELib.Core;
 
@@ -7,31 +8,36 @@ namespace UELib
 	/// <summary>
 	/// Represents a basic file table.
 	/// </summary>
-	public class Table
+	public abstract class UTableItem
 	{
+		#region PreInitialized Members
 		/// <summary>
-		/// Index of this Table in a TableList
+		/// Index into the table's enumerable.
 		/// </summary>
-		public int TableIndex = 0;
+		public int Index;
 
 		/// <summary>
-		/// Offset to this Table in a Package
+		/// Table offset in bytes.
 		/// </summary>
-		public long TableOffset = 0;
+		public int Offset;
 
-		public int TableSize = 0;
+		/// <summary>
+		/// Table size in bytes.
+		/// </summary>
+		public int Size;
+		#endregion
 	}
 
 	/// <summary>
 	/// Represents a unreal name table with serialized data from a unreal package header.
 	/// </summary>
-	public class UnrealNameTable : Table, IUnrealDeserializableClass
+	public sealed class UNameTableItem : UTableItem, IUnrealDeserializableClass
 	{
 		#region Serialized Members
 		/// <summary>
 		/// Object Name
 		/// </summary>
-		public string Name = "";
+		public string Name = String.Empty;
 
 		/// <summary>
 		/// Object Flags, such as LoadForEdit, LoadForServer, LoadForClient
@@ -40,16 +46,16 @@ namespace UELib
 		/// 32bit in UE2
 		/// 64bit in UE3
 		/// </value>
-		public ulong Flags = 0;
+		public ulong Flags;
 		#endregion
 
 		public void Deserialize( IUnrealStream stream )
 		{
 			Name = stream.ReadName();
-			if( Name.IndexOf( "\\", System.StringComparison.Ordinal ) != -1 )
-			{
-				Name = Name.Replace( "\0", "N_" + TableIndex );
-			}
+			//if( Name.IndexOf( "\\", StringComparison.Ordinal ) != -1 )
+			//{
+			//    Name = Name.Replace( "\0", "N_" + TableIndex );
+			//}
 			Flags = stream.UR.ReadQWORDFlags();
 						
 			// De-obfuscate names that contain unprintable characters!
@@ -70,11 +76,11 @@ namespace UELib
 		/// <param name="stream">Stream to Update</param>
 		public void WriteName( UPackageStream stream )
 		{
-			stream.Seek( TableOffset, System.IO.SeekOrigin.Begin );
+			stream.Seek( Offset, System.IO.SeekOrigin.Begin );
 
-			int Size = stream.ReadIndex();
+			int size = stream.ReadIndex();
 			byte[] rawName = Encoding.ASCII.GetBytes( Name );
-			stream.UW.Write( rawName, 0, Size - 1 );
+			stream.UW.Write( rawName, 0, size - 1 );
 		}
 
 		/// <summary>
@@ -83,7 +89,7 @@ namespace UELib
 		/// <param name="stream">Stream to Update</param>
 		public void WriteFlags( UPackageStream stream )
 		{
-			stream.Seek( TableOffset, System.IO.SeekOrigin.Begin );
+			stream.Seek( Offset, System.IO.SeekOrigin.Begin );
 
 			stream.ReadName();
 			if( stream.Version <= 200 )
@@ -103,20 +109,20 @@ namespace UELib
 	/// <summary>
 	/// Represents a unreal table with general deserialized data from a unreal package header.
 	/// </summary>
-	public abstract class UnrealTable : Table
+	public abstract class UObjectTableItem : UTableItem
 	{
 		#region PreInitialized Members
 		/// <summary>
 		/// Reference to the UnrealPackage this object resists in
 		/// </summary>
-		public UnrealPackage Owner = null;
+		public UnrealPackage Owner;
 
 		/// <summary>
 		/// Reference to the serialized object based on this table.
 		/// 
 		/// Only valid if Owner != null and Owner is fully serialized or on demand.
 		/// </summary>
-		public UObject Object = null;
+		public UObject Object;
 		#endregion
 
 		#region Serialized Members
@@ -124,7 +130,7 @@ namespace UELib
 		/// Name index to the name of this object
 		/// -- Fixed
 		/// </summary>
-		public int ObjectIndex = 0;
+		public int ObjectIndex;
 		public string ObjectName{ get{ return ObjectNumber > 0 ? Owner.GetIndexName( ObjectIndex ) + "_" + ObjectNumber : Owner.GetIndexName( ObjectIndex ); } }
 		public int ObjectNumber;
 
@@ -133,13 +139,13 @@ namespace UELib
 		/// Export:Object index to the class of this object
 		/// -- Not Fixed
 		/// </summary>
-		public int ClassIndex = 0;
-		public UnrealTable ClassTable{ get{ return Owner.GetIndexTable( ClassIndex ); } }
+		public int ClassIndex;
+		public UObjectTableItem ClassTable{ get{ return Owner.GetIndexTable( ClassIndex ); } }
 		public string ClassName
 		{ 
 			get
 			{ 
-				if( this is UnrealImportTable )
+				if( this is UImportTableItem )
 				{
 					return Owner.GetIndexName( ClassIndex );
 				}
@@ -158,33 +164,33 @@ namespace UELib
 		/// Object index to the outer of this object
 		/// -- Not Fixed
 		/// </summary>
-		public int OuterIndex = 0;
-		public UnrealTable OuterTable{ get{ return Owner.GetIndexTable( OuterIndex ); } }
-		public string OuterName{ get{ UnrealTable table = OuterTable; return table != null ? table.ObjectName : ""; } }
+		public int OuterIndex;
+		public UObjectTableItem OuterTable{ get{ return Owner.GetIndexTable( OuterIndex ); } }
+		public string OuterName{ get{ UObjectTableItem table = OuterTable; return table != null ? table.ObjectName : ""; } }
 		#endregion
 	}
 
 	/// <summary>
 	/// Represents a unreal export table with deserialized data from a unreal package header.
 	/// </summary>
-	public class UnrealExportTable : UnrealTable, IUnrealDeserializableClass
+	public sealed class UExportTableItem : UObjectTableItem, IUnrealDeserializableClass
 	{
 		#region Serialized Members
 		/// <summary>
 		/// Object index to the Super(parent) object of structs.
 		/// -- Not Fixed
 		/// </summary>
-		public int SuperIndex = 0;
-		public UnrealTable SuperTable{ get{ return Owner.GetIndexTable( SuperIndex ); } }
-		public string SuperName{ get{ UnrealTable table = SuperTable; return table != null ? table.ObjectName : ""; } }
+		public int SuperIndex;
+		public UObjectTableItem SuperTable{ get{ return Owner.GetIndexTable( SuperIndex ); } }
+		public string SuperName{ get{ UObjectTableItem table = SuperTable; return table != null ? table.ObjectName : ""; } }
 
 		/// <summary>
 		/// Object index.
 		/// -- Not Fixed
 		/// </summary>
-		public int ArchetypeIndex = 0;
-		public UnrealTable ArchetypeTable{ get{ return Owner.GetIndexTable( ArchetypeIndex ); } }
-		public string ArchetypeName{ get{ UnrealTable table = ArchetypeTable; return table != null ? table.ObjectName : ""; } }
+		public int ArchetypeIndex;
+		public UObjectTableItem ArchetypeTable{ get{ return Owner.GetIndexTable( ArchetypeIndex ); } }
+		public string ArchetypeName{ get{ UObjectTableItem table = ArchetypeTable; return table != null ? table.ObjectName : ""; } }
 
 		public int UnknownIndex;
 
@@ -192,32 +198,28 @@ namespace UELib
 		/// Object flags, such as Public, Protected and Private.
 		/// 32bit aligned.
 		/// </summary>
-		public ulong ObjectFlags = 0;
+		public ulong ObjectFlags;
 
 		/// <summary>
 		/// Object size in bytes.
 		/// </summary>
-		public int SerialSize = 0;
+		public int SerialSize;
 
 		/// <summary>
 		/// Object offset in bytes. Starting from the beginning of a file.
 		/// </summary>
-		public int SerialOffset = 0;
+		public int SerialOffset;
 
 		/// <summary>
 		/// ???
 		/// 
 		/// UE3 Only
 		/// </summary>
-		public uint ExportFlags = 0;
+		public uint ExportFlags;
 
 		public Dictionary<int, int> ComponentMap;
 		public List<int> NetObjects;
 		public string Guid;
-		#endregion
-
-		#region Writing Related
-		private long _ObjectFlagsOffset = 0;
 		#endregion
 
 		public void Deserialize( IUnrealStream stream )
@@ -253,7 +255,7 @@ namespace UELib
 			ObjectFlags = stream.ReadUInt32();
 			if( stream.Version >= 195 )
 			{
-			    ObjectFlags = (ObjectFlags << 32) | (ulong)stream.ReadUInt32();
+			    ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
 			}
 
 			SerialSize = stream.ReadIndex();
@@ -306,6 +308,8 @@ namespace UELib
 		}
 
 		#region Writing Methods
+		private long _ObjectFlagsOffset;
+
 		/// <summary>
 		/// Updates the ObjectFlags inside the Stream to the current set ObjectFlags of this Table
 		/// </summary>
@@ -320,14 +324,14 @@ namespace UELib
 	/// <summary>
 	/// Represents a unreal import table with deserialized data from a unreal package header.
 	/// </summary>
-	public class UnrealImportTable : UnrealTable, IUnrealDeserializableClass
+	public sealed class UImportTableItem : UObjectTableItem, IUnrealDeserializableClass
 	{
 		#region Serialized Members
 		/// <summary>
 		/// Name index to the package that contains this object class
 		/// -- Fixed
 		/// </summary>
-		public int PackageIndex = 0;
+		public int PackageIndex;
 		public string PackageName{ get{ return PackageNumber > 0 ? Owner.GetIndexName( PackageIndex ) + "_" + PackageNumber : Owner.GetIndexName( PackageIndex ); } }
 		public int PackageNumber;
 		#endregion
@@ -341,7 +345,7 @@ namespace UELib
 		}
 	}
 
-	public class UnrealDependsTable : UnrealTable, IUnrealDeserializableClass
+	public sealed class UDependencyTableItem : UObjectTableItem, IUnrealDeserializableClass
 	{
 		#region Serialized Members
 		public List<int> Dependencies;

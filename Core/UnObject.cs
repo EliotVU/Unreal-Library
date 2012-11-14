@@ -50,16 +50,16 @@ namespace UELib.Core
 
 		#region PreInitialized Members
 		#region Table
-		public UnrealTable Table
+		public UObjectTableItem Table
 		{
 			get;
 			internal set;
 		}
 
 		#region ExportTable
-		public UnrealExportTable ExportTable
+		public UExportTableItem ExportTable
 		{
-			get{ return Table as UnrealExportTable; }
+			get{ return Table as UExportTableItem; }
 		}
 
 		/// <summary>
@@ -85,9 +85,9 @@ namespace UELib.Core
 		#endregion
 
 		#region ImportTable
-		public UnrealImportTable ImportTable
+		public UImportTableItem ImportTable
 		{
-			get{ return Table as UnrealImportTable; }
+			get{ return Table as UImportTableItem; }
 		}
 		#endregion
 
@@ -115,7 +115,7 @@ namespace UELib.Core
 		#endregion
 
 		#region NameTable
-		public UnrealNameTable NameTable
+		public UNameTableItem NameTable
 		{
 			get;
 			internal set;
@@ -138,7 +138,7 @@ namespace UELib.Core
 
 		public int NameIndex
 		{
-			get{ return NameTable.TableIndex; }
+			get{ return NameTable.Index; }
 		}
 
 		/// <value>
@@ -174,7 +174,7 @@ namespace UELib.Core
 		/// <summary>
 		/// Object Properties e.g. SubObjects or/and DefaultProperties
 		/// </summary>
-		protected DefaultPropertiesCollection _Properties = null;
+		protected DefaultPropertiesCollection _Properties;
 
 		/// <summary>
 		/// Object Properties e.g. SubObjects or/and DefaultProperties
@@ -662,7 +662,7 @@ namespace UELib.Core
 					outer = outer.Outer;
 				}
 			}
-			catch( System.IO.IOException )
+			catch( IOException )
 			{
 				if( pkg != null )
 				{
@@ -680,7 +680,7 @@ namespace UELib.Core
 		public virtual byte[] GetBuffer()
 		{
 			var buff = new byte[ExportTable.SerialSize];
-			Package.Stream.Seek( ExportTable.SerialOffset, System.IO.SeekOrigin.Begin );
+			Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
 			Package.Stream.Read( buff, 0, ExportTable.SerialSize );
 			if( Package.Stream.BigEndianCode )
 			{
@@ -702,7 +702,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="varName">The struct that was read from the previous buffer position.</param>
 		/// <param name="varObject">The struct's value that was read.</param>
-		[System.Diagnostics.DebuggerHidden()]
+		[System.Diagnostics.DebuggerHidden]
 		[System.Diagnostics.Conditional( "DEBUG" )]
 		internal void NoteRead( string varName, object varObject = null )
 		{

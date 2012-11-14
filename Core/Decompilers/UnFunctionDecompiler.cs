@@ -178,7 +178,9 @@ namespace UELib.Core
 				);			
 			}
 
-			output += FormatFlags() + (ReturnProperty != null ? (ReturnProperty.GetFriendlyType() + " ") : String.Empty) 
+			output += FormatFlags() + (ReturnProperty != null 
+				? (ReturnProperty.GetFriendlyType() + " ") 
+				: String.Empty) 
 				+ FriendlyName + FormatParms();
 			if( HasFunctionFlag( Flags.FunctionFlags.Const ) )
 			{
@@ -205,7 +207,9 @@ namespace UELib.Core
 			for( var i = 0; i < _ChildLocals.Count; ++ i )
 			{
 				string curType = _ChildLocals[i].GetFriendlyType();
-				string nextType = ((i + 1) < _ChildLocals.Count ? _ChildLocals[i + 1].GetFriendlyType() : String.Empty);
+				string nextType = ((i + 1) < _ChildLocals.Count 
+					? _ChildLocals[i + 1].GetFriendlyType() 
+					: String.Empty);
 
 				// If previous is the same as the one now then format the params as one line until another type is reached
 				if( curType == lastType )
@@ -223,7 +227,8 @@ namespace UELib.Core
 				}
 				else
 				{
-					output += (numParms >= 5 ? "\r\n" : String.Empty) + UDecompilingState.Tabs + "local " + _ChildLocals[i].Decompile() + 
+					output += (numParms >= 5 ? "\r\n" : String.Empty) 
+						+ UDecompilingState.Tabs + "local " + _ChildLocals[i].Decompile() + 
 					(
 						(nextType != curType || String.IsNullOrEmpty( nextType ) ) 
 						? ";\r\n" 

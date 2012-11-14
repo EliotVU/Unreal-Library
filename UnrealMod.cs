@@ -29,7 +29,7 @@ namespace UELib
 		public FileSummary Summary;
 
 		// Table values are not initialized!
-		public class FileTable : Table, IUnrealDeserializableClass
+		public class FileTable : UTableItem, IUnrealDeserializableClass
 		{
 			public string FileName;
 			public uint SerialOffset;

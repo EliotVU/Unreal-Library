@@ -181,33 +181,6 @@ namespace UELib
 				Default,
 				Unknown,
 
-				[GameIDAttribute( 547, 547, 28u, 32u )]
-				APB,				// Has custom support!
-
-				[GameIDAttribute( 129, 27 )]
-				Swat4,				// Has custom support!
-
-				[GameIDAttribute( 110, 2609 )]
-				Unreal2,			// Has custom support!
-
-				[GameIDAttribute( 369, 6 )]
-				RoboBlitz,
-
-				[GameIDAttribute( 576, 5 )]
-				CrimeCraft,			// Has custom support!
-
-				[GameIDAttribute( 490, 9 )]
-				GoW1,
-
-				[GameIDAttribute( 575, 0, 0, 1 )]
-				GoW2,				// Has custom support!
-
-				[GameIDAttribute( 828, 0 )]
-				GoW3,
-
-				[GameIDAttribute( 584, 126 )]
-				Singularity,
-
 				[GameIDAttribute( 61, 0 )]
 				Unreal1,
 
@@ -217,32 +190,62 @@ namespace UELib
 				[GameIDAttribute( 99, 117, 5u, 8u )]
 				UT2003,
 
+				[GameIDAttribute( 110, 2609 )]
+				Unreal2,			// Has custom support!
+
 				[GameIDAttribute( 118, 128, 25u, 29u )]
 				UT2004,
+
+				[GameIDAttribute( 129, 27 )]
+				Swat4,				// Has custom support!
+
+				[GameIDAttribute( 369, 6 )]
+				RoboBlitz,
+
+				[GameIDAttribute( 421, 11 )]
+				MOHA,
+
+				[GameIDAttribute( 490, 9 )]
+				GoW1,
 
 				[GameIDAttribute( 512, 0 )]
 				UT3,
 
-				[GameIDAttribute( 828, 0 )]
-				InfinityBlade,
-
-				[GameIDAttribute( 842, 1, 1 )]
-				InfinityBlade2,
-
-				[GameIDAttribute( 742, 29 )]
-				BulletStorm,
-
 				[GameIDAttribute( 536, 43 )]
 				MirrorsEdge,		// Has custom support!
+
+				[GameIDAttribute( 547, 547, 28u, 32u )]
+				APB,				// Has custom support!
+
+				[GameIDAttribute( 575, 0, 0, 1 )]
+				GoW2,				// Has custom support!
+
+				[GameIDAttribute( 576, 5 )]
+				CrimeCraft,			// Has custom support!
 
 				[GameIDAttribute( 576, 100 )]
 				Homefront,
 
+				[GameIDAttribute( 584, 126 )]
+				Singularity,
+
 				[GameIDAttribute( 590, 1, 0, 1 )]
 				ShadowComplex,
 
+				[GameIDAttribute( 742, 29 )]
+				BulletStorm,
+
+				[GameIDAttribute( 828, 0 )]
+				InfinityBlade,
+
+				[GameIDAttribute( 828, 0 )]
+				GoW3,
+
 				[GameIDAttribute( 832, 46 )]
 				Borderlands2,		// Has custom support!
+
+				[GameIDAttribute( 842, 1, 1 )]
+				InfinityBlade2,
 
 				[GameIDAttribute( 904, 904, 9u, 9u, 0, 0 )]
 				SpecialForce2,		// Has custom support!
@@ -446,22 +449,22 @@ namespace UELib
 		/// <summary>
 		/// List of unique unreal names.
 		/// </summary>
-		public List<UnrealNameTable> NameTableList{ get; private set; }
+		public List<UNameTableItem> NameTableList{ get; private set; }
 
 		/// <summary>
 		/// List of info about exported objects.
 		/// </summary>
-		public List<UnrealExportTable> ExportTableList{ get; private set; }
+		public List<UExportTableItem> ExportTableList{ get; private set; }
 
 		/// <summary>
 		/// List of info about imported objects.
 		/// </summary>
-		public List<UnrealImportTable> ImportTableList{ get; private set; }
+		public List<UImportTableItem> ImportTableList{ get; private set; }
 
 		/// <summary>
 		/// List of info about dependency objects.
 		/// </summary>
-		public List<UnrealDependsTable> DependsTableList{ get; private set; }
+		public List<UDependencyTableItem> DependsTableList{ get; private set; }
 		#endregion
 
 		#region Initialized Members
@@ -677,12 +680,12 @@ namespace UELib
 			if( pkg.Data.NameCount > 0 )
 			{
 				stream.Seek( pkg.Data.NameOffset, SeekOrigin.Begin );
-				pkg.NameTableList = new List<UnrealNameTable>( (int)pkg.Data.NameCount );
+				pkg.NameTableList = new List<UNameTableItem>( (int)pkg.Data.NameCount );
 				for( var i = 0; i < pkg.Data.NameCount; ++ i )
 				{
-					var nameEntry = new UnrealNameTable {TableOffset = stream.Position, TableIndex = i};
+					var nameEntry = new UNameTableItem {Offset = (int)stream.Position, Index = i};
 					nameEntry.Deserialize( stream );
-					nameEntry.TableSize = (int)(stream.Position - nameEntry.TableOffset);
+					nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
 					pkg.NameTableList.Add( nameEntry );
 				}
 			}
@@ -691,10 +694,10 @@ namespace UELib
 			if( pkg.Data.ExportCount > 0 )
 			{
 				stream.Seek( pkg.Data.ExportOffset, SeekOrigin.Begin );
-				pkg.ExportTableList = new List<UnrealExportTable>( (int)pkg.Data.ExportCount );
+				pkg.ExportTableList = new List<UExportTableItem>( (int)pkg.Data.ExportCount );
 				for( var i = 0; i < pkg.Data.ExportCount; ++ i )
 				{
-					var exp = new UnrealExportTable{TableOffset = stream.Position, TableIndex = i, Owner = pkg};
+					var exp = new UExportTableItem{Offset = (int)stream.Position, Index = i, Owner = pkg};
 					// For the GetObjectName like functions
 					try
 					{
@@ -707,7 +710,7 @@ namespace UELib
 					}
 					finally
 					{
-						exp.TableSize = (int)(stream.Position - exp.TableOffset);
+						exp.Size = (int)(stream.Position - exp.Offset);
 						pkg.ExportTableList.Add( exp );
 					}
 				}
@@ -717,12 +720,12 @@ namespace UELib
 			if( pkg.Data.ImportCount > 0 )
 			{
 				stream.Seek( pkg.Data.ImportOffset, SeekOrigin.Begin );
-				pkg.ImportTableList = new List<UnrealImportTable>( (int)pkg.Data.ImportCount );
+				pkg.ImportTableList = new List<UImportTableItem>( (int)pkg.Data.ImportCount );
 				for( var i = 0; i < pkg.Data.ImportCount; ++ i )
 				{
-					var imp = new UnrealImportTable{TableOffset = stream.Position, TableIndex = i, Owner = pkg};
+					var imp = new UImportTableItem{Offset = (int)stream.Position, Index = i, Owner = pkg};
 					imp.Deserialize( stream );		
-					imp.TableSize = (int)(stream.Position - imp.TableOffset);
+					imp.Size = (int)(stream.Position - imp.Offset);
 					pkg.ImportTableList.Add( imp );
 				}
 			}
@@ -743,7 +746,7 @@ namespace UELib
 			return pkg;
 		}
 
-		private void CreateObjectForTable( UnrealTable table )
+		private void CreateObjectForTable( UObjectTableItem table )
 		{
 			var objectType = GetClassTypeByClassName( table.ClassName );
 			table.Object = objectType == null ? new UnknownObject() : (UObject)Activator.CreateInstance( objectType );
@@ -1038,20 +1041,20 @@ namespace UELib
 		#endregion
 
 		// Assumes that ObjectsList was constructed by the programmer using this library.
-		private void AddObject( UObject obj, UnrealTable T )
+		private void AddObject( UObject obj, UObjectTableItem T )
 		{
 			T.Object = obj;
 			obj.Package = this;
 			obj.NameTable = NameTableList[T.ObjectIndex];
 			obj.Table = T;
 
-			if( T is UnrealExportTable )
+			if( T is UExportTableItem )
 			{
-				obj.ObjectIndex = T.TableIndex + 1;
+				obj.ObjectIndex = T.Index + 1;
 	 		}
-			else if( T is UnrealImportTable )
+			else if( T is UImportTableItem )
 			{
-				obj.ObjectIndex = -(T.TableIndex + 1);
+				obj.ObjectIndex = -(T.Index + 1);
 			}
 
 			ObjectsList.Add( obj );
@@ -1106,12 +1109,12 @@ namespace UELib
 		/// </summary>
 		/// <param name="tableIndex">The index of the Table.</param>
 		/// <returns>The found UELib.Core.UnrealTable if any.</returns>
-		public UnrealTable GetIndexTable( int tableIndex )
+		public UObjectTableItem GetIndexTable( int tableIndex )
 		{
 			try
 			{
 				return 	(tableIndex < 0 ? ImportTableList[-tableIndex - 1] 
-						: (tableIndex > 0 ? (UnrealTable)ExportTableList[tableIndex - 1] 
+						: (tableIndex > 0 ? (UObjectTableItem)ExportTableList[tableIndex - 1] 
 						: null));
 			}
 			catch( ArgumentOutOfRangeException )

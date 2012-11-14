@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
 
 namespace UELib.Core
 {
-	using UELib.Types;
+	using Types;
 
 	/// <summary>
 	/// Represents a unreal property. 
@@ -161,7 +157,7 @@ namespace UELib.Core
 	public class UInterfaceProperty : UProperty
 	{
 		#region Serialized Members
-		public UClass InterfaceObject = null;
+		public UClass InterfaceObject;
 		//public UInterfaceProperty InterfaceType = null;
 		#endregion
 
@@ -177,8 +173,8 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int Index = _Buffer.ReadObjectIndex();
-			InterfaceObject = (UClass)GetIndexObject( Index );
+			int index = _Buffer.ReadObjectIndex();
+			InterfaceObject = (UClass)GetIndexObject( index );
 
 			//Index = _Buffer.ReadObjectIndex();
 			//_InterfaceType = (UInterfaceProperty)GetIndexObject( Index );
@@ -199,8 +195,8 @@ namespace UELib.Core
 	public class UDelegateProperty : UProperty
 	{
 		#region Serialized Members
-		public UObject FunctionObject = null;
-		public UObject DelegateObject = null;
+		public UObject FunctionObject;
+		public UObject DelegateObject;
 		#endregion
 
 		/// <summary>
@@ -281,7 +277,7 @@ namespace UELib.Core
 	{
 		#region Serialized Members
 		// MetaClass
-		public UClass ClassObject = null;
+		public UClass ClassObject;
 		#endregion
 
 		/// <summary>
@@ -296,8 +292,8 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int ClassIndex = _Buffer.ReadObjectIndex();
-			ClassObject = (UClass)GetIndexObject( ClassIndex );
+			int classIndex = _Buffer.ReadObjectIndex();
+			ClassObject = (UClass)GetIndexObject( classIndex );
 		}
 
 		/// <inheritdoc/>
@@ -305,7 +301,7 @@ namespace UELib.Core
 		{
 			if( ClassObject != null )
 			{
-				return (String.Compare( ClassObject.Name, "Object", true ) == 0) 
+				return (String.Compare( ClassObject.Name, "Object", StringComparison.OrdinalIgnoreCase ) == 0) 
 					? Object.GetFriendlyType() 
 					: ("class" + "<" + GetFriendlyInnerType() + ">");
 			}
@@ -324,13 +320,14 @@ namespace UELib.Core
 	public class UFixedArrayProperty : UProperty
 	{
 		#region Serialized Members
-		public UProperty InnerObject = null;
+		public UProperty InnerObject;
 
-		private int _Count = 0;
 		public int Count
 		{
-			get{ return _Count; }
+			get; 
+			private set;
 		}
+
 		#endregion
 
 		/// <summary>
@@ -338,6 +335,7 @@ namespace UELib.Core
 		/// </summary>
 		public UFixedArrayProperty()
 		{
+			Count = 0;
 			Type = PropertyType.FixedArrayProperty;
 		}
 
@@ -345,16 +343,16 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int InnerIndex = _Buffer.ReadObjectIndex();
-			InnerObject = (UProperty)GetIndexObject( InnerIndex );
-			_Count = _Buffer.ReadIndex();
+			int innerIndex = _Buffer.ReadObjectIndex();
+			InnerObject = (UProperty)GetIndexObject( innerIndex );
+			Count = _Buffer.ReadIndex();
 		}
 
 		/// <inheritdoc/>
 		public override string GetFriendlyType()
 		{
 			// Just move to decompiling?
-			return base.GetFriendlyType() + "[" + _Count + "]";
+			return base.GetFriendlyType() + "[" + Count + "]";
 		}
 	}
 
@@ -364,7 +362,7 @@ namespace UELib.Core
 	public class UArrayProperty : UProperty
 	{
 		#region Serialized Members
-		public UProperty InnerProperty = null;
+		public UProperty InnerProperty;
 		#endregion
 
 		/// <summary>
@@ -379,8 +377,8 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int InnerIndex = _Buffer.ReadObjectIndex();
-			InnerProperty = (UProperty)GetIndexObject( InnerIndex );
+			int innerIndex = _Buffer.ReadObjectIndex();
+			InnerProperty = (UProperty)GetIndexObject( innerIndex );
 		}
 	
 		/// <inheritdoc/>
@@ -444,7 +442,7 @@ namespace UELib.Core
 	public class UStructProperty : UProperty
 	{
 		#region Serialized Members
-		public UStruct StructObject = null;
+		public UStruct StructObject;
 		#endregion
 
 		/// <summary>
@@ -475,7 +473,7 @@ namespace UELib.Core
 	public class UByteProperty : UProperty
 	{
 		#region Serialized Members
-		public UEnum EnumObject = null;
+		public UEnum EnumObject;
 		#endregion
 
 		/// <summary>
@@ -490,8 +488,8 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int EnumIndex = _Buffer.ReadObjectIndex();
-			EnumObject = (UEnum)GetIndexObject( EnumIndex );
+			int enumIndex = _Buffer.ReadObjectIndex();
+			EnumObject = (UEnum)GetIndexObject( enumIndex );
 		}
 
 		/// <inheritdoc/>
@@ -519,10 +517,10 @@ namespace UELib.Core
 					pkg.RegisterClass( "Enum", typeof(UEnum) );
 					pkg.InitializeExportObjects();
 				}
-				UByteProperty B = (UByteProperty)pkg.FindObject( Name, typeof(UByteProperty) );
-				if( B != null )
+				UByteProperty b = (UByteProperty)pkg.FindObject( Name, typeof(UByteProperty) );
+				if( b != null )
 				{
-					EnumObject = B.EnumObject;
+					EnumObject = b.EnumObject;
 				}
 			}
 		}
@@ -706,8 +704,8 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int ObjectIndex = _Buffer.ReadObjectIndex();
-			Object = GetIndexObject( ObjectIndex );
+			int objectIndex = _Buffer.ReadObjectIndex();
+			Object = GetIndexObject( objectIndex );
 		}
 
 		/// <inheritdoc/>

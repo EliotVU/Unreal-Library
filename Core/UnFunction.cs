@@ -8,7 +8,7 @@ namespace UELib.Core
 	public partial class UFunction : UStruct
 	{
 		#region Serialized Members
-		public ushort NativeToken	// Aslo known as iNative.
+		public ushort NativeToken
 		{
 			get;
 			private set;
@@ -39,7 +39,7 @@ namespace UELib.Core
 
 		#region PostInitialized Members
 		// Children
-		protected List<UProperty> _ChildLocals 	= new List<UProperty>();
+		protected List<UProperty> _ChildLocals 		= new List<UProperty>();
 		public List<UProperty> ChildLocals
 		{
 			get{ return _ChildLocals; }
@@ -82,7 +82,7 @@ namespace UELib.Core
 			}*/
 
 			NativeToken = _Buffer.ReadUShort();
-			NoteRead( "iNative", NativeToken );
+			NoteRead( "NativeToken", NativeToken );
 			OperPrecedence = _Buffer.ReadByte();
 			NoteRead( "OperPrecedence", OperPrecedence );
 			if( Package.Version < 69 )
@@ -104,7 +104,7 @@ namespace UELib.Core
 			if( Package.Version >= 189 && !Package.IsConsoleCooked() )
 			{
 				FriendlyNameIndex = _Buffer.ReadNameIndex();
-				NoteRead( "_FriendlyNameIndex", FriendlyNameIndex );
+				NoteRead( "FriendlyNameIndex", FriendlyNameIndex );
 			}
 		}
 

@@ -159,7 +159,7 @@ namespace UELib.Core
 			{		
 				// Moved to UFunction in UE3
 				FriendlyNameIndex = _Buffer.ReadIndex();
-				NoteRead( "_FriendlyNameIndex", FriendlyNameIndex );
+				NoteRead( "FriendlyNameIndex", FriendlyNameIndex );
 #if SWAT4
 				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
 				{
@@ -193,13 +193,13 @@ namespace UELib.Core
 			int scriptSkipSize;
 			// ScriptSize
 			ScriptSize = _Buffer.ReadUInt32();
-			NoteRead( "_ScriptSize", ScriptSize );
+			NoteRead( "ScriptSize", ScriptSize );
 			
 			if( _Buffer.Version >= 639 )   // 639
 			{
 				// ScriptSize
 				_MinAlignment = _Buffer.ReadInt32();
-				NoteRead( "_MinAlignment", _MinAlignment );
+				NoteRead( "MinAlignment", _MinAlignment );
 
 				scriptSkipSize = _MinAlignment;
 			}
