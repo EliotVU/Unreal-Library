@@ -6,8 +6,8 @@ using System.IO;
 
 namespace UELib
 {
-	using UELib.Core;
-	using UELib.Engine;
+	using Core;
+	using Engine;
 
 	/// <summary>
 	/// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -38,7 +38,7 @@ namespace UELib
 	{
 		#region General Members
 		// Reference to the stream used when reading this package
-		public readonly UPackageStream Stream = null;
+		public readonly UPackageStream Stream;
 
 		/// <summary>
 		/// The signature of a 'Unreal Package'.
@@ -78,7 +78,7 @@ namespace UELib
 		/// For debugging purposes. Change this to override the present Version deserialized from the package.
 		/// </summary>
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
-		public static ushort OverrideVersion = 0;
+		public static ushort OverrideVersion;
 
 		#region Version history
 			public const ushort VSIZEPREFIXDEPRECATED	= 64;
@@ -97,7 +97,7 @@ namespace UELib
 			public const ushort VCLASSGROUP				= 789;
 		#endregion
 
-		private ushort _LicenseeVersion = 0;
+		private ushort _LicenseeVersion;
 		public ushort LicenseeVersion
 		{
 			get{ return OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion; }
@@ -189,6 +189,9 @@ namespace UELib
 
 				[GameIDAttribute( 99, 117, 5u, 8u )]
 				UT2003,
+
+				[GameIDAttribute( 100, 58 )]
+				XIII,
 
 				[GameIDAttribute( 110, 2609 )]
 				Unreal2,			// Has custom support!
@@ -288,14 +291,7 @@ namespace UELib
 
 				if( GameID == ID.Unset )
 				{
-					if( package.LicenseeVersion == 0 )
-					{
-						GameID = ID.Default;
-					}
-					else
-					{
-						GameID = ID.Unknown;
-					}	
+					GameID = package.LicenseeVersion == 0 ? ID.Default : ID.Unknown;	
 				}
 				
 			}
@@ -312,7 +308,7 @@ namespace UELib
 
 			public override bool Equals( object obj )
 			{
-				return this.GameID == (ID)obj;
+				return GameID == (ID)obj;
 			}
 
 			public override int GetHashCode()
@@ -477,7 +473,7 @@ namespace UELib
 		/// <summary>
 		/// Class types that should get added to the ObjectsList.
 		/// </summary>
-		private List<ObjectClass> _RegisteredClasses = new List<ObjectClass>();
+		private readonly List<ObjectClass> _RegisteredClasses = new List<ObjectClass>();
 
 		/// <summary>
 		/// List of UObjects that were constructed by function ConstructObjects, later deserialized and linked.
@@ -486,7 +482,7 @@ namespace UELib
 		/// </summary>
 		public List<UObject> ObjectsList { get; private set; }
 
-		public NativesTablePackage NTLPackage = null;
+		public NativesTablePackage NTLPackage;
 		#endregion
 
 		/// <summary>
@@ -510,12 +506,6 @@ namespace UELib
 		/// <param name="stream">A loaded UELib.PackageStream.</param>
 		private UnrealPackage( UPackageStream stream )
 		{
-			GenerationsList = null;
-			NameTableList = null;
-			ExportTableList = null;
-			ImportTableList = null;
-			DependsTableList = null;
-			ObjectsList = null;
 			_FullPackageName = stream.Name;
 			Stream = stream;
 		}
@@ -528,9 +518,9 @@ namespace UELib
 		/// <param name="stream">A loaded UELib.PackageStream.</param>
 		/// <returns>Deserialized UELib.UnrealPackage.</returns>
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Reliability", "CA2000:Dispose objects before losing scope" )]
-		public static UnrealPackage DeserializePackage( string packagePath, System.IO.FileAccess fileAccess = System.IO.FileAccess.Read )
+		public static UnrealPackage DeserializePackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
 		{
-			var stream = new UPackageStream( packagePath, System.IO.FileMode.Open, fileAccess );
+			var stream = new UPackageStream( packagePath, FileMode.Open, fileAccess );
 			var pkg = new UnrealPackage( stream );
 			stream.Package = pkg;	 // Very important so the stream Version will not throw a lot exceptions :P
 			Console.Write( "Package:" + pkg.PackageName );
@@ -601,7 +591,7 @@ namespace UELib
 
 				int generationCount = stream.ReadInt32();
 				#if APB
-				if( pkg.Build == UnrealPackage.GameBuild.ID.APB && pkg.LicenseeVersion >= 32 )
+				if( pkg.Build == GameBuild.ID.APB && pkg.LicenseeVersion >= 32 )
 				{
 					stream.Skip( 16 );
 				}
@@ -924,7 +914,6 @@ namespace UELib
 		/// <summary>
 		/// Tries to import necessary deserialized data from imported objects.
 		/// </summary>
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic" )]
 		public void ImportObjects()
 		{
 			// TODO:Figure out why this freezes.
@@ -974,7 +963,7 @@ namespace UELib
 
 		public bool IsRegisteredClass( string className )
 		{
-			return _RegisteredClasses.FindIndex( (o) => o.Name.ToLower() == className.ToLower() ) != -1;
+			return _RegisteredClasses.FindIndex( o => o.Name.ToLower() == className.ToLower() ) != -1;
 		}
 
 		public void RegisterAllCodeClasses()
@@ -1028,7 +1017,8 @@ namespace UELib
 
 		private Type GetClassTypeByClassName( string className )
 		{		
-			var c = _RegisteredClasses.Find( rclass => String.Compare( rclass.Name, className, true ) == 0 );
+			var c = _RegisteredClasses.Find( 
+				rclass => String.Compare( rclass.Name, className, StringComparison.OrdinalIgnoreCase ) == 0 );
 			try
 			{
 				return c.Class;
@@ -1136,7 +1126,7 @@ namespace UELib
 				return null;
 			}
 
-			var obj = ObjectsList.Find( o => System.String.Compare(o.Name, objectName, System.StringComparison.OrdinalIgnoreCase) == 0 &&
+			var obj = ObjectsList.Find( o => String.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
 				(checkForSubclass ? o.GetType().IsSubclassOf( type ) : o.GetType() == type) );
 			return obj;
 		}
@@ -1161,7 +1151,6 @@ namespace UELib
 			return HasPackageFlag( Flags.PackageFlags.Cooked ) && Version >= VCOOKEDPACKAGES;
 		}
 
-		// TODO: Corrigate conditions.
 		public bool IsConsoleCooked()
 		{
 			return IsCooked() && (IsBigEndian || Build.IsConsoleCompressed) && !Build.IsXenonCompressed;

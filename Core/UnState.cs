@@ -56,6 +56,8 @@ namespace UELib.Core
 		public const int ProbeMin = 300;
 		public const int ProbeMax = 364;
 
+		private const uint VStateFlags = 101;
+
 		public bool IsProbing( int nameIndex )
 		{
 			return (nameIndex < ProbeMin) || (nameIndex >= ProbeMax) || (_ProbeMask & ((ulong)1 << (nameIndex - ProbeMin))) != 0;
@@ -100,18 +102,22 @@ namespace UELib.Core
 			_LabelTableOffset = _Buffer.ReadUShort();
 			NoteRead( "_LabelTableOffset", _LabelTableOffset );
 
-#if BORDERLANDS2
-			// FIXME:Temp fix
-			if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
-			{
-				StateFlags = _Buffer.ReadUShort();
-				goto skipStateFlags;
-			}
-#endif
-			StateFlags = _Buffer.ReadUInt32();
-			skipStateFlags:
-			NoteRead( "StateFlags", StateFlags );
+			if( Package.Version > VStateFlags )
+			{ 
+				#if BORDERLANDS2
+					// FIXME:Temp fix
+					if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+					{
+						StateFlags = _Buffer.ReadUShort();
+						goto skipStateFlags;
+					}
+				#endif
 
+				StateFlags = _Buffer.ReadUInt32();
+				skipStateFlags:
+				NoteRead( "StateFlags", StateFlags );
+			}
+					
 			if( Package.Version >= 220 )
 			{ 
 				int mapCount = _Buffer.ReadIndex();

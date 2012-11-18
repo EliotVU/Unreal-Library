@@ -131,6 +131,7 @@ namespace UELib.Core
 		}
 
 		private const uint VCppText = 190;
+		private const uint VStructFlags = 101;
 
 		protected override void Deserialize()
 		{
@@ -167,7 +168,7 @@ namespace UELib.Core
 				}
 #endif
 				// TODO: Corrigate Version
-				if( _Buffer.Version > 69 )
+				if( _Buffer.Version > VStructFlags )
 				{
 					StructFlags = _Buffer.ReadUInt32();
 					NoteRead( "StructFlags", StructFlags );	

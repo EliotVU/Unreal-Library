@@ -83,11 +83,21 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
+#if XIII
+			if( Package.Build == UnrealPackage.GameBuild.ID.XIII )
+			{
+				ArrayDim = _Buffer.ReadUShort();
+				NoteRead( "ArrayDim", ArrayDim );		
+				goto skipInfo;
+			}
+#endif
+
 			var info = _Buffer.ReadUInt32();
 			ArrayDim = (ushort)(info & 0x0000FFFFU);
 			NoteRead( "ArrayDim", ArrayDim );
 			ElementSize = (ushort)(info >> 16);
 			NoteRead( "ElementSize", ElementSize );
+			skipInfo:
 
 			PropertyFlags = _Buffer.UR.ReadQWORDFlags();
 			NoteRead( "PropertyFlags", PropertyFlags );
@@ -118,7 +128,7 @@ namespace UELib.Core
 			}
 
 #if SWAT4
-			if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.Swat4 )
+			if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
 			{
 				// Contains meta data such as a ToolTip.
 				_Buffer.Skip( 3 );

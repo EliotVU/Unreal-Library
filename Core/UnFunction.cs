@@ -52,7 +52,6 @@ namespace UELib.Core
 		}
 
 		public UProperty ReturnProperty{ get; private set; }
-
 		#endregion
 
 		public string FriendlyName
@@ -77,19 +76,14 @@ namespace UELib.Core
 
 			base.Deserialize();
 
-			/*if( Package.Version > 63 )
-			{
-			}*/
-
 			NativeToken = _Buffer.ReadUShort();
 			NoteRead( "NativeToken", NativeToken );
 			OperPrecedence = _Buffer.ReadByte();
 			NoteRead( "OperPrecedence", OperPrecedence );
 			if( Package.Version < 69 )
 			{
+				// ParmsSize, NumParms, and ReturnValueOffse
 				_Buffer.Skip( 5 );
-
-				// ParmsSize, iNative, NumParms, OperPrecedence, ReturnValueOffset, FunctionFlags
 			}
 
 			FunctionFlags = _Buffer.ReadUInt32();
