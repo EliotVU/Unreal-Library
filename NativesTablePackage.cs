@@ -1,43 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace UELib
 {
-	using UELib.Core;
+	using Core;
 
-	public sealed class NativeTable
+	public sealed class NativeTableItem
 	{
 		public string 	Name;
 		public byte 	OperPrecedence;
-		public byte 	Format;
+		public byte 	Type;
 		public int 		ByteToken;
 
-		public void SetFormat( UFunction function )
+		public void InitializeType( UFunction function )
 		{
 			if( function.IsOperator() )
 			{
-				Format = (byte)NativeType.Operator;
+				Type = (byte)FunctionType.Operator;
 			}
 			else if( function.IsPost() )
 			{
-				Format = (byte)NativeType.PostOperator;
+				Type = (byte)FunctionType.PostOperator;
 			}
 			else if( function.IsPre() )
 			{
-				Format = (byte)NativeType.PreOperator;
+				Type = (byte)FunctionType.PreOperator;
 			} 
 			else
 			{
-				Format = (byte)NativeType.Function;
+				Type = (byte)FunctionType.Function;
 			}
 		}
 	}
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1008:EnumsShouldHaveZeroValue" )]
-	public enum NativeType : byte
+	public enum FunctionType : byte
 	{
 		Function		= 1,
 		Operator		= 2,
@@ -50,62 +47,54 @@ namespace UELib
 		public const uint Signature = 0x2C8D14F1;
 		public const string Extension = ".NTL";
 
-		public List<NativeTable> NativesTableList;
-
-		public NativesTablePackage()
-		{
-		}
+		public List<NativeTableItem> NativeTableList;
 
 		public void LoadPackage( string name )
 		{
-			using( FileStream stream = new FileStream( name + Extension, FileMode.Open, FileAccess.Read ) )
+			using( var stream = new FileStream( name + Extension, FileMode.Open, FileAccess.Read ) )
 			{
-				BinaryReader BinReader = new BinaryReader( stream );
-				if( BinReader.ReadUInt32() != Signature )
+				var binReader = new BinaryReader( stream );
+				if( binReader.ReadUInt32() != Signature )
 				{
-					throw new UnrealException( "File " + stream.Name + " is not a NTL file!" );
+					throw new UnrealException( String.Format( "File {0} is not a NTL file!", stream.Name ) );
 				}
-				int Count = BinReader.ReadInt32();
-				NativesTableList = new List<NativeTable>();
-				for( int i = 0; i < Count; ++ i )
+				int count = binReader.ReadInt32();
+				NativeTableList = new List<NativeTableItem>();
+				for( int i = 0; i < count; ++ i )
 				{
-					NativeTable NT = new NativeTable();
-
-					// Name
-					NT.Name = BinReader.ReadString();
-					NT.OperPrecedence = BinReader.ReadByte();
-					NT.Format = BinReader.ReadByte();
-					NT.ByteToken = BinReader.ReadInt32();
-					NativesTableList.Add( NT );
+					NativeTableList.Add
+					( 
+						new NativeTableItem
+						{
+							Name = binReader.ReadString(),
+							OperPrecedence = binReader.ReadByte(),
+							Type = binReader.ReadByte(),
+							ByteToken = binReader.ReadInt32()
+						} 
+					);
 				}
-				NativesTableList.Sort
-				( 
-					delegate( NativeTable nt1, NativeTable nt2 )
-					{ 
-						return nt1.ByteToken.CompareTo( nt2.ByteToken ); 
-					} 
-				);
+				NativeTableList.Sort( (nt1, nt2) => nt1.ByteToken.CompareTo( nt2.ByteToken ) );
 			}
 		}
 
-		public NativeTable FindTable( int token )
+		public NativeTableItem FindTableItem( int nativeToken )
 		{
-			int lownum = 0;
-			int highnum = NativesTableList.Count - 1;
-			while( lownum <= highnum )
+			int lowNum = 0;
+			int highNum = NativeTableList.Count - 1;
+			while( lowNum <= highNum )
 			{
-				int midnum = (lownum + highnum) / 2;
-				if( token > NativesTableList[midnum].ByteToken )
+				int midNum = (lowNum + highNum) / 2;
+				if( nativeToken > NativeTableList[midNum].ByteToken )
 				{
-					lownum = midnum + 1;
+					lowNum = midNum + 1;
 				}
-				else if( token < NativesTableList[midnum].ByteToken )
+				else if( nativeToken < NativeTableList[midNum].ByteToken )
 				{
-					highnum = midnum - 1;
+					highNum = midNum - 1;
 				}
 				else
 				{
-					return NativesTableList[midnum];
+					return NativeTableList[midNum];
 				}
 			}
 			return null;
@@ -113,17 +102,17 @@ namespace UELib
 
 		public void CreatePackage( string name )
 		{
-			using( FileStream stream = new FileStream( name + Extension, FileMode.Create, FileAccess.Write ) )
+			using( var stream = new FileStream( name + Extension, FileMode.Create, FileAccess.Write ) )
 			{
-				BinaryWriter BinWriter = new BinaryWriter( stream );
-				BinWriter.Write( Signature ); 
-				BinWriter.Write( NativesTableList.Count );
-				foreach( NativeTable T in NativesTableList )
+				var binWriter = new BinaryWriter( stream );
+				binWriter.Write( Signature ); 
+				binWriter.Write( NativeTableList.Count );
+				foreach( var item in NativeTableList )
 				{
-					BinWriter.Write( T.Name );
-					BinWriter.Write( T.OperPrecedence );
-					BinWriter.Write( T.Format );
-					BinWriter.Write( T.ByteToken );
+					binWriter.Write( item.Name );
+					binWriter.Write( item.OperPrecedence );
+					binWriter.Write( item.Type );
+					binWriter.Write( item.ByteToken );
 				}
 			}
 		}

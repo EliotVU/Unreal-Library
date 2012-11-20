@@ -211,7 +211,7 @@ namespace UELib.Core
 				var t = new NativeFunctionToken();
 				try
 				{
-					var nt = _Owner.Package.NTLPackage != null ? _Owner.Package.NTLPackage.FindTable( nativeIndex ) : null;
+					var nt = _Owner.Package.NTLPackage != null ? _Owner.Package.NTLPackage.FindTableItem( nativeIndex ) : null;
 					if( nt != null )
 					{
 						t.NativeTable = nt;
@@ -227,10 +227,10 @@ namespace UELib.Core
 							UFunction func = table.Object as UFunction;
 							if( func != null )
 							{
-								nt = new NativeTable();
-								nt.SetFormat( func );
+								nt = new NativeTableItem();
+								nt.InitializeType( func );
  								nt.OperPrecedence = func.OperPrecedence;
-								nt.Name = nt.Format == (byte)NativeType.Function ? func.Name : func.FriendlyName;
+								nt.Name = nt.Type == (byte)FunctionType.Function ? func.Name : func.FriendlyName;
 
 								nt.ByteToken = nativeIndex;
 								t.NativeTable = nt;
@@ -1953,27 +1953,27 @@ namespace UELib.Core
 
 			public class NativeFunctionToken : FunctionToken
 			{
-				public NativeTable NativeTable;
+				public NativeTableItem NativeTable;
 
 				public override void Deserialize()
 				{
 					if( NativeTable == null )
 					{
-						NativeTable = new NativeTable{ Format = (byte)NativeType.Function, Name = "UnresolvedNativeFunction_" + RepresentToken, ByteToken = RepresentToken };
+						NativeTable = new NativeTableItem{ Type = (byte)FunctionType.Function, Name = "UnresolvedNativeFunction_" + RepresentToken, ByteToken = RepresentToken };
 					}
 
-					switch( (NativeType)NativeTable.Format )
+					switch( (FunctionType)NativeTable.Type )
 					{
-						case NativeType.Function:
+						case FunctionType.Function:
 							DeserializeCall();
 							break;
 
-						case NativeType.PreOperator:
-						case NativeType.PostOperator:
+						case FunctionType.PreOperator:
+						case FunctionType.PostOperator:
 							DeserializeUnaryOperator();
 							break;
 
-						case NativeType.Operator:
+						case FunctionType.Operator:
 							DeserializeBinaryOperator();
 							break;
 
@@ -1986,21 +1986,21 @@ namespace UELib.Core
 				public override string Decompile()
 				{
 					string output;
-					switch( (NativeType)NativeTable.Format )
+					switch( (FunctionType)NativeTable.Type )
 					{
-						case NativeType.Function:
+						case FunctionType.Function:
 							output = DecompileCall( NativeTable.Name );
 							break;
 
-						case NativeType.Operator:
+						case FunctionType.Operator:
 							output = DecompileOperator( NativeTable.Name );
 							break;
 
-						case NativeType.PostOperator:
+						case FunctionType.PostOperator:
 							output = DecompilePostOperator( NativeTable.Name );
 							break;
 
-						case NativeType.PreOperator:
+						case FunctionType.PreOperator:
 							output = DecompilePreOperator( NativeTable.Name );
 							break;
 
