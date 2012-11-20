@@ -1584,7 +1584,7 @@ namespace UELib.Core
 			{
 				public UByteCodeDecompiler Decompiler
 				{ 
-					protected get;
+					get;
 					set;
 				}
 
