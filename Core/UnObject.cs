@@ -409,6 +409,10 @@ namespace UELib.Core
 			{
 				_ShouldReleaseBuffer = false;
 			}
+			else
+			{
+				_Properties = null;
+			}
 		}
 
 		/// <summary>
