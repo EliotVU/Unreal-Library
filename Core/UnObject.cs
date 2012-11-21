@@ -121,18 +121,10 @@ namespace UELib.Core
 			internal set;
 		}
 
-		private string _CustomName = String.Empty;
+		private string _CustomName;
 		public string Name
 		{
-			get
-			{ 
-				if( _CustomName.Length != 0 )
-				{
-					return _CustomName;
-				}
-				return Table.ObjectName;
-				//return NameTable.Name; 
-			}
+			get{ return _CustomName ?? Table.ObjectName; }
 			set{ _CustomName = value; }
 		}
 
@@ -148,7 +140,7 @@ namespace UELib.Core
 		public ulong NameFlags
 		{
 			get{ return NameTable.Flags; }
-			set
+			set										 
 			{
 				NameTable.Flags = value;
 				NameTable.WriteFlags( Package.Stream );
