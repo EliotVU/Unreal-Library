@@ -379,7 +379,7 @@ namespace UELib.Core
 			{
 				if( (ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0 )
 				{
-					output += Package.Version > PlaceableVersion ? "\r\n\tplaceable" : "\r\n\tusercreate";
+					output += Package.Version >= PlaceableVersion ? "\r\n\tplaceable" : "\r\n\tusercreate";
 				}
 				else
 				{
@@ -387,7 +387,7 @@ namespace UELib.Core
 					/*UClass ParentClass = (UClass)Super;
 					if( ParentClass != null && (ParentClass.ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0 )
 					{*/
-					output += Package.Version > PlaceableVersion ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
+					output += Package.Version >= PlaceableVersion ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
 					//}
 				}
 			}
