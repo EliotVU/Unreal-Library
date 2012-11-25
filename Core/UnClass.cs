@@ -261,8 +261,9 @@ namespace UELib.Core
 
 						if( Package.Version >= 185 )
 						{
-							// 576:CrimeCraft
-							if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) || Package.Version >= 576 )
+							// 490:GoW1, 576:CrimeCraft
+							if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) 
+								|| Package.Version <= 490 || Package.Version >= 576 )
 							{ 
 								AutoExpandCategoriesList = DeserializeGroup();
 								NoteRead( "AutoExpandCategoriesList", AutoExpandCategoriesList );
