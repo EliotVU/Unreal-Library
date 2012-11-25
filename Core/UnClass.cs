@@ -261,8 +261,12 @@ namespace UELib.Core
 
 						if( Package.Version >= 185 )
 						{
-							AutoExpandCategoriesList = DeserializeGroup();
-							NoteRead( "AutoExpandCategoriesList", AutoExpandCategoriesList );
+							// 576:CrimeCraft
+							if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) || Package.Version >= 576 )
+							{ 
+								AutoExpandCategoriesList = DeserializeGroup();
+								NoteRead( "AutoExpandCategoriesList", AutoExpandCategoriesList );
+							}
 
 							if( Package.Version > 670 )
 							{
@@ -299,6 +303,13 @@ namespace UELib.Core
 								// TODO: Unknown
 								int unk2 = _Buffer.ReadInt32();
 								NoteRead( "unk2", unk2 );
+
+								#if SINGULARITY
+									if( Package.Build == UnrealPackage.GameBuild.ID.Singularity )
+									{ 
+										_Buffer.Skip( 8 );
+									}
+								#endif
 							}	
 						}					
 					}
