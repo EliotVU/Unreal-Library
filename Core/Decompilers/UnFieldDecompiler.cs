@@ -11,27 +11,19 @@ namespace UELib.Core
 		}
 
 		// Introduction of the change from intrinsic to native.
-		private const uint NativeVersion = 100;
+		private const uint NativeVersion = 69;
 		// Introduction of the change from expands to extends.
-		private const uint ExtendsVersion = 100;
-		protected const uint PlaceableVersion = 100;
+		private const uint ExtendsVersion = 69;
+		protected const uint PlaceableVersion = 69;
 
 		protected string FormatNative()
 		{
-			if( Package.Version >= NativeVersion )
-			{
-				return "native";
-			}
-			return "intrinsic";
+			return Package.Version >= NativeVersion ? "native" : "intrinsic";
 		}
 
 		protected string FormatExtends()
 		{
-			if( Package.Version >= ExtendsVersion )
-			{
-				return "extends";
-			}
-			return "expands";
+			return Package.Version >= ExtendsVersion ? "extends" : "expands";
 		}
 	}
 }
