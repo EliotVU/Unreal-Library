@@ -298,7 +298,7 @@ namespace UELib.Core
 							}
 
 							// FIXME: Found first in(V:655), Definitely not in APB and GoW 2
-							if( Package.Version > 575 && Package.Version <= 678 )
+							if( Package.Version > 575 && Package.Version < 678 )
 							{
 								// TODO: Unknown
 								int unk2 = _Buffer.ReadInt32();
