@@ -271,7 +271,7 @@ namespace UELib.Core
 			}
 		}
 
-		public void ReadBuffer()
+		private void ReadBuffer()
 		{
 			if( _Buffer != null )
 			{
@@ -288,7 +288,7 @@ namespace UELib.Core
 			_Buffer = new UObjectStream( Package.Stream, ref buff );	
 		}
 
-		protected void ReleaseBuffer()
+		private void ReleaseBuffer()
 		{
 			if( _Buffer == null )
 				return;

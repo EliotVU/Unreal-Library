@@ -132,11 +132,18 @@ namespace UELib.Core
 
 			foreach( var func in functions )
 			{
-				string funcOutput = UDecompilingState.Tabs + func.Decompile();
+				try
+				{
+					string funcOutput = UDecompilingState.Tabs + func.Decompile();
 
-				// And add a empty line between all functions, except empty functions!
-				output += (funcOutput.EndsWith( ");" ) ? ("\r\n" + funcOutput) : 
-					("\r\n" + funcOutput + (func != _ChildFunctions.Last() ? "\r\n" : String.Empty)) );
+					// And add a empty line between all functions, except empty functions!
+					output += (funcOutput.EndsWith( ");" ) ? ("\r\n" + funcOutput) :
+						("\r\n" + funcOutput + (func != _ChildFunctions.Last() ? "\r\n" : String.Empty)));
+				}
+				catch( Exception e )
+				{
+					output += "\r\n" + UDecompilingState.Tabs + "// F:" + func.Name + " E:" + e;	
+				}
 			}
 			return output + (output.Length != 0 ? "\r\n" : String.Empty);
 		}

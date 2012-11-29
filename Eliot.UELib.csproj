@@ -47,7 +47,7 @@
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>C:\Program Files %28x86%29\UE Explorer\Eliot.UELib.xml</DocumentationFile>
-    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <NoWarn>
     </NoWarn>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
@@ -63,6 +63,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
     </DocumentationFile>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -87,7 +88,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY</DefineConstants>
+    <DefineConstants>DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY</DefineConstants>
     <Optimize>true</Optimize>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -99,10 +100,13 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <DocumentationFile>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\Eliot.UELib.XML</DocumentationFile>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MiniLZO">
       <HintPath>..\UE Explorer\libs\MiniLZO.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
