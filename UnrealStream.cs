@@ -63,7 +63,6 @@ namespace UELib
 		byte ReadByte();
 
 		short ReadInt16();
-		ushort ReadUShort();
 
 		int ReadInt32();
 		uint ReadUInt32();
@@ -72,9 +71,6 @@ namespace UELib
 		ulong ReadUInt64();
 
 		void Skip( int bytes );
-		void StartPeek();
-		void StartPeek( long peekPosition );
-		void EndPeek();
 
 		// Stream
 		long Length{ get; }
@@ -127,7 +123,7 @@ namespace UELib
 			_MyEncoding = enc;
 		}
 
-		public string ReadString()
+		public string ReadText()
 		{
 			if( _Version < UnrealPackage.VSIZEPREFIXDEPRECATED )
 			{
@@ -466,7 +462,7 @@ namespace UELib
 		/// <returns>the read string without the end \0 char</returns>
 		public string ReadString()
 		{
-			return UR.ReadString();
+			return UR.ReadText();
 		}
 
 		/// <summary>
@@ -734,7 +730,7 @@ namespace UELib
 		/// <returns>the read string without the end \0 char</returns>
 		public string ReadString()
 		{
-			return UR.ReadString();
+			return UR.ReadText();
 		}
 
 		/// <summary>

@@ -260,7 +260,6 @@ namespace UELib
 		public uint ExportFlags;
 		public Dictionary<int, int> Components;
 		public List<int> NetObjects;
-		public string Guid;
 		#endregion
 
 		public void Deserialize( IUnrealStream stream )
@@ -293,41 +292,41 @@ namespace UELib
 
 			if( stream.Version < 543 )
 			{
-				int componentMapCount = stream.ReadInt32();
-				if( componentMapCount > 0 )
-				{
-					Components = new Dictionary<int, int>( componentMapCount );
-					for( int i = 0; i < componentMapCount; ++ i )
-					{
-						Components.Add( stream.ReadNameIndex(), stream.ReadObjectIndex() );
-					}
-				}
+				int componentMapCount = stream.ReadInt32();	 
+				stream.Skip( componentMapCount * 12 );
+				//if( componentMapCount > 0 )
+				//{
+				//    Components = new Dictionary<int, int>( componentMapCount );
+				//    for( int i = 0; i < componentMapCount; ++ i )
+				//    {
+				//        Components.Add( stream.ReadNameIndex(), stream.ReadObjectIndex() );
+				//    }
+				//}
 			}
 
-			if( stream.Version >= 247 )
-			{
-				ExportFlags = stream.ReadUInt32();
-				if( stream.Version >= 322 )
-				{
-					// NetObjectCount
-					int netObjectCount = stream.ReadInt32();
-					if( netObjectCount > 0 )
-					{
-						NetObjects = new List<int>( netObjectCount );
-						for( int i = 0; i < netObjectCount; ++ i )
-						{
-							NetObjects.Add( stream.ReadObjectIndex() );
-						}
-					}
+			if( stream.Version < 247 )
+				return;
 
-					// 000* Guid...
-					Guid = stream.ReadGuid();
-					if( stream.Version > 486 )	// 475?	 486(> Stargate Worlds)
-					{
-						// Depends?
-						stream.ReadInt32();
-					}
-				}
+			ExportFlags = stream.ReadUInt32();
+			if( stream.Version < 322 )
+				return;
+
+			// NetObjectCount
+			int netObjectCount = stream.ReadInt32();
+			stream.Skip( netObjectCount * 4 );
+			//if( netObjectCount > 0 )
+			//{
+			//    NetObjects = new List<int>( netObjectCount );
+			//    for( int i = 0; i < netObjectCount; ++ i )
+			//    {
+			//        NetObjects.Add( stream.ReadObjectIndex() );
+			//    }
+			//}
+			stream.Skip( 16 ); // GUID
+			if( stream.Version > 486 )	// 475?	 486(> Stargate Worlds)
+			{
+				// Depends?
+				stream.ReadInt32();
 			}
 		}
 
