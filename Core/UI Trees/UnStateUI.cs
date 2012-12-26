@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace UELib.Core
 {
@@ -11,15 +10,9 @@ namespace UELib.Core
 
 			if( GetType() == typeof(UState) )
 			{
-				TextNode stateFlagsNode = AddTextNode( ParentNode, "State Flags:" + UnrealMethods.FlagToString( StateFlags ) );
-				stateFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.StateFlags), StateFlags ) );
+				var stateFlagsNode = AddTextNode( ParentNode, "State Flags:" + UnrealMethods.FlagToString( _StateFlags ) );
+				stateFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.StateFlags), _StateFlags ) );
 			}
-
-			#if DEBUG
-				AddTextNode( ParentNode, "Label Table offset:" + _LabelTableOffset );
-				AddTextNode( ParentNode, "Ignore Mask:" + String.Format( "0x{0:x8}", _IgnoreMask ) );
-				AddTextNode( ParentNode, "Probe Mask:" + String.Format( "0x{0:x8}", _ProbeMask ) );
-			#endif
 
 			base.InitNodes( ParentNode );
 		}
@@ -27,8 +20,7 @@ namespace UELib.Core
 		protected override void AddChildren( TreeNode node )
 		{
 			base.AddChildren( node );
-
-			AddObjectListNode( node, "Functions", _ChildFunctions );
+			AddObjectListNode( node, "Functions", Functions );
 		}
 	}
 }

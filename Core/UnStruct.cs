@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using UELib.Flags;
 
 namespace UELib.Core
 {
 	/// <summary>
 	/// Represents a unreal struct with the functionality to contain Constants, Enums, Structs and Properties. 
 	/// </summary>
+	[UnrealRegisterClass]
 	public partial class UStruct : UField
 	{
 		// Greater or equal than:
@@ -16,57 +18,28 @@ namespace UELib.Core
 		/// <summary>
 		/// Index to ScriptText Object (UnTextBuffer)
 		/// </summary>
-		public int ScriptText
-		{
-			get;
-			private set;
-		}
+		public int ScriptText{ get; private set; }
 
 		/// <summary>
 		/// Index to CppText Object (UTextBuffer)
 		/// UE3 Only
 		/// </summary>
-		public int CppText
-		{
-			get;
-			private set;
-		}
+		public int CppText{ get; private set; }
 
 		/// <summary>
 		/// Index to the first child property.
 		/// </summary>
-		public int Children
-		{
-			get;
-			private set;
-		}
+		public int Children{ get; private set; }
 
 		public uint Line;
 		public uint TextPos;
-
-		private int _MinAlignment
-		{
-			get; set;
-		}
-
-		public uint ScriptSize
-		{
-			get;
-			private set;
-		}
-
+		public int ByteScriptSize{ get; private set; }
+		public int DataScriptSize{ get; private set; }
 		protected int FriendlyNameIndex = -1;
-
-		/// <summary>
-		/// UE2 Only?
-		/// </summary>
-		private uint StructFlags
-		{
-			get; set;
-		}
+		protected uint StructFlags{ get; set; }
 		#endregion
 
-		#region PostInitialized Members
+		#region Script Members
 		public UTextBuffer ScriptBuffer
 		{
 			get;
@@ -79,29 +52,13 @@ namespace UELib.Core
 			protected set;
 		}
 
-		protected List<UConst> _ChildConstants = new List<UConst>();
-		public List<UConst> ChildConstants
-		{
-			get{ return _ChildConstants; }
-		}
+		public IList<UConst> Constants{ get; private set; }
 
-		protected List<UEnum> _ChildEnums = new List<UEnum>();
-		public List<UEnum> ChildEnums
-		{
-			get{ return _ChildEnums; }
-		}
+		public IList<UEnum> Enums{ get; private set; }
 
-		protected List<UStruct> _ChildStructs = new List<UStruct>();
-		public List<UStruct> ChildStructs
-		{
-			get{ return _ChildStructs; }
-		}
+		public IList<UStruct> Structs{ get; private set; }
 
-		protected List<UProperty> _ChildProperties = new List<UProperty>();
-		public List<UProperty> ChildProperties
-		{
-			get{ return _ChildProperties; }
-		}
+		public List<UProperty> Variables{ get; private set; }
 		#endregion
 
 		#region General Members
@@ -121,6 +78,7 @@ namespace UELib.Core
 		public UByteCodeDecompiler ByteCodeManager;
 		#endregion
 
+		#region Constructors
 		/// <summary>
 		///	Creates a new instance of the UELib.Core.UStruct class. 
 		/// </summary>
@@ -141,11 +99,11 @@ namespace UELib.Core
 			if( !Package.IsConsoleCooked() )
 			{
 				ScriptText = _Buffer.ReadObjectIndex();
-				NoteRead( "ScriptText", ScriptText );
+				NoteRead( "ScriptText", GetIndexObject( ScriptText ) );
 			}
 
 			Children = _Buffer.ReadObjectIndex();
-			NoteRead( "Children", Children );
+			NoteRead( "Children", GetIndexObject( Children ) );
 
 			// TODO: Correct version
 			if( _Buffer.Version > 154 /* UE3 */ )
@@ -153,16 +111,16 @@ namespace UELib.Core
 				if( _Buffer.Version >= VCppText && !Package.IsConsoleCooked() )
 				{
 					CppText = _Buffer.ReadInt32();
-					NoteRead( "CppText", CppText );
+					NoteRead( "CppText", GetIndexObject( CppText ) );
 				}
 			}
 			else
 			{		
 				// Moved to UFunction in UE3
 				FriendlyNameIndex = _Buffer.ReadIndex();
-				NoteRead( "FriendlyNameIndex", FriendlyNameIndex );
+				NoteRead( "FriendlyNameIndex", Package.Names[FriendlyNameIndex] );
 #if SWAT4
-				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
+				if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
 				{
 					_Buffer.ReadIndex();
 				}
@@ -171,14 +129,14 @@ namespace UELib.Core
 				if( _Buffer.Version > VStructFlags )
 				{
 					StructFlags = _Buffer.ReadUInt32();
-					NoteRead( "StructFlags", StructFlags );	
+					NoteRead( "StructFlags", (StructFlags)StructFlags );	
 				}
 
 #if SWAT4
-				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
+				if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
 				{
 					int processedText = _Buffer.ReadObjectIndex();
-					NoteRead( "ProcessedText", processedText );
+					NoteRead( "ProcessedText", GetIndexObject( processedText ) );
 				}
 #endif
 			}
@@ -191,60 +149,50 @@ namespace UELib.Core
 				NoteRead( "TextPos", TextPos );
 			}
 
-			int scriptSkipSize;
-			// ScriptSize
-			ScriptSize = _Buffer.ReadUInt32();
-			NoteRead( "ScriptSize", ScriptSize );
-			
-			if( _Buffer.Version >= 639 )   // 639
+			ByteScriptSize = _Buffer.ReadInt32();
+			NoteRead( "ByteScriptSize", ByteScriptSize );
+			const int vDataScriptSize = 639;
+			if( _Buffer.Version >= vDataScriptSize )
 			{
-				// ScriptSize
-				_MinAlignment = _Buffer.ReadInt32();
-				NoteRead( "MinAlignment", _MinAlignment );
-
-				scriptSkipSize = _MinAlignment;
+				DataScriptSize = _Buffer.ReadInt32();
+				NoteRead( "DataScriptSize", DataScriptSize );
 			}
 			else 
 			{
-				scriptSkipSize = (int)ScriptSize;
+				DataScriptSize = ByteScriptSize;
 			}
 			ScriptOffset = _Buffer.Position;
 
 			// Code Statements
-			if( ScriptSize > 0 )
-			{
-				ByteCodeManager = new UByteCodeDecompiler( this );
+			if( DataScriptSize <= 0 )
+				return;
 
+			ByteCodeManager = new UByteCodeDecompiler( this );
+			if( _Buffer.Version >= vDataScriptSize )
+			{
+				_Buffer.Skip( DataScriptSize );
+			}
+			else
+			{
 				const int moonbaseVersion = 587;
 				const int shadowcomplexVersion = 590;
 
 				var isTrueScriptSize = _Buffer.Version >= UnrealPackage.VINDEXDEPRECATED
-					&& (_Buffer.Version < moonbaseVersion && _Buffer.Version > shadowcomplexVersion );
-
+				    && (_Buffer.Version < moonbaseVersion && _Buffer.Version > shadowcomplexVersion );
 				if( isTrueScriptSize )
 				{
-					_Buffer.Skip( scriptSkipSize );
+					_Buffer.Skip( DataScriptSize );
 				}
 				else
 				{
 					ByteCodeManager.Deserialize();
 				}
 			}
-			else
-			{
-				_ShouldReleaseBuffer = true; 
-			}
+		}
 
-			// TODO: Corrigate Version.
-			if( IsPureStruct() && _Buffer.Version >= 220 )
-			{
-				StructFlags = _Buffer.ReadUInt32();
-				NoteRead( "StructFlags", StructFlags );
-
-				_ShouldReleaseBuffer = false;
-				// Introduced somewhere between 129 - 178
-				DeserializeProperties();
-			}
+		protected override bool CanDisposeBuffer()
+		{
+			return base.CanDisposeBuffer() && ByteCodeManager == null;
 		}
 
 		public override void PostInitialize()
@@ -282,29 +230,35 @@ namespace UELib.Core
 
 		protected virtual void FindChildren()
 		{
+			Constants = new List<UConst>();
+			Enums = new List<UEnum>();
+			Structs = new List<UStruct>();
+			Variables = new List<UProperty>();
+
 			for( var child = (UField)GetIndexObject( Children ); child != null; child = child.NextField )
 			{		
 				if( child.GetType().IsSubclassOf( typeof(UProperty) ) )
 				{
-					_ChildProperties.Add( (UProperty)child );
+					Variables.Add( (UProperty)child );
 				}
 				else if( child.IsClassType( "Const" ) )
 				{
-					_ChildConstants.Insert( 0, (UConst)child );
+					Constants.Insert( 0, (UConst)child );
 				}
 				else if( child.IsClassType( "Enum" ) )
 				{
-					_ChildEnums.Insert( 0, (UEnum)child );
+					Enums.Insert( 0, (UEnum)child );
 				}	
 				else if( child.IsClassType( "Struct" ) || child.IsClassType( "ScriptStruct" ) )
 				{
-					_ChildStructs.Insert( 0, (UStruct)child );
+					Structs.Insert( 0, (UStruct)child );
 				}
 			}
 		}	
+		#endregion
 
 		#region Methods
-		public bool HasStructFlag( Flags.StructFlags flag )
+		public bool HasStructFlag( StructFlags flag )
 		{
 			return (StructFlags & (uint)flag) != 0;
 		}

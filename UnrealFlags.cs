@@ -126,38 +126,25 @@ namespace UELib.Flags
 	public enum ObjectFlagsLO : ulong	// 32bit aligned, see ObjectFlags64
 	{
 		Transactional 		= 0x00000001U,	
-		//Unreachable 		= 0x00000002U,	
 		Public 				= 0x00000004U,	
-		//TagImp 				= 0x00000008U,	
-		//TagExp 				= 0x00000010U,	
-		//SourceModified 		= 0x00000020U,		// @Redefined(UE3, Obsolete)
-		//TagGarbage 			= 0x00000040U,	
-		Private 			= 0x00000080U,		// @Redefined(UE3, Final)
-		Automated 			= 0x00000100U,		// @Redefined(UE3, PerObjectLocalized)
-		//NeedLoad 			= 0x00000200U,	
-		//HighlightedName		= 0x00000400U,		// @Redefined(UE3, EliminateObject)
-		//InSingularFunc	 	= 0x00000800U,		// @Redefined(UE3, RemappedName) 
-		//Suppress			= 0x00001000U,		// @Redefined(UE3, StateChanged) 
-		//InEndState			= 0x00002000U,		
-		Transient			= 0x00004000U,		
-		//Preloading			= 0x00008000U,		
+
+		Private 			= 0x00000080U,		
+		Automated 			= 0x00000100U,	
+	
+		Transient			= 0x00004000U,	
+			
 		LoadForClient		= 0x00010000U,		
 		LoadForServer		= 0x00020000U,		
 		LoadForEdit			= 0x00040000U,		
 		Standalone			= 0x00080000U,		
 		NotForClient		= 0x00100000U,		
 		NotForServer		= 0x00200000U,		
-		NotForEdit			= 0x00400000U,		
-		//Destroyed			= 0x00800000U,		
-		//NeedPostLoad		= 0x01000000U,		
+		NotForEdit			= 0x00400000U,	
+		
 		HasStack			= 0x02000000U,		
 		Native				= 0x04000000U,		
 		Marked				= 0x08000000U,		
-		//SWAT4_Unnamed		    = 0x08000000U,	
-		//ErrorShutdown		= 0x10000000U,		
-		//DebugPostLoad		= 0x20000000U,		// @Removed(UE3)
-		//DebugSerialize		= 0x40000000U,		// @Removed(UE3)
-		//DebugDestroy		= 0x80000000U,		// @Redefined(UE3, EdSelected)
+		//SWAT4_Unnamed		    = 0x08000000U,		
 	}
 
 	/// <summary>
@@ -180,10 +167,7 @@ namespace UELib.Flags
 		PerObjectLocalized		= 0x00000100U,		
 		PropertiesObject		= 0x00000200U,
 		ArchetypeObject			= 0x00000400U,
-		//EliminateObject		= 0x00000400U,		
 		RemappedName			= 0x00000800U,   	
-		//StateChanged			= 0x00001000U,   	
-		//EdSelected			= 0x00080000U,		
 	}
 
 	/// <summary>
@@ -387,7 +371,7 @@ namespace UELib.Flags
 		Parsed 				= 0x00000010U,
 		Localized 			= 0x00000020U,
 		SafeReplace 		= 0x00000040U,
-		//RuntimeStatic 		= 0x00000080U,
+
 		NoExport 			= 0x00000100U,
 		Placeable 			= 0x00000200U,
 		PerObjectConfig 	= 0x00000400U,
@@ -395,12 +379,7 @@ namespace UELib.Flags
 		EditInlineNew 		= 0x00001000U,
 		CollapseCategories 	= 0x00002000U,
 		ExportStructs 		= 0x00004000U,		// @Removed(UE3 in early but not latest)
-		//IsAUProperty      	= 0x00008000U,	
-    	//IsAUObjectProperty	= 0x00010000U,	
-    	//IsAUBoolProperty  	= 0x00020000U,	
-    	//IsAUState         	= 0x00040000U,	
-    	//IsAUFunction      	= 0x00080000U,	
-		//NeedsDefProps		= 0x00100000U,	
+
 		Instanced			= 0x00200000U,		// @Removed(UE3)
 		HideDropDown		= 0x00400000U,		// @Redefined(UE3, HasComponents), @Moved(UE3, HideDropDown2)
 		ParseConfig			= 0x01000000U,		// @Redefined(UE3, Deprecated)

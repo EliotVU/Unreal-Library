@@ -1,54 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UELib;
-using UELib.Core;
+﻿using UELib.Core;
 
 namespace UELib.Engine
 {
 	/// <summary>
 	/// Unreal Font.
-	/// 
-	/// I was bored :D!
 	/// </summary>
-	public class UFont : UContent
+	[UnrealRegisterClass]
+	public class UFont : UObject, IUnrealViewable
 	{
-		public struct FontCharacter : IUnrealDeserializableClass
+		private struct FontCharacter : IUnrealDeserializableClass
 		{
-			public int StartU, StartV;
-			public int USize, VSize;
-			byte TextureIndex;
+			private int _StartU;
+			private int _StartV;
+			private int _USize;
+			private int _VSize;
+			byte _TextureIndex;
 
 			public void Deserialize( IUnrealStream stream )
 			{
-				StartU = stream.ReadInt32();
-				StartV = stream.ReadInt32();
+				_StartU = stream.ReadInt32();
+				_StartV = stream.ReadInt32();
 
-				USize = stream.ReadInt32();
-				VSize = stream.ReadInt32();
+				_USize = stream.ReadInt32();
+				_VSize = stream.ReadInt32();
 
-				TextureIndex = (byte)stream.ReadByte();
+				_TextureIndex = stream.ReadByte();
 			}
 		};
 
-		public List<FontCharacter> Characters = new List<FontCharacter>();
-
-		public UFont()
-		{
-		}
+		private UArray<FontCharacter> _Characters;
 
 		protected override void Deserialize()
 		{
 			base.Deserialize();
 
-			int count = _Buffer.ReadIndex();
-			for( int i = 0; i < count; ++ i )
-			{
-				var FC = new FontCharacter();
-				FC.Deserialize( _Buffer );
-				Characters.Add( FC );
-			}
+			_Characters = new UArray<FontCharacter>( _Buffer );
 
 			// Textures
 
@@ -58,12 +44,6 @@ namespace UELib.Engine
 			// Remap
 
 			_Buffer.UR.ReadBoolean();
-		}
-
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic" )]
-		private void SerializeCharacter()
-		{
-
 		}
 	}
 }

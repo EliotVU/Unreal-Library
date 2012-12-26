@@ -1,28 +1,27 @@
-﻿#define TDS
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using UELib.Flags;
 
 namespace UELib.Core
 {
 	/// <summary>
 	/// Represents a unreal class. 
 	/// </summary>
+	[UnrealRegisterClass]
 	public partial class UClass : UState
 	{
-		public class Dependency : IUnrealDeserializableClass
+		public struct Dependency : IUnrealDeserializableClass
 		{
-			public Dependency()
-			{
-				Class = 0;
-			}
-
 			public int Class{ get; private set; }
 
 			public void Deserialize( IUnrealStream stream )
 			{
 				Class = stream.ReadObjectIndex();
+
+				// Deep
 				stream.ReadInt32();
+
+				// ScriptTextCRC
 				stream.ReadUInt32();
 			}
 		}
@@ -51,7 +50,7 @@ namespace UELib.Core
 			private set;
 		}
 
-		private byte _UNKNOWNBYTE;
+		private byte _Unknownbyte;
 
 		private int _WithinIndex;
 		public UClass Within
@@ -69,10 +68,10 @@ namespace UELib.Core
 			get{ return Package.GetIndexName( _ConfigIndex ); }
 		}
 
-		private int? _DLLNameIndex;
+		private int _DLLNameIndex;
 		public string DLLName
 		{
-			get{ return Package.GetIndexName( (int)_DLLNameIndex ); }
+			get{ return Package.GetIndexName( _DLLNameIndex ); }
 		}
 
 		public string NativeClassName = String.Empty;
@@ -84,82 +83,71 @@ namespace UELib.Core
 		/// 
 		/// Deprecated @ PackageVersion:186
 		/// </summary>
-		public UArray<Dependency> ClassDependenciesList;
+		public UArray<Dependency> ClassDependencies;
 
 		/// <summary>
 		/// A list of objects imported from a package.
 		/// </summary>
-		public List<int> PackageImportsList;
+		public IList<int> PackageImports;
+
+		/// <summary>
+		/// Index of component names into the NameTableList.
+		/// UE3
+		/// </summary>
+		public IList<int> Components = null;
+
+		/// <summary>
+		/// Index of unsorted categories names into the NameTableList.
+		/// UE3
+		/// </summary>
+		public IList<int> DontSortCategories;
 
 		/// <summary>
 		/// Index of hidden categories names into the NameTableList.
-		/// UE3
 		/// </summary>
-		public List<int> ComponentsList 				= null;
-
-				/// <summary>
-		/// Index of hidden categories names into the NameTableList.
-		/// UE3
-		/// </summary>
-		public List<int> DontSortCategoriesList;
-
-		/// <summary>
-		/// Index of hidden categories names into the NameTableList.
-		/// </summary>
-		public List<int> HideCategoriesList;
+		public IList<int> HideCategories;
 
 		/// <summary>
 		/// Index of auto expanded categories names into the NameTableList.
 		/// UE3
 		/// </summary>
-		public List<int> AutoExpandCategoriesList;
+		public IList<int> AutoExpandCategories;
 
 		/// <summary>
 		/// A list of class group.
 		/// </summary>
-		public List<int> ClassGroupsList;
+		public IList<int> ClassGroups;
 
 		/// <summary>
 		/// Index of auto collapsed categories names into the NameTableList.
 		/// UE3
 		/// </summary>
-		public List<int> AutoCollapseCategoriesList;
+		public IList<int> AutoCollapseCategories;
 
 		/// <summary>
 		/// Index of (Object/Name?)
 		/// UE3
 		/// </summary>
-		public List<int> ImplementedInterfacesList;
+		public IList<int> ImplementedInterfaces;
 		#endregion
 
-		#region PostInitialized Members
-		// Children
-		protected List<UState> 	_ChildStates 		= new List<UState>();
-		public List<UState> 	ChildStates
-		{
-			get{ return _ChildStates; }
-		}
+		#region Script Members
+		public IList<UState> States{ get; protected set; }
 		#endregion
 
-		/// <summary>
-		///	Creates a new instance of the UELib.Core.UClass class. 
-		/// </summary>
-		public UClass()
-		{
-			_ShouldReleaseBuffer = false;
-		}
-
+		#region Constructors
 		protected override void Deserialize()
 		{
 			base.Deserialize();
 
 			if( Package.Version <= 61 )
 			{
-				_Buffer.ReadIndex();
+				var oldClassRecordSize = _Buffer.ReadIndex();
+				NoteRead( "oldClassRecordSize", oldClassRecordSize );
 			}
 	
 			ClassFlags = _Buffer.ReadUInt32();
-			NoteRead( "ClassFlags", ClassFlags );
+			NoteRead( "ClassFlags", (ClassFlags)ClassFlags );
 
 			// Both were deprecated since then
 			if( Package.Version < 186 )
@@ -167,16 +155,16 @@ namespace UELib.Core
 				ClassGuid = _Buffer.ReadGuid();
 				NoteRead( "ClassGuid", ClassGuid );
 
-				{int depSize = _Buffer.ReadIndex();
+				int depSize = _Buffer.ReadIndex();
 				NoteRead( "DepSize", depSize );
 				if( depSize > 0 )
 				{
-					ClassDependenciesList = new UArray<Dependency>( _Buffer, depSize );
-					NoteRead( "ClassDependenciesList", ClassDependenciesList );
-				}}
+					ClassDependencies = new UArray<Dependency>( _Buffer, depSize );
+					NoteRead( "ClassDependenciesList", ClassDependencies );
+				}
 
-				PackageImportsList = DeserializeGroup();
-				NoteRead( "PackageImportsList", PackageImportsList );
+				PackageImports = DeserializeGroup( "PackageImportsList" );
+				NoteRead( "PackageImportsList", PackageImports );
 			}
 
 			if( Package.Version >= 62 )
@@ -185,16 +173,16 @@ namespace UELib.Core
 				// At least since RoboBlitz(369) - 547(APB)
 				if( Package.Version >= 369 && Package.Version < 547  )
 				{
-					_UNKNOWNBYTE = _Buffer.ReadByte();	
-					NoteRead( "_UNKNOWNBYTE", _UNKNOWNBYTE );
+					_Unknownbyte = _Buffer.ReadByte();	
+					NoteRead( "??Byte", _Unknownbyte );
 				}
 
 				// Class Name Extends Super.Name Within _WithinIndex
 				//		Config(_ConfigIndex);
 				_WithinIndex = _Buffer.ReadObjectIndex();
-				NoteRead( "_WithinIndex", _WithinIndex );
+				NoteRead( "_WithinIndex", GetIndexObject( _WithinIndex ) );
 				_ConfigIndex = _Buffer.ReadNameIndex();
-				NoteRead( "_ConfigIndex", _ConfigIndex );
+				NoteRead( "_ConfigIndex", Package.Names[_ConfigIndex] );
 
 				if( Package.Version >= 100 )
 				{
@@ -202,48 +190,31 @@ namespace UELib.Core
 					{
 						int componentsCount = _Buffer.ReadInt32();
 						NoteRead( "componentsCount", componentsCount );
-
 						if( componentsCount > 0 )
 						{
+							// NameIndex/ObjectIndex
 							int bytes = componentsCount * (Package.Version > 490 ? 12 : 8);
 							TestEndOfStream( bytes, "Components" );
 							_Buffer.Skip( bytes );
-
-							//ComponentsList = new List<int>( componentsCount );
-							//for( int i = 0; i < componentsCount; ++ i )
-							//{
-							//    _Buffer.ReadNameIndex();
-							//    // TODO: Corrigate version. Definitely not in GoW 1(490)
-							//    if( Package.Version > 490 )	// GOW
-							//    {
-							//        ComponentsList.Add( _Buffer.ReadObjectIndex() );	
-							//    }
-							//}
-							//NoteRead( "ComponentsList", ComponentsList );
 						}
 
 						// RoboBlitz(369)
 						if( Package.Version >= 369 )
 						{
-							// FIXME: Invalid in UT3? Swapped with HideCategories?
+							// See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
 							int interfacesCount = _Buffer.ReadInt32();
 							NoteRead( "InterfacesCount", interfacesCount );
-
 							if( interfacesCount > 0 )
 							{
 								TestEndOfStream( interfacesCount * 8, "Interfaces" );
-								ImplementedInterfacesList = new List<int>( interfacesCount );
+								ImplementedInterfaces = new List<int>( interfacesCount );
 								for( int i = 0; i < interfacesCount; ++ i )
 								{
-									// Taken from UDN @ http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
-									// In C++, a native interface variable is represented as a TScriptInterface, 
-									// declared in UnTemplate.h. 
-									// This struct stores two pointers to the same object - a UObject pointer and a pointer of the interface type. 
 									int interfaceIndex = _Buffer.ReadInt32();
 									int typeIndex = _Buffer.ReadInt32();
-									ImplementedInterfacesList.Add( interfaceIndex ); 
+									ImplementedInterfaces.Add( interfaceIndex ); 
 								}
-								NoteRead( "ImplementedInterfacesList", ImplementedInterfacesList );
+								NoteRead( "ImplementedInterfacesList", ImplementedInterfaces );
 							}
 						}
 					}
@@ -252,31 +223,32 @@ namespace UELib.Core
 					{
 						if( Package.Version >= 603 )
 						{
-							DontSortCategoriesList = DeserializeGroup();
-							NoteRead( "DontSortCategoriesList", DontSortCategoriesList );
+							DontSortCategories = DeserializeGroup( "DontSortCategoriesList" );
+							NoteRead( "DontSortCategoriesList", DontSortCategories );
 						}
 
-						HideCategoriesList = DeserializeGroup();
-						NoteRead( "HideCategoriesList", HideCategoriesList );
+						HideCategories = DeserializeGroup( "HideCategoriesList" );
+						NoteRead( "HideCategoriesList", HideCategories );
 
 						if( Package.Version >= 185 )
 						{
 							// 490:GoW1, 576:CrimeCraft
-							if( !HasClassFlag( Flags.ClassFlags.CollapseCategories ) 
-								|| Package.Version <= 490 || Package.Version >= 576 )
+							if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories ) 
+								|| Package.Version <= 490 || Package.Version >= 576) 
+							)
 							{ 
-								AutoExpandCategoriesList = DeserializeGroup();
-								NoteRead( "AutoExpandCategoriesList", AutoExpandCategoriesList );
+								AutoExpandCategories = DeserializeGroup( "AutoExpandCategoriesList" );
+								NoteRead( "AutoExpandCategoriesList", AutoExpandCategories );
 							}
 
 							if( Package.Version > 670 )
 							{
-								AutoCollapseCategoriesList = DeserializeGroup();
-								NoteRead( "AutoCollapseCategoriesList", AutoCollapseCategoriesList );
+								AutoCollapseCategories = DeserializeGroup( "AutoCollapseCategoriesList" );
+								NoteRead( "AutoCollapseCategoriesList", AutoCollapseCategories );
 
 								if( Package.Version >= 749 
 									#if SPECIALFORCE2
-											&& Package.Build != UnrealPackage.GameBuild.ID.SpecialForce2  
+										&& Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2  
 									#endif
 									)
 								{
@@ -286,12 +258,12 @@ namespace UELib.Core
 
 									if( Package.Version >= UnrealPackage.VCLASSGROUP )
 									{
-										ClassGroupsList = DeserializeGroup();
-										NoteRead( "ClassGroupsList", ClassGroupsList );
+										ClassGroups = DeserializeGroup( "ClassGroupsList" );
+										NoteRead( "ClassGroupsList", ClassGroups );
 
 										if( Package.Version >= 813 )
 										{
-											NativeClassName = _Buffer.ReadName();
+											NativeClassName = _Buffer.ReadString();
 											NoteRead( "NativeClassName", NativeClassName );
 										}
 									}
@@ -301,15 +273,14 @@ namespace UELib.Core
 							// FIXME: Found first in(V:655), Definitely not in APB and GoW 2
 							if( Package.Version > 575 && Package.Version < 678 )
 							{
-								// TODO: Unknown
 								int unk2 = _Buffer.ReadInt32();
-								NoteRead( "unk2", unk2 );
+								NoteRead( "??Int32", unk2 );
 
 								#if SINGULARITY
-									if( Package.Build == UnrealPackage.GameBuild.ID.Singularity )
-									{ 
-										_Buffer.Skip( 8 );
-									}
+								if( Package.Build == UnrealPackage.GameBuild.BuildName.Singularity )
+								{ 
+									_Buffer.Skip( 8 );
+								}
 								#endif
 							}	
 						}					
@@ -318,13 +289,12 @@ namespace UELib.Core
 					if( Package.Version >= UnrealPackage.VDLLBIND )
 					{
 						_DLLNameIndex = _Buffer.ReadNameIndex();
-						NoteRead( "_DLLNameIndex", _DLLNameIndex );
-
+						NoteRead( "_DLLNameIndex", Package.Names[_DLLNameIndex] );
 #if BORDERLANDS2
-						if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+						if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
 						{ 
 							var unkval = _Buffer.ReadByte();
-							NoteRead( "unkval", unkval );
+							NoteRead( "??BL2_Byte", unkval );
 						}
 #endif
 					}
@@ -334,22 +304,17 @@ namespace UELib.Core
 			// In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere, 
 			if( Package.Version >= 322 )
 			{ 
-				int defaultObjectIndex = _Buffer.ReadObjectIndex();
-				NoteRead( "defaultObjectIndex", defaultObjectIndex );
-				if( defaultObjectIndex > 0 )
+				_Default = GetIndexObject( _Buffer.ReadObjectIndex() );
+				NoteRead( "defaultObjectIndex", _Default );
+				if( _Default != null )
 				{
-					var obj = Package.GetIndexObject( defaultObjectIndex );
-					if( obj != null )
-					{
-						obj.BeginDeserializing();
-						Properties = obj.Properties;
-					}
+					_Default.BeginDeserializing();
 				}
 			}
 			else
 			{		
 #if SWAT4
-				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
+				if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
 				{
 					// We are done here!
 					return;
@@ -357,24 +322,6 @@ namespace UELib.Core
 #endif 
 				DeserializeProperties();
 			}
-		}
-
-		private List<int> DeserializeGroup()
-		{
-			List<int> groupList = null;
-
-			int count = _Buffer.ReadIndex();
-			NoteRead( "Count", count );
-			if( count > 0 )
-			{
-				groupList = new List<int>( count );
-				for( int i = 0; i < count; ++ i )
-				{
-					int index = _Buffer.ReadNameIndex();
-					groupList.Add( index );
-				}
-			}
-			return groupList;
 		}
 
 		public override void PostInitialize()
@@ -389,56 +336,44 @@ namespace UELib.Core
 		protected override void FindChildren()
 		{
 			base.FindChildren();
+			States = new List<UState>();
 			for( var child = (UField)GetIndexObject( Children ); child != null; child = child.NextField )
 			{
 				if( child.IsClassType( "State" ) )
 				{
-					_ChildStates.Insert( 0, (UState)child );
+					States.Insert( 0, (UState)child );
 				}			
 			}
 		}
+		#endregion
 
 		#region Methods
-		public bool HasClassFlag( Flags.ClassFlags flag )
+		private IList<int> DeserializeGroup( string groupName = "List" )
+		{
+			int count = _Buffer.ReadIndex();
+			NoteRead( groupName + "Count", count );
+			if( count > 0 )
+			{
+				var groupList = new List<int>( count );
+				for( int i = 0; i < count; ++ i )
+				{
+					int index = _Buffer.ReadNameIndex();
+					groupList.Add( index );
+				}
+				return groupList;
+			}
+			return null;
+		}
+
+		public bool HasClassFlag( ClassFlags flag )
 		{
 			return (ClassFlags & (uint)flag) != 0;
 		}
-		#endregion
-	}
 
-	public partial class UTextBuffer : UObject
-	{
-		#region Serialized Members
-		protected uint _Top;
-		protected uint _Pos;
-		public string ScriptText = String.Empty;
-		#endregion
-
-		private long _ScriptOffset;
-
-		public UTextBuffer()
+		public bool HasClassFlag( uint flag )
 		{
-			ShouldDeserializeOnDemand = true;
+			return (ClassFlags & flag) != 0;
 		}
-
-		protected override void Deserialize()
-		{
-			base.Deserialize();
-
-	  		_Top = _Buffer.ReadUInt32();
-			_Pos = _Buffer.ReadUInt32();
-
-#if TDS
-			// FIXME: Use build detection 
-			if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.ThiefDeadlyShadows )
-			{
-				// TODO: Unknown
-				_Buffer.Skip( 8 );
-			}
-#endif
-
-			_ScriptOffset = _Buffer.Position;
-			ScriptText = _Buffer.ReadName();
-		}
+		#endregion
 	}
 }

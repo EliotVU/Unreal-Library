@@ -9,7 +9,7 @@ namespace UELib.Core
 	/// Represents a strongly typed array of serializable classes that can be accessed by index. 
 	/// Provides methods to serialize from a specified stream. 
 	/// </summary>
-	/// <typeparam name="T">T must have interface UELib.IUnrealSerializableClass and have default empty constructor.</typeparam>
+	/// <typeparam name="T">T must have interface UELib.IUnrealDeserializableClass and have default empty constructor.</typeparam>
 	public class UArray<T> : List<T> where T : IUnrealDeserializableClass, new()
 	{
 		/// <summary>
@@ -33,16 +33,10 @@ namespace UELib.Core
 		/// Initialize a new instance based from the specified stream.
 		/// </summary>
 		/// <param name="stream">The stream to use for initializing this array.</param>
+		/// <param name="count">The size to allocate for the list.</param>
 		public UArray( IUnrealStream stream, int count )
 		{
 			Deserialize( stream, count );
-		}
-
-		/// <summary>
-		/// <see cref="System.Collections.Generic.List<T>.List( collection )"/>
-		/// </summary>
-		public UArray( IEnumerable<T> collection ) : base( collection )
-		{
 		}
 
 		/// <summary>
@@ -65,6 +59,7 @@ namespace UELib.Core
 		/// Initialize this array with items in the specified stream.
 		/// </summary>
 		/// <param name="stream">The stream to use for initializing this array.</param>
+		/// <param name="count">The size to allocate for the list.</param>
 		public void Deserialize( IUnrealStream stream, int count )
 		{
 			Capacity = count;

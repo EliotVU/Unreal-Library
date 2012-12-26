@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using UELib.Types;
 
 namespace UELib.Core
@@ -7,135 +9,128 @@ namespace UELib.Core
 	/// <summary>
 	/// [Default]Properties values deserializer.
 	/// </summary>
-	public sealed class UPropertyTag
+	public sealed class UDefaultProperty : IUnrealDecompilable
 	{
-		private readonly UObject _Owner;
-		private readonly UObjectStream _Buffer;
+		[Flags]
+		public enum DeserializeFlags : byte
+		{
+			None					= 0x00,
+			WithinStruct			= 0x01,
+			WithinArray				= 0x02,
+			Complex					= WithinStruct | WithinArray,
+		}
 
+		private const byte			DoNotAppendName		= 0x01;
+		private const byte			ReplaceNameMarker	= 0x02;
+
+		private IUnrealStream		_Buffer{ get{ return _Owner.Buffer; } }
+		private readonly UObject	_Owner;
+		private UStruct				_Outer;
+
+		internal long				_PropertyOffset{ get; private set; }
+		private long				_ValueOffset{ get; set; }
+		private byte				_TempFlags{ get; set; }
+
+		#region Serialized Members
 		/// <summary>
 		/// Name of the property
 		/// </summary>
-		public string Name;
-		public int NameIndex;
+		public string				Name{ get; private set; }
+		public int					NameIndex;
 
 		/// <summary>
 		/// Name of the struct not UStructProperty!, if IsA UStructProperty only
 		/// </summary>
-		public string ItemName;
-
-		/// <summary>
-		/// A packed byte containing the size, type and arrayindex.
-		/// </summary>
-		private byte _Info;
+		private string				ItemName{ get; set; }
 
 		/// <summary>
 		/// See PropertysType enum in UnrealFlags.cs
 		/// </summary>
-		public PropertyType Type
-		{
-			get;
-			private set;
-		}
+		private PropertyType		Type{ get; set; }
 
 		/// <summary>
 		/// The stream size of this DefaultProperty.
 		/// </summary>
-		public int Size
-	   	{
-			get;
-			private set;
-		}
+		private int					Size{ get; set; }
 
 		/// <summary>
 		/// Whether this property is part of an array, and the index into it
 		/// </summary>
-	   	public int ArrayIndex = -1;
-		public long PropertyOffset{ get; private set; }
-		public long ValueOffset{ get; private set; }
+		public int					ArrayIndex = -1;
+		#endregion
 
-		internal byte TempFlags;
-
-		public bool IsComplex
-		{
-			get{ return Type == PropertyType.StructProperty || Type == PropertyType.ArrayProperty; }
-		}
-
-		public UPropertyTag( UObject owner )
+		#region Constructors
+		public UDefaultProperty( UObject owner, UStruct outer = null )
 		{
 			_Owner = owner;
-			_Buffer = _Owner.Buffer;
+			_Outer = (outer ?? _Owner as UStruct) ?? _Owner.Outer as UStruct;
 		}
 
 		private int DeserializeSize( byte sizePack )
 		{
-			int size = 0;
 			switch( sizePack )
 			{
 				case 0x00:
-					size = 1;
-					break;
-
+					return 1;
+													  
 				case 0x10:
-					size = 2;
-					break;
+					return 2;
 
 				case 0x20:
-					size = 4;
-					break;
+					return 4;
 
 				case 0x30:
-					size = 12;
-					break;
+					return 12;
 
 				case 0x40:
-					size = 16;
-					break;
+					return 16;
 
 				case 0x50:
-					size = _Buffer.ReadByte();
-					break;
+					return _Buffer.ReadByte();
 
 				case 0x60:
-					size = _Buffer.ReadUShort();
-					break;
+					return _Buffer.ReadInt16();
 
 				case 0x70:
-					size = _Buffer.ReadInt32();
-					break;
+					return _Buffer.ReadInt32();
+
+				default:
+					throw new NotImplementedException( String.Format( "Unknown sizePack {0}", sizePack ) );
 			}
-			return size;
 		}
+
+		const byte ArrayIndexMask = 0x80;
 
 		private int DeserializeArrayIndex()
 		{
 			int arrayIndex;
 			byte b = _Buffer.ReadByte();
-			if( (b & 0x80) == 0 )
+			if( (b & ArrayIndexMask) == 0 )
 			{
 				arrayIndex = b;
 			}
 			else if( (b & 0xC0) == 0x80 )
 			{
-				arrayIndex = ((int)(b & 0x7F) << 8) + ((int)_Buffer.ReadByte());
+				arrayIndex = ((b & 0x7F) << 8) + _Buffer.ReadByte();
 			}
 			else
 			{
-				arrayIndex = ((int)(b & 0x3F) << 24) 
-					+ ((int)_Buffer.ReadByte() << 16)
-					+ ((int)_Buffer.ReadByte() << 8) 
-					+ ((int)_Buffer.ReadByte());
+				arrayIndex = ((b & 0x3F) << 24) 
+					+ (_Buffer.ReadByte() << 16)
+					+ (_Buffer.ReadByte() << 8) 
+					+ _Buffer.ReadByte();
 			}
 			return arrayIndex;
 		}
 
 		public bool Deserialize()
 		{
-			PropertyOffset = _Buffer.Position;
+			_PropertyOffset = _Buffer.Position;
 
 			int num;
 			NameIndex = _Buffer.ReadNameIndex( out num );
-			_Owner.TestNoteRead( "NameIndex", NameIndex );
 			Name = _Owner.GetIndexName( NameIndex, num );
+			_Owner.NoteRead( "NameIndex", Name );
 			if( Name.Equals( "None", StringComparison.OrdinalIgnoreCase ) )
 			{
 				return false;
@@ -144,49 +139,51 @@ namespace UELib.Core
 			// Unreal Engine 1 and 2
 			if( _Buffer.Version < 220 )
 			{
+				const byte typeMask = 0x0F;
+				const byte sizeMask = 0x70;
+
 				// Packed byte
-				_Info = _Buffer.ReadByte();
-				Type = (PropertyType)((byte)(_Info & 0x0F));
+				var info = _Buffer.ReadByte();
+
+				Type = (PropertyType)(byte)(info & typeMask);
+				_Owner.NoteRead( "Type", Type );
 
 				// Read the ItemName(StructName) if this is a struct
 				if( Type == PropertyType.StructProperty )
 				{
 					ItemName = _Owner.Package.GetIndexName( _Buffer.ReadNameIndex() );
+					_Owner.NoteRead( "ItemName", ItemName );
 				}
 
-				Size = DeserializeSize( (byte)(_Info & 0x70) );
-				if( (_Info & 0x80) > 0 && Type != PropertyType.BoolProperty )
+				Size = DeserializeSize( (byte)(info & sizeMask) );
+				_Owner.NoteRead( "Size", Size );
+				
+				if( (info & ArrayIndexMask) > 0 && Type != PropertyType.BoolProperty )
 				{
 					ArrayIndex = DeserializeArrayIndex();
+					_Owner.NoteRead( "ArrayIndex", ArrayIndex );
 				}
 			}
 			// Unreal Engine 3
 			else
 			{
 				string typeName = _Owner.Package.GetIndexName( _Buffer.ReadNameIndex() );
-				_Owner.TestNoteRead( "typeName", typeName );
-				try
-				{
-					Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );
-				}
-				catch
-				{
-					Type = PropertyType.ByteProperty;
-				}				
+				_Owner.NoteRead( "typeName", typeName );
+				Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );				
 
 				Size = _Buffer.ReadInt32();
-				_Owner.TestNoteRead( "Size", Size );
+				_Owner.NoteRead( "Size", Size );
 				ArrayIndex = _Buffer.ReadInt32();
-				_Owner.TestNoteRead( "ArrayIndex", ArrayIndex );
+				_Owner.NoteRead( "ArrayIndex", ArrayIndex );
 
 				if( Type == PropertyType.StructProperty )
 				{
 					ItemName = _Owner.GetIndexName( _Buffer.ReadNameIndex( out num ), num );
-					_Owner.TestNoteRead( "ItemName", ItemName );
+					_Owner.NoteRead( "ItemName", ItemName );
 				}
 			}
 
-			ValueOffset = _Buffer.Position;
+			_ValueOffset = _Buffer.Position;
 			try
 			{
 				DeserializeValue();	
@@ -196,19 +193,10 @@ namespace UELib.Core
 				// Size is only accurate before 220
 				if( _Buffer.Version < 220 )
 				{
-					_Buffer.Position = ValueOffset + Size;
+					_Buffer.Position = _ValueOffset + Size;
 				}
 			}
 			return true;
-		}
-
-		[Flags]
-		public enum DeserializeFlags : byte
-		{
-			None					= 0x00,
-			WithinStruct			= 0x01,
-			WithinArray				= 0x02,
-			SkipHardCodedStructs	= 0x04,	// Fix for multi version support for hardcoded structs so that they can recall the struct deserializing(without causing an infinite loop) if a version is not supported.
 		}
 
 		/// <summary>
@@ -220,27 +208,15 @@ namespace UELib.Core
 		/// <returns>The deserialized value if any.</returns>
 		public string DeserializeValue( DeserializeFlags deserializeFlags = DeserializeFlags.None )
 		{
-			string output;
-
-			string bakItemName = ItemName;
-			string bakName = Name;
-
-			_Buffer.Seek( ValueOffset, System.IO.SeekOrigin.Begin );
+			_Buffer.Seek( _ValueOffset, System.IO.SeekOrigin.Begin );
 			try
 			{	
-				output = DeserializeDefaultPropertyValue( Type, ref deserializeFlags );	
+				return DeserializeDefaultPropertyValue( Type, ref deserializeFlags );	
 			}
 			catch( DeserializationException e )
 			{
-				output = e.Output;
+				return e.ToString();
 			}
-			finally
-			{
-				// Reset everything.
-				Name = bakName;
-				ItemName = bakItemName;
-			}
-			return output;
 		}
 
 		/// <summary>
@@ -250,11 +226,12 @@ namespace UELib.Core
 		/// <returns>The deserialized value if any.</returns>
 		private string DeserializeDefaultPropertyValue( PropertyType type, ref DeserializeFlags deserializeFlags )
 		{
-			if( (_Buffer.Position - ValueOffset) > Size ) 
+			if( _Buffer.Position - _ValueOffset > Size ) 
 			{
-				throw new DeserializationException( "end of DefaultProperty reached..." );
+				throw new DeserializationException( "End of defaultpropertyies stream reached..." );
 			}
 
+			var orgOuter = _Outer;
 			string propertyValue = String.Empty;
 			try
 			{
@@ -262,27 +239,38 @@ namespace UELib.Core
 				switch( type )
 				{
 					case PropertyType.BoolProperty:
-						if( IsComplex || _Buffer.Version >= 222 )	// i.e. within a struct or array we need to deserialize the value.
-						{
-							bool val = _Buffer.Version < 673 ? _Buffer.ReadInt32() > 0 : _Buffer.ReadByte() > 0;
-							propertyValue = val.ToString( CultureInfo.InvariantCulture ).ToLower();
+						{ 
+							bool value;
+							// i.e. within a struct or array we need to deserialize the value.
+							if( (deserializeFlags & DeserializeFlags.Complex) != 0 || _Buffer.Version >= 222 )
+							{
+								value = _Buffer.Version >= 673
+									? _Buffer.ReadByte() > 0
+									: _Buffer.ReadInt32() > 0;
+							}
+							else
+							{
+								value = ArrayIndex != 0;
+							}
+							propertyValue = value ? "true" : "false";
+							break;
 						}
-						else
-						{
-							propertyValue = ((ArrayIndex != 0) ? "true" : "false");
-						}
-						break;
 
 					case PropertyType.StrProperty:
-						propertyValue = "\"" + _Buffer.ReadName() + "\"";
+						propertyValue = "\"" + _Buffer.ReadString().Replace( "\"", "\\\"" )
+							.Replace( "\\", "\\\\" )
+							.Replace( "\n", "\\n" )
+ 							.Replace( "\r", "\\r" )
+							+ "\"";
 						break;
 
 					case PropertyType.NameProperty:
-					{
-						int nameindex = _Buffer.ReadNameIndex();
-						propertyValue = _Owner.Package.NameTableList[nameindex].Name;
-						break;
-					}
+						{
+							int nameNum;
+							int nameIndex = _Buffer.ReadNameIndex( out nameNum );
+							propertyValue = _Owner.GetIndexName( nameIndex, nameNum );
+							break;
+						}
 
 					case PropertyType.IntProperty:
 						propertyValue = _Buffer.ReadInt32().ToString( CultureInfo.InvariantCulture );
@@ -295,12 +283,12 @@ namespace UELib.Core
 					case PropertyType.ByteProperty:
 						switch( Size )
 						{
-							case 8:				
+							case 8:
 								int enumType = _Buffer.ReadNameIndex();
 								if( _Buffer.Version >= 633 )
 								{
 									int enumValue = _Buffer.ReadNameIndex();
-									propertyValue = _Owner.Package.GetIndexName( enumType ) + "." 
+									propertyValue = _Owner.Package.GetIndexName( enumType ) + "."
 										+ _Owner.Package.GetIndexName( enumValue );
 								}
 								else
@@ -325,200 +313,194 @@ namespace UELib.Core
 					case PropertyType.InterfaceProperty:
 					case PropertyType.ComponentProperty:
 					case PropertyType.ObjectProperty:
-					{
-						int index = _Buffer.ReadObjectIndex();
-						var obj = _Owner.Package.GetIndexObject( index );
-						if( obj != null )
 						{
-							// SubObject??, see if the subobject owner is this defaultproperties owner.
-							if( obj.GetOuterName() == _Owner.Name )
+							int objectIndex = _Buffer.ReadObjectIndex();
+							var obj = _Owner.Package.GetIndexObject( objectIndex );
+							if( obj != null )
 							{
-								TempFlags |= 0x01; // Don't automatically add a name.
-								if( obj.ObjectIndex > 0 )
+								// SubObject??, see if the subobject owner is this defaultproperties owner.
+								if( obj.GetOuterName() == _Owner.Name )
 								{
-									// This is probably an unknown object which is by default never deserialized, so force!
-									obj.BeginDeserializing();										
-									if( obj.Properties != null && obj.Properties.Count > 0 )
+									_TempFlags |= DoNotAppendName;
+									if( (int)obj > 0 )
 									{
-										propertyValue += obj.Decompile() + "\r\n" + UDecompilingState.Tabs;
-
-										/*propertyValue = "begin object class=" + obj.GetClassName() + " name=" + obj.Name + "\r\n";
-											UDecompiler.AddTabs( 1 );
-											propertyValue += obj.DecompileProperties();
-											UDecompiler.RemoveTabs( 1 );
-										propertyValue += UDecompiler.Tabs + "end object\r\n" + UDecompiler.Tabs;*/
+										// This is probably an unknown object which is by default never deserialized, so force!
+										obj.BeginDeserializing();
+										if( obj.Properties != null && obj.Properties.Count > 0 )
+										{
+											propertyValue = obj.Decompile() + "\r\n" + UDecompilingState.Tabs;
+										}
 									}
-								}
 
-								if( (deserializeFlags & DeserializeFlags.WithinArray) != 0 ) // fake actually an array in this case xD.
-								{
-									TempFlags |= 0x02;	// Notify the array that it needs to replace %x%.
-									propertyValue += "%ARRAYNAME%=" + obj.Name;
+									if( (deserializeFlags & DeserializeFlags.WithinArray) != 0 )
+									{
+										_TempFlags |= ReplaceNameMarker;
+										propertyValue += "%ARRAYNAME%=" + obj.Name;
+									}
+									else
+									{
+										propertyValue += Name + "=" + obj.Name;
+									}
 								}
 								else
 								{
-									propertyValue += Name + "=" + obj.Name;	
+									string className = obj.GetClassName();
+									propertyValue = (String.IsNullOrEmpty( className ) ? "class" : className)
+										+ "\'" + obj.GetOuterGroup() + "\'";
 								}
 							}
 							else
 							{
-								string classname = obj.GetClassName();
-								propertyValue = (String.IsNullOrEmpty( classname ) ? "class" : classname) 
-									+ "\'" + obj.GetOuterGroup() + "\'";
+								propertyValue = "none";
 							}
+							break;
 						}
-						else
-						{
-							propertyValue = "none";
-						}
-						break;
-					}
 
 					case PropertyType.ClassProperty:
-					{
-						int index = _Buffer.ReadObjectIndex();
-						var obj = _Owner.Package.GetIndexObject( index );
-						propertyValue = (obj != null ? "class\'" + obj.Name + "\'" : "none");
-						break;
-					}
+						{
+							int index = _Buffer.ReadObjectIndex();
+							var obj = _Owner.Package.GetIndexObject( index );
+							propertyValue = (obj != null ? "class\'" + obj.Name + "\'" : "none");
+							break;
+						}
 
 					case PropertyType.DelegateProperty:
-					{
-						TempFlags |= 0x01;
-						int outerindex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
-						int delegateindex = _Buffer.ReadNameIndex();
-						string delegatename = Name.Substring( 2, Name.Length - 12 );
-						propertyValue = delegatename + "=" + _Owner.Package.NameTableList[delegateindex].Name;
-						break;
-					}
+						{
+							_TempFlags |= DoNotAppendName;
+							int outerIndex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
+							int delegateIndex = _Buffer.ReadNameIndex();
+							string delegateName = Name.Substring( 2, Name.Length - 12 );
+							propertyValue = delegateName + "=" + _Owner.Package.Names[delegateIndex].Name;
+							break;
+						}
 
 					#region HardCoded Struct Types
 					case PropertyType.Color:
-					{
-						string B = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
-						string G = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
-						string R = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
-						string A = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
-								  												  
-						propertyValue += "R=" + R +
-							",G=" + G +
-							",B=" + B +
-							",A=" + A;
-						break;
-					}
+						{
+							string b = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
+							string g = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
+							string r = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
+							string a = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
+
+							propertyValue += "R=" + r +
+								",G=" + g +
+								",B=" + b +
+								",A=" + a;
+							break;
+						}
 
 					case PropertyType.LinearColor:
-					{
-						string B = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-						string G = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-						string R = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-						string A = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-								  												  
-						propertyValue += "R=" + R +
-							",G=" + G +
-							",B=" + B +
-							",A=" + A;
-						break;
-					}
+						{
+							string b = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+							string g = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+							string r = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+							string a = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+
+							propertyValue += "R=" + r +
+								",G=" + g +
+								",B=" + b +
+								",A=" + a;
+							break;
+						}
 
 					case PropertyType.Vector:
-					{
-						string X = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-						string Y = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-						string Z = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-								  												  
-						propertyValue += "X=" + X +
-							",Y=" + Y +
-							",Z=" + Z;
-						break;
-					}
+						{
+							string x = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+							string y = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+							string z = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+
+							propertyValue += "X=" + x +
+								",Y=" + y +
+								",Z=" + z;
+							break;
+						}
 
 					case PropertyType.TwoVectors:
-					{											  
-						string V1 = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
-						string V2 = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
+						{
+							string v1 = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
+							string v2 = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
 
-						propertyValue += "v1=(" + V1 + "),v2=(" + V2 + ")";
-						break;
-					}
+							propertyValue += "v1=(" + v1 + "),v2=(" + v2 + ")";
+							break;
+						}
 
 					case PropertyType.Vector4:
-					{											  
-						string Plane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+						{
+							string plane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
 
-						propertyValue += Plane;
-						break;
-					}
+							propertyValue += plane;
+							break;
+						}
 
 					case PropertyType.Vector2D:
-					{
-						string X = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-						string Y = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-								  												  
-						propertyValue += "X=" + X +
-							",Y=" + Y;
-						break;
-					}
+						{
+							string x = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+							string y = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+
+							propertyValue += "X=" + x +
+								",Y=" + y;
+							break;
+						}
 
 					case PropertyType.Rotator:
-					{
-						string Pitch = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-						string Yaw = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-						string Roll = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-								  												  
-						propertyValue += "Pitch=" + Pitch +
-							",Yaw=" + Yaw +
-							",Roll=" + Roll;
-						break;
-					}
+						{
+							string pitch = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+							string yaw = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+							string roll = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+
+							propertyValue += "Pitch=" + pitch +
+								",Yaw=" + yaw +
+								",Roll=" + roll;
+							break;
+						}
 
 					case PropertyType.Guid:
-					{
-						string A = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-						string B = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-						string C = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-						string D = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-								  												  
-						propertyValue += "A=" + A +
-							",B=" + B +
-							",C=" + C +
-							",D=" + D;
-						break;
-					}
+						{
+							string a = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+							string b = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+							string c = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+							string d = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+
+							propertyValue += "A=" + a +
+								",B=" + b +
+								",C=" + c +
+								",D=" + d;
+							break;
+						}
 
 					case PropertyType.Sphere:
 					case PropertyType.Plane:
-					{
-						string V = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
-						string W = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-								  												  
-						propertyValue += V + ",W=" + W;
-						break;
-					}
+						{
+							string v = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
+							string w = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+
+							propertyValue += v + ",W=" + w;
+							break;
+						}
 
 					case PropertyType.Scale:
-					{
-						string Scale = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
-						string SheerRate = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
-						string SheerAxis = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
-								  												  
-						propertyValue += "Scale=(" + Scale + ")" +
-							",SheerRate=" + SheerRate +
-							",SheerAxis=" + SheerAxis;
-						break;
-					}
+						{
+							string scale = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
+							string sheerRate = DeserializeDefaultPropertyValue( PropertyType.FloatProperty, ref deserializeFlags );
+							string sheerAxis = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
+
+							propertyValue += "Scale=(" + scale + ")" +
+								",SheerRate=" + sheerRate +
+								",SheerAxis=" + sheerAxis;
+							break;
+						}
 
 					case PropertyType.Box:
-					{
-						string Min = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
-						string Max = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
-						string IsValid = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
-								  
-						propertyValue += "Min=(" + Min + ")" +
-							",Max=(" + Max + ")" +
-							",IsValid=" + IsValid;
-						break;
-					}
+						{
+							string min = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
+							string max = DeserializeDefaultPropertyValue( PropertyType.Vector, ref deserializeFlags );
+							string isValid = DeserializeDefaultPropertyValue( PropertyType.ByteProperty, ref deserializeFlags );
+
+							propertyValue += "Min=(" + min + ")" +
+								",Max=(" + max + ")" +
+								",IsValid=" + isValid;
+							break;
+						}
 
 					/*case PropertyType.InterpCurve:
 					{	
@@ -556,259 +538,240 @@ namespace UELib.Core
 					}*/
 
 					case PropertyType.Quat:
-					{											  
-						propertyValue += DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-						break;
-					}
+						{
+							propertyValue += DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+							break;
+						}
 
 					case PropertyType.Matrix:
-					{			
-						string XPlane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-		  				string YPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-						string ZPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-						string WPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-						propertyValue += "XPlane=(" + XPlane + ")" +
-							",YPlane=(" + YPlane + ")" +
-							",ZPlane=(" + ZPlane + ")" +
-							",WPlane=(" + WPlane + ")";
-						break;
-					}
+						{
+							string xPlane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+							string yPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+							string zPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+							string wPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+							propertyValue += "XPlane=(" + xPlane + ")" +
+								",YPlane=(" + yPlane + ")" +
+								",ZPlane=(" + zPlane + ")" +
+								",WPlane=(" + wPlane + ")";
+							break;
+						}
 
 					case PropertyType.IntPoint:
-					{											  
-						string X = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
-						string Y = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+						{
+							string x = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
+							string y = DeserializeDefaultPropertyValue( PropertyType.IntProperty, ref deserializeFlags );
 
-						propertyValue += "X=" + X + ",Y=" + Y;
-						break;
-					}
+							propertyValue += "X=" + x + ",Y=" + y;
+							break;
+						}
 					#endregion
 
 					case PropertyType.PointerProperty:
-					case PropertyType.StructProperty:	
-					{
-						deserializeFlags |= DeserializeFlags.WithinStruct;
-						bool bWasHardcoded = false;
-						var hardcodedstructs = (PropertyType[])Enum.GetValues( typeof(PropertyType) );
-						for( var i = (byte)PropertyType.StructOffset; i < hardcodedstructs.Length; ++ i )
+					case PropertyType.StructProperty:
 						{
-							if( String.Compare( ItemName, 
-								Enum.GetName( typeof(PropertyType), (byte)hardcodedstructs[i] ), 
-								StringComparison.OrdinalIgnoreCase ) == 0 
-								)
+							deserializeFlags |= DeserializeFlags.WithinStruct;
+							bool isHardCoded = false;
+							var hardcodedStructs = (PropertyType[])Enum.GetValues( typeof( PropertyType ) );
+							for( var i = (byte)PropertyType.StructOffset; i < hardcodedStructs.Length; ++ i )
 							{
-								bWasHardcoded = true;
-								propertyValue += DeserializeDefaultPropertyValue( hardcodedstructs[i], ref deserializeFlags );
+								if( String.Compare( ItemName, 
+									Enum.GetName( typeof( PropertyType ), (byte)hardcodedStructs[i] ),
+								    StringComparison.OrdinalIgnoreCase ) != 0 
+								) 
+									continue;
+
+								isHardCoded = true;
+								propertyValue += DeserializeDefaultPropertyValue( hardcodedStructs[i], ref deserializeFlags );
 								break;
 							}
-						}
 
-						if( !bWasHardcoded )
-						{
-							while( true )
+							if( !isHardCoded )
 							{
-								var tag = new UPropertyTag( _Owner );
-								if( tag.Deserialize() )
+								// We have to modify the outer so that dynamic arrays within this struct 
+								// will be able to find its variables to determine the array type.
+								FindProperty( out _Outer );
+								while( true )
 								{
-									propertyValue += tag.Name + 
-										(tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty 
-										? "[" + tag.ArrayIndex + "]" : String.Empty) + 
-											"=" + tag.DeserializeValue( deserializeFlags ) + ",";
-								}
-								else
-								{
-									if( propertyValue.EndsWith( "," ) )
+									var tag = new UDefaultProperty( _Owner, _Outer );
+									if( tag.Deserialize() )
 									{
-										propertyValue = propertyValue.Remove( propertyValue.Length - 1, 1 );
+										propertyValue += tag.Name +
+											(tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty
+											? "[" + tag.ArrayIndex + "]" : String.Empty) +
+												"=" + tag.DeserializeValue( deserializeFlags ) + ",";
 									}
-									break;
-								}						
-							}					
-						}
-						propertyValue = propertyValue.Length != 0? "(" + propertyValue + ")" : "none";
-						break;
-					}
-
-					case PropertyType.ArrayProperty:
-					{		
-						int arraySize = _Buffer.ReadIndex();
-						if( arraySize <= 0 )
-						{
-							propertyValue += "none";
+									else
+									{
+										if( propertyValue.EndsWith( "," ) )
+										{
+											propertyValue = propertyValue.Remove( propertyValue.Length - 1, 1 );
+										}
+										break;
+									}
+								}
+							}
+							propertyValue = propertyValue.Length != 0 ? "(" + propertyValue + ")" : "none";
 							break;
 						}
 
-						deserializeFlags |= DeserializeFlags.WithinArray;
-						var arrayType = PropertyType.None;
-
-						// Array type search phase 1-a
-						var firstStruct = _Owner is UStruct ? _Owner as UStruct: _Owner.Class as UStruct;
-						UArrayProperty arrayObject = null;
-						for( var structField = firstStruct; structField != null; structField = structField.Super as UStruct )
+					case PropertyType.ArrayProperty:
 						{
-							arrayObject = structField.ChildProperties.Find( i => i.Name == Name ) as UArrayProperty;
-							if( arrayObject != null )
+							int arraySize = _Buffer.ReadIndex();
+							if( arraySize == 0 )
 							{
-								break;	
+								propertyValue = "none";
+								break;
 							}
-						}
 
-						// Array type search phase 2
-						if( arrayType == PropertyType.None )
-						{
-							var testType = UnrealConfig.VariableTypes.Find( i => i.Name == Name );
-							if( testType != null )
+							// Find the property within the outer/owner or its inheritances. 
+							// If found it has to modify the outer so structs within this array can find their array variables.
+							// Additionally we need to know the property to determine the array's type.
+							var arrayType = PropertyType.None;
+							var property = FindProperty( out _Outer ) as UArrayProperty;
+							if( property != null && property.InnerProperty != null )
 							{
-								var obj = _Owner.Package.ObjectsList.Find( i => i.GetOuterGroup() == testType.VFullName ); 
-								if( obj != null )
+								arrayType = property.InnerProperty.Type;
+							}
+							// If we did not find a reference to the associated property(because of imports)
+							// then try to determine the array's type by scanning the definined array types.
+							else if( UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey( Name ) )
+							{
+								var varTuple = UnrealConfig.VariableTypes[Name];
+								if( varTuple != null )
 								{
-									arrayType = (PropertyType)Enum.Parse( typeof(PropertyType), testType.VType );
+									arrayType = varTuple.Item2;
 								}
 							}
-						}
 
-						// Array type search phase 1-b
-						bool fallback = false;
-						if( arrayType == PropertyType.None )
-						{
-							if( arrayObject != null )
-							{			
-								if( arrayObject.InnerProperty != null )
-								{
-									arrayType = arrayObject.InnerProperty.Type;
-									switch( arrayType )
-									{
-										case PropertyType.PointerProperty:
-										case PropertyType.StructProperty:
-										{
-											var structObject = (UStructProperty)arrayObject.InnerProperty;
-											ItemName = structObject.StructObject.Name;
-											break;
-										}
+							if( arrayType == PropertyType.None )
+							{
+								propertyValue = "/* Array type was not detected. */";
+								break;
+							}
 
-										default:
-											ItemName = arrayObject.InnerProperty.Class.Name;
-											break;
-									}
-								}
-								else
+							deserializeFlags |= DeserializeFlags.WithinArray;
+							if( (deserializeFlags & DeserializeFlags.WithinStruct) != 0 )
+							{
+								// Hardcoded fix for InterpCurve and InterpCurvePoint.
+								if( String.Compare( Name, "Points", StringComparison.OrdinalIgnoreCase ) == 0 )
 								{
-									fallback = true;
-									propertyValue = "/* Cannot find this imported array's type.";
+									arrayType = PropertyType.StructProperty;
 								}
+
+								for( int i = 0; i < arraySize; ++ i )
+								{
+									propertyValue += DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags )
+										+ (i != arraySize - 1 ? "," : String.Empty);
+								}
+								propertyValue = "(" + propertyValue + ")";
 							}
 							else
 							{
-								fallback = true;
-								propertyValue = "/* Cannot find this array's type.";
+								for( int i = 0; i < arraySize; ++ i )
+								{
+									string elementValue = DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags );
+									if( (_TempFlags & ReplaceNameMarker) != 0 )
+									{
+										propertyValue = elementValue.Replace( "%ARRAYNAME%", Name + "(" + i + ")" );
+										_TempFlags = 0x00;
+									}
+									else
+									{
+										propertyValue += Name + "(" + i + ")=" + elementValue
+											+ (i != arraySize - 1 ? "\r\n" + UDecompilingState.Tabs : String.Empty);
+									}
+								}
 							}
-						}
 
-						if( fallback )
-						{
-							int innerSize = Size - (int)(_Buffer.Position - ValueOffset);
-							propertyValue += "\r\n" + UDecompilingState.Tabs + "\tDataSize:" + innerSize + " */";
+							_TempFlags |= DoNotAppendName; 
 							break;
 						}
 
-						string orgName = Name;
-						string orgItemName = ItemName;
-
-						if( (deserializeFlags & DeserializeFlags.WithinStruct) != 0 )
-						{
-							// Hardcoded fix for InterpCurve and InterpCurvePoint.
-							if( String.Compare( Name, "Points", StringComparison.OrdinalIgnoreCase ) == 0 )
-							{
-								// Remove commentary.
-								propertyValue = String.Empty;
-								arrayType = PropertyType.StructProperty;
-							}
-
-							propertyValue += "(";
-							for( int i = 0; i < arraySize; ++ i )
-							{
-								propertyValue += DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags ) + 
-									(i != arraySize - 1 
-										? ","
-										: String.Empty);
-							}
-							propertyValue += ")";
-						}
-						else
-						{
-							for( int i = 0; i < arraySize; ++ i )
-							{
-								string elementvalue = DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags );
-								if( (TempFlags & 0x02) != 0 )	// Must replace %x%
-								{
-									propertyValue = elementvalue.Replace( "%ARRAYNAME%", Name + "(" + i + ")" );
-									TempFlags = 0x00;
-								}
-								else
-								{
-									propertyValue += Name + "(" + i + ")=" + elementvalue + 
-										(i != arraySize - 1 
-											? "\r\n" + UDecompilingState.Tabs
-											: String.Empty);
-								}
-								// Restore, in case it changed between this loop.
-								// e.g. a array of a struct which contains many variants could easily screw it up for the next element which are going to do the same obviously :D.
-								Name = orgName;
-								ItemName = orgItemName;
-							}
-						}
-						TempFlags |= 0x01; // Don't automatically add a name.
-						break;
-					}
-
 					default:
-						propertyValue = "/*unknown " + ItemName + " (" + Type + "_" + type + ")*/";
+						propertyValue = "/* Unknown default property type! */";
 						break;
 				}
 			}
 			catch( Exception e )
-			{             
-                return propertyValue + "// " + e.Message + "\r\n" + UDecompilingState.Tabs;                          
+			{
+				return propertyValue + "\r\n" + UDecompilingState.Tabs 
+					+ "// Exception thrown while deserializing " + Name + "\t" + e;
+			}
+			finally
+			{
+				_Outer = orgOuter;
 			}
 			return propertyValue;
 		}
-	}
+		#endregion
 
-	/// <summary>
-	/// Represents a Decompilable UPropertyTag.
-	/// </summary>
-	public sealed class UDefaultProperty : IUnrealDecompilable
-	{
-		/// <summary>
-		/// Serialized Info
-		/// </summary>
-		public UPropertyTag Tag;
-
+		#region Decompilation
 		public string Decompile()
 		{
-			Tag.TempFlags = 0x00;
+			_TempFlags = 0x00;
 			string value;
 			try
 			{
-				value = Tag.DeserializeValue();
+				value = DeserializeValue();
 			}
 			catch( Exception e )
 			{
-				value = "//" + e.Message;
+				value = "//" + e;
 			}
 
 			// Array or Inlined object
-			if( (Tag.TempFlags & 0x01) != 0 )
+			if( (_TempFlags & DoNotAppendName) != 0 )
 			{		
 				// The tag handles the name etc on its own.
 				return value;
 			}
 			string arrayindex = String.Empty; 
-			if( Tag.ArrayIndex > 0 && Tag.Type != PropertyType.BoolProperty )
+			if( ArrayIndex > 0 && Type != PropertyType.BoolProperty )
 			{
-				arrayindex += "[" + Tag.ArrayIndex + "]";
+				arrayindex += "[" + ArrayIndex + "]";
 			}
-			return Tag.Name + arrayindex + "=" + value;
+			return Name + arrayindex + "=" + value;
 		}
+		#endregion
+
+		#region Methods
+		private UProperty FindProperty( out UStruct outer )
+		{
+			UProperty property = null;
+			outer = _Outer;
+			for( var structField = _Outer; structField != null; structField = structField.Super as UStruct )
+			{
+				if( structField.Variables == null || !structField.Variables.Any() )
+					continue;
+
+				property = structField.Variables.Find( i => i.Name == Name );
+				if( property == null )
+					continue;
+
+				switch( property.Type )
+				{
+					case PropertyType.StructProperty:
+						outer = ((UStructProperty)property).StructObject;
+						break;
+
+					case PropertyType.ArrayProperty:
+						var arrayField = property as UArrayProperty;
+						Debug.Assert( arrayField != null, "arrayField != null" );
+						var arrayInnerField = arrayField.InnerProperty;
+						if( arrayInnerField.Type == PropertyType.StructProperty )
+						{
+							_Outer = ((UStructProperty)arrayInnerField).StructObject;
+						}
+						break;
+
+					default:
+						outer = structField;
+						break;
+				}
+				break;
+			}
+			return property;
+		}
+		#endregion
 	}
 }

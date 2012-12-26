@@ -3,14 +3,16 @@ using UELib.Core;
 	
 namespace UELib.Engine
 {
-	public class UTexture : UContent
+	[UnrealRegisterClass]
+	public class UTexture : UObject, IUnrealViewable
 	{
-		protected UArray<MipMap> _MipMaps = null;
 		protected UDefaultProperty _Format;
 
-		public UArray<MipMap> MipMaps
+		public UArray<MipMap> MipMaps{ get; private set; }
+
+		public UTexture()
 		{
-			get{ return _MipMaps; }
+			ShouldDeserializeOnDemand = true;
 		}
 
 		protected override void Deserialize()
@@ -18,8 +20,8 @@ namespace UELib.Engine
 			base.Deserialize();
 
 			_Format = Properties.FindPropertyByName( "Format" );
-			_MipMaps = new UArray<MipMap>();
-			_MipMaps.Deserialize( _Buffer, delegate( MipMap mm ){ mm.Owner = this; } );
+			MipMaps = new UArray<MipMap>();
+			MipMaps.Deserialize( _Buffer, delegate( MipMap mm ){ mm.Owner = this; } );
 		}
 
 		public class MipMap : IUnrealDeserializableClass
@@ -52,19 +54,19 @@ namespace UELib.Engine
 					stream.Seek( opos, System.IO.SeekOrigin.Begin );
 				}
 
-				int MipMapSize = stream.ReadIndex();
-				Pixels = new int[MipMapSize];
+				int mipMapSize = stream.ReadIndex();
+				Pixels = new int[mipMapSize];
 				switch( Owner._Format.Decompile().Substring( 6 ) )
 				{
 					case "TEXF_RGBA8": case "5":
-						for( int i = 0; i < MipMapSize; ++ i )
+						for( int i = 0; i < mipMapSize; ++ i )
 						{				
 	  						Pixels[i] = stream.ReadInt32();
 						}
 						break;
 
 					case "TEXF_DXT1": case "3":
-						for( int i = 0; i < MipMapSize / 2; ++ i )
+						for( int i = 0; i < mipMapSize / 2; ++ i )
 						{		
 							byte c = stream.ReadByte();
 							Pixels[i ++] = c & 0xF0;
@@ -85,9 +87,15 @@ namespace UELib.Engine
 		}
 	}
 
-	public class UPalette : UContent
+	[UnrealRegisterClass]
+	public class UPalette : UObject, IUnrealViewable
 	{
-		private Color[] _ColorPalette = null;
+		private Color[] _ColorPalette;
+
+		public UPalette()
+		{
+			ShouldDeserializeOnDemand = true;
+		}
 
 		protected override void Deserialize()
 		{

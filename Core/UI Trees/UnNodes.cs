@@ -86,7 +86,7 @@ namespace UELib.Core
 		public virtual string Decompile()
 		{
 			string fullView = String.Empty;
-			foreach( IDecompilableNode node in Nodes.OfType<IDecompilableNode>() )
+			foreach( var node in Nodes.OfType<IDecompilableNode>() )
 			{
 				if( node.AllowDecompile )
 				{

@@ -58,7 +58,7 @@ namespace UELib.Core
 				}
 			}*/
 
-			TextNode flagNode = AddTextNode( ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
+			var flagNode = AddTextNode( ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
 			flagNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), ObjectFlags ) );
 
 			AddTextNode( ParentNode, "Size:" + ExportTable.SerialSize );
@@ -103,8 +103,16 @@ namespace UELib.Core
 			return objN;
 		}
 
-		internal static ObjectListNode AddObjectListNode( TreeNode parentNode, string title, IEnumerable<UObject> objects )
+		internal static ObjectListNode AddObjectListNode
+		( 
+			TreeNode parentNode, 
+			string title,
+			IEnumerable<UObject> objects 
+		)
 		{
+			if( objects == null )
+				return null;
+
 			var uObjects = objects as List<UObject> ?? objects.ToList();
 			if( uObjects.Any() )
 			{	

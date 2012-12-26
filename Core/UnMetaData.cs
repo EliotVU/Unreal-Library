@@ -13,6 +13,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Represents metadata from field(Properties,Enums,Structs and Constants) objects. 
 	/// </summary>
+	[UnrealRegisterClass]
 	public sealed class UMetaData : UObject
 	{
 		#region Serialized Members
@@ -28,14 +29,14 @@ namespace UELib.Core
 				if( stream.Version <= 540 )
 				{
 					// e.g. Core.Object.X
-					FieldName = stream.ReadName();
+					FieldName = stream.ReadString();
 				}
 				else 
 				{
 					FieldIndex = stream.ReadObjectIndex();
 				}
 				MetaTags = new UArray<UMetaTag>();
-				MetaTags.Deserialize( stream, delegate( UMetaTag tag ){ tag.Owner = Owner; } );
+				MetaTags.Deserialize( stream, tag => tag.Owner = Owner );
 			}
 
 			/// <summary>
@@ -49,21 +50,20 @@ namespace UELib.Core
 			/// <returns></returns>
 			public string Decompile()
 			{
-				List<UMetaTag> tags = new List<UMetaTag>( MetaTags.Count );
- 
+				var tags = new List<UMetaTag>( MetaTags.Count );
 				tags.AddRange( MetaTags );
 
 				// We remove this because OrderIndex is a implicit added MetaTag.
-				var OItag = GetMetaTag( "OrderIndex" );
-				if( OItag != null )
+				var oItag = GetMetaTag( "OrderIndex" );
+				if( oItag != null )
 				{
-					tags.Remove( OItag );
+					tags.Remove( oItag );
 				}
 
-				OItag = GetMetaTag( "ToolTip" );
-				if( OItag != null )
+				oItag = GetMetaTag( "ToolTip" );
+				if( oItag != null )
 				{
-					tags.Remove( OItag );
+					tags.Remove( oItag );
 				}
 
 				/*OItag = GetMetaTag( "ToolTip" );
@@ -72,10 +72,10 @@ namespace UELib.Core
 					tags.Remove( OItag );
 				}*/
 
-				if( tags != null && tags.Count > 0 )
+				if( tags.Count > 0 )
 				{
  					string output = "<";
-					foreach( UMetaTag tag in tags )
+					foreach( var tag in tags )
 					{
 				   		output += tag.Decompile() + (tag != tags.Last() ? "|" : ">");
 					}
@@ -91,7 +91,7 @@ namespace UELib.Core
 	
 			public UMetaTag GetMetaTag( string tagName )
 			{
-				return MetaTags.Find( delegate( UMetaTag tag ){ return Owner.GetIndexName( tag.TagNameIndex ) == tagName; } );
+				return MetaTags.Find( tag => Owner.GetIndexName( tag.TagNameIndex ) == tagName );
 			}
 		}															    
 
@@ -104,7 +104,7 @@ namespace UELib.Core
 			public void Deserialize( IUnrealStream stream )
 			{
 				TagNameIndex = stream.ReadNameIndex();
-				TagValue = stream.ReadName();
+				TagValue = stream.ReadString();
 			}
 
 			/// <summary>
@@ -122,34 +122,30 @@ namespace UELib.Core
 		private UArray<UMetaField> _MetaFields = null;
 		#endregion
 
+		#region Constructors
 		protected override void Deserialize()
 		{
 			base.Deserialize();
-
 			_MetaFields = new UArray<UMetaField>();
-			_MetaFields.Deserialize( _Buffer, delegate( UMetaField field ){ field.Owner = Package; } );
-
-			// Temp, for debugging the UE3 format.
-			#if DEBUGUE3
-			PostInitialize();
-			#endif
+			_MetaFields.Deserialize( _Buffer, field => field.Owner = Package );
 		}
 
 		public override void PostInitialize()
 		{
 			base.PostInitialize();
-
 			// Link the metas to the owners
-			foreach( UMetaField MetaProp in _MetaFields )
+			foreach( var metaProp in _MetaFields )
 			{
-				UField field = (UField)Package.GetIndexObject( MetaProp.FieldIndex );
+				var field = (UField)Package.GetIndexObject( metaProp.FieldIndex );
 				if( field != null )
 				{
-					field.Meta = MetaProp;
+					field.Meta = metaProp;
 				}
 			}
 		}
+		#endregion
 
+		#region Decompilation
 		/// <summary>
 		/// Decompiles this object into a text format of:
 		/// 
@@ -234,5 +230,6 @@ namespace UELib.Core
 			}
 			return output;
 		}
+		#endregion
 	}
 }

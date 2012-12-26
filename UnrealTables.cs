@@ -5,6 +5,42 @@ using UELib.Core;
 
 namespace UELib
 {
+	public struct UGenerationTableItem : IUnrealDeserializableClass
+	{
+		/// <summary>
+		/// Amount of exported objects that resist within a package.
+		/// </summary>
+		public int ExportsCount;
+
+		/// <summary>
+		/// Amount of unique names that resist within a package.
+		/// </summary>
+		public int NamesCount;
+		public int NetObjectsCount;
+
+		public void Deserialize( IUnrealStream stream )
+		{
+#if APB
+			if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.APB && stream.Package.LicenseeVersion >= 32 )
+			{
+				stream.Skip( 16 );
+			}
+#endif
+
+			ExportsCount = stream.ReadInt32();
+			NamesCount = stream.ReadInt32();
+			if( stream.Version >= 322 )
+			{
+				NetObjectsCount = stream.ReadInt32();
+
+				//if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Hawken )
+				//{
+				//    stream.Skip( 4 );
+				//}
+			}		
+		}
+	}
+
 	/// <summary>
 	/// Represents a basic file table.
 	/// </summary>
@@ -51,22 +87,19 @@ namespace UELib
 
 		public void Deserialize( IUnrealStream stream )
 		{
-			Name = stream.ReadName();
-			//if( Name.IndexOf( "\\", StringComparison.Ordinal ) != -1 )
-			//{
-			//    Name = Name.Replace( "\0", "N_" + TableIndex );
-			//}
-			Flags = stream.UR.ReadQWORDFlags();
-						
+			Name = stream.ReadString();
+			Flags = stream.Version >= 220 ? stream.ReadUInt64() : stream.ReadUInt32();					
+#if DEOBFUSCATE
 			// De-obfuscate names that contain unprintable characters!
-			/*foreach( char c in Name )
+			foreach( char c in Name )
 			{
 				if( !char.IsLetterOrDigit( c ) )
 				{
 					Name = "N" + TableIndex + "_OBF";
 					break;
 				}
-			}*/
+			}
+#endif
 		}
 
 		#region Writing Methods
@@ -91,7 +124,7 @@ namespace UELib
 		{
 			stream.Seek( Offset, System.IO.SeekOrigin.Begin );
 
-			stream.ReadName();
+			stream.ReadString();
 			if( stream.Version <= 200 )
 			{
 				// Writing UINT
@@ -104,6 +137,28 @@ namespace UELib
 			}
 		}
 		#endregion
+
+		public static bool operator ==( UNameTableItem a, string b )
+		{
+			return a.Name == b;
+		}
+
+		public static bool operator !=( UNameTableItem a, string b )
+		{
+			return a.Name != b;
+		}
+
+		/// <inheritdoc/>
+		//public override bool Equals( object obj )
+		//{
+		//    return Name.Equals( obj );
+		//}
+
+		/// <inheritdoc/>
+		public override string ToString()
+		{
+			return Name;
+		}
 	}
 
 	/// <summary>
@@ -131,6 +186,7 @@ namespace UELib
 		/// -- Fixed
 		/// </summary>
 		public int ObjectIndex;
+		public UNameTableItem ObjectTable{ get{ return Owner.Names[ObjectIndex]; } }
 		public string ObjectName{ get{ return ObjectNumber > 0 ? Owner.GetIndexName( ObjectIndex ) + "_" + ObjectNumber : Owner.GetIndexName( ObjectIndex ); } }
 		public int ObjectNumber;
 
@@ -144,20 +200,13 @@ namespace UELib
 		public string ClassName
 		{ 
 			get
-			{ 
+			{
 				if( this is UImportTableItem )
 				{
 					return Owner.GetIndexName( ClassIndex );
 				}
-				else
-				{
-					if( ClassIndex != 0 )
-					{
-						return Owner.GetIndexTable( ClassIndex ).ObjectName;
-					}
-					else return "class";
-				}
-			} 
+				return ClassIndex != 0 ? Owner.GetIndexTable( ClassIndex ).ObjectName : "class";
+			}
 		}
 
 		/// <summary>
@@ -166,7 +215,7 @@ namespace UELib
 		/// </summary>
 		public int OuterIndex;
 		public UObjectTableItem OuterTable{ get{ return Owner.GetIndexTable( OuterIndex ); } }
-		public string OuterName{ get{ UObjectTableItem table = OuterTable; return table != null ? table.ObjectName : ""; } }
+		public string OuterName{ get{ var table = OuterTable; return table != null ? table.ObjectName : String.Empty; } }
 		#endregion
 	}
 
@@ -182,7 +231,7 @@ namespace UELib
 		/// </summary>
 		public int SuperIndex;
 		public UObjectTableItem SuperTable{ get{ return Owner.GetIndexTable( SuperIndex ); } }
-		public string SuperName{ get{ UObjectTableItem table = SuperTable; return table != null ? table.ObjectName : ""; } }
+		public string SuperName{ get{ var table = SuperTable; return table != null ? table.ObjectName : String.Empty; } }
 
 		/// <summary>
 		/// Object index.
@@ -190,9 +239,7 @@ namespace UELib
 		/// </summary>
 		public int ArchetypeIndex;
 		public UObjectTableItem ArchetypeTable{ get{ return Owner.GetIndexTable( ArchetypeIndex ); } }
-		public string ArchetypeName{ get{ UObjectTableItem table = ArchetypeTable; return table != null ? table.ObjectName : ""; } }
-
-		public int UnknownIndex;
+		public string ArchetypeName{ get{ var table = ArchetypeTable; return table != null ? table.ObjectName : String.Empty; } }
 
 		/// <summary>
 		/// Object flags, such as Public, Protected and Private.
@@ -210,14 +257,8 @@ namespace UELib
 		/// </summary>
 		public int SerialOffset;
 
-		/// <summary>
-		/// ???
-		/// 
-		/// UE3 Only
-		/// </summary>
 		public uint ExportFlags;
-
-		public Dictionary<int, int> ComponentMap;
+		public Dictionary<int, int> Components;
 		public List<int> NetObjects;
 		public string Guid;
 		#endregion
@@ -235,23 +276,6 @@ namespace UELib
 			}
 
 			_ObjectFlagsOffset = stream.Position;	
-			//if( stream.Version >= 195 )
-			//{
-			//    var flags = stream.ReadUInt64();
-			//    System.Console.WriteLine( "flags:" + flags );
-			//    var hoFlags = ((ulong)(((uint)flags)) << 32);
-			//    var loFlags = ((ulong)(flags & 0xFFFFFFFF00000000U) >> 32);
-			//    System.Console.WriteLine( "hoFlags:" + hoFlags );
-			//    System.Console.WriteLine( "loFlags:" + loFlags );
-
-			//    ObjectFlags =  hoFlags | loFlags;
-			//    System.Console.WriteLine( "ObjectFlags:" + ObjectFlags );
-			//}
-			//else
-			//{
-			//    ObjectFlags = stream.ReadUInt32();
-			//}
-
 			ObjectFlags = stream.ReadUInt32();
 			if( stream.Version >= 195 )
 			{
@@ -264,44 +288,44 @@ namespace UELib
 				SerialOffset = stream.ReadIndex();
 			}
 
-			if( stream.Version >= 220 )
+			if( stream.Version < 220 )
+				return;
+
+			if( stream.Version < 543 )
 			{
-				if( stream.Version < 543 )
+				int componentMapCount = stream.ReadInt32();
+				if( componentMapCount > 0 )
 				{
-					int componentMapCount = stream.ReadInt32();
-					if( componentMapCount > 0 )
+					Components = new Dictionary<int, int>( componentMapCount );
+					for( int i = 0; i < componentMapCount; ++ i )
 					{
-						ComponentMap = new Dictionary<int,int>( componentMapCount );
-						for( int i = 0; i < componentMapCount; ++ i )
-						{
-							ComponentMap.Add( stream.ReadNameIndex(), stream.ReadObjectIndex() );
-						}
+						Components.Add( stream.ReadNameIndex(), stream.ReadObjectIndex() );
 					}
 				}
+			}
 
-				if( stream.Version >= 247 )
+			if( stream.Version >= 247 )
+			{
+				ExportFlags = stream.ReadUInt32();
+				if( stream.Version >= 322 )
 				{
-					ExportFlags = stream.ReadUInt32();
-					if( stream.Version >= 322 )
+					// NetObjectCount
+					int netObjectCount = stream.ReadInt32();
+					if( netObjectCount > 0 )
 					{
-						// NetObjectCount
-						int netObjectCount = stream.ReadInt32();
-						if( netObjectCount > 0 )
+						NetObjects = new List<int>( netObjectCount );
+						for( int i = 0; i < netObjectCount; ++ i )
 						{
-							NetObjects = new List<int>( netObjectCount );
-							for( int i = 0; i < netObjectCount; ++ i )
-							{
-								NetObjects.Add( stream.ReadObjectIndex() );
-							}
+							NetObjects.Add( stream.ReadObjectIndex() );
 						}
+					}
 
-						// 000* Guid...
-						Guid = stream.ReadGuid();
-						if( stream.Version > 486 )	// 475?	 486(> Stargate Worlds)
-						{
-							// Depends?
-							stream.ReadInt32();
-						}
+					// 000* Guid...
+					Guid = stream.ReadGuid();
+					if( stream.Version > 486 )	// 475?	 486(> Stargate Worlds)
+					{
+						// Depends?
+						stream.ReadInt32();
 					}
 				}
 			}

@@ -1,5 +1,6 @@
 ﻿#if DECOMPILE
 using System;
+using System.Globalization;
 
 namespace UELib.Core
 {
@@ -8,7 +9,7 @@ namespace UELib.Core
 		// Called before the var () is printed.
 		public virtual string PreDecompile()
 		{
-			UMetaData.UMetaTag tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
+			var tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
 			if( tag != null )
 			{
 				string comment = UDecompilingState.Tabs + "/** ";
@@ -30,8 +31,18 @@ namespace UELib.Core
 
 		public override string Decompile()
 		{
-			return FormatFlags() + GetFriendlyType() + " " + Name + (_IsArray ? "[" + ArrayDim + "]" : String.Empty) 
-				+ DecompileMeta();
+			return FormatFlags() + GetFriendlyType() + " " + Name + FormatSize() + DecompileMeta();
+		}
+
+		private string FormatSize()
+		{
+			if( !_IsArray )
+			{
+				return String.Empty;
+			}
+
+			var arraySizeDecl = ArrayEnum != null ? ArrayEnum.GetFriendlyType() : ArrayDim.ToString( CultureInfo.InvariantCulture );
+			return String.Format( "[{0}]", arraySizeDecl );
 		}
 
 		private string FormatAccess()
@@ -318,10 +329,9 @@ namespace UELib.Core
 				}
 
 				// Properties flagged with automated, automatically get those flags added by the compiler.
-				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2K4 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Automated) != 0 )
+				if( Package.Version == 128 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Automated) != 0 )
 				{
 					output += "automated ";
-
 					copyFlags &= ~((ulong)Flags.PropertyFlagsLO.Automated
 						|(ulong)Flags.PropertyFlagsLO.EditInlineUse
 						|(ulong)Flags.PropertyFlagsLO.EditInlineNotify
@@ -401,7 +411,7 @@ namespace UELib.Core
 					copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Localized;
 				}
 
-				if( Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.UT2K4 )
+				if( Package.Version == 128 )
 				{
 					if( HasPropertyFlag( Flags.PropertyFlagsLO.Cache ) )
 					{
@@ -429,8 +439,8 @@ namespace UELib.Core
 				}
 			}
 			// Local's may never output any of their implied flags!
-			if( !IsParm() && _Super != null 
-				&& String.Compare( _Super.GetClassName(), "Function", StringComparison.OrdinalIgnoreCase ) == 0 )
+			if( !IsParm() && Super != null 
+				&& String.Compare( Super.GetClassName(), "Function", StringComparison.OrdinalIgnoreCase ) == 0 )
 			{
 				return string.Empty;
 			}

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UELib;
 
 namespace UELib.Core
 {
@@ -12,53 +8,19 @@ namespace UELib.Core
 	public partial class UField : UObject
 	{
 		#region Serialized Members
-		/// <summary>
-		/// Index to the parent UField object.
-		/// </summary>
-		protected int _SuperIndex
-		{
-			get;
-			private set;
-		}
-
-		/// <summary>
-		/// Index to the next UField object.
-		/// </summary>
-		protected int _NextIndex
-		{
-			get;
-			private set;
-		}
+		public UField Super{ get; private set; }
+		public UField NextField{ get; private set; }
 		#endregion
 
-		#region PostInitialized Members
-		// UField???
-		protected UField _Super = null;
-		public UField Super
-		{
-			get{ return _Super; }
-		}
-
-		protected UField _NextField = null;
-		public UField NextField
-		{
-			get{ return _NextField; }
-		}
-
+		#region Script Members
 		/// <summary>
 		/// Initialized by the UMetaData object,
 		/// This Meta contains comments and other meta related info that belongs to this instance.
-		/// 
-		/// UE3 Only!
 		/// </summary>
-		public UMetaData.UMetaField Meta = null;
+		public UMetaData.UMetaField Meta;
 		#endregion
 
-		/// <summary>
-		///	Creates a new instance of the UELib.Core.UField class. 
-		/// </summary>
-		public UField(){}
-
+		#region Constructors
 		// REMINDER:
 		//	Other:
 		//		Class:SuperIndex->NextIndex
@@ -72,55 +34,35 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			// UDK_09_2010?
-
 			// _SuperIndex got moved into UStruct since 700+
 			if( _Buffer.Version < 756 
 #if SPECIALFORCE2
-				|| Package.Build == UnrealPackage.GameBuild.ID.SpecialForce2
+				|| Package.Build == UnrealPackage.GameBuild.BuildName.SpecialForce2
 #endif
 				)
 			{
-				// Index to the parent UField object; if any
-				_SuperIndex = _Buffer.ReadObjectIndex();
-				NoteRead( "_SuperIndex", _SuperIndex );
+				Super = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
+				NoteRead( "Super", Super );
 
-				// Index to the next UField object; if any
-				_NextIndex = _Buffer.ReadObjectIndex();
-				NoteRead( "_NextIndex", _NextIndex );
+				NextField = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
+				NoteRead( "NextField", NextField );
 			}
 			else
 			{
-				// Index to the next UField object; if any
-				_NextIndex = _Buffer.ReadObjectIndex();
-				NoteRead( "_NextIndex", _NextIndex );
+				NextField = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
+				NoteRead( "NextField", NextField );
 
 				// Should actually resist in UStruct
 				if( this is UStruct )
 				{
-					// Index to the parent UField object; if any
-					_SuperIndex = _Buffer.ReadObjectIndex();
-					NoteRead( "_SuperIndex", _SuperIndex );
+					Super = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
+					NoteRead( "Super", Super );
 				}
 			}
-
-			// PROT: Solution to Hex-Edit protections that are done by changing the NextIndex value to an unlogic object in Classes.
-			try
-			{
-				// PostInitialize exception; these objects are needed at PostInitialize() so it is really important to link them here rather than in PostInitialize.
-				if( _SuperIndex != 0 )
-				{
-					_Super = (UField)GetIndexObject( _SuperIndex );
-				}
-
-				if( _NextIndex != 0 )
-				{
-					_NextField = (UField)GetIndexObject( _NextIndex );
-				}
-			}
-			catch{}
 		}
+		#endregion
 
+		#region Methods
 		public bool Extends( string classType )
 		{
 			for( var field = Super; field != null; field = field.Super )
@@ -132,5 +74,6 @@ namespace UELib.Core
 			}
 			return false;
 		}
+		#endregion
 	}
 }

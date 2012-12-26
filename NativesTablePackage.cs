@@ -8,29 +8,39 @@ namespace UELib
 
 	public sealed class NativeTableItem
 	{
-		public string 	Name;
-		public byte 	OperPrecedence;
-		public byte 	Type;
-		public int 		ByteToken;
+		public string 			Name;
+		public byte 			OperPrecedence;
+		public FunctionType		Type;
+		public int 				ByteToken;
 
-		public void InitializeType( UFunction function )
+		public NativeTableItem()
+		{
+		}
+
+		public NativeTableItem( UFunction function )
 		{
 			if( function.IsOperator() )
 			{
-				Type = (byte)FunctionType.Operator;
+				Type = FunctionType.Operator;
 			}
 			else if( function.IsPost() )
 			{
-				Type = (byte)FunctionType.PostOperator;
+				Type = FunctionType.PostOperator;
 			}
 			else if( function.IsPre() )
 			{
-				Type = (byte)FunctionType.PreOperator;
+				Type = FunctionType.PreOperator;
 			} 
 			else
 			{
-				Type = (byte)FunctionType.Function;
+				Type = FunctionType.Function;
 			}
+
+			OperPrecedence = function.OperPrecedence;
+			ByteToken = function.NativeToken;
+			Name = Type == FunctionType.Function 
+				? function.Name 
+				: function.FriendlyName;
 		}
 	}
 
@@ -44,7 +54,7 @@ namespace UELib
 
 	public sealed class NativesTablePackage
 	{
-		public const uint Signature = 0x2C8D14F1;
+		private const uint Signature = 0x2C8D14F1;
 		public const string Extension = ".NTL";
 
 		public List<NativeTableItem> NativeTableList;
@@ -68,7 +78,7 @@ namespace UELib
 						{
 							Name = binReader.ReadString(),
 							OperPrecedence = binReader.ReadByte(),
-							Type = binReader.ReadByte(),
+							Type = (FunctionType)binReader.ReadByte(),
 							ByteToken = binReader.ReadInt32()
 						} 
 					);
@@ -111,7 +121,7 @@ namespace UELib
 				{
 					binWriter.Write( item.Name );
 					binWriter.Write( item.OperPrecedence );
-					binWriter.Write( item.Type );
+					binWriter.Write( (byte)item.Type );
 					binWriter.Write( item.ByteToken );
 				}
 			}

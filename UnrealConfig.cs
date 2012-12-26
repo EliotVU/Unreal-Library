@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UELib.Types;
 
 namespace UELib
 {
@@ -8,27 +9,18 @@ namespace UELib
 		#region Config
 		public static bool SuppressComments;
 		public static bool SuppressSignature;
+
 		public static string PreBeginBracket = UnrealSyntax.NewLine + "{0}";
 		public static string PreEndBracket = UnrealSyntax.NewLine + "{0}";
 		public static string Indention = "\t";
+
 		public enum CookedPlatform
 		{
 			PC,
 			Console
 		}
 		public static CookedPlatform Platform;
-
-		public class VariableType
-		{
-			public string VFullName;
-			public string Name
-			{
-				get{ return VFullName.Substring( VFullName.LastIndexOf( '.' ) + 1 ); }
-			}
-			public string VType;
-		}
-
-		public static List<VariableType> VariableTypes;
+		public static Dictionary<string, Tuple<string, PropertyType>> VariableTypes;
 		#endregion
 
 		public static string PrintBeginBracket()
@@ -43,7 +35,7 @@ namespace UELib
 
 		public static string ToUFloat( this float value )
 		{		
-			return value.ToString( "0.000000" ).TrimEnd( '0' ).Replace( ',', '.' ) + '0';		
+			return value.ToString( "0.0000000000" ).TrimEnd( '0' ).Replace( ',', '.' ) + '0';		
 		}
 	}
 
@@ -61,7 +53,7 @@ namespace UELib
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
 		public static string Tabs = String.Empty;
 
-		public static void AddTabs( byte count )
+		public static void AddTabs( int count )
 		{
 			for( int i = 0; i < count; ++ i )
 			{
@@ -83,6 +75,16 @@ namespace UELib
 		public static void RemoveTab()
 		{
 			Tabs = Tabs.Substring( 0, Tabs.Length - UnrealConfig.Indention.Length );
+		}
+
+		public static void RemoveSpaces( int count )
+		{
+			if( Tabs.Length < count )
+			{
+				Tabs = String.Empty;
+				return;
+			}
+			Tabs = Tabs.Substring( 0, Tabs.Length - count );	
 		}
 
 		public static void ResetTabs()

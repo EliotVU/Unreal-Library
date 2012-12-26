@@ -34,7 +34,7 @@ namespace UELib.Core
 		private string FormatFlags()
 		{
 			string output = String.Empty;
-			bool normalFunction = true;
+			bool isNormalFunction = true;
 
 			if( HasFunctionFlag( Flags.FunctionFlags.Private ) )
 			{
@@ -130,13 +130,13 @@ namespace UELib.Core
 			if( HasFunctionFlag( Flags.FunctionFlags.Event ) )
 			{
 				output += "event ";
-				normalFunction = false;
+				isNormalFunction = false;
 			}
 
 			if( HasFunctionFlag( Flags.FunctionFlags.Delegate ) )
 			{
 				output += "delegate ";
-				normalFunction = false;
+				isNormalFunction = false;
 			}
 
 			if( IsOperator() )
@@ -153,11 +153,11 @@ namespace UELib.Core
 				{
 					output += "operator(" + OperPrecedence + ") ";
 				}
-				normalFunction = false;
+				isNormalFunction = false;
 			}
 
 			// Don't add function if it's an operator or event or delegate function type!
-			if( normalFunction )
+			if( isNormalFunction )
 			{
 	   			output += "function ";
 			}
@@ -178,9 +178,10 @@ namespace UELib.Core
 				);			
 			}
 
-			output += FormatFlags() + (ReturnProperty != null 
-				? (ReturnProperty.GetFriendlyType() + " ") 
-				: String.Empty) 
+			output += FormatFlags() 
+				+ (ReturnProperty != null 
+					? ReturnProperty.GetFriendlyType() + " " 
+					: String.Empty) 
 				+ FriendlyName + FormatParms();
 			if( HasFunctionFlag( Flags.FunctionFlags.Const ) )
 			{
@@ -192,29 +193,35 @@ namespace UELib.Core
 		private string FormatParms()
 		{
 			string parms = "(";
-			foreach( var parm in _ChildParams	)
-			{
-				parms += parm.Decompile() + (parm != _ChildParams.Last() ? ", " : String.Empty);
+			if( Params != null && Params.Any() )
+			{ 
+				foreach( var parm in Params	)
+				{
+					parms += parm.Decompile() + (parm != Params.Last() ? ", " : String.Empty);
+				}
 			}
 			return parms + ")";
 		}
 
 		private string FormatLocals()
 		{
+			if( Locals == null || !Locals.Any() )
+				return String.Empty;
+
 			int numParms = 0;
 			string output = String.Empty;
 			string lastType = String.Empty;
-			for( var i = 0; i < _ChildLocals.Count; ++ i )
+			for( var i = 0; i < Locals.Count; ++ i )
 			{
-				string curType = _ChildLocals[i].GetFriendlyType();
-				string nextType = ((i + 1) < _ChildLocals.Count 
-					? _ChildLocals[i + 1].GetFriendlyType() 
+				string curType = Locals[i].GetFriendlyType();
+				string nextType = ((i + 1) < Locals.Count 
+					? Locals[i + 1].GetFriendlyType() 
 					: String.Empty);
 
 				// If previous is the same as the one now then format the params as one line until another type is reached
 				if( curType == lastType )
 				{				
-					output += _ChildLocals[i].Name + 
+					output += Locals[i].Name + 
 					(
 						curType == nextType 
 						? ((numParms >= 5 && numParms % 5 == 0) 
@@ -228,7 +235,7 @@ namespace UELib.Core
 				else
 				{
 					output += (numParms >= 5 ? "\r\n" : String.Empty) 
-						+ UDecompilingState.Tabs + "local " + _ChildLocals[i].Decompile() + 
+						+ UDecompilingState.Tabs + "local " + Locals[i].Decompile() + 
 					(
 						(nextType != curType || String.IsNullOrEmpty( nextType ) ) 
 						? ";\r\n" 

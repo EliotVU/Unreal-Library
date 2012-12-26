@@ -90,11 +90,11 @@ namespace UELib.Core
 
 		public string GetDependencies()
 		{
-			if( ClassDependenciesList == null )
+			if( ClassDependencies == null )
 				return String.Empty;
 
 			string output = String.Empty;
-			foreach( var dep in ClassDependenciesList )
+			foreach( var dep in ClassDependencies )
 			{
 				var obj = GetIndexObject( dep.Class );
 				if( obj != null )
@@ -105,15 +105,15 @@ namespace UELib.Core
 			return output.Length != 0 ? "Class Dependencies:\r\n" + output + " *" : String.Empty;
 		}
 
-		public string GetImports()
+		private string GetImports()
 		{
-			if( PackageImportsList == null )
+			if( PackageImports == null )
 				return String.Empty;
 
 			string output = String.Empty;
-			foreach( int packageImport in PackageImportsList )
+			foreach( int packageImport in PackageImports )
 			{
-				output += " *\t" + Package.NameTableList[packageImport].Name + "\r\n";
+				output += " *\t" + Package.Names[packageImport].Name + "\r\n";
 				/*for( int j = 1; j < (i + i) && (j + (i + i)) < PackageImportsList.Count; ++ j )
 				{
 					Output += " *\t\t\t" + Owner.NameTableList[PackageImportsList[i + j]].Name + "\r\n";
@@ -127,23 +127,23 @@ namespace UELib.Core
 		{
 			string output = String.Empty;
 
-			if( _ChildConstants != null && _ChildConstants.Count > 0 )
-				output += " *\tConstants:" + _ChildConstants.Count + "\r\n";
+			if( Constants != null && Constants.Count > 0 )
+				output += " *\tConstants:" + Constants.Count + "\r\n";
 
-			if( _ChildEnums != null && _ChildEnums.Count > 0 )
-				output += " *\tEnums:" + _ChildEnums.Count + "\r\n";
+			if( Enums != null && Enums.Count > 0 )
+				output += " *\tEnums:" + Enums.Count + "\r\n";
 
-			if( _ChildStructs != null && _ChildStructs.Count > 0 )
-				output += " *\tStructs:" + _ChildStructs.Count + "\r\n";
+			if( Structs != null && Structs.Count > 0 )
+				output += " *\tStructs:" + Structs.Count + "\r\n";
 
-			if( _ChildProperties != null && _ChildProperties.Count > 0 )
-				output += " *\tProperties:" + _ChildProperties.Count + "\r\n";
+			if( Variables != null && Variables.Count > 0 )
+				output += " *\tProperties:" + Variables.Count + "\r\n";
 
-			if( _ChildFunctions != null && _ChildFunctions.Count > 0 )
-				output += " *\tFunctions:" + _ChildFunctions.Count + "\r\n";
+			if( Functions != null && Functions.Count > 0 )
+				output += " *\tFunctions:" + Functions.Count + "\r\n";
 
-			if( _ChildStates != null && _ChildStates.Count > 0 )
-				output += " *\tStates:" + _ChildStates.Count + "\r\n";
+			if( States != null && States.Count > 0 )
+				output += " *\tStates:" + States.Count + "\r\n";
 
 			return output.Length != 0 ? "Stats:\r\n" + output + " *" : String.Empty;
 		}
@@ -184,13 +184,13 @@ namespace UELib.Core
 				{
 					foreach( int index in enumerableList )
 					{
-						output += Package.NameTableList[index].Name + ",";	
+						output += Package.Names[index].Name + ",";	
 					}
 					output = output.TrimEnd( ',' ) + ")";
 				}
 				catch
 				{
-					output += string.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
+					output += String.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
 				}
 			}
 			return output;
@@ -212,7 +212,7 @@ namespace UELib.Core
 				}
 				catch
 				{
-					output += string.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
+					output += String.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
 				}
 			}
 			return output;
@@ -222,9 +222,10 @@ namespace UELib.Core
 		{
 			string output = String.Empty;
 
-			try{
-				if( Package.Version >= UnrealPackage.VDLLBIND && _DLLNameIndex != 0 
-					&& String.Compare(DLLName, "None", StringComparison.OrdinalIgnoreCase) != 0 )
+			try
+			{
+				if( Package.Version >= UnrealPackage.VDLLBIND
+					&& String.Compare( DLLName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
 				{
 					output += "\r\n\tdllbind(" + DLLName + ")";
 				}
@@ -234,31 +235,31 @@ namespace UELib.Core
 				output += "\r\n\t// Failed to decompile dllbind";	
 			}
 
-			if( ClassDependenciesList != null )
+			if( ClassDependencies != null )
 			{
 				var dependson = new List<int>();
-				foreach( var depedency in ClassDependenciesList )
+				foreach( var dependency in ClassDependencies )
 				{
-					if( dependson.Exists( dep => dep == depedency.Class ) )
+					if( dependson.Exists( dep => dep == dependency.Class ) )
 					{
 						continue;
 					}
-					var obj = (UClass)GetIndexObject( depedency.Class );
+					var obj = (UClass)GetIndexObject( dependency.Class );
 					// Only exports and those who are further than this class
-					if( obj != null && obj.ExportIndex > ExportIndex )
+					if( obj != null && (int)obj > (int)this )
 					{
 						output += "\r\n\tdependson(" + obj.Name + ")";
 					}
-					dependson.Add( depedency.Class );
+					dependson.Add( dependency.Class );
 				}
 			}
 
-			output += FormatNameGroup( "dontsortcategories", DontSortCategoriesList );
-			output += FormatNameGroup( "hidecategories", HideCategoriesList );
-			output += FormatNameGroup( "classgroup", ClassGroupsList );
-			output += FormatNameGroup( "autoexpandcategories", AutoExpandCategoriesList );
-			output += FormatNameGroup( "autocollapsecategories", AutoCollapseCategoriesList );
-			output += FormatObjectGroup( "implements", ImplementedInterfacesList );
+			output += FormatNameGroup( "dontsortcategories", DontSortCategories );
+			output += FormatNameGroup( "hidecategories", HideCategories );
+			output += FormatNameGroup( "classgroup", ClassGroups );
+			output += FormatNameGroup( "autoexpandcategories", AutoExpandCategories );
+			output += FormatNameGroup( "autocollapsecategories", AutoCollapseCategories );
+			output += FormatObjectGroup( "implements", ImplementedInterfaces );
 
 			if( HasObjectFlag( Flags.ObjectFlagsLO.Native ) )
 			{
@@ -278,15 +279,6 @@ namespace UELib.Core
 			{
 				output += "\r\n\tnativereplication";
 			}
-			/*else
-			{
-				// Only do if parent had NativeReplication
-				UClass parentClass = (UClass)Super;
-				if( parentClass != null && parentClass.HasClassFlag( Flags.ClassFlags.NativeReplication ) )
-				{
-					output += "\r\n\tnonativereplication";
-				}
-			}*/
 
  			// BTClient.Menu.uc has Config(ClientBtimes) and this flag is not true???
 			if( (ClassFlags & (uint)Flags.ClassFlags.Config) != 0 )
@@ -297,20 +289,13 @@ namespace UELib.Core
 				{
 					inner = String.Empty;
 				}
-				output += "\r\n\tconfig(" + inner + ")"; //" /* File:" + System.IO.Path.GetDirectoryName( Package.FullPackageName ) 
-					//+ "\\" + (inner == String.Empty ? Name : inner) + ".ini */";
+				output += "\r\n\tconfig(" + inner + ")";
 			}
 
 			if( (ClassFlags & (uint)Flags.ClassFlags.ParseConfig) != 0 )
 			{
 				output += "\r\n\tparseconfig";
 			}
-
-			// Move to Header
-			/*if( (ClassFlags & (uint)Unreal_Explorer.ClassFlags.Localized) != 0 )
-			{
-				Output += "\t\n\tlocalized";
-			}*/
 
 			if( (ClassFlags & (uint)Flags.ClassFlags.Transient) != 0 )
 			{
@@ -383,12 +368,7 @@ namespace UELib.Core
 				}
 				else
 				{
-					// Only do if parent had placeable
-					/*UClass ParentClass = (UClass)Super;
-					if( ParentClass != null && (ParentClass.ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0 )
-					{*/
 					output += Package.Version >= PlaceableVersion ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
-					//}
 				}
 			}
 
@@ -408,7 +388,7 @@ namespace UELib.Core
 				output += "\r\n\thidedropdown";
 			}
 
-			if( Package.Build == UnrealPackage.GameBuild.ID.UT2004 )
+			if( Package.Build == UnrealPackage.GameBuild.BuildName.UT2004 )
 			{
 				if( HasClassFlag( Flags.ClassFlags.CacheExempt ) )
 				{
@@ -425,175 +405,137 @@ namespace UELib.Core
 				else if( !ForceScriptOrder && ((UClass)Super).ForceScriptOrder ) 
 					output += "\r\n\tforcescriptorder(false)";
 			}
-
-			//Output += "\n\tguid(" + ClassGuid + ")";
 			return output + ";\r\n";
 		}
 
-		private sealed class ReplicatedObject
-		{
-			public string Name = String.Empty;
-			public ushort Offset;
-			public bool Reliable = true;
-		}
+		const ushort VReliableDeprecation = 189;
 
-		public const byte ObjectsPerLine = 2;
 		public string FormatReplication()
 		{
-			if( ScriptSize <= 0 )
+			if( DataScriptSize <= 0 )
 			{
 				return String.Empty;
 			}
 
-			var replicationList = new List<ReplicatedObject>();
-			if( _ChildProperties != null )
+			var replicatedObjects = new List<IUnrealNetObject>();
+			if( Variables != null )
 			{
-				foreach( var prop in _ChildProperties )
-				{
-					if( (prop.PropertyFlags & (uint)Flags.PropertyFlagsLO.Net) != 0 )
-					{
-						// Could be a replicated property from parent class.
-						if( prop.RepOffset > (ushort)ScriptSize )
-						{
-							continue;
-						}
-						var ro = new ReplicatedObject {Name = prop.Name, Offset = Math.Min( prop.RepOffset, (ushort)ScriptSize )};
-						replicationList.Add( ro );
-					}
-				}
+				replicatedObjects.AddRange( Variables.Where( prop => prop.HasPropertyFlag( Flags.PropertyFlagsLO.Net ) ) );
 			}
 
-			if( Package.Version < 189 && _ChildFunctions != null )
+			if( Package.Version < VReliableDeprecation && Functions != null )
 			{
-				foreach( var func in _ChildFunctions )
-				{
-					if( (func.FunctionFlags & (uint)Flags.FunctionFlags.Net) != 0 )
-					{
-						// Could be a replicated function from parent class.
-						if( func.RepOffset > (ushort)ScriptSize )
-						{
-							continue;
-						}
-						var ro = new ReplicatedObject
-						{
-						    Name = func.Name,
-						    Offset = func.RepOffset,
-						    Reliable = ((func.FunctionFlags & (uint)Flags.FunctionFlags.NetReliable) != 0)
-						};
-						replicationList.Add( ro );
-					}
-				}
+				replicatedObjects.AddRange( Functions.Where( func => func.HasFunctionFlag( Flags.FunctionFlags.Net ) ) );
 			}
 
-			if( replicationList.Count == 0 )
+			if( replicatedObjects.Count == 0 )
 			{
 				return String.Empty;
 			}
-
-			UDecompilingState.AddTab();
-			// Must be sorted by Offset so that the buffer can read the statements linear!
-			replicationList.Sort( (ro, ro2) => ro.Offset.CompareTo( ro2.Offset ) );
-
-			// Important!
-			replicationList.Reverse();
-
-			string output = String.Empty;
-
-			// Construct all replication blocks e.g. reliable(s) and unreliable(s).
-			int num = 0;
-			var codeDec = ByteCodeManager;
-			codeDec.Deserialize();
-			codeDec.InitDecompile();
-			while( replicationList.Count > 0 )
+	
+			var statements = new Dictionary<uint, List<IUnrealNetObject>>();
+			replicatedObjects.Sort( (ro, ro2) => ro.RepKey.CompareTo( ro2.RepKey ) );
+			for( int netIndex = 0; netIndex < replicatedObjects.Count; ++ netIndex )
 			{
-				bool bReliableState = replicationList[replicationList.Count - 1].Reliable;
-				// End offset of this statement
-				ushort offset = replicationList[replicationList.Count - 1].Offset;		
-				// Add all replicated objects belonging to this replication statement
-				//int IterationCount = 0;		
-				var replicatedObjects = new List<string>();
-				while( replicationList.Count > 0 )
+				var firstObject = replicatedObjects[netIndex];
+				var netObjects = new List<IUnrealNetObject>{firstObject};
+				for( int nextIndex = netIndex + 1; nextIndex < replicatedObjects.Count; ++ nextIndex )
 				{
-					// Print all replicated objects that are only in the same block(offset)
-					if( replicationList[replicationList.Count - 1].Offset != offset )
+					var nextObject = replicatedObjects[nextIndex];
+					if( nextObject.RepOffset != firstObject.RepOffset
+						|| nextObject.RepReliable != firstObject.RepReliable 
+						)
 					{
-						// End of this Statement, print output and move to the next statement if any.
+						netIndex = nextIndex - 1;
 						break;
 					}
-					replicatedObjects.Add( replicationList[replicationList.Count - 1].Name );
-					//output += "\r\n\t\tRemoved:" + replicationList[replicationList.Count - 1].Name;
-					replicationList.Remove( replicationList[replicationList.Count - 1] );
+					netObjects.Add( nextObject );
 				}
 
-				/*{int i = 0;
-				output += "\r\n\t\tOffset:" + offset;
-				while( i < replicationList.Count )
-				{
-					output += "\r\n\t\tRemaining:" + replicationList[i].Name;
-					++ i;
-				}}*/
+				netObjects.Sort( (o, o2) => String.Compare( o.Name, o2.Name, StringComparison.Ordinal ) );
+				if( !statements.ContainsKey( firstObject.RepKey ) )
+					statements.Add( firstObject.RepKey, netObjects );
+			}
+			replicatedObjects.Clear();
 
-				string builtObjects = String.Empty;
-				if( replicatedObjects.Count > 0 )
-				{	
-					UDecompilingState.AddTab();
-					for( int i = 0; i < replicatedObjects.Count; ++ i )
-					{
-						// Write two replicated objects per line.
-						builtObjects += ((i % ObjectsPerLine == 0) ? "\r\n" + UDecompilingState.Tabs : " ") 
-							+ replicatedObjects[i] 
-							+ ((i != replicatedObjects.Count - 1) ? "," : ";");
-					}
-					UDecompilingState.RemoveTab();
-					replicatedObjects.Clear();
-				}
+			var output = "\r\nreplication" + UnrealConfig.PrintBeginBracket();
+			UDecompilingState.AddTab();
 
-				string conditions;
-				//codeDec.Goto( offset );
-				//var t = codeDec.CurrentToken;
-				var t = codeDec.NextToken;
+			foreach( var statement in statements )
+			{
 				try
 				{
-					conditions = t.Decompile();
-				}
-				catch
-				{
-					conditions = String.Format( "/* Exception occurred while decompiling token:{0}*/", t.GetType().Name );
-				}
+					var pos = (ushort)(statement.Key & 0x0000FFFF);
+					var rel = Convert.ToBoolean( statement.Key & 0xFFFF0000 );
 
-				if( !UnrealConfig.SuppressComments )
-				{
-					output += "\r\n" + UDecompilingState.Tabs + "// Pos:0x" + offset.ToString( "x2" ); 		
-				}
+					output += "\r\n" + UDecompilingState.Tabs;
+					if( !UnrealConfig.SuppressComments )
+					{
+						output += String.Format( "// Pos:0x{0:X3}\r\n{1}", pos, UDecompilingState.Tabs );
+					}
 
-				output += "\r\n" + UDecompilingState.Tabs 
-					+ (Package.Version < 189 ? (bReliableState ? "reliable" : "unreliable") : String.Empty) 
-					+ " if(" + conditions + ")" +
-						builtObjects + "\r\n";
+					ByteCodeManager.Deserialize();
+					ByteCodeManager.JumpTo( pos );
+					string statementCode;
+					try
+					{
+						statementCode = ByteCodeManager.CurrentToken.Decompile();
+					}
+					catch( Exception e )
+					{
+						statementCode = String.Format( "/* An exception occurred while decompiling condition ({0}) */", e );	
+					}
+					var statementType = Package.Version < VReliableDeprecation ? rel ? "reliable " : "unreliable " : String.Empty;
+					var statementFormat = String.Format( "{0}if({1})", statementType, statementCode );
+					output += statementFormat;
+
+					UDecompilingState.AddTab();
+					// NetObjects
+					for( int i = 0; i < statement.Value.Count; ++i )
+					{
+						var shouldSplit = i % 2 == 0;
+						if( shouldSplit )
+						{
+							output += "\r\n" + UDecompilingState.Tabs;
+						}
+
+						var netObject = statement.Value[i];
+						output += netObject.Name;
+
+						var isNotLast = i != statement.Value.Count - 1;
+						if( isNotLast )
+						{
+							output += ", ";
+						}
+					}
+					UDecompilingState.RemoveTab();
+
+					// IsNotLast
+					if( statements.Last().Key != statement.Key )
+					{
+						output += "\r\n";
+					}
+				}
+				catch( Exception e )
+				{
+					output += String.Format( "/* An exception occurred while decompiling an statement! ({0}) */", e );	
+				}
 			}
-			replicationList.Clear();
 			UDecompilingState.RemoveTab();
-			return (output.Length != 0 
-				? ("\r\nreplication" 
-					+ UnrealConfig.PrintBeginBracket() 
-					+ output
-					+ UnrealConfig.PrintEndBracket()
-					+ "\r\n") 
-				: String.Empty);
+			return output + UnrealConfig.PrintEndBracket() + "\r\n";
 		}
 
 		private string FormatStates()
 		{
-			if( _ChildStates == null )
+			if( States == null || !States.Any() )
 				return String.Empty;
 
 			string output = String.Empty;
-			foreach( var st in _ChildStates )
+			foreach( var scriptState in States )
 			{
-				// And add a empty line between all states!
-				output += "\r\n" + st.Decompile() + (st != _ChildStates.Last() ? "\r\n" : String.Empty);
+				output += "\r\n" + scriptState.Decompile() + "\r\n";
 			}
-			return output + (output.Length != 0 ? "\r\n" : String.Empty);
+			return output;
 		}
 	}
 }

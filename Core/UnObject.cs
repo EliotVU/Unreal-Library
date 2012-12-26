@@ -17,109 +17,38 @@ namespace UELib.Core
 	/// <summary>
 	/// Represents a unreal object. 
 	/// </summary>
+	[UnrealRegisterClass]
 	public partial class UObject : Object, ISupportsBuffer, IUnrealDeserializableObject, IDisposable, IComparable
 	{
-		#region PostConstruct Members
+		#region PreInitialized Members
 		/// <summary>
 		/// The package this object resists in.
 		/// </summary>
-		public UnrealPackage Package
-		{
-			get;
-			internal set;
-		}
+		public UnrealPackage Package { get; internal set; }
+		public UObjectTableItem Table{ get; internal set; }
+		public UExportTableItem ExportTable{ get{ return Table as UExportTableItem; } }
+		public UImportTableItem ImportTable{ get{ return Table as UImportTableItem; } }
+		public UNameTableItem NameTable{ get{ return Table.ObjectTable; } }
 
 		/// <summary>
-		/// Index of this Object in the ExportTableList.
-		/// 0 if not exported.
+		/// The internal represented class in UnrealScript.
 		/// </summary>
-		public int ExportIndex
-		{
-			get{ return ObjectIndex; }
-		}
-
-		/// <summary>
-		/// Index of this Object in the ImportTableList.
-		/// 0 if not imported.
-		/// </summary>
-		public int ImportIndex
-		{
-			get{ return -ObjectIndex; }
-		}
-		#endregion
-
-		#region PreInitialized Members
-		#region Table
-		public UObjectTableItem Table
-		{
-			get;
-			internal set;
-		}
-
-		#region ExportTable
-		public UExportTableItem ExportTable
-		{
-			get{ return Table as UExportTableItem; }
-		}
-
-		/// <summary>
-		/// Object Flags
-		/// Warning: Only call after PreInitialize!
-		/// </summary>
-		/// <value>
-		/// 32bit in UE2
-		/// 32bit aligned in UE3
-		/// </value>
-		private ulong ObjectFlags
-		{
-			get
-			{
-				// Imports have no flags!
-				if( ImportTable != null )
-				{
-					return 0;
-				}
-				return ExportTable.ObjectFlags;
-			}
-		}
-		#endregion
-
-		#region ImportTable
-		public UImportTableItem ImportTable
-		{
-			get{ return Table as UImportTableItem; }
-		}
-		#endregion
-
-		/// <summary>
-		/// UClass, UStruct etc
-		/// </summary>
-		public UObject Class
-		{
-			get{ return Package.GetIndexObject( Table.ClassIndex ); }
-		}
+		public UObject Class{ get{ return Package.GetIndexObject( Table.ClassIndex ); } }
 
 		/// <summary>
 		/// [Package.Group:Outer].Object
 		/// </summary>
-		public UObject Outer
-		{
-			get{ return Package.GetIndexObject( Table.OuterIndex ); }
-		}
+		public UObject Outer{ get{ return Package.GetIndexObject( Table.OuterIndex ); } }
 
-		public int ObjectIndex
-		{
-			get;
-			internal set;
-		}
-		#endregion
+		/// <summary>
+		/// The object's index represented as a table index.
+		/// </summary>
+		private int _ObjectIndex{ get{ return Table is UExportTableItem ? Table.Index + 1 : -(Table.Index + 1); } }
 
-		#region NameTable
-		public UNameTableItem NameTable
-		{
-			get;
-			internal set;
-		}
+		/// <summary>
+		/// The object's flags.
+		/// </summary>
+		public ulong ObjectFlags{ get{ return ExportTable.ObjectFlags; } }
 
 		private string _CustomName;
 		public string Name
@@ -140,45 +69,30 @@ namespace UELib.Core
 		public ulong NameFlags
 		{
 			get{ return NameTable.Flags; }
-			set										 
-			{
-				NameTable.Flags = value;
-				NameTable.WriteFlags( Package.Stream );
-			}
+			set{ NameTable.Flags = value; }
 		}
-		#endregion
 		#endregion
 
 		#region Serialized Members
-		/// <summary>
-		/// Copy of the Object bytes
-		/// </summary>
 		protected UObjectStream _Buffer;
 
 		/// <summary>
 		/// Copy of the Object bytes
 		/// </summary>
-		public UObjectStream Buffer 	// Public needed for passing a buffer see(UnDefaultProperties.cs subobjects deserializer).
+		public UObjectStream Buffer
 		{
 			get{ return _Buffer; }
 		}
 
-		/// <summary>
-		/// Object Properties e.g. SubObjects or/and DefaultProperties
-		/// </summary>
-		protected DefaultPropertiesCollection _Properties;
+		protected UObject _Default;
+		private DefaultPropertiesCollection _Properties;
 
 		/// <summary>
 		/// Object Properties e.g. SubObjects or/and DefaultProperties
 		/// </summary>
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly" )]
-		public DefaultPropertiesCollection Properties
-		{
-			get{ return _Properties; }
-			set{ _Properties = value; }
-		}
+		public DefaultPropertiesCollection Properties{ get{ return _Default._Properties; } }
 
-		public int NetIndex;
+		private int _NetIndex;
 		#endregion
 
 		#region General Members
@@ -201,34 +115,30 @@ namespace UELib.Core
 		/// <summary>
 		/// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
 		/// </summary>
-		public bool ShouldDeserializeOnDemand
-		{
-			get;
-			set;
-		}
+		public bool ShouldDeserializeOnDemand{ get; protected set; }
+
+#if DEBUG || BINARYMETADATA
+		public BinaryMetaData BinaryMetaData;
+#endif
 		#endregion
 
-		/// <summary>
-		///	Creates a new instance of the UELib.Core.UObject class. 
-		///	
-		/// Everything must be initialized programmatic.
-		/// </summary>
-		public UObject(){}
-
-		#region Serializiation Methods
+		#region Constructors
 		/// <summary>
 		/// Notifies this object instance to make a copy of this object's data from the Owner.Stream and then start deserializing this instance.
 		/// </summary>
 		public void BeginDeserializing()
 		{
+			#if THIEFDEADLYSHADOWS
 			// FIXME: Objects deserialization is not supported for Thief's Deadly Shadows!
-			if( Package.Version == 95 && Package.LicenseeVersion == (ushort)UnrealPackage.LicenseeVersions.ThiefDeadlyShadows )
+			if( Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS )
 			{
 				return;
 			}
+			#endif
 
 			if( SerializationState.HasFlag( ObjectState.Deserialied ) )
 			{
+				InitBuffer();
 				return;
 			}
 
@@ -247,7 +157,10 @@ namespace UELib.Core
 
 			try
 			{
-				ReadBuffer();
+#if DEBUG || BINARYMETADATA
+				BinaryMetaData = new BinaryMetaData();
+#endif
+				InitBuffer();
 				Deserialize();
 				SerializationState |= ObjectState.Deserialied;
 			}
@@ -264,18 +177,18 @@ namespace UELib.Core
 			}
 			finally
 			{
-				if( _ShouldReleaseBuffer )
+				if( CanDisposeBuffer() )
 				{
-					ReleaseBuffer();	
+					DisposeBuffer();	
 				}
 			}
 		}
 
-		private void ReadBuffer()
+		private void InitBuffer()
 		{
 			if( _Buffer != null )
 			{
-				ReleaseBuffer();
+				DisposeBuffer();
 			}
 
 			var buff = new byte[ExportTable.SerialSize];
@@ -288,14 +201,18 @@ namespace UELib.Core
 			_Buffer = new UObjectStream( Package.Stream, ref buff );	
 		}
 
-		private void ReleaseBuffer()
+		private void DisposeBuffer()
 		{
 			if( _Buffer == null )
 				return;
 
 			_Buffer.Dispose();
-			_Buffer.Close();
 			_Buffer = null;
+		}
+
+		protected virtual bool CanDisposeBuffer()
+		{
+			return _Properties == null;
 		}
 
 		/// <summary>
@@ -308,7 +225,6 @@ namespace UELib.Core
 			NoteRead( Name, this );
 			NoteRead( "ExportSize", ExportTable.SerialSize );
 #endif
-
 			// TODO: Corrigate version
 			if( _Buffer.Version >= 322 )
 			{
@@ -321,24 +237,25 @@ namespace UELib.Core
 				//    var componentName = _Buffer.ReadNameIndex();
 				//}
 
-				NetIndex = _Buffer.ReadObjectIndex();
-				NoteRead( "NetIndex", NetIndex );
+				_NetIndex = _Buffer.ReadObjectIndex();
+				NoteRead( "NetIndex", GetIndexObject( _NetIndex ) );
 			}
 			else
 			{
 				if( HasObjectFlag( Flags.ObjectFlagsLO.HasStack ) )
 				{
 					int node = _Buffer.ReadIndex();
-					/*int StateNode =*/ _Buffer.ReadIndex();
-					/*ulong ProbeMask =*/ _Buffer.ReadUInt64();
-					/*uint LatentAction =*/ _Buffer.ReadUInt32();
+					NoteRead( "node", GetIndexObject( node ) );
+					_Buffer.ReadIndex();	// stateNode
+					_Buffer.ReadUInt64();	// probeMask
+					_Buffer.ReadUInt32();	// latentAction
 					if( node != 0 )
 					{
-						/*int NodeOffset =*/ _Buffer.ReadIndex();
+						_Buffer.ReadIndex();	// Offset
 					}
 				}
 #if SWAT4
-				if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
+				if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
 				{
 					// 8 bytes: Value: 3
 					// 4 bytes: Value: 1
@@ -350,7 +267,7 @@ namespace UELib.Core
 			if( !IsClassType( "Class" ) )
 			{	
 #if SWAT4
-				if( Package.Build != UnrealPackage.GameBuild.ID.Swat4 )
+				if( Package.Build != UnrealPackage.GameBuild.BuildName.Swat4 )
 				{
 #endif
 					// REMINDER:Ends with a NameIndex referencing to "None"; 1/4/8 bytes
@@ -364,13 +281,12 @@ namespace UELib.Core
 #endif
 			}
 #if UNREAL2
-			else if( Package.Build == UnrealPackage.GameBuild.ID.Unreal2 )
+			else if( Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2 )
 			{
 				int count = _Buffer.ReadIndex();
 				for( int i = 0; i < count; ++ i )
 				{
-					/*UObject obj = GetIndexObject(*/ _Buffer.ReadObjectIndex();// );
-					//obj.ToString();		// breakpoint
+					_Buffer.ReadObjectIndex();
 				}
 			}
 #endif
@@ -382,26 +298,21 @@ namespace UELib.Core
 		/// <param name="properties">The read properties.</param>
 		protected void DeserializeProperties()
 		{
+			_Default = this;
 			_Properties = new DefaultPropertiesCollection();
 			while( true )
 			{
-				var tag = new UPropertyTag( this );
+				var tag = new UDefaultProperty( _Default );
 				if( !tag.Deserialize() )
 				{
 					break;
 				}
-
-				var property = new UDefaultProperty{Tag = tag};
-				_Properties.Add( property );
+				_Properties.Add( tag );
 			}
 
 			// We need to keep the MemoryStream alive,
 			// because we first deserialize the defaultproperties but we skip the values, which we'll deserialize later on by demand.
-			if( _Properties.Count > 0 )
-			{
-				_ShouldReleaseBuffer = false;
-			}
-			else
+			if( Properties.Count == 0 )
 			{
 				_Properties = null;
 			}
@@ -422,6 +333,9 @@ namespace UELib.Core
 		/// </summary>
 		private void CopyToPackageStream()
 		{
+			if( _Buffer == null )
+				return;
+
 			Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
 			Package.Stream.Write( _Buffer.GetBuffer(), 0, (int)_Buffer.Length );
 		}
@@ -642,12 +556,12 @@ namespace UELib.Core
 		/// 
 		/// Note: The package closes when the Owner is done with importing objects data.
 		/// </summary>
-		public UnrealPackage LoadImportPackage()
+		protected UnrealPackage LoadImportPackage()
 		{
 			UnrealPackage pkg = null;
 			try
 			{
-				UObject outer = Outer;
+				var outer = Outer;
 				while( outer != null )
 				{
 					if( outer.Outer == null )
@@ -685,12 +599,6 @@ namespace UELib.Core
 			return buff;
 		}
 
-		public int CompareTo( object obj )
-		{
-			return NameIndex - ((UObject)obj).NameIndex;
-		}
-		#endregion
-
 		/// <summary>
 		/// Outputs the present position and the value of the parsed object.
 		/// 
@@ -702,6 +610,15 @@ namespace UELib.Core
 		[System.Diagnostics.Conditional( "DEBUG" )]
 		internal void NoteRead( string varName, object varObject = null )
 		{
+#if DEBUG || BINARYMETADATA
+			{
+				var size = _Buffer.Position - _Buffer.LastPosition;
+				if( size != 0 )
+				{
+					BinaryMetaData.AddField( varName, varObject, _Buffer.LastPosition, size );
+				}
+			}
+#endif
 			if( varObject == null )
 			{
 				Console.WriteLine( varName );
@@ -710,57 +627,32 @@ namespace UELib.Core
 
 			var propertyType = varObject.GetType();
 			Console.WriteLine(
-				"0x" + _Buffer.Position.ToString("x8").ToUpper() 
+				"0x" + _Buffer.LastPosition.ToString("x8").ToUpper() 
 				+ " : ".PadLeft( 2, ' ' ) 
 				+ varName.PadRight( 32, ' ' ) + ":" + propertyType.Name.PadRight( 32, ' ' ) 
 				+ " => " + varObject 
 			);
-			//NoteRead( varObject );
 		}
 
-		//internal void NoteRead( object property )
-		//{
-		//    var propertyType = property.GetType();
-		//    Console.WriteLine( 
-		//        _Buffer.Position.ToString("0xx8").ToUpper() 
-		//        + " : ".PadLeft( 2, ' ' ) 
-		//        + propertyType + "::" + propertyType.Name.PadRight( 36, ' ' ) 
-		//        + " => " + property 
-		//    );
-		//}
-
-		[System.Diagnostics.Conditional( "DEBUG_TEST" )]
-		internal void TestNoteRead( string varName, object varObject )
+		public int CompareTo( object obj )
 		{
-			NoteRead( varName, varObject );
+			return NameIndex - ((UObject)obj).NameIndex;
 		}
 
-		public void SwitchPackage( UnrealPackage newPackage )
+		public override string ToString()
 		{
-			Package = newPackage;
+			return Name + String.Format( "({0})", (int)this );
 		}
 
 		public void Dispose()
 		{
-			Dispose( true );
-			GC.SuppressFinalize( this );
+			DisposeBuffer();
 		}
+		#endregion
 
-		protected virtual void Dispose( bool managed )
+		public static explicit operator int( UObject obj )
 		{
-			if( managed )
-			{		
-				if( _Buffer != null )
-				{
-					_Buffer.Close();
-					_Buffer = null;
-				}
-			}
-		}
-
-		~UObject()
-		{
-		   Dispose( false );
+			return obj == null ? 0 : obj._ObjectIndex;
 		}
 	}
 
@@ -778,7 +670,6 @@ namespace UELib.Core
 		/// </summary>
 		public UnknownObject()
 		{
-			_ShouldReleaseBuffer = false;
 			ShouldDeserializeOnDemand = true;
 		}
 
@@ -797,6 +688,11 @@ namespace UELib.Core
 				_Buffer.Position -= 12;
 			}
 			base.Deserialize();
+		}
+
+		protected override bool CanDisposeBuffer()
+		{
+			return false;
 		}
 	}
 }

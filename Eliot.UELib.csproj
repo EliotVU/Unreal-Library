@@ -42,7 +42,7 @@
     <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -50,7 +50,7 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <NoWarn>
     </NoWarn>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <CodeAnalysisRuleSet>GlobalizationRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
@@ -58,17 +58,18 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY</DefineConstants>
+    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
     </DocumentationFile>
     <UseVSHostingProcess>true</UseVSHostingProcess>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO SPECIALFORCE2 XIII SINGULARITY</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE</DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
     <Optimize>true</Optimize>
@@ -85,10 +86,11 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY</DefineConstants>
+    <DefineConstants>DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE</DefineConstants>
     <Optimize>true</Optimize>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -102,6 +104,7 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <DocumentationFile>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\Eliot.UELib.XML</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MiniLZO">
@@ -114,11 +117,16 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryMetaData.cs" />
     <Compile Include="Core\UnComponent.cs" />
     <Compile Include="Core\Decompilers\UnDecompiler.cs" />
     <Compile Include="Core\UI Trees\UnNodes.cs" />
     <Compile Include="Core\UnArray.cs" />
+    <Compile Include="Core\UnScriptStruct.cs" />
+    <Compile Include="Core\UnTextBuffer.cs" />
+    <Compile Include="Engine\UnModel.cs" />
     <Compile Include="Engine\UnTexture.cs" />
+    <Compile Include="Engine\UnSound.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Decompilers\UnClassDecompiler.cs" />
@@ -149,7 +157,6 @@
     <Compile Include="Core\UnProperties.cs" />
     <Compile Include="Core\UnState.cs" />
     <Compile Include="Core\UnStruct.cs" />
-    <Compile Include="Engine\UnContent.cs" />
     <Compile Include="Engine\UnFont.cs" />
     <Compile Include="NativesTablePackage.cs" />
     <Compile Include="UnrealCache.cs" />

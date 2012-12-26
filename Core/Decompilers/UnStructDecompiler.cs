@@ -138,59 +138,71 @@ namespace UELib.Core
 
 		protected string FormatConstants()
 		{
+			if( Constants == null || !Constants.Any() )
+				return String.Empty;
+
 			string output = String.Empty;
-			foreach( UConst c in _ChildConstants )
+			foreach( var scriptConstant in Constants )
 			{
 				try
 				{
-					output += "\r\n" + UDecompilingState.Tabs + c.Decompile();
+					output += "\r\n" + UDecompilingState.Tabs + scriptConstant.Decompile();
 				}
 				catch
 				{
-					output += string.Format( "\r\nFailed at decompiling const: {0}", c.Name ); 
+					output += String.Format( "\r\nFailed at decompiling const: {0}", scriptConstant.Name ); 
 				}
 			}
-			return output + (output.Length != 0 ? "\r\n" : String.Empty);
+			return output + "\r\n";
 		}
 
 		protected string FormatEnums()
 		{
+			if( Enums == null || !Enums.Any() )
+				return String.Empty;
+
 			string output = String.Empty;
-			foreach( UEnum en in _ChildEnums )
+			foreach( var scriptEnum in Enums )
 			{
 				try
 				{
 					// And add a empty line between all enums!
-					output += "\r\n" + en.Decompile() + (en != _ChildEnums.Last() ? "\r\n" : String.Empty);
+					output += "\r\n" + scriptEnum.Decompile() + "\r\n";
 				}
 				catch
 				{
-					output += string.Format( "\r\nFailed at decompiling enum: {0}", en.Name ); 
+					output += String.Format( "\r\nFailed at decompiling enum: {0}", scriptEnum.Name ); 
 				}
 			}
-			return output + (output.Length != 0 ? "\r\n" : String.Empty);
+			return output;
 		}
 
 		protected string FormatStructs()
 		{
+			if( Structs == null || !Structs.Any() )
+				return String.Empty;
+
 			string output = String.Empty;
-			foreach( UStruct str in _ChildStructs )
+			foreach( var scriptStruct in Structs )
 			{
 				// And add a empty line between all structs!
 				try
 				{
-					output += "\r\n" + str.Decompile() + (str != _ChildStructs.Last() ? "\r\n" : String.Empty);
+					output += "\r\n" + scriptStruct.Decompile() + "\r\n";
 				}
 				catch
 				{
-					output += string.Format( "\r\nFailed at decompiling struct: {0}", str.Name ); 
+					output += String.Format( "\r\nFailed at decompiling struct: {0}", scriptStruct.Name ); 
 				}
 			}
-			return output + (output.Length != 0 ? "\r\n" : String.Empty);
+			return output;
 		}
 
 		protected string FormatProperties()
 		{
+			if( Variables == null || !Variables.Any() )
+				return String.Empty;
+
 			string output = String.Empty;
 			// Only for pure UStructs because UClass handles this on its own
 			if( IsPureStruct() )
@@ -199,7 +211,7 @@ namespace UELib.Core
 			}
 
 			// Don't use foreach, screws up order.
-			foreach( UProperty property in _ChildProperties )
+			foreach( var property in Variables )
 			{
 				try
 				{
@@ -223,56 +235,59 @@ namespace UELib.Core
 					}
 					catch( ArgumentOutOfRangeException )
 					{
-						output += string.Format( "/* INDEX:{0} */", property.CategoryIndex );
+						output += String.Format( "/* INDEX:{0} */", property.CategoryIndex );
 					}
 
 					output += " " + property.Decompile() + ";";
 				}
 				catch( Exception e )
 				{
-					output += string.Format( " /* Property:{0} threw the following exception:{1} */", 
-					                         property.Name, e.Message 
-						);
+					output += String.Format
+					( 
+						" /* Property:{0} threw the following exception:{1} */", 
+					    property.Name, e.Message 
+					);
 				}
 			}
-			return output + (output.Length != 0 ? "\r\n" : String.Empty);
+			return output + "\r\n";
 		}
 
 		public string FormatDefaultProperties()
 		{
+			if( Properties == null || !Properties.Any() ) 
+				return String.Empty;
+
 			string output = String.Empty;
-			string innerOutput = String.Empty;
+			string innerOutput;
 
-			if( (_Properties != null && _Properties.Count > 0) )
+			if( IsClassType( "Class" ) )
 			{
-				if( IsClassType( "Class" ) )
-				{
-					output += "\r\ndefaultproperties\r\n{\r\n";
- 				}
-				else
-				{
-					output += "\r\n" + UDecompilingState.Tabs + "structdefaultproperties\r\n" 
-						+ UDecompilingState.Tabs + "{\r\n";
-				}
-
-				UDecompilingState.AddTabs( 1 );
-				try
-				{
-					innerOutput = DecompileProperties();
-				}
-				catch( Exception e )
-				{
-					innerOutput = string.Format( "{0}// {1} occurred while decompiling properties!\r\n", 
-						UDecompilingState.Tabs, e.GetType().Name 
-					);
-				}
-				finally
-				{
-					UDecompilingState.RemoveTabs( 1 );
-				}
-				output += innerOutput + UDecompilingState.Tabs + "}";
+				output += "\r\ndefaultproperties\r\n{\r\n";
 			}
-			return innerOutput.Length != 0 ? output : String.Empty;
+			else
+			{
+				output += "\r\n" + UDecompilingState.Tabs + "structdefaultproperties\r\n" 
+				          + UDecompilingState.Tabs + "{\r\n";
+			}
+
+			UDecompilingState.AddTabs( 1 );
+			try
+			{
+				innerOutput = DecompileProperties();
+			}
+			catch( Exception e )
+			{
+				innerOutput = String.Format
+				( 
+					"{0}// {1} occurred while decompiling properties!\r\n", 
+				     UDecompilingState.Tabs, e.GetType().Name 
+				);
+			}
+			finally
+			{
+				UDecompilingState.RemoveTabs( 1 );
+			}
+			return output + innerOutput + UDecompilingState.Tabs + "}";
 		}
 	}
 }

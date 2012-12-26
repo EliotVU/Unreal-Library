@@ -1,5 +1,4 @@
 ﻿#if DECOMPILE
-
 namespace UELib.Core
 {
 	public partial class UConst

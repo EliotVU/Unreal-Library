@@ -204,9 +204,9 @@
 	/// 
 	/// The redefined tokens are only valid if the past token expression was PrimitiveCast/RotatorToVector.
 	/// </summary>
-	[System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Design", "CA1008:EnumsShouldHaveZeroValue" )]
 	public enum CastToken : byte
 	{
+		None					= 0x00,
 		#region UE3ByteCodes
 			InterfaceToBool			= 0x36,
 			InterfaceToString		= 0x37,		// ???

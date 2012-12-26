@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UELib.Core;
 
 namespace UELib
@@ -10,7 +9,10 @@ namespace UELib
 	[Serializable]
 	public class UnrealException : Exception
 	{
-		public UnrealException(){}
+		protected UnrealException()
+		{
+		}
+
 		public UnrealException( string message ) : base( message )
 		{
 		}
@@ -23,17 +25,22 @@ namespace UELib
 	[Serializable]
 	public class DeserializationException : UnrealException
 	{
-		[System.NonSerializedAttribute]
-		public readonly string Output;
+		[NonSerializedAttribute]
+		private readonly string _Output;
 
 		public DeserializationException()
 		{
-			Output = "SerializationException";
+			_Output = "DeserializationException";
 		}
 
 		public DeserializationException( string output ) : base( output )
 		{
-			Output = output;
+			_Output = output;
+		}
+
+		public override string ToString()
+		{
+			return _Output + "\r\n" + base.ToString();
 		}
 	}
 
@@ -45,17 +52,22 @@ namespace UELib
 	[Serializable]
 	public class DecompilingHeaderException : UnrealException
 	{
-		[System.NonSerializedAttribute]
-		public readonly string Output;
+		[NonSerializedAttribute] 
+		private readonly string _Output;
 
 		public DecompilingHeaderException()
 		{
-			Output = "DecompilingHeaderException";
+			_Output = "DecompilingHeaderException";
 		}
 
 		public DecompilingHeaderException( string output )
 		{
-			Output = output;
+			_Output = output;
+		}
+
+		public override string ToString()
+		{
+			return _Output + "\r\n" + base.ToString();
 		}
 	}
 
@@ -78,15 +90,15 @@ namespace UELib
 	[Serializable]
 	public class OccurredWhileException : UnrealException
 	{
-		public OccurredWhileException( string endmsg ) : base( "An exception occurred while " + endmsg )
+		public OccurredWhileException( string postMessage ) : base( "An exception occurred while " + postMessage )
 		{
 		}			
 	}
 
 	[Serializable]
-	public class SerializingObjectsException : OccurredWhileException
+	public class DeserializingObjectsException : OccurredWhileException
 	{
-		public SerializingObjectsException() : base( "serializing objects" )
+		public DeserializingObjectsException() : base( "deserializing objects" )
 		{
 		}
 	}
@@ -116,48 +128,48 @@ namespace UELib
 	{
 		public static string FlagsListToString( List<string> flagsList )
 		{
-			string output = "";
-			foreach( string S in flagsList )
+			string output = String.Empty;
+			foreach( string s in flagsList )
 			{
-				output += S + (S != flagsList.Last() ? "\n" : String.Empty);
+				output += s + (s != flagsList.Last() ? "\n" : String.Empty);
 			}
 			return output;
 		}
 
 		public static List<string> FlagsToList( Type flagEnum, uint flagsDWORD )
 		{
-			List<string> FlagsList = new List<string>();
-			Array FlagValues = Enum.GetValues( flagEnum );
-			foreach( uint Flag in FlagValues )
+			var flagsList = new List<string>();
+			var flagValues = Enum.GetValues( flagEnum );
+			foreach( uint flag in flagValues )
 			{
-				if( (flagsDWORD & Flag) == Flag )
-				{
-					string eName = Enum.GetName( flagEnum, Flag );
-					if( FlagsList.Contains( eName ) )
-						continue;
+				if( (flagsDWORD & flag) != flag )
+					continue;
 
-					FlagsList.Add( eName );
-				}
+				string eName = Enum.GetName( flagEnum, flag );
+				if( flagsList.Contains( eName ) )
+					continue;
+
+				flagsList.Add( eName );
 			}
-			return FlagsList;
+			return flagsList;
 		}
 
 		public static List<string> FlagsToList( Type flagEnum, ulong flagsDWORD )
 		{
-			List<string> FlagsList = new List<string>();
-			Array FlagValues = Enum.GetValues( flagEnum );
-			foreach( ulong Flag in FlagValues )
+			var flagsList = new List<string>();
+			var flagValues = Enum.GetValues( flagEnum );
+			foreach( ulong flag in flagValues )
 			{
-				if( (flagsDWORD & Flag) == Flag )
-				{
-					string eName = Enum.GetName( flagEnum, Flag );
-					if( FlagsList.Contains( eName ) )
-						continue;
+				if( (flagsDWORD & flag) != flag )
+					continue;
 
-					FlagsList.Add( eName );
-				}
+				string eName = Enum.GetName( flagEnum, flag );
+				if( flagsList.Contains( eName ) )
+					continue;
+
+				flagsList.Add( eName );
 			}
-			return FlagsList;
+			return flagsList;
 		}
 
 		public static List<string> FlagsToList( Type flagEnum, Type flagEnum2, ulong flagsQWORD )
@@ -169,7 +181,7 @@ namespace UELib
 
 		public static string FlagToString( uint flags )
 		{
-			return "0x" + String.Format( "{0:x4}", flags ).PadLeft( 8, '0' ).ToUpper();
+			return "0x" + String.Format( "{0:X4}", flags ).PadLeft( 8, '0' );
 		}
 
 		public static string FlagToString( ulong flags )
@@ -185,24 +197,12 @@ namespace UELib
 	{
 		public UDefaultProperty FindPropertyByName( string name )
 		{
-			return this.Find
-			( 
-				delegate( UDefaultProperty prop )
-				{
-					return prop.Tag.Name == name;
-				}
-			);
+			return Find( prop => prop.Name == name );
 		}
 
 		public UDefaultProperty FindPropertyByIndex( int index )
 		{
-			return this.Find
-			( 
-				delegate( UDefaultProperty prop )
-				{
-					return prop.Tag.NameIndex == index;
-				}
-			);
+			return Find( prop => prop.NameIndex == index );
 		}
 
 		public bool ContainsIndex( int index )

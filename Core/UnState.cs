@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -11,63 +12,38 @@ namespace UELib.Core
 	/// <summary>
 	/// Represents a unreal state. 
 	/// </summary>
+	[UnrealRegisterClass]
 	public partial class UState : UStruct
 	{
-		#region Serialized Members
+		private const uint VStateFlags = 101;
 
+		#region Serialized Members
 		/// <summary>
 		/// Mask of current functions being probed by this class.
 		/// </summary>
-		protected ulong _ProbeMask;
+		private ulong _ProbeMask;
 
 		/// <summary>
 		/// Mask of current functions being ignored by the present state node.
 		/// </summary>
-		protected ulong _IgnoreMask;
+		private ulong _IgnoreMask;
 
 		/// <summary>
 		/// Offset into the ScriptStack where the FLabelEntry persist. 
 		/// </summary>
-		protected ushort _LabelTableOffset;
+		private ushort _LabelTableOffset;
 
 		/// <summary>
 		/// This state's flags mask e.g. Auto, Simulated.
 		/// </summary>
-		internal uint StateFlags
-		{
-			get;
-			private set;
-		}
-									   
-		//internal Dictionary<int,int> _FuncMap;
+		private uint _StateFlags;
 		#endregion
 
-		#region PostInitializedMembers
-		protected List<UFunction> _ChildFunctions = new List<UFunction>();
-		public List<UFunction> ChildFunctions
-		{
-			get
-			{
-				return _ChildFunctions;
-			}
-		}
+		#region Script Members
+		public IList<UFunction> Functions{ get; private set; }
 		#endregion
 
-		public const int ProbeMin = 300;
-		public const int ProbeMax = 364;
-
-		private const uint VStateFlags = 101;
-
-		public bool IsProbing( int nameIndex )
-		{
-			return (nameIndex < ProbeMin) || (nameIndex >= ProbeMax) || (_ProbeMask & ((ulong)1 << (nameIndex - ProbeMin))) != 0;
-		}
-
-		/// <summary>
-		/// Creates a new instance of the UELib.Core.UState class. 
-		/// </summary>
-		public UState(){}
-
+		#region Constructors
 		protected override void Deserialize()
 		{
 			base.Deserialize();
@@ -106,16 +82,16 @@ namespace UELib.Core
 			{ 
 				#if BORDERLANDS2
 					// FIXME:Temp fix
-					if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+					if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
 					{
-						StateFlags = _Buffer.ReadUShort();
+						_StateFlags = _Buffer.ReadUShort();
 						goto skipStateFlags;
 					}
 				#endif
 
-				StateFlags = _Buffer.ReadUInt32();
+				_StateFlags = _Buffer.ReadUInt32();
 				skipStateFlags:
-				NoteRead( "StateFlags", StateFlags );
+				NoteRead( "StateFlags", (StateFlags)_StateFlags );
 			}
 					
 			if( Package.Version >= 220 )
@@ -137,6 +113,31 @@ namespace UELib.Core
 			}
 		}
 
+		protected override void FindChildren()
+		{
+			base.FindChildren();
+			Functions = new List<UFunction>();
+			for( var child = (UField)GetIndexObject( Children ); child != null; child = child.NextField )
+			{
+				if( child.IsClassType( "Function" ) )
+				{
+				 	Functions.Insert( 0, (UFunction)child );
+				}
+			}
+		}
+		#endregion
+
+		#region Methods
+		public bool HasStateFlag( Flags.StateFlags flag )
+		{
+			return (_StateFlags & (uint)flag) != 0;
+		}
+
+		public bool HasStateFlag( uint flag )
+		{
+			return (_StateFlags & flag) != 0;
+		}
+
 		protected void TestEndOfStream( int size, string testSubject = "" )
 		{
 			if( size > (_Buffer.Length - _Buffer.Position) )
@@ -144,24 +145,6 @@ namespace UELib.Core
 				throw new DeserializationException( Name + ": Allocation past end of stream detected! Size:" + size + " Subject:" + testSubject );
 			}
 			//System.Diagnostics.Debug.Assert( size <= (_Buffer.Length - _Buffer.Position), Name + ": Allocation past end of stream detected! " + size );
-		}
-
-		protected override void FindChildren()
-		{
-			base.FindChildren();
-			for( var child = (UField)GetIndexObject( Children ); child != null; child = child.NextField )
-			{
-				if( child.IsClassType( "Function" ) )
-				{
-				 	_ChildFunctions.Insert( 0, (UFunction)child );
-				}
-			}
-		}
-
-		#region Methods
-		public bool HasStateFlag( Flags.StateFlags flag )
-		{
-			return (StateFlags & (uint)flag) != 0;
 		}
 		#endregion
 	}

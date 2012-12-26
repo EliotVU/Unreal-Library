@@ -26,26 +26,26 @@
 		PointerProperty		= 16,	// (UE2)
 		InterfaceProperty	= 17,	// (UE3)
 		ComponentProperty	= 18,	// (UE3)
-		StructOffset		= (1 + PropertyType.ComponentProperty),
+		StructOffset		= (1 + ComponentProperty),
 
 		// Helpers for serializing hardcoded structs.
-		Vector				= (PropertyType.StructOffset),
-		Rotator				= (1 + PropertyType.StructOffset), 
-		Color				= (2 + PropertyType.StructOffset),
-		Vector2D			= (3 + PropertyType.StructOffset),
-		Vector4				= (4 + PropertyType.StructOffset),		
-		Guid				= (5 + PropertyType.StructOffset),
-		Plane				= (6 + PropertyType.StructOffset),
-		Sphere				= (7 + PropertyType.StructOffset),
-		Scale				= (8 + PropertyType.StructOffset),
-		Box					= (9 + PropertyType.StructOffset),
-		BoxSphereBound		= (10 + PropertyType.StructOffset),
-		Quat				= (11 + PropertyType.StructOffset),
-		Matrix				= (12 + PropertyType.StructOffset),		
-		LinearColor			= (13 + PropertyType.StructOffset),
-		IntPoint			= (14 + PropertyType.StructOffset),
-		TwoVectors			= (15 + PropertyType.StructOffset),
-		//InterpCurve		= (16 + PropertyType.StructOffset)
-		//InterpCurvePoint	= (4 + PropertyType.StructOffset),
+		Vector				= (2 + StructOffset),
+		Rotator				= (3 + StructOffset), 
+		Color				= (4 + StructOffset),
+		Vector2D			= (5 + StructOffset),
+		Vector4				= (6 + StructOffset),		
+		Guid				= (7 + StructOffset),
+		Plane				= (8 + StructOffset),
+		Sphere				= (9 + StructOffset),
+		Scale				= (10 + StructOffset),
+		Box					= (11 + StructOffset),
+		//BoxSphereBound		= (12 + StructOffset),
+		Quat				= (12 + StructOffset),
+		Matrix				= (13 + StructOffset),		
+		LinearColor			= (14 + StructOffset),
+		IntPoint			= (15 + StructOffset),
+		TwoVectors			= (16 + StructOffset),
+		//InterpCurve		= (17 + PropertyType.StructOffset)
+		//InterpCurvePoint	= (18 + PropertyType.StructOffset),
 	}
 }

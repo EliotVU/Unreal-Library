@@ -1,20 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using UELib.Flags;
 
 namespace UELib.Core
 {
 	/// <summary>
 	/// Represents a unreal function. 
 	/// </summary>
-	public partial class UFunction : UStruct
+	[UnrealRegisterClass]
+	public partial class UFunction : UStruct, IUnrealNetObject
 	{
 		#region Serialized Members
-		public ushort NativeToken
+		public ushort	NativeToken
 		{
 			get;
 			private set;
 		}
 
-		public byte OperPrecedence
+		public byte		OperPrecedence
 		{
 			get;
 			private set;
@@ -24,52 +27,53 @@ namespace UELib.Core
 		/// 32bit in UE2
 		/// 64bit in UE3
 		/// </value>
-		internal ulong FunctionFlags
+		internal ulong	FunctionFlags
 		{
 			get;
 			private set;
 		}
 
-		public ushort RepOffset
+		public ushort	RepOffset
 		{
 			get;
 			private set;
+		}
+
+		public bool		RepReliable
+		{
+			get{ return HasFunctionFlag( Flags.FunctionFlags.NetReliable ); }
+		}
+
+		public uint		RepKey
+		{
+			get{ return RepOffset | ((uint)Convert.ToByte( RepReliable ) << 16); }
 		}
 		#endregion
 
-		#region PostInitialized Members
-		// Children
-		protected List<UProperty> _ChildLocals 		= new List<UProperty>();
-		public List<UProperty> ChildLocals
-		{
-			get{ return _ChildLocals; }
-		}
-
-		protected List<UProperty>	_ChildParams 	= new List<UProperty>();
-		public List<UProperty> ChildParams
-		{
-			get{ return _ChildParams; }
-		}
-
+		#region Script Members
+		public IList<UProperty> Locals{ get; protected set; }
+		public IList<UProperty> Params{ get; protected set; }
 		public UProperty ReturnProperty{ get; private set; }
-		#endregion
 
 		public string FriendlyName
 		{
 			get{ return FriendlyNameIndex > -1 ? Package.GetIndexName( FriendlyNameIndex ) : Name; }
 		}
+		#endregion
 
-		/// <summary>
-		///	Creates a new instance of the UELib.Core.UFunction class. 
-		/// </summary>
-		public UFunction(){}
+		#region Constructors
+		public UFunction()
+		{
+			_ShouldReleaseBuffer = false;	
+		}
 
 		protected override void Deserialize()
 		{
 #if BORDERLANDS2
-			if( Package.Build == UnrealPackage.GameBuild.ID.Borderlands2 )
+			if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
 			{
 				var size = _Buffer.ReadUShort();
+				NoteRead( "??size", size );
 				_Buffer.Skip( size * 2 );
 			}
 #endif
@@ -87,7 +91,7 @@ namespace UELib.Core
 			}
 
 			FunctionFlags = _Buffer.ReadUInt32();
-			NoteRead( "FunctionFlags", FunctionFlags );
+			NoteRead( "FunctionFlags", (FunctionFlags)FunctionFlags );
 			if( HasFunctionFlag( Flags.FunctionFlags.Net ) )
 			{
 				RepOffset = _Buffer.ReadUShort();
@@ -98,16 +102,18 @@ namespace UELib.Core
 			if( Package.Version >= 189 && !Package.IsConsoleCooked() )
 			{
 				FriendlyNameIndex = _Buffer.ReadNameIndex();
-				NoteRead( "FriendlyNameIndex", FriendlyNameIndex );
+				NoteRead( "FriendlyNameIndex", Package.Names[FriendlyNameIndex] );
 			}
 		}
 
 		protected override void FindChildren()
 		{
 			base.FindChildren();
-			foreach( var property in _ChildProperties )
+			Locals = new List<UProperty>();
+			Params = new List<UProperty>();
+			foreach( var property in Variables )
 			{
-				if( property.HasPropertyFlag( Flags.PropertyFlagsLO.ReturnParm ) )
+				if( property.HasPropertyFlag( PropertyFlagsLO.ReturnParm ) )
 				{
 					ReturnProperty = property;
 					continue;																																  
@@ -115,14 +121,15 @@ namespace UELib.Core
 
 				if( property.IsParm() )
 				{
-					_ChildParams.Add( property );
+					Params.Add( property );
 				}
 				else
 				{
-					_ChildLocals.Add( property );
+					Locals.Add( property );
 				}
 			}
 		}
+		#endregion
 
 		#region Methods
 		public bool HasFunctionFlag( Flags.FunctionFlags flag )

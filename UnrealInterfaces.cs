@@ -1,4 +1,5 @@
-﻿using UELib.Core;
+﻿using System.Collections.Generic;
+using UELib.Core;
 
 namespace UELib
 {
@@ -57,14 +58,14 @@ namespace UELib
 	}
 
 	/// <summary>
-	/// Allos an object to show itself to the user.
+	/// Allows an object to show itself to the user.
 	/// </summary>
 	public interface IUnrealViewable
 	{
-		/// <summary>
-		/// View this instanced object.
-		/// </summary>
-		void View();
+		///// <summary>
+		///// View this instanced object.
+		///// </summary>
+		//void View();
 	}
 
 	public interface IUnrealDeserializableClass
@@ -93,9 +94,17 @@ namespace UELib
 	/// </summary>
 	public interface IUnrealExportable
 	{
-		string[] ExportableExtensions{ get; }
+		IEnumerable<string> ExportableExtensions{ get; }
 
 		bool CompatableExport();
-		void SerializeExport( string desiredExportExtension, System.IO.FileStream exportStream );
+		void SerializeExport( string desiredExportExtension, System.IO.Stream exportStream );
+	}
+
+	public interface IUnrealNetObject
+	{
+		string Name{ get; }
+		ushort RepOffset{ get; }
+		bool RepReliable{ get; }
+		uint RepKey{ get; }
 	}
 }

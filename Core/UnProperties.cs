@@ -7,7 +7,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Represents a unreal property. 
 	/// </summary>
-	public partial class UProperty : UField
+	public partial class UProperty : UField, IUnrealNetObject
 	{
 		#region PreInitialized Members
 		public PropertyType Type
@@ -18,28 +18,18 @@ namespace UELib.Core
 		#endregion
 
 		#region Serialized Members
-		/// <summary>
-		/// > 0 = True if UBoolProperty.
-		/// </summary>
 		public ushort 	ArrayDim
 		{
 			get;
 			private set;
 		}
 
-		/// <summary>
-		/// e.g. sizeof(int) etc
-		/// </summary>
 		public ushort 	ElementSize 
 		{
 			get;
 			private set;
 		}
 
-		/// <value>
-		/// 32bit in UE2
-		/// 64bit in UE3
-		/// </value>
 		public ulong 	PropertyFlags 
 		{
 			get;
@@ -52,10 +42,22 @@ namespace UELib.Core
 			private set;
 		}
 
+		public UEnum	ArrayEnum{ get; private set; }
+
 		public ushort 	RepOffset 
 		{
 			get;
 			private set;
+		}
+
+		public bool		RepReliable
+		{
+			get{ return HasPropertyFlag( Flags.PropertyFlagsLO.Net ); }
+		}
+
+		public uint		RepKey
+		{
+			get{ return RepOffset | ((uint)Convert.ToByte( RepReliable ) << 16); }
 		}
 		#endregion
 
@@ -67,10 +69,11 @@ namespace UELib.Core
 
 		public string CategoryName
 		{
-			get{ return CategoryIndex != -1 ? Package.NameTableList[CategoryIndex].Name : "@Null"; }
+			get{ return CategoryIndex != -1 ? Package.Names[CategoryIndex].Name : "@Null"; }
 		}
 		#endregion
 
+		#region Constructors
 		/// <summary>
 		/// Creates a new instance of the UELib.Core.UProperty class. 
 		/// </summary>
@@ -84,7 +87,7 @@ namespace UELib.Core
 			base.Deserialize();
 
 #if XIII
-			if( Package.Build == UnrealPackage.GameBuild.ID.XIII )
+			if( Package.Build == UnrealPackage.GameBuild.BuildName.XIII )
 			{
 				ArrayDim = _Buffer.ReadUShort();
 				NoteRead( "ArrayDim", ArrayDim );		
@@ -99,21 +102,20 @@ namespace UELib.Core
 			NoteRead( "ElementSize", ElementSize );
 			skipInfo:
 
-			PropertyFlags = _Buffer.UR.ReadQWORDFlags();
+			PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
 			NoteRead( "PropertyFlags", PropertyFlags );
 			if( !Package.IsConsoleCooked() )
 			{
 				CategoryIndex = _Buffer.ReadNameIndex();
 				NoteRead( "CategoryIndex", CategoryIndex );
+
+				if( Package.Version > 400 )
+				{
+					ArrayEnum = GetIndexObject( _Buffer.ReadObjectIndex() ) as UEnum;
+					NoteRead( "ArrayEnum", ArrayEnum );
+				}
 			}
 			else CategoryIndex = -1;
-
-			// TODO: UNKNOWN!
-			if( Package.Version > 400 && !Package.IsConsoleCooked())
-			{
-				int unk = _Buffer.ReadInt32();
-				NoteRead( "Unknown", unk );
-			}
 
 			if( HasPropertyFlag( Flags.PropertyFlagsLO.Net ) )
 			{
@@ -123,19 +125,25 @@ namespace UELib.Core
 
 			if( HasPropertyFlag( Flags.PropertyFlagsLO.New ) && Package.Version <= 128 )
 			{
-				string unknown = _Buffer.ReadName();
+				string unknown = _Buffer.ReadString();
 				Console.WriteLine( "Found a property flagged with New:" + unknown );
 			}
 
 #if SWAT4
-			if( Package.Build == UnrealPackage.GameBuild.ID.Swat4 )
+			if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
 			{
 				// Contains meta data such as a ToolTip.
 				_Buffer.Skip( 3 );
 			}
 #endif
 		}
-	
+
+		protected override bool CanDisposeBuffer()
+		{
+			return true;
+		}
+		#endregion
+
 		#region Methods
 		public bool HasPropertyFlag( Flags.PropertyFlagsLO flag )
 		{
@@ -164,6 +172,7 @@ namespace UELib.Core
 	/// 
 	/// UE3 Only
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UInterfaceProperty : UProperty
 	{
 		#region Serialized Members
@@ -202,6 +211,7 @@ namespace UELib.Core
 	/// 
 	/// UE2+
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UDelegateProperty : UProperty
 	{
 		#region Serialized Members
@@ -245,6 +255,7 @@ namespace UELib.Core
 	/// 
 	/// UE2 Only (UStructProperty in UE3)
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UPointerProperty : UProperty
 	{
 		/// <summary>
@@ -267,6 +278,7 @@ namespace UELib.Core
 	/// 
 	/// UE3 Only
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UComponentProperty : UObjectProperty
 	{
 		/// <summary>
@@ -283,6 +295,7 @@ namespace UELib.Core
 	/// 
 	/// var class'Actor' ActorClass;
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UClassProperty : UObjectProperty
 	{
 		#region Serialized Members
@@ -327,6 +340,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Fixed Array Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UFixedArrayProperty : UProperty
 	{
 		#region Serialized Members
@@ -369,6 +383,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Dynamic Array Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UArrayProperty : UProperty
 	{
 		#region Serialized Members
@@ -416,6 +431,7 @@ namespace UELib.Core
 	/// 
 	/// Obsolete
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UMapProperty : UProperty
 	{
 		#region Serialized Members
@@ -449,6 +465,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Struct Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UStructProperty : UProperty
 	{
 		#region Serialized Members
@@ -480,6 +497,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Byte Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UByteProperty : UProperty
 	{
 		#region Serialized Members
@@ -518,16 +536,16 @@ namespace UELib.Core
 				return;
 			}
 
-			UnrealPackage pkg = LoadImportPackage();
+			var pkg = LoadImportPackage();
 			if( pkg != null )
 			{		
-				if( pkg.ObjectsList == null )
+				if( pkg.Objects == null )
 				{
 					pkg.RegisterClass( "ByteProperty", typeof(UByteProperty) );
 					pkg.RegisterClass( "Enum", typeof(UEnum) );
 					pkg.InitializeExportObjects();
 				}
-				UByteProperty b = (UByteProperty)pkg.FindObject( Name, typeof(UByteProperty) );
+				var b = (UByteProperty)pkg.FindObject( Name, typeof(UByteProperty) );
 				if( b != null )
 				{
 					EnumObject = b.EnumObject;
@@ -538,17 +556,14 @@ namespace UELib.Core
 		/// <inheritdoc/>
 		public override string GetFriendlyType()
 		{
-			if( EnumObject != null )
-			{
-				return EnumObject.GetOuterGroup();
-			}
-			return "byte";
+			return EnumObject != null ? EnumObject.GetOuterGroup() : "byte";
 		}
 	}
 
 	/// <summary>
 	/// Int Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UIntProperty : UProperty
 	{
 		/// <summary>
@@ -569,6 +584,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Bool Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UBoolProperty : UProperty
 	{
 		/// <summary>
@@ -584,23 +600,12 @@ namespace UELib.Core
 		{
 			return "bool";
 		}
-
-		// TODO: Figure out 2 unknown conditions where bool has a UInt32 variable.
-		/*protected override void Deserialize()
-		{
-			base.Deserialize();
-
-			if( ?? )
-			{
-				// BitMask?
-				_Buffer.ReadUInt32();
-			}
-		}*/
 	}
 
 	/// <summary>
 	/// Float Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UFloatProperty : UProperty
 	{
 		/// <summary>
@@ -621,6 +626,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Name Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UNameProperty : UProperty
 	{
 		/// <summary>
@@ -641,6 +647,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Dynamic String
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UStrProperty : UProperty
 	{
 		/// <summary>
@@ -663,6 +670,7 @@ namespace UELib.Core
 	/// 
 	/// UE1 Only
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UStringProperty : UProperty
 	{
 		public int Size;
@@ -692,6 +700,7 @@ namespace UELib.Core
 	/// <summary>
 	/// Object Reference Property
 	/// </summary>
+	[UnrealRegisterClass]
 	public class UObjectProperty : UProperty
 	{
 		#region Serialized Members

@@ -1,6 +1,5 @@
 ﻿#if DECOMPILE
 using System;
-using System.Linq;
 
 namespace UELib.Core
 {
@@ -30,11 +29,16 @@ namespace UELib.Core
 
 		private string FormatNames()
 		{
-			string output = "\r\n";
+			string output = String.Empty;
 			UDecompilingState.AddTabs( 1 );
-			foreach( int index in _NamesIndex )
+			for( int index = 0; index < Names.Count; index++ )
 			{
-				output += UDecompilingState.Tabs + Package.NameTableList[index].Name + (index != _NamesIndex.Last() ? ",\r\n" : String.Empty);
+				var enumName = Names[index];
+				output += "\r\n" + UDecompilingState.Tabs + enumName;
+				if( index != Names.Count - 1 )
+				{
+					output += ",";
+				}
 			}
 			UDecompilingState.RemoveTabs( 1 );
 			return output;
