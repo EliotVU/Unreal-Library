@@ -6,14 +6,14 @@ namespace UELib.Core
 	{
 		protected override void InitNodes( TreeNode node )
 		{
-			ParentNode = AddSectionNode( node, typeof(UClass).Name );
+			_ParentNode = AddSectionNode( node, typeof(UClass).Name );
 
-			var classFlagsNode = AddTextNode( ParentNode, "Class Flags:" + UnrealMethods.FlagToString( ClassFlags ) ); 
+			var classFlagsNode = AddTextNode( _ParentNode, "Class Flags:" + UnrealMethods.FlagToString( ClassFlags ) ); 
 			classFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( 
 				UnrealMethods.FlagsToList( typeof(Flags.ClassFlags), ClassFlags ) 
 			);
 
-			base.InitNodes( ParentNode );
+			base.InitNodes( _ParentNode );
 		}
 
 		protected override void AddChildren( TreeNode node )

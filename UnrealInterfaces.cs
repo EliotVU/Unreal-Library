@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
-using UELib.Core;
+using System.Diagnostics.Contracts;
+using System.IO;
 
 namespace UELib
 {
 	/// <summary>
-	/// Allows an object to decompile itself into text.
+	/// This class can be decompiled.
 	/// </summary>
 	public interface IUnrealDecompilable
 	{
@@ -14,79 +15,63 @@ namespace UELib
 		/// <returns>The decompiled ouput of text.</returns>
 		string Decompile();
 	}
-
-	/// <summary>
-	/// Allows an object to be tested whether it can may be decompiled.
-	/// </summary>
-	public interface IDecompilableNode : IUnrealDecompilable
-	{
-		// FIXME: Internal hack for Unreal Explorer!
-		string Text{ get; set; }
-
-		/// <summary>
-		/// Whether the node allows decompiling a.t.m.
-		/// </summary>
-		bool AllowDecompile{ get; }
-	}
 			  
 	/// <summary>
-	/// Allows a node to be attached with a decompileable object.
+	/// This class has a reference to an object and are both decompilable.
 	/// </summary>
-	public interface IDecompilableObjectNode : IDecompilableNode
+	public interface IDecompilableObject : IUnrealDecompilable
 	{
 		/// <summary>
 		/// The decompileable object that will be decompiled when this object's Decompile() function is called.
 		/// </summary>
-		IUnrealDecompilable Object{ get; set; }
-
-		/// <summary>
-		/// Whether the object has a byte's buffer.
-		/// </summary>
-		bool CanViewBuffer{ get; }
+		IUnrealDecompilable Object{ get; }
 	}
 
 	/// <summary>
-	/// Supports a buffer.
+	/// This class has a stream reference.
 	/// </summary>
-	public interface ISupportsBuffer
+	public interface IBuffered
 	{
 		/// <summary>
-		/// Get a copy of a buffer.
+		/// Returns a copy of the buffer.
 		/// </summary>
-		/// <returns>The copyed buffer.</returns>
-		 byte[] GetBuffer();
+		/// <returns>The copied buffer.</returns>
+		byte[] CopyBuffer();
+
+		[Pure]
+		IUnrealStream GetBuffer();
+
+		[Pure]
+		int GetBufferPosition();
+
+		[Pure]
+		int GetBufferSize();
+
+		[Pure]
+		string GetBufferId( bool fullName = false );
 	}
 
 	/// <summary>
-	/// Allows an object to show itself to the user.
+	/// This class contains binary meta data.
+	/// </summary>
+	public interface IBinaryData : IBuffered
+	{
+		BinaryMetaData BinaryMetaData{ get; }
+	}
+
+	/// <summary>
+	/// This class represents viewable information.
 	/// </summary>
 	public interface IUnrealViewable
 	{
-		///// <summary>
-		///// View this instanced object.
-		///// </summary>
-		//void View();
 	}
 
+	/// <summary>
+	/// This class can be deserialized from a specified stream.
+	/// </summary>
 	public interface IUnrealDeserializableClass
 	{
 		void Deserialize( IUnrealStream stream );
-	}
-
-	public interface IUnrealDeserializableObject
-	{
-		/// <summary>
-		/// Copy of bytes from the current instanced Object.
-		/// </summary>
-		UObjectStream Buffer{ get; }
-
-		void BeginDeserializing();
-	}
-
-	// Used by EventArg's
-	public interface IRefUObject
-	{
-		UObject ObjectRef{ get; }
 	}
 
 	/// <summary>
@@ -97,9 +82,12 @@ namespace UELib
 		IEnumerable<string> ExportableExtensions{ get; }
 
 		bool CompatableExport();
-		void SerializeExport( string desiredExportExtension, System.IO.Stream exportStream );
+		void SerializeExport( string desiredExportExtension, Stream exportStream );
 	}
 
+	/// <summary>
+	/// This class is replicable.
+	/// </summary>
 	public interface IUnrealNetObject
 	{
 		string Name{ get; }

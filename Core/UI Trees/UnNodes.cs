@@ -7,30 +7,19 @@ namespace UELib.Core
 {
 	[Serializable]
 	[System.Runtime.InteropServices.ComVisible( false )]
-	public class ObjectNode : TreeNode, IDecompilableObjectNode
+	public class ObjectNode : TreeNode, IDecompilableObject
 	{
-		public virtual IUnrealDecompilable Object
-		{
-			get;
-			set;
-		}
-
-		public virtual bool AllowDecompile
-		{
-			get{ return true; }
-		}
-
-		public virtual bool CanViewBuffer
-		{
-			get{ return true; }
-		}
+		public IUnrealDecompilable Object{ get; private set; }
 
 		public ObjectNode( IUnrealDecompilable objectRef )
 		{
 			Object = objectRef;
 		}
 
-		protected ObjectNode(SerializationInfo info, StreamingContext context) : base(info, context){}
+		protected ObjectNode( SerializationInfo info, StreamingContext context ) : base( info, context )
+		{
+			info.AddValue( Text, Object );
+		}
 
 		public virtual string Decompile()
 		{
@@ -41,57 +30,40 @@ namespace UELib.Core
 			}
 			catch( Exception e )
 			{
-				return "An " + e.GetType().Name + " occurred in " + Text 
-					+ " while decompiling.\r\nDetails:\r\n" + e;
+				return String.Format
+				( 
+					"An {0} occurred while decompiling {1}.\r\nDetails:\r\n{2}", 
+					e.GetType().Name, Text, e 
+				);
 			}
 		}
 	}
 
-	[Serializable]
 	[System.Runtime.InteropServices.ComVisible( false )]
 	public class DefaultObjectNode : ObjectNode
 	{
-		public override bool CanViewBuffer
-		{
-			get{ return false; }
-		}
-
 		public DefaultObjectNode( IUnrealDecompilable objectRef ) : base( objectRef )
 		{
 			ImageKey = typeof(UProperty).Name;
 			SelectedImageKey = ImageKey;
 		}
-
-		protected DefaultObjectNode(SerializationInfo info, StreamingContext context) : base(info, context)
-		{}
 	}
 
-	[Serializable]
 	[System.Runtime.InteropServices.ComVisible( false )]
-	public class ObjectListNode : TreeNode, IDecompilableNode
+	public sealed class ObjectListNode : TreeNode, IUnrealDecompilable
 	{
-		public virtual bool AllowDecompile
-		{
-			get{ return (Nodes.Count > 0); }
-		}
-
 		public ObjectListNode()
 		{
 			ImageKey = "List";
 			SelectedImageKey = ImageKey;
 		}
 
-		protected ObjectListNode(SerializationInfo info, StreamingContext context) : base(info, context){}
-
-		public virtual string Decompile()
+		public string Decompile()
 		{
 			string fullView = String.Empty;
-			foreach( var node in Nodes.OfType<IDecompilableNode>() )
+			foreach( var node in Nodes.OfType<IUnrealDecompilable>() )
 			{
-				if( node.AllowDecompile )
-				{
-					fullView += node.Decompile() + UnrealSyntax.NewLine;
-				}
+				fullView += node.Decompile() + UnrealSyntax.NewLine;
 			}
 			return fullView;
 		}

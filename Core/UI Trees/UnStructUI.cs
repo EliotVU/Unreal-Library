@@ -6,10 +6,10 @@ namespace UELib.Core
 	{
 		protected override void InitNodes( TreeNode node )
 		{
-			ParentNode = AddSectionNode( node, typeof(UStruct).Name );
+			_ParentNode = AddSectionNode( node, typeof(UStruct).Name );
 			if( IsPureStruct() )
 			{
-				var sFlagsNode = AddTextNode( ParentNode, "Struct Flags:" + UnrealMethods.FlagToString( StructFlags ) );
+				var sFlagsNode = AddTextNode( _ParentNode, "Struct Flags:" + UnrealMethods.FlagToString( StructFlags ) );
 				sFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.StructFlags), StructFlags ) );
 			}
 
@@ -19,8 +19,8 @@ namespace UELib.Core
 				node.Nodes.Add( objN );
 			}
 
-			AddTextNode( ParentNode, "Script Size:" + DataScriptSize );
-			base.InitNodes( ParentNode );
+			AddTextNode( _ParentNode, "Script Size:" + DataScriptSize );
+			base.InitNodes( _ParentNode );
 		}
 
 		protected override void AddChildren( TreeNode node )

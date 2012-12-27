@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
+using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using UELib.Core;
@@ -109,7 +111,7 @@ namespace UELib
 		/// <param name="stream">Stream to Update</param>
 		public void WriteName( UPackageStream stream )
 		{
-			stream.Seek( Offset, System.IO.SeekOrigin.Begin );
+			stream.Seek( Offset, SeekOrigin.Begin );
 
 			int size = stream.ReadIndex();
 			byte[] rawName = Encoding.ASCII.GetBytes( Name );
@@ -122,10 +124,9 @@ namespace UELib
 		/// <param name="stream">Stream to Update</param>
 		public void WriteFlags( UPackageStream stream )
 		{
-			stream.Seek( Offset, System.IO.SeekOrigin.Begin );
-
+			stream.Seek( Offset, SeekOrigin.Begin );
 			stream.ReadString();
-			if( stream.Version <= 200 )
+			if( stream.Version < 220 )
 			{
 				// Writing UINT
 				stream.UW.Write( (uint)Flags );
@@ -148,11 +149,22 @@ namespace UELib
 			return a.Name != b;
 		}
 
-		/// <inheritdoc/>
-		//public override bool Equals( object obj )
-		//{
-		//    return Name.Equals( obj );
-		//}
+		private bool Equals( UNameTableItem other )
+		{
+			return string.Equals( Name, other.Name );
+		}
+
+		public override bool Equals( object obj )
+		{
+			if( ReferenceEquals( null, obj ) ) return false;
+			if( ReferenceEquals( this, obj ) ) return true;
+			return obj is UNameTableItem && Equals( (UNameTableItem)obj );
+		}
+
+		public override int GetHashCode()
+		{
+			return (Name != null ? Name.GetHashCode() : 0);
+		}
 
 		/// <inheritdoc/>
 		public override string ToString()
@@ -164,7 +176,7 @@ namespace UELib
 	/// <summary>
 	/// Represents a unreal table with general deserialized data from a unreal package header.
 	/// </summary>
-	public abstract class UObjectTableItem : UTableItem
+	public abstract class UObjectTableItem : UTableItem, IBuffered
 	{
 		#region PreInitialized Members
 		/// <summary>
@@ -186,8 +198,8 @@ namespace UELib
 		/// -- Fixed
 		/// </summary>
 		public int ObjectIndex;
-		public UNameTableItem ObjectTable{ get{ return Owner.Names[ObjectIndex]; } }
-		public string ObjectName{ get{ return ObjectNumber > 0 ? Owner.GetIndexName( ObjectIndex ) + "_" + ObjectNumber : Owner.GetIndexName( ObjectIndex ); } }
+		[Pure]public UNameTableItem ObjectTable{ get{ return Owner.Names[ObjectIndex]; } }
+		[Pure]public string ObjectName{ get{ return ObjectNumber > 0 ? Owner.GetIndexName( ObjectIndex ) + "_" + ObjectNumber : Owner.GetIndexName( ObjectIndex ); } }
 		public int ObjectNumber;
 
 		/// <summary>
@@ -196,8 +208,8 @@ namespace UELib
 		/// -- Not Fixed
 		/// </summary>
 		public int ClassIndex;
-		public UObjectTableItem ClassTable{ get{ return Owner.GetIndexTable( ClassIndex ); } }
-		public string ClassName
+		[Pure]public UObjectTableItem ClassTable{ get{ return Owner.GetIndexTable( ClassIndex ); } }
+		[Pure]public string ClassName
 		{ 
 			get
 			{
@@ -214,8 +226,46 @@ namespace UELib
 		/// -- Not Fixed
 		/// </summary>
 		public int OuterIndex;
-		public UObjectTableItem OuterTable{ get{ return Owner.GetIndexTable( OuterIndex ); } }
-		public string OuterName{ get{ var table = OuterTable; return table != null ? table.ObjectName : String.Empty; } }
+		[Pure]public UObjectTableItem OuterTable{ get{ return Owner.GetIndexTable( OuterIndex ); } }
+		[Pure]public string OuterName{ get{ var table = OuterTable; return table != null ? table.ObjectName : String.Empty; } }
+		#endregion
+
+		#region IBuffered
+		public virtual byte[] CopyBuffer()
+		{
+			var buff = new byte[Size];
+			Owner.Stream.Seek( Offset, SeekOrigin.Begin );
+			Owner.Stream.Read( buff, 0, Size );
+			if( Owner.Stream.BigEndianCode )
+			{
+				Array.Reverse( buff );
+			}
+			return buff;
+		}
+
+		[Pure]
+		public IUnrealStream GetBuffer()
+		{
+			return Owner.Stream;
+		}
+
+		[Pure]
+		public int GetBufferPosition()
+		{
+			return Offset;
+		}
+
+		[Pure]
+		public int GetBufferSize()
+		{
+			return Size;
+		}
+
+		[Pure]
+		public string GetBufferId( bool fullName = false )
+		{
+			return fullName ? Owner.PackageName + "." + ObjectName + ".table" : ObjectName + ".table";
+		}
 		#endregion
 	}
 
@@ -230,16 +280,16 @@ namespace UELib
 		/// -- Not Fixed
 		/// </summary>
 		public int SuperIndex;
-		public UObjectTableItem SuperTable{ get{ return Owner.GetIndexTable( SuperIndex ); } }
-		public string SuperName{ get{ var table = SuperTable; return table != null ? table.ObjectName : String.Empty; } }
+		[Pure]public UObjectTableItem SuperTable{ get{ return Owner.GetIndexTable( SuperIndex ); } }
+		[Pure]public string SuperName{ get{ var table = SuperTable; return table != null ? table.ObjectName : String.Empty; } }
 
 		/// <summary>
 		/// Object index.
 		/// -- Not Fixed
 		/// </summary>
 		public int ArchetypeIndex;
-		public UObjectTableItem ArchetypeTable{ get{ return Owner.GetIndexTable( ArchetypeIndex ); } }
-		public string ArchetypeName{ get{ var table = ArchetypeTable; return table != null ? table.ObjectName : String.Empty; } }
+		[Pure]public UObjectTableItem ArchetypeTable{ get{ return Owner.GetIndexTable( ArchetypeIndex ); } }
+		[Pure]public string ArchetypeName{ get{ var table = ArchetypeTable; return table != null ? table.ObjectName : String.Empty; } }
 
 		/// <summary>
 		/// Object flags, such as Public, Protected and Private.
@@ -266,7 +316,7 @@ namespace UELib
 		{
 			ClassIndex 		= stream.ReadObjectIndex();
 			SuperIndex 		= stream.ReadObjectIndex();
-			OuterIndex 		= stream.ReadInt32();
+			OuterIndex 		= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 			ObjectIndex 	= stream.ReadNameIndex( out ObjectNumber );	
 			
 			if( stream.Version >= 220 )
@@ -338,7 +388,7 @@ namespace UELib
 		/// </summary>
 		public void WriteObjectFlags()
 		{
-			Owner.Stream.Seek( _ObjectFlagsOffset, System.IO.SeekOrigin.Begin );
+			Owner.Stream.Seek( _ObjectFlagsOffset, SeekOrigin.Begin );
 			Owner.Stream.UW.Write( (uint)ObjectFlags );
 		}
 		#endregion
@@ -355,7 +405,7 @@ namespace UELib
 		/// -- Fixed
 		/// </summary>
 		public int PackageIndex;
-		public string PackageName{ get{ return PackageNumber > 0 ? Owner.GetIndexName( PackageIndex ) + "_" + PackageNumber : Owner.GetIndexName( PackageIndex ); } }
+		[Pure]public string PackageName{ get{ return PackageNumber > 0 ? Owner.GetIndexName( PackageIndex ) + "_" + PackageNumber : Owner.GetIndexName( PackageIndex ); } }
 		public int PackageNumber;
 		#endregion
 
@@ -363,7 +413,7 @@ namespace UELib
 		{
 			PackageIndex 		= stream.ReadNameIndex( out PackageNumber );
 			ClassIndex 			= stream.ReadNameIndex();
-			OuterIndex 			= stream.ReadInt32();
+			OuterIndex 			= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 			ObjectIndex 		= stream.ReadNameIndex( out ObjectNumber );
 		}
 	}

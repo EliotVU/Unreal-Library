@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -40,7 +41,7 @@ namespace UELib
 	/// <summary>
 	/// Represents data of a loaded unreal package. 
 	/// </summary>
-	public sealed class UnrealPackage : IDisposable
+	public sealed class UnrealPackage : IDisposable, IBuffered
 	{
 		#region General Members
 		// Reference to the stream used when reading this package
@@ -1088,7 +1089,7 @@ namespace UELib
 		#endregion
 
 		#region Methods
-		private Type GetClassTypeByClassName( string className )
+		[Pure]private Type GetClassTypeByClassName( string className )
 		{		
 			return _RegisteredClasses.FirstOrDefault
 			(
@@ -1138,7 +1139,7 @@ namespace UELib
 		/// </summary>
 		/// <param name="className"></param>
 		/// <returns></returns>
-		public bool IsRegisteredClass( string className )
+		[Pure]public bool IsRegisteredClass( string className )
 		{
 			return _RegisteredClasses.Exists( o => o.Name.ToLower() == className.ToLower() );
 		}
@@ -1152,7 +1153,7 @@ namespace UELib
 		/// </summary>
 		/// <param name="objectIndex">The index of the Object in a tablelist.</param>
 		/// <returns>The found UELib.Core.UObject if any.</returns>
-		public UObject GetIndexObject( int objectIndex )
+		[Pure]public UObject GetIndexObject( int objectIndex )
 		{
 			return (objectIndex < 0 ? Imports[-objectIndex - 1].Object 
 						: (objectIndex > 0 ? Exports[objectIndex - 1].Object 
@@ -1164,7 +1165,7 @@ namespace UELib
 		/// </summary>
 		/// <param name="objectIndex">The index of the object in a tablelist.</param>
 		/// <returns>The found UELib.Core.UObject name if any.</returns>
-		public string GetIndexObjectName( int objectIndex )
+		[Pure]public string GetIndexObjectName( int objectIndex )
 		{
 			return GetIndexTable( objectIndex ).ObjectName;
 		}
@@ -1174,7 +1175,7 @@ namespace UELib
 		/// </summary>
 		/// <param name="nameIndex">A NameIndex into the NameTableList.</param>
 		/// <returns>The name at specified NameIndex.</returns>
-		public string GetIndexName( int nameIndex )
+		[Pure]public string GetIndexName( int nameIndex )
 		{
 			return Names[nameIndex].Name;
 		}
@@ -1188,7 +1189,7 @@ namespace UELib
 		/// </summary>
 		/// <param name="tableIndex">The index of the Table.</param>
 		/// <returns>The found UELib.Core.UnrealTable if any.</returns>
-		public UObjectTableItem GetIndexTable( int tableIndex )
+		[Pure]public UObjectTableItem GetIndexTable( int tableIndex )
 		{
 			return 	(tableIndex < 0 ? Imports[-tableIndex - 1] 
 					: (tableIndex > 0 ? (UObjectTableItem)Exports[tableIndex - 1] 
@@ -1202,7 +1203,7 @@ namespace UELib
 		/// <param name="type">The type of the object to find.</param>
 		/// <param name="checkForSubclass">Whether to test for subclasses of type as well.</param>
 		/// <returns>The found UELib.Core.UObject if any.</returns>
-		public UObject FindObject( string objectName, Type type, bool checkForSubclass = false )
+		[Pure]public UObject FindObject( string objectName, Type type, bool checkForSubclass = false )
 		{ 
 			if( Objects == null )
 			{
@@ -1219,7 +1220,7 @@ namespace UELib
 		/// </summary>
 		/// <param name="flag">The enum @flag to test.</param>
 		/// <returns>Whether this package is marked with @flag.</returns>
-		public bool HasPackageFlag( Flags.PackageFlags flag )
+		[Pure]public bool HasPackageFlag( Flags.PackageFlags flag )
 		{
 			return (PackageFlags & (uint)flag) != 0;
 		}
@@ -1229,7 +1230,7 @@ namespace UELib
 		/// </summary>
 		/// <param name="flag">The uint @flag to test</param>
 		/// <returns>Whether this package is marked with @flag.</returns>
-		public bool HasPackageFlag( uint flag )
+		[Pure]public bool HasPackageFlag( uint flag )
 		{
 			return (PackageFlags & flag) != 0;
 		}
@@ -1238,7 +1239,7 @@ namespace UELib
 		/// Tests the packageflags of this UELib.UnrealPackage instance whether it is cooked. 
 		/// </summary>
 		/// <returns>True if cooked or False if not.</returns>
-		public bool IsCooked()
+		[Pure]public bool IsCooked()
 		{
 			return HasPackageFlag( Flags.PackageFlags.Cooked ) && Version >= VCOOKEDPACKAGES;
 		}
@@ -1247,7 +1248,7 @@ namespace UELib
 		/// Tests the package for console build indications.
 		/// </summary>
 		/// <returns>Whether package is cooked for consoles.</returns>
-		public bool IsConsoleCooked()
+		[Pure]public bool IsConsoleCooked()
 		{
 			return IsCooked() && (IsBigEndianEncoded || Build.IsConsoleCompressed) && !Build.IsXenonCompressed;
 		}
@@ -1256,7 +1257,7 @@ namespace UELib
 		/// Checks for the Map flag in PackageFlags. 
 		/// </summary>
 		/// <returns>Whether if this package is a map.</returns>
-		public bool IsMap()
+		[Pure]public bool IsMap()
 		{
 			return HasPackageFlag( Flags.PackageFlags.Map );
 		}
@@ -1265,7 +1266,7 @@ namespace UELib
 		/// Checks if this package contains code classes.
 		/// </summary>
 		/// <returns>Whether if this package contains code classes.</returns>
-		public bool IsScript()
+		[Pure]public bool IsScript()
 		{
 			return HasPackageFlag( Flags.PackageFlags.Script );
 		}
@@ -1274,7 +1275,7 @@ namespace UELib
 		/// Checks if this package was built using the debug configuration.
 		/// </summary>
 		/// <returns>Whether if this package was built in debug configuration.</returns>
-		public bool IsDebug()
+		[Pure]public bool IsDebug()
 		{
 			return HasPackageFlag( Flags.PackageFlags.Debug );
 		}
@@ -1283,7 +1284,7 @@ namespace UELib
 		/// Checks for the Stripped flag in PackageFlags.
 		/// </summary>
 		/// <returns>Whether if this package is stripped.</returns>
-		public bool IsStripped()
+		[Pure]public bool IsStripped()
 		{
 			return HasPackageFlag( Flags.PackageFlags.Stripped );
 		}
@@ -1292,10 +1293,48 @@ namespace UELib
 		/// Tests the packageflags of this UELib.UnrealPackage instance whether it is encrypted. 
 		/// </summary>
 		/// <returns>True if encrypted or False if not.</returns>
-		public bool IsEncrypted()
+		[Pure]public bool IsEncrypted()
 		{
 			return HasPackageFlag( Flags.PackageFlags.Encrypted );
 		}
+
+		#region IBuffered
+		public byte[] CopyBuffer()
+		{
+			var buff = new byte[_HeaderSize];
+			Stream.Seek( 0, SeekOrigin.Begin );
+			Stream.Read( buff, 0, (int)_HeaderSize );
+			if( Stream.BigEndianCode )
+			{
+				Array.Reverse( buff );
+			}
+			return buff;
+		}
+
+		[Pure]
+		public IUnrealStream GetBuffer()
+		{
+			return Stream;
+		}
+
+		[Pure]
+		public int GetBufferPosition()
+		{
+			return 0;
+		}
+
+		[Pure]
+		public int GetBufferSize()
+		{
+			return (int)_HeaderSize;
+		}
+
+		[Pure]
+		public string GetBufferId( bool fullName = false )
+		{
+			return fullName ? FullPackageName : PackageName;
+		}
+		#endregion
 
 		/// <inheritdoc/>
 		public override string ToString()

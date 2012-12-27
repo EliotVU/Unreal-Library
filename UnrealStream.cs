@@ -9,9 +9,11 @@ namespace UELib
 {
 	public interface IUnrealStream
 	{
+		string Name{ get; }
+		void Dispose();
+		void Close();
+
 		UnrealPackage Package{ get; }
-		UnrealReader UR{ get; }
-		UnrealWriter UW{ get; }
 
 		/// <summary>
 		/// The version of the package this stream is working for.
@@ -29,12 +31,15 @@ namespace UELib
 		/// </summary>
 		/// <returns></returns>
 		int ReadObjectIndex();
+		UObject ReadObject();
+		UObject ParseObject( int index );
 
 		/// <summary>
 		/// Reads the next bytes as a index to an NameTable.
 		/// </summary>
 		/// <returns></returns>
 		int ReadNameIndex();
+		string ParseName( int index );
 
 		/// <summary>
 		/// Reads the next bytes as a index to an NameTable.
@@ -47,12 +52,6 @@ namespace UELib
 		/// </summary>
 		/// <returns></returns>
 		int ReadIndex();
-
-		/// <summary>
-		/// Reads the next 4 bytes as a ABCD guid converted to a string.
-		/// </summary>
-		/// <returns></returns>
-		string ReadGuid();
 
 		/// <summary>
 		/// Reads the next 4 bytes as a float converted to an Unreal float format.
@@ -255,9 +254,9 @@ namespace UELib
 			return ReadIndex();
 		}
 
-		public static int ReadIndexFromBuffer( byte[] value, UnrealPackage package )
+		public static int ReadIndexFromBuffer( byte[] value, IUnrealStream stream )
 		{
-			if( package.Version >= UnrealPackage.VINDEXDEPRECATED )
+			if( stream.Version >= UnrealPackage.VINDEXDEPRECATED )
 			{
 				return BitConverter.ToInt32( value, 0 );
 			}
@@ -301,9 +300,6 @@ namespace UELib
 
 	public class UPackageStream : FileStream, IUnrealStream
 	{
-		/// <summary>
-		/// The package I am streaming for.
-		/// </summary>
 		public UnrealPackage Package{ get; set; }
 
 		/// <inheritdoc/>
@@ -315,10 +311,10 @@ namespace UELib
 		public UnrealReader UR{ get; private set; }
 		public UnrealWriter UW{ get; private set; }
 
-		private long _PeekStartPosition;
 		public long LastPosition{ get; set; }
 
 		public readonly bool BigEndianCode;
+		public bool Chunked;
 
 		public UPackageStream( string path, FileMode mode, FileAccess access ) : base( path, mode, access )
 		{
@@ -501,6 +497,16 @@ namespace UELib
 			return UR.ReadIndex();
 		}
 
+		public UObject ReadObject()
+		{
+			return Package.GetIndexObject( ReadObjectIndex() );
+		}
+
+		public UObject ParseObject( int index )
+		{
+			return Package.GetIndexObject( index );	
+		}
+
 		/// <summary>
 		/// Same as ReadIndex except this one handles differently if the version is something above UE3.
 		/// </summary>
@@ -508,6 +514,11 @@ namespace UELib
 		public int ReadNameIndex()
 		{
 			return (int)UR.ReadNameIndex();
+		}
+
+		public string ParseName( int index )
+		{
+			return Package.GetIndexName( index );
 		}
 
 		/// <summary>
@@ -552,37 +563,11 @@ namespace UELib
 		{
 			Position += bytes;
 		}
-
-		/// <summary>
-		/// Start peeking, without advancing the stream position.
-		/// </summary>
-		public void StartPeek()
-		{
-			_PeekStartPosition = Position;
-		}
-
-		/// <summary>
-		/// Start peeking, without advancing the stream position and start at a new position.
-		/// </summary>
-		public void StartPeek( long peekPosition )
-		{
-			_PeekStartPosition = Position;
-			Position = peekPosition;
-		}
-
-		/// <summary>
-		/// Stop peeking, the original position is restored.
-		/// </summary>
-		public void EndPeek()
-		{
-			Position = _PeekStartPosition;
-		}	
-
-		public bool Chunked;
 	}
 
 	public class UObjectStream : MemoryStream, IUnrealStream
 	{
+		public string Name{ get{ return Package.Stream.Name; } }
 		/// <summary>
 		/// The package I am streaming for.
 		/// </summary>
@@ -768,6 +753,16 @@ namespace UELib
 		{
 			return UR.ReadIndex();
 		}
+
+		public UObject ReadObject()
+		{
+			return Package.GetIndexObject( ReadObjectIndex() );
+		}
+
+		public UObject ParseObject( int index )
+		{
+			return Package.GetIndexObject( index );	
+		}
 		
 		/// <summary>
 		/// Same as ReadIndex except this one handles differently if the version is something above UE3.
@@ -782,6 +777,11 @@ namespace UELib
 				return index;		
 			}
 			return UR.ReadIndex();
+		}
+
+		public string ParseName( int index )
+		{
+			return Package.GetIndexName( index );
 		}
 
 		/// <summary>
@@ -835,16 +835,6 @@ namespace UELib
 		public void StartPeek()
 		{
 			_PeekStartPosition = Position;
-		}
-
-		/// <summary>
-		/// Start peeking, without advancing the stream position, and start at a new position.
-		/// </summary>
-		/// <param name="peekPosition">The initial start position.</param>
-		public void StartPeek( long peekPosition )
-		{
-			_PeekStartPosition = Position;
-			Position = peekPosition;
 		}
 
 		/// <summary>

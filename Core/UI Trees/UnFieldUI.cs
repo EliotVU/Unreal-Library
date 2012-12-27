@@ -6,10 +6,10 @@ namespace UELib.Core
 	{
 		protected override void InitNodes( TreeNode node )
 		{
-			ParentNode = AddSectionNode( node, typeof(UField).Name );
-			AddTextNode( ParentNode, "SuperField:" + Super ); 
-			AddTextNode( ParentNode, "NextField:" + NextField ); 
-			base.InitNodes( ParentNode );
+			_ParentNode = AddSectionNode( node, typeof(UField).Name );
+			AddTextNode( _ParentNode, "SuperField:" + Super ); 
+			AddTextNode( _ParentNode, "NextField:" + NextField ); 
+			base.InitNodes( _ParentNode );
 		}
 	}
 }

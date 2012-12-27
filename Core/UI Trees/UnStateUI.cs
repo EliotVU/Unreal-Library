@@ -6,15 +6,15 @@ namespace UELib.Core
 	{
 		protected override void InitNodes( TreeNode node )
 		{
-			ParentNode = AddSectionNode( node, typeof(UState).Name );
+			_ParentNode = AddSectionNode( node, typeof(UState).Name );
 
 			if( GetType() == typeof(UState) )
 			{
-				var stateFlagsNode = AddTextNode( ParentNode, "State Flags:" + UnrealMethods.FlagToString( _StateFlags ) );
+				var stateFlagsNode = AddTextNode( _ParentNode, "State Flags:" + UnrealMethods.FlagToString( _StateFlags ) );
 				stateFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.StateFlags), _StateFlags ) );
 			}
 
-			base.InitNodes( ParentNode );
+			base.InitNodes( _ParentNode );
 		}
 
 		protected override void AddChildren( TreeNode node )

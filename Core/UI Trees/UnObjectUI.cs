@@ -6,63 +6,36 @@ namespace UELib.Core
 {
 	public partial class UObject
 	{
-		// Cannot be viewed
-		internal class TextNode : TreeNode
-		{
-			internal TextNode( string node ) : base(node)
-			{
-			}
-		}
-
-		internal TextNode ParentNode;
-		public bool InitializedNodes;
+		protected TreeNode _ParentNode;
+		public bool HasInitializedNodes;
 
 		public void InitializeNodes( TreeNode node )
 		{
-			if( InitializedNodes )
+			if( HasInitializedNodes )
 				return;
 
-			try
-			{
-				node.ToolTipText = FormatHeader();	
-			}
-			catch
-			{
-				node.ToolTipText = "An error occurred!";
-				//throw new DecompilingHeaderException();
-			}
-
+			node.ToolTipText = FormatHeader();	
 			InitNodes( node );
 			AddChildren( node );
 			PostAddChildren( node );
 
-			node.ImageKey = GetType().IsSubclassOf( typeof(UProperty) ) ? typeof(UProperty).Name : GetType().Name;
+			node.ImageKey = GetType().IsSubclassOf( typeof(UProperty) ) 
+				? typeof(UProperty).Name : this is UScriptStruct 
+					? "UStruct" : GetType().Name;
 			node.SelectedImageKey = node.ImageKey;
-			InitializedNodes = true;
+			HasInitializedNodes = true;
 		}
 
 		protected virtual void InitNodes( TreeNode node )
 		{			
-			ParentNode = AddSectionNode( node, typeof(UObject).Name );
-			/*foreach( System.Reflection.PropertyInfo PI in GetType().GetProperties() )
-			{
-				// Only properties that are from UObject i.e. ignore properties of children.
-				// Flags
-				if( PI.PropertyType == typeof(uint) )
-				{
-					AddTextNode( _ParentNode, PI.Name + ":" + String.Format( "0x{0:x4}", PI.GetValue( this, null ) ) );
-				}
-				else if( PI.PropertyType != null && !PI.PropertyType.IsArray )
-				{
-					AddTextNode( _ParentNode, PI.Name + ":" + PI.GetValue( this, null ).ToString() );
-				}
-			}*/
+			_ParentNode = AddSectionNode( node, typeof(UObject).Name );
+			var flagNode = AddTextNode( _ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
+			flagNode.ToolTipText = UnrealMethods.FlagsListToString( 
+				UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), ObjectFlags ) 
+			);
 
-			var flagNode = AddTextNode( ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
-			flagNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), ObjectFlags ) );
-
-			AddTextNode( ParentNode, "Size:" + ExportTable.SerialSize );
-			AddTextNode( ParentNode, "Offset:" + ExportTable.SerialOffset );
+			AddTextNode( _ParentNode, "Size:" + ExportTable.SerialSize );
+			AddTextNode( _ParentNode, "Offset:" + ExportTable.SerialOffset );
 		}
 
 		protected virtual void AddChildren( TreeNode node )
@@ -73,23 +46,23 @@ namespace UELib.Core
 		{
 		}
 
-		internal static TextNode AddSectionNode( TreeNode p, string n )
+		protected static TreeNode AddSectionNode( TreeNode p, string n )
 		{
-			var nn = new TextNode( n ){ImageKey = typeof (UObject).Name};
+			var nn = new TreeNode( n ){ImageKey = typeof(UObject).Name};
 			nn.SelectedImageKey = nn.ImageKey;
 		   	p.Nodes.Add( nn );
 			return nn;
 		}
 
-		internal static TextNode AddTextNode( TreeNode p, string n )
+		protected static TreeNode AddTextNode( TreeNode p, string n )
 		{
-			var nn = new TextNode( n ){ImageKey = "Unknown"};
+			var nn = new TreeNode( n ){ImageKey = "Unknown"};
 			nn.SelectedImageKey = nn.ImageKey;
 			p.Nodes.Add( nn );
 			return nn;
 		}
 
-		internal static ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject )
+		protected static ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject )
 		{
 			var objN = new ObjectNode( unrealObject ){Text = unrealObject.Name};
 			unrealObject.InitializeNodes( objN );
@@ -103,7 +76,7 @@ namespace UELib.Core
 			return objN;
 		}
 
-		internal static ObjectListNode AddObjectListNode
+		protected static ObjectListNode AddObjectListNode
 		( 
 			TreeNode parentNode, 
 			string title,

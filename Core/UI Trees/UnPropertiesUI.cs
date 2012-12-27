@@ -6,8 +6,8 @@ namespace UELib.Core
 	{
 		protected override void InitNodes( TreeNode node )
 		{
-			ParentNode = AddSectionNode( node, typeof(UProperty).Name );
-			var propertyFlagsNode = AddTextNode( ParentNode, 
+			_ParentNode = AddSectionNode( node, typeof(UProperty).Name );
+			var propertyFlagsNode = AddTextNode( _ParentNode, 
 				"Property Flags:" + UnrealMethods.FlagToString( PropertyFlags ) 
 			);
 			propertyFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( 
@@ -17,9 +17,9 @@ namespace UELib.Core
 		 	
 			if( RepOffset > 0 )
 			{
-				AddTextNode( ParentNode, "Replication Offset:" + RepOffset );
+				AddTextNode( _ParentNode, "Replication Offset:" + RepOffset );
 			}
-			base.InitNodes( ParentNode );
+			base.InitNodes( _ParentNode );
 		}
 	}
 }

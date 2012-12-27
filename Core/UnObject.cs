@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 
 namespace UELib.Core
 {
-	public class ObjectEventArgs : EventArgs, IRefUObject
+	public class ObjectEventArgs : EventArgs
 	{
-		public UObject ObjectRef{ get; protected set; }
+		public UObject ObjectRef{ get; private set; }
 
 		public ObjectEventArgs( UObject objectRef )
 		{
@@ -18,7 +19,7 @@ namespace UELib.Core
 	/// Represents a unreal object. 
 	/// </summary>
 	[UnrealRegisterClass]
-	public partial class UObject : Object, ISupportsBuffer, IUnrealDeserializableObject, IDisposable, IComparable
+	public partial class UObject : Object, IBinaryData, IDisposable, IComparable
 	{
 		#region PreInitialized Members
 		/// <summary>
@@ -117,9 +118,7 @@ namespace UELib.Core
 		/// </summary>
 		public bool ShouldDeserializeOnDemand{ get; protected set; }
 
-#if DEBUG || BINARYMETADATA
-		public BinaryMetaData BinaryMetaData;
-#endif
+		public BinaryMetaData BinaryMetaData{ get; set; }
 		#endregion
 
 		#region Constructors
@@ -355,6 +354,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="flag">The flag(s) to compare to.</param>
 		/// <returns>Whether it contained one of the specified flags.</returns>
+		[Pure]
 		public bool HasObjectFlag( Flags.ObjectFlagsLO flag )
 		{
 			return ((uint)ObjectFlags & (uint)flag) != 0;
@@ -367,6 +367,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="flag">The flag(s) to compare to.</param>
 		/// <returns>Whether it contained one of the specified flags.</returns>
+		[Pure]
 		public bool HasObjectFlag( Flags.ObjectFlagsHO flag )
 		{
 			return ((ObjectFlags >> 32) & (uint)flag) != 0;
@@ -377,6 +378,7 @@ namespace UELib.Core
 		/// Returns a copy of the ObjectFlags.
 		/// </summary>
 		/// <returns>A copy of @ObjectFlags.</returns>
+		[Pure]
 		public ulong GetObjectFlags()
 		{
 			return ObjectFlags;
@@ -387,6 +389,7 @@ namespace UELib.Core
 		/// Whether object is publically accessable.
 		/// </summary>
 		/// <returns>Whether it is publically accessable.</returns>
+		[Pure]
 		public bool IsPublic()
 		{
 			return HasObjectFlag( Flags.ObjectFlagsLO.Public );
@@ -396,6 +399,7 @@ namespace UELib.Core
 		private const uint AccessFlagChangeVersion = 180;
 
 		// OBJECTFLAG:!PUBLIC
+		[Pure]
 		public bool IsProtected()
 		{
 			//return !HasObjectFlag( Flags.ObjectFlagsLO.Public );
@@ -403,6 +407,7 @@ namespace UELib.Core
 		}
 
 		// OBJECTFLAG:!PUBLIC, FINAL
+		[Pure]
 		public bool IsPrivate()
 		{
 			//return !HasObjectFlag( Flags.ObjectFlagsLO.Public ) && HasObjectFlag( Flags.ObjectFlagsLO.Private );
@@ -413,11 +418,13 @@ namespace UELib.Core
 		/// Gets a human-readable name of this object instance.
 		/// </summary>
 		/// <returns>The human-readable name of this object instance.</returns>
+		[Pure]
 		public virtual string GetFriendlyType()
 		{
 			return Name;
 		}
 
+		[Pure]
 		public bool ResistsInGroup()
 		{
 			return Outer != null && Outer.GetClassName() == "Package";
@@ -428,6 +435,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="offset">Optional relative offset.</param>
 		/// <returns>The highest outer.</returns>
+		[Pure]
 		public UObject GetHighestOuter( byte offset = (byte)0 )
 		{
 			var parents = new List<UObject>();
@@ -444,6 +452,7 @@ namespace UELib.Core
 		/// e.g. var Core.Object.Vector Location;
 		/// </summary>
 		/// <returns>The full name.</returns>
+		[Pure]
 		public string GetOuterGroup()
 		{
 			string group = String.Empty;
@@ -459,6 +468,7 @@ namespace UELib.Core
 		/// Gets the name of this object instance outer.
 		/// </summary>
 		/// <returns>The outer name of this object instance.</returns>
+		[Pure]
 		public string GetOuterName()
 		{
 			return Table.OuterName;
@@ -468,6 +478,7 @@ namespace UELib.Core
 		/// Gets the name of this object instance class.
 		/// </summary>
 		/// <returns>The class name of this object instance.</returns>
+		[Pure]
 		public string GetClassName()
 		{
 			return Table.ClassName;
@@ -478,6 +489,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="className">The class name to compare to.</param>
 		/// <returns>TRUE if this object instance class name is equal className, FALSE otherwise.</returns>
+		[Pure]
 		public bool IsClassType( string className )
 		{
 			return String.Compare( GetClassName(), className, StringComparison.OrdinalIgnoreCase ) == 0; 
@@ -488,6 +500,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="className">The name of the class to compare to.</param>
 		/// <returns>Whether it extends class @className.</returns>
+		[Pure]
 		public bool IsClass( string className )
 		{
 			for( var c = Table.ClassTable; c != null; c = c.ClassTable )
@@ -503,6 +516,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="membersClass">Field to test against.</param>
 		/// <returns>Whether it is a member or not.</returns>
+		[Pure]
 		public bool IsMember( UField membersClass )
 		{
 			for( var p = membersClass; p != null; p = p.Super )
@@ -518,6 +532,7 @@ namespace UELib.Core
 		/// <summary>
 		/// Macro for getting a object instance by index.
 		/// </summary>
+		[Pure]
 		protected UObject GetIndexObject( int index )
 		{
 			return Package.GetIndexObject( index );
@@ -528,6 +543,7 @@ namespace UELib.Core
 		/// </summary>
 		/// <param name="index">The object's index.</param>
 		/// <returns>The reference of the specified object's index. NULL if none.</returns>
+		[Pure]
 		protected UObject TryGetIndexObject( int index )
 		{
 			try
@@ -546,6 +562,7 @@ namespace UELib.Core
 		/// <param name="index">The object's nameIndex.</param>
 		/// <param name="number">The instance number.</param>
 		/// <returns></returns>
+		[Pure]
 		public string GetIndexName( int index, int number = -1 )
 		{
 			return number > 0 ? Package.GetIndexName( index ) + "_" + number : Package.GetIndexName( index ); 
@@ -583,21 +600,58 @@ namespace UELib.Core
 			return pkg;
 		}
 
-		/// <summary>
-		/// Return a copy of this object's serialized bytes.
-		/// </summary>
-		/// <returns>This object's serialized bytes.</returns>
-		public virtual byte[] GetBuffer()
+		#region IBuffered
+		public virtual byte[] CopyBuffer()
 		{
-			var buff = new byte[ExportTable.SerialSize];
-			Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
-			Package.Stream.Read( buff, 0, ExportTable.SerialSize );
+			var stream = GetBuffer();
+			if( stream == null )
+				return null;
+
+			var offset = GetBufferPosition();
+			if( offset == -1 )
+				return null;
+
+			var size = GetBufferSize();
+			if( size == 0 )
+				return null;
+
+			var bytes = new byte[size];
+			var prePosition = stream.Position;
+			stream.Seek( offset, SeekOrigin.Begin );
+			stream.Read( bytes, 0, size );
+			stream.Position = prePosition;
+			// FIXME:
 			if( Package.Stream.BigEndianCode )
 			{
-				Array.Reverse( buff );
+				Array.Reverse( bytes );
 			}
-			return buff;
+			return bytes;
 		}
+
+		[Pure]
+		public IUnrealStream GetBuffer()
+		{
+			return Package == null || Package.Stream == null ? null : Package.Stream;
+		}
+
+		[Pure]
+		public int GetBufferPosition()
+		{
+			return ExportTable == null ? -1 : ExportTable.SerialOffset;
+		}
+
+		[Pure]
+		public int GetBufferSize()
+		{
+			return ExportTable == null ? 0 : ExportTable.SerialSize;
+		}
+
+		[Pure]
+		public string GetBufferId( bool fullName = false )
+		{
+			return fullName ? Package.PackageName + "." + GetOuterGroup() + "." + GetClassName() : GetOuterGroup() + "." + GetClassName();
+		}
+		#endregion
 
 		/// <summary>
 		/// Outputs the present position and the value of the parsed object.

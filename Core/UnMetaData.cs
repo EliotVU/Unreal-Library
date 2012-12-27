@@ -1,12 +1,6 @@
-﻿/**
- *	UnMetaData.cs http://udn.epicgames.com/Three/UnrealScriptReference.html#UnrealScriptMetadata
- */
-#define DEBUGUE3
-#define DECUNIQUETAGS
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace UELib.Core
 {
@@ -119,7 +113,7 @@ namespace UELib.Core
 			}
 		}
 
-		private UArray<UMetaField> _MetaFields = null;
+		private UArray<UMetaField> _MetaFields;
 		#endregion
 
 		#region Constructors
@@ -167,7 +161,7 @@ namespace UELib.Core
 			}
 
 			string content = FormatHeader();
-			foreach( UMetaField field in _MetaFields )
+			foreach( var field in _MetaFields )
 			{
 				string fieldname = field.FieldIndex != 0 ? GetIndexObject( field.FieldIndex ).GetOuterGroup() : field.FieldName;																			  // Max string length!
 				string fieldOutput = field.Decompile();
@@ -182,25 +176,19 @@ namespace UELib.Core
 
 		protected override string FormatHeader()
 		{
-			if( _MetaFields == null )
-			{
-			    return "No MetaFields found!";
-			}
-
-			return "Meta count: " + _MetaFields.Count + "\r\n";
+			return _MetaFields == null ? "No MetaFields found!" : "Meta count: " + _MetaFields.Count + "\r\n";
 		}
 
 		public string GetUniqueMetas()
 		{
 			string output = String.Empty;
-			List<UMetaTag> tags = new List<UMetaTag>();
-			foreach( UMetaField field in _MetaFields )
+			var tags = new List<UMetaTag>();
+			foreach( var field in _MetaFields )
 			{
-				foreach( UMetaTag dfield in field.MetaTags )
+				foreach( var dfield in field.MetaTags )
 				{
-					UMetaTag ut = new UMetaTag();
-					ut.Owner = dfield.Owner;
-					if( tags.Find( delegate( UMetaTag tag ){ return tag.TagNameIndex == dfield.TagNameIndex; } ) != null )
+					var ut = new UMetaTag{Owner = dfield.Owner};
+					if( tags.Find( tag => tag.TagNameIndex == dfield.TagNameIndex ) != null )
 					{
 						continue;
 					}			
@@ -220,7 +208,7 @@ namespace UELib.Core
 				}
 			}
 
-			foreach( UMetaTag ut in tags )
+			foreach( var ut in tags )
 			{
 				string tagsOutput = ut.Decompile().TrimEnd( '=' );
 				if( tagsOutput.Length != 0 )
