@@ -61,7 +61,7 @@ namespace UELib.Core
 
 		private string FormatIgnores()
 		{
-			if( _IgnoreMask == ulong.MaxValue || Functions == null || !Functions.Any() )
+			if( _IgnoreMask == long.MaxValue || Functions == null || !Functions.Any() )
 			{
 				return String.Empty;
 			}

@@ -12,13 +12,30 @@ namespace UELib.Core
 	{
 		// Greater or equal than:
 		// Definitely not after 110
+		// TODO: Corrigate version
 		private const int PrimitveCastVersion = 100;
+
+		// Version might actually be correct!
+		private const uint VCppText = 129;
+		// TODO: Corrigate version
+		private const uint VStructFlags = 102;
+		// TODO: Corrigate version
+		private const uint VProcessedText = 129;
+		// TODO: Corrigate version
+		private const uint VFriendlyNameMoved = 154;
+		// TODO: Corrigate version
+		private const uint VStructFlagsMoved = 154;
 
 		#region Serialized Members
 		/// <summary>
-		/// Index to ScriptText Object (UnTextBuffer)
+		/// Index to ScriptText Object (UTextBuffer)
 		/// </summary>
 		public int ScriptText{ get; private set; }
+
+		/// <summary>
+		/// Index to ProcessedText Object (UTextBuffer)
+		/// </summary>
+		public int ProcessedText{ get; private set; }
 
 		/// <summary>
 		/// Index to CppText Object (UTextBuffer)
@@ -31,8 +48,8 @@ namespace UELib.Core
 		/// </summary>
 		public int Children{ get; private set; }
 
-		public uint Line;
-		public uint TextPos;
+		public int Line;
+		public int TextPos;
 		public int ByteScriptSize{ get; private set; }
 		public int DataScriptSize{ get; private set; }
 		protected int FriendlyNameIndex = -1;
@@ -88,9 +105,6 @@ namespace UELib.Core
 			_ShouldReleaseBuffer = false;
 		}
 
-		private const uint VCppText = 190;
-		private const uint VStructFlags = 101;
-
 		protected override void Deserialize()
 		{
 			base.Deserialize();
@@ -99,60 +113,61 @@ namespace UELib.Core
 			if( !Package.IsConsoleCooked() )
 			{
 				ScriptText = _Buffer.ReadObjectIndex();
-				NoteRead( "ScriptText", GetIndexObject( ScriptText ) );
+				NoteRead( "ScriptText", TryGetIndexObject( ScriptText ) );
 			}
 
 			Children = _Buffer.ReadObjectIndex();
-			NoteRead( "Children", GetIndexObject( Children ) );
+			NoteRead( "Children", TryGetIndexObject( Children ) );
 
-			// TODO: Correct version
-			if( _Buffer.Version > 154 /* UE3 */ )
-			{
-				if( _Buffer.Version >= VCppText && !Package.IsConsoleCooked() )
-				{
-					CppText = _Buffer.ReadInt32();
-					NoteRead( "CppText", GetIndexObject( CppText ) );
-				}
-			}
-			else
-			{		
+			if( Package.Version < VFriendlyNameMoved )
+			{ 
 				// Moved to UFunction in UE3
-				FriendlyNameIndex = _Buffer.ReadIndex();
+				FriendlyNameIndex = _Buffer.ReadNameIndex();
 				NoteRead( "FriendlyNameIndex", Package.Names[FriendlyNameIndex] );
-#if SWAT4
-				if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
+			}
+
+			if( Package.Version >= VStructFlags )
+			{
+				if( Package.Version >= VCppText && !Package.IsConsoleCooked() )
 				{
-					_Buffer.ReadIndex();
+					CppText = _Buffer.ReadObjectIndex();
+					NoteRead( "CppText", TryGetIndexObject( CppText ) );
 				}
-#endif
-				// TODO: Corrigate Version
-				if( _Buffer.Version > VStructFlags )
+
+				if( Package.Version < VStructFlagsMoved )
 				{
 					StructFlags = _Buffer.ReadUInt32();
 					NoteRead( "StructFlags", (StructFlags)StructFlags );	
+					// Note: Bioshock inherits from the SWAT4's UE2 build.
+					#if BIOSHOCK
+					if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
+					{
+						// TODO: Unknown data, might be related to the above Swat4 data.
+						var unknown = _Buffer.ReadObjectIndex();
+						NoteRead( "???", TryGetIndexObject( unknown ) );
+					}
+					#endif
+					// This is high likely to be only for "Irrational Games" builds.
+					if( Package.Version >= VProcessedText )
+					{
+						ProcessedText = _Buffer.ReadObjectIndex();
+						NoteRead( "ProcessedText", TryGetIndexObject( ProcessedText ) );
+					}
 				}
-
-#if SWAT4
-				if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
-				{
-					int processedText = _Buffer.ReadObjectIndex();
-					NoteRead( "ProcessedText", GetIndexObject( processedText ) );
-				}
-#endif
 			}
 
 			if( !Package.IsConsoleCooked() )
 			{
-				Line = _Buffer.ReadUInt32();
+				Line = _Buffer.ReadInt32();
 				NoteRead( "Line", Line );
-				TextPos = _Buffer.ReadUInt32();
+				TextPos = _Buffer.ReadInt32();
 				NoteRead( "TextPos", TextPos );
 			}
 
 			ByteScriptSize = _Buffer.ReadInt32();
 			NoteRead( "ByteScriptSize", ByteScriptSize );
 			const int vDataScriptSize = 639;
-			if( _Buffer.Version >= vDataScriptSize )
+			if( Package.Version >= vDataScriptSize )
 			{
 				DataScriptSize = _Buffer.ReadInt32();
 				NoteRead( "DataScriptSize", DataScriptSize );
@@ -168,7 +183,7 @@ namespace UELib.Core
 				return;
 
 			ByteCodeManager = new UByteCodeDecompiler( this );
-			if( _Buffer.Version >= vDataScriptSize )
+			if( Package.Version >= vDataScriptSize )
 			{
 				_Buffer.Skip( DataScriptSize );
 			}
@@ -176,9 +191,13 @@ namespace UELib.Core
 			{
 				const int moonbaseVersion = 587;
 				const int shadowcomplexVersion = 590;
+				const int mohaVersion = 421;
 
-				var isTrueScriptSize = _Buffer.Version >= UnrealPackage.VINDEXDEPRECATED
-				    && (_Buffer.Version < moonbaseVersion && _Buffer.Version > shadowcomplexVersion );
+				var isTrueScriptSize = Package.Version == mohaVersion || 
+				(
+					Package.Version >= UnrealPackage.VINDEXDEPRECATED 
+					&& (Package.Version < moonbaseVersion && Package.Version > shadowcomplexVersion )
+				);
 				if( isTrueScriptSize )
 				{
 					_Buffer.Skip( DataScriptSize );

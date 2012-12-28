@@ -13,7 +13,7 @@ namespace UELib
 
 			public string Decompile()
 			{
-				return Tag != null ? Tag.ToString() : "?";
+				return Tag != null ? Tag.ToString() : "NULL";
 			}
 		}
 

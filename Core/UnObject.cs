@@ -91,7 +91,7 @@ namespace UELib.Core
 		/// <summary>
 		/// Object Properties e.g. SubObjects or/and DefaultProperties
 		/// </summary>
-		public DefaultPropertiesCollection Properties{ get{ return _Default._Properties; } }
+		public DefaultPropertiesCollection Properties{ get{ return _Default != null ? _Default._Properties : null; } }
 
 		private int _NetIndex;
 		#endregion
@@ -225,7 +225,7 @@ namespace UELib.Core
 			NoteRead( "ExportSize", ExportTable.SerialSize );
 #endif
 			// TODO: Corrigate version
-			if( _Buffer.Version >= 322 )
+			if( Package.Version >= 322 )
 			{
 				// TODO: Corrigate version. Fix component detection!
 				//if( _Buffer.Version > 400
@@ -259,6 +259,13 @@ namespace UELib.Core
 					// 8 bytes: Value: 3
 					// 4 bytes: Value: 1
 					_Buffer.Skip( 12 );
+				}
+#endif
+
+#if BIOSHOCK
+				if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
+				{
+					_Buffer.Skip( 8 );
 				}
 #endif
 			}

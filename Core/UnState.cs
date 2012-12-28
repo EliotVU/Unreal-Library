@@ -21,17 +21,17 @@ namespace UELib.Core
 		/// <summary>
 		/// Mask of current functions being probed by this class.
 		/// </summary>
-		private ulong _ProbeMask;
+		private long _ProbeMask;
 
 		/// <summary>
 		/// Mask of current functions being ignored by the present state node.
 		/// </summary>
-		private ulong _IgnoreMask;
+		private long _IgnoreMask;
 
 		/// <summary>
 		/// Offset into the ScriptStack where the FLabelEntry persist. 
 		/// </summary>
-		private ushort _LabelTableOffset;
+		private short _LabelTableOffset;
 
 		/// <summary>
 		/// This state's flags mask e.g. Auto, Simulated.
@@ -48,34 +48,44 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
+			// TODO: Simplify ProbeMask deserialization.
+			// if >= 700
+			// 32b IgnoreMask
+			// if < 700
+			// 32b ProbeMask
+			// 64b IgnoreMask
+			// if < 220
+			// 64b ProbeMask
+			// 64b IgnoreMask
+
 			// UE3
 			if( Package.Version >= 220 )
 			{
 				// TODO: Corrigate Version; Somewhere between 690 - 706
-				if( _Buffer.Version < 700 )
+				if( Package.Version < 700 )
 				{
 				    // TODO: Unknown!
-				    int unk1 = _Buffer.ReadInt32();
-					NoteRead( "unk1", unk1 );	
+				    int unknown = _Buffer.ReadInt32();
+					NoteRead( "???", unknown );	
 				}
 
-				_ProbeMask = _Buffer.ReadUInt32();
+				_ProbeMask = _Buffer.ReadInt32();
 				NoteRead( "_ProbeMask", _ProbeMask );		
 			}
 			else  // UE2 and 1
 			{
-				_ProbeMask = _Buffer.ReadUInt64();
+				_ProbeMask = _Buffer.ReadInt64();
 				NoteRead( "_ProbeMask", _ProbeMask );
 			}
 
 			// TODO: Corrigate Version; Somewhere between 690 - 706
-			if( _Buffer.Version < 700 )
+			if( Package.Version < 700 )
 		    {
-		        _IgnoreMask = _Buffer.ReadUInt64();	
+		        _IgnoreMask = _Buffer.ReadInt64();	
 		        NoteRead( "_IgnoreMask", _IgnoreMask );
 		    }
 
-			_LabelTableOffset = _Buffer.ReadUShort();
+			_LabelTableOffset = _Buffer.ReadInt16();
 			NoteRead( "_LabelTableOffset", _LabelTableOffset );
 
 			if( Package.Version > VStateFlags )

@@ -87,10 +87,12 @@ namespace UELib
 		public ulong Flags;
 		#endregion
 
+		private const int QWORDVersion = 141;
+
 		public void Deserialize( IUnrealStream stream )
 		{
 			Name = stream.ReadString();
-			Flags = stream.Version >= 220 ? stream.ReadUInt64() : stream.ReadUInt32();					
+			Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();					
 #if DEOBFUSCATE
 			// De-obfuscate names that contain unprintable characters!
 			foreach( char c in Name )
@@ -126,7 +128,7 @@ namespace UELib
 		{
 			stream.Seek( Offset, SeekOrigin.Begin );
 			stream.ReadString();
-			if( stream.Version < 220 )
+			if( stream.Version < QWORDVersion )
 			{
 				// Writing UINT
 				stream.UW.Write( (uint)Flags );
@@ -317,6 +319,10 @@ namespace UELib
 			ClassIndex 		= stream.ReadObjectIndex();
 			SuperIndex 		= stream.ReadObjectIndex();
 			OuterIndex 		= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
+			if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Version >= 132 )
+			{
+				stream.Skip( sizeof(int) );
+			}
 			ObjectIndex 	= stream.ReadNameIndex( out ObjectNumber );	
 			
 			if( stream.Version >= 220 )
@@ -326,7 +332,9 @@ namespace UELib
 
 			_ObjectFlagsOffset = stream.Position;	
 			ObjectFlags = stream.ReadUInt32();
-			if( stream.Version >= 195 )
+			if( stream.Version >= 195 
+				|| (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Package.LicenseeVersion >= 40) 
+				)
 			{
 			    ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
 			}
@@ -335,6 +343,11 @@ namespace UELib
 			if( SerialSize > 0 || stream.Version >= 249 )
 			{
 				SerialOffset = stream.ReadIndex();
+			}
+
+			if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Version >= 130 )
+			{
+				stream.Skip( sizeof(int) );
 			}
 
 			if( stream.Version < 220 )

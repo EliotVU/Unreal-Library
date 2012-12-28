@@ -50,8 +50,6 @@ namespace UELib.Core
 			private set;
 		}
 
-		private byte _Unknownbyte;
-
 		private int _WithinIndex;
 		public UClass Within
 		{
@@ -145,12 +143,20 @@ namespace UELib.Core
 				var oldClassRecordSize = _Buffer.ReadIndex();
 				NoteRead( "oldClassRecordSize", oldClassRecordSize );
 			}
+
+#if BIOSHOCK
+			if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
+			{
+				var unknown = _Buffer.ReadInt32();
+				NoteRead( "???", unknown );
+			}
+#endif
 	
 			ClassFlags = _Buffer.ReadUInt32();
 			NoteRead( "ClassFlags", (ClassFlags)ClassFlags );
 
 			// Both were deprecated since then
-			if( Package.Version < 186 )
+			if( Package.Version < 140 )
 			{
 				ClassGuid = _Buffer.ReadGuid();
 				NoteRead( "ClassGuid", ClassGuid );
@@ -171,10 +177,10 @@ namespace UELib.Core
 			{
 				// TODO: Corrigate Version
 				// At least since RoboBlitz(369) - 547(APB)
-				if( Package.Version >= 369 && Package.Version < 547  )
+				if( Package.Version >= 140 && Package.Version < 547  )
 				{
-					_Unknownbyte = _Buffer.ReadByte();	
-					NoteRead( "??Byte", _Unknownbyte );
+					var unknown = _Buffer.ReadByte();	
+					NoteRead( "???", unknown );
 				}
 
 				// Class Name Extends Super.Name Within _WithinIndex

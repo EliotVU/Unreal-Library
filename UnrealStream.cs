@@ -1,4 +1,5 @@
-﻿using System;
+﻿// WARNING: You might get a brain stroke from reading the code below :O
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -124,23 +125,32 @@ namespace UELib
 
 		public string ReadText()
 		{
+#if DEBUG || BINARYMETADATA
+			var lastPosition = _UnrealStream.Position;
+#endif
 			if( _Version < UnrealPackage.VSIZEPREFIXDEPRECATED )
 			{
 				return ReadAnsi();
 			}
 
-			int unfixedSize; var size = (unfixedSize = ReadIndex()) < 0 ? -unfixedSize : unfixedSize;
+			int unfixedSize; var size = (unfixedSize = 
+#if BIOSHOCK 
+				_UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock ? -ReadIndex() :
+#endif
+				ReadIndex()) < 0 ? -unfixedSize : unfixedSize;
 			System.Diagnostics.Debug.Assert( size < 1000000000, "Dangerous string size detected! IT'S OVER 9000 THOUSAND!" );
 			if( unfixedSize > 0 ) // ANSI	 	
 			{
 				var strBytes = new byte[size - 1];
 				Read( strBytes, 0, size - 1 );
 				++ BaseStream.Position; // null
-
 				if( _MyEncoding == Encoding.BigEndianUnicode )
 				{
 					Array.Reverse( strBytes );
 				}
+#if DEBUG || BINARYMETADATA
+				_UnrealStream.LastPosition = lastPosition;
+#endif
 				return Encoding.ASCII.GetString( strBytes );
 			}
 
@@ -149,14 +159,19 @@ namespace UELib
 				var strBytes = new byte[(size * 2) - 2];
 				Read( strBytes, 0, (size * 2) - 2 );
 				BaseStream.Position += 2; // null
-
 				// Convert Byte Str to a String type
 				if( _MyEncoding == Encoding.BigEndianUnicode )
 				{
 					Array.Reverse( strBytes );
 				}
+#if DEBUG || BINARYMETADATA
+				_UnrealStream.LastPosition = lastPosition;
+#endif
 				return Encoding.Unicode.GetString( strBytes );
 			}
+#if DEBUG || BINARYMETADATA
+				_UnrealStream.LastPosition = lastPosition;
+#endif
 			return String.Empty;
 		}
 
@@ -244,14 +259,45 @@ namespace UELib
 
 		public long ReadNameIndex()
 		{
-			if( _Version >= 343 )
+#if DEBUG || BINARYMETADATA
+			var lastPosition = _UnrealStream.Position;
+#endif
+			var index = ReadIndex();
+			if( _Version >= 343 
+#if BIOSHOCK
+				|| _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+#endif
+				)
 			{
-				//var index = ReadInt64();	  // BigEndian?
-				var index = ReadInt32();
 				var num = ReadUInt32();
+#if DEBUG || BINARYMETADATA
+				_UnrealStream.LastPosition = lastPosition;
+#endif
 				return (long)((ulong)num << 32) | (uint)index;	
 			}
-			return ReadIndex();
+			return index;
+		}
+
+		public int ReadNameIndex( out int num )
+		{
+#if DEBUG || BINARYMETADATA
+			var lastPosition = _UnrealStream.Position;
+#endif
+			var index = ReadIndex();
+			if( _UnrealStream.Version >= 343 
+#if BIOSHOCK
+				|| _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock 
+#endif
+				)				
+			{
+				num = ReadInt32()-1;
+#if DEBUG || BINARYMETADATA
+				_UnrealStream.LastPosition = lastPosition;
+#endif
+				return index;
+			}
+			num = -1;
+			return index;
 		}
 
 		public static int ReadIndexFromBuffer( byte[] value, IUnrealStream stream )
@@ -527,21 +573,7 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex( out int num )
 		{
-			if( Version >= 343 )				
-			{
-#if DEBUG || BINARYMETADATA
-				var lastPosition = Position;
-#endif
-				int index = UR.ReadInt32();	 // Number. For example Model_1.
-				num = UR.ReadInt32()-1;
-#if DEBUG || BINARYMETADATA
-				LastPosition = lastPosition;
-#endif
-				return index;
-			}
-
-			num = -1;
-			return UR.ReadIndex();
+			return UR.ReadNameIndex( out num );
 		}
 
 		/// <summary>
@@ -770,13 +802,7 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex()
 		{
-			if( Version >= 343 )
-			{
-				int index = UR.ReadInt32();
-				Skip( 4 );	// NAME_index if > 0
-				return index;		
-			}
-			return UR.ReadIndex();
+			return (int)UR.ReadNameIndex();
 		}
 
 		public string ParseName( int index )
@@ -790,23 +816,8 @@ namespace UELib
 		/// <returns>The read 64bit index casted to a 32bit index.</returns>
 		public int ReadNameIndex( out int num )
 		{
-			if( Version >= 343 )				
-			{
-#if DEBUG || BINARYMETADATA
-				var lastPosition = Position;
-#endif
-				int index = UR.ReadInt32();	 // Number. For example Model_1.
-				num = UR.ReadInt32()-1;
-#if DEBUG || BINARYMETADATA
-				LastPosition = lastPosition;
-#endif
-				return index;
-			}
-
-			num = -1;
-			return UR.ReadIndex();
+			return UR.ReadNameIndex( out num );
 		}
-
 
 		/// <summary>
 		///	Reads a Guid of type A-B-C-D.

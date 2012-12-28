@@ -213,7 +213,7 @@ namespace UELib
 				/// 95/133
 				/// </summary>
 				[Build( 95, 133 )]
-				Thief_DS,			// Has custom support!	
+				Thief_DS,
 
 				/// <summary>
 				/// 99:117/005:008
@@ -231,7 +231,7 @@ namespace UELib
 				/// 110/2609
 				/// </summary>
 				[Build( 110, 2609 )]
-				Unreal2,			// Has custom support!
+				Unreal2,
 
 				/// <summary>
 				/// 118/025:029
@@ -243,7 +243,15 @@ namespace UELib
 				/// 129/027
 				/// </summary>
 				[Build( 129, 27 )]
-				Swat4,				// Has custom support!
+				Swat4,
+
+				/// <summary>
+				/// 130:143/056:059
+				/// </summary>
+				[Build( 130, 143, 56u, 59u, 0, 0 )]
+				Bioshock,
+
+				// IrrationalGames - 129:143/027:059
 
 				/// <summary>
 				/// 369/006
@@ -273,25 +281,25 @@ namespace UELib
 				/// 536/043
 				/// </summary>
 				[Build( 536, 43 )]
-				MirrorsEdge,		// Has custom support!
+				MirrorsEdge,
 
 				/// <summary>
 				/// 547/028:032
 				/// </summary>
 				[Build( 547, 547, 28u, 32u )]
-				APB,				// Has custom support!
+				APB,
 
 				/// <summary>
 				/// 575/000
 				/// </summary>
 				[Build( 575, 0, 0, 1 )]
-				GoW2,				// Has custom support!
+				GoW2,
 
 				/// <summary>
 				/// 576/005
 				/// </summary>
 				[Build( 576, 5 )]
-				CrimeCraft,			// Has custom support!
+				CrimeCraft,
 
 				/// <summary>
 				/// 576/100
@@ -339,7 +347,7 @@ namespace UELib
 				/// 832/046
 				/// </summary>
 				[Build( 832, 46 )]
-				Borderlands2,		// Has custom support!
+				Borderlands2,
 
 				/// <summary>
 				/// 842/001
@@ -363,7 +371,7 @@ namespace UELib
 				/// 904/009
 				/// </summary>
 				[Build( 904, 904, 9u, 9u, 0, 0 )]
-				SpecialForce2		// Has custom support!
+				SpecialForce2
 			}
 
 			public BuildName Name
@@ -411,8 +419,7 @@ namespace UELib
 				if( Name == BuildName.Unset )
 				{
 					Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;	
-				}
-				
+				}	
 			}
 
 			public static bool operator ==( GameBuild b, BuildName i )
@@ -770,6 +777,20 @@ namespace UELib
 				}
 			}
 
+			// Read Import Table
+			if( pkg._Data.ImportsCount > 0 )
+			{
+				stream.Seek( pkg._Data.ImportsOffset, SeekOrigin.Begin );
+				pkg.Imports = new List<UImportTableItem>( (int)pkg._Data.ImportsCount );
+				for( var i = 0; i < pkg._Data.ImportsCount; ++ i )
+				{
+					var imp = new UImportTableItem{Offset = (int)stream.Position, Index = i, Owner = pkg};
+					imp.Deserialize( stream );		
+					imp.Size = (int)(stream.Position - imp.Offset);
+					pkg.Imports.Add( imp );
+				}
+			}
+
 			// Read Export Table
 			if( pkg._Data.ExportsCount > 0 )
 			{
@@ -793,20 +814,6 @@ namespace UELib
 						exp.Size = (int)(stream.Position - exp.Offset);
 						pkg.Exports.Add( exp );
 					}
-				}
-			}
-
-			// Read Import Table
-			if( pkg._Data.ImportsCount > 0 )
-			{
-				stream.Seek( pkg._Data.ImportsOffset, SeekOrigin.Begin );
-				pkg.Imports = new List<UImportTableItem>( (int)pkg._Data.ImportsCount );
-				for( var i = 0; i < pkg._Data.ImportsCount; ++ i )
-				{
-					var imp = new UImportTableItem{Offset = (int)stream.Position, Index = i, Owner = pkg};
-					imp.Deserialize( stream );		
-					imp.Size = (int)(stream.Position - imp.Offset);
-					pkg.Imports.Add( imp );
 				}
 			}
 
