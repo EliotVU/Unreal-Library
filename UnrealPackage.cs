@@ -480,6 +480,12 @@ namespace UELib
 
 			public void Deserialize( IUnrealStream stream )
 			{
+#if HAWKEN
+				if( stream.Package.Build == GameBuild.BuildName.Hawken )
+				{
+					stream.Skip( 4 );
+				}
+#endif
 				NamesCount = stream.ReadUInt32();
 				NamesOffset = stream.ReadUInt32();										    
 				ExportsCount = stream.ReadUInt32();
@@ -490,10 +496,6 @@ namespace UELib
 					stream.Skip( 24 );
 				}
 #endif
-				if( stream.Package.Build == GameBuild.BuildName.Hawken )
-				{
-					stream.Skip( 4 );
-				}
 				ImportsCount = stream.ReadUInt32();
 				ImportsOffset = stream.ReadUInt32();
 				if( stream.Version < 415 )
@@ -723,13 +725,6 @@ namespace UELib
 								if( pkg.CompressedChunks.Capacity > 0 )
 								{
 									pkg.CompressedChunks.Deserialize( stream, pkg.CompressedChunks.Capacity );
-									stream.Chunked = true;
-
-									/*if( pkg.Version >= 482 )
-									{
-										stream.Skip( 4 );
-									}*/
-
 									return pkg;
 
 									//try

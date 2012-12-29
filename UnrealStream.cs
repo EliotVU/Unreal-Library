@@ -360,7 +360,7 @@ namespace UELib
 		public long LastPosition{ get; set; }
 
 		public readonly bool BigEndianCode;
-		public bool Chunked;
+		public bool IsChunked{ get{ return Package.CompressedChunks != null && Package.CompressedChunks.Any(); } }
 
 		public UPackageStream( string path, FileMode mode, FileAccess access ) : base( path, mode, access )
 		{
