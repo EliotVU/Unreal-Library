@@ -139,14 +139,14 @@ namespace UELib.Core
 					StructFlags = _Buffer.ReadUInt32();
 					NoteRead( "StructFlags", (StructFlags)StructFlags );	
 					// Note: Bioshock inherits from the SWAT4's UE2 build.
-					#if BIOSHOCK
+#if BIOSHOCK
 					if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
 					{
 						// TODO: Unknown data, might be related to the above Swat4 data.
 						var unknown = _Buffer.ReadObjectIndex();
 						NoteRead( "???", TryGetIndexObject( unknown ) );
 					}
-					#endif
+#endif
 					// This is high likely to be only for "Irrational Games" builds.
 					if( Package.Version >= VProcessedText )
 					{
