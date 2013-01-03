@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UELib.Core;
+﻿using UELib.Core;
 
 namespace UELib
 {
@@ -51,13 +47,13 @@ namespace UELib
 			}
 		}
 
-		public UArray<FileTable> FileTableList = null;
+		public UArray<FileTable> FileTableList;
 
 		public void Deserialize( IUnrealStream stream )
 		{
 			if( stream.ReadUInt32() != Signature )
 			{
-				throw new System.IO.FileLoadException( stream.ToString() + " isn't a UnrealMod file!" );
+				throw new System.IO.FileLoadException( stream + " isn't a UnrealMod file!" );
 			}
 
 			Summary = new FileSummary();
