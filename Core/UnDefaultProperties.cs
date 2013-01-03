@@ -257,11 +257,7 @@ namespace UELib.Core
                         }
 
                     case PropertyType.StrProperty:
-                        propertyValue = "\"" + _Buffer.ReadString().Replace( "\"", "\\\"" )
-                            .Replace( "\\", "\\\\" )
-                            .Replace( "\n", "\\n" )
-                            .Replace( "\r", "\\r" )
-                            + "\"";
+                        propertyValue = "\"" + _Buffer.ReadString().Escape() + "\"";
                         break;
 
                     case PropertyType.NameProperty:

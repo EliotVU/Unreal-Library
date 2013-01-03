@@ -21,12 +21,7 @@
         protected override void Deserialize()
         {
             base.Deserialize();
-
-            // Size:BYTES:\0
-            Value = _Buffer.ReadString().Replace( "\"", "\\\"" )
-                .Replace( "\\", "\\\\" )
-                .Replace( "\n", "\\n" )
-                .Replace( "\r", "\\r" );
+            Value = _Buffer.ReadString();
         }
         #endregion
     }

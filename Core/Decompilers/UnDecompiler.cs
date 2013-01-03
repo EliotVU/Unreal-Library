@@ -3401,11 +3401,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "\"" + Value.Replace( "\"", "\\\"" )
-                        .Replace( "\\", "\\\\" )
-                        .Replace( "\n", "\\n" )
-                        .Replace( "\r", "\\r" )
-                        + "\"";
+                    return "\"" + Value.Escape() + "\"";
                 }
             }
 
@@ -3421,11 +3417,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "\"" + Value.Replace( "\"", "\\\"" )
-                        .Replace( "\\", "\\\\" )
-                        .Replace( "\n", "\\n" )
-                        .Replace( "\r", "\\r" )
-                        + "\"";
+                    return "\"" + Value.Escape() + "\"";
                 }
             }
 
