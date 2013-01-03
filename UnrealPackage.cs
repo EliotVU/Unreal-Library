@@ -460,7 +460,7 @@ namespace UELib
         /// <summary>
         /// Size of the Header. Basically points to the first Object in the package.
         /// </summary>
-        private uint _HeaderSize;
+        public long HeaderSize{ get; private set; }
 
         /// <summary>
         /// The group the package is associated with in the Content Browser.
@@ -650,7 +650,7 @@ namespace UELib
             if( pkg.Version >= 249 )
             {
                 // Offset to the first class(not object) in the package.
-                pkg._HeaderSize = stream.ReadUInt32();
+                pkg.HeaderSize = stream.ReadUInt32();
                 if( pkg.Version >= 269 )
                 {
                     // UPK content category e.g. Weapons, Sounds or Meshes.
@@ -758,6 +758,7 @@ namespace UELib
                 }
             }
             
+            
             // Read the name table
             if( pkg._Data.NamesCount > 0 )
             {
@@ -824,6 +825,8 @@ namespace UELib
                     pkg.DependsTableList.Add( dep );
                 }
             }*/
+
+            pkg.HeaderSize = stream.Position;
 
             return pkg;
         }
@@ -1303,9 +1306,9 @@ namespace UELib
         #region IBuffered
         public byte[] CopyBuffer()
         {
-            var buff = new byte[_HeaderSize];
+            var buff = new byte[HeaderSize];
             Stream.Seek( 0, SeekOrigin.Begin );
-            Stream.Read( buff, 0, (int)_HeaderSize );
+            Stream.Read( buff, 0, (int)HeaderSize );
             if( Stream.BigEndianCode )
             {
                 Array.Reverse( buff );
@@ -1328,7 +1331,7 @@ namespace UELib
         [Pure]
         public int GetBufferSize()
         {
-            return (int)_HeaderSize;
+            return (int)HeaderSize;
         }
 
         [Pure]
