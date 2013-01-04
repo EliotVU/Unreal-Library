@@ -62,12 +62,7 @@ namespace UELib.Core
 		#endregion
 
 		#region Constructors
-		public UFunction()
-		{
-			_ShouldReleaseBuffer = false;	
-		}
-
-		protected override void Deserialize()
+	    protected override void Deserialize()
 		{
 #if BORDERLANDS2
 			if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )

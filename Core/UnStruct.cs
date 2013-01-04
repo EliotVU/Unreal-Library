@@ -96,16 +96,7 @@ namespace UELib.Core
 		#endregion
 
 		#region Constructors
-		/// <summary>
-		///	Creates a new instance of the UELib.Core.UStruct class. 
-		/// </summary>
-		public UStruct()
-		{
-			// Don't release because structs have scripts, but if ScriptSize == 0 this will still be done!
-			_ShouldReleaseBuffer = false;
-		}
-
-		protected override void Deserialize()
+	    protected override void Deserialize()
 		{
 			base.Deserialize();
 

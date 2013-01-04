@@ -67,7 +67,7 @@ namespace UELib.Core
 			var objN = new ObjectNode( unrealObject ){Text = unrealObject.Name};
 			unrealObject.InitializeNodes( objN );
 
-			if( unrealObject.SerializationState.HasFlag( ObjectState.Errorlized ) )
+			if( unrealObject.DeserializationState.HasFlag( ObjectState.Errorlized ) )
 			{
 				objN.ForeColor = System.Drawing.Color.Red;
 			}

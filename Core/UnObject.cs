@@ -19,7 +19,7 @@ namespace UELib.Core
 	/// Represents a unreal object. 
 	/// </summary>
 	[UnrealRegisterClass]
-	public partial class UObject : Object, IBinaryData, IDisposable, IComparable
+	public partial class UObject : Object, IContainsTable, IBinaryData, IDisposable, IComparable
 	{
 		#region PreInitialized Members
 		/// <summary>
@@ -49,7 +49,7 @@ namespace UELib.Core
 		/// <summary>
 		/// The object's flags.
 		/// </summary>
-		public ulong ObjectFlags{ get{ return ExportTable.ObjectFlags; } }
+		public ulong ObjectFlags{ get{ return ExportTable != null ? ExportTable.ObjectFlags : 0; } }
 
 		private string _CustomName;
 		public string Name
@@ -62,17 +62,7 @@ namespace UELib.Core
 		{
 			get{ return NameTable.Index; }
 		}
-
-		/// <value>
-		/// 32bit in UE2
-		/// 64bit in UE3
-		/// </value>
-		public ulong NameFlags
-		{
-			get{ return NameTable.Flags; }
-			set{ NameTable.Flags = value; }
-		}
-		#endregion
+	    #endregion
 
 		#region Serialized Members
 		protected UObjectStream _Buffer;
@@ -85,13 +75,13 @@ namespace UELib.Core
 			get{ return _Buffer; }
 		}
 
-		protected UObject _Default;
+	    public UObject Default{ get; protected set; }
 		private DefaultPropertiesCollection _Properties;
 
 		/// <summary>
 		/// Object Properties e.g. SubObjects or/and DefaultProperties
 		/// </summary>
-		public DefaultPropertiesCollection Properties{ get{ return _Default != null ? _Default._Properties : null; } }
+		public DefaultPropertiesCollection Properties{ get{ return Default != null ? Default._Properties : _Properties; } }
 
 		private int _NetIndex;
 		#endregion
@@ -104,21 +94,16 @@ namespace UELib.Core
 			Errorlized = 0x02,
 		}
 
-		public ObjectState SerializationState;
+		public ObjectState DeserializationState;
 		public Exception ThrownException;
 		public long ExceptionPosition;
 
-		/// <summary>
-		/// Whether to release the buffer from memory when this Object is done deserializing.
-		/// </summary>
-		protected bool _ShouldReleaseBuffer = true;
-
-		/// <summary>
+	    /// <summary>
 		/// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
 		/// </summary>
 		public bool ShouldDeserializeOnDemand{ get; protected set; }
 
-		public BinaryMetaData BinaryMetaData{ get; set; }
+		public BinaryMetaData BinaryMetaData{ get; private set; }
 		#endregion
 
 		#region Constructors
@@ -135,7 +120,7 @@ namespace UELib.Core
 			}
 			#endif
 
-			if( SerializationState.HasFlag( ObjectState.Deserialied ) )
+			if( DeserializationState.HasFlag( ObjectState.Deserialied ) )
 			{
 				InitBuffer();
 				return;
@@ -150,7 +135,7 @@ namespace UELib.Core
 			// e.g. None.
 			if( ExportTable.SerialSize == 0 )
 			{
-				SerializationState |= ObjectState.Deserialied;
+				DeserializationState |= ObjectState.Deserialied;
 				return;
 			}
 
@@ -161,13 +146,13 @@ namespace UELib.Core
 #endif
 				InitBuffer();
 				Deserialize();
-				SerializationState |= ObjectState.Deserialied;
+				DeserializationState |= ObjectState.Deserialied;
 			}
 			catch( Exception e )
 			{
 				ThrownException = e;
 				ExceptionPosition = _Buffer.Position;
-				SerializationState |= ObjectState.Errorlized;
+				DeserializationState |= ObjectState.Errorlized;
 
 				Console.WriteLine( e.Source + ":" + Name + ":" + e.GetType().Name + " occurred while deserializing;"  
 					+ "\r\n" + e.StackTrace 
@@ -304,11 +289,11 @@ namespace UELib.Core
 		/// <param name="properties">The read properties.</param>
 		protected void DeserializeProperties()
 		{
-			_Default = this;
+			Default = this;
 			_Properties = new DefaultPropertiesCollection();
 			while( true )
 			{
-				var tag = new UDefaultProperty( _Default );
+				var tag = new UDefaultProperty( Default );
 				if( !tag.Deserialize() )
 				{
 					break;

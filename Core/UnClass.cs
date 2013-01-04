@@ -310,11 +310,11 @@ namespace UELib.Core
 			// In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere, 
 			if( Package.Version >= 322 )
 			{ 
-				_Default = GetIndexObject( _Buffer.ReadObjectIndex() );
-				NoteRead( "defaultObjectIndex", _Default );
-				if( _Default != null )
+				Default = GetIndexObject( _Buffer.ReadObjectIndex() );
+				NoteRead( "defaultObjectIndex", Default );
+				if( Default != null )
 				{
-					_Default.BeginDeserializing();
+					Default.BeginDeserializing();
 				}
 			}
 			else
