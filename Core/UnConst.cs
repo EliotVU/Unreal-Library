@@ -21,7 +21,7 @@
         protected override void Deserialize()
         {
             base.Deserialize();
-            Value = _Buffer.ReadString();
+            Value = _Buffer.ReadText();
         }
         #endregion
     }

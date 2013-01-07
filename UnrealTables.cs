@@ -91,7 +91,7 @@ namespace UELib
 
         public void Deserialize( IUnrealStream stream )
         {
-            Name = stream.ReadString();
+            Name = stream.ReadText();
             Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();					
 #if DEOBFUSCATE
             // De-obfuscate names that contain unprintable characters!
@@ -127,7 +127,7 @@ namespace UELib
         public void WriteFlags( UPackageStream stream )
         {
             stream.Seek( Offset, SeekOrigin.Begin );
-            stream.ReadString();
+            stream.ReadText();
             if( stream.Version < QWORDVersion )
             {
                 // Writing UINT

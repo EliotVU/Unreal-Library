@@ -40,7 +40,7 @@ namespace UELib
 
 			public void Deserialize( IUnrealStream stream )
 			{
-				FileName = stream.ReadString();
+				FileName = stream.ReadText();
 				SerialOffset = (uint)stream.ReadIndex();
 				SerialSize = (uint)stream.ReadIndex();
 				FileFlags = stream.ReadUInt32();

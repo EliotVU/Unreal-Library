@@ -42,21 +42,21 @@ namespace UELib.Core
 				)
 			{
 				Super = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
-				NoteRead( "Super", Super );
+				Record( "Super", Super );
 
 				NextField = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
-				NoteRead( "NextField", NextField );
+				Record( "NextField", NextField );
 			}
 			else
 			{
 				NextField = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
-				NoteRead( "NextField", NextField );
+				Record( "NextField", NextField );
 
 				// Should actually resist in UStruct
 				if( this is UStruct )
 				{
 					Super = GetIndexObject( _Buffer.ReadObjectIndex() ) as UField;
-					NoteRead( "Super", Super );
+					Record( "Super", Super );
 				}
 			}
 		}

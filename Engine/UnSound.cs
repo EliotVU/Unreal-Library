@@ -44,24 +44,24 @@ namespace UELib.Engine
 
             // Format
             SoundFormat = Package.GetIndexName( _Buffer.ReadNameIndex() );
-            NoteRead( "SoundFormat", SoundFormat );
+            Record( "SoundFormat", SoundFormat );
 #if UT
             if( (Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
                 || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/ )
             {
                 var unknownFloat = _Buffer.ReadFloat();   
-                NoteRead( "???", unknownFloat );
+                Record( "???", unknownFloat );
             }
 #endif
             if( Package.Version >= 63 )
             {
                 // OffsetNext
                 _Buffer.Skip( 4 );
-                NoteRead( "OffsetNext" );
+                Record( "OffsetNext" );
             }
 
             var size = _Buffer.ReadIndex();
-            NoteRead( "soundSize", size );
+            Record( "soundSize", size );
             // Resource Interchange File Format
             _Buffer.Read( _SoundBuffer = new byte[size], 0, size );
         }

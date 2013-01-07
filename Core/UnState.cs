@@ -66,27 +66,27 @@ namespace UELib.Core
 				{
 				    // TODO: Unknown!
 				    int unknown = _Buffer.ReadInt32();
-					NoteRead( "???", unknown );	
+					Record( "???", unknown );	
 				}
 
 				_ProbeMask = _Buffer.ReadInt32();
-				NoteRead( "_ProbeMask", _ProbeMask );		
+				Record( "_ProbeMask", _ProbeMask );		
 			}
 			else  // UE2 and 1
 			{
 				_ProbeMask = _Buffer.ReadInt64();
-				NoteRead( "_ProbeMask", _ProbeMask );
+				Record( "_ProbeMask", _ProbeMask );
 			}
 
 			// TODO: Corrigate Version; Somewhere between 690 - 706
 			if( Package.Version < 700 )
 		    {
 		        _IgnoreMask = _Buffer.ReadInt64();	
-		        NoteRead( "_IgnoreMask", _IgnoreMask );
+		        Record( "_IgnoreMask", _IgnoreMask );
 		    }
 
 			_LabelTableOffset = _Buffer.ReadInt16();
-			NoteRead( "_LabelTableOffset", _LabelTableOffset );
+			Record( "_LabelTableOffset", _LabelTableOffset );
 
 			if( Package.Version > VStateFlags )
 			{ 
@@ -101,16 +101,16 @@ namespace UELib.Core
 
 				_StateFlags = _Buffer.ReadUInt32();
 				skipStateFlags:
-				NoteRead( "StateFlags", (StateFlags)_StateFlags );
+				Record( "StateFlags", (StateFlags)_StateFlags );
 			}
 					
 			if( Package.Version >= 220 )
 			{ 
 				int mapCount = _Buffer.ReadIndex();
-				NoteRead( "mapcount", mapCount );
+				Record( "mapcount", mapCount );
 				if( mapCount > 0 )
 				{
-					TestEndOfStream( mapCount * 12, "Maps" );
+					AssertEOS( mapCount * 12, "Maps" );
 					_Buffer.Skip( mapCount * 12 );
 					// We don't have to store this.
 					// We don't use it and all that could happen is a OutOfMemory exception!
@@ -138,7 +138,7 @@ namespace UELib.Core
 		#endregion
 
 		#region Methods
-		public bool HasStateFlag( Flags.StateFlags flag )
+		public bool HasStateFlag( StateFlags flag )
 		{
 			return (_StateFlags & (uint)flag) != 0;
 		}
@@ -146,15 +146,6 @@ namespace UELib.Core
 		public bool HasStateFlag( uint flag )
 		{
 			return (_StateFlags & flag) != 0;
-		}
-
-		protected void TestEndOfStream( int size, string testSubject = "" )
-		{
-			if( size > (_Buffer.Length - _Buffer.Position) )
-			{
-				throw new DeserializationException( Name + ": Allocation past end of stream detected! Size:" + size + " Subject:" + testSubject );
-			}
-			//System.Diagnostics.Debug.Assert( size <= (_Buffer.Length - _Buffer.Position), Name + ": Allocation past end of stream detected! " + size );
 		}
 		#endregion
 	}

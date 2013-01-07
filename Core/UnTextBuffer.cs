@@ -30,7 +30,7 @@ namespace UELib.Core
 				_Buffer.Skip( 8 );
 			}
 #endif
-			ScriptText = _Buffer.ReadString();
+			ScriptText = _Buffer.ReadText();
 		}
 		#endregion
 	}

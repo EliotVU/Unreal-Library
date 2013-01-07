@@ -130,7 +130,7 @@ namespace UELib.Core
             int num;
             NameIndex = _Buffer.ReadNameIndex( out num );
             Name = _Owner.GetIndexName( NameIndex, num );
-            _Owner.NoteRead( "NameIndex", Name );
+            _Owner.Record( "NameIndex", Name );
             if( Name.Equals( "None", StringComparison.OrdinalIgnoreCase ) )
             {
                 return false;
@@ -146,40 +146,40 @@ namespace UELib.Core
                 var info = _Buffer.ReadByte();
 
                 Type = (PropertyType)(byte)(info & typeMask);
-                _Owner.NoteRead( "Type", Type );
+                _Owner.Record( "Type", Type );
 
                 // Read the ItemName(StructName) if this is a struct
                 if( Type == PropertyType.StructProperty )
                 {
                     ItemName = _Owner.Package.GetIndexName( _Buffer.ReadNameIndex() );
-                    _Owner.NoteRead( "ItemName", ItemName );
+                    _Owner.Record( "ItemName", ItemName );
                 }
 
                 Size = DeserializeSize( (byte)(info & sizeMask) );
-                _Owner.NoteRead( "Size", Size );
+                _Owner.Record( "Size", Size );
                 
                 if( (info & ArrayIndexMask) > 0 && Type != PropertyType.BoolProperty )
                 {
                     ArrayIndex = DeserializeArrayIndex();
-                    _Owner.NoteRead( "ArrayIndex", ArrayIndex );
+                    _Owner.Record( "ArrayIndex", ArrayIndex );
                 }
             }
             // Unreal Engine 3
             else
             {
                 string typeName = _Owner.Package.GetIndexName( _Buffer.ReadNameIndex() );
-                _Owner.NoteRead( "typeName", typeName );
+                _Owner.Record( "typeName", typeName );
                 Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );				
 
                 Size = _Buffer.ReadInt32();
-                _Owner.NoteRead( "Size", Size );
+                _Owner.Record( "Size", Size );
                 ArrayIndex = _Buffer.ReadInt32();
-                _Owner.NoteRead( "ArrayIndex", ArrayIndex );
+                _Owner.Record( "ArrayIndex", ArrayIndex );
 
                 if( Type == PropertyType.StructProperty )
                 {
                     ItemName = _Owner.GetIndexName( _Buffer.ReadNameIndex( out num ), num );
-                    _Owner.NoteRead( "ItemName", ItemName );
+                    _Owner.Record( "ItemName", ItemName );
                 }
             }
 
@@ -257,7 +257,7 @@ namespace UELib.Core
                         }
 
                     case PropertyType.StrProperty:
-                        propertyValue = "\"" + _Buffer.ReadString().Escape() + "\"";
+                        propertyValue = "\"" + _Buffer.ReadText().Escape() + "\"";
                         break;
 
                     case PropertyType.NameProperty:

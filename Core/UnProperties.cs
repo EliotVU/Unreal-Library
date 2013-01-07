@@ -90,29 +90,29 @@ namespace UELib.Core
 			if( Package.Build == UnrealPackage.GameBuild.BuildName.XIII )
 			{
 				ArrayDim = _Buffer.ReadUShort();
-				NoteRead( "ArrayDim", ArrayDim );		
+				Record( "ArrayDim", ArrayDim );		
 				goto skipInfo;
 			}
 #endif
 
 			var info = _Buffer.ReadUInt32();
 			ArrayDim = (ushort)(info & 0x0000FFFFU);
-			NoteRead( "ArrayDim", ArrayDim );
+			Record( "ArrayDim", ArrayDim );
 			ElementSize = (ushort)(info >> 16);
-			NoteRead( "ElementSize", ElementSize );
+			Record( "ElementSize", ElementSize );
 			skipInfo:
 
 			PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
-			NoteRead( "PropertyFlags", PropertyFlags );
+			Record( "PropertyFlags", PropertyFlags );
 			if( !Package.IsConsoleCooked() )
 			{
 				CategoryIndex = _Buffer.ReadNameIndex();
-				NoteRead( "CategoryIndex", CategoryIndex );
+				Record( "CategoryIndex", CategoryIndex );
 
 				if( Package.Version > 400 )
 				{
 					ArrayEnum = GetIndexObject( _Buffer.ReadObjectIndex() ) as UEnum;
-					NoteRead( "ArrayEnum", ArrayEnum );
+					Record( "ArrayEnum", ArrayEnum );
 				}
 			}
 			else CategoryIndex = -1;
@@ -120,12 +120,12 @@ namespace UELib.Core
 			if( HasPropertyFlag( Flags.PropertyFlagsLO.Net ) )
 			{
 				RepOffset = _Buffer.ReadUShort();
-				NoteRead( "RepOffset", RepOffset );
+				Record( "RepOffset", RepOffset );
 			}
 
 			if( HasPropertyFlag( Flags.PropertyFlagsLO.New ) && Package.Version <= 128 )
 			{
-				string unknown = _Buffer.ReadString();
+				string unknown = _Buffer.ReadText();
 				Console.WriteLine( "Found a property flagged with New:" + unknown );
 			}
 

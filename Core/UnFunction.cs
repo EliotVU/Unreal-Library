@@ -68,7 +68,7 @@ namespace UELib.Core
 			if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
 			{
 				var size = _Buffer.ReadUShort();
-				NoteRead( "??size", size );
+				Record( "??size", size );
 				_Buffer.Skip( size * 2 );
 			}
 #endif
@@ -76,9 +76,9 @@ namespace UELib.Core
 			base.Deserialize();
 
 			NativeToken = _Buffer.ReadUShort();
-			NoteRead( "NativeToken", NativeToken );
+			Record( "NativeToken", NativeToken );
 			OperPrecedence = _Buffer.ReadByte();
-			NoteRead( "OperPrecedence", OperPrecedence );
+			Record( "OperPrecedence", OperPrecedence );
 			if( Package.Version < 69 )
 			{
 				// ParmsSize, NumParms, and ReturnValueOffse
@@ -86,18 +86,18 @@ namespace UELib.Core
 			}
 
 			FunctionFlags = _Buffer.ReadUInt32();
-			NoteRead( "FunctionFlags", (FunctionFlags)FunctionFlags );
+			Record( "FunctionFlags", (FunctionFlags)FunctionFlags );
 			if( HasFunctionFlag( Flags.FunctionFlags.Net ) )
 			{
 				RepOffset = _Buffer.ReadUShort();
-				NoteRead( "RepOffset", RepOffset );
+				Record( "RepOffset", RepOffset );
 			}
 
 			// UStruct::FriendlyName is moved to UFunction in UE3
 			if( Package.Version >= 189 && !Package.IsConsoleCooked() )
 			{
 				FriendlyNameIndex = _Buffer.ReadNameIndex();
-				NoteRead( "FriendlyNameIndex", Package.Names[FriendlyNameIndex] );
+				Record( "FriendlyNameIndex", Package.Names[FriendlyNameIndex] );
 			}
 		}
 

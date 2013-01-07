@@ -23,7 +23,7 @@ namespace UELib.Core
                 if( stream.Version <= 540 )
                 {
                     // e.g. Core.Object.X
-                    FieldName = stream.ReadString();
+                    FieldName = stream.ReadText();
                 }
                 else 
                 {
@@ -98,7 +98,7 @@ namespace UELib.Core
             public void Deserialize( IUnrealStream stream )
             {
                 TagNameIndex = stream.ReadNameIndex();
-                TagValue = stream.ReadString();
+                TagValue = stream.ReadText();
             }
 
             /// <summary>

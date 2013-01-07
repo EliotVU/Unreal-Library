@@ -660,7 +660,7 @@ namespace UELib
                 if( pkg.Version >= 269 )
                 {
                     // UPK content category e.g. Weapons, Sounds or Meshes.
-                    pkg.Group = stream.ReadString();
+                    pkg.Group = stream.ReadText();
                 }
             }
 

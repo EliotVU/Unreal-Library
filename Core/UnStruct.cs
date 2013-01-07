@@ -104,17 +104,17 @@ namespace UELib.Core
 			if( !Package.IsConsoleCooked() )
 			{
 				ScriptText = _Buffer.ReadObjectIndex();
-				NoteRead( "ScriptText", TryGetIndexObject( ScriptText ) );
+				Record( "ScriptText", TryGetIndexObject( ScriptText ) );
 			}
 
 			Children = _Buffer.ReadObjectIndex();
-			NoteRead( "Children", TryGetIndexObject( Children ) );
+			Record( "Children", TryGetIndexObject( Children ) );
 
 			if( Package.Version < VFriendlyNameMoved )
 			{ 
 				// Moved to UFunction in UE3
 				FriendlyNameIndex = _Buffer.ReadNameIndex();
-				NoteRead( "FriendlyNameIndex", Package.Names[FriendlyNameIndex] );
+				Record( "FriendlyNameIndex", Package.Names[FriendlyNameIndex] );
 			}
 
 			if( Package.Version >= VStructFlags )
@@ -122,27 +122,27 @@ namespace UELib.Core
 				if( Package.Version >= VCppText && !Package.IsConsoleCooked() )
 				{
 					CppText = _Buffer.ReadObjectIndex();
-					NoteRead( "CppText", TryGetIndexObject( CppText ) );
+					Record( "CppText", TryGetIndexObject( CppText ) );
 				}
 
 				if( Package.Version < VStructFlagsMoved )
 				{
 					StructFlags = _Buffer.ReadUInt32();
-					NoteRead( "StructFlags", (StructFlags)StructFlags );	
+					Record( "StructFlags", (StructFlags)StructFlags );	
 					// Note: Bioshock inherits from the SWAT4's UE2 build.
 #if BIOSHOCK
 					if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
 					{
 						// TODO: Unknown data, might be related to the above Swat4 data.
 						var unknown = _Buffer.ReadObjectIndex();
-						NoteRead( "???", TryGetIndexObject( unknown ) );
+						Record( "???", TryGetIndexObject( unknown ) );
 					}
 #endif
 					// This is high likely to be only for "Irrational Games" builds.
 					if( Package.Version >= VProcessedText )
 					{
 						ProcessedText = _Buffer.ReadObjectIndex();
-						NoteRead( "ProcessedText", TryGetIndexObject( ProcessedText ) );
+						Record( "ProcessedText", TryGetIndexObject( ProcessedText ) );
 					}
 				}
 			}
@@ -150,18 +150,18 @@ namespace UELib.Core
 			if( !Package.IsConsoleCooked() )
 			{
 				Line = _Buffer.ReadInt32();
-				NoteRead( "Line", Line );
+				Record( "Line", Line );
 				TextPos = _Buffer.ReadInt32();
-				NoteRead( "TextPos", TextPos );
+				Record( "TextPos", TextPos );
 			}
 
 			ByteScriptSize = _Buffer.ReadInt32();
-			NoteRead( "ByteScriptSize", ByteScriptSize );
+			Record( "ByteScriptSize", ByteScriptSize );
 			const int vDataScriptSize = 639;
 			if( Package.Version >= vDataScriptSize )
 			{
 				DataScriptSize = _Buffer.ReadInt32();
-				NoteRead( "DataScriptSize", DataScriptSize );
+				Record( "DataScriptSize", DataScriptSize );
 			}
 			else 
 			{

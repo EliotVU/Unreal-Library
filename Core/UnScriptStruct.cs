@@ -10,7 +10,7 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 			StructFlags = _Buffer.ReadUInt32();
-			NoteRead( "StructFlags", (StructFlags)StructFlags );
+			Record( "StructFlags", (StructFlags)StructFlags );
 			DeserializeProperties();
 		}	
 		#endregion
