@@ -138,7 +138,7 @@ namespace UELib
 				_UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock ? -ReadIndex() :
 #endif
 				ReadIndex()) < 0 ? -unfixedSize : unfixedSize;
-			System.Diagnostics.Debug.Assert( size < 1000000000, "Dangerous string size detected! IT'S OVER 9000 THOUSAND!" );
+			System.Diagnostics.Debug.Assert( size < 1000000, "Dangerous string size detected! IT'S OVER 9000 THOUSAND!" );
 			if( unfixedSize > 0 ) // ANSI	 	
 			{
 				var strBytes = new byte[size - 1];

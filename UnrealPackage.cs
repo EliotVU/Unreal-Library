@@ -332,6 +332,12 @@ namespace UELib
                 BulletStorm,
 
                 /// <summary>
+                /// 801/030
+                /// </summary>
+                [Build( 801, 30 )]
+                Dishonored,
+
+                /// <summary>
                 /// 828/000
                 /// </summary>
                 [Build( 828, 0 )]

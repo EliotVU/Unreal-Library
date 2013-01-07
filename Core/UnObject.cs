@@ -665,6 +665,7 @@ namespace UELib.Core
 				}
 			}
 #endif
+#if LOG_RECORDS
 			if( varObject == null )
 			{
 				Console.WriteLine( varName );
@@ -678,6 +679,7 @@ namespace UELib.Core
 				+ varName.PadRight( 32, ' ' ) + ":" + propertyType.Name.PadRight( 32, ' ' ) 
 				+ " => " + varObject 
 			);
+#endif
 		}
 
 		public int CompareTo( object obj )

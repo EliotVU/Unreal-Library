@@ -225,9 +225,9 @@ namespace UELib.Core
             try
             {
                 if( Package.Version >= UnrealPackage.VDLLBIND
-                    && String.Compare( DLLName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
+                    && String.Compare( DLLBindName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
                 {
-                    output += "\r\n\tdllbind(" + DLLName + ")";
+                    output += "\r\n\tdllbind(" + DLLBindName + ")";
                 }
             }
             catch
