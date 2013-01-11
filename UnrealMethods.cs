@@ -210,22 +210,6 @@ namespace UELib
             return Find( prop => prop.Name == name );
         }
 
-        public UDefaultProperty FindPropertyByIndex( int index )
-        {
-            return Find( prop => prop.NameIndex == index );
-        }
-
-        public bool ContainsIndex( int index )
-        {
-            return FindPropertyByIndex( index ) != null;
-        }
-
-        public bool ContainsIndex( int index, out UDefaultProperty prop )
-        {
-            prop = FindPropertyByIndex( index );
-            return prop != null;
-        }
-
         public bool ContainsName( string name )
         {
             return FindPropertyByName( name ) != null;

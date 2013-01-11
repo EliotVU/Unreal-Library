@@ -23,25 +23,34 @@ namespace UELib.Core
         private const byte			DoNotAppendName		= 0x01;
         private const byte			ReplaceNameMarker	= 0x02;
 
+        private const int           V3                  = 220;
+        private const int           VEnumName           = 633;
+        private const int           VBoolSizeToOne      = 673;
+
         private IUnrealStream		_Buffer{ get{ return _Owner.Buffer; } }
         private readonly UObject	_Owner;
         private UStruct				_Outer;
 
-        internal long				_PropertyOffset{ get; private set; }
+        internal long				_BeginOffset{ get; set; }
         private long				_ValueOffset{ get; set; }
+        private long                _EndOffset{ get{ return _ValueOffset + Size; } }
         private byte				_TempFlags{ get; set; }
 
         #region Serialized Members
         /// <summary>
-        /// Name of the property
+        /// Name of the UProperty.
         /// </summary>
         public string				Name{ get; private set; }
-        public int					NameIndex;
 
         /// <summary>
-        /// Name of the struct not UStructProperty!, if IsA UStructProperty only
+        /// Name of the UStruct. If type equals StructProperty.
         /// </summary>
         private string				ItemName{ get; set; }
+
+        /// <summary>
+        /// Name of the UEnum. If Type equals ByteProperty.
+        /// </summary>
+        private string              EnumName{ get; set; }
 
         /// <summary>
         /// See PropertysType enum in UnrealFlags.cs
@@ -57,6 +66,11 @@ namespace UELib.Core
         /// Whether this property is part of an array, and the index into it
         /// </summary>
         public int					ArrayIndex = -1;
+
+        /// <summary>
+        /// Value of the UBoolProperty. If Type equals BoolProperty.
+        /// </summary>
+        private bool                _BoolValue;
         #endregion
 
         #region Constructors
@@ -125,17 +139,17 @@ namespace UELib.Core
 
         public bool Deserialize()
         {
-            _PropertyOffset = _Buffer.Position;
+            _BeginOffset = _Buffer.Position;
 
             Name = _Buffer.ReadName();
-            _Owner.Record( "NameIndex", Name );
+            _Owner.Record( "Name", Name );
             if( Name.Equals( "None", StringComparison.OrdinalIgnoreCase ) )
             {
                 return false;
             }
 
             // Unreal Engine 1 and 2
-            if( _Buffer.Version < 220 )
+            if( _Buffer.Version < V3 )
             {
                 const byte typeMask = 0x0F;
                 const byte sizeMask = 0x70;
@@ -174,10 +188,25 @@ namespace UELib.Core
                 ArrayIndex = _Buffer.ReadInt32();
                 _Owner.Record( "ArrayIndex", ArrayIndex );
 
-                if( Type == PropertyType.StructProperty )
+                switch( Type )
                 {
-                    ItemName = _Buffer.ReadName();
-                    _Owner.Record( "ItemName", ItemName );
+                    case PropertyType.StructProperty:
+                        ItemName = _Buffer.ReadName();
+                        _Owner.Record( "ItemName", ItemName );
+                        break;
+
+                    case PropertyType.ByteProperty:
+                        if( _Buffer.Version >= VEnumName )
+                        {
+                            EnumName = _Buffer.ReadName();
+                            _Owner.Record( "EnumName", EnumName );
+                        }
+                        break;
+
+                    case PropertyType.BoolProperty:
+                        _BoolValue = _Buffer.Version >= VBoolSizeToOne ? _Buffer.ReadByte() > 0 : _Buffer.ReadInt32() > 0;
+                        _Owner.Record( "_BoolValue", _BoolValue );
+                        break;
                 }
             }
 
@@ -188,11 +217,8 @@ namespace UELib.Core
             }
             finally
             {
-                // Size is only accurate before 220
-                if( _Buffer.Version < 220 )
-                {
-                    _Buffer.Position = _ValueOffset + Size;
-                }
+                // Even if something goes wrong, we can still skip everything and safely deserialize the next property if any!
+                _Buffer.Position = _EndOffset;
             }
             return true;
         }
@@ -204,7 +230,7 @@ namespace UELib.Core
         /// 	Only call after the whole package has been deserialized!
         /// </summary>
         /// <returns>The deserialized value if any.</returns>
-        public string DeserializeValue( DeserializeFlags deserializeFlags = DeserializeFlags.None )
+        private string DeserializeValue( DeserializeFlags deserializeFlags = DeserializeFlags.None )
         {
             _Buffer.Seek( _ValueOffset, System.IO.SeekOrigin.Begin );
             try
@@ -226,7 +252,7 @@ namespace UELib.Core
         {
             if( _Buffer.Position - _ValueOffset > Size ) 
             {
-                throw new DeserializationException( "End of defaultpropertyies stream reached..." );
+                throw new DeserializationException( "End of defaultproperties stream reached..." );
             }
 
             var orgOuter = _Outer;
@@ -238,19 +264,22 @@ namespace UELib.Core
                 {
                     case PropertyType.BoolProperty:
                         { 
-                            bool value;
-                            // i.e. within a struct or array we need to deserialize the value.
-                            if( (deserializeFlags & DeserializeFlags.Complex) != 0 || _Buffer.Version >= 222 )
+                            if( _Buffer.Version >= V3 )
                             {
-                                value = _Buffer.Version >= 673
-                                    ? _Buffer.ReadByte() > 0
-                                    : _Buffer.ReadInt32() > 0;
+                                propertyValue = _BoolValue ? "true" : "false";
                             }
                             else
                             {
-                                value = ArrayIndex != 0;
+                                // i.e. within a struct or array we need to deserialize the value.
+                                if( (deserializeFlags & DeserializeFlags.Complex) != 0 )
+                                {
+                                    propertyValue = _Buffer.ReadInt32() > 0 ? "true" : "false";
+                                }
+                                else
+                                {
+                                    propertyValue = ArrayIndex != 0 ? "true" : "false";
+                                }
                             }
-                            propertyValue = value ? "true" : "false";
                             break;
                         }
 
@@ -273,31 +302,18 @@ namespace UELib.Core
                         break;
 
                     case PropertyType.ByteProperty:
-                        switch( Size )
+                        if( _Buffer.Version >= V3 && Size == 8 )
+                        {   
+                            var enumValue = _Buffer.ReadName();
+                            propertyValue = enumValue;
+                            if( _Buffer.Version >= VEnumName )
+                            {
+                                propertyValue = EnumName + "." + propertyValue;
+                            }
+                        }
+                        else
                         {
-                            case 8:
-                                var enumType = _Buffer.ReadName();
-                                if( _Buffer.Version >= 633 )
-                                {
-                                    var enumValue = _Buffer.ReadName();
-                                    propertyValue = enumType + "." + enumValue;
-                                }
-                                else
-                                {
-                                    propertyValue = enumType;
-                                }
-                                break;
-
-                            case 1:
-                                if( _Buffer.Version >= 633 )
-                                    _Buffer.ReadNameIndex();
-
-                                propertyValue = _Buffer.ReadByte().ToString( CultureInfo.InvariantCulture );
-                                break;
-
-                            default:
-                                propertyValue = _Buffer.ReadByte().ToString( CultureInfo.InvariantCulture );
-                                break;
+                            propertyValue = _Buffer.ReadByte().ToString( CultureInfo.InvariantCulture );
                         }
                         break;
 
@@ -690,8 +706,7 @@ namespace UELib.Core
             }
             catch( Exception e )
             {
-                return propertyValue + "\r\n" + UDecompilingState.Tabs 
-                    + "// Exception thrown while deserializing " + Name + "\t" + e;
+                return propertyValue + "\r\n/* Exception thrown while deserializing " + Name + "\r\n" + e + " */";
             }
             finally
             {

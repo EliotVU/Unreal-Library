@@ -64,8 +64,8 @@ namespace UELib.Core
 
 				// FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
 				output += UDecompilingState.Tabs +
-#if DEBUG
-				"/*" + UnrealMethods.FlagToString( (uint)Properties[i]._PropertyOffset ) + "*/\t" +
+#if DEBUG_POSITIONS
+				"/*" + UnrealMethods.FlagToString( (uint)Properties[i]._BeginOffset ) + "*/\t" +
 #endif
 				propOutput + "\r\n";
 			}
