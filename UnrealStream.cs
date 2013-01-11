@@ -566,7 +566,13 @@ namespace UELib
 
         public string ReadName()
         {
-            return Package.GetIndexName( ReadNameIndex() );
+            int num;
+            var name = Package.GetIndexName( ReadNameIndex( out num ) );
+            if( num > 0 )
+            {
+                name += "_" + num;
+            }
+            return name;
         }
 
         public string ParseName( int index )
@@ -814,7 +820,13 @@ namespace UELib
 
         public string ReadName()
         {
-            return Package.GetIndexName( ReadNameIndex() );
+            int num;
+            var name = Package.GetIndexName( ReadNameIndex( out num ) );
+            if( num > 0 )
+            {
+                name += "_" + num;
+            }
+            return name;
         }
 
         public string ParseName( int index )

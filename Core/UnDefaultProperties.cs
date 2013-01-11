@@ -127,9 +127,7 @@ namespace UELib.Core
         {
             _PropertyOffset = _Buffer.Position;
 
-            int num;
-            NameIndex = _Buffer.ReadNameIndex( out num );
-            Name = _Owner.GetIndexName( NameIndex, num );
+            Name = _Buffer.ReadName();
             _Owner.Record( "NameIndex", Name );
             if( Name.Equals( "None", StringComparison.OrdinalIgnoreCase ) )
             {
@@ -151,7 +149,7 @@ namespace UELib.Core
                 // Read the ItemName(StructName) if this is a struct
                 if( Type == PropertyType.StructProperty )
                 {
-                    ItemName = _Owner.Package.GetIndexName( _Buffer.ReadNameIndex() );
+                    ItemName = _Buffer.ReadName();
                     _Owner.Record( "ItemName", ItemName );
                 }
 
@@ -167,7 +165,7 @@ namespace UELib.Core
             // Unreal Engine 3
             else
             {
-                string typeName = _Owner.Package.GetIndexName( _Buffer.ReadNameIndex() );
+                string typeName = _Buffer.ReadName();
                 _Owner.Record( "typeName", typeName );
                 Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );				
 
@@ -178,7 +176,7 @@ namespace UELib.Core
 
                 if( Type == PropertyType.StructProperty )
                 {
-                    ItemName = _Owner.GetIndexName( _Buffer.ReadNameIndex( out num ), num );
+                    ItemName = _Buffer.ReadName();
                     _Owner.Record( "ItemName", ItemName );
                 }
             }
@@ -262,9 +260,7 @@ namespace UELib.Core
 
                     case PropertyType.NameProperty:
                         {
-                            int nameNum;
-                            int nameIndex = _Buffer.ReadNameIndex( out nameNum );
-                            propertyValue = _Owner.GetIndexName( nameIndex, nameNum );
+                            propertyValue = _Buffer.ReadName();
                             break;
                         }
 
@@ -280,16 +276,15 @@ namespace UELib.Core
                         switch( Size )
                         {
                             case 8:
-                                int enumType = _Buffer.ReadNameIndex();
+                                var enumType = _Buffer.ReadName();
                                 if( _Buffer.Version >= 633 )
                                 {
-                                    int enumValue = _Buffer.ReadNameIndex();
-                                    propertyValue = _Owner.Package.GetIndexName( enumType ) + "."
-                                        + _Owner.Package.GetIndexName( enumValue );
+                                    var enumValue = _Buffer.ReadName();
+                                    propertyValue = enumType + "." + enumValue;
                                 }
                                 else
                                 {
-                                    propertyValue = _Owner.Package.GetIndexName( enumType );
+                                    propertyValue = enumType;
                                 }
                                 break;
 
@@ -310,43 +305,43 @@ namespace UELib.Core
                     case PropertyType.ComponentProperty:
                     case PropertyType.ObjectProperty:
                         {
-                            int objectIndex = _Buffer.ReadObjectIndex();
-                            var obj = _Owner.Package.GetIndexObject( objectIndex );
+                            var obj = _Buffer.ReadObject();
+                            _Owner.Record( "object", obj );
                             if( obj != null )
                             {
-                                // SubObject??, see if the subobject owner is this defaultproperties owner.
-                                if( obj.GetOuterName() == _Owner.Name )
+                                bool inline = false;
+                                // If true, object is an archetype or subobject.
+                                if( obj.Outer == _Owner && (deserializeFlags & DeserializeFlags.WithinStruct) == 0 )
                                 {
-                                    _TempFlags |= DoNotAppendName;
-                                    if( (int)obj > 0 )
+                                    // Unknown objects are only deserialized on demand.
+                                    obj.BeginDeserializing();
+                                    if( obj.Properties != null && obj.Properties.Count > 0 )
                                     {
-                                        // This is probably an unknown object which is by default never deserialized, so force!
-                                        obj.BeginDeserializing();
-                                        if( obj.Properties != null && obj.Properties.Count > 0 )
+                                        inline = true;
+                                        propertyValue = obj.Decompile() + "\r\n" + UDecompilingState.Tabs;
+
+                                        _TempFlags |= DoNotAppendName;
+                                        if( (deserializeFlags & DeserializeFlags.WithinArray) != 0 )
                                         {
-                                            propertyValue = obj.Decompile() + "\r\n" + UDecompilingState.Tabs;
+                                            _TempFlags |= ReplaceNameMarker;
+                                            propertyValue += "%ARRAYNAME%=" + obj.Name;
+                                        }
+                                        else
+                                        {
+                                            propertyValue += Name + "=" + obj.Name;
                                         }
                                     }
-
-                                    if( (deserializeFlags & DeserializeFlags.WithinArray) != 0 )
-                                    {
-                                        _TempFlags |= ReplaceNameMarker;
-                                        propertyValue += "%ARRAYNAME%=" + obj.Name;
-                                    }
-                                    else
-                                    {
-                                        propertyValue += Name + "=" + obj.Name;
-                                    }
                                 }
-                                else
+                                
+                                if( !inline )
                                 {
-                                    string className = obj.GetClassName();
-                                    propertyValue = (String.IsNullOrEmpty( className ) ? "class" : className)
-                                        + "\'" + obj.GetOuterGroup() + "\'";
+                                    // =CLASS'Package.Group(s)+.Name'
+                                    propertyValue = String.Format( "{0}\'{1}\'", obj.GetClassName(), obj.GetOuterGroup() );
                                 }
                             }
                             else
                             {
+                                // =none
                                 propertyValue = "none";
                             }
                             break;
@@ -354,8 +349,8 @@ namespace UELib.Core
 
                     case PropertyType.ClassProperty:
                         {
-                            int index = _Buffer.ReadObjectIndex();
-                            var obj = _Owner.Package.GetIndexObject( index );
+                            var obj = _Buffer.ReadObject();
+                            _Owner.Record( "object", obj );
                             propertyValue = (obj != null ? "class\'" + obj.Name + "\'" : "none");
                             break;
                         }
@@ -364,9 +359,9 @@ namespace UELib.Core
                         {
                             _TempFlags |= DoNotAppendName;
                             int outerIndex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
-                            int delegateIndex = _Buffer.ReadNameIndex();
+                            var delegateValue = _Buffer.ReadName();
                             string delegateName = Name.Substring( 2, Name.Length - 12 );
-                            propertyValue = delegateName + "=" + _Owner.Package.Names[delegateIndex].Name;
+                            propertyValue = delegateName + "=" + delegateValue;
                             break;
                         }
 
@@ -613,6 +608,7 @@ namespace UELib.Core
                     case PropertyType.ArrayProperty:
                         {
                             int arraySize = _Buffer.ReadIndex();
+                            _Owner.Record( "arraySize", arraySize );
                             if( arraySize == 0 )
                             {
                                 propertyValue = "none";
@@ -668,13 +664,17 @@ namespace UELib.Core
                                     string elementValue = DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags );
                                     if( (_TempFlags & ReplaceNameMarker) != 0 )
                                     {
-                                        propertyValue = elementValue.Replace( "%ARRAYNAME%", Name + "(" + i + ")" );
+                                        propertyValue += elementValue.Replace( "%ARRAYNAME%", Name + "(" + i + ")" );
                                         _TempFlags = 0x00;
                                     }
                                     else
                                     {
-                                        propertyValue += Name + "(" + i + ")=" + elementValue
-                                            + (i != arraySize - 1 ? "\r\n" + UDecompilingState.Tabs : String.Empty);
+                                        propertyValue += Name + "(" + i + ")=" + elementValue;
+                                    }
+
+                                    if( i != arraySize - 1 )
+                                    {
+                                        propertyValue += "\r\n" + UDecompilingState.Tabs;
                                     }
                                 }
                             }
