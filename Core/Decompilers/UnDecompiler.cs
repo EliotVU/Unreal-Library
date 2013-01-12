@@ -3276,6 +3276,15 @@ namespace UELib.Core
                 private enum ENetRole
                 {
                     ROLE_None = 0,
+                    ROLE_DumbProxy = 1,
+                    ROLE_SimulatedProxy = 2,
+                    ROLE_AutonomousProxy = 3,
+                    ROLE_Authority = 4
+                }
+
+                private enum ENetRole3
+                {
+                    ROLE_None = 0,
                     ROLE_SimulatedProxy = 1,
                     ROLE_AutonomousProxy = 2,
                     ROLE_Authority = 3,
@@ -3303,9 +3312,11 @@ namespace UELib.Core
                     {
                         switch( FieldToken.LastField.Outer.Name + FieldToken.LastField.Name )
                         {
+                            case "ActorRemoteRole":
                             case "ActorRole":
-                                return Enum.GetName( typeof(ENetRole), Value );
+                                return Enum.GetName( Buffer.Version >= 220 ? typeof(ENetRole3) : typeof(ENetRole), Value );
 
+                            case "LevelInfoNetMode":
                             case "WorldInfoNetMode":
                                 return Enum.GetName( typeof(ENetMode), Value );
                         }
