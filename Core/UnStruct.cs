@@ -30,18 +30,18 @@ namespace UELib.Core
 		/// <summary>
 		/// Index to ScriptText Object (UTextBuffer)
 		/// </summary>
-		public int ScriptText{ get; private set; }
+		public UTextBuffer ScriptText{ get; private set; }
 
 		/// <summary>
 		/// Index to ProcessedText Object (UTextBuffer)
 		/// </summary>
-		public int ProcessedText{ get; private set; }
+		public UTextBuffer ProcessedText{ get; private set; }
 
 		/// <summary>
 		/// Index to CppText Object (UTextBuffer)
 		/// UE3 Only
 		/// </summary>
-		public int CppText{ get; private set; }
+		public UTextBuffer CppText{ get; private set; }
 
 		/// <summary>
 		/// Index to the first child property.
@@ -57,18 +57,6 @@ namespace UELib.Core
 		#endregion
 
 		#region Script Members
-		public UTextBuffer ScriptBuffer
-		{
-			get;
-			private set;
-		}
-
-		public UTextBuffer CppBuffer
-		{
-			get; 
-			protected set;
-		}
-
 		public IList<UConst> Constants{ get; private set; }
 
 		public IList<UEnum> Enums{ get; private set; }
@@ -103,8 +91,8 @@ namespace UELib.Core
 			// --SuperField
 			if( !Package.IsConsoleCooked() )
 			{
-				ScriptText = _Buffer.ReadObjectIndex();
-				Record( "ScriptText", TryGetIndexObject( ScriptText ) );
+				ScriptText = _Buffer.ReadObject() as UTextBuffer;
+				Record( "ScriptText", ScriptText );
 			}
 
 			Children = _Buffer.ReadObjectIndex();
@@ -121,8 +109,8 @@ namespace UELib.Core
 			{
 				if( Package.Version >= VCppText && !Package.IsConsoleCooked() )
 				{
-					CppText = _Buffer.ReadObjectIndex();
-					Record( "CppText", TryGetIndexObject( CppText ) );
+					CppText = _Buffer.ReadObject() as UTextBuffer;
+					Record( "CppText", CppText );
 				}
 
 				if( Package.Version < VStructFlagsMoved )
@@ -141,8 +129,8 @@ namespace UELib.Core
 					// This is high likely to be only for "Irrational Games" builds.
 					if( Package.Version >= VProcessedText )
 					{
-						ProcessedText = _Buffer.ReadObjectIndex();
-						Record( "ProcessedText", TryGetIndexObject( ProcessedText ) );
+						ProcessedText = _Buffer.ReadObject() as UTextBuffer;
+						Record( "ProcessedText", ProcessedText );
 					}
 				}
 			}
@@ -214,22 +202,6 @@ namespace UELib.Core
 				if( Children != 0 )
 				{
 					FindChildren();
-				}
-		
-				// Found by UnStruct::Serialize
-				if( ScriptText != 0 )
-				{
-					ScriptBuffer = (UTextBuffer)TryGetIndexObject( ScriptText ); 
-					if( ScriptBuffer != null )
-					{
-						// Hardcoded because some packages such as CtryTags.u have a different name for the TextBuffer
-						ScriptBuffer.Name = "ScriptText";
-					}
-				}
-
-				if( CppText != 0 )
-				{
-					CppBuffer = (UTextBuffer)TryGetIndexObject( CppText );
 				}
 			}
 			catch( InvalidCastException ice )

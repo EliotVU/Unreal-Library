@@ -13,12 +13,6 @@ namespace UELib.Core
 				sFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.StructFlags), StructFlags ) );
 			}
 
-			if( ScriptBuffer != null )
-			{
-				var objN = new ObjectNode( ScriptBuffer ) {Text = ScriptBuffer.Name};
-				node.Nodes.Add( objN );
-			}
-
 			AddTextNode( _ParentNode, "Script Size:" + DataScriptSize );
 			base.InitNodes( _ParentNode );
 		}

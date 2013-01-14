@@ -122,7 +122,7 @@ namespace UELib.Core
 
 		protected string FormatCPPText()
 		{
-			if( CppBuffer == null )
+			if( CppText == null )
 			{
 				return String.Empty;
 			}
@@ -132,7 +132,7 @@ namespace UELib.Core
 				CPPTextKeyword,
 				UnrealConfig.PrintBeginBracket() 
 			);
-			output += CppBuffer.Decompile() + UnrealConfig.PrintEndBracket() + "\r\n";
+			output += CppText.Decompile() + UnrealConfig.PrintEndBracket() + "\r\n";
 			return output;
 		}
 
