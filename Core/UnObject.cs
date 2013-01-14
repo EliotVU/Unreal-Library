@@ -222,7 +222,7 @@ namespace UELib.Core
                 //}
 
                 _NetIndex = _Buffer.ReadObjectIndex();
-                Record( "NetIndex", GetIndexObject( _NetIndex ) );
+                Record( "NetIndex", TryGetIndexObject( _NetIndex ) );
             }
             else
             {
