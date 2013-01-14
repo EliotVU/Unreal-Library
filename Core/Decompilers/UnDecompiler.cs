@@ -1186,6 +1186,7 @@ namespace UELib.Core
 
                 FieldToken.LastField = null;
 
+                // TODO: Corrigate detection and version.
                 if( Buffer.Version > 300 )
                 {
                     var func = _Owner as UFunction;
@@ -1428,7 +1429,7 @@ namespace UELib.Core
                                     spewOutput = true;
                                 }
 
-                                output.Append( DecompileLabels( false ) );
+                                output.Append( DecompileLabels() );
                             }
                             catch( Exception e )
                             {
@@ -1505,23 +1506,20 @@ namespace UELib.Core
                 return output;
             }
 
-            private string DecompileLabels( bool isStateLabel = true )
+            private string DecompileLabels()
             {
                 string output = String.Empty;
                 for( int i = 0; i < _TempLabels.Count; ++ i )
                 {
-                    if( DeserializedTokens[CurrentTokenIndex + 1].Position < _TempLabels[i].Position )
+                    var label = _TempLabels[i];
+                    if( PeekToken.Position < label.Position )
                         continue;
 
-                    if( (!isStateLabel || _TempLabels[i].Name.StartsWith( "J0x", StringComparison.Ordinal )) 
-                        && (isStateLabel || !_TempLabels[i].Name.StartsWith( "J0x", StringComparison.Ordinal )) 
-                    ) 
-                        continue;
+                    var isStateLabel = !label.Name.StartsWith( "J0x", StringComparison.Ordinal );
 
-                    output += "\r\n" 
-                        + (isStateLabel ? _TempLabels[i].Name : UDecompilingState.Tabs + _TempLabels[i].Name) 
-                        + ":" 
-                        + (isStateLabel ? "\r\n" : String.Empty);
+                    output += isStateLabel 
+                        ? String.Format( "\r\n{0}:\r\n", label.Name ) 
+                        : String.Format( "\r\n{0}:", UDecompilingState.Tabs + label.Name );
                     _TempLabels.RemoveAt( i );
                     -- i;
                 }
@@ -1595,7 +1593,7 @@ namespace UELib.Core
 
                 protected UnrealPackage Package
                 {
-                    get{ return Decompiler._Owner.Package; }
+                    get{ return Buffer.Package; }
                 }
 
                 public byte RepresentToken;	 // Fixed(adjusted at decompile time for compatibility)
@@ -1665,16 +1663,6 @@ namespace UELib.Core
                 protected Token DeserializeNext()
                 {
                     return Decompiler.DeserializeNext();
-                }
-
-                protected Token DeserializeNext( byte tokenCode )
-                {
-                    return Decompiler.DeserializeNext( tokenCode );
-                }
-
-                protected string DisassambleNext()
-                {
-                    return Decompiler.NextToken.Disassemble();
                 }
 
                 public override string ToString()
@@ -2279,6 +2267,21 @@ namespace UELib.Core
                         );
                 }
 
+                protected void Commentize()
+                {
+                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );   
+                }
+
+                protected void Commentize( string statement )
+                {
+                    Decompiler.PreComment = String.Format( "// End:0x{0:X2} [{1}]", CodeOffset, statement );   
+                }
+
+                protected void PrintStatement( string statement )
+                {
+                    Decompiler.PreComment = String.Format( "// [{0}]", statement );                       
+                }
+
                 /// <summary>
                 /// FORMATION ISSUESSES:
                 ///		1:(-> Logic remains the same)	Continue's are decompiled as Else's statements e.g.
@@ -2317,7 +2320,7 @@ namespace UELib.Core
                         {
                             //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position );			
                             ClearLabel();
-                            Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
+                            Commentize();
                             Decompiler._CanAddSemicolon = true;	
                             return "break";
                         }
@@ -2326,9 +2329,9 @@ namespace UELib.Core
                         if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
                         {
                             ClearLabel();
+                            Commentize();
                             Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
                             Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position );
-                            Decompiler.PreComment = String.Format( "// End:0x{0:X2} Break;", CodeOffset );
                             Decompiler._CanAddSemicolon = true;	
                             return "break";
                         }
@@ -2340,7 +2343,7 @@ namespace UELib.Core
                             // Continue
                             if( CodeOffset + 10 == ((JumpToken)nest.Creator).CodeOffset )
                             {
-                                Decompiler.PreComment = String.Format( "// End:0x{0:X2} Continue;", CodeOffset );
+                                PrintStatement( "Continue" );
                                 goto gotoJump;
                             }									
                             // Break
@@ -2349,12 +2352,11 @@ namespace UELib.Core
                                 if( nest.Type == NestManager.Nest.NestType.ForEach )
                                 {
                                     ClearLabel();
-                                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
+                                    Commentize();
                                     Decompiler._CanAddSemicolon = true;
                                     return "break";
                                 }
-
-                                Decompiler.PreComment = String.Format( "// End:0x{0:X2} Break;", CodeOffset );
+                                PrintStatement( "Break" );
                                 goto gotoJump;
                             }
                         }
@@ -2393,14 +2395,13 @@ namespace UELib.Core
                         }
                     }
 
-                    Decompiler.PreComment = "// This is an implied JumpToken;";
+                    if( CodeOffset < Position )
+                    {
+                        PrintStatement( "Continue" );
+                    }
                     gotoJump:
                     // This is an implicit GoToToken.
                     Decompiler._CanAddSemicolon = true;
-                    if( CodeOffset < Position )
-                    {
-                        Decompiler.PreComment += " Continue!";
-                    }
                     return String.Format( "goto J0x{0:X2}", CodeOffset );
                 }
 
@@ -2429,11 +2430,6 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {		
-                    //CodeOffset -= (Position - 1) + (uint)(Size - 1);
-                    /** Could loop from here up to a JumpToken to detect whether this is a While loop. */
-
-                    string condition = DecompileNext();
-
                     // Check whether there's a JumpToken pointing to the begin of this JumpIfNot, 
                     //	if detected, we assume that this If is part of a loop.
                     IsLoop = false;
@@ -2446,12 +2442,13 @@ namespace UELib.Core
                         }
                     }
 
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
+                    Commentize();
                     if( IsLoop )
                     {
                         Decompiler.PreComment += " [While If]";
                     }
 
+                    string condition = DecompileNext();
                     string output = /*(IsLoop ? "while" : "if") +*/ "if(" + condition + ")";
 
                     if( (CodeOffset & UInt16.MaxValue) < Position )
@@ -2483,13 +2480,13 @@ namespace UELib.Core
                 {
                     Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Scope, Position );
                     Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Scope, CodeOffset );
+                    Commentize();
                     return "filtereditoronly";
                 }
             }
 
             public class SwitchToken : Token
             {
-                public int ObjectIndex;
                 public ushort PropertyType;
 
                 public override void Deserialize()
@@ -2498,7 +2495,7 @@ namespace UELib.Core
                     {
                         // Points to the object that was passed to the switch, 
                         // beware that the followed token chain contains it as well!
-                        ObjectIndex = Buffer.ReadObjectIndex();
+                        Buffer.ReadObjectIndex();
                         Decompiler.AddObjectIndexCodeSize();
                     }
 
@@ -2589,7 +2586,7 @@ namespace UELib.Core
                     }
                     else _CaseStack = 0;
 
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
+                    Commentize();
                     if( CodeOffset != UInt16.MaxValue )
                     {
                         Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Case, Position );
@@ -2620,7 +2617,7 @@ namespace UELib.Core
                     // HACK: Use IteratorPopToken instead as the end indicator!
                     //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.ForEach, CodeOffset );
 
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
+                    Commentize();
 
                     // foreach FunctionCall
                     string expression = DecompileNext();
@@ -2654,7 +2651,7 @@ namespace UELib.Core
                     // HACK: Use IteratorPopToken instead as the end indicator!
                     //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.ForEach, CodeOffset );
     
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
+                    Commentize();
 
                     // foreach ArrayVariable( Parameters )
                     string output = "foreach " + DecompileNext() + "(" + DecompileNext();
@@ -2957,30 +2954,26 @@ namespace UELib.Core
             {
                 public override void Deserialize()
                 {
-                    int labelIndex = -1;
+                    var label = String.Empty;
                     int labelPos = -1;
                     do
                     {
-                        if( labelIndex != -1 )
+                        if( label != String.Empty )
                         {
-                            Decompiler._Labels.Add( 
+                            Decompiler._Labels.Add
+                            ( 
                                 new ULabelEntry
                                 {
-                                    Name = Decompiler._Owner.Package.GetIndexName( labelIndex ), 
+                                    Name = label, 
                                     Position = labelPos
                                 } 
                             );
                         }
-
-                        labelIndex = Buffer.ReadNameIndex();
+                        label = Buffer.ReadName();
                         Decompiler.AddNameIndexCodeSize();
-
                         labelPos = Buffer.ReadInt32();
                         Decompiler.AddCodeSize( sizeof(int) );
-
-
-                    } while( String.Compare( Decompiler._Owner.Package.GetIndexName( labelIndex ), 
-                        "None", StringComparison.OrdinalIgnoreCase ) != 0 );
+                    } while( String.Compare( label, "None", StringComparison.OrdinalIgnoreCase ) != 0 );
                 }
             }
 
@@ -3002,11 +2995,9 @@ namespace UELib.Core
 
             public abstract class ComparisonToken : Token
             {
-                public int ObjectIndex;
-
                 public override void Deserialize()
                 {
-                    ObjectIndex = Buffer.ReadObjectIndex();
+                    Buffer.ReadObjectIndex();
                     Decompiler.AddObjectIndexCodeSize();
 
                     DeserializeNext();
@@ -3094,13 +3085,9 @@ namespace UELib.Core
                         Buffer.ReadUShort();	// Size
                         Decompiler.AddCodeSize( sizeof(ushort) );
 
-                        // TODO: Corrigate Version	 (Definitely since Roboblitz(369))
-                        if( Buffer.Version >= 369 )
-                        {
-                            // TODO: UNKNOWN:
-                            Buffer.ReadUShort();
-                            Decompiler.AddCodeSize( sizeof(ushort) );
-                        }
+                        // TODO: UNKNOWN:
+                        Buffer.ReadUShort();
+                        Decompiler.AddCodeSize( sizeof(ushort) );
                     }
                 
                     // The Field
