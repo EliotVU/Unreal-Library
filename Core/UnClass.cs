@@ -143,7 +143,7 @@ namespace UELib.Core
             if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
             {
                 var unknown = _Buffer.ReadInt32();
-                Record( "???", unknown );
+                Record( "???Bioshock_Int32", unknown );
             }
 #endif
     
@@ -151,6 +151,7 @@ namespace UELib.Core
             Record( "ClassFlags", (ClassFlags)ClassFlags );
 
             // Both were deprecated since then
+            // TODO: Corrigate Version
             if( Package.Version < 140 )
             {
                 ClassGuid = _Buffer.ReadGuid();
@@ -185,21 +186,31 @@ namespace UELib.Core
                 _ConfigIndex = _Buffer.ReadNameIndex();
                 Record( "ConfigName", Package.Names[_ConfigIndex] );
 
+                // TODO: Corrigate Version
                 if( Package.Version >= 100 )
                 {
-                    if( Package.Version > 300 )
+                    // TODO: Corrigate Version
+                    if( Package.Version >= 220 )
                     {
+                        // TODO: Corrigate Version
+                        if( Package.Version <= 512 )
+                        {
+                            HideCategories = DeserializeGroup( "HideCategories" );
+                            Record( "HideCategories", HideCategories );
+                        }
+
                         int componentsCount = _Buffer.ReadInt32();
                         Record( "componentsCount", componentsCount );
                         if( componentsCount > 0 )
                         {
                             // NameIndex/ObjectIndex
-                            int bytes = componentsCount * (Package.Version > 490 ? 12 : 8);
+                            int bytes = componentsCount * 12;
                             AssertEOS( bytes, "Components" );
                             _Buffer.Skip( bytes );
                         }
 
                         // RoboBlitz(369)
+                        // TODO: Corrigate Version
                         if( Package.Version >= 369 )
                         {
                             // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
@@ -228,15 +239,19 @@ namespace UELib.Core
                             Record( "DontSortCategories", DontSortCategories );
                         }
 
-                        HideCategories = DeserializeGroup( "HideCategories" );
-                        Record( "HideCategories", HideCategories );
+                        // TODO: Corrigate Version
+                        if( Package.Version < 220 || Package.Version > 512 )
+                        {
+                            HideCategories = DeserializeGroup( "HideCategories" );
+                            Record( "HideCategories", HideCategories );
+                        }
 
+                        // TODO: Corrigate Version
                         if( Package.Version >= 185 )
                         {
                             // 490:GoW1, 576:CrimeCraft
-                            if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories ) 
-                                || Package.Version <= 490 || Package.Version >= 576) 
-                            )
+                            if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories )) 
+                                || Package.Version <= 490 || Package.Version >= 576 )
                             { 
                                 AutoExpandCategories = DeserializeGroup( "AutoExpandCategories" );
                                 Record( "AutoExpandCategories", AutoExpandCategories );
@@ -275,7 +290,7 @@ namespace UELib.Core
                                             goto skipClassGroups;
                                         }
 #endif
-                                        ClassGroups = DeserializeGroup( "ClassGroupsList" );
+                                        ClassGroups = DeserializeGroup( "ClassGroups" );
                                         Record( "ClassGroups", ClassGroups );
                                         if( Package.Version >= 813 )
                                         {
@@ -290,6 +305,7 @@ namespace UELib.Core
                             }
 
                             // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
+                            // TODO: Corrigate Version
                             if( Package.Version > 575 && Package.Version < 678 )
                             {
                                 int unk2 = _Buffer.ReadInt32();
@@ -312,7 +328,7 @@ namespace UELib.Core
 #if DISHONORED
                         if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
                         {
-                            ClassGroups = DeserializeGroup( "ClassGroupsList" );
+                            ClassGroups = DeserializeGroup( "ClassGroups" );
                             Record( "ClassGroups", ClassGroups );   
                         }
 #endif
@@ -328,6 +344,7 @@ namespace UELib.Core
             }	
     
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere, 
+            // TODO: Corrigate Version
             if( Package.Version >= 322 )
             { 
                 Default = GetIndexObject( _Buffer.ReadObjectIndex() );
