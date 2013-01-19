@@ -9,14 +9,7 @@ namespace UELib
 {
     public struct UGenerationTableItem : IUnrealDeserializableClass
     {
-        /// <summary>
-        /// Amount of exported objects that resist within a package.
-        /// </summary>
         public int ExportsCount;
-
-        /// <summary>
-        /// Amount of unique names that resist within a package.
-        /// </summary>
         public int NamesCount;
         public int NetObjectsCount;
 
@@ -28,17 +21,11 @@ namespace UELib
                 stream.Skip( 16 );
             }
 #endif
-
             ExportsCount = stream.ReadInt32();
             NamesCount = stream.ReadInt32();
             if( stream.Version >= 322 )
             {
                 NetObjectsCount = stream.ReadInt32();
-
-                //if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Hawken )
-                //{
-                //    stream.Skip( 4 );
-                //}
             }		
         }
     }
@@ -63,6 +50,15 @@ namespace UELib
         /// Table size in bytes.
         /// </summary>
         public int Size;
+        #endregion
+
+        #region Methods
+        public string ToString( bool shouldPrintMembers )
+        {
+            return shouldPrintMembers 
+                ? String.Format( "\r\nTable Index:{0}\r\nTable Offset:0x{1:X8}\r\nTable Size:0x{2:X8}\r\n", Index, Offset, Size ) 
+                : base.ToString();
+        }
         #endregion
     }
 
@@ -165,10 +161,9 @@ namespace UELib
 
         public override int GetHashCode()
         {
-            return Name != null ? Name.GetHashCode() : 0;
+            return Name.GetHashCode();
         }
 
-        /// <inheritdoc/>
         public override string ToString()
         {
             return Name;
@@ -310,8 +305,8 @@ namespace UELib
         public int SerialOffset;
 
         public uint ExportFlags;
-        public Dictionary<int, int> Components;
-        public List<int> NetObjects;
+        //public Dictionary<int, int> Components;
+        //public List<int> NetObjects;
         #endregion
 
         public void Deserialize( IUnrealStream stream )
@@ -411,6 +406,13 @@ namespace UELib
             Owner.Stream.UW.Write( (uint)ObjectFlags );
         }
         #endregion
+
+        #region Methods
+        public override string ToString()
+        {
+            return ObjectName + "(" + Index + 1 + ")";
+        }
+        #endregion
     }
 
     /// <summary>
@@ -424,6 +426,7 @@ namespace UELib
         /// -- Fixed
         /// </summary>
         public int PackageIndex;
+        [Pure]public UObjectTableItem PackageTable{ get{ return Owner.GetIndexTable( PackageIndex ); } }
         [Pure]public string PackageName{ get{ return PackageNumber > 0 ? Owner.GetIndexName( PackageIndex ) + "_" + PackageNumber : Owner.GetIndexName( PackageIndex ); } }
         public int PackageNumber;
         #endregion
@@ -435,9 +438,16 @@ namespace UELib
             OuterIndex 			= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
             ObjectIndex 		= stream.ReadNameIndex( out ObjectNumber );
         }
+
+        #region Methods
+        public override string ToString()
+        {
+            return ObjectName + "(" + -(Index + 1) + ")";
+        }
+        #endregion
     }
 
-    public sealed class UDependencyTableItem : UObjectTableItem, IUnrealDeserializableClass
+    public sealed class UDependencyTableItem : UTableItem, IUnrealDeserializableClass
     {
         #region Serialized Members
         public List<int> Dependencies;
