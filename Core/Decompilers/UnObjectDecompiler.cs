@@ -1,8 +1,4 @@
-﻿/***********************************************************************
- *	Author - Eliot Van Uytfanghe
- *	Copyright - (C) Eliot Van Uytfanghe 2009 - 2010
- **********************************************************************/
-using System;
+﻿using System;
 
 namespace UELib.Core
 {
