@@ -1360,6 +1360,16 @@ namespace UELib
             {
                 Stream.Dispose();
             }
+
+            if( Objects != null && Objects.Any() )
+            {
+                foreach( var obj in Objects )
+                {
+                    obj.Dispose();
+                }
+                Objects.Clear();
+                Objects = null;
+            }
         }
         #endregion
     }

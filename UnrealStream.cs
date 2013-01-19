@@ -2,18 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.IO;
 using UELib.Core;
 
 namespace UELib
 {
-    public interface IUnrealStream
+    public interface IUnrealStream : IDisposable
     {
         string Name{ get; }
-        void Dispose();
-        void Close();
 
         UnrealPackage Package{ get; }
 
@@ -110,8 +107,8 @@ namespace UELib
     /// </summary>
     public class UnrealReader : BinaryReader
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
-        protected readonly IUnrealStream _UnrealStream;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )] 
+        private readonly IUnrealStream _UnrealStream;
         private readonly Encoding _MyEncoding;
 
         private uint _Version
@@ -608,6 +605,15 @@ namespace UELib
         {
             Position += bytes;
         }
+
+        protected override void Dispose( bool disposing )
+        {
+            if( !disposing ) 
+                return;
+
+            UR = null;
+            UW = null;
+        }
     }
 
     public class UObjectStream : MemoryStream, IUnrealStream
@@ -878,6 +884,15 @@ namespace UELib
         public void EndPeek()
         {
             Position = _PeekStartPosition;
+        }
+
+        protected override void Dispose( bool disposing )
+        {
+            if( !disposing ) 
+                return;
+
+            UR = null;
+            UW = null;
         }
     }
 }
