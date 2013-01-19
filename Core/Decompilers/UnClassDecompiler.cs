@@ -296,9 +296,9 @@ namespace UELib.Core
                 if( String.Compare( inner, "None", StringComparison.OrdinalIgnoreCase ) == 0 
                     || String.Compare( inner, "System", StringComparison.OrdinalIgnoreCase ) == 0 )
                 {
-                    inner = String.Empty;
+                    output += "\r\n\tconfig";
                 }
-                output += "\r\n\tconfig(" + inner + ")";
+                else output += "\r\n\tconfig(" + inner + ")";
             }
 
             if( (ClassFlags & (uint)Flags.ClassFlags.ParseConfig) != 0 )
