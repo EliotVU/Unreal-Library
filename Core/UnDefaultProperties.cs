@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -27,8 +28,8 @@ namespace UELib.Core
         private const int           VEnumName           = 633;
         private const int           VBoolSizeToOne      = 673;
 
-        private IUnrealStream		_Buffer{ get{ return _Owner.Buffer; } }
-        private readonly UObject	_Owner;
+        private IUnrealStream		_Buffer{ get{ return _Container.Buffer; } }
+        private readonly UObject	_Container;
         private UStruct				_Outer;
 
         internal long				_BeginOffset{ get; set; }
@@ -40,17 +41,17 @@ namespace UELib.Core
         /// <summary>
         /// Name of the UProperty.
         /// </summary>
-        public string				Name{ get; private set; }
+        public UName				Name{ get; private set; }
 
         /// <summary>
         /// Name of the UStruct. If type equals StructProperty.
         /// </summary>
-        private string				ItemName{ get; set; }
+        private UName			    ItemName{ get; set; }
 
         /// <summary>
         /// Name of the UEnum. If Type equals ByteProperty.
         /// </summary>
-        private string              EnumName{ get; set; }
+        private UName               EnumName{ get; set; }
 
         /// <summary>
         /// See PropertysType enum in UnrealFlags.cs
@@ -63,7 +64,7 @@ namespace UELib.Core
         private int					Size{ get; set; }
 
         /// <summary>
-        /// Whether this property is part of an array, and the index into it
+        /// Whether this property is part of an static array, and the index into it
         /// </summary>
         public int					ArrayIndex = -1;
 
@@ -76,8 +77,8 @@ namespace UELib.Core
         #region Constructors
         public UDefaultProperty( UObject owner, UStruct outer = null )
         {
-            _Owner = owner;
-            _Outer = (outer ?? _Owner as UStruct) ?? _Owner.Outer as UStruct;
+            _Container = owner;
+            _Outer = (outer ?? _Container as UStruct) ?? _Container.Outer as UStruct;
         }
 
         private int DeserializeSize( byte sizePack )
@@ -118,12 +119,15 @@ namespace UELib.Core
         private int DeserializeArrayIndex()
         {
             int arrayIndex;
+#if DEBUG || BINARYMETADATA
+            var startPos = _Buffer.Position;
+#endif
             byte b = _Buffer.ReadByte();
             if( (b & ArrayIndexMask) == 0 )
             {
                 arrayIndex = b;
             }
-            else if( (b & 0xC0) == 0x80 )
+            else if( (b & 0xC0) == ArrayIndexMask )
             {
                 arrayIndex = ((b & 0x7F) << 8) + _Buffer.ReadByte();
             }
@@ -134,6 +138,9 @@ namespace UELib.Core
                     + (_Buffer.ReadByte() << 8) 
                     + _Buffer.ReadByte();
             }
+#if DEBUG || BINARYMETADATA
+            _Buffer.LastPosition = startPos;
+#endif
             return arrayIndex;
         }
 
@@ -141,9 +148,9 @@ namespace UELib.Core
         {
             _BeginOffset = _Buffer.Position;
 
-            Name = _Buffer.ReadName();
-            _Owner.Record( "Name", Name );
-            if( Name.Equals( "None", StringComparison.OrdinalIgnoreCase ) )
+            Name = _Buffer.ReadNameReference();
+            _Container.Record( "Name", Name );
+            if( Name.IsNone() )
             {
                 return false;
             }
@@ -156,56 +163,72 @@ namespace UELib.Core
 
                 // Packed byte
                 var info = _Buffer.ReadByte();
+                _Container.Record( String.Format( 
+                    "Info(Type={0},SizeMask=0x{1:X2},ArrayIndexMask=0x{2:X2})",
+                    (PropertyType)(byte)(info & typeMask),
+                    (byte)(info & sizeMask),
+                    (info & ArrayIndexMask)
+                    ), info 
+                );
 
                 Type = (PropertyType)(byte)(info & typeMask);
-                _Owner.Record( "Type", Type );
-
-                // Read the ItemName(StructName) if this is a struct
                 if( Type == PropertyType.StructProperty )
                 {
-                    ItemName = _Buffer.ReadName();
-                    _Owner.Record( "ItemName", ItemName );
+                    ItemName = _Buffer.ReadNameReference();
+                    _Container.Record( "ItemName", ItemName );
                 }
 
                 Size = DeserializeSize( (byte)(info & sizeMask) );
-                _Owner.Record( "Size", Size );
-                
-                if( (info & ArrayIndexMask) > 0 && Type != PropertyType.BoolProperty )
+                if( Size >= 0x50 )
                 {
-                    ArrayIndex = DeserializeArrayIndex();
-                    _Owner.Record( "ArrayIndex", ArrayIndex );
+                    _Container.Record( "Size", Size );
+                }
+
+                switch( Type )
+                {
+                    case PropertyType.BoolProperty:
+                        _BoolValue = (info & ArrayIndexMask) != 0;
+                        break;
+
+                    default:
+                        if( (info & ArrayIndexMask) != 0 )
+                        {
+                            ArrayIndex = DeserializeArrayIndex();
+                            _Container.Record( "ArrayIndex", ArrayIndex );
+                        }
+                        break;
                 }
             }
             // Unreal Engine 3
             else
             {
                 string typeName = _Buffer.ReadName();
-                _Owner.Record( "typeName", typeName );
+                _Container.Record( "typeName", typeName );
                 Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );				
 
                 Size = _Buffer.ReadInt32();
-                _Owner.Record( "Size", Size );
+                _Container.Record( "Size", Size );
                 ArrayIndex = _Buffer.ReadInt32();
-                _Owner.Record( "ArrayIndex", ArrayIndex );
+                _Container.Record( "ArrayIndex", ArrayIndex );
 
                 switch( Type )
                 {
                     case PropertyType.StructProperty:
-                        ItemName = _Buffer.ReadName();
-                        _Owner.Record( "ItemName", ItemName );
+                        ItemName = _Buffer.ReadNameReference();
+                        _Container.Record( "ItemName", ItemName );
                         break;
 
                     case PropertyType.ByteProperty:
                         if( _Buffer.Version >= VEnumName )
                         {
-                            EnumName = _Buffer.ReadName();
-                            _Owner.Record( "EnumName", EnumName );
+                            EnumName = _Buffer.ReadNameReference();
+                            _Container.Record( "EnumName", EnumName );
                         }
                         break;
 
                     case PropertyType.BoolProperty:
                         _BoolValue = _Buffer.Version >= VBoolSizeToOne ? _Buffer.ReadByte() > 0 : _Buffer.ReadInt32() > 0;
-                        _Owner.Record( "_BoolValue", _BoolValue );
+                        _Container.Record( "_BoolValue", _BoolValue );
                         break;
                 }
             }
@@ -263,23 +286,13 @@ namespace UELib.Core
                 switch( type )
                 {
                     case PropertyType.BoolProperty:
-                        { 
-                            if( _Buffer.Version >= V3 )
+                        {
+                            var value = _BoolValue;
+                            if( Size == 1 && _Buffer.Version < V3 )
                             {
-                                propertyValue = _BoolValue ? "true" : "false";
+                                value = _Buffer.ReadByte() > 0;
                             }
-                            else
-                            {
-                                // i.e. within a struct or array we need to deserialize the value.
-                                if( (deserializeFlags & DeserializeFlags.Complex) != 0 )
-                                {
-                                    propertyValue = _Buffer.ReadInt32() > 0 ? "true" : "false";
-                                }
-                                else
-                                {
-                                    propertyValue = ArrayIndex != 0 ? "true" : "false";
-                                }
-                            }
+                            propertyValue = value ? "true" : "false";
                             break;
                         }
 
@@ -288,10 +301,8 @@ namespace UELib.Core
                         break;
 
                     case PropertyType.NameProperty:
-                        {
-                            propertyValue = _Buffer.ReadName();
-                            break;
-                        }
+                        propertyValue = _Buffer.ReadName();
+                        break;
 
                     case PropertyType.IntProperty:
                         propertyValue = _Buffer.ReadInt32().ToString( CultureInfo.InvariantCulture );
@@ -322,12 +333,12 @@ namespace UELib.Core
                     case PropertyType.ObjectProperty:
                         {
                             var obj = _Buffer.ReadObject();
-                            _Owner.Record( "object", obj );
+                            _Container.Record( "object", obj );
                             if( obj != null )
                             {
                                 bool inline = false;
                                 // If true, object is an archetype or subobject.
-                                if( obj.Outer == _Owner && (deserializeFlags & DeserializeFlags.WithinStruct) == 0 )
+                                if( obj.Outer == _Container && (deserializeFlags & DeserializeFlags.WithinStruct) == 0 )
                                 {
                                     // Unknown objects are only deserialized on demand.
                                     obj.BeginDeserializing();
@@ -366,7 +377,7 @@ namespace UELib.Core
                     case PropertyType.ClassProperty:
                         {
                             var obj = _Buffer.ReadObject();
-                            _Owner.Record( "object", obj );
+                            _Container.Record( "object", obj );
                             propertyValue = (obj != null ? "class\'" + obj.Name + "\'" : "none");
                             break;
                         }
@@ -376,7 +387,7 @@ namespace UELib.Core
                             _TempFlags |= DoNotAppendName;
                             int outerIndex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
                             var delegateValue = _Buffer.ReadName();
-                            string delegateName = Name.Substring( 2, Name.Length - 12 );
+                            string delegateName = ((string)(Name)).Substring( 2, Name.Length - 12 );
                             propertyValue = delegateName + "=" + delegateValue;
                             break;
                         }
@@ -581,10 +592,8 @@ namespace UELib.Core
                             var hardcodedStructs = (PropertyType[])Enum.GetValues( typeof( PropertyType ) );
                             for( var i = (byte)PropertyType.StructOffset; i < hardcodedStructs.Length; ++ i )
                             {
-                                if( String.Compare( ItemName, 
-                                    Enum.GetName( typeof( PropertyType ), (byte)hardcodedStructs[i] ),
-                                    StringComparison.OrdinalIgnoreCase ) != 0 
-                                ) 
+                                var structType = Enum.GetName( typeof( PropertyType ), (byte)hardcodedStructs[i] );
+                                if( String.Compare( ItemName, structType, StringComparison.OrdinalIgnoreCase ) != 0 ) 
                                     continue;
 
                                 isHardCoded = true;
@@ -599,7 +608,7 @@ namespace UELib.Core
                                 FindProperty( out _Outer );
                                 while( true )
                                 {
-                                    var tag = new UDefaultProperty( _Owner, _Outer );
+                                    var tag = new UDefaultProperty( _Container, _Outer );
                                     if( tag.Deserialize() )
                                     {
                                         propertyValue += tag.Name +
@@ -624,7 +633,7 @@ namespace UELib.Core
                     case PropertyType.ArrayProperty:
                         {
                             int arraySize = _Buffer.ReadIndex();
-                            _Owner.Record( "arraySize", arraySize );
+                            _Container.Record( "arraySize", arraySize );
                             if( arraySize == 0 )
                             {
                                 propertyValue = "none";
@@ -784,5 +793,19 @@ namespace UELib.Core
             return property;
         }
         #endregion
+    }
+
+    [System.Runtime.InteropServices.ComVisible( false )]
+    public sealed class DefaultPropertiesCollection : List<UDefaultProperty>
+    {
+        public UDefaultProperty Find( string name )
+        {
+            return Find( prop => prop.Name == name );
+        }
+
+        public bool Contains( string name )
+        {
+            return Find( name ) != null;
+        }
     }
 }

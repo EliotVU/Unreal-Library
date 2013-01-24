@@ -19,7 +19,7 @@ namespace UELib.Engine
 		{
 			base.Deserialize();
 
-			_Format = Properties.FindPropertyByName( "Format" );
+			_Format = Properties.Find( "Format" );
 			MipMaps = new UArray<MipMap>();
 			MipMaps.Deserialize( _Buffer, delegate( MipMap mm ){ mm.Owner = this; } );
 		}

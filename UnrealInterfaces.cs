@@ -79,6 +79,11 @@ namespace UELib
         void Deserialize( IUnrealStream stream );
     }
 
+    public interface IUnrealSerializableClass
+    {
+        void Serialize( UPackageStream stream );
+    }
+
     /// <summary>
     /// This class is exportable into an non-unreal format
     /// </summary>

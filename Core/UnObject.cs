@@ -49,18 +49,11 @@ namespace UELib.Core
         /// <summary>
         /// The object's flags.
         /// </summary>
-        public ulong ObjectFlags{ get{ return ExportTable != null ? ExportTable.ObjectFlags : 0; } }
+        private ulong _ObjectFlags{ get{ return ExportTable != null ? ExportTable.ObjectFlags : 0; } }
 
-        private string _CustomName;
         public string Name
         {
-            get{ return _CustomName ?? Table.ObjectName; }
-            set{ _CustomName = value; }
-        }
-
-        public int NameIndex
-        {
-            get{ return NameTable.Index; }
+            get{ return Table.ObjectName; }
         }
         #endregion
 
@@ -82,8 +75,6 @@ namespace UELib.Core
         /// Object Properties e.g. SubObjects or/and DefaultProperties
         /// </summary>
         public DefaultPropertiesCollection Properties{ get{ return Default != null ? Default._Properties : _Properties; } }
-
-        private int _NetIndex;
         #endregion
 
         #region General Members
@@ -221,8 +212,8 @@ namespace UELib.Core
                 //    var componentName = _Buffer.ReadNameIndex();
                 //}
 
-                _NetIndex = _Buffer.ReadObjectIndex();
-                Record( "NetIndex", TryGetIndexObject( _NetIndex ) );
+                var netIndex = _Buffer.ReadObjectIndex();
+                Record( "netIndex", TryGetIndexObject( netIndex ) );
             }
             else
             {
@@ -310,28 +301,6 @@ namespace UELib.Core
         }
 
         /// <summary>
-        ///	Write this instance to the Owner.Stream at the present position. 
-        /// NOTE: The package's stream must have Write access!
-        /// </summary>
-        public virtual void Serialize()
-        {
-            CopyToPackageStream();
-        }
-
-        /// <summary>
-        /// Writes the present Buffer to the package's stream. Saving is not implied.
-        /// NOTE: The package's stream must have Write access!
-        /// </summary>
-        private void CopyToPackageStream()
-        {
-            if( _Buffer == null )
-                return;
-
-            Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
-            Package.Stream.Write( _Buffer.GetBuffer(), 0, (int)_Buffer.Length );
-        }
-
-        /// <summary>
         /// Initializes this object instance important members.
         /// </summary>
         public virtual void PostInitialize(){}
@@ -349,7 +318,7 @@ namespace UELib.Core
         [Pure]
         public bool HasObjectFlag( Flags.ObjectFlagsLO flag )
         {
-            return ((uint)ObjectFlags & (uint)flag) != 0;
+            return ((uint)_ObjectFlags & (uint)flag) != 0;
         }
 
         /// <summary>
@@ -362,19 +331,10 @@ namespace UELib.Core
         [Pure]
         public bool HasObjectFlag( Flags.ObjectFlagsHO flag )
         {
-            return ((ObjectFlags >> 32) & (uint)flag) != 0;
+            return ((_ObjectFlags >> 32) & (uint)flag) != 0;
         }
 
         // 32bit aligned.
-        /// <summary>
-        /// Returns a copy of the ObjectFlags.
-        /// </summary>
-        /// <returns>A copy of @ObjectFlags.</returns>
-        [Pure]
-        public ulong GetObjectFlags()
-        {
-            return ObjectFlags;
-        }
 
         // OBJECTFLAG:PUBLIC
         /// <summary>
@@ -549,18 +509,6 @@ namespace UELib.Core
         }
 
         /// <summary>
-        /// Gets the specified object's name along with the instance number.
-        /// </summary>
-        /// <param name="index">The object's nameIndex.</param>
-        /// <param name="number">The instance number.</param>
-        /// <returns></returns>
-        [Pure]
-        public string GetIndexName( int index, int number = -1 )
-        {
-            return number > 0 ? Package.GetIndexName( index ) + "_" + number : Package.GetIndexName( index ); 
-        }
-
-        /// <summary>
         /// Loads the package that this object instance resides in.
         /// 
         /// Note: The package closes when the Owner is done with importing objects data.
@@ -693,7 +641,7 @@ namespace UELib.Core
 
         public int CompareTo( object obj )
         {
-            return NameIndex - ((UObject)obj).NameIndex;
+            return (int)Table.ObjectName - (int)(((UObject)obj).Table.ObjectName);
         }
 
         public override string ToString()
@@ -710,6 +658,11 @@ namespace UELib.Core
         public static explicit operator int( UObject obj )
         {
             return obj == null ? 0 : obj._ObjectIndex;
+        }
+
+        public static explicit operator string( UObject obj )
+        {
+            return obj == null ? null : obj.Name;
         }
     }
 
@@ -737,7 +690,7 @@ namespace UELib.Core
                 // componentClassIndex
                 _Buffer.Position += sizeof(int);
                 var componentNameIndex = _Buffer.ReadNameIndex();
-                if( componentNameIndex == NameIndex )
+                if( componentNameIndex == (int)Table.ObjectName )
                 {
                     base.Deserialize();
                     return;

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UELib.Core;
 
 namespace UELib
 {
@@ -202,24 +201,6 @@ namespace UELib
     #endregion
 
     #region Lists
-    [System.Runtime.InteropServices.ComVisible( false )]
-    public sealed class DefaultPropertiesCollection : List<UDefaultProperty>
-    {
-        public UDefaultProperty FindPropertyByName( string name )
-        {
-            return Find( prop => prop.Name == name );
-        }
 
-        public bool ContainsName( string name )
-        {
-            return FindPropertyByName( name ) != null;
-        }
-
-        public bool ContainsName( string name, out UDefaultProperty prop )
-        {
-            prop = FindPropertyByName( name );
-            return prop != null;
-        }
-    }
     #endregion
 }

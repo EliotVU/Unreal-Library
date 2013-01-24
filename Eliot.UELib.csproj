@@ -155,6 +155,7 @@
     <Compile Include="Core\UnStruct.cs" />
     <Compile Include="Engine\UnFont.cs" />
     <Compile Include="NativesTablePackage.cs" />
+    <Compile Include="UDecompilingState.cs" />
     <Compile Include="UnrealCache.cs" />
     <Compile Include="UnrealConfig.cs" />
     <Compile Include="UnrealFlags.cs" />
@@ -166,6 +167,7 @@
     <Compile Include="UnrealPackage.cs" />
     <Compile Include="UnrealPackageCompression.cs" />
     <Compile Include="UnrealStream.cs" />
+    <Compile Include="UnrealSyntax.cs" />
     <Compile Include="UnrealTables.cs" />
     <Compile Include="UnrealTokens.cs" />
     <Compile Include="UnrealTypes.cs" />
@@ -195,7 +197,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

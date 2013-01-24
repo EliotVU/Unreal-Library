@@ -29,9 +29,9 @@ namespace UELib.Core
 		protected virtual void InitNodes( TreeNode node )
 		{			
 			_ParentNode = AddSectionNode( node, typeof(UObject).Name );
-			var flagNode = AddTextNode( _ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( ObjectFlags ) );
+			var flagNode = AddTextNode( _ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( _ObjectFlags ) );
 			flagNode.ToolTipText = UnrealMethods.FlagsListToString( 
-				UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), ObjectFlags ) 
+				UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), _ObjectFlags ) 
 			);
 
 			AddTextNode( _ParentNode, "Size:" + ExportTable.SerialSize );

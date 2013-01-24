@@ -353,7 +353,7 @@ namespace UELib.Core
                 output += "\r\n\tcollapsecategories";
             }
 
-            // FIX: Might indicate "Interface" in later versions
+            // TODO: Might indicate "Interface" in later versions
             if( HasClassFlag( Flags.ClassFlags.ExportStructs ) && Package.Version < 300 )
             {
                 output += "\r\n\texportstructs";

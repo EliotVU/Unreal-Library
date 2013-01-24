@@ -127,7 +127,7 @@ namespace UELib.Core
 		{
 			base.FindChildren();
 			Functions = new List<UFunction>();
-			for( var child = (UField)GetIndexObject( Children ); child != null; child = child.NextField )
+			for( var child = Children; child != null; child = child.NextField )
 			{
 				if( child.IsClassType( "Function" ) )
 				{

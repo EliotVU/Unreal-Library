@@ -39,6 +39,7 @@ namespace UELib
         /// <returns></returns>
         int ReadNameIndex();
         string ReadName();
+        UName ReadNameReference();
         string ParseName( int index );
 
         /// <summary>
@@ -268,7 +269,7 @@ namespace UELib
 #endif
                 )
             {
-                var num = ReadUInt32();
+                var num = ReadUInt32()-1;
 #if DEBUG || BINARYMETADATA
                 _UnrealStream.LastPosition = lastPosition;
 #endif
@@ -565,11 +566,16 @@ namespace UELib
         {
             int num;
             var name = Package.GetIndexName( ReadNameIndex( out num ) );
-            if( num > 0 )
+            if( num > UName.Numeric )
             {
                 name += "_" + num;
             }
             return name;
+        }
+
+        public UName ReadNameReference()
+        {
+            return new UName( this );
         }
 
         public string ParseName( int index )
@@ -828,11 +834,16 @@ namespace UELib
         {
             int num;
             var name = Package.GetIndexName( ReadNameIndex( out num ) );
-            if( num > 0 )
+            if( num > UName.Numeric )
             {
                 name += "_" + num;
             }
             return name;
+        }
+
+        public UName ReadNameReference()
+        {
+            return new UName( this );
         }
 
         public string ParseName( int index )

@@ -27,49 +27,14 @@ namespace UELib.Core
         }
 
         #region Serialized Members
-        /// <summary>
-        /// Flags of this class
-        /// e.g. Placeable, HideDropDown, Transient and so on	
-        /// </summary>
-        /// <value>
-        /// 32bit in UE2
-        /// 64bit in UE3
-        /// </value>
-        private ulong ClassFlags
-        {
-            get; set;
-        }
+        private ulong   ClassFlags{ get; set; }
 
-        /// <summary>
-        /// guid(xx....) flag (UE2)
-        /// Deprecated @ UE3
-        /// </summary>
-        public string ClassGuid
-        {
-            get;
-            private set;
-        }
-
-        private int _WithinIndex;
-        public UClass Within
-        {
-            get; 
-            protected set;
-        }
-
-        private int _ConfigIndex;
-        /// <summary>
-        /// config(UClass::Config) flag
-        /// </summary>
-        public string ConfigName
-        {
-            get{ return Package.GetIndexName( _ConfigIndex ); }
-        }
-
-        public string DLLBindName;
-        public string NativeClassName = String.Empty;
-
-        public bool ForceScriptOrder;
+        public string   ClassGuid{ get; private set; }
+        public UClass   Within{ get; private set; }
+        public UName    ConfigName{ get; private set; }
+        public UName    DLLBindName{ get; private set; }
+        public string   NativeClassName = String.Empty;
+        public bool     ForceScriptOrder;
 
         /// <summary>
         /// A list of class dependencies that this class depends on. Includes Imports and Exports.
@@ -181,10 +146,10 @@ namespace UELib.Core
 
                 // Class Name Extends Super.Name Within _WithinIndex
                 //		Config(_ConfigIndex);
-                _WithinIndex = _Buffer.ReadObjectIndex();
-                Record( "Within", GetIndexObject( _WithinIndex ) );
-                _ConfigIndex = _Buffer.ReadNameIndex();
-                Record( "ConfigName", Package.Names[_ConfigIndex] );
+                Within = _Buffer.ReadObject() as UClass;
+                Record( "Within", Within );
+                ConfigName = _Buffer.ReadNameReference();
+                Record( "ConfigName", ConfigName );
 
                 // TODO: Corrigate Version
                 if( Package.Version >= 100 )
@@ -323,7 +288,7 @@ namespace UELib.Core
 
                     if( Package.Version >= UnrealPackage.VDLLBIND )
                     {
-                        DLLBindName = _Buffer.ParseName( _Buffer.ReadNameIndex() );
+                        DLLBindName = _Buffer.ReadNameReference();
                         Record( "DLLBindName", DLLBindName );
 #if DISHONORED
                         if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
@@ -347,7 +312,7 @@ namespace UELib.Core
             // TODO: Corrigate Version
             if( Package.Version >= 322 )
             { 
-                Default = GetIndexObject( _Buffer.ReadObjectIndex() );
+                Default = _Buffer.ReadObject();
                 Record( "Default", Default );
                 if( Default != null )
                 {
@@ -367,20 +332,11 @@ namespace UELib.Core
             }
         }
 
-        public override void PostInitialize()
-        {
-            base.PostInitialize();
-            if( _WithinIndex != 0 )
-            {
-                Within = (UClass)Package.GetIndexObject( _WithinIndex );
-            }
-        }
-
         protected override void FindChildren()
         {
             base.FindChildren();
             States = new List<UState>();
-            for( var child = (UField)GetIndexObject( Children ); child != null; child = child.NextField )
+            for( var child = Children; child != null; child = child.NextField )
             {
                 if( child.IsClassType( "State" ) )
                 {

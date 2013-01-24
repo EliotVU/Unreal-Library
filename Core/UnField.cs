@@ -21,15 +21,6 @@ namespace UELib.Core
 		#endregion
 
 		#region Constructors
-		// REMINDER:
-		//	Other:
-		//		Class:SuperIndex->NextIndex
-		//		Const:NoneIndex->SuperIndex->NextIndex
-		//	UE3:756
-		//		Class:ObjectIndex->NextIndex->SuperIndex
-		//		Const:ObjectIndex->NoneIndex->NextIndex
-		//	Conclusion:
-		//		SuperIndex was moved from UField to UStruct
 		protected override void Deserialize()
 		{
 			base.Deserialize();

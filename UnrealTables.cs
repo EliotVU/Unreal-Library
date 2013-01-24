@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Text;
@@ -62,10 +63,94 @@ namespace UELib
         #endregion
     }
 
+    public sealed class UName : IUnrealDeserializableClass
+    {
+        private const string    None = "None";
+        public const int        Numeric = 0;
+
+        private UNameTableItem  _NameItem;
+        private int             _Number;
+
+        private string          _Text
+        {
+            get{ return _Number > Numeric ? _NameItem.Name + "_" + _Number : _NameItem.Name; }
+        }
+
+        private int             _Index
+        {
+            get{ return _NameItem.Index; }
+        }
+
+        public int              Length
+        {
+            get{ return _Text.Length; }
+        }
+
+        public UName( IUnrealStream stream )
+        {
+            Deserialize( stream );
+        }
+
+        public UName( UNameTableItem nameItem, int num )
+        {
+            _NameItem = nameItem;
+            _Number = num;
+        }
+
+        public bool IsNone()
+        {
+            return _NameItem.Name.Equals( None, StringComparison.OrdinalIgnoreCase );
+        }
+
+        public void Deserialize( IUnrealStream stream )
+        {
+            var index = stream.ReadNameIndex( out _Number );
+            _NameItem = stream.Package.Names[index];
+
+            Debug.Assert( _NameItem != null, "_NameItem cannot be null!" );
+            Debug.Assert( _Number >= -1, "Invalid _Number value!" );
+        }
+
+        public override string ToString()
+        {
+            return _Text;
+        }
+
+        public static bool operator ==( UName a, object b )
+        {
+            return Equals( a, b );
+        }
+
+        public static bool operator !=( UName a, object b )
+        {
+            return !Equals( a, b );
+        }
+
+        public static bool operator ==( UName a, string b )
+        {
+            return String.Equals( a, b );
+        }
+
+        public static bool operator !=( UName a, string b )
+        {
+            return !String.Equals( a, b );
+        }
+
+        public static implicit operator string( UName a )
+        {
+            return !Equals( a, null ) ? a._Text : null;
+        }
+
+        public static explicit operator int( UName a )
+        {
+            return a._Index;
+        }
+    }
+
     /// <summary>
     /// Represents a unreal name table with serialized data from a unreal package header.
     /// </summary>
-    public sealed class UNameTableItem : UTableItem, IUnrealDeserializableClass
+    public sealed class UNameTableItem : UTableItem, IUnrealDeserializableClass, IUnrealSerializableClass
     {
         #region Serialized Members
         /// <summary>
@@ -102,28 +187,14 @@ namespace UELib
 #endif
         }
 
-        #region Writing Methods
-        /// <summary>
-        /// Updates the Name inside the Stream to the current set Name of this Table
-        /// </summary>
-        /// <param name="stream">Stream to Update</param>
-        public void WriteName( UPackageStream stream )
+        public void Serialize( UPackageStream stream )
         {
             stream.Seek( Offset, SeekOrigin.Begin );
 
             int size = stream.ReadIndex();
             byte[] rawName = Encoding.ASCII.GetBytes( Name );
             stream.UW.Write( rawName, 0, size - 1 );
-        }
 
-        /// <summary>
-        /// Updates the Flags inside the Stream to the current set Flags of this Table
-        /// </summary>
-        /// <param name="stream">Stream to Update</param>
-        public void WriteFlags( UPackageStream stream )
-        {
-            stream.Seek( Offset, SeekOrigin.Begin );
-            stream.ReadText();
             if( stream.Version < QWORDVersion )
             {
                 // Writing UINT
@@ -135,38 +206,30 @@ namespace UELib
                 stream.UW.Write( Flags );
             }
         }
-        #endregion
-
-        public static bool operator ==( UNameTableItem a, string b )
-        {
-            return a.Name == b;
-        }
-
-        public static bool operator !=( UNameTableItem a, string b )
-        {
-            return a.Name != b;
-        }
-
-        private bool Equals( UNameTableItem other )
-        {
-            return string.Equals( Name, other.Name );
-        }
-
-        public override bool Equals( object obj )
-        {
-            if( ReferenceEquals( null, obj ) ) return false;
-            if( ReferenceEquals( this, obj ) ) return true;
-            return obj is UNameTableItem && Equals( (UNameTableItem)obj );
-        }
-
-        public override int GetHashCode()
-        {
-            return Name.GetHashCode();
-        }
 
         public override string ToString()
         {
             return Name;
+        }
+
+        public static bool operator ==( UNameTableItem a, string b )
+        {
+            return String.Equals( a, b );
+        }
+
+        public static bool operator !=( UNameTableItem a, string b )
+        {
+            return !String.Equals( a, b );
+        }
+
+        public static implicit operator string( UNameTableItem a )
+        {
+            return a.Name;
+        }
+
+        public static implicit operator int( UNameTableItem a )
+        {
+            return a.Index;
         }
     }
 
@@ -194,10 +257,8 @@ namespace UELib
         /// Name index to the name of this object
         /// -- Fixed
         /// </summary>
-        public int ObjectIndex;
-        [Pure]public UNameTableItem ObjectTable{ get{ return Owner.Names[ObjectIndex]; } }
-        [Pure]public string ObjectName{ get{ return ObjectNumber > 0 ? Owner.GetIndexName( ObjectIndex ) + "_" + ObjectNumber : Owner.GetIndexName( ObjectIndex ); } }
-        public int ObjectNumber;
+        [Pure]public UNameTableItem ObjectTable{ get{ return Owner.Names[(int)ObjectName]; } }
+        public UName ObjectName;
 
         /// <summary>
         /// Import:Name index to the class of this object
@@ -320,7 +381,7 @@ namespace UELib
                 stream.Skip( sizeof(int) );
             }
 #endif
-            ObjectIndex 	= stream.ReadNameIndex( out ObjectNumber );	
+            ObjectName 	= stream.ReadNameReference();	
             
             if( stream.Version >= 220 )
             {
@@ -421,22 +482,15 @@ namespace UELib
     public sealed class UImportTableItem : UObjectTableItem, IUnrealDeserializableClass
     {
         #region Serialized Members
-        /// <summary>
-        /// Name index to the package that contains this object class
-        /// -- Fixed
-        /// </summary>
-        public int PackageIndex;
-        [Pure]public UObjectTableItem PackageTable{ get{ return Owner.GetIndexTable( PackageIndex ); } }
-        [Pure]public string PackageName{ get{ return PackageNumber > 0 ? Owner.GetIndexName( PackageIndex ) + "_" + PackageNumber : Owner.GetIndexName( PackageIndex ); } }
-        public int PackageNumber;
+        public UName PackageName;
         #endregion
 
         public void Deserialize( IUnrealStream stream )
         {
-            PackageIndex 		= stream.ReadNameIndex( out PackageNumber );
+            PackageName 		= stream.ReadNameReference();
             ClassIndex 			= stream.ReadNameIndex();
             OuterIndex 			= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
-            ObjectIndex 		= stream.ReadNameIndex( out ObjectNumber );
+            ObjectName 		    = stream.ReadNameReference();
         }
 
         #region Methods
