@@ -1712,6 +1712,11 @@ namespace UELib.Core
                     Decompiler.DeserializeDebugToken();
                 }
 
+                private static string PrecedenceToken( Token t )
+                {
+                    return t is FunctionToken ? String.Format( "({0})", t.Decompile() ) : t.Decompile();
+                }
+
                 protected string DecompilePreOperator( string operatorName )
                 {
                     string output = operatorName + (operatorName.Length > 1 ? " " : String.Empty) + DecompileNext();
@@ -1721,7 +1726,11 @@ namespace UELib.Core
 
                 protected string DecompileOperator( string operatorName )
                 {
-                    string output = DecompileNext() + " " + operatorName + " " + DecompileNext(); 
+                    string output = String.Format( "{0} {1} {2}", 
+                        PrecedenceToken( GrabNextToken() ), 
+                        operatorName, 
+                        PrecedenceToken( GrabNextToken() ) 
+                    );
                     DecompileNext(); // )
                     return output;
                 }
@@ -1748,6 +1757,7 @@ namespace UELib.Core
                     return output;
                 }
 
+                // TODO: Rewrite properly, also fix a suspected bug for UE3 function calls with optional params.
                 protected string DecompileParms()
                 {
                     var outputBuilder = new List<string>();
