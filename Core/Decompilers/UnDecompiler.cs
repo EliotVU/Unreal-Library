@@ -1093,6 +1093,13 @@ namespace UELib.Core
 
                 public readonly List<Nest> Nests = new List<Nest>();
 
+                public void AddNest( Nest.NestType type, uint position, uint endPosition, Token creator = null )
+                {	
+                    creator = creator ?? Decompiler.CurrentToken;
+                    Nests.Add( new NestBegin{Position = position, Type = type, Creator = creator} );
+                    Nests.Add( new NestEnd{Position = endPosition, Type = type, Creator = creator} );
+                }
+
                 public NestBegin AddNestBegin( Nest.NestType type, uint position, Token creator = null )
                 {	
                     var n = new NestBegin {Position = position, Type = type};
@@ -2377,10 +2384,7 @@ namespace UELib.Core
                                     Decompiler._NestChain.RemoveAt( Decompiler._NestChain.Count - 1 );
                                     Decompiler._Nester.Nests.Remove( nestEnd );
 
-                                    Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Else, Position );
-                                    Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Else, CodeOffset );
-
-                                    //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.If, Position );
+                                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.Else, Position, CodeOffset );
 
                                     ClearLabel();
 
@@ -2460,16 +2464,11 @@ namespace UELib.Core
                     }
 
                     Decompiler._CanAddSemicolon = false;
-                    if( IsLoop )
-                    {
-                        Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Loop, Position );
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Loop, CodeOffset );
-                    }
-                    else
-                    {
-                        Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.If, Position );
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.If, CodeOffset );
-                    }
+                    Decompiler._Nester.AddNest( IsLoop 
+                        ? NestManager.Nest.NestType.Loop 
+                        : NestManager.Nest.NestType.If, 
+                        Position, CodeOffset 
+                    );
                     return output;
                 }
             }
@@ -2478,8 +2477,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Scope, Position );
-                    Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Scope, CodeOffset );
+                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.Scope, Position, CodeOffset );
                     Commentize();
                     return "filtereditoronly";
                 }
@@ -2589,9 +2587,7 @@ namespace UELib.Core
                     Commentize();
                     if( CodeOffset != UInt16.MaxValue )
                     {
-                        Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Case, Position );
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, CodeOffset );
-
+                        Decompiler._Nester.AddNest( NestManager.Nest.NestType.Case, Position, CodeOffset );
                         string output = "case " + DecompileNext() + ":";
                         Decompiler._CanAddSemicolon = false;
                         return output;
@@ -2613,10 +2609,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {				  
-                    Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.ForEach, Position, this );
-                    // HACK: Use IteratorPopToken instead as the end indicator!
-                    //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.ForEach, CodeOffset );
-
+                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.ForEach, Position, CodeOffset, this );
                     Commentize();
 
                     // foreach FunctionCall
@@ -2647,9 +2640,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {				  
-                    Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.ForEach, Position, this );
-                    // HACK: Use IteratorPopToken instead as the end indicator!
-                    //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.ForEach, CodeOffset );
+                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.ForEach, Position, CodeOffset, this );
     
                     Commentize();
 
@@ -2690,8 +2681,6 @@ namespace UELib.Core
                             Decompiler._CanAddSemicolon = true;
                             return "break";
                         }
-
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.ForEach, Position );
                     }
                     return String.Empty;
                 }
