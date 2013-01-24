@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using UELib.Tokens;
 
@@ -20,17 +21,20 @@ namespace UELib.Core
             /// <summary>
             /// The Struct that contains the bytecode that we have to deserialize and decompile!
             /// </summary>
-            private readonly UStruct _Owner;
+            private readonly UStruct _Container;
 
             /// <summary>
             /// Pointer to the ObjectStream buffer of 'Owner'
             /// </summary>
-            private UObjectStream Buffer{ get; set; }
+            private UObjectStream Buffer{ get { return _Container.Buffer; } }
 
             /// <summary>
             /// A collection of deserialized tokens, in their correspondence stream order.
             /// </summary>
             public List<Token> DeserializedTokens{ get; private set; }
+
+            [System.ComponentModel.DefaultValue(-1)]
+            public int CurrentTokenIndex{ get; private set; }
 
             public Token NextToken
             {
@@ -39,46 +43,29 @@ namespace UELib.Core
 
             public Token PeekToken
             {
-                get{ return DeserializedTokens[CurrentTokenIndex + 1]; }
+                [Pure]get{ return DeserializedTokens[CurrentTokenIndex + 1]; }
             }
 
             public Token PreviousToken
             {
-                get{ return DeserializedTokens[CurrentTokenIndex - 1]; }
+                [Pure]get{ return DeserializedTokens[CurrentTokenIndex - 1]; }
             }
 
             public Token CurrentToken
             {
-                get{ return DeserializedTokens[CurrentTokenIndex]; }
+                [Pure]get{ return DeserializedTokens[CurrentTokenIndex]; }
             }
 
-            // State
-            [System.ComponentModel.DefaultValue(-1)]
-            public int CurrentTokenIndex
+            public UByteCodeDecompiler( UStruct container )
             {
-                get; private set;
-            }
-
-            public uint CurrentTokenCodePosition
-            {
-                get{ return CurrentToken != null ? CurrentToken.Position : 0; }
-            }
-
-            public UByteCodeDecompiler( UStruct owner )
-            {
-                _Owner = owner;
-                Buffer = _Owner._Buffer;
+                _Container = container;
             }
 
             #region Deserialize
             /// <summary>
             /// The current position in buffer.
             /// </summary>
-            private uint CodePosition
-            {
-                get;
-                set;
-            }
+            private uint CodePosition{ get; set; }
 
             /// <summary>
             /// Fix the values of UE1/UE2 tokens to match the UE3 token values.
@@ -86,7 +73,7 @@ namespace UELib.Core
             private byte FixToken( byte tokenCode )
             {
                 // Adjust UE2 tokens to UE3
-                if( _Owner.Package.Version >= 184 
+                if( _Container.Package.Version >= 184 
                     && 
                     (
                         (tokenCode >= (byte)ExprToken.Unknown && tokenCode < (byte)ExprToken.ReturnNothing) 
@@ -99,7 +86,7 @@ namespace UELib.Core
 
 
                 #if APB
-                if( _Owner.Package.Build == UnrealPackage.GameBuild.BuildName.APB && _Owner.Package.LicenseeVersion >= 32 )
+                if( _Container.Package.Build == UnrealPackage.GameBuild.BuildName.APB && _Container.Package.LicenseeVersion >= 32 )
                 {
                     if( tokenCode == (byte)ExprToken.Return )
                     {
@@ -163,9 +150,9 @@ namespace UELib.Core
                     return;
 
                 _WasDeserialized = true;
-                Buffer.Seek( _Owner.ScriptOffset, System.IO.SeekOrigin.Begin );
+                Buffer.Seek( _Container.ScriptOffset, System.IO.SeekOrigin.Begin );
                 CodePosition = 0;
-                var codeSize = _Owner.ByteScriptSize;
+                var codeSize = _Container.ByteScriptSize;
         
                 CurrentTokenIndex = -1;
                 DeserializedTokens = new List<Token>();
@@ -191,7 +178,7 @@ namespace UELib.Core
                             Console.WriteLine( "Couldn't backup from this error! Decompiling aborted!" );
                             return;
                         }
-                        Console.WriteLine( "Object:" + _Owner.Name );
+                        Console.WriteLine( "Object:" + _Container.Name );
                         Console.WriteLine( "Failed to deserialize token at position:" + CodePosition );
                         Console.WriteLine( "Exception:" + e.Message );
                         Console.WriteLine( "Stack:" + e.StackTrace );
@@ -216,8 +203,8 @@ namespace UELib.Core
                 var nativeFuncToken = new NativeFunctionToken();
                 try
                 {
-                    var nativeTableItem = _Owner.Package.NTLPackage != null 
-                        ? _Owner.Package.NTLPackage.FindTableItem( nativeIndex ) 
+                    var nativeTableItem = _Container.Package.NTLPackage != null 
+                        ? _Container.Package.NTLPackage.FindTableItem( nativeIndex ) 
                         : null;
                     if( nativeTableItem != null )
                     {
@@ -226,7 +213,7 @@ namespace UELib.Core
                     else
                     {
                         // TODO: Rewrite as FindChild( lambda )
-                        var table = _Owner.Package.Exports.Find( 
+                        var table = _Container.Package.Exports.Find( 
                             e => (e.ClassName == "Function" && ((UFunction)(e.Object)).NativeToken == nativeIndex) 
                         );
 
@@ -465,7 +452,7 @@ namespace UELib.Core
                     // Referenced variables that are default
                     case (byte)ExprToken.UndefinedVariable:
                         #if BORDERLANDS2
-                            if( _Owner.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
+                            if( _Container.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
                             {
                                 tokenItem = new DynamicVariableToken();
                                 break;
@@ -850,14 +837,14 @@ namespace UELib.Core
                 tokenItem.Decompiler = this;
                 tokenItem.RepresentToken = tokenCode;
                 tokenItem.Position = tokenPosition;// + (uint)Owner._ScriptOffset;
-                tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Owner.ScriptOffset;
+                tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset;
                 // IMPORTANT:Add before deserialize, due the possibility that the tokenitem might deserialize other tokens as well.
                 DeserializedTokens.Add( tokenItem );
                 tokenItem.Deserialize();
                 // Includes all sizes of followed tokens as well! e.g. i = i + 1; is summed here but not i = i +1; (not>>)i ++;
                 tokenItem.Size = (ushort)(CodePosition - tokenPosition);
                 tokenItem.StorageSize = (ushort)(tokenItem.StoragePosition 
-                    - ((uint)Buffer.Position - (uint)_Owner.ScriptOffset));
+                    - ((uint)Buffer.Position - (uint)_Container.ScriptOffset));
                 tokenItem.PostDeserialized();
                 return tokenItem;
             }
@@ -1196,7 +1183,7 @@ namespace UELib.Core
                 // TODO: Corrigate detection and version.
                 if( Buffer.Version > 300 )
                 {
-                    var func = _Owner as UFunction;
+                    var func = _Container as UFunction;
                     if( func != null && func.Params != null )
                     { 
                         // Step up to the first parameter that is optional, this is where the DefaultParameterToken will get the variable names from!
@@ -1241,6 +1228,11 @@ namespace UELib.Core
                     return;
 
                 CurrentTokenIndex = index;
+            }
+
+            public Token TokenAt( ushort codeOffset )
+            {
+                return DeserializedTokens.Find( t => t.Position == codeOffset );
             }
 
             /// <summary>
@@ -1481,7 +1473,7 @@ namespace UELib.Core
                             "\r\n Message: {4} " +
                             "\r\n\r\n StackTrace: {5}",
                         UDecompilingState.Tabs,
-                        _Owner.Class.Name,
+                        _Container.Class.Name,
                         UDecompilingState.Tabs,
                         CodePosition,
                         FormatTabs( e.Message ),
@@ -1810,7 +1802,7 @@ namespace UELib.Core
                 {
                     string output = String.Empty;
 
-                    var function = (UFunction)Decompiler._Owner.GetIndexObject( FunctionIndex );
+                    var function = (UFunction)Decompiler._Container.GetIndexObject( FunctionIndex );
                     if( function != null )
                     {		
                         // Support for non native operators.
@@ -1829,23 +1821,23 @@ namespace UELib.Core
                         else
                         {
                             // Calling Super??.
-                            if( function.Name == Decompiler._Owner.Name && !Decompiler._IsWithinClassContext )
+                            if( function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext )
                             {
                                 output = "super";
 
                                 // Check if the super call is within the super class of this functions outer(class)
-                                var myouter = (UField)Decompiler._Owner.Outer;
+                                var myouter = (UField)Decompiler._Container.Outer;
                                 if( myouter == null || myouter.Super == null || function.GetOuterName() != myouter.Super.Name  )
                                 {
                                     // There's no super to call then do a recursive super call.
-                                    if( Decompiler._Owner.Super == null )
+                                    if( Decompiler._Container.Super == null )
                                     {
-                                        output += "(" + Decompiler._Owner.GetOuterName() + ")";
+                                        output += "(" + Decompiler._Container.GetOuterName() + ")";
                                     }
                                     else
                                     {
                                         // Different owners, then it is a deep super call.
-                                        if( function.GetOuterName() != Decompiler._Owner.GetOuterName() )
+                                        if( function.GetOuterName() != Decompiler._Container.GetOuterName() )
                                         {
                                             output += "(" + function.GetOuterName() + ")";
                                         }
@@ -1888,7 +1880,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;	
-                    return DecompileCall( Decompiler._Owner.Package.GetIndexName( FunctionNameIndex ) );
+                    return DecompileCall( Decompiler._Container.Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
 
@@ -1907,7 +1899,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;	
-                    return "global." + DecompileCall( Decompiler._Owner.Package.GetIndexName( FunctionNameIndex ) );
+                    return "global." + DecompileCall( Decompiler._Container.Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
 
@@ -1938,7 +1930,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileCall( Decompiler._Owner.Package.GetIndexName( FunctionNameIndex ) );
+                    return DecompileCall( Decompiler._Container.Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
 
@@ -2086,7 +2078,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     // Property index
-                    MemberProperty = Decompiler._Owner.TryGetIndexObject( Buffer.ReadObjectIndex() ) as UField;
+                    MemberProperty = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() ) as UField;
                     Decompiler.AddObjectIndexCodeSize();
 
                     // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
@@ -2214,7 +2206,7 @@ namespace UELib.Core
                     if( Buffer.Version <= 300 )
                         return;
 
-                    _ReturnObject = Decompiler._Owner.TryGetIndexObject( Buffer.ReadObjectIndex() );
+                    _ReturnObject = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() );
                     Decompiler.AddObjectIndexCodeSize();
                 }
 
@@ -2253,7 +2245,7 @@ namespace UELib.Core
 
             public class JumpToken : Token
             {
-                public uint CodeOffset{ get; private set; }
+                public ushort CodeOffset{ get; private set; }
 
                 public override void Deserialize()
                 {
@@ -2269,7 +2261,7 @@ namespace UELib.Core
                             new ULabelEntry
                             {
                                 Name = String.Format( "J0x{0:X2}", CodeOffset ), 
-                                Position = (int)CodeOffset
+                                Position = CodeOffset
                             } 
                         );
                 }
@@ -2284,7 +2276,7 @@ namespace UELib.Core
                     Decompiler.PreComment = String.Format( "// End:0x{0:X2} [{1}]", CodeOffset, statement );   
                 }
 
-                protected void PrintStatement( string statement )
+                protected void CommentStatement( string statement )
                 {
                     Decompiler.PreComment = String.Format( "// [{0}]", statement );                       
                 }
@@ -2326,7 +2318,7 @@ namespace UELib.Core
                         if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
                         {
                             //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position );			
-                            ClearLabel();
+                            NoJumpLabel();
                             Commentize();
                             Decompiler._CanAddSemicolon = true;	
                             return "break";
@@ -2335,7 +2327,7 @@ namespace UELib.Core
                         //==================We're inside a Default and at the end of it!
                         if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
                         {
-                            ClearLabel();
+                            NoJumpLabel();
                             Commentize();
                             Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
                             Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position );
@@ -2343,28 +2335,53 @@ namespace UELib.Core
                             return "break";
                         }
 
-                        var nest = Decompiler.IsInNest( NestManager.Nest.NestType.Loop ) ??
-                                   Decompiler.IsInNest( NestManager.Nest.NestType.ForEach );
+                        var nest = Decompiler.IsWithinNest( NestManager.Nest.NestType.ForEach );
                         if( nest != null )
                         {
-                            // Continue
-                            if( CodeOffset + 10 == ((JumpToken)nest.Creator).CodeOffset )
+                            var dest = Decompiler.TokenAt( CodeOffset );
+                            if( dest != null )
                             {
-                                PrintStatement( "Continue" );
-                                goto gotoJump;
-                            }									
-                            // Break
-                            if( CodeOffset == ((JumpToken)nest.Creator).CodeOffset )
-                            {
-                                if( nest.Type == NestManager.Nest.NestType.ForEach )
+                                if( dest is IteratorPopToken )
                                 {
-                                    ClearLabel();
+                                    if( Decompiler.PreviousToken is IteratorNextToken )
+                                    {
+                                        NoJumpLabel();
+                                        return String.Empty;
+                                    }
+
+                                    NoJumpLabel();
                                     Commentize();
                                     Decompiler._CanAddSemicolon = true;
                                     return "break";
                                 }
-                                PrintStatement( "Break" );
-                                goto gotoJump;
+
+                                if( dest is IteratorNextToken )
+                                {
+                                    NoJumpLabel();
+                                    Commentize();
+                                    Decompiler._CanAddSemicolon = true;
+                                    return "continue";
+                                }
+                            }
+                        }
+
+                        nest = Decompiler.IsWithinNest( NestManager.Nest.NestType.Loop );
+                        if( nest != null )
+                        {
+                            var dest = nest.Creator as JumpToken;
+                            if( dest != null )
+                            {
+                                if( CodeOffset + 10 == dest.CodeOffset )
+                                {
+                                    CommentStatement( "Explicit Continue" );
+                                    goto gotoJump;
+                                }
+
+                                if( CodeOffset == dest.CodeOffset )
+                                {
+                                    CommentStatement( "Explicit Break" );
+                                    goto gotoJump;
+                                }
                             }
                         }
 
@@ -2386,7 +2403,7 @@ namespace UELib.Core
 
                                     Decompiler._Nester.AddNest( NestManager.Nest.NestType.Else, Position, CodeOffset );
 
-                                    ClearLabel();
+                                    NoJumpLabel();
 
                                     // HACK: This should be handled by UByteCodeDecompiler.Decompile()
                                     return "}" + "\r\n" + 
@@ -2401,7 +2418,7 @@ namespace UELib.Core
 
                     if( CodeOffset < Position )
                     {
-                        PrintStatement( "Continue" );
+                        CommentStatement( "Loop Continue" );
                     }
                     gotoJump:
                     // This is an implicit GoToToken.
@@ -2409,7 +2426,7 @@ namespace UELib.Core
                     return String.Format( "goto J0x{0:X2}", CodeOffset );
                 }
 
-                private void ClearLabel()
+                private void NoJumpLabel()
                 {
                     int i = Decompiler._TempLabels.FindIndex( p => p.Position == CodeOffset );
                     if( i != -1 )
@@ -2467,7 +2484,7 @@ namespace UELib.Core
                     Decompiler._Nester.AddNest( IsLoop 
                         ? NestManager.Nest.NestType.Loop 
                         : NestManager.Nest.NestType.If, 
-                        Position, CodeOffset 
+                        Position, CodeOffset, this 
                     );
                     return output;
                 }
@@ -2656,16 +2673,12 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    // Only output this when we are WITHIN a ForEach but not IN it.
-                    if( Decompiler.IsWithinNest( NestManager.Nest.NestType.ForEach ) != null )
+                    if( Decompiler.PeekToken is IteratorPopToken )
                     {
-                        if( Decompiler.IsInNest( NestManager.Nest.NestType.ForEach ) == null )
-                        {
-                            Decompiler._CanAddSemicolon = true;
-                            return "continue";
-                        }
+                        return String.Empty;
                     }
-                    return String.Empty;
+                    Decompiler._CanAddSemicolon = true;
+                    return "continue";
                 }
             }
 
@@ -2673,16 +2686,12 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    // Only output this when we are WITHIN a ForEach but not IN it.
-                    if( Decompiler.IsWithinNest( NestManager.Nest.NestType.ForEach ) != null )
+                    if( Decompiler.PreviousToken is IteratorNextToken )
                     {
-                        if( Decompiler.IsInNest( NestManager.Nest.NestType.ForEach ) == null )
-                        {
-                            Decompiler._CanAddSemicolon = true;
-                            return "break";
-                        }
+                        return String.Empty;
                     }
-                    return String.Empty;
+                    Decompiler._CanAddSemicolon = true;
+                    return "break";
                 }
             }
             #endregion
@@ -2695,7 +2704,7 @@ namespace UELib.Core
 
                 public override void Deserialize()
                 {
-                    Object = Decompiler._Owner.TryGetIndexObject( Buffer.ReadObjectIndex() );
+                    Object = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() );
                     Decompiler.AddObjectIndexCodeSize();	
                 }
 
@@ -2779,7 +2788,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return Decompiler._Owner.Package.GetIndexName( NameIndex );
+                    return Decompiler._Container.Package.GetIndexName( NameIndex );
                 }
             }
 
@@ -2807,7 +2816,7 @@ namespace UELib.Core
                     string propertyName;
                     try
                     {
-                        propertyName = ((UFunction)Decompiler._Owner).Params[ParamNum++].Name;
+                        propertyName = ((UFunction)Decompiler._Container).Params[ParamNum++].Name;
                     }
                     catch( ArgumentOutOfRangeException )
                     {
@@ -3105,7 +3114,7 @@ namespace UELib.Core
             {
                 public override void Deserialize()
                 {
-                    var topFunc = Decompiler._Owner as UFunction;
+                    var topFunc = Decompiler._Container as UFunction;
                     Debug.Assert( topFunc != null, "topf != null" );
                     foreach( UProperty property in topFunc.Variables )
                     {
@@ -3345,7 +3354,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    UObject obj = Decompiler._Owner.GetIndexObject( ObjectIndex );
+                    UObject obj = Decompiler._Container.GetIndexObject( ObjectIndex );
                     if( obj != null )
                     {
                         // class'objectclasshere'
@@ -3372,7 +3381,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "\'" + Decompiler._Owner.Package.GetIndexName( NameIndex ) + "\'";
+                    return "\'" + Decompiler._Container.Package.GetIndexName( NameIndex ) + "\'";
                 }
             }
 
@@ -3495,7 +3504,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return Decompiler._Owner.GetIndexObject( ObjectToCastTo ).Name + base.Decompile();
+                    return Decompiler._Container.GetIndexObject( ObjectToCastTo ).Name + base.Decompile();
                 }
             }
 
@@ -3513,7 +3522,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "class<" + Decompiler._Owner.GetIndexObject( ClassToCastTo ).Name + ">" + base.Decompile();
+                    return "class<" + Decompiler._Container.GetIndexObject( ClassToCastTo ).Name + ">" + base.Decompile();
                 }
             }
 
