@@ -1690,7 +1690,7 @@ namespace UELib.Core
                     Decompiler.DeserializeDebugToken();
                 }
 
-                protected void DeserializeParms()
+                private void DeserializeParms()
                 {
                     while( !(DeserializeNext() is EndFunctionParmsToken) );
                 }
@@ -1714,7 +1714,20 @@ namespace UELib.Core
 
                 private static string PrecedenceToken( Token t )
                 {
-                    return t is FunctionToken ? String.Format( "({0})", t.Decompile() ) : t.Decompile();
+                    if( !(t is FunctionToken) )
+                        return t.Decompile();
+
+                    // Always add ( and ) unless the conditions below are not met, in case of a VirtualFunctionCall.
+                    var addParenthesises = true;
+                    if( t is NativeFunctionToken )
+                    {
+                        addParenthesises = ((NativeFunctionToken)t).NativeTable.Type == FunctionType.Operator;    
+                    }
+                    else if( t is FinalFunctionToken )
+                    {
+                        addParenthesises = ((FinalFunctionToken)t).Function.IsOperator(); 
+                    }
+                    return addParenthesises ? String.Format( "({0})", t.Decompile() ) : t.Decompile();
                 }
 
                 protected string DecompilePreOperator( string operatorName )
@@ -1758,7 +1771,7 @@ namespace UELib.Core
                 }
 
                 // TODO: Rewrite properly, also fix a suspected bug for UE3 function calls with optional params.
-                protected string DecompileParms()
+                private string DecompileParms()
                 {
                     var outputBuilder = new List<string>();
                     {Token t;
@@ -1793,7 +1806,7 @@ namespace UELib.Core
 
             public class FinalFunctionToken : FunctionToken
             {
-                public int FunctionIndex;
+                public UFunction Function;
 
                 public override void Deserialize()
                 {
@@ -1802,7 +1815,7 @@ namespace UELib.Core
                         Decompiler.AddCodeSize( sizeof(int) );
                     }
 
-                    FunctionIndex = Buffer.ReadObjectIndex();
+                    Function = Buffer.ReadObject() as UFunction;
                     Decompiler.AddObjectIndexCodeSize();
 
                     DeserializeCall();
@@ -1811,33 +1824,31 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     string output = String.Empty;
-
-                    var function = (UFunction)Decompiler._Container.GetIndexObject( FunctionIndex );
-                    if( function != null )
+                    if( Function != null )
                     {		
                         // Support for non native operators.
-                        if( function.IsPost() )
+                        if( Function.IsPost() )
                         {
-                            output = DecompilePreOperator( function.FriendlyName );
+                            output = DecompilePreOperator( Function.FriendlyName );
                         }
-                        else if( function.IsPre() )
+                        else if( Function.IsPre() )
                         {
-                            output = DecompilePostOperator( function.FriendlyName );
+                            output = DecompilePostOperator( Function.FriendlyName );
                         }
-                        else if( function.IsOperator() )
+                        else if( Function.IsOperator() )
                         {
-                            output = DecompileOperator( function.FriendlyName );	
+                            output = DecompileOperator( Function.FriendlyName );	
                         }
                         else
                         {
                             // Calling Super??.
-                            if( function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext )
+                            if( Function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext )
                             {
                                 output = "super";
 
                                 // Check if the super call is within the super class of this functions outer(class)
                                 var myouter = (UField)Decompiler._Container.Outer;
-                                if( myouter == null || myouter.Super == null || function.GetOuterName() != myouter.Super.Name  )
+                                if( myouter == null || myouter.Super == null || Function.GetOuterName() != myouter.Super.Name  )
                                 {
                                     // There's no super to call then do a recursive super call.
                                     if( Decompiler._Container.Super == null )
@@ -1847,15 +1858,15 @@ namespace UELib.Core
                                     else
                                     {
                                         // Different owners, then it is a deep super call.
-                                        if( function.GetOuterName() != Decompiler._Container.GetOuterName() )
+                                        if( Function.GetOuterName() != Decompiler._Container.GetOuterName() )
                                         {
-                                            output += "(" + function.GetOuterName() + ")";
+                                            output += "(" + Function.GetOuterName() + ")";
                                         }
                                     }
                                 }
                                 output += ".";
                             }
-                            output += DecompileCall( function.Name );
+                            output += DecompileCall( Function.Name );
                         }
                     }	
                     Decompiler._CanAddSemicolon = true;	
