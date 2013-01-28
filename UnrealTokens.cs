@@ -210,6 +210,7 @@
         #region UE3ByteCodes
             InterfaceToBool			= 0x36,
             InterfaceToString		= 0x37,		// ???
+            InterfaceToObject       = 0x38,
         #endregion
 
         RotatorToVector 		= 0x39,		// Redefined
@@ -225,7 +226,7 @@
         FloatToByte 			= 0x43,		// Redefined
         FloatToInt 				= 0x44,	 	// Redefined
         FloatToBool 			= 0x45,	 	// Redefined
-        Unknown46 				= 0x46,
+        ObjectToInterface		= 0x46,
         ObjectToBool 			= 0x47,		// Redefined
         NameToBool 				= 0x48,		// Redefined
         StringToByte 			= 0x49,
@@ -245,6 +246,7 @@
         NameToString 			= 0x57,
         VectorToString 			= 0x58,
         RotatorToString 		= 0x59,
+        DelegateToString        = 0x5A,
         StringToName 			= 0x60,
     }
 

@@ -994,6 +994,18 @@ namespace UELib.Core
                     case Tokens.CastToken.InterfaceToBool:
                         tokenitem = new InterfaceToBoolToken();
                         break;
+
+                    case Tokens.CastToken.InterfaceToObject:
+                        tokenitem = new InterfaceToObjectToken();
+                        break;
+
+                    case Tokens.CastToken.ObjectToInterface:
+                        tokenitem = new ObjectToInterfaceToken();
+                        break;
+
+                    case Tokens.CastToken.DelegateToString:
+                        tokenitem = new DelegateToStringToken();
+                        break;
                 }
 
                 // Unsure what this is, found in:  ClanManager1h_6T.CMBanReplicationInfo.Timer:	
@@ -1186,20 +1198,16 @@ namespace UELib.Core
                     var func = _Container as UFunction;
                     if( func != null && func.Params != null )
                     { 
-                        // Step up to the first parameter that is optional, this is where the DefaultParameterToken will get the variable names from!
-                        for( DefaultParameterToken.ParamNum = 0; DefaultParameterToken.ParamNum < func.Params.Count; ++ DefaultParameterToken.ParamNum )
-                        {
-                            if( func.Params[DefaultParameterToken.ParamNum].HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm ) )
-                            {
-                                break;
-                            }
-                        }
+                        DefaultParameterToken._NextParamIndex = func.Params.FindIndex( 
+                            p => p.HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm ) 
+                        );
                     }
                 }
 
                 // Reset these, in case of a loop in the Decompile function that did not finish due exception errors!
                 _IsWithinClassContext = false;
                 _CanAddSemicolon = false;
+                _MustCommentStatement = false;
                 _PostIncrementTabs = 0;
                 _PostDecrementTabs = 0;
                 _PreIncrementTabs = 0;
@@ -2815,7 +2823,11 @@ namespace UELib.Core
 
             public class DefaultParameterToken : Token
             {
-                internal static byte ParamNum;
+                internal static int     _NextParamIndex;
+                private UField          _NextParam
+                {
+                    get{ return ((UFunction)Decompiler._Container).Params[_NextParamIndex++]; }
+                }
 
                 public override void Deserialize()
                 {
@@ -2834,20 +2846,10 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    string propertyName;
-                    try
-                    {
-                        propertyName = ((UFunction)Decompiler._Container).Params[ParamNum++].Name;
-                    }
-                    catch( ArgumentOutOfRangeException )
-                    {
-                        propertyName = "UnknownParm_" + ParamNum;
-                    }
-
-                    string expr = DecompileNext();		
+                    string expression = DecompileNext();		
                     DecompileNext();	// EndParmValue
                     Decompiler._CanAddSemicolon = true;
-                    return propertyName + " = " + expr;
+                    return String.Format( "{0} = {1}", _NextParam.Name, expression );
                 }
             }
 
@@ -2920,6 +2922,13 @@ namespace UELib.Core
                 {
                     if( Buffer.Version == 421 )
                         Decompiler.AddCodeSize( sizeof(int ) );
+                }
+
+                public override string Decompile()
+                {
+                    // Empty default option parameter!
+                    ++ DefaultParameterToken._NextParamIndex;
+                    return String.Empty;
                 }
             }
             public class NoDelegateToken : NoneToken{}
@@ -3511,49 +3520,36 @@ namespace UELib.Core
                 }
             }
 
-            public class DynamicCastToken : CastToken
+            public abstract class ObjectCastToken : CastToken
             {
-                public int ObjectToCastTo;
+                public UObject CastedObject;
 
                 public override void Deserialize()
                 {
-                    ObjectToCastTo = Buffer.ReadObjectIndex();
+                    CastedObject = Buffer.ReadObject();
                     Decompiler.AddObjectIndexCodeSize();
 
                     base.Deserialize();
-                }
+                }   
+            }
 
+            public class DynamicCastToken : ObjectCastToken
+            {
                 public override string Decompile()
                 {
-                    return Decompiler._Container.GetIndexObject( ObjectToCastTo ).Name + base.Decompile();
+                    return CastedObject.Name + base.Decompile();
                 }
             }
 
-            public class MetaCastToken : CastToken
+            public class MetaCastToken : ObjectCastToken
             {
-                public int ClassToCastTo;
-
-                public override void Deserialize()
-                {
-                    ClassToCastTo = Buffer.ReadObjectIndex();
-                    Decompiler.AddObjectIndexCodeSize();
-
-                    base.Deserialize();
-                }
-
                 public override string Decompile()
                 {
-                    return "class<" + Decompiler._Container.GetIndexObject( ClassToCastTo ).Name + ">" + base.Decompile();
+                    return "class<" + CastedObject.Name + ">" + base.Decompile();
                 }
             }
 
-            public class InterfaceCastToken : DynamicCastToken
-            {
-                /*public override string Decompile()
-                {
-                    return Decompiler.Owner.GetIndexObject( InerfaceToCastTo ).Name + base.Decompile();
-                }*/
-            }
+            public class InterfaceCastToken : ObjectCastToken{}
 
             public class RotatorToVectorToken : CastToken
             {
@@ -3836,8 +3832,19 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return DecompileNext(); 
+                    return "bool" + base.Decompile(); 
                 }
+            }
+
+            public class InterfaceToObjectToken : CastToken{}
+            public class ObjectToInterfaceToken : CastToken{}
+
+            public class DelegateToStringToken : CastToken
+            {
+                public override string Decompile()
+                {
+                    return "string" + base.Decompile(); 
+                }   
             }
             #endregion
 

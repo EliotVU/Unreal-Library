@@ -53,8 +53,8 @@ namespace UELib.Core
         #endregion
 
         #region Script Members
-        public IList<UProperty> Locals{ get; private set; }
-        public IList<UProperty> Params{ get; private set; }
+        public List<UProperty>  Locals{ get; private set; }
+        public List<UProperty>  Params{ get; private set; }
         public UProperty        ReturnProperty{ get; private set; }
         #endregion
 
