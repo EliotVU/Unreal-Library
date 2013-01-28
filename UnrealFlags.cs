@@ -201,8 +201,9 @@ namespace UELib.Flags
                                         
         NetClient			= 0x01000000U,
         DLLImport			= 0x02000000U,		// Also available in UE2(unknown meaning there)
-        K2Pure 				= 0x04000000U,
-        Unk4 				= 0x08000000U,		// K2Call?
+        K2Call 				= 0x04000000U,
+        K2Override 			= 0x08000000U,		// K2Call?
+        K2Pure              = 0x10000000U,
     }
 
     /// <summary>

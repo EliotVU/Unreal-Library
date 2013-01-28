@@ -92,6 +92,16 @@ namespace UELib.Core
                 output += "noexport ";
             }
 
+            if( HasFunctionFlag( Flags.FunctionFlags.K2Call ) )
+            {
+                output += "k2call ";
+            }
+
+            if( HasFunctionFlag( Flags.FunctionFlags.K2Override ) )
+            {
+                output += "k2override ";
+            }
+
             if( HasFunctionFlag( Flags.FunctionFlags.K2Pure ) )
             {
                 output += "k2pure ";
