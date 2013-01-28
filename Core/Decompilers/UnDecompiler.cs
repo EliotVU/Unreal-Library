@@ -428,11 +428,11 @@ namespace UELib.Core
                     case (byte)ExprToken.IteratorPop: 
                         tokenItem = new IteratorPopToken();
                         break;
-#if DEBUG
+
                     case (byte)ExprToken.FilterEditorOnly:
                         tokenItem = new FilterEditorOnlyToken();
                         break;
-#endif
+
                     #endregion
 
                     #region Variables
@@ -623,6 +623,10 @@ namespace UELib.Core
                         {
                             tokenItem = new DelegateFunctionCmpNEToken();
                         }
+                        break;
+
+                    case (byte)ExprToken.InstanceDelegate:
+                        tokenItem = new InstanceDelegateToken();
                         break;
 
                     case (byte)ExprToken.EatString:
@@ -3100,6 +3104,15 @@ namespace UELib.Core
                     string output = DecompileNext() + " != " + DecompileNext();
                     DecompileNext();
                     return output;
+                }
+            }
+
+            public class InstanceDelegateToken : Token
+            {
+                public override void Deserialize()
+                {
+                    Buffer.ReadNameIndex();
+                    Decompiler.AddNameIndexCodeSize();
                 }
             }
 
