@@ -190,7 +190,8 @@ namespace UELib.Flags
         Event 				= 0x00000800U,		
         Operator 			= 0x00001000U,		
         Static 				= 0x00002000U,		
-        NoExport 			= 0x00004000U,		
+        NoExport 			= 0x00004000U,	    // Can also be an identifier for functions with Optional parameters.
+        OptionalParameters  = 0x00004000U,
         Const 				= 0x00008000U,		
         Invariant 			= 0x00010000U,		
         Public 				= 0x00020000U,		

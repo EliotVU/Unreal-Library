@@ -87,7 +87,10 @@ namespace UELib.Core
                 output += "final ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.NoExport ) )
+            // NoExport is no longer available in UE3+ builds,
+            // - instead it is replaced with (FunctionFlags.OptionalParameters)
+            // - as an indicator that the function has optional parameters.
+            if( HasFunctionFlag( Flags.FunctionFlags.NoExport ) && Package.Version <= 220 )
             {
                 output += "noexport ";
             }
