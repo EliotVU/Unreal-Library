@@ -104,12 +104,6 @@ namespace UELib
         public const ushort VCOOKEDPACKAGES			= 277;
 
         /// <summary>
-        /// All NameIndex diverse from the standard ReadIndex due an additional 32bit after each index targeted for names.
-        /// 500
-        /// </summary>
-        public const ushort VNAMEINDEX				= 500;
-
-        /// <summary>
         /// DLLBind(Name)
         /// 655
         /// </summary>
