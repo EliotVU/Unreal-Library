@@ -1366,6 +1366,9 @@ namespace UELib.Core
                                     _PreIncrementTabs = 0;
                                 }
 
+                                if( _MustCommentStatement && UnrealConfig.SuppressComments )
+                                    continue;
+
                                 if( !UnrealConfig.SuppressComments )
                                 {
                                     if( PreComment.Length != 0 )
