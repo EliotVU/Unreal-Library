@@ -2734,7 +2734,8 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    if( Decompiler.PreviousToken is IteratorNextToken )
+                    if( Decompiler.PreviousToken is IteratorNextToken 
+                        || Decompiler.PeekToken is ReturnToken )
                     {
                         return String.Empty;
                     }
