@@ -97,14 +97,14 @@ namespace UELib.Core
                 AlignSize( (byte)size );
             }
 
-            private void AlignObjectSize()
-            {
-                AlignSize( _ObjectMemorySize );
-            }
-
             private void AlignNameSize()
             {
                 AlignSize( _NameMemorySize );
+            }
+
+            private void AlignObjectSize()
+            {
+                AlignSize( _ObjectMemorySize );
             }
 
             /// <summary>
@@ -1843,7 +1843,7 @@ namespace UELib.Core
                     }
 
                     Function = Buffer.ReadObject() as UFunction;
-                    Decompiler.AlignNameSize();
+                    Decompiler.AlignObjectSize();
 
                     DeserializeCall();
                 }
@@ -1920,7 +1920,7 @@ namespace UELib.Core
                     }
 
                     FunctionNameIndex = Buffer.ReadNameIndex();
-                    Decompiler.AlignObjectSize();
+                    Decompiler.AlignNameSize();
 
                     DeserializeCall();
                 }
@@ -1939,7 +1939,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     FunctionNameIndex = Buffer.ReadNameIndex();
-                    Decompiler.AlignObjectSize();
+                    Decompiler.AlignNameSize();
 
                     DeserializeCall();
                 }
@@ -1966,11 +1966,11 @@ namespace UELib.Core
 
                     // Delegate object index
                     Buffer.ReadObjectIndex();
-                    Decompiler.AlignNameSize();	
+                    Decompiler.AlignObjectSize();	
  
                     // Delegate name index
                     FunctionNameIndex = Buffer.ReadNameIndex();
-                    Decompiler.AlignObjectSize();
+                    Decompiler.AlignNameSize();
 
                     DeserializeCall();
                 }
@@ -2071,7 +2071,7 @@ namespace UELib.Core
                     {
                         // Property
                         Buffer.ReadObjectIndex();
-                        Decompiler.AlignNameSize();
+                        Decompiler.AlignObjectSize();
                     }
 
                     // PropertyType
@@ -2127,14 +2127,14 @@ namespace UELib.Core
                 {
                     // Property index
                     MemberProperty = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() ) as UField;
-                    Decompiler.AlignNameSize();
+                    Decompiler.AlignObjectSize();
 
                     // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
                     if( Buffer.Version > 369 )
                     {
                         // Struct index
                         Buffer.ReadObjectIndex();	
-                        Decompiler.AlignNameSize();
+                        Decompiler.AlignObjectSize();
 
                         Buffer.Position ++;
                         Decompiler.AlignSize( sizeof(byte) );
@@ -2255,7 +2255,7 @@ namespace UELib.Core
                         return;
 
                     _ReturnObject = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() );
-                    Decompiler.AlignNameSize();
+                    Decompiler.AlignObjectSize();
                 }
 
                 public override string Decompile()
@@ -2559,7 +2559,7 @@ namespace UELib.Core
                         // Points to the object that was passed to the switch, 
                         // beware that the followed token chain contains it as well!
                         Buffer.ReadObjectIndex();
-                        Decompiler.AlignNameSize();
+                        Decompiler.AlignObjectSize();
                     }
 
                     // TODO: Corrigate version
@@ -2754,7 +2754,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     Object = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() );
-                    Decompiler.AlignNameSize();	
+                    Decompiler.AlignObjectSize();	
                 }
 
                 public override string Decompile()
@@ -2827,7 +2827,7 @@ namespace UELib.Core
                     }
 
                     NameIndex = Buffer.ReadNameIndex();
-                    Decompiler.AlignObjectSize();
+                    Decompiler.AlignNameSize();
                     // TODO: Corrigate version. Definitely not in Mirrors Edge(536)
                     if( Buffer.Version > 536 )
                     {
@@ -3018,7 +3018,7 @@ namespace UELib.Core
                             );
                         }
                         label = Buffer.ReadName();
-                        Decompiler.AlignObjectSize();
+                        Decompiler.AlignNameSize();
                         labelPos = Buffer.ReadInt32();
                         Decompiler.AlignSize( sizeof(int) );
                     } while( String.Compare( label, "None", StringComparison.OrdinalIgnoreCase ) != 0 );
@@ -3046,7 +3046,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     Buffer.ReadObjectIndex();
-                    Decompiler.AlignNameSize();
+                    Decompiler.AlignObjectSize();
 
                     DeserializeNext();
                     // ==
@@ -3128,7 +3128,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     Buffer.ReadNameIndex();
-                    Decompiler.AlignObjectSize();
+                    Decompiler.AlignNameSize();
                 }
             }
 
@@ -3408,7 +3408,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     ObjectIndex = Buffer.ReadObjectIndex();
-                    Decompiler.AlignNameSize();
+                    Decompiler.AlignObjectSize();
                 }
 
                 public override string Decompile()
@@ -3435,7 +3435,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     NameIndex = Buffer.ReadNameIndex();
-                    Decompiler.AlignObjectSize();
+                    Decompiler.AlignNameSize();
                 }
 
                 public override string Decompile()
@@ -3556,7 +3556,7 @@ namespace UELib.Core
                 public override void Deserialize()
                 {
                     CastedObject = Buffer.ReadObject();
-                    Decompiler.AlignNameSize();
+                    Decompiler.AlignObjectSize();
 
                     base.Deserialize();
                 }   
