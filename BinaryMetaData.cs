@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace UELib
 {
@@ -22,6 +24,7 @@ namespace UELib
         [System.Diagnostics.Conditional( "DEBUG" )]
         public void AddField( string name, object tag, long position, long size )
         {
+            Debug.Assert( size > 0, String.Format( "Invalid {0} binary field!", name ) );
             if( Fields == null )
             {
                 Fields = new Stack<BinaryField>();

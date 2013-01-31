@@ -173,7 +173,7 @@ namespace UELib.Core
             {
                 Array.Reverse( buff );
             }
-            _Buffer = new UObjectStream( Package.Stream, ref buff );	
+            _Buffer = new UObjectStream( Package.Stream, buff );	
         }
 
         private void DisposeBuffer()
@@ -607,10 +607,10 @@ namespace UELib.Core
 #if DEBUG || BINARYMETADATA
             {
                 var size = _Buffer.Position - _Buffer.LastPosition;
-                if( size != 0 )
-                {
-                    BinaryMetaData.AddField( varName, varObject, _Buffer.LastPosition, size );
-                }
+                if( size <= 0 )
+                    return;
+                    
+                BinaryMetaData.AddField( varName, varObject, _Buffer.LastPosition, size );
             }
 #endif
 #if LOG_RECORDS

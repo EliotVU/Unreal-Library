@@ -2514,7 +2514,7 @@ namespace UELib.Core
                     Commentize();
                     if( IsLoop )
                     {
-                        Decompiler.PreComment += " [While If]";
+                        Decompiler.PreComment += " [Loop If]";
                     }
 
                     string condition = DecompileNext();

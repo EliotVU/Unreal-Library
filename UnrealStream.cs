@@ -644,7 +644,7 @@ namespace UELib
 
         public readonly bool BigEndianCode;
         
-        public UObjectStream( UPackageStream str, ref byte[] buffer ) : base( buffer )
+        public UObjectStream( UPackageStream str, byte[] buffer ) : base( buffer, true )
         {
             UW = null;
             UR = null;

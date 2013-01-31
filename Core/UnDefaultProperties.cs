@@ -758,8 +758,8 @@ namespace UELib.Core
         private UProperty FindProperty( out UStruct outer )
         {
             UProperty property = null;
-            outer = _Outer;
-            for( var structField = _Outer; structField != null; structField = structField.Super as UStruct )
+            outer = _Outer ?? _Container.Class as UStruct;
+            for( var structField = outer; structField != null; structField = structField.Super as UStruct )
             {
                 if( structField.Variables == null || !structField.Variables.Any() )
                     continue;
