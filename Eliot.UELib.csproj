@@ -114,6 +114,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMetaData.cs" />
+    <Compile Include="Core\Decompilers\UnClassDecompiler.cs" />
     <Compile Include="Core\UnComponent.cs" />
     <Compile Include="Core\Decompilers\UnDecompiler.cs" />
     <Compile Include="Core\UI Trees\UnNodes.cs" />
@@ -125,7 +126,6 @@
     <Compile Include="Engine\UnSound.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Core\Decompilers\UnClassDecompiler.cs" />
     <Compile Include="Core\Decompilers\UnConstDecompiler.cs" />
     <Compile Include="Core\Decompilers\UnEnumDecompiler.cs" />
     <Compile Include="Core\Decompilers\UnFieldDecompiler.cs" />
@@ -197,7 +197,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
