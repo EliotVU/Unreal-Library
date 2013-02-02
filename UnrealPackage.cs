@@ -894,41 +894,41 @@ namespace UELib
             }
 
             ConstructObjects();
-            if( (initFlags & InitFlags.Deserialize) != 0 )
+            if( (initFlags & InitFlags.Deserialize) == 0 )
+                return;
+
+            try
             {
-                try
-                {
-                    DeserializeObjects();
-                }
-                catch
-                {
-                    throw new DeserializingObjectsException();
-                }
+                DeserializeObjects();
+            }
+            catch
+            {
+                throw new DeserializingObjectsException();
+            }
 
-                try
+            try
+            {
+                if( (initFlags & InitFlags.Import) != 0 )
                 {
-                    if( (initFlags & InitFlags.Import) != 0 )
-                    {
-                        ImportObjects();
-                    }
+                    ImportObjects();
                 }
-                catch( Exception )
-                {
-                    //can be treat with as a warning!
-                    throw new Exception( "An exception occurred while importing objects" );
-                }
+            }
+            catch( Exception e )
+            {
+                //can be treat with as a warning!
+                throw new Exception( "An exception occurred while importing objects", e );
+            }
 
-                try
+            try
+            {
+                if( (initFlags & InitFlags.Link) != 0 )
                 {
-                    if( (initFlags & InitFlags.Link) != 0 )
-                    {
-                        LinkObjects();
-                    }
+                    LinkObjects();
                 }
-                catch( Exception )
-                {
-                    throw new LinkingObjectsException();
-                }
+            }
+            catch
+            {
+                throw new LinkingObjectsException();
             }
         }
 

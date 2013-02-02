@@ -77,6 +77,10 @@ namespace UELib.Core
                 "\r\n " +
                 "* http://eliotvu.com" +
                 "\r\n " +
+                "*" +
+                "\r\n " +
+                "* All rights belong to their respective owners." +
+                "\r\n " +
                 "*******************************************************************************/\r\n", 
                 assembly.GetName().Name,
                 ((AssemblyCopyrightAttribute)assembly.GetCustomAttributes( typeof(AssemblyCopyrightAttribute), false )[0]).Copyright,

@@ -196,7 +196,9 @@ namespace UELib.Core
         protected virtual void Deserialize()
         {
 #if DEBUG
-            Console.WriteLine( "" );
+            #if LOG_RECORDS
+                Console.WriteLine( "" );
+            #endif
             Record( Name, this );
             Record( "ExportSize", ExportTable.SerialSize );
 #endif
