@@ -883,52 +883,59 @@ namespace UELib
         /// <example>InitializePackage( UnrealPackage.InitFlags.All )</example>
         public void InitializePackage( InitFlags initFlags = InitFlags.All )
         {
-            if( (initFlags & InitFlags.RegisterClasses) != 0 )
-            {
-                RegisterAllClasses();
-            }
-
-            if( (initFlags & InitFlags.Construct) == 0 )
-            {
-                return;
-            }
-
-            ConstructObjects();
-            if( (initFlags & InitFlags.Deserialize) == 0 )
-                return;
-
             try
             {
-                DeserializeObjects();
-            }
-            catch
-            {
-                throw new DeserializingObjectsException();
-            }
-
-            try
-            {
-                if( (initFlags & InitFlags.Import) != 0 )
+                if( (initFlags & InitFlags.RegisterClasses) != 0 )
                 {
-                    ImportObjects();
+                    RegisterAllClasses();
+                }
+
+                if( (initFlags & InitFlags.Construct) == 0 )
+                {
+                    return;
+                }
+
+                ConstructObjects();
+                if( (initFlags & InitFlags.Deserialize) == 0 )
+                    return;
+
+                try
+                {
+                    DeserializeObjects();
+                }
+                catch
+                {
+                    throw new DeserializingObjectsException();
+                }
+
+                try
+                {
+                    if( (initFlags & InitFlags.Import) != 0 )
+                    {
+                        ImportObjects();
+                    }
+                }
+                catch( Exception e )
+                {
+                    //can be treat with as a warning!
+                    throw new Exception( "An exception occurred while importing objects", e );
+                }
+
+                try
+                {
+                    if( (initFlags & InitFlags.Link) != 0 )
+                    {
+                        LinkObjects();
+                    }
+                }
+                catch
+                {
+                    throw new LinkingObjectsException();
                 }
             }
-            catch( Exception e )
+            finally
             {
-                //can be treat with as a warning!
-                throw new Exception( "An exception occurred while importing objects", e );
-            }
-
-            try
-            {
-                if( (initFlags & InitFlags.Link) != 0 )
-                {
-                    LinkObjects();
-                }
-            }
-            catch
-            {
-                throw new LinkingObjectsException();
+                DisposeStream();
             }
         }
 
@@ -1350,11 +1357,9 @@ namespace UELib
         /// <inheritdoc/>
         public void Dispose()
         {
-            if( Stream != null )
-            {
-                Stream.Dispose();
-            }
+            Console.WriteLine( "Disposing {0}", PackageName );
 
+            DisposeStream();
             if( Objects != null && Objects.Any() )
             {
                 foreach( var obj in Objects )
@@ -1364,6 +1369,14 @@ namespace UELib
                 Objects.Clear();
                 Objects = null;
             }
+        }
+
+        private void DisposeStream()
+        {
+            if( Stream == null )
+                return;
+
+            Stream.Dispose();
         }
         #endregion
     }

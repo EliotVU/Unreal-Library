@@ -27,7 +27,7 @@ namespace UELib.Core
                 content += FormatIgnores() +
                     FormatConstants() +
                     FormatFunctions() + 
-                    DecompileStateCode();
+                    DecompileScript();
             UDecompilingState.RemoveTabs( 1 );
             content += UnrealConfig.PrintEndBracket();	
             return content;
@@ -115,11 +115,6 @@ namespace UELib.Core
                 }
             }
             return output;
-        }
-
-        private string DecompileStateCode()
-        {
-            return DataScriptSize <= 0 ? String.Empty : ByteCodeManager.Decompile();
         }
     }
 }

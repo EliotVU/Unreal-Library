@@ -26,7 +26,9 @@ namespace UELib.Core
             /// <summary>
             /// Pointer to the ObjectStream buffer of 'Owner'
             /// </summary>
-            private UObjectStream Buffer{ get { return _Container.Buffer; } }
+            private UObjectStream Buffer{ get{ return _Container.Buffer; } }
+
+            private UnrealPackage Package{ get{ return _Container.Package; } }
 
             /// <summary>
             /// A collection of deserialized tokens, in their correspondence stream order.
@@ -165,39 +167,47 @@ namespace UELib.Core
                     return;
 
                 _WasDeserialized = true;
-                Buffer.Seek( _Container.ScriptOffset, System.IO.SeekOrigin.Begin );
-                CodePosition = 0;
-                var codeSize = _Container.ByteScriptSize;
-        
-                CurrentTokenIndex = -1;
-                DeserializedTokens = new List<Token>();
-                _Labels = new List<ULabelEntry>();
-                while( CodePosition < codeSize )
+                try
                 {
-                    try
-                    {
-                        var t = DeserializeNext();
-                        if( !(t is EndOfScriptToken) )
-                            continue;
+                    _Container.EnsureBuffer();
+                    Buffer.Seek( _Container.ScriptOffset, System.IO.SeekOrigin.Begin );
+                    CodePosition = 0;
+                    var codeSize = _Container.ByteScriptSize;
 
-                        if( CodePosition < codeSize )
-                        { 
-                            Console.WriteLine( "End of script detected, but the loop condition is still true." );
-                        }
-                        break;
-                    }
-                    catch( SystemException e )
+                    CurrentTokenIndex = -1;
+                    DeserializedTokens = new List<Token>();
+                    _Labels = new List<ULabelEntry>();
+                    while( CodePosition < codeSize )
                     {
-                        if( e is System.IO.EndOfStreamException )
+                        try
                         {
-                            Console.WriteLine( "Couldn't backup from this error! Decompiling aborted!" );
-                            return;
+                            var t = DeserializeNext();
+                            if( !(t is EndOfScriptToken) )
+                                continue;
+
+                            if( CodePosition < codeSize )
+                            {
+                                Console.WriteLine( "End of script detected, but the loop condition is still true." );
+                            }
+                            break;
                         }
-                        Console.WriteLine( "Object:" + _Container.Name );
-                        Console.WriteLine( "Failed to deserialize token at position:" + CodePosition );
-                        Console.WriteLine( "Exception:" + e.Message );
-                        Console.WriteLine( "Stack:" + e.StackTrace );
+                        catch( SystemException e )
+                        {
+                            if( e is System.IO.EndOfStreamException )
+                            {
+                                Console.WriteLine( "Couldn't backup from this error! Decompiling aborted!" );
+                                return;
+                            }
+                            Console.WriteLine( "Object:" + _Container.Name );
+                            Console.WriteLine( "Failed to deserialize token at position:" + CodePosition );
+                            Console.WriteLine( "Exception:" + e.Message );
+                            Console.WriteLine( "Stack:" + e.StackTrace );
+                        }
                     }
+                }
+                finally
+                {
+                    _Container.MaybeDisposeBuffer();
                 }
             }
 
@@ -859,7 +869,7 @@ namespace UELib.Core
                 tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset;
                 // IMPORTANT:Add before deserialize, due the possibility that the tokenitem might deserialize other tokens as well.
                 DeserializedTokens.Add( tokenItem );
-                tokenItem.Deserialize();
+                tokenItem.Deserialize( Buffer );
                 // Includes all sizes of followed tokens as well! e.g. i = i + 1; is summed here but not i = i +1; (not>>)i ++;
                 tokenItem.Size = (ushort)(CodePosition - tokenPosition);
                 tokenItem.StorageSize = (ushort)(tokenItem.StoragePosition 
@@ -1212,7 +1222,7 @@ namespace UELib.Core
                 FieldToken.LastField = null;
 
                 // TODO: Corrigate detection and version.
-                if( Buffer.Version > 300 )
+                if( Package.Version > 300 )
                 {
                     var func = _Container as UFunction;
                     if( func != null && func.Params != null && func.HasFunctionFlag( Flags.FunctionFlags.OptionalParameters ) )
@@ -1607,7 +1617,7 @@ namespace UELib.Core
             #endregion
 
             #region Tokens
-            public abstract class Token : IUnrealDecompilable
+            public abstract class Token : IUnrealDecompilable, IUnrealDeserializableClass
             {
                 public UByteCodeDecompiler Decompiler
                 { 
@@ -1615,14 +1625,9 @@ namespace UELib.Core
                     set;
                 }
 
-                protected UObjectStream Buffer
-                {
-                    get{ return Decompiler.Buffer; }
-                }
-
                 protected UnrealPackage Package
                 {
-                    get{ return Buffer.Package; }
+                    get{ return Decompiler.Package; }
                 }
 
                 public byte RepresentToken;	 // Fixed(adjusted at decompile time for compatibility)
@@ -1641,7 +1646,7 @@ namespace UELib.Core
                 public ushort Size;
                 public ushort StorageSize;
 
-                public virtual void Deserialize()
+                public virtual void Deserialize( IUnrealStream stream )
                 {
                 }
 
@@ -1722,7 +1727,9 @@ namespace UELib.Core
 
                 private void DeserializeParms()
                 {
+#pragma warning disable 642
                     while( !(DeserializeNext() is EndFunctionParmsToken) );
+#pragma warning restore 642
                 }
 
                 protected void DeserializeBinaryOperator()
@@ -1838,14 +1845,14 @@ namespace UELib.Core
             {
                 public UFunction Function;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    if( Buffer.Version == 421 )
+                    if( stream.Version == 421 )
                     {
                         Decompiler.AlignSize( sizeof(int) );
                     }
 
-                    Function = Buffer.ReadObject() as UFunction;
+                    Function = stream.ReadObject() as UFunction;
                     Decompiler.AlignObjectSize();
 
                     DeserializeCall();
@@ -1908,21 +1915,21 @@ namespace UELib.Core
             {
                 public int FunctionNameIndex;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // TODO: Corrigate Version (Definitely not in MOHA, but in roboblitz(369))
-                    if( Buffer.Version >= 178 && Buffer.Version < 421/*MOHA*/ )
+                    if( stream.Version >= 178 && stream.Version < 421/*MOHA*/ )
                     {
-                        byte super = Buffer.ReadByte();
+                        byte isSuperCall = stream.ReadByte();
                         Decompiler.AlignSize( sizeof(byte) );
                     }
 
-                    if( Buffer.Version == 421 )
+                    if( stream.Version == 421 )
                     {
                         Decompiler.AlignSize( sizeof(int) );
                     }
 
-                    FunctionNameIndex = Buffer.ReadNameIndex();
+                    FunctionNameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
 
                     DeserializeCall();
@@ -1931,7 +1938,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;	
-                    return DecompileCall( Decompiler._Container.Package.GetIndexName( FunctionNameIndex ) );
+                    return DecompileCall( Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
 
@@ -1939,9 +1946,9 @@ namespace UELib.Core
             {
                 public int FunctionNameIndex;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    FunctionNameIndex = Buffer.ReadNameIndex();
+                    FunctionNameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
 
                     DeserializeCall();
@@ -1950,7 +1957,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;	
-                    return "global." + DecompileCall( Decompiler._Container.Package.GetIndexName( FunctionNameIndex ) );
+                    return "global." + DecompileCall( Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
 
@@ -1958,21 +1965,21 @@ namespace UELib.Core
             {
                 public int FunctionNameIndex;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // TODO: Corrigate Version
-                    if( Buffer.Version > 180 )
+                    if( stream.Version > 180 )
                     {
-                        ++ Buffer.Position;	// ReadByte()
+                        ++ stream.Position;	// ReadByte()
                         Decompiler.AlignSize( sizeof(byte) );
                     }
 
                     // Delegate object index
-                    Buffer.ReadObjectIndex();
+                    stream.ReadObjectIndex();
                     Decompiler.AlignObjectSize();	
  
                     // Delegate name index
-                    FunctionNameIndex = Buffer.ReadNameIndex();
+                    FunctionNameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
 
                     DeserializeCall();
@@ -1989,7 +1996,7 @@ namespace UELib.Core
             {
                 public NativeTableItem NativeTable;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     if( NativeTable == null )
                     {
@@ -2060,31 +2067,31 @@ namespace UELib.Core
                 // Greater or Equal than
                 private const ushort VSizeByteMoved = 588;  
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // A.?
                     DeserializeNext();
 
                     // SkipSize
-                    Buffer.ReadUShort();
+                    stream.ReadUInt16();
                     Decompiler.AlignSize( sizeof(ushort) );
 
                     // Doesn't seem to exist in APB
-                    if( Buffer.Version >= VSizeByteMoved )
+                    if( stream.Version >= VSizeByteMoved )
                     {
                         // Property
-                        Buffer.ReadObjectIndex();
+                        stream.ReadObjectIndex();
                         Decompiler.AlignObjectSize();
                     }
 
                     // PropertyType
-                    Buffer.ReadByte();
+                    stream.ReadByte();
                     Decompiler.AlignSize( sizeof(byte) );	
 
                     // Additional byte in APB?
-                    if( Buffer.Version > 512 && Buffer.Version < VSizeByteMoved )
+                    if( stream.Version > 512 && stream.Version < VSizeByteMoved )
                     {
-                        Buffer.ReadByte();
+                        stream.ReadByte();
                         Decompiler.AlignSize( sizeof(byte) );	
                     }
 
@@ -2111,7 +2118,7 @@ namespace UELib.Core
 
             public class InterfaceContextToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     DeserializeNext();
                 }
@@ -2126,25 +2133,25 @@ namespace UELib.Core
             {
                 public UField MemberProperty;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Property index
-                    MemberProperty = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() ) as UField;
+                    MemberProperty = Decompiler._Container.TryGetIndexObject( stream.ReadObjectIndex() ) as UField;
                     Decompiler.AlignObjectSize();
 
                     // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
-                    if( Buffer.Version > 369 )
+                    if( stream.Version > 369 )
                     {
                         // Struct index
-                        Buffer.ReadObjectIndex();	
+                        stream.ReadObjectIndex();	
                         Decompiler.AlignObjectSize();
 
-                        Buffer.Position ++;
+                        stream.Position ++;
                         Decompiler.AlignSize( sizeof(byte) );
                         // TODO: Corrigate version. Definitely didn't exist in MOHA(421)
-                        if( Buffer.Version > 421 )
+                        if( stream.Version > 421 )
                         {
-                            Buffer.Position ++;
+                            stream.Position ++;
                             Decompiler.AlignSize( sizeof(byte) );
                         }
                     }
@@ -2162,7 +2169,7 @@ namespace UELib.Core
             #region LetTokens
             public class LetToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // A = B
                     DeserializeNext();	  
@@ -2194,20 +2201,20 @@ namespace UELib.Core
 
             public class ConditionalToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Condition
                     DeserializeNext();	
 
                     // Size. Used to skip ? if Condition is False.
-                    Buffer.ReadUShort();
+                    stream.ReadUInt16();
                     Decompiler.AlignSize( sizeof(ushort) );
 
                     // If TRUE expression
                     DeserializeNext();
 
                     // Size. Used to skip : if Condition is True.
-                    Buffer.ReadUShort();
+                    stream.ReadUInt16();
                     Decompiler.AlignSize( sizeof(ushort) );
 
                     // If FALSE expression
@@ -2224,7 +2231,7 @@ namespace UELib.Core
             #region JumpTokens
             public class ReturnToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Expression
                     DeserializeNext();	
@@ -2251,13 +2258,13 @@ namespace UELib.Core
             {
                 private UObject _ReturnObject;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // TODO: Corrigate version.
-                    if( Buffer.Version <= 300 )
+                    if( stream.Version <= 300 )
                         return;
 
-                    _ReturnObject = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() );
+                    _ReturnObject = Decompiler._Container.TryGetIndexObject( stream.ReadObjectIndex() );
                     Decompiler.AlignObjectSize();
                 }
 
@@ -2281,7 +2288,7 @@ namespace UELib.Core
 
             public class GoToLabelToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Expression
                     DeserializeNext();	
@@ -2298,9 +2305,9 @@ namespace UELib.Core
             {
                 public ushort CodeOffset{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    CodeOffset = Buffer.ReadUShort();
+                    CodeOffset = stream.ReadUInt16();
                     Decompiler.AlignSize( sizeof(ushort) );
                 }
 
@@ -2491,10 +2498,10 @@ namespace UELib.Core
             {
                 public bool IsLoop;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // CodeOffset
-                    base.Deserialize();
+                    base.Deserialize( stream );
 
                     // Condition
                     DeserializeNext();
@@ -2555,25 +2562,25 @@ namespace UELib.Core
             {
                 public ushort PropertyType;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    if( Buffer.Version >= 600 )
+                    if( stream.Version >= 600 )
                     {
                         // Points to the object that was passed to the switch, 
                         // beware that the followed token chain contains it as well!
-                        Buffer.ReadObjectIndex();
+                        stream.ReadObjectIndex();
                         Decompiler.AlignObjectSize();
                     }
 
                     // TODO: Corrigate version
-                    if( Buffer.Version >= 536 && Buffer.Version <= 587 )
+                    if( stream.Version >= 536 && stream.Version <= 587 )
                     {
-                        PropertyType = Buffer.ReadUShort();
+                        PropertyType = stream.ReadUInt16();
                         Decompiler.AlignSize( sizeof(ushort) );
                     }
                     else
                     {
-                        PropertyType = Buffer.ReadByte();
+                        PropertyType = stream.ReadByte();
                         Decompiler.AlignSize( sizeof(byte) );
                     }
 
@@ -2615,9 +2622,9 @@ namespace UELib.Core
 
             public class CaseToken : JumpToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    base.Deserialize();
+                    base.Deserialize( stream );
                     if( CodeOffset != UInt16.MaxValue )
                     {
                         DeserializeNext();	// Condition
@@ -2630,19 +2637,19 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     // HACK: If this case is inside another case, end the last case to avoid broken indention.
-                    /// -> Original
-                    ///		case 0:
-                    ///		case 1:
-                    ///		case 2:
-                    ///			CallA();
-                    ///			break;
-                    ///		
-                    ///	->(Without the hack) Decompiled
-                    ///		case 0:
-                    ///			case 1:
-                    ///				case 2:
-                    ///					CallA();
-                    ///					break;
+                    // -> Original
+                    //		case 0:
+                    //		case 1:
+                    //		case 2:
+                    //			CallA();
+                    //			break;
+                    //		
+                    //	->(Without the hack) Decompiled
+                    //		case 0:
+                    //			case 1:
+                    //				case 2:
+                    //					CallA();
+                    //					break;
                     if( Decompiler.IsInNest( NestManager.Nest.NestType.Switch ) == null && _CaseStack == 0 )
                     {
                         Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
@@ -2669,10 +2676,10 @@ namespace UELib.Core
 
             public class IteratorToken : JumpToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     DeserializeNext();	// Expression
-                    base.Deserialize();
+                    base.Deserialize( stream );
                 }
 
                 public override string Decompile()
@@ -2691,7 +2698,7 @@ namespace UELib.Core
             {
                 protected bool HasSecondParm;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Expression
                     DeserializeNext();
@@ -2699,11 +2706,11 @@ namespace UELib.Core
                     // Param 1
                     DeserializeNext();
 
-                    HasSecondParm = Buffer.ReadByte() > 0;
+                    HasSecondParm = stream.ReadByte() > 0;
                     Decompiler.AlignSize( sizeof(byte) );
                     DeserializeNext();
 
-                    base.Deserialize();
+                    base.Deserialize( stream );
                 }
 
                 public override string Decompile()
@@ -2754,9 +2761,9 @@ namespace UELib.Core
                 public UObject Object{ get; private set; }
                 public static UObject LastField{ get; internal set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Object = Decompiler._Container.TryGetIndexObject( Buffer.ReadObjectIndex() );
+                    Object = Decompiler._Container.TryGetIndexObject( stream.ReadObjectIndex() );
                     Decompiler.AlignObjectSize();	
                 }
 
@@ -2797,9 +2804,9 @@ namespace UELib.Core
             {
                 protected int LocalIndex;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    LocalIndex = Buffer.ReadInt32();	
+                    LocalIndex = stream.ReadInt32();	
                     Decompiler.AlignSize( sizeof(int) );
                 }
 
@@ -2821,20 +2828,20 @@ namespace UELib.Core
             {
                 public int NameIndex;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {		  
                     // FIXME: MOHA or general?
-                    if( Buffer.Version == 421 )
+                    if( stream.Version == 421 )
                     {
                         Decompiler.AlignSize( sizeof(int) );
                     }
 
-                    NameIndex = Buffer.ReadNameIndex();
+                    NameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
                     // TODO: Corrigate version. Definitely not in Mirrors Edge(536)
-                    if( Buffer.Version > 536 )
+                    if( stream.Version > 536 )
                     {
-                        base.Deserialize();
+                        base.Deserialize( stream );
                     }
                 }
 
@@ -2852,13 +2859,13 @@ namespace UELib.Core
                     get{ return ((UFunction)Decompiler._Container).Params[_NextParamIndex++]; }
                 }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Buffer.ReadUShort();	// Size
+                    stream.ReadUInt16();	// Size
                     Decompiler.AlignSize( sizeof(ushort) );
 
                     // FIXME: MOHA or general?
-                    if( Buffer.Version == 421 )
+                    if( stream.Version == 421 )
                     {
                         Decompiler.AlignSize( sizeof(ushort) );
                     }
@@ -2878,7 +2885,7 @@ namespace UELib.Core
 
             public class BoolVariableToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     DeserializeNext();
                 }
@@ -2941,9 +2948,9 @@ namespace UELib.Core
 
             public class NothingToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    if( Buffer.Version == 421 )
+                    if( stream.Version == 421 )
                         Decompiler.AlignSize( sizeof(int ) );
                 }
 
@@ -2974,15 +2981,15 @@ namespace UELib.Core
             {
                 public bool DebugMode;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Buffer.ReadUShort();	// Line
+                    stream.ReadUInt16();	// Line
                     Decompiler.AlignSize( sizeof(short) );
 
                     // TODO: Corrigate version, at least known since Mirrors Edge(536)
-                    if( Buffer.Version >= 536 )
+                    if( stream.Version >= 536 )
                     {
-                        DebugMode = Buffer.ReadByte() > 0;
+                        DebugMode = stream.ReadByte() > 0;
                         Decompiler.AlignSize( sizeof(byte) );
                     }
                     DeserializeNext();
@@ -2990,7 +2997,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    if( Buffer.Version >= 536 )
+                    if( Package.Version >= 536 )
                     {
                         Decompiler.PreComment = "// DebugMode:" + DebugMode;
                     }
@@ -3003,7 +3010,7 @@ namespace UELib.Core
             private List<ULabelEntry> _Labels, _TempLabels;
             public class LabelTableToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     var label = String.Empty;
                     int labelPos = -1;
@@ -3020,9 +3027,9 @@ namespace UELib.Core
                                 } 
                             );
                         }
-                        label = Buffer.ReadName();
+                        label = stream.ReadName();
                         Decompiler.AlignNameSize();
-                        labelPos = Buffer.ReadInt32();
+                        labelPos = stream.ReadInt32();
                         Decompiler.AlignSize( sizeof(int) );
                     } while( String.Compare( label, "None", StringComparison.OrdinalIgnoreCase ) != 0 );
                 }
@@ -3030,9 +3037,9 @@ namespace UELib.Core
 
             public class SkipToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Buffer.ReadUShort();	// Size
+                    stream.ReadUInt16();	// Size
                     Decompiler.AlignSize( sizeof(ushort) );	
 
                     DeserializeNext();
@@ -3046,9 +3053,9 @@ namespace UELib.Core
 
             public abstract class ComparisonToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Buffer.ReadObjectIndex();
+                    stream.ReadObjectIndex();
                     Decompiler.AlignObjectSize();
 
                     DeserializeNext();
@@ -3075,7 +3082,7 @@ namespace UELib.Core
 
             public class DelegateComparisonToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     DeserializeNext();	// Left
                     // ==
@@ -3128,25 +3135,25 @@ namespace UELib.Core
 
             public class InstanceDelegateToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Buffer.ReadNameIndex();
+                    stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
                 }
             }
 
             public class EatStringToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // TODO: Corrigate Version(Lowest known version 369(Roboblitz))
-                    if( Buffer.Version > 300 )
+                    if( stream.Version > 300 )
                     {
-                        Buffer.ReadUShort();	// Size
+                        stream.ReadUInt16();	// Size
                         Decompiler.AlignSize( sizeof(ushort) );
 
                         // TODO: UNKNOWN:
-                        Buffer.ReadUShort();
+                        stream.ReadUInt16();
                         Decompiler.AlignSize( sizeof(ushort) );
                     }
                 
@@ -3164,9 +3171,9 @@ namespace UELib.Core
             // TODO: Implement
             public class ResizeStringToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Buffer.ReadByte();	// Size
+                    stream.ReadByte();	// Size
                     Decompiler.AlignSize( sizeof(byte) );
                 }
             }
@@ -3174,22 +3181,22 @@ namespace UELib.Core
             // TODO: Implement
             public class BeginFunctionToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     var topFunc = Decompiler._Container as UFunction;
                     Debug.Assert( topFunc != null, "topf != null" );
-                    foreach( UProperty property in topFunc.Variables )
+                    foreach( var property in topFunc.Variables )
                     {
                         if( !property.HasPropertyFlag( Flags.PropertyFlagsLO.Parm | Flags.PropertyFlagsLO.ReturnParm ) )
                             continue;
 
-                        Buffer.ReadByte(); // Size
+                        stream.ReadByte(); // Size
                         Decompiler.AlignSize( sizeof(byte) );
 
-                        Buffer.ReadByte(); // bOutParam
+                        stream.ReadByte(); // bOutParam
                         Decompiler.AlignSize( sizeof(byte) );
                     }
-                    Buffer.ReadByte();	// End
+                    stream.ReadByte();	// End
                     Decompiler.AlignSize( sizeof(byte) );
                 }
             }
@@ -3199,7 +3206,7 @@ namespace UELib.Core
                 // Greater Than!
                 private const uint TemplateVersion = 300;	// TODO: Corrigate Version
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Outer
                     DeserializeNext();	  
@@ -3212,7 +3219,7 @@ namespace UELib.Core
                     DeserializeNext();
                         
                     // TODO: Corrigate Version
-                    if( Buffer.Version > TemplateVersion )
+                    if( stream.Version > TemplateVersion )
                     {
                         // Template?
                         DeserializeNext();
@@ -3229,7 +3236,7 @@ namespace UELib.Core
 
                     string templateStr = String.Empty;
                     // TODO: Corrigate Version
-                    if( Buffer.Version > TemplateVersion )
+                    if( Package.Version > TemplateVersion )
                     {
                         templateStr = DecompileNext();
                     }
@@ -3284,16 +3291,16 @@ namespace UELib.Core
 
             public class DebugInfoToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Version
-                    Buffer.ReadInt32();
+                    stream.ReadInt32();
                     // Line
-                    Buffer.ReadInt32();
+                    stream.ReadInt32();
                     // Pos
-                    Buffer.ReadInt32();
+                    stream.ReadInt32();
                     // Code
-                    Buffer.ReadByte();
+                    stream.ReadByte();
                     Decompiler.AlignSize( 13 );
                 }
             }
@@ -3304,9 +3311,9 @@ namespace UELib.Core
             {
                 public int Value{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Value = Buffer.ReadInt32();
+                    Value = stream.ReadInt32();
                     Decompiler.AlignSize( sizeof(int) );
                 }
 
@@ -3347,9 +3354,9 @@ namespace UELib.Core
                     NM_MAX = 4
                 }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Value = Buffer.ReadByte();
+                    Value = stream.ReadByte();
                     Decompiler.AlignSize( sizeof(byte) );
                 }
 
@@ -3361,7 +3368,7 @@ namespace UELib.Core
                         {
                             case "ActorRemoteRole":
                             case "ActorRole":
-                                return Enum.GetName( Buffer.Version >= 220 ? typeof(ENetRole3) : typeof(ENetRole), Value );
+                                return Enum.GetName( Package.Version >= 220 ? typeof(ENetRole3) : typeof(ENetRole), Value );
 
                             case "LevelInfoNetMode":
                             case "WorldInfoNetMode":
@@ -3376,9 +3383,9 @@ namespace UELib.Core
             {
                 public byte Value{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Value = Buffer.ReadByte();
+                    Value = stream.ReadByte();
                     Decompiler.AlignSize( sizeof(byte) );
                 }
 
@@ -3392,9 +3399,9 @@ namespace UELib.Core
             {
                 public float Value{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Value = Buffer.UR.ReadSingle();
+                    Value = stream.UR.ReadSingle();
                     Decompiler.AlignSize( sizeof(float) );
                 }
 
@@ -3408,9 +3415,9 @@ namespace UELib.Core
             {
                 public int ObjectIndex{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    ObjectIndex = Buffer.ReadObjectIndex();
+                    ObjectIndex = stream.ReadObjectIndex();
                     Decompiler.AlignObjectSize();
                 }
 
@@ -3435,9 +3442,9 @@ namespace UELib.Core
             {
                 public int NameIndex{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    NameIndex = Buffer.ReadNameIndex();
+                    NameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
                 }
 
@@ -3451,9 +3458,9 @@ namespace UELib.Core
             {
                 public string Value{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Value = Buffer.UR.ReadAnsi();
+                    Value = stream.UR.ReadAnsi();
                     Decompiler.AlignSize( Value.Length + 1 );	// inc null char
                 }
 
@@ -3467,9 +3474,9 @@ namespace UELib.Core
             {
                 public string Value{ get; private set; }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Value = Buffer.UR.ReadUnicode();
+                    Value = stream.UR.ReadUnicode();
                     Decompiler.AlignSize( (Value.Length * 2) + 2 );	// inc null char
                 }
 
@@ -3488,13 +3495,13 @@ namespace UELib.Core
 
                 public Rotator Value;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    Value.Pitch = Buffer.ReadInt32();
+                    Value.Pitch = stream.ReadInt32();
                     Decompiler.AlignSize( sizeof(int) );
-                    Value.Yaw = Buffer.ReadInt32();
+                    Value.Yaw = stream.ReadInt32();
                     Decompiler.AlignSize( sizeof(int) );
-                    Value.Roll = Buffer.ReadInt32();
+                    Value.Roll = stream.ReadInt32();
                     Decompiler.AlignSize( sizeof(int) );
                 }
 
@@ -3508,13 +3515,13 @@ namespace UELib.Core
             {
                 public float X, Y, Z;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    X = Buffer.UR.ReadSingle();
+                    X = stream.UR.ReadSingle();
                     Decompiler.AlignSize( sizeof(float) );
-                    Y = Buffer.UR.ReadSingle();
+                    Y = stream.UR.ReadSingle();
                     Decompiler.AlignSize( sizeof(float) );
-                    Z = Buffer.UR.ReadSingle();
+                    Z = stream.UR.ReadSingle();
                     Decompiler.AlignSize( sizeof(float) );
                 }
 
@@ -3528,7 +3535,7 @@ namespace UELib.Core
             #region CastTokens
             public class CastToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     DeserializeNext();
                 }
@@ -3541,7 +3548,7 @@ namespace UELib.Core
 
             public class PrimitiveCastToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     DeserializeNext();
                 }
@@ -3556,12 +3563,12 @@ namespace UELib.Core
             {
                 public UObject CastedObject;
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    CastedObject = Buffer.ReadObject();
+                    CastedObject = stream.ReadObject();
                     Decompiler.AlignObjectSize();
 
-                    base.Deserialize();
+                    base.Deserialize( stream );
                 }   
             }
 
@@ -3883,7 +3890,7 @@ namespace UELib.Core
             #region ArrayTokens
             public class ArrayElementToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Key
                     DeserializeNext();
@@ -3907,7 +3914,7 @@ namespace UELib.Core
 
             public class DynamicArrayLengthToken : Token
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Array
                     DeserializeNext();
@@ -3927,37 +3934,37 @@ namespace UELib.Core
 
             public class DynamicArrayMethodToken : Token
             {
-                protected virtual void DeserializeMethodOne( bool skipEndParms = false )
+                protected virtual void DeserializeMethodOne( IUnrealStream stream, bool skipEndParms = false )
                 {
                     // Array
                     DeserializeNext();
 
-                    if( Buffer.Version > ArrayMethodSizeParmsVersion )
+                    if( stream.Version > ArrayMethodSizeParmsVersion )
                     {
                         // Size
-                        Buffer.Skip( 2 );
+                        stream.Skip( 2 );
                         Decompiler.AlignSize( sizeof(ushort) );
                     }
 
                     // Param 1
                     DeserializeNext();
 
-                    if( Buffer.Version > ArrayMethodEndParmsVersion && !skipEndParms )
+                    if( stream.Version > ArrayMethodEndParmsVersion && !skipEndParms )
                     {
                         // EndParms
                         DeserializeNext();
                     }
                 }
 
-                protected virtual void DeserializeMethodTwo( bool skipEndParms = false )
+                protected virtual void DeserializeMethodTwo( IUnrealStream stream, bool skipEndParms = false )
                 {
                     // Array
                     DeserializeNext();
 
-                    if( Buffer.Version > ArrayMethodSizeParmsVersion )
+                    if( stream.Version > ArrayMethodSizeParmsVersion )
                     {
                         // Size
-                        Buffer.Skip( 2 );
+                        stream.Skip( 2 );
                         Decompiler.AlignSize( sizeof(ushort) );
                     }
 
@@ -3967,7 +3974,7 @@ namespace UELib.Core
                     // Param 2
                     DeserializeNext();
 
-                    if( Buffer.Version > ArrayMethodEndParmsVersion && !skipEndParms )
+                    if( stream.Version > ArrayMethodEndParmsVersion && !skipEndParms )
                     {
                         // EndParms
                         DeserializeNext();
@@ -3978,21 +3985,21 @@ namespace UELib.Core
                 {
                     Decompiler._CanAddSemicolon = true;	
                     return DecompileNext() + "." + functionName + 
-                        "(" + DecompileNext() + (Buffer.Version > ArrayMethodEndParmsVersion && !skipEndParms ? DecompileNext() : ")");
+                        "(" + DecompileNext() + (Package.Version > ArrayMethodEndParmsVersion && !skipEndParms ? DecompileNext() : ")");
                 }
 
                 protected string DecompileMethodTwo( string functionName, bool skipEndParms = false )
                 {
                     Decompiler._CanAddSemicolon = true;	
                     return DecompileNext() + "." + functionName + 
-                        "(" + DecompileNext() + ", " + DecompileNext() + (Buffer.Version > ArrayMethodEndParmsVersion && !skipEndParms ? DecompileNext() : ")");
+                        "(" + DecompileNext() + ", " + DecompileNext() + (Package.Version > ArrayMethodEndParmsVersion && !skipEndParms ? DecompileNext() : ")");
                 }
             }
 
             // TODO:Byte code of this has apparently changed to ReturnNothing in UE3
             public class DynamicArrayInsertToken : DynamicArrayMethodToken
             {
-                protected override void DeserializeMethodTwo( bool skipEndParms = false )
+                protected override void DeserializeMethodTwo( IUnrealStream stream, bool skipEndParms = false )
                 {
                     // Array
                     DeserializeNext();
@@ -4003,16 +4010,16 @@ namespace UELib.Core
                     // Param 2
                     DeserializeNext();
 
-                    if( Buffer.Version > ArrayMethodEndParmsVersion && !skipEndParms )
+                    if( stream.Version > ArrayMethodEndParmsVersion && !skipEndParms )
                     {
                         // EndParms
                         DeserializeNext();
                     }
                 }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodTwo();
+                    DeserializeMethodTwo( stream );
                 }
 
                 public override string Decompile()
@@ -4025,9 +4032,9 @@ namespace UELib.Core
 
             public class DynamicArrayInsertItemToken : DynamicArrayMethodToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodTwo();
+                    DeserializeMethodTwo( stream );
                 }
 
                 public override string Decompile()
@@ -4038,7 +4045,7 @@ namespace UELib.Core
 
             public class DynamicArrayRemoveToken : DynamicArrayMethodToken
             {
-                protected override void DeserializeMethodTwo( bool skipEndParms = false )
+                protected override void DeserializeMethodTwo( IUnrealStream stream, bool skipEndParms = false )
                 {
                     // Array
                     DeserializeNext();
@@ -4049,16 +4056,16 @@ namespace UELib.Core
                     // Param 2
                     DeserializeNext();
 
-                    if( Buffer.Version > ArrayMethodEndParmsVersion && !skipEndParms )
+                    if( stream.Version > ArrayMethodEndParmsVersion && !skipEndParms )
                     {
                         // EndParms
                         DeserializeNext();
                     }
                 }
 
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodTwo();
+                    DeserializeMethodTwo( stream );
                 }
 
                 public override string Decompile()
@@ -4069,9 +4076,9 @@ namespace UELib.Core
 
             public class DynamicArrayRemoveItemToken : DynamicArrayMethodToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodOne();
+                    DeserializeMethodOne( stream );
                 }
 
                 public override string Decompile()
@@ -4082,7 +4089,7 @@ namespace UELib.Core
 
             public class DynamicArrayAddToken : DynamicArrayMethodToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
                     // Array
                     DeserializeNext();
@@ -4102,9 +4109,9 @@ namespace UELib.Core
 
             public class DynamicArrayAddItemToken : DynamicArrayMethodToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodOne();
+                    DeserializeMethodOne( stream );
                 }
 
                 public override string Decompile()
@@ -4115,9 +4122,9 @@ namespace UELib.Core
 
             public class DynamicArrayFindToken : DynamicArrayMethodToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodOne();
+                    DeserializeMethodOne( stream );
                 }
 
                 public override string Decompile()
@@ -4128,9 +4135,9 @@ namespace UELib.Core
 
             public class DynamicArrayFindStructToken : DynamicArrayMethodToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodTwo();
+                    DeserializeMethodTwo( stream );
                 }
 
                 public override string Decompile()
@@ -4141,9 +4148,9 @@ namespace UELib.Core
 
             public class DynamicArraySortToken : DynamicArrayMethodToken
             {
-                public override void Deserialize()
+                public override void Deserialize( IUnrealStream stream )
                 {
-                    DeserializeMethodOne();
+                    DeserializeMethodOne( stream );
                 }
 
                 public override string Decompile()

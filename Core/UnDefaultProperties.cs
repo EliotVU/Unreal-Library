@@ -255,6 +255,11 @@ namespace UELib.Core
         /// <returns>The deserialized value if any.</returns>
         private string DeserializeValue( DeserializeFlags deserializeFlags = DeserializeFlags.None )
         {
+            if( _Buffer == null )
+            {
+                return "_Buffer is not initialized!";    
+            }
+
             _Buffer.Seek( _ValueOffset, System.IO.SeekOrigin.Begin );
             try
             {	

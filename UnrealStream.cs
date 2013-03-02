@@ -13,6 +13,7 @@ namespace UELib
         string Name{ get; }
 
         UnrealPackage Package{ get; }
+        UnrealReader UR{ get; }
 
         /// <summary>
         /// The version of the package this stream is working for.
@@ -63,6 +64,7 @@ namespace UELib
         byte ReadByte();
 
         short ReadInt16();
+        ushort ReadUInt16();
 
         int ReadInt32();
         uint ReadUInt32();
@@ -83,7 +85,7 @@ namespace UELib
     public class UnrealWriter : BinaryWriter
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )] 
-        private readonly IUnrealStream _UnrealStream;
+        private IUnrealStream _UnrealStream;
 
         private uint _Version
         {
@@ -101,6 +103,15 @@ namespace UELib
             Write( name.ToCharArray(), 0, 0 );
             Write( '\0' );
         }
+
+        protected override void Dispose( bool disposing )
+        {
+            base.Dispose( disposing );
+            if( !disposing )
+                return;
+
+            _UnrealStream = null;
+        }
     }
 
     /// <summary>
@@ -109,7 +120,7 @@ namespace UELib
     public class UnrealReader : BinaryReader
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )] 
-        private readonly IUnrealStream _UnrealStream;
+        private IUnrealStream _UnrealStream;
         private readonly Encoding _MyEncoding;
 
         private uint _Version
@@ -342,6 +353,15 @@ namespace UELib
             var g = new Guid( guidBuffer );
             return g.ToString();
         }
+
+        protected override void Dispose( bool disposing )
+        {
+            base.Dispose( disposing );
+            if( !disposing )
+                return;
+
+            _UnrealStream = null;
+        }
     }
 
     public class UPackageStream : FileStream, IUnrealStream
@@ -472,6 +492,11 @@ namespace UELib
         public short ReadInt16()
         {
             return UR.ReadInt16();
+        }
+
+        public ushort ReadUInt16()
+        {
+            return UR.ReadUInt16();
         }
 
         /// <summary>
@@ -650,12 +675,17 @@ namespace UELib
             UR = null;
             Package = str.Package;
             BigEndianCode = str.BigEndianCode;
-            if( CanRead )
+            InitBuffer(); 
+        }
+
+        public void InitBuffer()
+        {
+            if( CanRead && UR == null )
             {
                 UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
             }
 
-            if( CanWrite )
+            if( CanWrite && UW == null )
             {
                 UW = new UnrealWriter( this );
             }
@@ -740,6 +770,11 @@ namespace UELib
         public short ReadInt16()
         {
             return UR.ReadInt16();
+        }
+
+        public ushort ReadUInt16()
+        {
+            return UR.ReadUInt16();
         }
 
         /// <summary>
@@ -897,13 +932,22 @@ namespace UELib
             Position = _PeekStartPosition;
         }
 
-        protected override void Dispose( bool disposing )
+        internal void DisposeBuffer()
         {
-            if( !disposing ) 
-                return;
+            if( UR != null )
+            {
+                UR.Dispose();
+                UR = null;
+            }
 
-            UR = null;
-            UW = null;
+            if( UW != null )
+            {
+               UW.Dispose();
+               UW = null;
+            }
+
+            // Closed by the above, but this is just for ensurance.
+            Dispose();
         }
     }
 }

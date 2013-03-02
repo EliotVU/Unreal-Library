@@ -268,7 +268,7 @@ namespace UELib.Core
             string code;
             try
             {
-                code = ByteCodeManager != null ? ByteCodeManager.Decompile() : String.Empty;
+                code = DecompileScript();
             }
             catch( Exception e )
             {

@@ -83,6 +83,7 @@ namespace UELib.Core
         {
             Deserialied = 0x01,
             Errorlized = 0x02,
+            Deserializing = 0x04
         }
 
         public ObjectState DeserializationState;
@@ -111,12 +112,6 @@ namespace UELib.Core
             }
             #endif
 
-            if( DeserializationState.HasFlag( ObjectState.Deserialied ) )
-            {
-                InitBuffer();
-                return;
-            }
-
             // Imported objects cannot be deserialized!
             if( ImportTable != null )
             {
@@ -130,19 +125,20 @@ namespace UELib.Core
                 return;
             }
 
+            InitBuffer();
             try
             {
 #if DEBUG || BINARYMETADATA
                 BinaryMetaData = new BinaryMetaData();
 #endif
-                InitBuffer();
+                DeserializationState |= ObjectState.Deserializing;
                 Deserialize();
                 DeserializationState |= ObjectState.Deserialied;
             }
             catch( Exception e )
             {
                 ThrownException = e;
-                ExceptionPosition = _Buffer.Position;
+                ExceptionPosition = _Buffer != null ? _Buffer.Position : -1;
                 DeserializationState |= ObjectState.Errorlized;
 
                 Console.WriteLine( e.Source + ":" + Name + ":" + e.GetType().Name + " occurred while deserializing;"  
@@ -152,18 +148,19 @@ namespace UELib.Core
             }
             finally
             {
-                if( CanDisposeBuffer() )
-                {
-                    DisposeBuffer();	
-                }
+                DeserializationState &= ~ObjectState.Deserializing;
+                MaybeDisposeBuffer();	
             }
         }
 
         private void InitBuffer()
         {
+            Console.WriteLine( "Init buffer for {0}", (string)this );
             if( _Buffer != null )
             {
-                DisposeBuffer();
+                Console.WriteLine( "Short initialization" );
+                _Buffer.InitBuffer();
+                return;
             }
 
             var buff = new byte[ExportTable.SerialSize];
@@ -176,13 +173,24 @@ namespace UELib.Core
             _Buffer = new UObjectStream( Package.Stream, buff );	
         }
 
-        private void DisposeBuffer()
+        protected void EnsureBuffer()
         {
-            if( _Buffer == null )
+            Console.WriteLine( "Ensure buffer for {0}", (string)this );
+            InitBuffer();
+        }
+
+        protected void MaybeDisposeBuffer()
+        {
+            Console.WriteLine( "Disposing buffer for {0}", (string)this );
+
+            // Do not dispose while deserializing! 
+            // For example DecompileDefaultProperties or DecompileScript, may dispose the buffer in certain situations!
+            if( _Buffer == null || (DeserializationState & ObjectState.Deserializing) != 0 )
                 return;
 
-            _Buffer.Dispose();
-            _Buffer = null;
+            _Buffer.DisposeBuffer();
+            _Buffer = null;   
+            Console.WriteLine( "Disposed" ); 
         }
 
         protected virtual bool CanDisposeBuffer()
@@ -279,7 +287,6 @@ namespace UELib.Core
         /// <summary>
         /// Tries to read all properties that resides in this object instance.
         /// </summary>
-        /// <param name="properties">The read properties.</param>
         protected void DeserializeProperties()
         {
             Default = this;
@@ -653,7 +660,20 @@ namespace UELib.Core
 
         public void Dispose()
         {
-            DisposeBuffer();
+            Dispose( true );    
+        }
+
+        private void Dispose( bool disposing )
+        {
+            if( disposing )
+            {
+                MaybeDisposeBuffer();
+            }
+        }
+
+        ~UObject()
+        {
+            Dispose( false );        
         }
         #endregion
 

@@ -314,10 +314,6 @@ namespace UELib.Core
             { 
                 Default = _Buffer.ReadObject();
                 Record( "Default", Default );
-                if( Default != null )
-                {
-                    Default.BeginDeserializing();
-                }
             }
             else
             {		
@@ -327,7 +323,7 @@ namespace UELib.Core
                     // We are done here!
                     return;
                 }
-#endif 
+#endif     
                 DeserializeProperties();
             }
         }
