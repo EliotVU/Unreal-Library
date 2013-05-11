@@ -39,7 +39,6 @@ namespace UELib
         /// </summary>
         /// <returns></returns>
         int ReadNameIndex();
-        string ReadName();
         UName ReadNameReference();
         string ParseName( int index );
 
@@ -97,10 +96,10 @@ namespace UELib
             _UnrealStream = stream as IUnrealStream;
         }
 
-        public void WriteName( string name )
+        public void WriteText( string text )
         {
-            Write( name.Length );
-            Write( name.ToCharArray(), 0, 0 );
+            Write( text.Length );
+            Write( text.ToCharArray(), 0, 0 );
             Write( '\0' );
         }
 
@@ -447,6 +446,9 @@ namespace UELib
         /// <returns>the read byte</returns>
         public new byte ReadByte()
         {
+#if DEBUG || BINARYMETADATA
+            LastPosition = Position;
+#endif
             return UR.ReadByte();
         }
 
@@ -585,17 +587,6 @@ namespace UELib
         public int ReadNameIndex()
         {
             return (int)UR.ReadNameIndex();
-        }
-
-        public string ReadName()
-        {
-            int num;
-            var name = Package.GetIndexName( ReadNameIndex( out num ) );
-            if( num > UName.Numeric )
-            {
-                name += "_" + num;
-            }
-            return name;
         }
 
         public UName ReadNameReference()
@@ -725,6 +716,9 @@ namespace UELib
         /// <returns>the read byte</returns>
         public new byte ReadByte()
         {
+#if DEBUG || BINARYMETADATA
+            LastPosition = Position;
+#endif
             return UR.ReadByte();
         }
 
@@ -865,17 +859,6 @@ namespace UELib
             return (int)UR.ReadNameIndex();
         }
 
-        public string ReadName()
-        {
-            int num;
-            var name = Package.GetIndexName( ReadNameIndex( out num ) );
-            if( num > UName.Numeric )
-            {
-                name += "_" + num;
-            }
-            return name;
-        }
-
         public UName ReadNameReference()
         {
             return new UName( this );
@@ -948,6 +931,23 @@ namespace UELib
 
             // Closed by the above, but this is just for ensurance.
             Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Methods that shouldn't be duplicated between UObjectStream and UPackageStream.
+    /// </summary>
+    public static class UnrealStreamImplementations
+    {
+        public static string ReadName( this IUnrealStream stream )
+        {
+            int num;
+            var name = stream.Package.GetIndexName( stream.ReadNameIndex( out num ) );
+            if( num > UName.Numeric )
+            {
+                name += "_" + num;
+            }
+            return name;
         }
     }
 }
