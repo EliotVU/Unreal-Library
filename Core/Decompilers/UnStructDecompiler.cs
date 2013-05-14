@@ -295,6 +295,51 @@ namespace UELib.Core
             return output + innerOutput + UDecompilingState.Tabs + "}";
         }
 
+         protected string FormatLocals()
+        {
+            if( Locals == null || !Locals.Any() )
+                return String.Empty;
+
+            int numParms = 0;
+            string output = String.Empty;
+            string lastType = String.Empty;
+            for( var i = 0; i < Locals.Count; ++ i )
+            {
+                string curType = Locals[i].GetFriendlyType();
+                string nextType = ((i + 1) < Locals.Count 
+                    ? Locals[i + 1].GetFriendlyType() 
+                    : String.Empty);
+
+                // If previous is the same as the one now then format the params as one line until another type is reached
+                if( curType == lastType )
+                {				
+                    output += Locals[i].Name + 
+                    (
+                        curType == nextType 
+                        ? ((numParms >= 5 && numParms % 5 == 0) 
+                            ? ",\r\n\t" + UDecompilingState.Tabs 
+                            : ", "
+                          ) 
+                        : ";\r\n"
+                    ); 	
+                    ++ numParms;
+                }
+                else
+                {
+                    output += (numParms >= 5 ? "\r\n" : String.Empty) 
+                        + UDecompilingState.Tabs + "local " + Locals[i].Decompile() + 
+                    (
+                        (nextType != curType || String.IsNullOrEmpty( nextType ) ) 
+                        ? ";\r\n" 
+                        : ", "
+                    );
+                    numParms = 1;
+                }
+                lastType = curType;
+            }
+            return output;
+        }
+
         protected string DecompileScript()
         {
             return ByteCodeManager != null ? ByteCodeManager.Decompile() : String.Empty;

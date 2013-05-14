@@ -24,6 +24,13 @@ namespace UELib.Core
         {	
             string content = FormatHeader() + UnrealConfig.PrintBeginBracket();
             UDecompilingState.AddTabs( 1 );
+
+                var locals = FormatLocals();
+                if( locals != String.Empty )
+                {
+                    content += "\r\n" + locals;
+                }
+
                 content += FormatIgnores() +
                     FormatConstants() +
                     FormatFunctions() + 

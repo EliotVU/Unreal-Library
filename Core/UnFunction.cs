@@ -53,7 +53,6 @@ namespace UELib.Core
         #endregion
 
         #region Script Members
-        public List<UProperty>  Locals{ get; private set; }
         public List<UProperty>  Params{ get; private set; }
         public UProperty        ReturnProperty{ get; private set; }
         #endregion
@@ -100,7 +99,6 @@ namespace UELib.Core
         protected override void FindChildren()
         {
             base.FindChildren();
-            Locals = new List<UProperty>();
             Params = new List<UProperty>();
             foreach( var property in Variables )
             {
@@ -113,10 +111,6 @@ namespace UELib.Core
                 if( property.IsParm() )
                 {
                     Params.Add( property );
-                }
-                else
-                {
-                    Locals.Add( property );
                 }
             }
         }
