@@ -474,6 +474,10 @@ namespace UELib.Core
                         tokenItem = new LocalVariableToken();
                         break;
 
+                    case (byte)ExprToken.StateVariable:
+                        tokenItem = new StateVariableToken();
+                        break;
+
                     // Referenced variables that are default
                     case (byte)ExprToken.UndefinedVariable:
                         #if BORDERLANDS2
@@ -2790,6 +2794,7 @@ namespace UELib.Core
 
             public class InstanceVariableToken : FieldToken{}
             public class LocalVariableToken : FieldToken{}
+            public class StateVariableToken : FieldToken{}
             public class OutVariableToken : FieldToken{}
 
             public class DefaultVariableToken : FieldToken
