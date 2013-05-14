@@ -3154,12 +3154,8 @@ namespace UELib.Core
                     // TODO: Corrigate Version(Lowest known version 369(Roboblitz))
                     if( stream.Version > 300 )
                     {
-                        stream.ReadUInt16();	// Size
-                        Decompiler.AlignSize( sizeof(ushort) );
-
-                        // TODO: UNKNOWN:
-                        stream.ReadUInt16();
-                        Decompiler.AlignSize( sizeof(ushort) );
+                        stream.ReadObjectIndex();
+                        Decompiler.AlignObjectSize();
                     }
                 
                     // The Field
