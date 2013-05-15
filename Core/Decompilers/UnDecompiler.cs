@@ -1811,37 +1811,41 @@ namespace UELib.Core
                     return output;
                 }
 
-                // TODO: Rewrite properly, also fix a suspected bug for UE3 function calls with optional params.
                 private string DecompileParms()
                 {
-                    var outputBuilder = new List<string>();
-                    {Token t;
-                    do
+                    var tokens = new List<Tuple<Token, String>>();
                     {
-                        // Using GrabNextToken over DecompileNest fixes a format issue when the code is compiled in debug mode.
-                        t = GrabNextToken();	// Skips debug tokens!
-                        if( t is NoParmToken )
-                            continue;
-
-                        outputBuilder.Add( t.Decompile() );
-                    } while( !(t is EndFunctionParmsToken) );}
-
-                    string output = String.Empty;
-                    for( int i = 0; i < outputBuilder.Count; ++ i )
-                    {
-                        //if( outputBuilder[i] == ")" )
-                        //	break;
-
-                        output += outputBuilder[i];
-                        if( i < outputBuilder.Count - 2 )
-                        {
-                            // Format handling for params that were skipped(optionals), add a space if not skipped!
-                            output += String.IsNullOrEmpty( outputBuilder[i + 1] ) ? "," : ", ";
-                        }
+                    next:
+                        var t = GrabNextToken();
+                        tokens.Add( Tuple.Create( t, t.Decompile() ) );
+                        if( !(t is EndFunctionParmsToken) )
+                            goto next;
                     }
 
-                    // ----Trim all , that are decompiled in UE3 due the inserted NoParmToken's
-                    return output;
+                    var output = new StringBuilder();
+                    for( int i = 0; i < tokens.Count; ++ i )
+                    {
+                        var t = tokens[i].Item1; // Token
+                        var v = tokens[i].Item2; // Value
+   
+                        if( t is NoParmToken ) // Skipped optional parameters
+                        {
+                            output.Append( v );
+                        }
+                        else if( t is EndFunctionParmsToken ) // End ")"
+                        {
+                            output = new StringBuilder( output.ToString().TrimEnd( ',' ) + v );
+                        }
+                        else // Any passed values
+                        {
+                            if( i != tokens.Count - 1 && i > 0 ) // Skipped optional parameters
+                            {
+                                output.Append( v == String.Empty ? "," : ", " );    
+                            }
+                            output.Append( v );       
+                        }
+                    }
+                    return output.ToString();
                 }
             }
 
@@ -2970,7 +2974,13 @@ namespace UELib.Core
             public class NoObjectToken : NoneToken{}
 
             // A skipped parameter when calling a function
-            public class NoParmToken : Token{}
+            public class NoParmToken : Token
+            {
+                public override string Decompile()
+                {
+                    return ",";
+                }
+            }
             public class EndOfScriptToken : Token{}
 
             public class StopToken : Token
