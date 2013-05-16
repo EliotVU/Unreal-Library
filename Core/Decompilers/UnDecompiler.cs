@@ -870,14 +870,13 @@ namespace UELib.Core
                 tokenItem.Decompiler = this;
                 tokenItem.RepresentToken = tokenCode;
                 tokenItem.Position = tokenPosition;// + (uint)Owner._ScriptOffset;
-                tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset;
+                tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset - 1;
                 // IMPORTANT:Add before deserialize, due the possibility that the tokenitem might deserialize other tokens as well.
                 DeserializedTokens.Add( tokenItem );
                 tokenItem.Deserialize( Buffer );
                 // Includes all sizes of followed tokens as well! e.g. i = i + 1; is summed here but not i = i +1; (not>>)i ++;
                 tokenItem.Size = (ushort)(CodePosition - tokenPosition);
-                tokenItem.StorageSize = (ushort)(tokenItem.StoragePosition 
-                    - ((uint)Buffer.Position - (uint)_Container.ScriptOffset));
+                tokenItem.StorageSize = (ushort)((uint)Buffer.Position - (uint)_Container.ScriptOffset - tokenItem.StoragePosition);
                 tokenItem.PostDeserialized();
                 return tokenItem;
             }
