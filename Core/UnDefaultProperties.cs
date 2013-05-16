@@ -735,6 +735,7 @@ namespace UELib.Core
         {
             _TempFlags = 0x00;
             string value;
+            _Container.EnsureBuffer();
             try
             {
                 value = DeserializeValue();
@@ -743,6 +744,11 @@ namespace UELib.Core
             {
                 value = "//" + e;
             }
+            finally
+            {
+                _Container.MaybeDisposeBuffer();
+            }
+
 
             // Array or Inlined object
             if( (_TempFlags & DoNotAppendName) != 0 )

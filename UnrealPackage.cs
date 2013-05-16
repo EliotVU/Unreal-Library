@@ -883,60 +883,54 @@ namespace UELib
         /// <example>InitializePackage( UnrealPackage.InitFlags.All )</example>
         public void InitializePackage( InitFlags initFlags = InitFlags.All )
         {
+            if( (initFlags & InitFlags.RegisterClasses) != 0 )
+            {
+                RegisterAllClasses();
+            }
+
+            if( (initFlags & InitFlags.Construct) == 0 )
+            {
+                return;
+            }
+
+            ConstructObjects();
+            if( (initFlags & InitFlags.Deserialize) == 0 )
+                return;
+
             try
             {
-                if( (initFlags & InitFlags.RegisterClasses) != 0 )
-                {
-                    RegisterAllClasses();
-                }
-
-                if( (initFlags & InitFlags.Construct) == 0 )
-                {
-                    return;
-                }
-
-                ConstructObjects();
-                if( (initFlags & InitFlags.Deserialize) == 0 )
-                    return;
-
-                try
-                {
-                    DeserializeObjects();
-                }
-                catch
-                {
-                    throw new DeserializingObjectsException();
-                }
-
-                try
-                {
-                    if( (initFlags & InitFlags.Import) != 0 )
-                    {
-                        ImportObjects();
-                    }
-                }
-                catch( Exception e )
-                {
-                    //can be treat with as a warning!
-                    throw new Exception( "An exception occurred while importing objects", e );
-                }
-
-                try
-                {
-                    if( (initFlags & InitFlags.Link) != 0 )
-                    {
-                        LinkObjects();
-                    }
-                }
-                catch
-                {
-                    throw new LinkingObjectsException();
-                }
+                DeserializeObjects();
             }
-            finally
+            catch
             {
-                DisposeStream();
+                throw new DeserializingObjectsException();
             }
+
+            try
+            {
+                if( (initFlags & InitFlags.Import) != 0 )
+                {
+                    ImportObjects();
+                }
+            }
+            catch( Exception e )
+            {
+                //can be treat with as a warning!
+                throw new Exception( "An exception occurred while importing objects", e );
+            }
+
+            try
+            {
+                if( (initFlags & InitFlags.Link) != 0 )
+                {
+                    LinkObjects();
+                }
+            }
+            catch
+            {
+                throw new LinkingObjectsException();
+            }
+            DisposeStream();
         }
 
         /// <summary>
@@ -1011,7 +1005,7 @@ namespace UELib
         /// Constructs all the objects based on data from _ExportTableList and _ImportTableList, and
         /// all constructed objects are added to the _ObjectsList.
         /// </summary>
-        public void ConstructObjects()
+        private void ConstructObjects()
         {		
             Objects = new List<UObject>();
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Construct ) );
@@ -1029,7 +1023,7 @@ namespace UELib
         /// <summary>
         /// Deserializes all exported objects. 
         /// </summary>
-        public void DeserializeObjects()
+        private void DeserializeObjects()
         {
             // Only exports should be deserialized and PostInitialized!
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Deserialize ) );
@@ -1047,7 +1041,7 @@ namespace UELib
         /// <summary>
         /// Tries to import necessary deserialized data from imported objects.
         /// </summary>
-        public void ImportObjects()
+        private void ImportObjects()
         {
             // TODO:Figure out why this freezes.
             /*OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Import ) );
@@ -1065,7 +1059,7 @@ namespace UELib
         /// <summary>
         /// Initializes all exported objects.
         /// </summary>
-        public void LinkObjects()
+        private void LinkObjects()
         {
             // Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Link ) );
@@ -1372,10 +1366,11 @@ namespace UELib
         }
 
         private void DisposeStream()
-        {
+        { 
             if( Stream == null )
                 return;
 
+            Console.WriteLine( "Disposing package stream" );
             Stream.Dispose();
         }
         #endregion

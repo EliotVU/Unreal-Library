@@ -155,10 +155,10 @@ namespace UELib.Core
 
         private void InitBuffer()
         {
-            Console.WriteLine( "Init buffer for {0}", (string)this );
+            //Console.WriteLine( "Init buffer for {0}", (string)this );
             if( _Buffer != null )
             {
-                Console.WriteLine( "Short initialization" );
+                //Console.WriteLine( "Short initialization" );
                 _Buffer.InitBuffer();
                 return;
             }
@@ -173,15 +173,15 @@ namespace UELib.Core
             _Buffer = new UObjectStream( Package.Stream, buff );	
         }
 
-        protected void EnsureBuffer()
+        internal void EnsureBuffer()
         {
-            Console.WriteLine( "Ensure buffer for {0}", (string)this );
+            //Console.WriteLine( "Ensure buffer for {0}", (string)this );
             InitBuffer();
         }
 
-        protected void MaybeDisposeBuffer()
+        internal void MaybeDisposeBuffer()
         {
-            Console.WriteLine( "Disposing buffer for {0}", (string)this );
+            //Console.WriteLine( "Disposing buffer for {0}", (string)this );
 
             // Do not dispose while deserializing! 
             // For example DecompileDefaultProperties or DecompileScript, may dispose the buffer in certain situations!
@@ -190,7 +190,7 @@ namespace UELib.Core
 
             _Buffer.DisposeBuffer();
             _Buffer = null;   
-            Console.WriteLine( "Disposed" ); 
+            //Console.WriteLine( "Disposed" ); 
         }
 
         protected virtual bool CanDisposeBuffer()
