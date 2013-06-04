@@ -295,7 +295,7 @@ namespace UELib.Core
             return output + innerOutput + UDecompilingState.Tabs + "}";
         }
 
-         protected string FormatLocals()
+        protected string FormatLocals()
         {
             if( Locals == null || !Locals.Any() )
                 return String.Empty;

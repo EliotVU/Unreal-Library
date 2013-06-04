@@ -220,6 +220,10 @@ namespace UELib.Core
         {
             UDecompilingState.AddTabs( 1 );
             string locals = FormatLocals();
+            if( locals != String.Empty )
+            {
+                locals += "\r\n";
+            }
             string code;
             try
             {
