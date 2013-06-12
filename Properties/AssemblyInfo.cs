@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle( "UELib" )]
 [assembly: AssemblyDescription( "UELib makes it possible to deserialize and decompile almost any Unreal package files." )]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany( "" )]
+[assembly: AssemblyCompany( "EliotVU" )]
 [assembly: AssemblyProduct( "UELib" )]
 [assembly: AssemblyCopyright( "© 2009-2013 Eliot van Uytfanghe. All rights reserved." )]
 [assembly: AssemblyTrademark( "" )]
