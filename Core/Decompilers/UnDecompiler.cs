@@ -76,7 +76,13 @@ namespace UELib.Core
 
             private void AlignMemorySizes()
             {
-                const short vNameSizeTo8 = 500;
+#if TERA
+                if( Package.Build == UnrealPackage.GameBuild.BuildName.Tera )
+                {
+                    return;
+                }
+#endif
+                const short vNameSizeTo8 = 490;
                 if( Buffer.Version >= vNameSizeTo8 )
                 {
                     _NameMemorySize = 8;
@@ -2063,12 +2069,17 @@ namespace UELib.Core
             #region ContextTokens
             public class ContextToken : Token
             {
-                // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
+                // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase, and Moonbase Alpha(587).
                 // Greater or Equal than
-                private const ushort VSizeByteMoved = 588;  
+                private const ushort VSizeByteMoved = 590;  // Starting at Shadow Complex  
 
                 public override void Deserialize( IUnrealStream stream )
                 {
+                    var propertyAdded = stream.Version >= VSizeByteMoved
+#if TERA
+                        && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                        ; 
                     // A.?
                     DeserializeNext();
 
@@ -2077,7 +2088,7 @@ namespace UELib.Core
                     Decompiler.AlignSize( sizeof(ushort) );
 
                     // Doesn't seem to exist in APB
-                    if( stream.Version >= VSizeByteMoved )
+                    if( propertyAdded )
                     {
                         // Property
                         stream.ReadObjectIndex();
@@ -2089,7 +2100,7 @@ namespace UELib.Core
                     Decompiler.AlignSize( sizeof(byte) );	
 
                     // Additional byte in APB?
-                    if( stream.Version > 512 && stream.Version < VSizeByteMoved )
+                    if( stream.Version > 512 && !propertyAdded )
                     {
                         stream.ReadByte();
                         Decompiler.AlignSize( sizeof(byte) );	

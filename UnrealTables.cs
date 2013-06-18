@@ -10,9 +10,9 @@ namespace UELib
 {
     public struct UGenerationTableItem : IUnrealDeserializableClass
     {
-        public int ExportsCount;
-        public int NamesCount;
-        public int NetObjectsCount;
+        public uint ExportsCount;
+        public uint NamesCount;
+        public uint NetObjectsCount;
 
         public void Deserialize( IUnrealStream stream )
         {
@@ -22,11 +22,11 @@ namespace UELib
                 stream.Skip( 16 );
             }
 #endif
-            ExportsCount = stream.ReadInt32();
-            NamesCount = stream.ReadInt32();
+            ExportsCount = stream.ReadUInt32();
+            NamesCount = stream.ReadUInt32();
             if( stream.Version >= 322 )
             {
-                NetObjectsCount = stream.ReadInt32();
+                NetObjectsCount = stream.ReadUInt32();
             }		
         }
     }
@@ -171,9 +171,9 @@ namespace UELib
         private const int QWORDVersion = 141;
 
         public void Deserialize( IUnrealStream stream )
-        {
+        {   
             Name = stream.ReadText();
-            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();					
+            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
 #if DEOBFUSCATE
             // De-obfuscate names that contain unprintable characters!
             foreach( char c in Name )
@@ -419,14 +419,6 @@ namespace UELib
             {
                 int componentMapCount = stream.ReadInt32();	 
                 stream.Skip( componentMapCount * 12 );
-                //if( componentMapCount > 0 )
-                //{
-                //    Components = new Dictionary<int, int>( componentMapCount );
-                //    for( int i = 0; i < componentMapCount; ++ i )
-                //    {
-                //        Components.Add( stream.ReadNameIndex(), stream.ReadObjectIndex() );
-                //    }
-                //}
             }
 
             if( stream.Version < 247 )
@@ -439,20 +431,21 @@ namespace UELib
             // NetObjectCount
             int netObjectCount = stream.ReadInt32();
             stream.Skip( netObjectCount * 4 );
-            //if( netObjectCount > 0 )
-            //{
-            //    NetObjects = new List<int>( netObjectCount );
-            //    for( int i = 0; i < netObjectCount; ++ i )
-            //    {
-            //        NetObjects.Add( stream.ReadObjectIndex() );
-            //    }
-            //}
-            stream.Skip( 16 ); // GUID
+
+            stream.Skip( 16 );  // Package guid
             if( stream.Version > 486 )	// 475?	 486(> Stargate Worlds)
             {
-                // Depends?
-                stream.ReadInt32();
+                stream.Skip( 4 ); // Package flags
             }
+
+            // TODO: Bioshock infinite has 28 extra bytes here
+#if BIOSHOCK
+            if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite )
+            {
+                stream.Skip( 16 );
+                stream.Skip( 12 );  // conditional
+            }
+#endif
         }
 
         #region Writing Methods

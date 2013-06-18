@@ -65,7 +65,7 @@ namespace UELib.Core
             if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
             {
                 var size = _Buffer.ReadUShort();
-                Record( "??size", size );
+                Record( "??size_BL2", size );
                 _Buffer.Skip( size * 2 );
             }
 #endif

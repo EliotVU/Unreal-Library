@@ -320,6 +320,18 @@ namespace UELib
                 ShadowComplex,
 
                 /// <summary>
+                /// 610/014
+                /// </summary>
+                [Build( 610, 14 )]
+                Tera,
+
+                /// <summary>
+                /// 727/075
+                /// </summary>
+                [Build( 727, 75 )]
+                Bioshock_Infinite,
+
+                /// <summary>
                 /// 742/029
                 /// </summary>
                 [Build( 742, 29 )]
@@ -505,7 +517,11 @@ namespace UELib
                 if( stream.Version >= 584 )
                 {
                     // Additional tables, like thumbnail, and guid data.
-                    if( stream.Version >= 623 )
+                    if( stream.Version >= 623 
+                        #if BIOSHOCK
+                            && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+                        #endif
+                    )
                     {
                         stream.Skip( 12 );
                     }
@@ -649,6 +665,12 @@ namespace UELib
 
             if( pkg.Version >= 249 )
             {
+#if BIOSHOCK
+                if( pkg.Build == GameBuild.BuildName.Bioshock_Infinite )
+                {
+                    stream.Skip( 4 );
+                }
+#endif
                 // Offset to the first class(not object) in the package.
                 pkg.HeaderSize = stream.ReadUInt32();
                 if( pkg.Version >= 269 )
@@ -698,9 +720,21 @@ namespace UELib
 #endif
                 pkg.GUID = stream.ReadGuid();
                 Console.Write( "\r\n\tGUID:" + pkg.GUID + "\r\n" );
-
+#if TERA
+                if( pkg.Build == GameBuild.BuildName.Tera )
+                {
+                    stream.Position -= 4;
+                }
+#endif
                 int generationCount = stream.ReadInt32();
-                pkg.Generations = new UArray<UGenerationTableItem>( stream, generationCount );	
+                pkg.Generations = new UArray<UGenerationTableItem>( stream, generationCount );
+	
+#if TERA
+                if( pkg.Build == GameBuild.BuildName.Tera )
+                {
+                    pkg._Data.NamesCount = pkg.Generations.Last().NamesCount;
+                }
+#endif
 
                 if( pkg.Version >= 245 )
                 {
@@ -826,8 +860,14 @@ namespace UELib
                 }
             }*/
 
+            if( pkg.Version > 500 )
+            {
+                var unk = stream.ReadUInt32();
+                Console.WriteLine( "unk:" + unk );
+                // 516, array of strings
+                // 767, object indexes?
+            }
             pkg.HeaderSize = stream.Position;
-
             return pkg;
         }
 
@@ -1017,12 +1057,26 @@ namespace UELib
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Construct ) );
             foreach( var exp in Exports )
             {
-                CreateObjectForTable( exp );
+                try
+                {
+                    CreateObjectForTable( exp );
+                }
+                catch( Exception exc )
+                {
+                    throw new UnrealException( "couldn't create export object for " + exp, exc );
+                }
             }
 
             foreach( var imp in Imports )
             {
-                CreateObjectForTable( imp );
+                try
+                {
+                    CreateObjectForTable( imp );
+                }
+                catch( Exception exc )
+                {
+                    throw new UnrealException( "couldn't create import object for " + imp, exc );
+                }
             }
         }
 
@@ -1146,21 +1200,16 @@ namespace UELib
             _RegisteredClasses.Add( obj );
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="className"></param>
-        /// <returns></returns>
         [Pure]public bool IsRegisteredClass( string className )
         {
             return _RegisteredClasses.Exists( o => o.Name.ToLower() == className.ToLower() );
         }
 
         /// <summary>
-        /// Returns a Object that resides at the specified ObjectIndex.
+        /// Returns an Object that resides at the specified ObjectIndex.
         /// 
-        /// if index is positive a exported Object will be returned.
-        /// if index is negative a imported Object will be returned.
+        /// if index is positive an exported Object will be returned.
+        /// if index is negative an imported Object will be returned.
         /// if index is zero null will be returned.
         /// </summary>
         /// <param name="objectIndex">The index of the Object in a tablelist.</param>
@@ -1173,7 +1222,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Returns a Object name that resides at the specified ObjectIndex.
+        /// Returns an Object name that resides at the specified ObjectIndex.
         /// </summary>
         /// <param name="objectIndex">The index of the object in a tablelist.</param>
         /// <returns>The found UELib.Core.UObject name if any.</returns>
@@ -1193,10 +1242,10 @@ namespace UELib
         }
 
         /// <summary>
-        /// Returns a UnrealTable that resides at the specified TableIndex.
+        /// Returns an UnrealTable that resides at the specified TableIndex.
         /// 
-        /// if index is positive a ExportTable will be returned.
-        /// if index is negative a ImportTable will be returned.
+        /// if index is positive an ExportTable will be returned.
+        /// if index is negative an ImportTable will be returned.
         /// if index is zero null will be returned.
         /// </summary>
         /// <param name="tableIndex">The index of the Table.</param>
@@ -1209,7 +1258,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Tries to find a UELib.Core.UObject with a specified name and type.
+        /// Tries to find an UELib.Core.UObject with a specified name and type.
         /// </summary>
         /// <param name="objectName">The name of the object to find.</param>
         /// <param name="type">The type of the object to find.</param>
@@ -1222,7 +1271,7 @@ namespace UELib
                 return null;
             }
 
-            var obj = Objects.Find( o => String.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+            var obj = Objects.Find( o => String.Compare( o.Name, objectName, StringComparison.OrdinalIgnoreCase ) == 0 &&
                 (checkForSubclass ? o.GetType().IsSubclassOf( type ) : o.GetType() == type) );
             return obj;
         }

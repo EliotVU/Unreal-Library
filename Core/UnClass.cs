@@ -198,7 +198,11 @@ namespace UELib.Core
 
                     if( !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed )
                     {
-                        if( Package.Version >= 603 )
+                        if( Package.Version >= 603 
+#if TERA
+                            && Package.Build != UnrealPackage.GameBuild.BuildName.Tera 
+#endif
+                            )
                         {
                             DontSortCategories = DeserializeGroup( "DontSortCategories" );
                             Record( "DontSortCategories", DontSortCategories );
@@ -215,8 +219,12 @@ namespace UELib.Core
                         if( Package.Version >= 185 )
                         {
                             // 490:GoW1, 576:CrimeCraft
-                            if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories )) 
-                                || Package.Version <= 490 || Package.Version >= 576 )
+                            if( ((!HasClassFlag( Flags.ClassFlags.CollapseCategories )) 
+                                || Package.Version <= 490 || Package.Version >= 576)
+#if TERA
+                                && Package.Build != UnrealPackage.GameBuild.BuildName.Tera 
+#endif
+                                )
                             { 
                                 AutoExpandCategories = DeserializeGroup( "AutoExpandCategories" );
                                 Record( "AutoExpandCategories", AutoExpandCategories );
@@ -271,7 +279,11 @@ namespace UELib.Core
 
                             // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
-                            if( Package.Version > 575 && Package.Version < 678 )
+                            if( Package.Version > 575 && Package.Version < 678
+#if TERA
+                            && Package.Build != UnrealPackage.GameBuild.BuildName.Tera 
+#endif
+                                )
                             {
                                 int unk2 = _Buffer.ReadInt32();
                                 Record( "??Int32", unk2 );
