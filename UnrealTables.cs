@@ -415,7 +415,11 @@ namespace UELib
             if( stream.Version < 220 )
                 return;
 
-            if( stream.Version < 543 )
+            if( stream.Version < 543 
+#if ALPHAPROTOCOL
+                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtcol          
+#endif     
+            )
             {
                 int componentMapCount = stream.ReadInt32();	 
                 stream.Skip( componentMapCount * 12 );
