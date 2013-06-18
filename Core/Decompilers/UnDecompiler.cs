@@ -1225,10 +1225,11 @@ namespace UELib.Core
                 FieldToken.LastField = null;
 
                 // TODO: Corrigate detection and version.
+                DefaultParameterToken._NextParamIndex = 0;
                 if( Package.Version > 300 )
                 {
                     var func = _Container as UFunction;
-                    if( func != null && func.Params != null && func.HasFunctionFlag( Flags.FunctionFlags.OptionalParameters ) )
+                    if( func != null && func.Params != null )
                     { 
                         DefaultParameterToken._NextParamIndex = func.Params.FindIndex( 
                             p => p.HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm ) 
@@ -2864,7 +2865,7 @@ namespace UELib.Core
                 internal static int     _NextParamIndex;
                 private UField          _NextParam
                 {
-                    get{ return ((UFunction)Decompiler._Container).Params[_NextParamIndex++]; }
+                    get{ try{return ((UFunction)Decompiler._Container).Params[_NextParamIndex++];}catch{return null;} }
                 }
 
                 public override void Deserialize( IUnrealStream stream )
@@ -2887,7 +2888,9 @@ namespace UELib.Core
                     string expression = DecompileNext();		
                     DecompileNext();	// EndParmValue
                     Decompiler._CanAddSemicolon = true;
-                    return String.Format( "{0} = {1}", _NextParam.Name, expression );
+                    var param = _NextParam;
+                    var paramName = param != null ? param.Name : "@UnknownOptionalParam_" + (_NextParamIndex - 1);
+                    return String.Format( "{0} = {1}", paramName, expression );
                 }
             }
 
