@@ -332,12 +332,6 @@ namespace UELib
                 Tera,
 
                 /// <summary>
-                /// 727/075
-                /// </summary>
-                [Build( 727, 75 )]
-                Bioshock_Infinite,
-
-                /// <summary>
                 /// 742/029
                 /// </summary>
                 [Build( 742, 29 )]
