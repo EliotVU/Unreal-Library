@@ -344,6 +344,12 @@ namespace UELib
                 GoW3,
 
                 /// <summary>
+                /// 832/021
+                /// </summary>
+                [Build( 832, 21 )]
+                RememberMe,  
+
+                /// <summary>
                 /// 832/046
                 /// </summary>
                 [Build( 832, 46 )]

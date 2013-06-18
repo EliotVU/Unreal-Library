@@ -290,6 +290,13 @@ namespace UELib.Core
                     {
                         DLLBindName = _Buffer.ReadNameReference();
                         Record( "DLLBindName", DLLBindName );
+#if REMEMBERME
+                        if( Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe )
+                        {
+                            var unknownName = _Buffer.ReadNameReference();
+                            Record( "??RM_Name", unknownName );
+                        }
+#endif
 #if DISHONORED
                         if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
                         {
