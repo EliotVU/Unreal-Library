@@ -278,6 +278,12 @@ namespace UELib
                 MirrorsEdge,
 
                 /// <summary>
+                /// 539/091
+                /// </summary>
+                [Build( 539, 91 )]
+                AlphaProtcol,
+
+                /// <summary>
                 /// 547/028:032
                 /// </summary>
                 [Build( 547, 547, 28u, 32u )]
