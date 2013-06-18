@@ -381,7 +381,7 @@ namespace UELib
         public readonly bool BigEndianCode;
         public bool IsChunked{ get{ return Package.CompressedChunks != null && Package.CompressedChunks.Any(); } }
 
-        public UPackageStream( string path, FileMode mode, FileAccess access ) : base( path, mode, access )
+        public UPackageStream( string path, FileMode mode, FileAccess access ) : base( path, mode, access, FileShare.ReadWrite )
         {
             UR = null;
             UW = null;

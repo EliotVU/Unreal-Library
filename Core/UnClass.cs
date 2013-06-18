@@ -131,7 +131,6 @@ namespace UELib.Core
                 }
 
                 PackageImports = DeserializeGroup( "PackageImports" );
-                Record( "PackageImports", PackageImports );
             }
 
             if( Package.Version >= 62 )
@@ -151,6 +150,13 @@ namespace UELib.Core
                 ConfigName = _Buffer.ReadNameReference();
                 Record( "ConfigName", ConfigName );
 
+                const int vHideCategoriesOldOrder = 539;
+                var isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
+#if TERA
+                            || Package.Build == UnrealPackage.GameBuild.BuildName.Tera 
+#endif           
+                    ;
+
                 // TODO: Corrigate Version
                 if( Package.Version >= 100 )
                 {
@@ -158,41 +164,18 @@ namespace UELib.Core
                     if( Package.Version >= 220 )
                     {
                         // TODO: Corrigate Version
-                        if( Package.Version <= 512 )
+                        if( isHideCategoriesOldOrder )
                         {
-                            HideCategories = DeserializeGroup( "HideCategories" );
-                            Record( "HideCategories", HideCategories );
+                            DeserializeHideCategories();
                         }
 
-                        int componentsCount = _Buffer.ReadInt32();
-                        Record( "componentsCount", componentsCount );
-                        if( componentsCount > 0 )
-                        {
-                            // NameIndex/ObjectIndex
-                            int bytes = componentsCount * 12;
-                            AssertEOS( bytes, "Components" );
-                            _Buffer.Skip( bytes );
-                        }
+                        DeserializeComponentsMap();
 
                         // RoboBlitz(369)
                         // TODO: Corrigate Version
                         if( Package.Version >= 369 )
                         {
-                            // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
-                            int interfacesCount = _Buffer.ReadInt32();
-                            Record( "InterfacesCount", interfacesCount );
-                            if( interfacesCount > 0 )
-                            {
-                                AssertEOS( interfacesCount * 8, "ImplementedInterfaces" );
-                                ImplementedInterfaces = new List<int>( interfacesCount );
-                                for( int i = 0; i < interfacesCount; ++ i )
-                                {
-                                    int interfaceIndex = _Buffer.ReadInt32();
-                                    int typeIndex = _Buffer.ReadInt32();
-                                    ImplementedInterfaces.Add( interfaceIndex ); 
-                                }
-                                Record( "ImplementedInterfaces", ImplementedInterfaces );
-                            }
+                            DeserializeInterfaces();
                         }
                     }
 
@@ -205,35 +188,29 @@ namespace UELib.Core
                             )
                         {
                             DontSortCategories = DeserializeGroup( "DontSortCategories" );
-                            Record( "DontSortCategories", DontSortCategories );
                         }
 
                         // TODO: Corrigate Version
-                        if( Package.Version < 220 || Package.Version > 512 )
+                        if( Package.Version < 220 || !isHideCategoriesOldOrder )
                         {
-                            HideCategories = DeserializeGroup( "HideCategories" );
-                            Record( "HideCategories", HideCategories );
+                            DeserializeHideCategories();
                         }
 
                         // TODO: Corrigate Version
                         if( Package.Version >= 185 )
                         {
-                            // 490:GoW1, 576:CrimeCraft
-                            if( ((!HasClassFlag( Flags.ClassFlags.CollapseCategories )) 
-                                || Package.Version <= 490 || Package.Version >= 576)
-#if TERA
-                                && Package.Build != UnrealPackage.GameBuild.BuildName.Tera 
-#endif
-                                )
+                            var hasAutoExpandCategories = !HasClassFlag( Flags.ClassFlags.CollapseCategories ) 
+                                || isHideCategoriesOldOrder || Package.Version >= 576;
+
+                            // 576:CrimeCraft
+                            if( hasAutoExpandCategories )
                             { 
                                 AutoExpandCategories = DeserializeGroup( "AutoExpandCategories" );
-                                Record( "AutoExpandCategories", AutoExpandCategories );
                             }
 
                             if( Package.Version > 670 )
                             {
                                 AutoCollapseCategories = DeserializeGroup( "AutoCollapseCategories" );
-                                Record( "AutoCollapseCategories", AutoCollapseCategories );
 
                                 if( Package.Version >= 749 
                                     #if SPECIALFORCE2
@@ -264,7 +241,6 @@ namespace UELib.Core
                                         }
 #endif
                                         ClassGroups = DeserializeGroup( "ClassGroups" );
-                                        Record( "ClassGroups", ClassGroups );
                                         if( Package.Version >= 813 )
                                         {
                                             NativeClassName = _Buffer.ReadText();
@@ -302,11 +278,17 @@ namespace UELib.Core
                     {
                         DLLBindName = _Buffer.ReadNameReference();
                         Record( "DLLBindName", DLLBindName );
+#if REMEMBERME
+                        if( Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe )
+                        {
+                            var unknownName = _Buffer.ReadNameReference();
+                            Record( "??RM_Name", unknownName );
+                        }
+#endif
 #if DISHONORED
                         if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
                         {
                             ClassGroups = DeserializeGroup( "ClassGroups" );
-                            Record( "ClassGroups", ClassGroups );   
                         }
 #endif
 #if BORDERLANDS2
@@ -340,6 +322,44 @@ namespace UELib.Core
             }
         }
 
+        private void DeserializeInterfaces()
+        {
+            // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
+            int interfacesCount = _Buffer.ReadInt32();
+            Record( "Implements.Count", interfacesCount );
+            if( interfacesCount <= 0 )
+                return;
+
+            AssertEOS( interfacesCount*8, "Implemented" );
+            ImplementedInterfaces = new List<int>( interfacesCount );
+            for( int i = 0; i < interfacesCount; ++ i )
+            {
+                int interfaceIndex = _Buffer.ReadInt32();
+                Record( "Implemented.InterfaceIndex", interfaceIndex );
+                int typeIndex = _Buffer.ReadInt32();
+                Record( "Implemented.TypeIndex", typeIndex );
+                ImplementedInterfaces.Add( interfaceIndex );
+            }
+        }
+
+        private void DeserializeHideCategories()
+        {
+            HideCategories = DeserializeGroup( "HideCategories" );
+        }
+
+        private void DeserializeComponentsMap()
+        {
+            int componentsCount = _Buffer.ReadInt32();
+            Record( "Components.Count", componentsCount );
+            if( componentsCount <= 0 )
+                return;
+
+            // NameIndex/ObjectIndex
+            int numBytes = componentsCount*12;
+            AssertEOS( numBytes, "Components" );
+            _Buffer.Skip( numBytes );
+        }
+
         protected override void FindChildren()
         {
             base.FindChildren();
@@ -358,7 +378,7 @@ namespace UELib.Core
         private IList<int> DeserializeGroup( string groupName = "List" )
         {
             int count = _Buffer.ReadIndex();
-            Record( groupName + "Count", count );
+            Record( String.Format( "{0}.Count", groupName ), count );
             if( count > 0 )
             {
                 var groupList = new List<int>( count );
@@ -366,6 +386,8 @@ namespace UELib.Core
                 {
                     int index = _Buffer.ReadNameIndex();
                     groupList.Add( index );
+
+                    Record( String.Format( "{0}({1})", groupName, Package.GetIndexName( index ) ), index );
                 }
                 return groupList;
             }

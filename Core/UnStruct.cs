@@ -42,13 +42,15 @@ namespace UELib.Core
         #endregion
 
         #region Script Members
-        public IList<UConst> Constants{ get; private set; }
+        public IList<UConst>    Constants{ get; private set; }
 
-        public IList<UEnum> Enums{ get; private set; }
+        public IList<UEnum>     Enums{ get; private set; }
 
-        public IList<UStruct> Structs{ get; private set; }
+        public IList<UStruct>   Structs{ get; private set; }
 
-        public List<UProperty> Variables{ get; private set; }
+        public List<UProperty>  Variables{ get; private set; }
+
+        public List<UProperty>  Locals{ get; private set; }
         #endregion
 
         #region General Members
@@ -218,6 +220,19 @@ namespace UELib.Core
                 else if( child is UStruct && ((UStruct)(child)).IsPureStruct() )
                 {
                     Structs.Insert( 0, (UStruct)child );
+                }
+            }
+
+            // TODO: Introduced since UDK 2011-06+(not sure on exaclty which month).
+            if( (Package.Version >= 805 && GetType() == typeof(UState)) || GetType() == typeof(UFunction) )
+            {
+                Locals = new List<UProperty>();
+                foreach( var local in Variables )
+                {
+                    if( !local.IsParm() )
+                    {
+                        Locals.Add( local );
+                    }
                 }
             }
         }	

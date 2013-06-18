@@ -45,33 +45,25 @@ namespace UELib.Core
             output += UDecompilingState.Tabs + "// Object Offset:" + UnrealMethods.FlagToString( (uint)ExportTable.SerialOffset ) + "\r\n";
             #endif
 
-            Default.EnsureBuffer();
-            try
+            for( int i = 0; i < Properties.Count; ++ i )
             {
-                for( int i = 0; i < Properties.Count; ++ i )
+                string propOutput = Properties[i].Decompile();
+
+                // This is the first element of a static array
+                if( i+1 < Properties.Count 
+                    && Properties[i+1].Name == Properties[i].Name 
+                    && Properties[i].ArrayIndex <= 0
+                    && Properties[i+1].ArrayIndex > 0 )
                 {
-                    string propOutput = Properties[i].Decompile();
-
-                    // This is the first element of a static array
-                    if( i+1 < Properties.Count 
-                        && Properties[i+1].Name == Properties[i].Name 
-                        && Properties[i].ArrayIndex <= 0
-                        && Properties[i+1].ArrayIndex > 0 )
-                    {
-                        propOutput = propOutput.Insert( Properties[i].Name.Length, "[0]" );
-                    }
-
-                    // FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
-                    output += UDecompilingState.Tabs +
-#if DEBUG_POSITIONS
-                "/*" + UnrealMethods.FlagToString( (uint)Properties[i]._BeginOffset ) + "*/\t" +
-#endif
-                              propOutput + "\r\n";
+                    propOutput = propOutput.Insert( Properties[i].Name.Length, "[0]" );
                 }
-            }
-            finally
-            {
-                Default.MaybeDisposeBuffer();
+
+                // FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
+                output += UDecompilingState.Tabs +
+#if DEBUG_POSITIONS
+            "/*" + UnrealMethods.FlagToString( (uint)Properties[i]._BeginOffset ) + "*/\t" +
+#endif
+                            propOutput + "\r\n";
             }
             return output;
         }

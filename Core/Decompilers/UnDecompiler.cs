@@ -480,6 +480,10 @@ namespace UELib.Core
                         tokenItem = new LocalVariableToken();
                         break;
 
+                    case (byte)ExprToken.StateVariable:
+                        tokenItem = new StateVariableToken();
+                        break;
+
                     // Referenced variables that are default
                     case (byte)ExprToken.UndefinedVariable:
                         #if BORDERLANDS2
@@ -872,14 +876,13 @@ namespace UELib.Core
                 tokenItem.Decompiler = this;
                 tokenItem.RepresentToken = tokenCode;
                 tokenItem.Position = tokenPosition;// + (uint)Owner._ScriptOffset;
-                tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset;
+                tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset - 1;
                 // IMPORTANT:Add before deserialize, due the possibility that the tokenitem might deserialize other tokens as well.
                 DeserializedTokens.Add( tokenItem );
                 tokenItem.Deserialize( Buffer );
                 // Includes all sizes of followed tokens as well! e.g. i = i + 1; is summed here but not i = i +1; (not>>)i ++;
                 tokenItem.Size = (ushort)(CodePosition - tokenPosition);
-                tokenItem.StorageSize = (ushort)(tokenItem.StoragePosition 
-                    - ((uint)Buffer.Position - (uint)_Container.ScriptOffset));
+                tokenItem.StorageSize = (ushort)((uint)Buffer.Position - (uint)_Container.ScriptOffset - tokenItem.StoragePosition);
                 tokenItem.PostDeserialized();
                 return tokenItem;
             }
@@ -1228,10 +1231,11 @@ namespace UELib.Core
                 FieldToken.LastField = null;
 
                 // TODO: Corrigate detection and version.
+                DefaultParameterToken._NextParamIndex = 0;
                 if( Package.Version > 300 )
                 {
                     var func = _Container as UFunction;
-                    if( func != null && func.Params != null && func.HasFunctionFlag( Flags.FunctionFlags.OptionalParameters ) )
+                    if( func != null && func.Params != null )
                     { 
                         DefaultParameterToken._NextParamIndex = func.Params.FindIndex( 
                             p => p.HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm ) 
@@ -1813,37 +1817,41 @@ namespace UELib.Core
                     return output;
                 }
 
-                // TODO: Rewrite properly, also fix a suspected bug for UE3 function calls with optional params.
                 private string DecompileParms()
                 {
-                    var outputBuilder = new List<string>();
-                    {Token t;
-                    do
+                    var tokens = new List<Tuple<Token, String>>();
                     {
-                        // Using GrabNextToken over DecompileNest fixes a format issue when the code is compiled in debug mode.
-                        t = GrabNextToken();	// Skips debug tokens!
-                        if( t is NoParmToken )
-                            continue;
-
-                        outputBuilder.Add( t.Decompile() );
-                    } while( !(t is EndFunctionParmsToken) );}
-
-                    string output = String.Empty;
-                    for( int i = 0; i < outputBuilder.Count; ++ i )
-                    {
-                        //if( outputBuilder[i] == ")" )
-                        //	break;
-
-                        output += outputBuilder[i];
-                        if( i < outputBuilder.Count - 2 )
-                        {
-                            // Format handling for params that were skipped(optionals), add a space if not skipped!
-                            output += String.IsNullOrEmpty( outputBuilder[i + 1] ) ? "," : ", ";
-                        }
+                    next:
+                        var t = GrabNextToken();
+                        tokens.Add( Tuple.Create( t, t.Decompile() ) );
+                        if( !(t is EndFunctionParmsToken) )
+                            goto next;
                     }
 
-                    // ----Trim all , that are decompiled in UE3 due the inserted NoParmToken's
-                    return output;
+                    var output = new StringBuilder();
+                    for( int i = 0; i < tokens.Count; ++ i )
+                    {
+                        var t = tokens[i].Item1; // Token
+                        var v = tokens[i].Item2; // Value
+   
+                        if( t is NoParmToken ) // Skipped optional parameters
+                        {
+                            output.Append( v );
+                        }
+                        else if( t is EndFunctionParmsToken ) // End ")"
+                        {
+                            output = new StringBuilder( output.ToString().TrimEnd( ',' ) + v );
+                        }
+                        else // Any passed values
+                        {
+                            if( i != tokens.Count - 1 && i > 0 ) // Skipped optional parameters
+                            {
+                                output.Append( v == String.Empty ? "," : ", " );    
+                            }
+                            output.Append( v );       
+                        }
+                    }
+                    return output.ToString();
                 }
             }
 
@@ -2801,6 +2809,7 @@ namespace UELib.Core
 
             public class InstanceVariableToken : FieldToken{}
             public class LocalVariableToken : FieldToken{}
+            public class StateVariableToken : FieldToken{}
             public class OutVariableToken : FieldToken{}
 
             public class DefaultVariableToken : FieldToken
@@ -2867,7 +2876,7 @@ namespace UELib.Core
                 internal static int     _NextParamIndex;
                 private UField          _NextParam
                 {
-                    get{ return ((UFunction)Decompiler._Container).Params[_NextParamIndex++]; }
+                    get{ try{return ((UFunction)Decompiler._Container).Params[_NextParamIndex++];}catch{return null;} }
                 }
 
                 public override void Deserialize( IUnrealStream stream )
@@ -2890,7 +2899,9 @@ namespace UELib.Core
                     string expression = DecompileNext();		
                     DecompileNext();	// EndParmValue
                     Decompiler._CanAddSemicolon = true;
-                    return String.Format( "{0} = {1}", _NextParam.Name, expression );
+                    var param = _NextParam;
+                    var paramName = param != null ? param.Name : "@UnknownOptionalParam_" + (_NextParamIndex - 1);
+                    return String.Format( "{0} = {1}", paramName, expression );
                 }
             }
 
@@ -2976,7 +2987,13 @@ namespace UELib.Core
             public class NoObjectToken : NoneToken{}
 
             // A skipped parameter when calling a function
-            public class NoParmToken : Token{}
+            public class NoParmToken : Token
+            {
+                public override string Decompile()
+                {
+                    return ",";
+                }
+            }
             public class EndOfScriptToken : Token{}
 
             public class StopToken : Token
@@ -3160,12 +3177,8 @@ namespace UELib.Core
                     // TODO: Corrigate Version(Lowest known version 369(Roboblitz))
                     if( stream.Version > 300 )
                     {
-                        stream.ReadUInt16();	// Size
-                        Decompiler.AlignSize( sizeof(ushort) );
-
-                        // TODO: UNKNOWN:
-                        stream.ReadUInt16();
-                        Decompiler.AlignSize( sizeof(ushort) );
+                        stream.ReadObjectIndex();
+                        Decompiler.AlignObjectSize();
                     }
                 
                     // The Field

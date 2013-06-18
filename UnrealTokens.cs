@@ -15,7 +15,7 @@
         LocalVariable			= 0x00,
         InstanceVariable		= 0x01,
         DefaultVariable			= 0x02,
-        // GAP:					= 0x03,
+        StateVariable           = 0x03,
         Return					= 0x04,
         Switch					= 0x05,
         Jump					= 0x06,		// goto CODEOFFSET
