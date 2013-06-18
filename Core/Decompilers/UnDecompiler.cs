@@ -76,12 +76,6 @@ namespace UELib.Core
 
             private void AlignMemorySizes()
             {
-#if TERA
-                if( Package.Build == UnrealPackage.GameBuild.BuildName.Tera )
-                {
-                    return;
-                }
-#endif
                 const short vNameSizeTo8 = 490;
                 if( Buffer.Version >= vNameSizeTo8 )
                 {
@@ -89,7 +83,11 @@ namespace UELib.Core
                 }
 
                 const short vObjectSizeTo8 = 587;
-                if( Buffer.Version >= vObjectSizeTo8 )
+                if( Buffer.Version >= vObjectSizeTo8 
+#if TERA
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                    )
                 {
                     _ObjectMemorySize = 8;    
                 }
