@@ -441,15 +441,6 @@ namespace UELib
             {
                 stream.Skip( 4 ); // Package flags
             }
-
-            // TODO: Bioshock infinite has 28 extra bytes here
-#if BIOSHOCK
-            if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite )
-            {
-                stream.Skip( 16 );
-                stream.Skip( 12 );  // conditional
-            }
-#endif
         }
 
         #region Writing Methods

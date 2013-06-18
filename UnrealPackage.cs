@@ -529,11 +529,7 @@ namespace UELib
                 if( stream.Version >= 584 )
                 {
                     // Additional tables, like thumbnail, and guid data.
-                    if( stream.Version >= 623 
-                        #if BIOSHOCK
-                            && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
-                        #endif
-                    )
+                    if( stream.Version >= 623 )
                     {
                         stream.Skip( 12 );
                     }
@@ -677,12 +673,6 @@ namespace UELib
 
             if( pkg.Version >= 249 )
             {
-#if BIOSHOCK
-                if( pkg.Build == GameBuild.BuildName.Bioshock_Infinite )
-                {
-                    stream.Skip( 4 );
-                }
-#endif
                 // Offset to the first class(not object) in the package.
                 pkg.HeaderSize = stream.ReadUInt32();
                 if( pkg.Version >= 269 )
