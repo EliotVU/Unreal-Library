@@ -733,4 +733,32 @@ namespace UELib.Core
 			return Object != null ? Object.GetFriendlyType() : "@NULL";
 		}
 	}
+
+#if BIOSHOCK
+    /// <summary>
+	/// WeakReference Property
+	/// </summary>
+	[UnrealRegisterClass]
+	public class UXWeakReferenceProperty : UObjectProperty
+	{
+		/// <inheritdoc/>
+		public override string GetFriendlyType()
+		{
+			return base.GetFriendlyType() + "&";
+		}
+	}
+
+    /// <summary>
+	/// QWord Property
+	/// </summary>
+	[UnrealRegisterClass]
+	public class UQWordProperty : UIntProperty
+	{
+        /// <inheritdoc/>
+		public override string GetFriendlyType()
+		{
+			return "Qword";
+		}
+	}
+#endif
 }
