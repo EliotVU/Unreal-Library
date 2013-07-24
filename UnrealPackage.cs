@@ -674,7 +674,8 @@ namespace UELib
 #if BIOSHOCK
                 if( pkg.Build == GameBuild.BuildName.Bioshock_Infinite )
                 {
-                    stream.Skip( 4 );
+                    var unk = stream.ReadInt32();
+                    unk.ToString();
                 }
 #endif
                 // Offset to the first class(not object) in the package.
@@ -729,6 +730,7 @@ namespace UELib
 
                 int generationCount = stream.ReadInt32();
                 pkg.Generations = new UArray<UGenerationTableItem>( stream, generationCount );	
+                Console.WriteLine( "Deserialized {0} generations", pkg.Generations.Count );
 
                 if( pkg.Version >= 245 )
                 {
@@ -799,6 +801,7 @@ namespace UELib
                     nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                     pkg.Names.Add( nameEntry );
                 }
+                Console.WriteLine( "Deserialized {0} names", pkg.Names.Count );
             }
 
             // Read Import Table
@@ -813,6 +816,7 @@ namespace UELib
                     imp.Size = (int)(stream.Position - imp.Offset);
                     pkg.Imports.Add( imp );
                 }
+                Console.WriteLine( "Deserialized {0} imports", pkg.Imports.Count );
             }
 
             // Read Export Table
@@ -839,6 +843,7 @@ namespace UELib
                         pkg.Exports.Add( exp );
                     }
                 }
+                Console.WriteLine( "Deserialized {0} exports", pkg.Exports.Count );
             }
 
             /*if( pkg.Data.DependsOffset > 0 )
@@ -852,6 +857,7 @@ namespace UELib
                     dep.TableSize = (int)(stream.Position - dep.TableOffset);
                     pkg.DependsTableList.Add( dep );
                 }
+                Console.WriteLine( "Deserialized {0} dependencies", pkg.DependsTableList.Count );
             }*/
 
             pkg.HeaderSize = stream.Position;

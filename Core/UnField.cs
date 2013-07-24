@@ -27,9 +27,13 @@ namespace UELib.Core
             base.Deserialize();
 
             // _SuperIndex got moved into UStruct since 700+
-            if( Package.Version < 756 
+            if( (Package.Version < 756 
 #if SPECIALFORCE2
                 || Package.Build == UnrealPackage.GameBuild.BuildName.SpecialForce2
+#endif
+                )
+#if BIOSHOCK
+                && Package.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
 #endif
                 )
             {
