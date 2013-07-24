@@ -313,6 +313,12 @@ namespace UELib.Core
                         propertyValue = _Buffer.ReadInt32().ToString( CultureInfo.InvariantCulture );
                         break;
 
+#if BIOSHOCK
+                    case PropertyType.QwordProperty:
+                        propertyValue = _Buffer.ReadInt64().ToString( CultureInfo.InvariantCulture );
+                        break;
+#endif
+
                     case PropertyType.FloatProperty:
                         propertyValue = _Buffer.ReadFloat().ToUFloat();
                         break;
