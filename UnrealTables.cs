@@ -459,7 +459,7 @@ namespace UELib
 #endif
 
             int netObjectCount = stream.ReadInt32();
-            //stream.Skip( netObjectCount * 4 );
+            stream.Skip( netObjectCount * 4 );
             //if( netObjectCount > 0 )
             //{
             //    NetObjects = new List<int>( netObjectCount );
