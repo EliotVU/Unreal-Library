@@ -372,7 +372,7 @@ namespace UELib.Core
         public bool IsPrivate()
         {
             //return !HasObjectFlag( Flags.ObjectFlagsLO.Public ) && HasObjectFlag( Flags.ObjectFlagsLO.Private );
-            return Package.Version < AccessFlagChangeVersion ? HasObjectFlag( Flags.ObjectFlagsLO.Private ) : !IsPublic();
+            return Package.Version < AccessFlagChangeVersion ? HasObjectFlag( Flags.ObjectFlagsLO.Private ) : (!IsPublic() && !HasObjectFlag( Flags.ObjectFlagsHO.Final ));
         }
 
         /// <summary>

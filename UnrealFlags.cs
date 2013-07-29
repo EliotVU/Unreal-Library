@@ -337,6 +337,8 @@ namespace UELib.Flags
 
         // DrawScale3D, DrawScale, PrePivot
         BIOINF_Unk2         = 0x00200000U,
+        // XWeakReferenceProperty related.
+        BIOINF_Unk3         = 0x01000000U,
 #endif
 
         // Possible flags: CrossLevel, AllowAbstract

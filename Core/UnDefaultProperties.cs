@@ -317,6 +317,10 @@ namespace UELib.Core
                     case PropertyType.QwordProperty:
                         propertyValue = _Buffer.ReadInt64().ToString( CultureInfo.InvariantCulture );
                         break;
+
+                    case PropertyType.XWeakReferenceProperty:
+                        propertyValue = "/* XWeakReference: (?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadByte() + ",?=" + _Buffer.ReadName() + ") */"; 
+                        break;
 #endif
 
                     case PropertyType.FloatProperty:
