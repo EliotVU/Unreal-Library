@@ -1255,6 +1255,27 @@ namespace UELib
             return obj;
         }
 
+        [Pure]public UObject FindObjectByGroup( string objectGroup )
+        {
+            var groups = objectGroup.Split( '.' );
+            UObject lastObj = null;
+            for( var i = 0; i < groups.Length; ++ i )
+            {
+                var obj = Objects.Find( o => String.Compare( o.Name, groups[i], StringComparison.OrdinalIgnoreCase ) == 0 && o.Outer == lastObj );
+                if( obj != null )
+                {
+                    lastObj = obj;
+                }
+                else
+                {
+                    lastObj = Objects.Find( o => String.Compare( o.Name, groups[i], StringComparison.OrdinalIgnoreCase ) == 0 );
+                    break;
+                }
+            }
+
+            return lastObj;
+        }
+
         /// <summary>
         /// Checks whether this package is marked with @flag.
         /// </summary>
