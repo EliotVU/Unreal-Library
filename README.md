@@ -100,3 +100,9 @@ Teaching UMyTexture its binary structure:
     }
     
 Note: The above UTexture implementation assumes the binary structure of Unreal Engine 2 games. (It is quite different for UDK and not official supported by the library, but you can do so using the example given.)
+
+
+Contribute
+==============
+
+Feel free to fill in an issue to request documentation for a specific feature. Or contribute missing documentation by editing this file.
