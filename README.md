@@ -73,7 +73,7 @@ Extending the output of "Decompile()":
 
     public class UMyTexture : UObject
     {
-        protected override string Decompile()
+        public override string Decompile()
         {
             var output = base.Decompile();
             return output + "\r\n\tUMyTexture has its own decompile output!";       
@@ -93,7 +93,7 @@ Teaching UMyTexture its binary structure:
             _MipMapCount = _Buffer.ReadIndex();
         }
         
-        protected override string Decompile()
+        public override string Decompile()
         {
             return "Mip Maps: " + _MipMapCount;   
         }
