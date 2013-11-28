@@ -254,7 +254,7 @@ namespace UELib.Core
 
         public string FormatDefaultProperties()
         {
-            if( Default != this )
+            if( Default != null && Default != this )
             {
                 Default.BeginDeserializing();    
             }
