@@ -36,7 +36,7 @@ namespace UELib.Core
             public List<Token> DeserializedTokens{ get; private set; }
 
             [System.ComponentModel.DefaultValue(-1)]
-            public int CurrentTokenIndex{ get; private set; }
+            public int CurrentTokenIndex{ get; set; }
 
             public Token NextToken
             {
