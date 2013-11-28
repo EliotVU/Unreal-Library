@@ -496,6 +496,13 @@ namespace UELib.Core
 
                     // UE3+
                     case (byte)ExprToken.OutVariable:
+#if BIOSHOCK
+                        if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
+                        {
+                            tokenItem = new LogFunctionToken();
+                            break;
+                        }
+#endif
                         tokenItem = new OutVariableToken();
                         break;
 
@@ -1996,9 +2003,27 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileCall( Decompiler._Container.Package.GetIndexName( FunctionNameIndex ) );
+                    return DecompileCall( Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
+
+#if BIOSHOCK
+            public class LogFunctionToken : FunctionToken
+            {
+                public override void Deserialize( IUnrealStream stream )
+                {
+                    stream.Skip( 2 );
+                    Decompiler.AlignSize( sizeof(ushort) );
+                    DeserializeCall();
+                }
+
+                public override string Decompile()
+                {
+                    Decompiler._CanAddSemicolon = true;
+                    return DecompileCall( "Log" );
+                }
+            }
+#endif
 
             public class NativeFunctionToken : FunctionToken
             {

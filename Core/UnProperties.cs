@@ -97,9 +97,8 @@ namespace UELib.Core
 
 			var info = _Buffer.ReadUInt32();
 			ArrayDim = (ushort)(info & 0x0000FFFFU);
-			Record( "ArrayDim", ArrayDim );
 			ElementSize = (ushort)(info >> 16);
-			Record( "ElementSize", ElementSize );
+            Record( String.Format( "(ArrayDim={0}, ElementSize={1})", ArrayDim, ElementSize ), info );
 			skipInfo:
 
 			PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
@@ -129,12 +128,28 @@ namespace UELib.Core
 				Console.WriteLine( "Found a property flagged with New:" + unknown );
 			}
 
-#if SWAT4
-			if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
+#if SWAT4 || BIOSHOCK
+			if( 
+                #if SWAT4
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 
+                #endif
+                #if BIOSHOCK
+                    || Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+                #endif
+                )
 			{
 				// Contains meta data such as a ToolTip.
-				_Buffer.Skip( 3 );
+                var data = new byte[3];
+				_Buffer.Read( data, 0, 3 );
+                Record( "???Vengeance_3Bytes", data );
 			}
+#endif
+
+#if BIOSHOCK
+            if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
+            {
+                _Buffer.Skip( 8 );
+            }
 #endif
 		}
 
@@ -194,6 +209,7 @@ namespace UELib.Core
 
 			int index = _Buffer.ReadObjectIndex();
 			InterfaceObject = (UClass)GetIndexObject( index );
+            Record( "Interface", InterfaceObject );
 
 			//Index = _Buffer.ReadObjectIndex();
 			//_InterfaceType = (UInterfaceProperty)GetIndexObject( Index );
@@ -232,9 +248,11 @@ namespace UELib.Core
 			base.Deserialize();
 
 			FunctionObject = GetIndexObject( _Buffer.ReadObjectIndex() );
+            Record( "Function", FunctionObject );
 			if( Package.Version > 184 )
 			{
 				DelegateObject = GetIndexObject( _Buffer.ReadObjectIndex() );
+                Record( "Delegate", DelegateObject );
 			}
 		}
 
@@ -317,6 +335,7 @@ namespace UELib.Core
 
 			int classIndex = _Buffer.ReadObjectIndex();
 			ClassObject = (UClass)GetIndexObject( classIndex );
+            Record( "Class", ClassObject );
 		}
 
 		/// <inheritdoc/>
@@ -369,7 +388,9 @@ namespace UELib.Core
 
 			int innerIndex = _Buffer.ReadObjectIndex();
 			InnerObject = (UProperty)GetIndexObject( innerIndex );
+            Record( "Inner", InnerObject );
 			Count = _Buffer.ReadIndex();
+            Record( "Count", Count );
 		}
 
 		/// <inheritdoc/>
@@ -404,6 +425,7 @@ namespace UELib.Core
 
 			int innerIndex = _Buffer.ReadObjectIndex();
 			InnerProperty = (UProperty)GetIndexObject( innerIndex );
+            Record( "Inner", InnerProperty );
 		}
 	
 		/// <inheritdoc/>
@@ -452,7 +474,9 @@ namespace UELib.Core
 			base.Deserialize();
 
 			_Key = _Buffer.ReadObjectIndex();
+            Record( "Key", _Key );
 			_Value = _Buffer.ReadObjectIndex();
+            Record( "Value", _Value );
 		}
 
 		/// <inheritdoc/>
@@ -485,6 +509,7 @@ namespace UELib.Core
 			base.Deserialize();
 
 			StructObject = (UStruct)GetIndexObject( _Buffer.ReadObjectIndex() );
+            Record( "Struct", StructObject );
 		}
 
 		/// <inheritdoc/>
@@ -518,6 +543,7 @@ namespace UELib.Core
 
 			int enumIndex = _Buffer.ReadObjectIndex();
 			EnumObject = (UEnum)GetIndexObject( enumIndex );
+            Record( "Enum", EnumObject );
 		}
 
 		/// <inheritdoc/>
@@ -688,6 +714,7 @@ namespace UELib.Core
 			base.Deserialize();
 
 			Size = _Buffer.ReadInt32();
+            Record( "Size", Size );
 		}
 
 		/// <inheritdoc/>
@@ -725,6 +752,7 @@ namespace UELib.Core
 
 			int objectIndex = _Buffer.ReadObjectIndex();
 			Object = GetIndexObject( objectIndex );
+            Record( "Object", Object );
 		}
 
 		/// <inheritdoc/>
