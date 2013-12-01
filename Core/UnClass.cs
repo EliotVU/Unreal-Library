@@ -10,9 +10,14 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UClass : UState
     {
-        public struct Dependency : IUnrealDeserializableClass
+        public struct Dependency : IUnrealSerializableClass
         {
             public int Class{ get; private set; }
+
+            public void Serialize( IUnrealStream stream )
+            {
+                // TODO: Implement code
+            }
 
             public void Deserialize( IUnrealStream stream )
             {

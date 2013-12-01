@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace UELib
 {
@@ -18,18 +19,21 @@ namespace UELib
 		/// Loads the given file specified by PackagePath and
 		/// returns the serialized UnrealPackage.
 		/// </summary>
-		public static UnrealPackage LoadPackage( string packagePath, System.IO.FileAccess fileAccess = System.IO.FileAccess.Read )
+		public static UnrealPackage LoadPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
 		{
-			return UnrealPackage.DeserializePackage( packagePath, fileAccess );
+            var stream = new UPackageStream( packagePath, FileMode.Open, fileAccess );
+            var package = new UnrealPackage( stream );
+            package.Deserialize( stream );
+			return package;
 		}
 
 		/// <summary>
 		/// Looks if the package is already loaded before by looking into the CachedPackages list first. 
 		/// If it is not found then it loads the given file specified by PackagePath and returns the serialized UnrealPackage.
 		/// </summary>
-		public static UnrealPackage LoadCachedPackage( string packagePath, System.IO.FileAccess fileAccess = System.IO.FileAccess.Read )
+		public static UnrealPackage LoadCachedPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
 		{
-			var package = CachedPackages.Find( pkg => pkg.PackageName == System.IO.Path.GetFileNameWithoutExtension( packagePath ) );
+			var package = CachedPackages.Find( pkg => pkg.PackageName == Path.GetFileNameWithoutExtension( packagePath ) );
 			if( package == null )
 			{
 				package = LoadPackage( packagePath, fileAccess );
@@ -45,7 +49,7 @@ namespace UELib
 		/// Loads the given file specified by PackagePath and
 		/// returns the serialized UnrealPackage with deserialized objects.
 		/// </summary>
-		public static UnrealPackage LoadFullPackage( string packagePath, System.IO.FileAccess fileAccess = System.IO.FileAccess.Read )
+		public static UnrealPackage LoadFullPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
 		{
 			var package = LoadPackage( packagePath, fileAccess );
 			if( package != null )

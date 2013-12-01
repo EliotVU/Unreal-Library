@@ -5,13 +5,22 @@ namespace UELib
 {	
     using Core;
 
-    public class CompressedChunk : IUnrealDeserializableClass
+    public class CompressedChunk : IUnrealSerializableClass
     {
         public int UncompressedOffset;
         public int UncompressedSize;
         public int CompressedOffset;
         public int CompressedSize;
         private CompressedChunkHeader _Header;
+
+        public void Serialize( IUnrealStream stream )
+        {
+            // TODO: Implement code
+            stream.Write( UncompressedOffset );
+            stream.Write( UncompressedSize );
+            stream.Write( CompressedOffset );
+            stream.Write( CompressedSize );
+        }
 
         public void Deserialize( IUnrealStream stream )
         {
@@ -33,7 +42,7 @@ namespace UELib
             }
         }
 
-        public struct CompressedChunkHeader : IUnrealDeserializableClass
+        public struct CompressedChunkHeader : IUnrealSerializableClass
         {
             private uint _Signature;
             private int _BlockSize;
@@ -41,6 +50,11 @@ namespace UELib
             private int _UncompressedSize;
 
             public UArray<CompressedChunkBlock> Blocks;
+
+            public void Serialize( IUnrealStream stream )
+            {
+                // TODO: Implement code
+            }
 
             public void Deserialize( IUnrealStream stream )
             {
@@ -57,11 +71,16 @@ namespace UELib
                 Blocks = new UArray<CompressedChunkBlock>( stream, blockCount );
             }
 
-            public struct CompressedChunkBlock : IUnrealDeserializableClass
+            public struct CompressedChunkBlock : IUnrealSerializableClass
             {
                 private int _CompressedSize;
                 private int _UncompressedSize;
                 private byte[] _CompressedData;
+
+                public void Serialize( IUnrealStream stream )
+                {
+                    // TODO: Implement code
+                }
 
                 public void Deserialize( IUnrealStream stream )
                 {

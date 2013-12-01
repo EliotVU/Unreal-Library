@@ -1,4 +1,5 @@
-﻿using UELib.Core;
+﻿using System;
+using UELib.Core;
 
 namespace UELib
 {
@@ -25,7 +26,7 @@ namespace UELib
 		public FileSummary Summary;
 
 		// Table values are not initialized!
-		public class FileTable : UTableItem, IUnrealDeserializableClass
+		public class FileTable : UTableItem, IUnrealSerializableClass
 		{
 			public string FileName;
 			public uint SerialOffset;
@@ -37,6 +38,11 @@ namespace UELib
 			{
 				NoSystem = 0x03
 			}*/
+
+            public void Serialize( IUnrealStream stream )
+            {
+                throw new NotImplementedException();
+            }
 
 			public void Deserialize( IUnrealStream stream )
 			{

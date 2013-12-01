@@ -1,4 +1,5 @@
-﻿using UELib.Core;
+﻿using System;
+using UELib.Core;
 
 namespace UELib.Engine
 {
@@ -8,13 +9,18 @@ namespace UELib.Engine
 	[UnrealRegisterClass]
 	public class UFont : UObject, IUnrealViewable
 	{
-		private struct FontCharacter : IUnrealDeserializableClass
+		private struct FontCharacter : IUnrealSerializableClass
 		{
 			private int _StartU;
 			private int _StartV;
 			private int _USize;
 			private int _VSize;
 			byte _TextureIndex;
+
+            public void Serialize( IUnrealStream stream )
+            {
+                throw new NotImplementedException();
+            }
 
 			public void Deserialize( IUnrealStream stream )
 			{

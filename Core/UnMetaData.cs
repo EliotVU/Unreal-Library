@@ -11,12 +11,17 @@ namespace UELib.Core
     public sealed class UMetaData : UObject
     {
         #region Serialized Members
-        public sealed class UMetaField : IUnrealDecompilable, IUnrealDeserializableClass
+        public sealed class UMetaField : IUnrealDecompilable, IUnrealSerializableClass
         {
             public int					FieldIndex;			// ObjectIndex		
             public string				FieldName;			// UT3, Mirrors Edge
             public UArray<UMetaTag> 	MetaTags;
             public UnrealPackage		Owner;
+
+            public void Serialize( IUnrealStream stream )
+            {
+                throw new NotImplementedException();
+            }
 
             public void Deserialize( IUnrealStream stream )
             {
@@ -89,11 +94,16 @@ namespace UELib.Core
             }
         }															    
 
-        public sealed class UMetaTag : IUnrealDecompilable, IUnrealDeserializableClass
+        public sealed class UMetaTag : IUnrealDecompilable, IUnrealSerializableClass
         {
             public int				TagNameIndex;
             public string 			TagValue;
             public UnrealPackage	Owner;
+
+            public void Serialize( IUnrealStream stream )
+            {
+                throw new NotImplementedException();
+            }
 
             public void Deserialize( IUnrealStream stream )
             {
