@@ -40,7 +40,7 @@ After having loaded a package you can do the following:
 Loading a Unreal Package with custom classes
 ==============  
   
-This code will first load a package and deserialize its summary, then bind every occurance of class "UTexture" to your "UMyTexture" class, and then deserialize the whole package.
+This code will first load a package and deserialize its summary, then bind every occurrence of class "UTexture" to your "UMyTexture" class, and then deserialize the whole package.
   
     var package = UnrealLoader.LoadPackage( <PATH_TO_PACKAGE>, System.IO.FileAccess.Read );
     if( package != null )
