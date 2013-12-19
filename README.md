@@ -125,7 +125,7 @@ Scanning packages for Assets
 
     foreach( var tex in textures )
     {
-        Console.WriteLine( "Reference for sound {0} is {2}'{1}'", tex.Name, tex.GetOuterGroup(), tex.GetClassName() );
+        Console.WriteLine( "Reference for texture {0} is {2}'{1}'", tex.Name, tex.GetOuterGroup(), tex.GetClassName() );
     }
 
 
