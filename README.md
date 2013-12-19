@@ -133,6 +133,22 @@ The above code would first scan every object in the package for objects of class
 
 Output of function "Max" would be written as "Function'Object.Max".
 
+UObject API
+==============
+
+    string              Name                The name of the object.
+    UObject             Class               The class of the object. Use Class.Name to get the class's name.
+    UObject             Outer               The outer of this object. Function "Max" outer would be "Object". Use Outer.Name to get the outer's name.
+    UDefaultProperty    Properties          Properties of this object. That is what you see as "DefaultProperties" in UnrealScript classes.
+    UnrealPackage       Package             The package of this object.
+    
+    function    Decompile()         Returns the output of this object. As experienced in UE Explorer "View Object".
+    function    CopyBuffer()        Returns a copy of bytes of this object.
+    function    GetBufferPosition() Returns the position whereas this object resides in the package's stream.
+    function    GetBufferSize()     Returns the size this object consumes in the package's stream.      
+    function    HasObjectFlag()     Returns true if object is masked with specified flag(s).
+    function    IsClassType()       Returns true if object is of class e.g. "SoundCue".
+
 Contribute
 ==============
 
