@@ -13,8 +13,7 @@ At the moment these are all the object classes that are supported by this API:
 Installing
 ==============
 
-In order to install UE Library you need to download the latest release of UE Explorer at http://EliotVU.com, upon installing UE Explorer, Eliot.UELib.dll will be installed.
-Copy Eliot.UELib.dll to your project and add it as an reference to your project.
+Fork this project and grab the Eliot.UELib.dll from your forked repository, or grab this repository from the Releases tab.
 
 Using the Library
 ==============
