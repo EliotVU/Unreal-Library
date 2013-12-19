@@ -120,16 +120,18 @@ Scanning packages for Assets
 
     foreach( var snd in sounds )
     {
-        Console.WriteLine( "Reference for sound {0} is {1}", snd.Name, snd.GetOuterGroup() );
+        Console.WriteLine( "Reference for sound {0} is {2}'{1}'", snd.Name, snd.GetOuterGroup(), snd.GetClassName() );
     }
 
     foreach( var tex in textures )
     {
-        Console.WriteLine( "Reference for texture {0} is {1}", tex.Name, tex.GetOuterGroup() );
+        Console.WriteLine( "Reference for sound {0} is {2}'{1}'", tex.Name, tex.GetOuterGroup(), tex.GetClassName() );
     }
 
 
 The above code would first scan every object in the package for objects of class Texture and Sound and its UE3 equivalent. Organizing each object into its own list. Then each sound and texture reference will be written to the console. This can particually be useful in cases you want to make a tool that provides a searchable list of assets such as the Content Browser in UnrealEd but with the advantage of performance, or as an addition feature for UnrealScript text editors as an autcomplete suggestion!
+
+Output of function "Max" would be written as "Function'Object.Max".
 
 Contribute
 ==============
