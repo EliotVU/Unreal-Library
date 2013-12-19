@@ -100,6 +100,36 @@ Teaching UMyTexture its binary structure:
     
 Note: The above UTexture implementation assumes the binary structure of Unreal Engine 2 games. (It is quite different for UDK and not official supported by the library, but you can do so using the example given.)
 
+Scanning packages for Assets
+==============
+
+    var textures = new List<UObject>();
+    var sounds = new List<UObject>();
+
+    foreach( UObject obj in package.Objects )
+    {
+        if( obj.IsClassType( "Texture" ) || obj.IsClassType( "Texture2D" ) )
+        {
+            textures.Add( obj );
+        }
+        else if( obj.IsClassType( "Sound" ) || obj.IsClassType( "SoundCue" ) )
+        {
+            sounds.Add( obj ); 
+        }
+    }
+
+    foreach( var snd in sounds )
+    {
+        Console.WriteLine( "Reference for sound {0} is {1}", snd.Name, snd.GetOuterGroup() );
+    }
+
+    foreach( var tex in textures )
+    {
+        Console.WriteLine( "Reference for texture {0} is {1}", tex.Name, tex.GetOuterGroup() );
+    }
+
+
+The above code would first scan every object in the package for objects of class Texture and Sound and its UE3 equivalent. Organizing each object into its own list. Then each sound and texture reference will be written to the console. This can particually be useful in cases you want to make a tool that provides a searchable list of assets such as the Content Browser in UnrealEd but with the advantage of performance, or as an addition feature for UnrealScript text editors as an autcomplete suggestion!
 
 Contribute
 ==============
