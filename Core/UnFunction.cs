@@ -104,8 +104,7 @@ namespace UELib.Core
             {
                 if( property.HasPropertyFlag( PropertyFlagsLO.ReturnParm ) )
                 {
-                    ReturnProperty = property;
-                    continue;																																  
+                    ReturnProperty = property;																															  
                 }
 
                 if( property.IsParm() )

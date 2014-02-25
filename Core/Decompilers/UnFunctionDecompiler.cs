@@ -208,7 +208,7 @@ namespace UELib.Core
             string parms = "(";
             if( Params != null && Params.Any() )
             { 
-                foreach( var parm in Params	)
+                foreach( var parm in Params.Where( (p) => p != ReturnProperty ) )
                 {
                     parms += parm.Decompile() + (parm != Params.Last() ? ", " : String.Empty);
                 }
