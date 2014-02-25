@@ -727,4 +727,9 @@ namespace UELib.Core
             return false;
         }
     }
+
+    [UnrealRegisterClass]
+    public partial class UPackage : UObject
+    {
+    }
 }

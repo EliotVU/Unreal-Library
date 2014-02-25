@@ -25,5 +25,36 @@ namespace UELib.Core
 			AddObjectListNode( node, "Parameters", Params );
 			AddObjectListNode( node, "Locals", Locals );
 		}
+
+        public override string GetImageName()
+        {
+            var name = string.Empty;
+            if( HasFunctionFlag( Flags.FunctionFlags.Event ) )
+            {
+                name = "Event";
+            }
+            else if( HasFunctionFlag( Flags.FunctionFlags.Delegate ) )
+            {
+                name = "Delegate";
+            }
+            else if( HasFunctionFlag( Flags.FunctionFlags.Operator ) )
+            {
+                name = "Operator";
+            }
+
+            if( name != string.Empty )
+            {
+                if( IsPrivate() )
+                {
+                    return name + "-Private";
+                }
+                else if( IsProtected() )
+                {
+                    return name + "-Protected";
+                }
+                return name;
+            }
+            return base.GetImageName();
+        }
 	}
 }

@@ -54,7 +54,7 @@ namespace UELib.Core
 	{
 		public ObjectListNode()
 		{
-			ImageKey = "List";
+			ImageKey = "TreeView";
 			SelectedImageKey = ImageKey;
 		}
 

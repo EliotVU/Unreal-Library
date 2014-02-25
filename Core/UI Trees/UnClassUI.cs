@@ -21,5 +21,18 @@ namespace UELib.Core
 			base.AddChildren( node );
 			AddObjectListNode( node, "States", States );
 		}
+
+        public override string GetImageName()
+        {
+            if( IsClassInterface() )
+            {
+                return "Interface";
+            }
+            else if( IsClassWithin() )
+            {
+                return "UClass-Within";
+            }
+            return base.GetImageName();
+        }
 	}
 }
