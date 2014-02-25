@@ -32,7 +32,7 @@ namespace UELib.Core
 			{
 				return String.Format
 				( 
-					"An {0} occurred while decompiling {1}.\r\nDetails:\r\n{2}", 
+					"An exception of type \"{0}\" occurred while decompiling {1}.\r\nDetails:\r\n{2}", 
 					e.GetType().Name, Text, e 
 				);
 			}
@@ -44,7 +44,7 @@ namespace UELib.Core
 	{
 		public DefaultObjectNode( IUnrealDecompilable objectRef ) : base( objectRef )
 		{
-			ImageKey = typeof(UProperty).Name;
+			ImageKey = typeof(UDefaultProperty).Name;
 			SelectedImageKey = ImageKey;
 		}
 	}
@@ -56,6 +56,12 @@ namespace UELib.Core
 		{
 			ImageKey = "TreeView";
 			SelectedImageKey = ImageKey;
+		}
+
+        public ObjectListNode( string imageName )
+		{
+			ImageKey = imageName;
+			SelectedImageKey = imageName;
 		}
 
 		public string Decompile()

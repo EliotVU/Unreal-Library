@@ -7,8 +7,8 @@ namespace UELib.Core
 		protected override void InitNodes( TreeNode node )
 		{
 			_ParentNode = AddSectionNode( node, typeof(UField).Name );
-			AddTextNode( _ParentNode, "SuperField:" + Super ); 
-			AddTextNode( _ParentNode, "NextField:" + NextField ); 
+			AddSimpleObjectNode( _ParentNode, Super, "SuperField", Super != null ? Super.GetImageName() : "" ); 
+			AddSimpleObjectNode( _ParentNode, NextField, "NextField", NextField != null ? NextField.GetImageName() : "" ); 
 			base.InitNodes( _ParentNode );
 		}
 	}

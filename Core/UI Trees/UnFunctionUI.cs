@@ -22,8 +22,8 @@ namespace UELib.Core
 		protected override void AddChildren( TreeNode node )
 		{
 			base.AddChildren( node );
-			AddObjectListNode( node, "Parameters", Params );
-			AddObjectListNode( node, "Locals", Locals );
+			AddObjectListNode( node, "Parameters", Params, "UProperty" );
+			AddObjectListNode( node, "Locals", Locals, "UProperty" );
 		}
 
         public override string GetImageName()

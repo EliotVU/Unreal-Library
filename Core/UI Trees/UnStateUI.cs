@@ -20,7 +20,7 @@ namespace UELib.Core
 		protected override void AddChildren( TreeNode node )
 		{
 			base.AddChildren( node );
-			AddObjectListNode( node, "Functions", Functions );
+			AddObjectListNode( node, "Functions", Functions, "UFunction" );
 		}
 	}
 }

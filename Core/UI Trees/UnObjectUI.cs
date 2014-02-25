@@ -67,10 +67,18 @@ namespace UELib.Core
 			return nn;
 		}
 
-		protected static ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject )
+		protected static ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject, string imageName = "" )
 		{
+            if( unrealObject == null )
+                return null; 
+
 			var objN = new ObjectNode( unrealObject ){Text = unrealObject.Name};
-			unrealObject.InitializeNodes( objN );
+            unrealObject.InitializeNodes( objN );
+            if( imageName != string.Empty )
+            {
+                objN.ImageKey = imageName;
+                objN.SelectedImageKey = imageName;
+            }
 
 			if( unrealObject.DeserializationState.HasFlag( ObjectState.Errorlized ) )
 			{
@@ -81,11 +89,28 @@ namespace UELib.Core
 			return objN;
 		}
 
+        protected static ObjectNode AddSimpleObjectNode( TreeNode parentNode, UObject unrealObject, string text, string imageName = "" )
+		{
+            if( unrealObject == null )
+                return null; 
+
+			var objN = new ObjectNode( unrealObject ){Text = text + ":" + unrealObject.Name};
+            if( imageName != string.Empty )
+            {
+                objN.ImageKey = imageName;
+                objN.SelectedImageKey = imageName;
+            }
+
+			parentNode.Nodes.Add( objN );
+			return objN;
+		}
+
 		protected static ObjectListNode AddObjectListNode
 		( 
 			TreeNode parentNode, 
 			string title,
-			IEnumerable<UObject> objects 
+			IEnumerable<UObject> objects,
+            string imageName = "TreeView"
 		)
 		{
 			if( objects == null )
@@ -94,7 +119,7 @@ namespace UELib.Core
 			var uObjects = objects as List<UObject> ?? objects.ToList();
 			if( uObjects.Any() )
 			{	
-				var listNode = new ObjectListNode{Text = title};
+				var listNode = new ObjectListNode( imageName ){Text = title};
 				foreach( var obj in uObjects )
 				{
 					AddObjectNode( listNode, obj );

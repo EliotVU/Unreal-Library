@@ -7,6 +7,7 @@ namespace UELib.Core
 		protected override void InitNodes( TreeNode node )
 		{
 			_ParentNode = AddSectionNode( node, typeof(UClass).Name );
+            AddSimpleObjectNode( _ParentNode, Within, "Within", Within != null ? Within.GetImageName() : "" ); 
 
 			var classFlagsNode = AddTextNode( _ParentNode, "Class Flags:" + UnrealMethods.FlagToString( ClassFlags ) ); 
 			classFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( 
@@ -19,7 +20,7 @@ namespace UELib.Core
 		protected override void AddChildren( TreeNode node )
 		{
 			base.AddChildren( node );
-			AddObjectListNode( node, "States", States );
+			AddObjectListNode( node, "States", States, "UState" );
 		}
 
         public override string GetImageName()
