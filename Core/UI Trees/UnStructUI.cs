@@ -28,6 +28,21 @@ namespace UELib.Core
 			{
 				AddObjectListNode( node, "Variables", Variables );
 			}
+
+            if( ScriptText != null )
+            {
+                AddObjectNode( node, ScriptText );
+            }
+
+            if( CppText != null )
+            {
+                AddObjectNode( node, CppText );
+            }
+
+            if( ProcessedText != null )
+            {
+                AddObjectNode( node, ProcessedText );
+            }
 		}
 
 		protected override void PostAddChildren( TreeNode node )
