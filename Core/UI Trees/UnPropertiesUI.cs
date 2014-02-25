@@ -21,5 +21,24 @@ namespace UELib.Core
 			}
 			base.InitNodes( _ParentNode );
 		}
+
+        public override string GetImageName()
+        {
+            if( HasPropertyFlag( Flags.PropertyFlagsLO.ReturnParm ) )
+            {
+                return "ReturnValue";
+            }
+
+            var which = base.GetImageName();
+            if( IsPrivate() )
+            {
+                return which + "-Private";
+            }
+            else if( IsProtected() )
+            {
+                return which + "-Protected";
+            }
+            return which;
+        }
 	}
 }

@@ -164,22 +164,16 @@ namespace UELib.Core
 
         protected override string FormatHeader()
         {
-            string output = 
-            (
-                Super != null 
-                && String.Compare( Super.Name, "Interface", StringComparison.OrdinalIgnoreCase ) == 0 
-                    ? "interface " 
-                    : "class "
-            ) + Name;
+            string output = (IsClassInterface() ? "interface " : "class ") + Name;
 
             // Object doesn't have an extension so only try add the extension if theres a SuperField
-            if( Super != null )
+            if( Super != null 
+                && !(IsClassInterface() && String.Compare( Super.Name, "Object", StringComparison.OrdinalIgnoreCase ) == 0) )
             {
                 output += " " + FormatExtends() + " " + Super.Name;
             }
 
-            // Check within because within is Object by default
-            if( Within != null && !String.Equals( Within.Name, "Object", StringComparison.OrdinalIgnoreCase ) )
+            if( IsClassWithin() )
             {
                 output += " within " + Within.Name;
             }
@@ -236,44 +230,24 @@ namespace UELib.Core
         {
             string output = String.Empty;
 
-            try
+            if( (ClassFlags & (uint)Flags.ClassFlags.Abstract) != 0 )
             {
-                if( Package.Version >= UnrealPackage.VDLLBIND
-                    && String.Compare( DLLBindName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
-                {
-                    output += "\r\n\tdllbind(" + DLLBindName + ")";
-                }
-            }
-            catch
-            {
-                output += "\r\n\t// Failed to decompile dllbind";	
+                output += "\r\n\tabstract";
             }
 
-            if( ClassDependencies != null )
+            if( (ClassFlags & (uint)Flags.ClassFlags.Transient) != 0 )
             {
-                var dependson = new List<int>();
-                foreach( var dependency in ClassDependencies )
+                output += "\r\n\ttransient";
+            }
+            else
+            {
+                // Only do if parent had Transient
+                UClass parentClass = (UClass)Super;
+                if( parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.Transient) != 0 )
                 {
-                    if( dependson.Exists( dep => dep == dependency.Class ) )
-                    {
-                        continue;
-                    }
-                    var obj = (UClass)GetIndexObject( dependency.Class );
-                    // Only exports and those who are further than this class
-                    if( obj != null && (int)obj > (int)this )
-                    {
-                        output += "\r\n\tdependson(" + obj.Name + ")";
-                    }
-                    dependson.Add( dependency.Class );
+                    output += "\r\n\tnotransient";
                 }
             }
-
-            output += FormatNameGroup( "dontsortcategories", DontSortCategories );
-            output += FormatNameGroup( "hidecategories", HideCategories );
-            output += FormatNameGroup( "classgroup", ClassGroups );
-            output += FormatNameGroup( "autoexpandcategories", AutoExpandCategories );
-            output += FormatNameGroup( "autocollapsecategories", AutoCollapseCategories );
-            output += FormatObjectGroup( "implements", ImplementedInterfaces );
 
             if( HasObjectFlag( Flags.ObjectFlagsLO.Native ) )
             {
@@ -309,20 +283,6 @@ namespace UELib.Core
             if( (ClassFlags & (uint)Flags.ClassFlags.ParseConfig) != 0 )
             {
                 output += "\r\n\tparseconfig";
-            }
-
-            if( (ClassFlags & (uint)Flags.ClassFlags.Transient) != 0 )
-            {
-                output += "\r\n\ttransient";
-            }
-            else
-            {
-                // Only do if parent had Transient
-                UClass parentClass = (UClass)Super;
-                if( parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.Transient) != 0 )
-                {
-                    output += "\r\n\tnotransient";
-                }
             }
 
             if( (ClassFlags & (uint)Flags.ClassFlags.PerObjectConfig) != 0 )
@@ -367,11 +327,6 @@ namespace UELib.Core
             if( (ClassFlags & (uint)Flags.ClassFlags.NoExport) != 0 )
             {
                 output += "\r\n\tnoexport";
-            }
-
-            if( (ClassFlags & (uint)Flags.ClassFlags.Abstract) != 0 )
-            {
-                output += "\r\n\tabstract";
             }
 
             if( Extends( "Actor" ) )
@@ -419,6 +374,46 @@ namespace UELib.Core
                 else if( !ForceScriptOrder && ((UClass)Super).ForceScriptOrder ) 
                     output += "\r\n\tforcescriptorder(false)";
             }
+
+            try
+            {
+                if( Package.Version >= UnrealPackage.VDLLBIND
+                    && String.Compare( DLLBindName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
+                {
+                    output += "\r\n\tdllbind(" + DLLBindName + ")";
+                }
+            }
+            catch
+            {
+                output += "\r\n\t// Failed to decompile dllbind";	
+            }
+
+            if( ClassDependencies != null )
+            {
+                var dependson = new List<int>();
+                foreach( var dependency in ClassDependencies )
+                {
+                    if( dependson.Exists( dep => dep == dependency.Class ) )
+                    {
+                        continue;
+                    }
+                    var obj = (UClass)GetIndexObject( dependency.Class );
+                    // Only exports and those who are further than this class
+                    if( obj != null && (int)obj > (int)this )
+                    {
+                        output += "\r\n\tdependson(" + obj.Name + ")";
+                    }
+                    dependson.Add( dependency.Class );
+                }
+            }
+
+            output += FormatNameGroup( "dontsortcategories", DontSortCategories );
+            output += FormatNameGroup( "hidecategories", HideCategories );
+            output += FormatNameGroup( "classgroup", ClassGroups );
+            output += FormatNameGroup( "autoexpandcategories", AutoExpandCategories );
+            output += FormatNameGroup( "autocollapsecategories", AutoCollapseCategories );
+            output += FormatObjectGroup( "implements", ImplementedInterfaces );
+
             return output + ";\r\n";
         }
 

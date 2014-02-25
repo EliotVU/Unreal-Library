@@ -388,6 +388,17 @@ namespace UELib.Core
         {
             return (ClassFlags & flag) != 0;
         }
+
+        public bool IsClassInterface()
+        {
+            return (Super != null && String.Compare( Super.Name, "Interface", StringComparison.OrdinalIgnoreCase ) == 0)
+                || String.Compare( Name, "Interface", StringComparison.OrdinalIgnoreCase ) == 0;
+        }
+
+        public bool IsClassWithin()
+        {
+            return Within != null && !string.Equals( Within.Name, "Object", System.StringComparison.OrdinalIgnoreCase );
+        }
         #endregion
     }
 }

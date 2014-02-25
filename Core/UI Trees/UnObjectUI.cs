@@ -19,12 +19,17 @@ namespace UELib.Core
 			AddChildren( node );
 			PostAddChildren( node );
 
-			node.ImageKey = GetType().IsSubclassOf( typeof(UProperty) ) 
-				? typeof(UProperty).Name : this is UScriptStruct 
-					? "UStruct" : GetType().Name;
+			node.ImageKey = GetImageName();
 			node.SelectedImageKey = node.ImageKey;
 			HasInitializedNodes = true;
 		}
+
+        public virtual string GetImageName()
+        {
+            return GetType().IsSubclassOf( typeof(UProperty) ) 
+				? typeof(UProperty).Name : this is UScriptStruct 
+					? "UStruct" : GetType().Name;
+        }
 
 		protected virtual void InitNodes( TreeNode node )
 		{			
@@ -48,7 +53,7 @@ namespace UELib.Core
 
 		protected static TreeNode AddSectionNode( TreeNode p, string n )
 		{
-			var nn = new TreeNode( n ){ImageKey = typeof(UObject).Name};
+			var nn = new TreeNode( n ){ImageKey = "Extend"};
 			nn.SelectedImageKey = nn.ImageKey;
 		   	p.Nodes.Add( nn );
 			return nn;
@@ -56,7 +61,7 @@ namespace UELib.Core
 
 		protected static TreeNode AddTextNode( TreeNode p, string n )
 		{
-			var nn = new TreeNode( n ){ImageKey = "Unknown"};
+			var nn = new TreeNode( n ){ImageKey = "Info"};
 			nn.SelectedImageKey = nn.ImageKey;
 			p.Nodes.Add( nn );
 			return nn;
@@ -100,4 +105,12 @@ namespace UELib.Core
 			return null;
 		}
 	}
+
+    public partial class UPackage
+    {
+        public override string GetImageName()
+        {
+            return "Library";
+        }
+    }
 }
