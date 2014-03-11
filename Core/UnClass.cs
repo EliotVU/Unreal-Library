@@ -397,7 +397,7 @@ namespace UELib.Core
 
         public bool IsClassWithin()
         {
-            return Within != null && !string.Equals( Within.Name, "Object", System.StringComparison.OrdinalIgnoreCase );
+            return Within != null && !string.Equals( Within.Name, "Object", StringComparison.OrdinalIgnoreCase );
         }
         #endregion
     }
