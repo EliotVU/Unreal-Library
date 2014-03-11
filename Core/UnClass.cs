@@ -244,7 +244,7 @@ namespace UELib.Core
 
                             // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
-                            if( Package.Version > 575 && Package.Version < 678 )
+                            if( Package.Version > 575 && Package.Version < 674 )
                             {
                                 int unk2 = _Buffer.ReadInt32();
                                 Record( "??Int32", unk2 );
