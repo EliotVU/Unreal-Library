@@ -83,6 +83,7 @@ namespace UELib
             get{ return OverrideVersion > 0 ? OverrideVersion : _Version; }
             private set{ _Version = value; }
         }
+        public uint UE4Version{ get; set; }
 
         /// <summary>
         /// For debugging purposes. Change this to override the present Version deserialized from the package.
@@ -557,6 +558,13 @@ namespace UELib
                 DependsOffset = stream.ReadUInt32();
                 if( stream.Version >= 584 )
                 {
+#if UE4
+                    if( stream.Package.UE4Version > 0 )
+                    {
+                        stream.Skip( 4 );   // Thumbnailoffset
+                        return;
+                    }
+#endif
                     // Additional tables, like thumbnail, and guid data.
                     if( stream.Version >= 623 
 #if BIOSHOCK
@@ -799,6 +807,24 @@ namespace UELib
             LicenseeVersion = (ushort)(Version >> 16);
             Version = (Version & 0xFFFFU);
             Console.WriteLine( "\tPackage Version:" + Version + "/" + LicenseeVersion );
+            
+            var version = stream.ReadInt32();
+            if( version < 0 )
+            {
+#if UE4
+                pkg.Version = stream.ReadUInt32();
+                pkg.UE4Version = stream.ReadUInt32();
+                stream.ReadUInt32();    // CookedVersion
+                stream.ReadUInt32();    // CookedLicenseeVersion
+#endif
+            }
+            else
+            {
+                pkg.Version = (uint)version;
+            }
+            pkg.LicenseeVersion = (ushort)(pkg.Version >> 16);
+            pkg.Version = (pkg.Version & 0xFFFFU);
+            Console.WriteLine( "\tPackage Version:" + pkg.Version + "/" + pkg.LicenseeVersion );
 
             Build = new GameBuild( this );
             Console.WriteLine( "\tBuild:" + Build.Name );

@@ -48,6 +48,13 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
+#if UE4
+            if( Package.UE4Version > 0 )
+            {
+                return;
+            }
+#endif
+
 			// TODO: Simplify ProbeMask deserialization.
 			// if >= 700
 			// 32b IgnoreMask
@@ -104,24 +111,29 @@ namespace UELib.Core
 				Record( "StateFlags", (StateFlags)_StateFlags );
 			}
 					
-			if( Package.Version >= 220 )
-			{ 
-				int mapCount = _Buffer.ReadIndex();
-				Record( "mapcount", mapCount );
-				if( mapCount > 0 )
-				{
-					AssertEOS( mapCount * 12, "Maps" );
-					_Buffer.Skip( mapCount * 12 );
-					// We don't have to store this.
-					// We don't use it and all that could happen is a OutOfMemory exception!
-					/*_FuncMap = new Dictionary<int,int>( mapCount );
-					for( int i = 0; i < mapCount; ++ i )
-					{
-						_FuncMap.Add( _Buffer.ReadNameIndex(), _Buffer.ReadObjectIndex() );
-					} */
-				}
-			}
+            DeserializeFuncMap();
 		}
+
+        protected void DeserializeFuncMap()
+        {
+            if( Package.Version < 220 )
+                return;
+
+            var mapCount = _Buffer.ReadIndex();
+            Record( "mapcount", mapCount );
+            if( mapCount <= 0 )
+                return;
+
+            AssertEOS( mapCount * 12, "Maps" );
+            _Buffer.Skip( mapCount * 12 );
+            // We don't have to store this.
+            // We don't use it and all that could happen is a OutOfMemory exception!
+            /*_FuncMap = new Dictionary<int,int>( mapCount );
+			for( int i = 0; i < mapCount; ++ i )
+			{
+				_FuncMap.Add( _Buffer.ReadNameIndex(), _Buffer.ReadObjectIndex() );
+			} */
+        }
 
 		protected override void FindChildren()
 		{

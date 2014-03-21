@@ -104,18 +104,36 @@ namespace UELib.Core
 
 			PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
 			Record( "PropertyFlags", PropertyFlags );
+            CategoryIndex = -1;
 			if( !Package.IsConsoleCooked() )
 			{
-				CategoryIndex = _Buffer.ReadNameIndex();
-				Record( "CategoryIndex", CategoryIndex );
+#if UE4
+                // FIXME: Guessed number
+                if( Package.UE4Version < 160 )
+                {
+#endif
+				    CategoryIndex = _Buffer.ReadNameIndex();
+				    Record( "CategoryIndex", CategoryIndex );
 
-				if( Package.Version > 400 )
-				{
-					ArrayEnum = GetIndexObject( _Buffer.ReadObjectIndex() ) as UEnum;
-					Record( "ArrayEnum", ArrayEnum );
-				}
+                    if( Package.Version > 400 )
+				    {
+					    ArrayEnum = GetIndexObject( _Buffer.ReadObjectIndex() ) as UEnum;
+					    Record( "ArrayEnum", ArrayEnum );
+				    }
+#if UE4
+                }
+#endif
 			}
-			else CategoryIndex = -1;
+
+#if UE4
+            if( Package.UE4Version > 0 )
+            {
+                // RepNotify function name
+                var repnotifyFunc = _Buffer.ReadNameReference();
+                Record( "RepNotifyFunc", repnotifyFunc );
+                return;
+            }
+#endif
 
 			if( HasPropertyFlag( Flags.PropertyFlagsLO.Net ) )
 			{

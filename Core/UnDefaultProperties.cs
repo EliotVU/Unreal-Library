@@ -57,6 +57,7 @@ namespace UELib.Core
         /// See PropertysType enum in UnrealFlags.cs
         /// </summary>
         private PropertyType		Type{ get; set; }
+        private PropertyType        InnerType{ get; set; }
 
         /// <summary>
         /// The stream size of this DefaultProperty.
@@ -230,6 +231,18 @@ namespace UELib.Core
                         _BoolValue = _Buffer.Version >= VBoolSizeToOne ? _Buffer.ReadByte() > 0 : _Buffer.ReadInt32() > 0;
                         _Container.Record( "_BoolValue", _BoolValue );
                         break;
+
+#if UE4
+                    case PropertyType.ArrayProperty:
+                        // FIXME: Guessed number
+                        if( _Buffer.Package.UE4Version > 220 )
+                        {
+                            var innerTypeName = _Buffer.ReadName();
+                            _Container.Record( "InnerType", innerTypeName );
+                            InnerType = (PropertyType)Enum.Parse( typeof(PropertyType), innerTypeName );
+                        }
+                        break;
+#endif
                 }
             }
 
@@ -659,19 +672,28 @@ namespace UELib.Core
                             // If found it has to modify the outer so structs within this array can find their array variables.
                             // Additionally we need to know the property to determine the array's type.
                             var arrayType = PropertyType.None;
-                            var property = FindProperty( out _Outer ) as UArrayProperty;
-                            if( property != null && property.InnerProperty != null )
                             {
-                                arrayType = property.InnerProperty.Type;
-                            }
-                            // If we did not find a reference to the associated property(because of imports)
-                            // then try to determine the array's type by scanning the definined array types.
-                            else if( UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey( Name ) )
-                            {
-                                var varTuple = UnrealConfig.VariableTypes[Name];
-                                if( varTuple != null )
+                                if( InnerType != PropertyType.None )
                                 {
-                                    arrayType = varTuple.Item2;
+                                    arrayType = InnerType;
+                                }
+                                else
+                                {
+                                    var property = FindProperty( out _Outer ) as UArrayProperty;
+                                    if( property != null && property.InnerProperty != null )
+                                    {
+                                        arrayType = property.InnerProperty.Type;
+                                    }
+                                    // If we did not find a reference to the associated property(because of imports)
+                                    // then try to determine the array's type by scanning the definined array types.
+                                    else if( UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey( Name ) )
+                                    {
+                                        var varTuple = UnrealConfig.VariableTypes[Name];
+                                        if( varTuple != null )
+                                        {
+                                            arrayType = varTuple.Item2;
+                                        }
+                                    }
                                 }
                             }
 

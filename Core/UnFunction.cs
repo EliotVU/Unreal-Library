@@ -68,9 +68,21 @@ namespace UELib.Core
                 _Buffer.Skip( size * 2 );
             }
 #endif
-
             base.Deserialize();
-
+#if UE4
+            if( Package.UE4Version > 0 )
+            {
+                FunctionFlags = _Buffer.ReadUInt32();
+                Record( "FunctionFlags", (FunctionFlags)FunctionFlags );
+                if( HasFunctionFlag( Flags.FunctionFlags.Net ) )
+                {
+                    RepOffset = _Buffer.ReadUShort();
+                    Record( "RepOffset", RepOffset );
+                }
+                FriendlyName = ExportTable.ObjectName;
+                return;
+            }
+#endif
             NativeToken = _Buffer.ReadUShort();
             Record( "NativeToken", NativeToken );
             OperPrecedence = _Buffer.ReadByte();

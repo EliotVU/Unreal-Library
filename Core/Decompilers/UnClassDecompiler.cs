@@ -382,7 +382,7 @@ namespace UELib.Core
             try
             {
                 if( Package.Version >= UnrealPackage.VDLLBIND
-                    && String.Compare( DLLBindName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
+                    && DLLBindName != null && String.Compare( DLLBindName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
                 {
                     output += "\r\n\tdllbind(" + DLLBindName + ")";
                 }

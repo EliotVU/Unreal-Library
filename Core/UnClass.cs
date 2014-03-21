@@ -116,6 +116,13 @@ namespace UELib.Core
                 Record( "???Bioshock_Int32", unknown );
             }
 #endif
+
+#if UE4
+            if( Package.UE4Version > 0 )
+            {
+                DeserializeFuncMap();
+            }
+#endif
     
             ClassFlags = _Buffer.ReadUInt32();
             Record( "ClassFlags", (ClassFlags)ClassFlags );
@@ -164,24 +171,50 @@ namespace UELib.Core
                     if( Package.Version >= 220 )
                     {
                         // TODO: Corrigate Version
-                        if( Package.Version <= vHideCategoriesOldOrder )
+                        if( Package.Version <= vHideCategoriesOldOrder 
+#if UE4
+                            && Package.UE4Version < 117 
+#endif
+                        )
                         {
                             DeserializeHideCategories();
                         }
 
-                        DeserializeComponentsMap();
-
+#if UE4
+                        if( Package.UE4Version < 118 )
+                        {
+#endif
+                            DeserializeComponentsMap();
+#if UE4
+                        }
+#endif
                         // RoboBlitz(369)
                         // TODO: Corrigate Version
                         if( Package.Version >= 369 )
                         {
                             DeserializeInterfaces();
+#if UE4
+                            if( Package.UE4Version > 0 )
+                            {
+                                var obj = _Buffer.ReadObject();
+                                Record( "ClassGeneratedBy", obj );
+                            }
+#endif
                         }
                     }
 
-                    if( !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed )
+                    if( !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed
+#if UE4
+                        // FIXME: Guessed number
+                        && Package.UE4Version < 250 
+#endif
+                    )
                     {
-                        if( Package.Version >= 603 )
+                        if( Package.Version >= 603 
+#if UE4
+                            && Package.UE4Version < 113 
+#endif
+                        )
                         {
                             DontSortCategories = DeserializeGroup( "DontSortCategories" );
                         }
@@ -264,7 +297,20 @@ namespace UELib.Core
                         }					
                     }
 
-                    if( Package.Version >= UnrealPackage.VDLLBIND )
+#if UE4
+                    if( Package.UE4Version > 0 )
+                    {
+                        // bForceScriptOrder
+                        var DeprecatedForceScriptOrder = _Buffer.ReadInt32() > 0;
+                        Record( "DeprecatedForceScriptOrder", DeprecatedForceScriptOrder );
+                    }
+#endif
+
+                    if( Package.Version >= UnrealPackage.VDLLBIND
+#if UE4
+                        && Package.UE4Version < 117 
+#endif
+                    )
                     {
                         DLLBindName = _Buffer.ReadNameReference();
                         Record( "DLLBindName", DLLBindName );
@@ -291,6 +337,18 @@ namespace UELib.Core
                     }
                 }
             }	
+
+#if UE4
+            if( Package.UE4Version > 0 )
+            {
+                var dummy = _Buffer.ReadName();
+                Record( "dummy", dummy );
+
+                var isCooked = _Buffer.ReadInt32() > 0;
+                Record( "isCooked", isCooked );
+            }
+#endif
+
     
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere, 
             // TODO: Corrigate Version
@@ -329,6 +387,14 @@ namespace UELib.Core
                 int typeIndex = _Buffer.ReadInt32();
                 Record( "Implemented.TypeIndex", typeIndex );
                 ImplementedInterfaces.Add( interfaceIndex );
+
+#if UE4
+                if( _Buffer.Package.UE4Version > 0 )
+                {
+                    var isImplementedByK2 = _Buffer.ReadInt32() > 0;
+                    Record( "Implemented.isImplementedByK2", isImplementedByK2 );
+                }
+#endif
             }
         }
 
@@ -405,5 +471,17 @@ namespace UELib.Core
             return Within != null && !string.Equals( Within.Name, "Object", StringComparison.OrdinalIgnoreCase );
         }
         #endregion
+    }
+
+    [UnrealRegisterClass]
+    public class UBlueprint : UField
+    {
+    
+    }
+
+    [UnrealRegisterClass]
+    public class UBlueprintGeneratedClass : UClass
+    {
+    
     }
 }

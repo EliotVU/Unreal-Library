@@ -29,11 +29,7 @@ namespace UELib.Core
             {
                 return "Interface";
             }
-            else if( IsClassWithin() )
-            {
-                return "UClass-Within";
-            }
-            return base.GetImageName();
+            return IsClassWithin() ? "UClass-Within" : "UClass";
         }
 	}
 }

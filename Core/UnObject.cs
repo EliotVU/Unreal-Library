@@ -211,7 +211,11 @@ namespace UELib.Core
             Record( "ExportSize", ExportTable.SerialSize );
 #endif
             // TODO: Corrigate version
-            if( Package.Version >= 322 )
+            if( Package.Version >= 322 
+#if UE4
+                && Package.UE4Version == 0
+#endif
+            )
             {
                 // TODO: Corrigate version. Fix component detection!
                 //if( _Buffer.Version > 400
@@ -307,6 +311,15 @@ namespace UELib.Core
             {
                 _Properties = null;
             }
+
+#if UE4
+            if( Package.UE4Version > 0 )
+            {
+                // Archetype?
+                var archetype = _Buffer.ReadObject();
+                Record( "Archetype", archetype );
+            }
+#endif
         }
 
         /// <summary>
