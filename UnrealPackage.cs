@@ -804,20 +804,15 @@ namespace UELib
 
         public void Deserialize( UPackageStream stream )
         {
-            // Read as one variable due Big Endian Encoding.
-            Version = stream.ReadUInt32();
-            LicenseeVersion = (ushort)(Version >> 16);
-            Version = (Version & 0xFFFFU);
-            Console.WriteLine( "\tPackage Version:" + Version + "/" + LicenseeVersion );
-            
+            // Read as one variable due Big Endian Encoding.       
             var version = stream.ReadInt32();
             if( version < 0 )
             {
+#if UE4
                 if( version > -3 )
                 {
                     //throw new Exception( "This version of the Unreal Engine 4 is not supported!" );
                 }
-#if UE4
                 Version = stream.ReadUInt32();
                 UE4Version = stream.ReadUInt32();
                 UE4LicenseeVersion = stream.ReadUInt32();
@@ -854,9 +849,9 @@ namespace UELib
             {
                 Version = (uint)version;
             }
-            LicenseeVersion = (ushort)Version >> 16);
+            LicenseeVersion = (ushort)(Version >> 16);
             Version = (Version & 0xFFFFU);
-            Console.WriteLine( "\tPackage Version:" + Version + "/" LicenseeVersion );
+            Console.WriteLine( "\tPackage Version:" + Version + "/" + LicenseeVersion );
 
             Build = new GameBuild( this );
             Console.WriteLine( "\tBuild:" + Build.Name );
@@ -923,7 +918,7 @@ namespace UELib
                 if( Version >= VEngineVersion )
                 {
 #if UE4
-                    if( pkg.UE4Version >= 336 )
+                    if( UE4Version >= 336 )
                     {
                         stream.ReadUInt16();
                         stream.ReadUInt16();
@@ -934,12 +929,9 @@ namespace UELib
                     else
                     {
 #endif
-                    // The Engine Version this package was created with
-                    EngineVersion = stream.ReadInt32();
-                    Console.WriteLine( "\tEngineVersion:" + EngineVersion );
-                    if( Version >= VCOOKEDPACKAGES )
-                    pkg.EngineVersion = stream.ReadInt32();
-                    Console.WriteLine( "\tEngineVersion:" + pkg.EngineVersion );
+                        // The Engine Version this package was created with
+                        EngineVersion = stream.ReadInt32();
+                        Console.WriteLine( "\tEngineVersion:" + EngineVersion );
 #if UE4
                     }
 #endif

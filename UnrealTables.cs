@@ -473,7 +473,6 @@ namespace UELib
 #if BIOSHOCK
                 || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Package.LicenseeVersion >= 40) 
 #endif
-                )
             )
             {
                 ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
