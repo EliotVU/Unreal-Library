@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using UELib.Core;
 	
 namespace UELib.Engine
@@ -24,7 +25,7 @@ namespace UELib.Engine
 			MipMaps.Deserialize( _Buffer, delegate( MipMap mm ){ mm.Owner = this; } );
 		}
 
-		public class MipMap : IUnrealDeserializableClass
+		public class MipMap : IUnrealSerializableClass
 		{
 			public enum CompressionFormat
 			{
@@ -39,6 +40,11 @@ namespace UELib.Engine
 			public uint Height;
 			public byte BitsWidth;
 			public byte BitsHeight;
+
+            public void Serialize( IUnrealStream stream )
+            {
+                throw new NotImplementedException();
+            }
 
 			public void Deserialize( IUnrealStream stream )
 			{

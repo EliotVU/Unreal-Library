@@ -2,17 +2,28 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Text;
 using System.Collections.Generic;
 using UELib.Core;
 
 namespace UELib
 {
-    public struct UGenerationTableItem : IUnrealDeserializableClass
+    public struct UGenerationTableItem : IUnrealSerializableClass
     {
         public int ExportsCount;
         public int NamesCount;
         public int NetObjectsCount;
+
+        private const int VNetObjectsCount = 322;
+
+        public void Serialize( IUnrealStream stream )
+        {
+            stream.Write( ExportsCount );  
+            stream.Write( NamesCount );  
+            if( stream.Version >= VNetObjectsCount )
+            {
+                stream.Write( NetObjectsCount ); 
+            }	
+        }
 
         public void Deserialize( IUnrealStream stream )
         {
@@ -24,7 +35,7 @@ namespace UELib
 #endif
             ExportsCount = stream.ReadInt32();
             NamesCount = stream.ReadInt32();
-            if( stream.Version >= 322 )
+            if( stream.Version >= VNetObjectsCount )
             {
                 NetObjectsCount = stream.ReadInt32();
             }		
@@ -40,17 +51,17 @@ namespace UELib
         /// <summary>
         /// Index into the table's enumerable.
         /// </summary>
-        public int Index;
+        public int Index{ get; internal set; }
 
         /// <summary>
         /// Table offset in bytes.
         /// </summary>
-        public int Offset;
+        public int Offset{ get; internal set; }
 
         /// <summary>
         /// Table size in bytes.
         /// </summary>
-        public int Size;
+        public int Size{ get; internal set; }
         #endregion
 
         #region Methods
@@ -63,13 +74,15 @@ namespace UELib
         #endregion
     }
 
-    public sealed class UName : IUnrealDeserializableClass
+    public sealed class UName : IUnrealSerializableClass
     {
         private const string    None = "None";
         public const int        Numeric = 0;
+        internal const int      VNameNumbered = 343;
 
         private UNameTableItem  _NameItem;
         private int             _Number;
+        public int              Number{ get; private set; }
 
         private string          _Text
         {
@@ -81,11 +94,13 @@ namespace UELib
             get{ return _NameItem.Index; }
         }
 
+        public int              Index{ get; private set; }
+
         public int              Length
         {
             get{ return _Text.Length; }
         }
-
+        
         public UName( IUnrealStream stream )
         {
             Deserialize( stream );
@@ -107,8 +122,18 @@ namespace UELib
             var index = stream.ReadNameIndex( out _Number );
             _NameItem = stream.Package.Names[index];
 
-            Debug.Assert( _NameItem != null, "_NameItem cannot be null!" );
-            Debug.Assert( _Number >= -1, "Invalid _Number value!" );
+            Debug.Assert( _NameItem != null, "_NameItem cannot be null! " + index );
+            Debug.Assert( _Number >= -1, "Invalid _Number value! " + _Number );
+        }
+
+        public void Serialize( IUnrealStream stream )
+        {
+            stream.WriteIndex( _Index );
+            if( stream.Version >= VNameNumbered )
+            {
+                Console.WriteLine( _Number + " " + _Text );
+                stream.Write( (uint)_Number + 1 );
+            }   
         }
 
         public override string ToString()
@@ -150,7 +175,7 @@ namespace UELib
     /// <summary>
     /// Represents a unreal name table with serialized data from a unreal package header.
     /// </summary>
-    public sealed class UNameTableItem : UTableItem, IUnrealDeserializableClass, IUnrealSerializableClass
+    public sealed class UNameTableItem : UTableItem, IUnrealSerializableClass
     {
         #region Serialized Members
         /// <summary>
@@ -187,13 +212,9 @@ namespace UELib
 #endif
         }
 
-        public void Serialize( UPackageStream stream )
+        public void Serialize( IUnrealStream stream )
         {
-            stream.Seek( Offset, SeekOrigin.Begin );
-
-            int size = stream.ReadIndex();
-            byte[] rawName = Encoding.ASCII.GetBytes( Name );
-            stream.UW.Write( rawName, 0, size - 1 );
+            stream.WriteString( Name );
 
             if( stream.Version < QWORDVersion )
             {
@@ -265,25 +286,15 @@ namespace UELib
         /// Export:Object index to the class of this object
         /// -- Not Fixed
         /// </summary>
-        public int ClassIndex;
+        public int ClassIndex{ get; protected set; }
         [Pure]public UObjectTableItem ClassTable{ get{ return Owner.GetIndexTable( ClassIndex ); } }
-        [Pure]public string ClassName
-        { 
-            get
-            {
-                if( this is UImportTableItem )
-                {
-                    return Owner.GetIndexName( ClassIndex );
-                }
-                return ClassIndex != 0 ? Owner.GetIndexTable( ClassIndex ).ObjectName : "class";
-            }
-        }
+        [Pure]public virtual string ClassName{ get{ return ClassIndex != 0 ? Owner.GetIndexTable( ClassIndex ).ObjectName : "class"; } }
 
         /// <summary>
         /// Object index to the outer of this object
         /// -- Not Fixed
         /// </summary>
-        public int OuterIndex;
+        public int OuterIndex{ get; protected set; }
         [Pure]public UObjectTableItem OuterTable{ get{ return Owner.GetIndexTable( OuterIndex ); } }
         [Pure]public string OuterName{ get{ var table = OuterTable; return table != null ? table.ObjectName : String.Empty; } }
         #endregion
@@ -330,14 +341,18 @@ namespace UELib
     /// <summary>
     /// Represents a unreal export table with deserialized data from a unreal package header.
     /// </summary>
-    public sealed class UExportTableItem : UObjectTableItem, IUnrealDeserializableClass
+    public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
+        private const uint VArchetype = 220;
+        private const uint VObjectFlagsToULONG = 195;
+        private const uint VSerialSizeConditionless = 249;
+
         #region Serialized Members
         /// <summary>
         /// Object index to the Super(parent) object of structs.
         /// -- Not Fixed
         /// </summary>
-        public int SuperIndex;
+        public int SuperIndex{ get; private set; }
         [Pure]public UObjectTableItem SuperTable{ get{ return Owner.GetIndexTable( SuperIndex ); } }
         [Pure]public string SuperName{ get{ var table = SuperTable; return table != null ? table.ObjectName : String.Empty; } }
 
@@ -345,7 +360,7 @@ namespace UELib
         /// Object index.
         /// -- Not Fixed
         /// </summary>
-        public int ArchetypeIndex;
+        public int ArchetypeIndex{ get; private set; }
         [Pure]public UObjectTableItem ArchetypeTable{ get{ return Owner.GetIndexTable( ArchetypeIndex ); } }
         [Pure]public string ArchetypeName{ get{ var table = ArchetypeTable; return table != null ? table.ObjectName : String.Empty; } }
 
@@ -370,6 +385,30 @@ namespace UELib
         //public List<int> NetObjects;
         #endregion
 
+        // @Warning - Only supports Official builds.
+        public void Serialize( IUnrealStream stream )
+        {
+            stream.Write( ClassTable.Object );
+            stream.Write( SuperTable.Object );
+            stream.Write( (int)OuterTable.Object );
+
+            stream.Write( ObjectName );
+
+            if( stream.Version >= VArchetype )
+            {
+                ArchetypeIndex = stream.ReadInt32();
+            }
+            stream.UW.Write( stream.Version >= VObjectFlagsToULONG ? ObjectFlags : (uint)ObjectFlags );
+            stream.WriteIndex( SerialSize );    // Assumes SerialSize has been updated to @Object's buffer size.
+            if( SerialSize > 0 || stream.Version >= VSerialSizeConditionless )
+            {
+                // SerialOffset has to be set and written after this object has been serialized.
+                stream.WriteIndex( SerialOffset );  // Assumes the same as @SerialSize comment.
+            }
+
+            // TODO: Continue.
+        }
+
         public void Deserialize( IUnrealStream stream )
         {
             ClassIndex 		= stream.ReadObjectIndex();
@@ -383,14 +422,14 @@ namespace UELib
 #endif
             ObjectName 	= stream.ReadNameReference();	
             
-            if( stream.Version >= 220 )
+            if( stream.Version >= VArchetype )
             {
                 ArchetypeIndex = stream.ReadInt32();
             }
 
             _ObjectFlagsOffset = stream.Position;	
             ObjectFlags = stream.ReadUInt32();
-            if( stream.Version >= 195 
+            if( stream.Version >= VObjectFlagsToULONG 
 #if BIOSHOCK
                 || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Package.LicenseeVersion >= 40) 
 #endif
@@ -400,7 +439,7 @@ namespace UELib
             }
 
             SerialSize = stream.ReadIndex();
-            if( SerialSize > 0 || stream.Version >= 249 )
+            if( SerialSize > 0 || stream.Version >= VSerialSizeConditionless )
             {
                 SerialOffset = stream.ReadIndex();
             }
@@ -500,16 +539,30 @@ namespace UELib
     /// <summary>
     /// Represents a unreal import table with deserialized data from a unreal package header.
     /// </summary>
-    public sealed class UImportTableItem : UObjectTableItem, IUnrealDeserializableClass
+    public sealed class UImportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
         #region Serialized Members
         public UName PackageName;
+        private UName _ClassName;
+
+        [Pure]public override string ClassName{ get{ return _ClassName; } }
         #endregion
+
+        public void Serialize( IUnrealStream stream )
+        {
+            Console.WriteLine( "Writing import " + ObjectName + " at " + stream.Position );
+            stream.Write( PackageName );
+            stream.Write( _ClassName );
+            stream.Write( OuterTable != null ? (int)OuterTable.Object : 0 ); // Always an ordinary integer
+            stream.Write( ObjectName );
+        }
 
         public void Deserialize( IUnrealStream stream )
         {
+            Console.WriteLine( "Reading import " + Index + " at " + stream.Position );
             PackageName 		= stream.ReadNameReference();
-            ClassIndex 			= stream.ReadNameIndex();
+            _ClassName 			= stream.ReadNameReference();
+             ClassIndex         = (int)_ClassName;
             OuterIndex 			= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
             ObjectName 		    = stream.ReadNameReference();
         }

@@ -14,6 +14,9 @@ namespace UELib
 
         UnrealPackage Package{ get; }
         UnrealReader UR{ get; }
+        UnrealWriter UW{ get; }
+
+        bool BigEndianCode{ get; }
 
         /// <summary>
         /// The version of the package this stream is working for.
@@ -96,11 +99,32 @@ namespace UELib
             _UnrealStream = stream as IUnrealStream;
         }
 
-        public void WriteText( string text )
+        public void WriteText( string s )
         {
-            Write( text.Length );
-            Write( text.ToCharArray(), 0, 0 );
+            Write( s.Length );
+            Write( s.ToCharArray(), 0, 0 );
             Write( '\0' );
+        }
+
+        // TODO: Add support for Unicode, and Unreal Engine 1 & 2.
+        public void WriteString( string s )
+        {
+            WriteIndex( s.Length + 1 );
+            var bytes = Encoding.ASCII.GetBytes( s );
+            Write( bytes, 0, bytes.Count() );
+            Write( (byte)0 );
+        }
+
+        public void WriteIndex( int index )
+        {
+            if( _Version >= UnrealPackage.VINDEXDEPRECATED )
+            { 
+                Write( index );
+            }
+            else
+            {
+                throw new InvalidDataException( "UE1 and UE2 are not supported for writing indexes!" );
+            }
         }
 
         protected override void Dispose( bool disposing )
@@ -273,7 +297,7 @@ namespace UELib
             var lastPosition = _UnrealStream.Position;
 #endif
             var index = ReadIndex();
-            if( _Version >= 343 
+            if( _Version >= UName.VNameNumbered 
 #if BIOSHOCK
                 || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
 #endif
@@ -294,7 +318,7 @@ namespace UELib
             var lastPosition = _UnrealStream.Position;
 #endif
             var index = ReadIndex();
-            if( _UnrealStream.Version >= 343 
+            if( _UnrealStream.Version >= UName.VNameNumbered 
 #if BIOSHOCK
                 || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock 
 #endif
@@ -378,7 +402,7 @@ namespace UELib
 
         public long LastPosition{ get; set; }
 
-        public readonly bool BigEndianCode;
+        public bool BigEndianCode{ get; set; }
         public bool IsChunked{ get{ return Package.CompressedChunks != null && Package.CompressedChunks.Any(); } }
 
         public UPackageStream( string path, FileMode mode, FileAccess access ) : base( path, mode, access, FileShare.ReadWrite )
@@ -402,11 +426,20 @@ namespace UELib
                 {
                     throw new FileLoadException( path + " isn't a UnrealPackage file!" );
                 }
-                Position = 4;
-                UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );		
+                Position = 4;	
             }
 
-            if( CanWrite )
+            InitBuffer();
+        }
+
+        public void InitBuffer()
+        {
+            if( CanRead && UR == null )
+            {
+                UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
+            }
+
+            if( CanWrite && UW == null )
             {
                 UW = new UnrealWriter( this );
             }
@@ -658,9 +691,18 @@ namespace UELib
         private long _PeekStartPosition;
         public long LastPosition{ get; set; }
 
-        public readonly bool BigEndianCode;
+        public bool BigEndianCode{ get; set; }
+
+        public UObjectStream( IUnrealStream stream )
+        {
+            UW = null;
+            UR = null;
+            Package = stream.Package;
+            BigEndianCode = stream.BigEndianCode;
+            InitBuffer(); 
+        }
         
-        public UObjectStream( UPackageStream str, byte[] buffer ) : base( buffer, true )
+        public UObjectStream( IUnrealStream str, byte[] buffer ) : base( buffer, true )
         {
             UW = null;
             UR = null;
@@ -948,6 +990,67 @@ namespace UELib
                 name += "_" + num;
             }
             return name;
+        }
+
+        public static void Write( this IUnrealStream stream, UName name )
+        {
+            name.Serialize( stream );
+        }
+
+        public static void Write( this IUnrealStream stream, UObjectTableItem obj )
+        {
+            stream.UW.WriteIndex( obj != null ? (int)obj.Object : 0 );
+        }
+
+        public static void Write( this IUnrealStream stream, UObject obj )
+        {
+            stream.UW.WriteIndex( obj != null ? (int)obj : 0 );
+        }
+
+        public static void Write( this IUnrealStream stream, short number )
+        {
+            stream.UW.Write( number );
+        }
+
+        public static void Write( this IUnrealStream stream, ushort number )
+        {
+            stream.UW.Write( number );
+        }
+
+        public static void Write( this IUnrealStream stream, int number )
+        {
+            stream.UW.Write( number );
+        }
+
+        public static void Write( this IUnrealStream stream, uint number )
+        {
+            stream.UW.Write( number );
+        }
+
+        public static void Write( this IUnrealStream stream, long number )
+        {
+            stream.UW.Write( number );
+        }
+
+        public static void Write( this IUnrealStream stream, ulong number )
+        {
+            stream.UW.Write( number );
+        }
+
+        public static void Write( this IUnrealStream stream, byte[] buffer, int index, int count )
+        {
+            stream.UW.Write( buffer, index, count );
+        }
+
+        public static void WriteIndex( this IUnrealStream stream, int index )
+        {
+            stream.UW.WriteIndex( index );
+        }
+
+        // Don't overload Write() because this string writes using the Unreal instead of the .NET format.
+        public static void WriteString( this IUnrealStream stream, string s )
+        {
+            stream.UW.WriteString( s );
         }
     }
 }
