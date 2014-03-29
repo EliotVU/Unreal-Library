@@ -22,7 +22,7 @@ namespace UELib
         { 
             ".ut2", ".udk", ".unr", ".rom", ".un2", ".aao",
             ".run", ".sac", ".xcm", ".nrf", ".wot", ".scl", 
-            ".dvs", ".rsm", ".ut3" 
+            ".dvs", ".rsm", ".ut3", ".umap" 
         };
         public static readonly string[] SaveExt 		= { ".uvx", ".md5", ".usa", ".ums", ".rsa", ".sav" };
         public static readonly string[] PackageExt 		= { ".upk", ".uasset" };

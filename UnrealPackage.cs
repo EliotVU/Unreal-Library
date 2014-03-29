@@ -83,7 +83,6 @@ namespace UELib
             get{ return OverrideVersion > 0 ? OverrideVersion : _Version; }
             private set{ _Version = value; }
         }
-        public uint UE4Version{ get; set; }
 
         /// <summary>
         /// For debugging purposes. Change this to override the present Version deserialized from the package.
@@ -137,6 +136,9 @@ namespace UELib
         /// </summary>
         [SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
         public static ushort OverrideLicenseeVersion;
+
+        public uint UE4Version{ get; private set; }
+        public uint UE4LicenseeVersion{ get; private set; }
 
         public class GameBuild
         {
@@ -811,20 +813,50 @@ namespace UELib
             var version = stream.ReadInt32();
             if( version < 0 )
             {
+                if( version > -3 )
+                {
+                    //throw new Exception( "This version of the Unreal Engine 4 is not supported!" );
+                }
 #if UE4
-                pkg.Version = stream.ReadUInt32();
-                pkg.UE4Version = stream.ReadUInt32();
-                stream.ReadUInt32();    // CookedVersion
-                stream.ReadUInt32();    // CookedLicenseeVersion
+                Version = stream.ReadUInt32();
+                UE4Version = stream.ReadUInt32();
+                UE4LicenseeVersion = stream.ReadUInt32();
+                if( UE4Version >= 138 && UE4Version < 142 )
+                {
+                    stream.Skip( 8 ); // CookedVersion, CookedLicenseeVersion   
+                }
+
+                if( version <= -2 )
+                {
+                    // Read enum based version
+                    if( version <= -3 )
+                    {
+                        var count = stream.ReadInt32(); // Versions
+                        stream.Skip( count*(4 + 4) ); // Tag, Version
+                    }
+                    else
+                    {
+                        var count = stream.ReadInt32();
+                        for( int i = 0; i < count; ++ i )
+                        {
+                            // Key
+                            stream.ReadGuid();
+                            // Version
+                            stream.ReadInt32();
+                            // FriendlyName
+                            stream.ReadText();
+                        }
+                    }
+                }
 #endif
             }
             else
             {
-                pkg.Version = (uint)version;
+                Version = (uint)version;
             }
-            pkg.LicenseeVersion = (ushort)(pkg.Version >> 16);
-            pkg.Version = (pkg.Version & 0xFFFFU);
-            Console.WriteLine( "\tPackage Version:" + pkg.Version + "/" + pkg.LicenseeVersion );
+            LicenseeVersion = (ushort)Version >> 16);
+            Version = (Version & 0xFFFFU);
+            Console.WriteLine( "\tPackage Version:" + Version + "/" LicenseeVersion );
 
             Build = new GameBuild( this );
             Console.WriteLine( "\tBuild:" + Build.Name );
@@ -890,23 +922,47 @@ namespace UELib
 
                 if( Version >= VEngineVersion )
                 {
+#if UE4
+                    if( pkg.UE4Version >= 336 )
+                    {
+                        stream.ReadUInt16();
+                        stream.ReadUInt16();
+                        stream.ReadUInt16();
+                        stream.ReadUInt32();
+                        stream.ReadText(); // Branch
+                    }
+                    else
+                    {
+#endif
                     // The Engine Version this package was created with
                     EngineVersion = stream.ReadInt32();
                     Console.WriteLine( "\tEngineVersion:" + EngineVersion );
                     if( Version >= VCOOKEDPACKAGES )
+                    pkg.EngineVersion = stream.ReadInt32();
+                    Console.WriteLine( "\tEngineVersion:" + pkg.EngineVersion );
+#if UE4
+                    }
+#endif
+                    if( Version >= VCOOKEDPACKAGES )
                     {
+#if UE4
+                        if( UE4Version == 0 )
+                        {
+#endif
                         // The Cooker Version this package was cooked with
                         CookerVersion = stream.ReadInt32();
                         Console.WriteLine( "\tCookerVersion:" + CookerVersion );
-
+#if UE4
+                        }
+#endif
                         // Read compressed info?
                         if( Version >= VCompression )
-                        {	
+                        {
                             if( IsCooked() )
                             {
                                 CompressionFlags = stream.ReadUInt32();
                                 Console.WriteLine( "\tCompressionFlags:" + CompressionFlags );
-                                CompressedChunks = new UArray<CompressedChunk>{Capacity = stream.ReadInt32()};
+                                CompressedChunks = new UArray<CompressedChunk> {Capacity = stream.ReadInt32()};
                                 //long uncookedSize = stream.Position;
                                 if( CompressedChunks.Capacity > 0 )
                                 {
@@ -919,7 +975,7 @@ namespace UELib
                                     //    //File.SetAttributes( packagePath + ".dec", FileAttributes.Temporary );
                                     //    outStream.Package = pkg;
                                     //    outStream._BigEndianCode = stream._BigEndianCode;
-                                    
+
                                     //    var headerBytes = new byte[uncookedSize];
                                     //    stream.Seek( 0, SeekOrigin.Begin );
                                     //    stream.Read( headerBytes, 0, (int)uncookedSize );
@@ -939,11 +995,20 @@ namespace UELib
                                     //}
                                 }
                             }
+#if UE4
+                            if( UE4Version > 0 )
+                            {
+                                var source = stream.ReadUInt32();
+                                Console.WriteLine( "\tSource:{0}", source );
+                            }
+#endif
                         }
                     }
                 }
             }
             
+            // All serialized summary-data past this is safely ignored!
+            HeaderSize = stream.Position;
             
             // Read the name table
             if( _TablesData.NamesCount > 0 )
@@ -1021,8 +1086,6 @@ namespace UELib
                 }
                 Console.WriteLine( "Deserialized {0} dependencies", pkg.DependsTableList.Count );
             }*/
-
-            HeaderSize = stream.Position;   
         }
 
         /// <summary>
