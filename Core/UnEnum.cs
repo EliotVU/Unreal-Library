@@ -10,9 +10,9 @@ namespace UELib.Core
 	{
 		#region Serialized Members
 		/// <summary>
-		/// List of name indexes in the UnrealPackage.Names list.
+		/// Names of each element in the UEnum.
 		/// </summary>
-		public readonly IList<string> Names = new List<string>();
+		public IList<UName> Names;
 		#endregion
 
 		#region Constructors
@@ -20,45 +20,13 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int namesCount = _Buffer.ReadIndex();
-			for( int i = 0; i < namesCount; ++ i )
+			int count = _Buffer.ReadIndex();
+            Names = new List<UName>(count);
+			for( int i = 0; i < count; ++ i )
 			{
-		   		int nameIndex = _Buffer.ReadNameIndex();
-				Names.Add( Package.Names[nameIndex].Name );
+                Names.Add(_Buffer.ReadNameReference() );
 			}
 		}
-
-		//public override void InitializeImports()
-		//{
-		//    base.InitializeImports();
-		//    ImportObject();
-		//}
-
-		private void ImportObject()
-		{
-			// Already imported...
-			//if( Names.Count > 0 )
-			//{
-			//    return;
-			//}
-
-			//// Closed when Owner gets closed.
-			//UnrealPackage pkg = LoadImportPackage();
-			//if( pkg != null )
-			//{
-			//    if( pkg.Objects == null )
-			//    {
-			//        pkg.RegisterClass( "Enum", typeof(UEnum) );
-			//        pkg.InitializeExportObjects();
-			//    }
-			//    UEnum E = (UEnum)pkg.FindObject( Name, typeof(UEnum) );
-			//    if( E != null )
-			//    {
-			//        // The names we needed.
-			//        Names = E.Names;
-			//    }
-			//}
-		}
-		#endregion
+	    #endregion
 	}
 }
