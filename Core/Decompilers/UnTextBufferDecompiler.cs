@@ -39,5 +39,10 @@ namespace UELib.Core
 			}
 			return output;
 		}
+
+        protected override string FormatHeader()
+        {
+            return "// Postprocessed copy of the source code.";
+        }
 	}	
 }
