@@ -165,7 +165,11 @@ namespace UELib.Core
         protected override string FormatHeader()
         {
             string output = (IsClassInterface() ? "interface " : "class ") + Name;
-
+            var metaData = DecompileMeta();
+            if( metaData != string.Empty )
+            {
+                output = metaData + "\r\n" + output;
+            }
             // Object doesn't have an extension so only try add the extension if theres a SuperField
             if( Super != null 
                 && !(IsClassInterface() && String.Compare( Super.Name, "Object", StringComparison.OrdinalIgnoreCase ) == 0) )
@@ -260,7 +264,7 @@ namespace UELib.Core
 
             if( HasClassFlag( Flags.ClassFlags.NativeOnly ) )
             {
-                output += "\r\n\tnatveonly";
+                output += "\r\n\tnativeonly";
             }
 
             if( HasClassFlag( Flags.ClassFlags.NativeReplication ) )

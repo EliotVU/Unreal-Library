@@ -191,6 +191,12 @@ namespace UELib.Core
                 );			
             }
 
+            var metaData = DecompileMeta();
+            if( metaData != String.Empty )
+            {
+                output = metaData + "\r\n" + output;
+            }
+
             output += FormatFlags() 
                 + (ReturnProperty != null 
                     ? ReturnProperty.GetFriendlyType() + " " 

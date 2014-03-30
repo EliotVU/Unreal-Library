@@ -49,8 +49,14 @@ namespace UELib.Core
 
         protected override string FormatHeader()
         {
-            return "struct " + FormatFlags() + Name + (Super != null ? " " + FormatExtends() + " " 
+            var output = "struct " + FormatFlags() + Name + (Super != null ? " " + FormatExtends() + " " 
                 + Super.Name : String.Empty);
+            var metaData = DecompileMeta();
+            if( metaData != String.Empty )
+            {
+                output = metaData + "\r\n" + UDecompilingState.Tabs + output;
+            }
+            return output;
         }
 
         private string FormatFlags()
