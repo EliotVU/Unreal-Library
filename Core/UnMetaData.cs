@@ -5,7 +5,7 @@ using System.Linq;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents metadata from field(Properties,Enums,Structs and Constants) objects. 
+    /// MetaData objects contain all the metadata of UField objects.
     /// </summary>
     [UnrealRegisterClass]
     public sealed class UMetaData : UObject
@@ -52,7 +52,7 @@ namespace UELib.Core
                 var tags = new List<UMetaTag>( MetaTags.Count );
                 tags.AddRange( MetaTags );
 
-                // We remove this because OrderIndex is a implicit added MetaTag.
+                // We remove this because OrderIndex is an implicit added MetaTag.
                 var oItag = GetMetaTag( "OrderIndex" );
                 if( oItag != null )
                 {
@@ -71,32 +71,26 @@ namespace UELib.Core
                     tags.Remove( OItag );
                 }*/
 
-                if( tags.Count > 0 )
+                if( tags.Count <= 0 ) 
+                    return String.Empty;
+
+                var output = "<";
+                foreach( var tag in tags )
                 {
-                    string output = "<";
-                    foreach( var tag in tags )
-                    {
-                        output += tag.Decompile() + (tag != tags.Last() ? "|" : ">");
-                    }
-                    return output;
+                    output += tag.Decompile() + (tag != tags.Last() ? "|" : ">");
                 }
-                return String.Empty;
+                return output;
             }
 
-            public string Decompile( ref string outer )
-            {
-                return outer + Decompile();
-            }	
-    
             public UMetaTag GetMetaTag( string tagName )
             {
-                return MetaTags.Find( tag => Owner.GetIndexName( tag.TagNameIndex ) == tagName );
+                return MetaTags.Find( tag => tag.TagName == tagName );
             }
         }															    
 
         public sealed class UMetaTag : IUnrealDecompilable, IUnrealSerializableClass
         {
-            public int				TagNameIndex;
+            public UName			TagName;
             public string 			TagValue;
             public UnrealPackage	Owner;
 
@@ -107,7 +101,7 @@ namespace UELib.Core
 
             public void Deserialize( IUnrealStream stream )
             {
-                TagNameIndex = stream.ReadNameIndex();
+                TagName = stream.ReadNameReference();
                 TagValue = stream.ReadText();
             }
 
@@ -119,7 +113,7 @@ namespace UELib.Core
             /// <returns></returns>
             public string Decompile()
             {								
-                return Owner.GetIndexName( TagNameIndex ) + "=" + TagValue;
+                return TagName + "=" + TagValue;
             }
         }
 
@@ -170,12 +164,11 @@ namespace UELib.Core
                 return "No MetaFields found!";
             }
 
-            string content = FormatHeader();
+            var content = FormatHeader();
             foreach( var field in _MetaFields )
             {
-                string fieldname = field.FieldIndex != 0 ? GetIndexObject( field.FieldIndex ).GetOuterGroup() : field.FieldName;																			  // Max string length!
-                string fieldOutput = field.Decompile();
-
+                var fieldname = field.FieldIndex != 0 ? GetIndexObject( field.FieldIndex ).GetOuterGroup() : field.FieldName;																			  // Max string length!
+                var fieldOutput = field.Decompile();
                 if( fieldOutput.Length != 0 )
                 {
                     content += "\r\n" + fieldname + field.Decompile();
@@ -191,36 +184,26 @@ namespace UELib.Core
 
         public string GetUniqueMetas()
         {
-            string output = String.Empty;
+            var output = String.Empty;
             var tags = new List<UMetaTag>();
             foreach( var field in _MetaFields )
             {
                 foreach( var dfield in field.MetaTags )
                 {
                     var ut = new UMetaTag{Owner = dfield.Owner};
-                    if( tags.Find( tag => tag.TagNameIndex == dfield.TagNameIndex ) != null )
+                    if( tags.Find( tag => tag.TagName == dfield.TagName ) != null )
                     {
                         continue;
                     }			
-                    ut.TagNameIndex = dfield.TagNameIndex;
-
+                    ut.TagName = dfield.TagName;
                     ut.TagValue = field.FieldName;
-                    /*
-                    if( field.FieldIndex != 0 )
-                    {
-                        ut.TagValue = GetIndexObject( field.FieldIndex ).GetOuterGroup() + "." + dfield.TagValue;
-                    }
-                    else
-                    {
-                        ut.TagValue = field.FieldName + "." + dfield.TagValue;
-                    }*/
                     tags.Add( ut );
                 }
             }
 
             foreach( var ut in tags )
             {
-                string tagsOutput = ut.Decompile().TrimEnd( '=' );
+                var tagsOutput = ut.Decompile().TrimEnd( '=' );
                 if( tagsOutput.Length != 0 )
                 {
                     output += tagsOutput + "\r\n";
