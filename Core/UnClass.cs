@@ -127,7 +127,8 @@ namespace UELib.Core
                 ClassGuid = _Buffer.ReadGuid();
                 Record( "ClassGuid", ClassGuid );
 
-                int depSize = _Buffer.ReadIndex();
+                // Use ReadCount because Vanguard does no longer uses indexes but an int32 for arrays.
+                var depSize = ReadCount();
                 Record( "DepSize", depSize );
                 if( depSize > 0 )
                 {
@@ -365,9 +366,13 @@ namespace UELib.Core
         #endregion
 
         #region Methods
-        private IList<int> DeserializeGroup( string groupName = "List" )
+        private IList<int> DeserializeGroup( string groupName = "List", int count = -1 )
         {
-            int count = _Buffer.ReadIndex();
+            if( count == -1 )
+            {
+                count = ReadCount();
+            }
+
             Record( String.Format( "{0}.Count", groupName ), count );
             if( count > 0 )
             {
