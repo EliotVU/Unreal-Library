@@ -613,15 +613,11 @@ namespace UELib.Core
         [System.Diagnostics.Conditional( "DEBUG" ), System.Diagnostics.Conditional( "BINARYMETADATA" )]
         internal void Record( string varName, object varObject = null )
         {
-#if DEBUG || BINARYMETADATA
-            {
-                var size = _Buffer.Position - _Buffer.LastPosition;
-                if( size <= 0 )
-                    return;
+            var size = _Buffer.Position - _Buffer.LastPosition;
+            if( size <= 0 )
+                return;
                     
-                BinaryMetaData.AddField( varName, varObject, _Buffer.LastPosition, size );
-            }
-#endif
+            BinaryMetaData.AddField( varName, varObject, _Buffer.LastPosition, size );
 #if LOG_RECORDS
             if( varObject == null )
             {

@@ -21,7 +21,7 @@ namespace UELib
 
         public Stack<BinaryField> Fields;
 
-        [System.Diagnostics.Conditional( "DEBUG" )]
+        [Conditional( "DEBUG" ), Conditional( "BINARYMETADATA" )]
         public void AddField( string name, object tag, long position, long size )
         {
             Debug.Assert( size > 0, String.Format( "Invalid {0} binary field!", name ) );
