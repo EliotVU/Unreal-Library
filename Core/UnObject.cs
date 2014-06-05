@@ -610,7 +610,7 @@ namespace UELib.Core
         /// <param name="varName">The struct that was read from the previous buffer position.</param>
         /// <param name="varObject">The struct's value that was read.</param>
         [System.Diagnostics.DebuggerHidden]
-        [System.Diagnostics.Conditional( "DEBUG" )]
+        [System.Diagnostics.Conditional( "DEBUG" ), System.Diagnostics.Conditional( "BINARYMETADATA" )]
         internal void Record( string varName, object varObject = null )
         {
 #if DEBUG || BINARYMETADATA

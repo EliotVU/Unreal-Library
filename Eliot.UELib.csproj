@@ -58,7 +58,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE HAWKEN UT DISHONORED REMEMBERME BIOSHOCK</DefineConstants>
+    <DefineConstants>TRACE;DECOMPILE BINARYMETADATA SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE HAWKEN UT DISHONORED REMEMBERME BIOSHOCK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -197,7 +197,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
