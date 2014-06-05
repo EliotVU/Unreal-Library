@@ -369,6 +369,21 @@ namespace UELib.Core
                         }
                         break;
 
+#if UE4
+                    // TracePoint
+                    case (byte)0x5F:
+                        tokenItem = new TracepointToken();
+                        break;
+
+                    case (byte)0x60:
+                        tokenItem = new LetObjToken();
+                        break;
+
+                    case (byte)0x61:
+                        tokenItem = new LetWeakObjPtrToken();
+                        break;
+#endif
+
                     // Redefined, can be NameToBool!(UE1)
                     case (byte)ExprToken.Conditional:
                         tokenItem = new ConditionalToken();
@@ -455,6 +470,14 @@ namespace UELib.Core
                         break;
 
                     case (byte)ExprToken.FilterEditorOnly:
+#if UE4
+                        // WireTracepoint
+                        if( Package.UE4Version > 0 )
+                        {
+                            tokenItem = new WireTracepointToken();
+                            break;
+                        }
+#endif
                         tokenItem = new FilterEditorOnlyToken();
                         break;
 
@@ -678,8 +701,28 @@ namespace UELib.Core
                         break;
 
                     case (byte)ExprToken.VarInt:
-                    case (byte)ExprToken.VarFloat:
+#if UE4
+                        if( Package.UE4Version > 0 )
+                        {
+                            tokenItem = new PushExecutionFlowToken();
+                            break;
+                        }
+#endif
+                        tokenItem = new DynamicVariableToken();
+                        break;
+
                     case (byte)ExprToken.VarByte:
+#if UE4
+                        if( Package.UE4Version > 0 )
+                        {
+                            tokenItem = new PopExecutionFlowToken();
+                            break;
+                        }
+#endif
+                        tokenItem = new DynamicVariableToken();
+                        break;
+
+                    case (byte)ExprToken.VarFloat:
                     case (byte)ExprToken.VarBool:
                     //case (byte)ExprToken.VarObject:	// See UndefinedVariable	
                         tokenItem = new DynamicVariableToken();
@@ -1665,7 +1708,11 @@ namespace UELib.Core
 
                 public virtual string Disassemble()
                 {
-                    return String.Format( "0x{0:X2}", RepresentToken );
+                    return String.Format( "(Adjusted 0x{0:x2}, P 0x{2:x4}, SP 0x{3:x4}, S 0x{4:x4}, SS 0x{5:x4})\r\n{1}", 
+                        RepresentToken, GetType().Name, 
+                        Position, StoragePosition,
+                        Size, StorageSize
+                    );
                 }
 
                 protected string DecompileNext()
@@ -2199,6 +2246,23 @@ namespace UELib.Core
             {
             }
 
+#if UE4
+            public class LetMulticastDelegateToken : LetDelegateToken
+            {
+                
+            }
+
+            public class LetObjToken : LetToken
+            {
+                
+            }
+
+            public class LetWeakObjPtrToken : LetToken
+            {
+                
+            }
+#endif
+
             public class EndParmValueToken : Token
             {
                 public override string Decompile()
@@ -2315,6 +2379,14 @@ namespace UELib.Core
 
                 public override void Deserialize( IUnrealStream stream )
                 {
+#if UE4
+                    if( Package.UE4Version > 0 )
+                    {
+                        CodeOffset = (ushort)stream.ReadInt32();
+                        Decompiler.AlignSize( sizeof(int) );
+                        return;
+                    }
+#endif
                     CodeOffset = stream.ReadUInt16();
                     Decompiler.AlignSize( sizeof(ushort) );
                 }
@@ -4172,6 +4244,46 @@ namespace UELib.Core
                 }
             }
             #endregion
+
+#if UE4
+            public class PushExecutionFlowToken : Token
+            {
+                private int _Size;
+
+                public override void Deserialize( IUnrealStream stream )
+                {
+                    _Size = stream.ReadInt32();
+                    Decompiler.AlignSize( sizeof(int) );
+                }
+
+                public override string Decompile()
+                {
+                    Decompiler._CanAddSemicolon = true;
+                    Decompiler._MustCommentStatement = true;
+                    return "PUSH " + _Size;
+                }
+            }
+
+            public class PopExecutionFlowToken : Token
+            {
+                public override string Decompile()
+                {
+                    Decompiler._CanAddSemicolon = true;
+                    Decompiler._MustCommentStatement = true;
+                    return "POP";
+                }
+            }
+
+            public class TracepointToken : Token
+            {
+                
+            }
+
+            public class WireTracepointToken : Token
+            {
+                
+            }
+#endif
 
             public sealed class UnknownExprToken : Token
             {

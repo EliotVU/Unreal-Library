@@ -1,4 +1,5 @@
 ﻿#if DECOMPILE
+using System.Diagnostics.Contracts;
 using System;
 
 namespace UELib.Core
@@ -9,6 +10,27 @@ namespace UELib.Core
 		{
 			return Meta != null ? Meta.Decompile() : String.Empty; 
 		}
+
+        [Pure]protected string FetchToolTipAsComment()
+        {
+            var tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
+            if( tag == null ) 
+                return String.Empty;
+
+            var comment = UDecompilingState.Tabs + "/** ";
+            // Multiline comment?
+            if( tag.TagValue.IndexOf( '\n' ) != -1 )
+            {
+                comment += " \r\n" + UDecompilingState.Tabs + " *" 
+                           + tag.TagValue.Replace( "\n", "\n" + UDecompilingState.Tabs + " *" ) 
+                           + "\r\n" + UDecompilingState.Tabs;
+            }
+            else
+            {
+                comment += tag.TagValue;
+            }
+            return comment + " */\r\n";
+        }
 
 		// Introduction of the change from intrinsic to native.
 		private const uint NativeVersion = 69;

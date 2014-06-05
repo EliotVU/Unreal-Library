@@ -9,29 +9,21 @@ namespace UELib.Core
 		// Called before the var () is printed.
 		public virtual string PreDecompile()
 		{
-			var tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
-			if( tag != null )
-			{
-				string comment = UDecompilingState.Tabs + "/** ";
-				// Multiline comment?
-				if( tag.TagValue.IndexOf( '\n' ) != -1 )
-				{
-					comment += " \r\n" + UDecompilingState.Tabs + " *" 
-						+ tag.TagValue.Replace( "\n", "\n" + UDecompilingState.Tabs + " *" ) 
-						+ "\r\n" + UDecompilingState.Tabs;
-				}
-				else
-				{
-					comment += tag.TagValue;
-				}
-				return comment + " */\r\n";
-			}
-			return String.Empty;
+			return FetchToolTipAsComment();
 		}
 
 		public override string Decompile()
 		{
-			return FormatFlags() + GetFriendlyType() + " " + Name + FormatSize() + DecompileMeta();
+#if UE4
+            var propName = Name;
+            //if( Package.UE4Version > 0 && propName.Contains( " " ) )
+            //{
+            //    propName = "\'" + propName + "\'";
+            //}
+#else
+            var propName = Name;
+#endif
+			return FormatFlags() + GetFriendlyType() + " " + propName + FormatSize() + DecompileMeta();
 		}
 
 		private string FormatSize()
