@@ -94,7 +94,11 @@ namespace UELib.Core
 
             if( Package.Version >= VStructFlags )
             {
-                if( Package.Version >= VCppText && !Package.IsConsoleCooked() )
+                if( Package.Version >= VCppText && !Package.IsConsoleCooked() 
+#if VANGUARD
+                    && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
+#endif
+                    )
                 {
                     CppText = _Buffer.ReadObject() as UTextBuffer;
                     Record( "CppText", CppText );
@@ -104,6 +108,7 @@ namespace UELib.Core
                 {
                     StructFlags = _Buffer.ReadUInt32();
                     Record( "StructFlags", (StructFlags)StructFlags );	
+
                     // Note: Bioshock inherits from the SWAT4's UE2 build.
 #if BIOSHOCK
                     if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
@@ -114,7 +119,11 @@ namespace UELib.Core
                     }
 #endif
                     // This is high likely to be only for "Irrational Games" builds.
-                    if( Package.Version >= VProcessedText )
+                    if( Package.Version >= VProcessedText 
+#if VANGUARD
+                        && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
+#endif
+                        )
                     {
                         ProcessedText = _Buffer.ReadObject() as UTextBuffer;
                         Record( "ProcessedText", ProcessedText );

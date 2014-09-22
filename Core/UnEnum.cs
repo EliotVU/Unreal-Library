@@ -20,11 +20,11 @@ namespace UELib.Core
 		{
 			base.Deserialize();
 
-			int count = _Buffer.ReadIndex();
+			int count = ReadCount();
             Names = new List<UName>(count);
 			for( int i = 0; i < count; ++ i )
 			{
-                Names.Add(_Buffer.ReadNameReference() );
+                Names.Add( _Buffer.ReadNameReference() );
 			}
 		}
 	    #endregion

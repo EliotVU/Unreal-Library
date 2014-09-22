@@ -248,6 +248,12 @@ namespace UELib
                 Swat4,
 
                 /// <summary>
+                /// 129/035
+                /// </summary>
+                [Build( 129, 35 )]
+                Vanguard,
+
+                /// <summary>
                 /// 130:143/056:059
                 /// </summary>
                 [Build( 130, 143, 56u, 59u, 0, 0 )]

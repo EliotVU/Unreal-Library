@@ -644,6 +644,19 @@ namespace UELib.Core
             //System.Diagnostics.Debug.Assert( size <= (_Buffer.Length - _Buffer.Position), Name + ": Allocation past end of stream detected! " + size );
         }
 
+        // FIXME: Implement within IUnrealStream.
+        protected int ReadCount()
+        {
+            int count;
+#if VANGUARD
+            if( Package.Build.Name == UnrealPackage.GameBuild.BuildName.Vanguard )
+            {    
+                return _Buffer.ReadInt32();
+            }
+#endif    
+            return _Buffer.ReadIndex();
+        }
+
         public int CompareTo( object obj )
         {
             return (int)Table.ObjectName - (int)(((UObject)obj).Table.ObjectName);
