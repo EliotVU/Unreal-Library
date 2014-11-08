@@ -162,3 +162,4 @@ TODO
 * Re-organize and rename most of the files.
 * Decompress LZO .upk files.
 * Full UE4 Support.
+* Make it Mono compatible.
