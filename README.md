@@ -153,3 +153,12 @@ Contribute
 ==============
 
 Feel free to fill in an issue to request documentation for a specific feature. Or contribute missing documentation by editing this file.
+
+TODO
+==============
+
+* Untabify all files.
+* Split most of the UDecompiler.cs code into a bunch of files.
+* Re-organize and rename most of the files.
+* Decompress LZO .upk files.
+* Full UE4 Support.
