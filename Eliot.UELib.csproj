@@ -114,6 +114,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMetaData.cs" />
+    <Compile Include="Core\Decompilers\Tokens\ArrayTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\CastTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\ConstTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\ContextTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\FieldTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\FunctionTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\JumpTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\LetTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\OtherTokens.cs" />
+    <Compile Include="Core\Decompilers\Tokens\Token.cs" />
     <Compile Include="Core\Decompilers\UnClassDecompiler.cs" />
     <Compile Include="Core\UnComponent.cs" />
     <Compile Include="Core\Decompilers\UnDecompiler.cs" />
