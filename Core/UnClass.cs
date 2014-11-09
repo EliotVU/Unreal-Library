@@ -145,12 +145,12 @@ namespace UELib.Core
                 // At least since Bioshock(140) - 547(APB)
                 if( Package.Version >= 140 && Package.Version < 547  )
                 {
-                    var unknown = _Buffer.ReadByte();	
+                    var unknown = _Buffer.ReadByte();
                     Record( "???", unknown );
                 }
 
                 // Class Name Extends Super.Name Within _WithinIndex
-                //		Config(_ConfigIndex);
+                //      Config(_ConfigIndex);
                 Within = _Buffer.ReadObject() as UClass;
                 Record( "Within", Within );
                 ConfigName = _Buffer.ReadNameReference();
@@ -261,8 +261,8 @@ namespace UELib.Core
                                     _Buffer.Skip( 8 );
                                 }
                                 #endif
-                            }	
-                        }					
+                            }   
+                        }                   
                     }
 
                     if( Package.Version >= UnrealPackage.VDLLBIND )
@@ -291,7 +291,7 @@ namespace UELib.Core
 #endif
                     }
                 }
-            }	
+            }   
     
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere, 
             // TODO: Corrigate Version
@@ -301,7 +301,7 @@ namespace UELib.Core
                 Record( "Default", Default );
             }
             else
-            {		
+            {       
 #if SWAT4
                 if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
                 {
@@ -360,7 +360,7 @@ namespace UELib.Core
                 if( child.IsClassType( "State" ) )
                 {
                     States.Insert( 0, (UState)child );
-                }			
+                }           
             }
         }
         #endregion

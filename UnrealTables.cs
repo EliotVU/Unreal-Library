@@ -22,7 +22,7 @@ namespace UELib
             if( stream.Version >= VNetObjectsCount )
             {
                 stream.Write( NetObjectsCount ); 
-            }	
+            }   
         }
 
         public void Deserialize( IUnrealStream stream )
@@ -38,7 +38,7 @@ namespace UELib
             if( stream.Version >= VNetObjectsCount )
             {
                 NetObjectsCount = stream.ReadInt32();
-            }		
+            }       
         }
     }
 
@@ -198,7 +198,7 @@ namespace UELib
         public void Deserialize( IUnrealStream stream )
         {
             Name = stream.ReadText();
-            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();					
+            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();                 
 #if DEOBFUSCATE
             // De-obfuscate names that contain unprintable characters!
             foreach( char c in Name )
@@ -411,23 +411,23 @@ namespace UELib
 
         public void Deserialize( IUnrealStream stream )
         {
-            ClassIndex 		= stream.ReadObjectIndex();
-            SuperIndex 		= stream.ReadObjectIndex();
-            OuterIndex 		= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
+            ClassIndex      = stream.ReadObjectIndex();
+            SuperIndex      = stream.ReadObjectIndex();
+            OuterIndex      = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 #if BIOSHOCK
             if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Version >= 132 )
             {
                 stream.Skip( sizeof(int) );
             }
 #endif
-            ObjectName 	= stream.ReadNameReference();	
+            ObjectName  = stream.ReadNameReference();   
             
             if( stream.Version >= VArchetype )
             {
                 ArchetypeIndex = stream.ReadInt32();
             }
 
-            _ObjectFlagsOffset = stream.Position;	
+            _ObjectFlagsOffset = stream.Position;   
             ObjectFlags = stream.ReadUInt32();
             if( stream.Version >= VObjectFlagsToULONG 
 #if BIOSHOCK
@@ -460,7 +460,7 @@ namespace UELib
 #endif     
             )
             {
-                int componentMapCount = stream.ReadInt32();	 
+                int componentMapCount = stream.ReadInt32();  
                 stream.Skip( componentMapCount * 12 );
                 //if( componentMapCount > 0 )
                 //{
@@ -509,7 +509,7 @@ namespace UELib
             //}
 
             stream.Skip( 16 );  // Package guid
-            if( stream.Version > 486 )	// 475?	 486(> Stargate Worlds)
+            if( stream.Version > 486 )  // 475?  486(> Stargate Worlds)
             {
                 stream.Skip( 4 ); // Package flags
             }
@@ -560,11 +560,11 @@ namespace UELib
         public void Deserialize( IUnrealStream stream )
         {
             Console.WriteLine( "Reading import " + Index + " at " + stream.Position );
-            PackageName 		= stream.ReadNameReference();
-            _ClassName 			= stream.ReadNameReference();
+            PackageName         = stream.ReadNameReference();
+            _ClassName          = stream.ReadNameReference();
              ClassIndex         = (int)_ClassName;
-            OuterIndex 			= stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
-            ObjectName 		    = stream.ReadNameReference();
+            OuterIndex          = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
+            ObjectName          = stream.ReadNameReference();
         }
 
         #region Methods

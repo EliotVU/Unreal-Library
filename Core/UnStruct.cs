@@ -107,7 +107,7 @@ namespace UELib.Core
                 if( Package.Version < VStructFlagsMoved )
                 {
                     StructFlags = _Buffer.ReadUInt32();
-                    Record( "StructFlags", (StructFlags)StructFlags );	
+                    Record( "StructFlags", (StructFlags)StructFlags );  
 
                     // Note: Bioshock inherits from the SWAT4's UE2 build.
 #if BIOSHOCK
@@ -213,7 +213,7 @@ namespace UELib.Core
             Variables = new List<UProperty>();
 
             for( var child = Children; child != null; child = child.NextField )
-            {		
+            {       
                 if( child.GetType().IsSubclassOf( typeof(UProperty) ) )
                 {
                     Variables.Add( (UProperty)child );
@@ -225,7 +225,7 @@ namespace UELib.Core
                 else if( child.IsClassType( "Enum" ) )
                 {
                     Enums.Insert( 0, (UEnum)child );
-                }	
+                }   
                 else if( child is UStruct && ((UStruct)(child)).IsPureStruct() )
                 {
                     Structs.Insert( 0, (UStruct)child );
@@ -244,7 +244,7 @@ namespace UELib.Core
                     }
                 }
             }
-        }	
+        }   
         #endregion
 
         #region Methods

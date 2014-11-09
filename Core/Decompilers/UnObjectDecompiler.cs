@@ -18,13 +18,13 @@ namespace UELib.Core
             UDecompilingState.AddTabs( 1 );
             try
             {
-                output += DecompileProperties();	
+                output += DecompileProperties();    
             }
             finally
             {
                 UDecompilingState.RemoveTabs( 1 );
             }
-            return output + String.Format( "{0}object end\r\n{0}// Reference: {1}'{2}'", UDecompilingState.Tabs, Class.Name, GetOuterGroup() );		
+            return output + String.Format( "{0}object end\r\n{0}// Reference: {1}'{2}'", UDecompilingState.Tabs, Class.Name, GetOuterGroup() );     
         }
 
         // Ment to be overriden!

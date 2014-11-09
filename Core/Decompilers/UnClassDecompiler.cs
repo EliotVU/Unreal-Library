@@ -10,31 +10,31 @@ namespace UELib.Core
     {
         protected override string CPPTextKeyword
         {
-            get{ return "cpptext"; }	
+            get{ return "cpptext"; }    
         }
 
         /**
          * Structure looks like this, even though said XX.GetFriendlyName() actually it's XX.Decompile() which handles then the rest on its own.
          * class GetName() extends SuperFieldName
-         * 		FormatFlags()
-         * 		
+         *      FormatFlags()
+         *      
          * CPPTEXT
          * {
          * }
-         * 		
+         *      
          * Constants
          * const C.GetFriendlyName() = C.Value
          * 
          * Enums
          * enum En.GetFriendlyName()
          * {
-         * 		FormatProperties()		
+         *      FormatProperties()      
          * }
          * 
          * Structs
          * struct FormatFlags() Str.GetFriendlyName() extends SuperFieldName
          * {
-         * 		FormatProperties()
+         *      FormatProperties()
          * }
          * 
          * Properties
@@ -42,22 +42,22 @@ namespace UELib.Core
          * 
          * Replication
          * {
-         * 		SerializeToken()
+         *      SerializeToken()
          * }
          * 
          * Functions
          * FormatFlags() GetFriendlyName() GetParms()
          * {
-         * 		FormatLocals()
-         * 		SerializeToken()
+         *      FormatLocals()
+         *      SerializeToken()
          * }
          * 
          * States
          * FormatFlags() state GetFriendlyName() extends SuperFieldName
          * {
-         * 		FormatIgnores()
-         * 		FormatFunctions()
-         * 		SerializeToken();
+         *      FormatIgnores()
+         *      FormatFunctions()
+         *      SerializeToken();
          * }
          * 
          * DefaultProperties
@@ -97,7 +97,7 @@ namespace UELib.Core
                 FormatReplication() +
                 FormatFunctions() +
                 FormatStates() +
-                FormatDefaultProperties();	
+                FormatDefaultProperties();  
 
             return content;
         }
@@ -196,7 +196,7 @@ namespace UELib.Core
                 {
                     foreach( int index in enumerableList )
                     {
-                        output += Package.Names[index].Name + ",";	
+                        output += Package.Names[index].Name + ",";  
                     }
                     output = output.TrimEnd( ',' ) + ")";
                 }
@@ -218,7 +218,7 @@ namespace UELib.Core
                 {
                     foreach( int index in enumerableList )
                     {
-                        output += Package.GetIndexObjectName( index ) + ",";	
+                        output += Package.GetIndexObjectName( index ) + ",";    
                     }
                     output = output.TrimEnd( ',' ) + ")";
                 }
@@ -389,7 +389,7 @@ namespace UELib.Core
             }
             catch
             {
-                output += "\r\n\t// Failed to decompile dllbind";	
+                output += "\r\n\t// Failed to decompile dllbind";   
             }
 
             if( ClassDependencies != null )
@@ -496,7 +496,7 @@ namespace UELib.Core
                     }
                     catch( Exception e )
                     {
-                        statementCode = String.Format( "/* An exception occurred while decompiling condition ({0}) */", e );	
+                        statementCode = String.Format( "/* An exception occurred while decompiling condition ({0}) */", e );    
                     }
                     var statementType = Package.Version < VReliableDeprecation ? rel ? "reliable " : "unreliable " : String.Empty;
                     var statementFormat = String.Format( "{0}if({1})", statementType, statementCode );
@@ -531,7 +531,7 @@ namespace UELib.Core
                 }
                 catch( Exception e )
                 {
-                    output += String.Format( "/* An exception occurred while decompiling an statement! ({0}) */", e );	
+                    output += String.Format( "/* An exception occurred while decompiling an statement! ({0}) */", e );  
                 }
             }
             UDecompilingState.RemoveTab();

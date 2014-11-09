@@ -75,7 +75,7 @@ namespace UELib
     {
         public CookedPackageException() : base( "The package is cooked" )
         {
-        }			
+        }           
     }
 
     [Serializable]
@@ -83,7 +83,7 @@ namespace UELib
     {
         public DecompressPackageException() : base( "Failed to decompress this package" )
         {
-        }			
+        }           
     }
 
     [Serializable]
@@ -91,7 +91,7 @@ namespace UELib
     {
         public OccurredWhileException( string postMessage ) : base( "An exception occurred while " + postMessage )
         {
-        }			
+        }           
     }
 
     [Serializable]

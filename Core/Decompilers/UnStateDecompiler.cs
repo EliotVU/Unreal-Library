@@ -10,18 +10,18 @@ namespace UELib.Core
         /// <summary>
         /// Decompiles this object into a text format of:
         /// 
-        ///	[FLAGS] state[()] NAME [extends NAME]
-        ///	{
-        ///		[ignores Name[,Name];]
-        ///		
-        ///		[FUNCTIONS]
-        ///		
+        /// [FLAGS] state[()] NAME [extends NAME]
+        /// {
+        ///     [ignores Name[,Name];]
+        ///     
+        ///     [FUNCTIONS]
+        ///     
         /// [STATE CODE]
         /// };
         /// </summary>
         /// <returns></returns>
         public override string Decompile()
-        {	
+        {   
             string content = FormatHeader() + UnrealConfig.PrintBeginBracket();
             UDecompilingState.AddTabs( 1 );
 
@@ -36,7 +36,7 @@ namespace UELib.Core
                     FormatFunctions() + 
                     DecompileScript();
             UDecompilingState.RemoveTabs( 1 );
-            content += UnrealConfig.PrintEndBracket();	
+            content += UnrealConfig.PrintEndBracket();  
             return content;
         }
 
@@ -78,7 +78,7 @@ namespace UELib.Core
             foreach( var func in Functions.Where( func => !func.HasFunctionFlag( Flags.FunctionFlags.Defined ) ) )
             {
                 ignores.Add( func.Name );
-            }		
+            }       
 
             for( int i = 0; i < ignores.Count; ++ i )
             {
@@ -91,7 +91,7 @@ namespace UELib.Core
                         i % ignoresPerRow == 0 && i >= ignoresPerRow 
                         ? "\r\n\t" + UDecompilingState.Tabs 
                         : String.Empty
-                    )	
+                    )   
                     : ";\r\n"
                 );
             }
@@ -118,7 +118,7 @@ namespace UELib.Core
                 }
                 catch( Exception e )
                 {
-                    output += "\r\n" + UDecompilingState.Tabs + "// F:" + scriptFunction.Name + " E:" + e;	
+                    output += "\r\n" + UDecompilingState.Tabs + "// F:" + scriptFunction.Name + " E:" + e;  
                 }
             }
             return output;

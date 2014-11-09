@@ -9,19 +9,19 @@ namespace UELib.Core
         /// <summary>
         /// Decompiles this object into a text format of:
         /// 
-        ///	struct [FLAGS] NAME [extends NAME]
-        ///	{
-        ///		[STRUCTCPPTEXT]
+        /// struct [FLAGS] NAME [extends NAME]
+        /// {
+        ///     [STRUCTCPPTEXT]
         /// 
-        ///		[CONSTS]
-        ///		
-        ///		[ENUMS]
-        ///		
-        ///		[STRUCTS]
-        ///		
-        ///		[VARIABLES]
-        ///		
-        ///		[STRUCTDEFAULTPROPERTIES]
+        ///     [CONSTS]
+        ///     
+        ///     [ENUMS]
+        ///     
+        ///     [STRUCTS]
+        ///     
+        ///     [VARIABLES]
+        ///     
+        ///     [STRUCTDEFAULTPROPERTIES]
         /// };
         /// </summary>
         /// <returns></returns>
@@ -123,7 +123,7 @@ namespace UELib.Core
 
         protected virtual string CPPTextKeyword
         {
-            get{ return Package.Version < VCppText ? "cppstruct" : "structcpptext"; }	
+            get{ return Package.Version < VCppText ? "cppstruct" : "structcpptext"; }   
         }
 
         protected string FormatCPPText()
@@ -221,7 +221,7 @@ namespace UELib.Core
             {
                 try
                 {
-                    // Fix for properties within structs				   
+                    // Fix for properties within structs                   
                     output += "\r\n" + property.PreDecompile() + UDecompilingState.Tabs + "var"; 
                     try
                     {
@@ -318,7 +318,7 @@ namespace UELib.Core
 
                 // If previous is the same as the one now then format the params as one line until another type is reached
                 if( curType == lastType )
-                {				
+                {               
                     output += Locals[i].Name + 
                     (
                         curType == nextType 
@@ -327,7 +327,7 @@ namespace UELib.Core
                             : ", "
                           ) 
                         : ";\r\n"
-                    ); 	
+                    );  
                     ++ numParms;
                 }
                 else

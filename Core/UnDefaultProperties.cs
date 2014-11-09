@@ -15,38 +15,38 @@ namespace UELib.Core
         [Flags]
         public enum DeserializeFlags : byte
         {
-            None					= 0x00,
-            WithinStruct			= 0x01,
-            WithinArray				= 0x02,
-            Complex					= WithinStruct | WithinArray,
+            None                    = 0x00,
+            WithinStruct            = 0x01,
+            WithinArray             = 0x02,
+            Complex                 = WithinStruct | WithinArray,
         }
 
-        private const byte			DoNotAppendName		= 0x01;
-        private const byte			ReplaceNameMarker	= 0x02;
+        private const byte          DoNotAppendName     = 0x01;
+        private const byte          ReplaceNameMarker   = 0x02;
 
         private const int           V3                  = 220;
         private const int           VEnumName           = 633;
         private const int           VBoolSizeToOne      = 673;
 
-        private IUnrealStream		_Buffer{ get{ return _Container.Buffer; } }
-        private readonly UObject	_Container;
-        private UStruct				_Outer;
+        private IUnrealStream       _Buffer{ get{ return _Container.Buffer; } }
+        private readonly UObject    _Container;
+        private UStruct             _Outer;
 
-        internal long				_BeginOffset{ get; set; }
-        private long				_ValueOffset{ get; set; }
+        internal long               _BeginOffset{ get; set; }
+        private long                _ValueOffset{ get; set; }
         private long                _EndOffset{ get{ return _ValueOffset + Size; } }
-        private byte				_TempFlags{ get; set; }
+        private byte                _TempFlags{ get; set; }
 
         #region Serialized Members
         /// <summary>
         /// Name of the UProperty.
         /// </summary>
-        public UName				Name{ get; private set; }
+        public UName                Name{ get; private set; }
 
         /// <summary>
         /// Name of the UStruct. If type equals StructProperty.
         /// </summary>
-        private UName			    ItemName{ get; set; }
+        private UName               ItemName{ get; set; }
 
         /// <summary>
         /// Name of the UEnum. If Type equals ByteProperty.
@@ -56,17 +56,17 @@ namespace UELib.Core
         /// <summary>
         /// See PropertysType enum in UnrealFlags.cs
         /// </summary>
-        private PropertyType		Type{ get; set; }
+        private PropertyType        Type{ get; set; }
 
         /// <summary>
         /// The stream size of this DefaultProperty.
         /// </summary>
-        private int					Size{ get; set; }
+        private int                 Size{ get; set; }
 
         /// <summary>
         /// Whether this property is part of an static array, and the index into it
         /// </summary>
-        public int					ArrayIndex = -1;
+        public int                  ArrayIndex = -1;
 
         /// <summary>
         /// Value of the UBoolProperty. If Type equals BoolProperty.
@@ -204,7 +204,7 @@ namespace UELib.Core
             {
                 string typeName = _Buffer.ReadName();
                 _Container.Record( "typeName", typeName );
-                Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );				
+                Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );              
 
                 Size = _Buffer.ReadInt32();
                 _Container.Record( "Size", Size );
@@ -236,7 +236,7 @@ namespace UELib.Core
             _ValueOffset = _Buffer.Position;
             try
             {
-                DeserializeValue();	
+                DeserializeValue(); 
             }
             finally
             {
@@ -250,7 +250,7 @@ namespace UELib.Core
         /// Deserialize the value of this UPropertyTag instance.
         /// 
         /// Note:
-        /// 	Only call after the whole package has been deserialized!
+        ///     Only call after the whole package has been deserialized!
         /// </summary>
         /// <returns>The deserialized value if any.</returns>
         private string DeserializeValue( DeserializeFlags deserializeFlags = DeserializeFlags.None )
@@ -262,8 +262,8 @@ namespace UELib.Core
 
             _Buffer.Seek( _ValueOffset, System.IO.SeekOrigin.Begin );
             try
-            {	
-                return DeserializeDefaultPropertyValue( Type, ref deserializeFlags );	
+            {   
+                return DeserializeDefaultPropertyValue( Type, ref deserializeFlags );   
             }
             catch( DeserializationException e )
             {
@@ -536,7 +536,7 @@ namespace UELib.Core
                         }
 
                     /*case PropertyType.InterpCurve:
-                    {	
+                    {   
                         // HACK:
                         UPropertyTag tag = new UPropertyTag( _Owner );
                         tag.Serialize();
@@ -547,7 +547,7 @@ namespace UELib.Core
                         {
                             break;
                         }
-                        propertyvalue += tag.Name + "=(";						
+                        propertyvalue += tag.Name + "=(";                       
                         for( int i = 0; i < curvescount; ++ i )
                         {
                             propertyvalue += "(" + SerializeDefaultPropertyValue( PropertyType.InterpCurvePoint, buffer, ref serializeFlags ) + ")";
@@ -579,9 +579,9 @@ namespace UELib.Core
                     case PropertyType.Matrix:
                         {
                             string xPlane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-                            string yPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-                            string zPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
-                            string wPlane =	DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+                            string yPlane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+                            string zPlane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
+                            string wPlane = DeserializeDefaultPropertyValue( PropertyType.Plane, ref deserializeFlags );
                             propertyValue += "XPlane=(" + xPlane + ")" +
                                 ",YPlane=(" + yPlane + ")" +
                                 ",ZPlane=(" + zPlane + ")" +
@@ -762,7 +762,7 @@ namespace UELib.Core
 
             // Array or Inlined object
             if( (_TempFlags & DoNotAppendName) != 0 )
-            {		
+            {       
                 // The tag handles the name etc on its own.
                 return value;
             }

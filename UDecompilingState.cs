@@ -42,7 +42,7 @@ namespace UELib
                 Tabs = String.Empty;
                 return;
             }
-            Tabs = Tabs.Substring( 0, Tabs.Length - count );	
+            Tabs = Tabs.Substring( 0, Tabs.Length - count );
         }
 
         public static void ResetTabs()

@@ -163,7 +163,7 @@ namespace UELib.Cache
                     FileName = Path.GetFileNameWithoutExtension( filePath ), 
                     Extension = Path.GetExtension( filePath )
                 };
-                cfs.Guid = cfs.FileName;	// TODO: Generate a guid.
+                cfs.Guid = cfs.FileName;    // TODO: Generate a guid.
                 CacheEntries.Add( cfs );
             }
             catch( Exception )

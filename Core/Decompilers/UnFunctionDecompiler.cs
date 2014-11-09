@@ -9,16 +9,16 @@ namespace UELib.Core
         /// <summary>
         /// Decompiles this object into a text format of:
         /// 
-        ///	[FLAGS] function NAME([VARIABLES]) [const]
-        ///	{
-        ///		[LOCALS]
-        ///		
-        ///		[CODE]
+        /// [FLAGS] function NAME([VARIABLES]) [const]
+        /// {
+        ///     [LOCALS]
+        ///     
+        ///     [CODE]
         /// }
         /// </summary>
         /// <returns></returns>
         public override string Decompile()
-        {	
+        {   
             string code;
             try
             {
@@ -188,7 +188,7 @@ namespace UELib.Core
                     Outer.Name, 
                     Name, 
                     UDecompilingState.Tabs 
-                );			
+                );          
             }
 
             var metaData = DecompileMeta();

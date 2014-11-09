@@ -82,7 +82,7 @@ namespace UELib
         long LastPosition{ get; set; }
         int Read( byte[] array, int offset, int count );
         long Seek( long offset, SeekOrigin origin );
-    }	  
+    }     
 
     public class UnrealWriter : BinaryWriter
     {
@@ -173,7 +173,7 @@ namespace UELib
 #endif
                 ReadIndex()) < 0 ? -unfixedSize : unfixedSize;
             System.Diagnostics.Debug.Assert( size < 1000000, "Dangerous string size detected! IT'S OVER 9000 THOUSAND!" );
-            if( unfixedSize > 0 ) // ANSI	 	
+            if( unfixedSize > 0 ) // ANSI       
             {
                 var strBytes = new byte[size - 1];
                 Read( strBytes, 0, size - 1 );
@@ -259,7 +259,7 @@ namespace UELib
             const byte isNegative = 0x80; // 8th bit
             const byte value = 0xFF - isIndiced - isNegative; // 3F
             const byte isProceeded = 0x80; // 8th bit
-            const byte proceededValue = 0xFF - isProceeded;	// 7F
+            const byte proceededValue = 0xFF - isProceeded; // 7F
 
             int index = 0;
             byte b0 = ReadByte();
@@ -287,7 +287,7 @@ namespace UELib
             _UnrealStream.LastPosition = lastPosition;
 #endif
             return (b0 & isNegative) != 0 // The value is negative or positive?.
-                ? -((index << 6) + (b0 & value)) 	
+                ? -((index << 6) + (b0 & value))    
                 : ((index << 6) + (b0 & value));
         }
 
@@ -307,7 +307,7 @@ namespace UELib
 #if DEBUG || BINARYMETADATA
                 _UnrealStream.LastPosition = lastPosition;
 #endif
-                return (long)((ulong)num << 32) | (uint)index;	
+                return (long)((ulong)num << 32) | (uint)index;  
             }
             return index;
         }
@@ -322,7 +322,7 @@ namespace UELib
 #if BIOSHOCK
                 || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock 
 #endif
-                )				
+                )               
             {
                 num = ReadInt32()-1;
 #if DEBUG || BINARYMETADATA
@@ -364,7 +364,7 @@ namespace UELib
                 index = (index << 7) + (b1 & 0x7F);
             }
             return (b0 & 0x80) != 0 // The value is negative or positive?.
-                ? -((index << 6) + (b0 & 0x3F)) 	
+                ? -((index << 6) + (b0 & 0x3F))     
                 : ((index << 6) + (b0 & 0x3F));
         }
 
@@ -426,7 +426,7 @@ namespace UELib
                 {
                     throw new FileLoadException( path + " isn't a UnrealPackage file!" );
                 }
-                Position = 4;	
+                Position = 4;   
             }
 
             InitBuffer();
@@ -568,8 +568,8 @@ namespace UELib
         }
 
         /// <summary>
-        ///	Reads a string with no known length, ends when the first \0 char is reached.
-        ///	
+        /// Reads a string with no known length, ends when the first \0 char is reached.
+        /// 
         /// Advances the position.
         /// </summary>
         /// <returns>the read string</returns>
@@ -610,7 +610,7 @@ namespace UELib
 
         public UObject ParseObject( int index )
         {
-            return Package.GetIndexObject( index );	
+            return Package.GetIndexObject( index ); 
         }
 
         /// <summary>
@@ -642,8 +642,8 @@ namespace UELib
         }
 
         /// <summary>
-        ///	Reads a Guid of type A-B-C-D.
-        ///	
+        /// Reads a Guid of type A-B-C-D.
+        /// 
         /// Advances the position.
         /// </summary>
         /// <returns>the read guid</returns>
@@ -654,7 +654,7 @@ namespace UELib
         #endregion
 
         /// <summary>
-        ///	Skip a amount of bytes.
+        /// Skip a amount of bytes.
         /// </summary>
         public void Skip( int bytes )
         {
@@ -847,8 +847,8 @@ namespace UELib
         }
 
         /// <summary>
-        ///	Reads a string with no known length, ends when the first \0 char is reached.
-        ///	
+        /// Reads a string with no known length, ends when the first \0 char is reached.
+        /// 
         /// Advances the position.
         /// </summary>
         /// <returns>the read string</returns>
@@ -889,7 +889,7 @@ namespace UELib
 
         public UObject ParseObject( int index )
         {
-            return Package.GetIndexObject( index );	
+            return Package.GetIndexObject( index ); 
         }
         
         /// <summary>
@@ -921,8 +921,8 @@ namespace UELib
         }
 
         /// <summary>
-        ///	Reads a Guid of type A-B-C-D.
-        ///	
+        /// Reads a Guid of type A-B-C-D.
+        /// 
         /// Advances the position.
         /// </summary>
         /// <returns>the read guid</returns>
@@ -933,7 +933,7 @@ namespace UELib
         #endregion
 
         /// <summary>
-        ///	Skip a amount of bytes.
+        /// Skip a amount of bytes.
         /// </summary>
         /// <param name="bytes">The amount of bytes to skip.</param>
         public void Skip( int bytes )

@@ -94,29 +94,29 @@ namespace UELib
         /// <summary>
         /// 64
         /// </summary>
-        public const ushort VSIZEPREFIXDEPRECATED	= 64;
+        public const ushort VSIZEPREFIXDEPRECATED   = 64;
 
         /// <summary>
         /// 178
         /// </summary>
-        public const ushort VINDEXDEPRECATED		= 178;
+        public const ushort VINDEXDEPRECATED        = 178;
 
         /// <summary>
         /// 277
         /// </summary>
-        public const ushort VCOOKEDPACKAGES			= 277;
+        public const ushort VCOOKEDPACKAGES         = 277;
 
         /// <summary>
         /// DLLBind(Name)
         /// 655
         /// </summary>
-        public const ushort VDLLBIND				= 655;
+        public const ushort VDLLBIND                = 655;
 
         /// <summary>
         /// New class modifier "ClassGroup(Name[,Name])"
         /// 789
         /// </summary>
-        public const ushort VCLASSGROUP				= 789;
+        public const ushort VCLASSGROUP             = 789;
 
         private const int VCompression = 334;
         private const int VEngineVersion = 245;
@@ -186,7 +186,7 @@ namespace UELib
                         if( _IsXenonCompressed < 2 )
                         {
                             gb.IsXenonCompressed = _IsXenonCompressed == 1;
-                        }	
+                        }   
                         return true;
                     }
                     return false;
@@ -450,8 +450,8 @@ namespace UELib
 
                 if( Name == BuildName.Unset )
                 {
-                    Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;	
-                }	
+                    Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;    
+                }   
             }
 
             public static bool operator ==( GameBuild b, BuildName i )
@@ -540,7 +540,7 @@ namespace UELib
                 }
 #endif
                 NamesCount = stream.ReadUInt32();
-                NamesOffset = stream.ReadUInt32();										    
+                NamesOffset = stream.ReadUInt32();                                          
                 ExportsCount = stream.ReadUInt32();
                 ExportsOffset = stream.ReadUInt32();
 #if APB
@@ -666,12 +666,12 @@ namespace UELib
         [Obfuscation(Exclude = true)]
         public enum InitFlags : ushort
         {
-            Construct		=	0x0001,
-            Deserialize		=	0x0002,// 			| Construct,
-            Import			=	0x0004,// 			| Serialize,
-            Link			=	0x0008,// 			| Serialize,
-            All				=	RegisterClasses		| Construct 	| Deserialize 	| Import 	| Link,
-            RegisterClasses	=	0x0010
+            Construct       =   0x0001,
+            Deserialize     =   0x0002,//           | Construct,
+            Import          =   0x0004,//           | Serialize,
+            Link            =   0x0008,//           | Serialize,
+            All             =   RegisterClasses     | Construct     | Deserialize   | Import    | Link,
+            RegisterClasses =   0x0010
         }
 
         [Obsolete]
@@ -865,7 +865,7 @@ namespace UELib
                 Console.Write( "\r\n\tGUID:" + GUID + "\r\n" );
 
                 int generationCount = stream.ReadInt32();
-                Generations = new UArray<UGenerationTableItem>( stream, generationCount );	
+                Generations = new UArray<UGenerationTableItem>( stream, generationCount );  
                 Console.WriteLine( "Deserialized {0} generations", Generations.Count );
 
                 if( Version >= VEngineVersion )
@@ -881,7 +881,7 @@ namespace UELib
 
                         // Read compressed info?
                         if( Version >= VCompression )
-                        {	
+                        {   
                             if( IsCooked() )
                             {
                                 CompressionFlags = stream.ReadUInt32();
@@ -952,7 +952,7 @@ namespace UELib
                 for( var i = 0; i < _TablesData.ImportsCount; ++ i )
                 {
                     var imp = new UImportTableItem{Offset = (int)stream.Position, Index = i, Owner = this};
-                    imp.Deserialize( stream );		
+                    imp.Deserialize( stream );      
                     imp.Size = (int)(stream.Position - imp.Offset);
                     Imports.Add( imp );
                 }
@@ -995,7 +995,7 @@ namespace UELib
                 for( var i = 0; i < pkg.Data.DependsCount; ++ i )
                 {
                     var dep = new UnrealDependsTable{TableOffset = stream.Position, TableIndex = i, Owner = pkg};
-                    dep.Deserialize( stream );		
+                    dep.Deserialize( stream );      
                     dep.TableSize = (int)(stream.Position - dep.TableOffset);
                     pkg.DependsTableList.Add( dep );
                 }
@@ -1180,7 +1180,7 @@ namespace UELib
         /// all constructed objects are added to the _ObjectsList.
         /// </summary>
         private void ConstructObjects()
-        {		
+        {       
             Objects = new List<UObject>();
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Construct ) );
             foreach( var exp in Exports )
@@ -1209,7 +1209,7 @@ namespace UELib
                     exp.Object.BeginDeserializing();
                 }
                 OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Object ) );
-            }	
+            }   
         }
 
         /// <summary>
@@ -1237,7 +1237,7 @@ namespace UELib
         {
             // Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Link ) );
-            foreach( var exp in Exports )		
+            foreach( var exp in Exports )       
             {
                 try
                 {
@@ -1254,7 +1254,7 @@ namespace UELib
             }
         }
 
-        private void RegisterAllClasses()					
+        private void RegisterAllClasses()                   
         {
             var exportedTypes = Assembly.GetExecutingAssembly().GetExportedTypes();
             foreach( var exportedType in exportedTypes )
@@ -1270,7 +1270,7 @@ namespace UELib
 
         #region Methods
         [Pure]private Type GetClassTypeByClassName( string className )
-        {		
+        {       
             return _RegisteredClasses.FirstOrDefault
             (
                 registered => String.Compare( registered.Name, className, StringComparison.OrdinalIgnoreCase ) == 0
@@ -1371,7 +1371,7 @@ namespace UELib
         /// <returns>The found UELib.Core.UnrealTable if any.</returns>
         [Pure]public UObjectTableItem GetIndexTable( int tableIndex )
         {
-            return 	(tableIndex < 0 ? Imports[-tableIndex - 1] 
+            return  (tableIndex < 0 ? Imports[-tableIndex - 1] 
                     : (tableIndex > 0 ? (UObjectTableItem)Exports[tableIndex - 1] 
                     : null));
         }

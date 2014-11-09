@@ -2,7 +2,7 @@
 using System.Linq;
 
 namespace UELib
-{	
+{   
     using Core;
 
     public class CompressedChunk : IUnrealSerializableClass

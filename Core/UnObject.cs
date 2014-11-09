@@ -149,7 +149,7 @@ namespace UELib.Core
             finally
             {
                 DeserializationState &= ~ObjectState.Deserializing;
-                MaybeDisposeBuffer();	
+                MaybeDisposeBuffer();   
             }
         }
 
@@ -170,7 +170,7 @@ namespace UELib.Core
             {
                 Array.Reverse( buff );
             }
-            _Buffer = new UObjectStream( Package.Stream, buff );	
+            _Buffer = new UObjectStream( Package.Stream, buff );    
         }
 
         internal void EnsureBuffer()
@@ -231,12 +231,12 @@ namespace UELib.Core
                 {
                     int node = _Buffer.ReadIndex();
                     Record( "node", GetIndexObject( node ) );
-                    _Buffer.ReadIndex();	// stateNode
-                    _Buffer.ReadUInt64();	// probeMask
-                    _Buffer.ReadUInt32();	// latentAction
+                    _Buffer.ReadIndex();    // stateNode
+                    _Buffer.ReadUInt64();   // probeMask
+                    _Buffer.ReadUInt32();   // latentAction
                     if( node != 0 )
                     {
-                        _Buffer.ReadIndex();	// Offset
+                        _Buffer.ReadIndex();    // Offset
                     }
                 }
 #if SWAT4
@@ -257,7 +257,7 @@ namespace UELib.Core
             }
 
             if( !IsClassType( "Class" ) )
-            {	
+            {   
 #if SWAT4
                 if( Package.Build != UnrealPackage.GameBuild.BuildName.Swat4 )
                 {
@@ -513,7 +513,7 @@ namespace UELib.Core
             }
             catch
             {
-                return null;	
+                return null;    
             }
         }
 
@@ -701,13 +701,13 @@ namespace UELib.Core
     /// Unknown Object
     /// 
     /// Notes:
-    /// 	Instances of this class are created because of a class type that was not found within the 'RegisteredClasses' list.
-    /// 	Instances of this class will only be deserialized on demand.
+    ///     Instances of this class are created because of a class type that was not found within the 'RegisteredClasses' list.
+    ///     Instances of this class will only be deserialized on demand.
     /// </summary>
     public sealed class UnknownObject : UObject
     {
         /// <summary>
-        ///	Creates a new instance of the UELib.Core.UnknownObject class. 
+        /// Creates a new instance of the UELib.Core.UnknownObject class. 
         /// </summary>
         public UnknownObject()
         {
@@ -717,7 +717,7 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             if( Package.Version > 400 && _Buffer.Length >= 12 )
-            {			 
+            {            
                 // componentClassIndex
                 _Buffer.Position += sizeof(int);
                 var componentNameIndex = _Buffer.ReadNameIndex();

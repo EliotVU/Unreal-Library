@@ -14,13 +14,13 @@ namespace UELib.Core
         private const uint VFriendlyName = 189;
 
         #region Serialized Members
-        public ushort	NativeToken
+        public ushort   NativeToken
         {
             get;
             private set;
         }
 
-        public byte		OperPrecedence
+        public byte     OperPrecedence
         {
             get;
             private set;
@@ -30,23 +30,23 @@ namespace UELib.Core
         /// 32bit in UE2
         /// 64bit in UE3
         /// </value>
-        private ulong	FunctionFlags
+        private ulong   FunctionFlags
         {
             get; set;
         }
 
-        public ushort	RepOffset
+        public ushort   RepOffset
         {
             get;
             private set;
         }
 
-        public bool		RepReliable
+        public bool     RepReliable
         {
             get{ return HasFunctionFlag( Flags.FunctionFlags.NetReliable ); }
         }
 
-        public uint		RepKey
+        public uint     RepKey
         {
             get{ return RepOffset | ((uint)Convert.ToByte( RepReliable ) << 16); }
         }
@@ -104,7 +104,7 @@ namespace UELib.Core
             {
                 if( property.HasPropertyFlag( PropertyFlagsLO.ReturnParm ) )
                 {
-                    ReturnProperty = property;																															  
+                    ReturnProperty = property;                                                                                                                            
                 }
 
                 if( property.IsParm() )

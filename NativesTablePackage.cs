@@ -8,10 +8,10 @@ namespace UELib
 
     public sealed class NativeTableItem
     {
-        public string 			Name;
-        public byte 			OperPrecedence;
-        public FunctionType		Type;
-        public int 				ByteToken;
+        public string           Name;
+        public byte             OperPrecedence;
+        public FunctionType     Type;
+        public int              ByteToken;
 
         public NativeTableItem()
         {
@@ -46,10 +46,10 @@ namespace UELib
 
     public enum FunctionType : byte
     {
-        Function		= 1,
-        Operator		= 2,
-        PreOperator		= 3,
-        PostOperator	= 4
+        Function        = 1,
+        Operator        = 2,
+        PreOperator     = 3,
+        PostOperator    = 4
     }
 
     public sealed class NativesTablePackage
