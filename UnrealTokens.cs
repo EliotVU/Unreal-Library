@@ -2,16 +2,16 @@
 {
     /// <summary>
     /// A collection of tokens describing a expression.
-    /// 
+    ///
     /// The redefined tokens are not valid if the past token expression was a PrimitiveCast/RotatorToVector expression.
     /// </summary>
     public enum ExprToken : byte
     {
         /// UNTACKLED TOKENS
         /// ValidateObject
-        /// ResizeString    
-        /// BeginFunction   
-        
+        /// ResizeString
+        /// BeginFunction
+
         LocalVariable           = 0x00,
         InstanceVariable        = 0x01,
         DefaultVariable         = 0x02,
@@ -61,7 +61,7 @@
         // GAP:                 = 0x2B,
         IntConstByte            = 0x2C,     // 0-9          (<= 255)
         BoolVariable            = 0x2D,     // B            (Bool)
-        DynamicCast             = 0x2E,     // A(B) 
+        DynamicCast             = 0x2E,     // A(B)
 
         Iterator                = 0x2F,     // ForEach
         IteratorPop             = 0x30,     // Break        (Implied/Explicit)
@@ -80,10 +80,10 @@
             StructMember            = 0x36,
             DynArrayLength          = 0x37,     // ARRAY.Length
             GlobalFunction          = 0x38,     // Global.
-                
+
             /// <summary>
             /// Redefined(RotatorToVector)
-            /// 
+            ///
             /// UE1:RotatorToVector cast.
             /// UE2+:Meaning the next bytecode token is the cast version rather than the other meaning.
             /// </summary>
@@ -93,25 +93,25 @@
         #endregion  // FixedByteCodes
         /// <summary>
         /// Redefined(DynArrayRemove)
-        /// 
+        ///
         /// UE1:ByteToInt cast.
         /// UE2:ReturnNothing
         /// UE3:ReturnNothing if previous token is a ReturnToken, DynArrayRemove when not.
         /// </summary>
-        ReturnNothing           = 0x3A,     // Redefined, 
+        ReturnNothing           = 0x3A,     // Redefined,
 
         #region UE3ByteCodes
-            DelegateCmpEq           = 0x3B, 
-            DelegateCmpNE           = 0x3C, 
-            DelegateFunctionCmpEq   = 0x3D,     
-            DelegateFunctionCmpNE   = 0x3E,     
-            NoDelegate              = 0x3F,     
+            DelegateCmpEq           = 0x3B,
+            DelegateCmpNE           = 0x3C,
+            DelegateFunctionCmpEq   = 0x3D,
+            DelegateFunctionCmpNE   = 0x3E,
+            NoDelegate              = 0x3F,
 
             #region FixedByteCodes
                 // Note:In UE1, UE2 these values are as what they are set here, but in UE3 they are one number lower!
                 DynArrayInsert          = 0x40, // Or 0x3F in UE3 (primitive is 0x3E then thus a gap occurrs, see above).
                 DynArrayRemove          = 0x41, // Or 0x40 in UE3.
-                DebugInfo               = 0x42, 
+                DebugInfo               = 0x42,
                 DelegateFunction        = 0x43,
                 DelegateProperty        = 0x44,
                 LetDelegate             = 0x45,
@@ -128,7 +128,7 @@
 
                 /// <summary>
                 /// Redefined(ObjectToBool,DynArrayFind)
-                /// 
+                ///
                 /// UE1:As a ObjectToBool cast.
                 /// UE2:As a indication of function end(unless preceded by PrimitiveCast then it is treat as a ObjectToBool).
                 /// UE3:See DynArrayFind(See EndOfScript).
@@ -142,7 +142,7 @@
 
                 /// <summary>
                 /// In some Unreal Engine 2 games, see Conditional for Unreal Engine 3.
-                /// 
+                ///
                 /// An alternative to Else-If statements using A ? B : C;.
                 /// </summary>
                 Eval                    = 0x48,     // See Conditional
@@ -151,14 +151,14 @@
                 /// Reference to a property with the Out modifier.
                 /// </summary>
                 OutVariable             = 0x49,
-    
+
                 /// <summary>
                 /// Default value of a parameter property.
                 /// </summary>
                 DefaultParmValue        = 0x4A,     // PARAMETER = EXPRESSION
 
                 /// <summary>
-                /// No parameter value was given e.g: Foo( Foo,, Foo ); 
+                /// No parameter value was given e.g: Foo( Foo,, Foo );
                 /// </summary>
                 NoParm                  = 0x4B,     // ,...,
 
@@ -185,7 +185,7 @@
                 DynArrayAdd             = 0x55,
                 DynArrayAddItem         = 0x56,
                 DynArrayRemoveItem      = 0x57,
-                DynArrayInsertItem      = 0x58, 
+                DynArrayInsertItem      = 0x58,
                 DynArrayIterator        = 0x59,
                 DynArraySort            = 0x5A,
                 FilterEditorOnly        = 0x5B,
@@ -201,7 +201,7 @@
 
     /// <summary>
     /// A collection of tokens describing a cast.
-    /// 
+    ///
     /// The redefined tokens are only valid if the past token expression was PrimitiveCast/RotatorToVector.
     /// </summary>
     public enum CastToken : byte
@@ -219,8 +219,8 @@
         ByteToFloat             = 0x3C,
         IntToByte               = 0x3D,
         IntToBool               = 0x3E,
-        IntToFloat              = 0x3F, 
-        BoolToByte              = 0x40,     // Redefined  
+        IntToFloat              = 0x3F,
+        BoolToByte              = 0x40,     // Redefined
         BoolToInt               = 0x41,     // Redefined
         BoolToFloat             = 0x42,     // Redefined
         FloatToByte             = 0x43,     // Redefined

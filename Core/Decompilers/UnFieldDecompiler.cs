@@ -7,7 +7,7 @@ namespace UELib.Core
     {
         protected string DecompileMeta()
         {
-            return Meta != null ? Meta.Decompile() : String.Empty; 
+            return Meta != null ? Meta.Decompile() : String.Empty;
         }
 
         // Introduction of the change from intrinsic to native.

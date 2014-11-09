@@ -5,7 +5,7 @@ using UELib.Flags;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal function. 
+    /// Represents a unreal function.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UFunction : UStruct, IUnrealNetObject
@@ -104,7 +104,7 @@ namespace UELib.Core
             {
                 if( property.HasPropertyFlag( PropertyFlagsLO.ReturnParm ) )
                 {
-                    ReturnProperty = property;                                                                                                                            
+                    ReturnProperty = property;
                 }
 
                 if( property.IsParm() )
@@ -118,7 +118,7 @@ namespace UELib.Core
         #region Methods
         public bool HasFunctionFlag( FunctionFlags flag )
         {
-            return ((uint)FunctionFlags & (uint)flag) != 0; 
+            return ((uint)FunctionFlags & (uint)flag) != 0;
         }
 
         public bool IsOperator()

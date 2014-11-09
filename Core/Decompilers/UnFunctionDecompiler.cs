@@ -8,17 +8,17 @@ namespace UELib.Core
     {
         /// <summary>
         /// Decompiles this object into a text format of:
-        /// 
+        ///
         /// [FLAGS] function NAME([VARIABLES]) [const]
         /// {
         ///     [LOCALS]
-        ///     
+        ///
         ///     [CODE]
         /// }
         /// </summary>
         /// <returns></returns>
         public override string Decompile()
-        {   
+        {
             string code;
             try
             {
@@ -184,11 +184,11 @@ namespace UELib.Core
             if( HasFunctionFlag( Flags.FunctionFlags.Native ) )
             {
                 // Output native declaration.
-                output = String.Format( "// Export U{0}::exec{1}(FFrame&, void* const)\r\n{2}", 
-                    Outer.Name, 
-                    Name, 
-                    UDecompilingState.Tabs 
-                );          
+                output = String.Format( "// Export U{0}::exec{1}(FFrame&, void* const)\r\n{2}",
+                    Outer.Name,
+                    Name,
+                    UDecompilingState.Tabs
+                );
             }
 
             var metaData = DecompileMeta();
@@ -197,10 +197,10 @@ namespace UELib.Core
                 output = metaData + "\r\n" + output;
             }
 
-            output += FormatFlags() 
-                + (ReturnProperty != null 
-                    ? ReturnProperty.GetFriendlyType() + " " 
-                    : String.Empty) 
+            output += FormatFlags()
+                + (ReturnProperty != null
+                    ? ReturnProperty.GetFriendlyType() + " "
+                    : String.Empty)
                 + FriendlyName + FormatParms();
             if( HasFunctionFlag( Flags.FunctionFlags.Const ) )
             {
@@ -213,8 +213,8 @@ namespace UELib.Core
         {
             string output = "(";
             if( Params != null && Params.Any() )
-            { 
-                var parameters = Params.Where( (p) => p != ReturnProperty ); 
+            {
+                var parameters = Params.Where( (p) => p != ReturnProperty );
                 foreach( var parm in parameters )
                 {
                     output += parm.Decompile() + (parm != parameters.Last() ? ", " : String.Empty);
@@ -251,12 +251,11 @@ namespace UELib.Core
                 return String.Empty;
             }
 
-            return UnrealConfig.PrintBeginBracket() + "\r\n" + 
-                locals + 
-                code + 
-                UnrealConfig.PrintEndBracket(); 
+            return UnrealConfig.PrintBeginBracket() + "\r\n" +
+                locals +
+                code +
+                UnrealConfig.PrintEndBracket();
         }
     }
 }
 #endif
-                                                                                                           

@@ -16,7 +16,7 @@ namespace UELib.Core
     }
 
     /// <summary>
-    /// Represents a unreal object. 
+    /// Represents a unreal object.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UObject : Object, IContainsTable, IBinaryData, IDisposable, IComparable
@@ -141,15 +141,15 @@ namespace UELib.Core
                 ExceptionPosition = _Buffer != null ? _Buffer.Position : -1;
                 DeserializationState |= ObjectState.Errorlized;
 
-                Console.WriteLine( e.Source + ":" + Name + ":" + e.GetType().Name + " occurred while deserializing;"  
-                    + "\r\n" + e.StackTrace 
+                Console.WriteLine( e.Source + ":" + Name + ":" + e.GetType().Name + " occurred while deserializing;"
+                    + "\r\n" + e.StackTrace
                     + "\r\n" + e.Message
                 );
             }
             finally
             {
                 DeserializationState &= ~ObjectState.Deserializing;
-                MaybeDisposeBuffer();   
+                MaybeDisposeBuffer();
             }
         }
 
@@ -164,13 +164,13 @@ namespace UELib.Core
             }
 
             var buff = new byte[ExportTable.SerialSize];
-            Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin ); 
-            Package.Stream.Read( buff, 0, ExportTable.SerialSize ); 
+            Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
+            Package.Stream.Read( buff, 0, ExportTable.SerialSize );
             if( Package.Stream.BigEndianCode )
             {
                 Array.Reverse( buff );
             }
-            _Buffer = new UObjectStream( Package.Stream, buff );    
+            _Buffer = new UObjectStream( Package.Stream, buff );
         }
 
         internal void EnsureBuffer()
@@ -183,14 +183,14 @@ namespace UELib.Core
         {
             //Console.WriteLine( "Disposing buffer for {0}", (string)this );
 
-            // Do not dispose while deserializing! 
+            // Do not dispose while deserializing!
             // For example DecompileDefaultProperties or DecompileScript, may dispose the buffer in certain situations!
             if( _Buffer == null || (DeserializationState & ObjectState.Deserializing) != 0 )
                 return;
 
             _Buffer.DisposeBuffer();
-            _Buffer = null;   
-            //Console.WriteLine( "Disposed" ); 
+            _Buffer = null;
+            //Console.WriteLine( "Disposed" );
         }
 
         protected virtual bool CanDisposeBuffer()
@@ -257,7 +257,7 @@ namespace UELib.Core
             }
 
             if( !IsClassType( "Class" ) )
-            {   
+            {
 #if SWAT4
                 if( Package.Build != UnrealPackage.GameBuild.BuildName.Swat4 )
                 {
@@ -312,14 +312,20 @@ namespace UELib.Core
         /// <summary>
         /// Initializes this object instance important members.
         /// </summary>
-        public virtual void PostInitialize(){}
-        public virtual void InitializeImports(){}
+        public virtual void PostInitialize()
+        {
+
+        }
+        public virtual void InitializeImports()
+        {
+
+        }
         #endregion
 
         #region Methods
         /// <summary>
         /// Checks if the object contains the specified @flag or one of the specified flags.
-        /// 
+        ///
         /// Checks the lower bits of ObjectFlags.
         /// </summary>
         /// <param name="flag">The flag(s) to compare to.</param>
@@ -332,7 +338,7 @@ namespace UELib.Core
 
         /// <summary>
         /// Checks if the object contains the specified @flag or one of the specified flags.
-        /// 
+        ///
         /// Checks the higher bits of ObjectFlags.
         /// </summary>
         /// <param name="flag">The flag(s) to compare to.</param>
@@ -404,12 +410,12 @@ namespace UELib.Core
             {
                 parents.Add( outer );
             }
-            return parents.Count > 0 ? parents[parents.Count - offset] : Outer; 
+            return parents.Count > 0 ? parents[parents.Count - offset] : Outer;
         }
 
         /// <summary>
         /// Gets a full name of this object instance i.e. including outers.
-        /// 
+        ///
         /// e.g. var Core.Object.Vector Location;
         /// </summary>
         /// <returns>The full name.</returns>
@@ -422,7 +428,7 @@ namespace UELib.Core
             {
                 group = outer.Name + "." + group;
             }
-            return group + Name; 
+            return group + Name;
         }
 
         /// <summary>
@@ -453,7 +459,7 @@ namespace UELib.Core
         [Pure]
         public bool IsClassType( string className )
         {
-            return String.Compare( GetClassName(), className, StringComparison.OrdinalIgnoreCase ) == 0; 
+            return String.Compare( GetClassName(), className, StringComparison.OrdinalIgnoreCase ) == 0;
         }
 
         /// <summary>
@@ -468,7 +474,7 @@ namespace UELib.Core
             {
                 if( String.Compare( c.ObjectName, className, StringComparison.OrdinalIgnoreCase ) == 0 )
                     return true;
-            } 
+            }
             return false;
         }
 
@@ -513,13 +519,13 @@ namespace UELib.Core
             }
             catch
             {
-                return null;    
+                return null;
             }
         }
 
         /// <summary>
         /// Loads the package that this object instance resides in.
-        /// 
+        ///
         /// Note: The package closes when the Owner is done with importing objects data.
         /// </summary>
         protected UnrealPackage LoadImportPackage()
@@ -604,7 +610,7 @@ namespace UELib.Core
 
         /// <summary>
         /// Outputs the present position and the value of the parsed object.
-        /// 
+        ///
         /// Only called in the DEBUGBUILD!
         /// </summary>
         /// <param name="varName">The struct that was read from the previous buffer position.</param>
@@ -616,7 +622,7 @@ namespace UELib.Core
             var size = _Buffer.Position - _Buffer.LastPosition;
             if( size <= 0 )
                 return;
-                    
+
             BinaryMetaData.AddField( varName, varObject, _Buffer.LastPosition, size );
 #if LOG_RECORDS
             if( varObject == null )
@@ -627,10 +633,10 @@ namespace UELib.Core
 
             var propertyType = varObject.GetType();
             Console.WriteLine(
-                "0x" + _Buffer.LastPosition.ToString("x8").ToUpper() 
-                + " : ".PadLeft( 2, ' ' ) 
-                + varName.PadRight( 32, ' ' ) + ":" + propertyType.Name.PadRight( 32, ' ' ) 
-                + " => " + varObject 
+                "0x" + _Buffer.LastPosition.ToString("x8").ToUpper()
+                + " : ".PadLeft( 2, ' ' )
+                + varName.PadRight( 32, ' ' ) + ":" + propertyType.Name.PadRight( 32, ' ' )
+                + " => " + varObject
             );
 #endif
         }
@@ -650,10 +656,10 @@ namespace UELib.Core
             int count;
 #if VANGUARD
             if( Package.Build.Name == UnrealPackage.GameBuild.BuildName.Vanguard )
-            {    
+            {
                 return _Buffer.ReadInt32();
             }
-#endif    
+#endif
             return _Buffer.ReadIndex();
         }
 
@@ -669,7 +675,7 @@ namespace UELib.Core
 
         public void Dispose()
         {
-            Dispose( true );    
+            Dispose( true );
         }
 
         private void Dispose( bool disposing )
@@ -682,7 +688,7 @@ namespace UELib.Core
 
         ~UObject()
         {
-            Dispose( false );        
+            Dispose( false );
         }
         #endregion
 
@@ -699,7 +705,7 @@ namespace UELib.Core
 
     /// <summary>
     /// Unknown Object
-    /// 
+    ///
     /// Notes:
     ///     Instances of this class are created because of a class type that was not found within the 'RegisteredClasses' list.
     ///     Instances of this class will only be deserialized on demand.
@@ -707,7 +713,7 @@ namespace UELib.Core
     public sealed class UnknownObject : UObject
     {
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UnknownObject class. 
+        /// Creates a new instance of the UELib.Core.UnknownObject class.
         /// </summary>
         public UnknownObject()
         {
@@ -717,7 +723,7 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             if( Package.Version > 400 && _Buffer.Length >= 12 )
-            {            
+            {
                 // componentClassIndex
                 _Buffer.Position += sizeof(int);
                 var componentNameIndex = _Buffer.ReadNameIndex();

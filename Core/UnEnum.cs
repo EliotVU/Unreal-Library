@@ -3,7 +3,7 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal enum. 
+    /// Represents a unreal enum.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UEnum : UField

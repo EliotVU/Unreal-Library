@@ -7,7 +7,7 @@ namespace UELib.Core
     {
         /// <summary>
         /// Decompiles this object into a text format of:
-        /// 
+        ///
         /// enum NAME
         /// {
         ///     [ELEMENTS]

@@ -10,7 +10,7 @@ namespace UELib.Core
     }
 
     /// <summary>
-    /// Represents a unreal state. 
+    /// Represents a unreal state.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UState : UStruct
@@ -29,7 +29,7 @@ namespace UELib.Core
         private long _IgnoreMask;
 
         /// <summary>
-        /// Offset into the ScriptStack where the FLabelEntry persist. 
+        /// Offset into the ScriptStack where the FLabelEntry persist.
         /// </summary>
         private short _LabelTableOffset;
 
@@ -66,11 +66,11 @@ namespace UELib.Core
                 {
                     // TODO: Unknown!
                     int unknown = _Buffer.ReadInt32();
-                    Record( "???", unknown );   
+                    Record( "???", unknown );
                 }
 
                 _ProbeMask = _Buffer.ReadInt32();
-                Record( "_ProbeMask", _ProbeMask );     
+                Record( "_ProbeMask", _ProbeMask );
             }
             else  // UE2 and 1
             {
@@ -81,7 +81,7 @@ namespace UELib.Core
             // TODO: Corrigate Version; Somewhere between 690 - 706
             if( Package.Version < 700 )
             {
-                _IgnoreMask = _Buffer.ReadInt64();  
+                _IgnoreMask = _Buffer.ReadInt64();
                 Record( "_IgnoreMask", _IgnoreMask );
             }
 
@@ -89,7 +89,7 @@ namespace UELib.Core
             Record( "_LabelTableOffset", _LabelTableOffset );
 
             if( Package.Version > VStateFlags )
-            { 
+            {
                 #if BORDERLANDS2
                     // FIXME:Temp fix
                     if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
@@ -103,9 +103,9 @@ namespace UELib.Core
                 skipStateFlags:
                 Record( "StateFlags", (StateFlags)_StateFlags );
             }
-                    
+
             if( Package.Version >= 220 )
-            { 
+            {
                 int mapCount = _Buffer.ReadIndex();
                 Record( "mapcount", mapCount );
                 if( mapCount > 0 )

@@ -87,7 +87,7 @@ namespace UELib.Core
             {
                 case 0x00:
                     return 1;
-                                                      
+
                 case 0x10:
                     return 2;
 
@@ -133,9 +133,9 @@ namespace UELib.Core
             }
             else
             {
-                arrayIndex = ((b & 0x3F) << 24) 
+                arrayIndex = ((b & 0x3F) << 24)
                     + (_Buffer.ReadByte() << 16)
-                    + (_Buffer.ReadByte() << 8) 
+                    + (_Buffer.ReadByte() << 8)
                     + _Buffer.ReadByte();
             }
 #if DEBUG || BINARYMETADATA
@@ -163,12 +163,12 @@ namespace UELib.Core
 
                 // Packed byte
                 var info = _Buffer.ReadByte();
-                _Container.Record( String.Format( 
+                _Container.Record( String.Format(
                     "Info(Type={0},SizeMask=0x{1:X2},ArrayIndexMask=0x{2:X2})",
                     (PropertyType)(byte)(info & typeMask),
                     (byte)(info & sizeMask),
                     (info & ArrayIndexMask)
-                    ), info 
+                    ), info
                 );
 
                 Type = (PropertyType)(byte)(info & typeMask);
@@ -204,7 +204,7 @@ namespace UELib.Core
             {
                 string typeName = _Buffer.ReadName();
                 _Container.Record( "typeName", typeName );
-                Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );              
+                Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );
 
                 Size = _Buffer.ReadInt32();
                 _Container.Record( "Size", Size );
@@ -236,7 +236,7 @@ namespace UELib.Core
             _ValueOffset = _Buffer.Position;
             try
             {
-                DeserializeValue(); 
+                DeserializeValue();
             }
             finally
             {
@@ -248,7 +248,7 @@ namespace UELib.Core
 
         /// <summary>
         /// Deserialize the value of this UPropertyTag instance.
-        /// 
+        ///
         /// Note:
         ///     Only call after the whole package has been deserialized!
         /// </summary>
@@ -257,13 +257,13 @@ namespace UELib.Core
         {
             if( _Buffer == null )
             {
-                return "_Buffer is not initialized!";    
+                return "_Buffer is not initialized!";
             }
 
             _Buffer.Seek( _ValueOffset, System.IO.SeekOrigin.Begin );
             try
-            {   
-                return DeserializeDefaultPropertyValue( Type, ref deserializeFlags );   
+            {
+                return DeserializeDefaultPropertyValue( Type, ref deserializeFlags );
             }
             catch( DeserializationException e )
             {
@@ -278,7 +278,7 @@ namespace UELib.Core
         /// <returns>The deserialized value if any.</returns>
         private string DeserializeDefaultPropertyValue( PropertyType type, ref DeserializeFlags deserializeFlags )
         {
-            if( _Buffer.Position - _ValueOffset > Size ) 
+            if( _Buffer.Position - _ValueOffset > Size )
             {
                 throw new DeserializationException( "End of defaultproperties stream reached..." );
             }
@@ -319,7 +319,7 @@ namespace UELib.Core
                         break;
 
                     case PropertyType.XWeakReferenceProperty:
-                        propertyValue = "/* XWeakReference: (?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadByte() + ",?=" + _Buffer.ReadName() + ") */"; 
+                        propertyValue = "/* XWeakReference: (?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadByte() + ",?=" + _Buffer.ReadName() + ") */";
                         break;
 #endif
 
@@ -329,7 +329,7 @@ namespace UELib.Core
 
                     case PropertyType.ByteProperty:
                         if( _Buffer.Version >= V3 && Size == 8 )
-                        {   
+                        {
                             var enumValue = _Buffer.ReadName();
                             propertyValue = enumValue;
                             if( _Buffer.Version >= VEnumName )
@@ -374,7 +374,7 @@ namespace UELib.Core
                                         }
                                     }
                                 }
-                                
+
                                 if( !inline )
                                 {
                                     // =CLASS'Package.Group(s)+.Name'
@@ -536,7 +536,7 @@ namespace UELib.Core
                         }
 
                     /*case PropertyType.InterpCurve:
-                    {   
+                    {
                         // HACK:
                         UPropertyTag tag = new UPropertyTag( _Owner );
                         tag.Serialize();
@@ -547,7 +547,7 @@ namespace UELib.Core
                         {
                             break;
                         }
-                        propertyvalue += tag.Name + "=(";                       
+                        propertyvalue += tag.Name + "=(";
                         for( int i = 0; i < curvescount; ++ i )
                         {
                             propertyvalue += "(" + SerializeDefaultPropertyValue( PropertyType.InterpCurvePoint, buffer, ref serializeFlags ) + ")";
@@ -564,7 +564,7 @@ namespace UELib.Core
                     {
                         string InVal = SerializeDefaultPropertyValue( PropertyType.Float, buffer, ref serializeFlags );
                         string OutVal = SerializeDefaultPropertyValue( PropertyType.Float, buffer, ref serializeFlags );
-                                                                                  
+
                         propertyvalue += "InVal=" + InVal +
                             ",OutVal=" + OutVal;
                         break;
@@ -608,7 +608,7 @@ namespace UELib.Core
                             for( var i = (byte)PropertyType.StructOffset; i < hardcodedStructs.Length; ++ i )
                             {
                                 var structType = Enum.GetName( typeof( PropertyType ), (byte)hardcodedStructs[i] );
-                                if( String.Compare( ItemName, structType, StringComparison.OrdinalIgnoreCase ) != 0 ) 
+                                if( String.Compare( ItemName, structType, StringComparison.OrdinalIgnoreCase ) != 0 )
                                     continue;
 
                                 isHardCoded = true;
@@ -618,7 +618,7 @@ namespace UELib.Core
 
                             if( !isHardCoded )
                             {
-                                // We have to modify the outer so that dynamic arrays within this struct 
+                                // We have to modify the outer so that dynamic arrays within this struct
                                 // will be able to find its variables to determine the array type.
                                 FindProperty( out _Outer );
                                 while( true )
@@ -655,7 +655,7 @@ namespace UELib.Core
                                 break;
                             }
 
-                            // Find the property within the outer/owner or its inheritances. 
+                            // Find the property within the outer/owner or its inheritances.
                             // If found it has to modify the outer so structs within this array can find their array variables.
                             // Additionally we need to know the property to determine the array's type.
                             var arrayType = PropertyType.None;
@@ -719,7 +719,7 @@ namespace UELib.Core
                                 }
                             }
 
-                            _TempFlags |= DoNotAppendName; 
+                            _TempFlags |= DoNotAppendName;
                             break;
                         }
 
@@ -759,14 +759,13 @@ namespace UELib.Core
                 _Container.MaybeDisposeBuffer();
             }
 
-
             // Array or Inlined object
             if( (_TempFlags & DoNotAppendName) != 0 )
-            {       
+            {
                 // The tag handles the name etc on its own.
                 return value;
             }
-            string arrayindex = String.Empty; 
+            string arrayindex = String.Empty;
             if( ArrayIndex > 0 && Type != PropertyType.BoolProperty )
             {
                 arrayindex += "[" + ArrayIndex + "]";

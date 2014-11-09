@@ -6,8 +6,8 @@ namespace UELib.Core
     //Mirrored docu' from List<T>
 
     /// <summary>
-    /// Represents a strongly typed array of serializable classes that can be accessed by index. 
-    /// Provides methods to serialize from a specified stream. 
+    /// Represents a strongly typed array of serializable classes that can be accessed by index.
+    /// Provides methods to serialize from a specified stream.
     /// </summary>
     /// <typeparam name="T">T must have interface UELib.IUnrealSerializableClass and have default empty constructor.</typeparam>
     public class UArray<T> : List<T> where T : IUnrealSerializableClass, new()
@@ -93,13 +93,13 @@ namespace UELib.Core
             {
                 T item = new T();
                 action.Invoke( item );
-                item.Deserialize( stream );	
+                item.Deserialize( stream );
                 Add( item );
             }
         }
     }
 
-    public static class UArrayList 
+    public static class UArrayList
     {
         public static void Deserialize( this List<int> indexes, IUnrealStream stream )
         {

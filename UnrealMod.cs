@@ -66,7 +66,7 @@ namespace UELib
             Summary.Deserialize( stream );
 
             stream.Seek( Summary.FileTableOffset, System.IO.SeekOrigin.Begin );
-            FileTableList = new UArray<FileTable>( stream );	
+            FileTableList = new UArray<FileTable>( stream );
         }
     }
 }

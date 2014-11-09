@@ -34,8 +34,8 @@ namespace UELib
         }
 
         public static string ToUFloat( this float value )
-        {       
-            return value.ToString( "0.0000000000" ).TrimEnd( '0' ).Replace( ',', '.' ) + '0';       
+        {
+            return value.ToString( "0.0000000000" ).TrimEnd( '0' ).Replace( ',', '.' ) + '0';
         }
     }
 }

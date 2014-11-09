@@ -1,9 +1,9 @@
 ﻿// WARNING: You might get a brain stroke from reading the code below :O
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.IO;
 using UELib.Core;
 
 namespace UELib
@@ -82,11 +82,11 @@ namespace UELib
         long LastPosition{ get; set; }
         int Read( byte[] array, int offset, int count );
         long Seek( long offset, SeekOrigin origin );
-    }     
+    }
 
     public class UnrealWriter : BinaryWriter
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )] 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
         private IUnrealStream _UnrealStream;
 
         private uint _Version
@@ -118,7 +118,7 @@ namespace UELib
         public void WriteIndex( int index )
         {
             if( _Version >= UnrealPackage.VINDEXDEPRECATED )
-            { 
+            {
                 Write( index );
             }
             else
@@ -142,7 +142,7 @@ namespace UELib
     /// </summary>
     public class UnrealReader : BinaryReader
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )] 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
         private IUnrealStream _UnrealStream;
         private readonly Encoding _MyEncoding;
 
@@ -167,13 +167,13 @@ namespace UELib
                 return ReadAnsi();
             }
 
-            int unfixedSize; var size = (unfixedSize = 
-#if BIOSHOCK 
+            int unfixedSize; var size = (unfixedSize =
+#if BIOSHOCK
                 _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock ? -ReadIndex() :
 #endif
                 ReadIndex()) < 0 ? -unfixedSize : unfixedSize;
             System.Diagnostics.Debug.Assert( size < 1000000, "Dangerous string size detected! IT'S OVER 9000 THOUSAND!" );
-            if( unfixedSize > 0 ) // ANSI       
+            if( unfixedSize > 0 ) // ANSI
             {
                 var strBytes = new byte[size - 1];
                 Read( strBytes, 0, size - 1 );
@@ -287,7 +287,7 @@ namespace UELib
             _UnrealStream.LastPosition = lastPosition;
 #endif
             return (b0 & isNegative) != 0 // The value is negative or positive?.
-                ? -((index << 6) + (b0 & value))    
+                ? -((index << 6) + (b0 & value))
                 : ((index << 6) + (b0 & value));
         }
 
@@ -297,7 +297,7 @@ namespace UELib
             var lastPosition = _UnrealStream.Position;
 #endif
             var index = ReadIndex();
-            if( _Version >= UName.VNameNumbered 
+            if( _Version >= UName.VNameNumbered
 #if BIOSHOCK
                 || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
 #endif
@@ -307,7 +307,7 @@ namespace UELib
 #if DEBUG || BINARYMETADATA
                 _UnrealStream.LastPosition = lastPosition;
 #endif
-                return (long)((ulong)num << 32) | (uint)index;  
+                return (long)((ulong)num << 32) | (uint)index;
             }
             return index;
         }
@@ -318,11 +318,11 @@ namespace UELib
             var lastPosition = _UnrealStream.Position;
 #endif
             var index = ReadIndex();
-            if( _UnrealStream.Version >= UName.VNameNumbered 
+            if( _UnrealStream.Version >= UName.VNameNumbered
 #if BIOSHOCK
-                || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock 
+                || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
 #endif
-                )               
+                )
             {
                 num = ReadInt32()-1;
 #if DEBUG || BINARYMETADATA
@@ -364,7 +364,7 @@ namespace UELib
                 index = (index << 7) + (b1 & 0x7F);
             }
             return (b0 & 0x80) != 0 // The value is negative or positive?.
-                ? -((index << 6) + (b0 & 0x3F))     
+                ? -((index << 6) + (b0 & 0x3F))
                 : ((index << 6) + (b0 & 0x3F));
         }
 
@@ -420,13 +420,13 @@ namespace UELib
                     BigEndianCode = true;
                 }
 
-                if( !UnrealConfig.SuppressSignature 
-                    && readSignature != UnrealPackage.Signature 
+                if( !UnrealConfig.SuppressSignature
+                    && readSignature != UnrealPackage.Signature
                     && readSignature != UnrealPackage.Signature_BigEndian )
                 {
                     throw new FileLoadException( path + " isn't a UnrealPackage file!" );
                 }
-                Position = 4;   
+                Position = 4;
             }
 
             InitBuffer();
@@ -450,7 +450,7 @@ namespace UELib
 #if DEBUG || BINARYMETADATA
             LastPosition = Position;
 #endif
-            int r = base.Read( array, offset, count ); 
+            int r = base.Read( array, offset, count );
             if( BigEndianCode && r > 1 )
             {
                 Array.Reverse( array, 0, r );
@@ -460,7 +460,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a float converted to a unreal float string format.
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read float converted to a unreal float string format</returns>
@@ -473,7 +473,7 @@ namespace UELib
         // Macros
         /// <summary>
         /// overidden: Reads a byte
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read byte</returns>
@@ -487,7 +487,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Unsigned Integer of 16bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read ushort</returns>
@@ -498,7 +498,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Unsigned Integer of 32bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read uint</returns>
@@ -509,7 +509,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Unsigned Integer of 64bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read ulong</returns>
@@ -520,7 +520,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Signed Integer of 16bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read int</returns>
@@ -536,7 +536,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Signed Integer of 32bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read int</returns>
@@ -547,7 +547,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Signed Integer of 64bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read long</returns>
@@ -558,7 +558,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Name/String with no known size, expecting that the next bytes are the size of the string.
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read string without the end \0 char</returns>
@@ -569,7 +569,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a string with no known length, ends when the first \0 char is reached.
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read string</returns>
@@ -582,10 +582,10 @@ namespace UELib
         /// Unreal Engine 1 and 2
         /// Compact indices exist so that small numbers can be stored efficiently.
         /// An index named "Index" is stored as a series of 1-5 consecutive bytes.
-        /// 
+        ///
         /// Unreal Engine 3
         /// The index is based on a Int32
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read index</returns>
@@ -610,7 +610,7 @@ namespace UELib
 
         public UObject ParseObject( int index )
         {
-            return Package.GetIndexObject( index ); 
+            return Package.GetIndexObject( index );
         }
 
         /// <summary>
@@ -643,7 +643,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Guid of type A-B-C-D.
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read guid</returns>
@@ -663,7 +663,7 @@ namespace UELib
 
         protected override void Dispose( bool disposing )
         {
-            if( !disposing ) 
+            if( !disposing )
                 return;
 
             UR = null;
@@ -699,16 +699,16 @@ namespace UELib
             UR = null;
             Package = stream.Package;
             BigEndianCode = stream.BigEndianCode;
-            InitBuffer(); 
+            InitBuffer();
         }
-        
+
         public UObjectStream( IUnrealStream str, byte[] buffer ) : base( buffer, true )
         {
             UW = null;
             UR = null;
             Package = str.Package;
             BigEndianCode = str.BigEndianCode;
-            InitBuffer(); 
+            InitBuffer();
         }
 
         public void InitBuffer()
@@ -729,7 +729,7 @@ namespace UELib
 #if DEBUG || BINARYMETADATA
             LastPosition = Position;
 #endif
-            int r = base.Read( array, offset, count ); 
+            int r = base.Read( array, offset, count );
             if( BigEndianCode && r > 1 )
             {
                 Array.Reverse( array, 0, r );
@@ -739,7 +739,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a float
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>The read float</returns>
@@ -752,7 +752,7 @@ namespace UELib
         // Macros
         /// <summary>
         /// overidden: Reads a byte
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read byte</returns>
@@ -766,7 +766,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Unsigned Integer of 16bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read ushort</returns>
@@ -777,7 +777,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Unsigned Integer of 32bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read uint</returns>
@@ -788,7 +788,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Unsigned Integer of 64bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read ulong</returns>
@@ -799,7 +799,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Signed Integer of 16bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read int</returns>
@@ -815,7 +815,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Signed Integer of 32bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read int</returns>
@@ -826,7 +826,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Signed Integer of 64bits
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read long</returns>
@@ -837,7 +837,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Name/String with no known size, expecting that the next bytes are the size of the string.
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read string without the end \0 char</returns>
@@ -848,7 +848,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a string with no known length, ends when the first \0 char is reached.
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read string</returns>
@@ -861,10 +861,10 @@ namespace UELib
         /// Unreal Engine 1 and 2
         /// Compact indices exist so that small numbers can be stored efficiently.
         /// An index named "Index" is stored as a series of 1-5 consecutive bytes.
-        /// 
+        ///
         /// Unreal Engine 3
         /// The index is based on a Int32
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read index</returns>
@@ -889,9 +889,9 @@ namespace UELib
 
         public UObject ParseObject( int index )
         {
-            return Package.GetIndexObject( index ); 
+            return Package.GetIndexObject( index );
         }
-        
+
         /// <summary>
         /// Same as ReadIndex except this one handles differently if the version is something above UE3.
         /// </summary>
@@ -922,7 +922,7 @@ namespace UELib
 
         /// <summary>
         /// Reads a Guid of type A-B-C-D.
-        /// 
+        ///
         /// Advances the position.
         /// </summary>
         /// <returns>the read guid</returns>

@@ -1,7 +1,7 @@
 ﻿namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal const. 
+    /// Represents a unreal const.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UConst : UField

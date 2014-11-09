@@ -12,7 +12,7 @@ namespace UELib.Core
             StructFlags = _Buffer.ReadUInt32();
             Record( "StructFlags", (StructFlags)StructFlags );
             DeserializeProperties();
-        }   
+        }
         #endregion
     }
 }

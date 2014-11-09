@@ -42,7 +42,7 @@ namespace UELib
     }
 
     /// <summary>
-    /// Represents data of a loaded unreal package. 
+    /// Represents data of a loaded unreal package.
     /// </summary>
     public sealed class UnrealPackage : IDisposable, IBuffered
     {
@@ -150,7 +150,7 @@ namespace UELib
 
                 private readonly bool _VerifyEqual;
 
-                public BuildAttribute( int minVersion, uint minLicensee, 
+                public BuildAttribute( int minVersion, uint minLicensee,
                     byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
                 {
                     _MinVersion = minVersion;
@@ -160,7 +160,7 @@ namespace UELib
                     _VerifyEqual = true;
                 }
 
-                public BuildAttribute( int minVersion, int maxVersion, uint minLicensee, uint maxLicensee, 
+                public BuildAttribute( int minVersion, int maxVersion, uint minLicensee, uint maxLicensee,
                     byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
                 {
                     _MinVersion = minVersion;
@@ -173,7 +173,7 @@ namespace UELib
 
                 public bool Verify( GameBuild gb, UnrealPackage package )
                 {
-                    if( _VerifyEqual 
+                    if( _VerifyEqual
                         ? package.Version == _MinVersion && package.LicenseeVersion == _MinLicensee
                         : package.Version >= _MinVersion && package.Version <= _MaxVersion
                             && package.LicenseeVersion >= _MinLicensee && package.LicenseeVersion <= _MaxLicensee )
@@ -186,7 +186,7 @@ namespace UELib
                         if( _IsXenonCompressed < 2 )
                         {
                             gb.IsXenonCompressed = _IsXenonCompressed == 1;
-                        }   
+                        }
                         return true;
                     }
                     return false;
@@ -373,7 +373,7 @@ namespace UELib
                 /// 832/021
                 /// </summary>
                 [Build( 832, 21 )]
-                RememberMe,  
+                RememberMe,
 
                 /// <summary>
                 /// 832/046
@@ -450,8 +450,8 @@ namespace UELib
 
                 if( Name == BuildName.Unset )
                 {
-                    Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;    
-                }   
+                    Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;
+                }
             }
 
             public static bool operator ==( GameBuild b, BuildName i )
@@ -540,7 +540,7 @@ namespace UELib
                 }
 #endif
                 NamesCount = stream.ReadUInt32();
-                NamesOffset = stream.ReadUInt32();                                          
+                NamesOffset = stream.ReadUInt32();
                 ExportsCount = stream.ReadUInt32();
                 ExportsOffset = stream.ReadUInt32();
 #if APB
@@ -552,9 +552,9 @@ namespace UELib
                 ImportsCount = stream.ReadUInt32();
                 ImportsOffset = stream.ReadUInt32();
 
-                Console.WriteLine( "\tNames Count:" + NamesCount + "\tNames Offset:" + NamesOffset 
-                    + "\r\n\tExports Count:" + ExportsCount + "\tExports Offset:" + ExportsOffset 
-                    + "\r\n\tImports Count:" + ImportsCount + "\tImports Offset:" + ImportsOffset 
+                Console.WriteLine( "\tNames Count:" + NamesCount + "\tNames Offset:" + NamesOffset
+                    + "\r\n\tExports Count:" + ExportsCount + "\tExports Offset:" + ExportsOffset
+                    + "\r\n\tImports Count:" + ImportsCount + "\tImports Offset:" + ImportsOffset
                 );
 
                 if( stream.Version < 415 )
@@ -564,7 +564,7 @@ namespace UELib
                 if( stream.Version >= 584 )
                 {
                     // Additional tables, like thumbnail, and guid data.
-                    if( stream.Version >= 623 
+                    if( stream.Version >= 623
 #if BIOSHOCK
                         && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
 #endif
@@ -598,7 +598,7 @@ namespace UELib
         /// The Engine version the package was created with.
         /// </summary>
         [DefaultValue(-1)]
-        public int EngineVersion{ get; private set; } 
+        public int EngineVersion{ get; private set; }
 
         /// <summary>
         /// The Cooker version the package was cooked with.
@@ -650,7 +650,7 @@ namespace UELib
 
         /// <summary>
         /// List of UObjects that were constructed by function ConstructObjects, later deserialized and linked.
-        /// 
+        ///
         /// Includes Exports and Imports!.
         /// </summary>
         public List<UObject> Objects{ get; private set; }
@@ -684,7 +684,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Creates a new instance of the UELib.UnrealPackage class with a PackageStream and name. 
+        /// Creates a new instance of the UELib.UnrealPackage class with a PackageStream and name.
         /// </summary>
         /// <param name="stream">A loaded UELib.PackageStream.</param>
         public UnrealPackage( UPackageStream stream )
@@ -865,7 +865,7 @@ namespace UELib
                 Console.Write( "\r\n\tGUID:" + GUID + "\r\n" );
 
                 int generationCount = stream.ReadInt32();
-                Generations = new UArray<UGenerationTableItem>( stream, generationCount );  
+                Generations = new UArray<UGenerationTableItem>( stream, generationCount );
                 Console.WriteLine( "Deserialized {0} generations", Generations.Count );
 
                 if( Version >= VEngineVersion )
@@ -881,7 +881,7 @@ namespace UELib
 
                         // Read compressed info?
                         if( Version >= VCompression )
-                        {   
+                        {
                             if( IsCooked() )
                             {
                                 CompressionFlags = stream.ReadUInt32();
@@ -899,11 +899,11 @@ namespace UELib
                                     //    //File.SetAttributes( packagePath + ".dec", FileAttributes.Temporary );
                                     //    outStream.Package = pkg;
                                     //    outStream._BigEndianCode = stream._BigEndianCode;
-                                    
+
                                     //    var headerBytes = new byte[uncookedSize];
                                     //    stream.Seek( 0, SeekOrigin.Begin );
                                     //    stream.Read( headerBytes, 0, (int)uncookedSize );
-                                    //    outStream.Write( headerBytes, 0, (int)uncookedSize );   
+                                    //    outStream.Write( headerBytes, 0, (int)uncookedSize );
                                     //    foreach( var chunk in pkg.CompressedChunks )
                                     //    {
                                     //        chunk.Decompress( stream, outStream );
@@ -923,8 +923,7 @@ namespace UELib
                     }
                 }
             }
-            
-            
+
             // Read the name table
             if( _TablesData.NamesCount > 0 )
             {
@@ -952,7 +951,7 @@ namespace UELib
                 for( var i = 0; i < _TablesData.ImportsCount; ++ i )
                 {
                     var imp = new UImportTableItem{Offset = (int)stream.Position, Index = i, Owner = this};
-                    imp.Deserialize( stream );      
+                    imp.Deserialize( stream );
                     imp.Size = (int)(stream.Position - imp.Offset);
                     Imports.Add( imp );
                 }
@@ -995,14 +994,14 @@ namespace UELib
                 for( var i = 0; i < pkg.Data.DependsCount; ++ i )
                 {
                     var dep = new UnrealDependsTable{TableOffset = stream.Position, TableIndex = i, Owner = pkg};
-                    dep.Deserialize( stream );      
+                    dep.Deserialize( stream );
                     dep.TableSize = (int)(stream.Position - dep.TableOffset);
                     pkg.DependsTableList.Add( dep );
                 }
                 Console.WriteLine( "Deserialized {0} dependencies", pkg.DependsTableList.Count );
             }*/
 
-            HeaderSize = stream.Position;   
+            HeaderSize = stream.Position;
         }
 
         /// <summary>
@@ -1108,7 +1107,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public class PackageEventArgs : EventArgs
         {
@@ -1144,7 +1143,7 @@ namespace UELib
             }
 
             /// <summary>
-            /// The event identification. 
+            /// The event identification.
             /// </summary>
             public readonly Id EventId;
 
@@ -1159,7 +1158,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public event PackageEventHandler NotifyPackageEvent = null;
         private void OnNotifyPackageEvent( PackageEventArgs e )
@@ -1180,7 +1179,7 @@ namespace UELib
         /// all constructed objects are added to the _ObjectsList.
         /// </summary>
         private void ConstructObjects()
-        {       
+        {
             Objects = new List<UObject>();
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Construct ) );
             foreach( var exp in Exports )
@@ -1195,7 +1194,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Deserializes all exported objects. 
+        /// Deserializes all exported objects.
         /// </summary>
         private void DeserializeObjects()
         {
@@ -1209,7 +1208,7 @@ namespace UELib
                     exp.Object.BeginDeserializing();
                 }
                 OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Object ) );
-            }   
+            }
         }
 
         /// <summary>
@@ -1237,7 +1236,7 @@ namespace UELib
         {
             // Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Link ) );
-            foreach( var exp in Exports )       
+            foreach( var exp in Exports )
             {
                 try
                 {
@@ -1254,7 +1253,7 @@ namespace UELib
             }
         }
 
-        private void RegisterAllClasses()                   
+        private void RegisterAllClasses()
         {
             var exportedTypes = Assembly.GetExecutingAssembly().GetExportedTypes();
             foreach( var exportedType in exportedTypes )
@@ -1270,7 +1269,7 @@ namespace UELib
 
         #region Methods
         [Pure]private Type GetClassTypeByClassName( string className )
-        {       
+        {
             return _RegisteredClasses.FirstOrDefault
             (
                 registered => String.Compare( registered.Name, className, StringComparison.OrdinalIgnoreCase ) == 0
@@ -1315,7 +1314,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="className"></param>
         /// <returns></returns>
@@ -1326,7 +1325,7 @@ namespace UELib
 
         /// <summary>
         /// Returns a Object that resides at the specified ObjectIndex.
-        /// 
+        ///
         /// if index is positive a exported Object will be returned.
         /// if index is negative a imported Object will be returned.
         /// if index is zero null will be returned.
@@ -1335,8 +1334,8 @@ namespace UELib
         /// <returns>The found UELib.Core.UObject if any.</returns>
         [Pure]public UObject GetIndexObject( int objectIndex )
         {
-            return (objectIndex < 0 ? Imports[-objectIndex - 1].Object 
-                        : (objectIndex > 0 ? Exports[objectIndex - 1].Object 
+            return (objectIndex < 0 ? Imports[-objectIndex - 1].Object
+                        : (objectIndex > 0 ? Exports[objectIndex - 1].Object
                         : null));
         }
 
@@ -1362,7 +1361,7 @@ namespace UELib
 
         /// <summary>
         /// Returns a UnrealTable that resides at the specified TableIndex.
-        /// 
+        ///
         /// if index is positive a ExportTable will be returned.
         /// if index is negative a ImportTable will be returned.
         /// if index is zero null will be returned.
@@ -1371,8 +1370,8 @@ namespace UELib
         /// <returns>The found UELib.Core.UnrealTable if any.</returns>
         [Pure]public UObjectTableItem GetIndexTable( int tableIndex )
         {
-            return  (tableIndex < 0 ? Imports[-tableIndex - 1] 
-                    : (tableIndex > 0 ? (UObjectTableItem)Exports[tableIndex - 1] 
+            return  (tableIndex < 0 ? Imports[-tableIndex - 1]
+                    : (tableIndex > 0 ? (UObjectTableItem)Exports[tableIndex - 1]
                     : null));
         }
 
@@ -1384,7 +1383,7 @@ namespace UELib
         /// <param name="checkForSubclass">Whether to test for subclasses of type as well.</param>
         /// <returns>The found UELib.Core.UObject if any.</returns>
         [Pure]public UObject FindObject( string objectName, Type type, bool checkForSubclass = false )
-        { 
+        {
             if( Objects == null )
             {
                 return null;
@@ -1427,7 +1426,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Checks whether this package is marked with @flag. 
+        /// Checks whether this package is marked with @flag.
         /// </summary>
         /// <param name="flag">The uint @flag to test</param>
         /// <returns>Whether this package is marked with @flag.</returns>
@@ -1437,7 +1436,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Tests the packageflags of this UELib.UnrealPackage instance whether it is cooked. 
+        /// Tests the packageflags of this UELib.UnrealPackage instance whether it is cooked.
         /// </summary>
         /// <returns>True if cooked or False if not.</returns>
         [Pure]public bool IsCooked()
@@ -1455,7 +1454,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Checks for the Map flag in PackageFlags. 
+        /// Checks for the Map flag in PackageFlags.
         /// </summary>
         /// <returns>Whether if this package is a map.</returns>
         [Pure]public bool IsMap()
@@ -1491,7 +1490,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Tests the packageflags of this UELib.UnrealPackage instance whether it is encrypted. 
+        /// Tests the packageflags of this UELib.UnrealPackage instance whether it is encrypted.
         /// </summary>
         /// <returns>True if encrypted or False if not.</returns>
         [Pure]public bool IsEncrypted()
@@ -1561,7 +1560,7 @@ namespace UELib
         }
 
         private void DisposeStream()
-        { 
+        {
             if( Stream == null )
                 return;
 

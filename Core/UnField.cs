@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal field. 
+    /// Represents a unreal field.
     /// </summary>
     public partial class UField : UObject
     {
@@ -27,7 +27,7 @@ namespace UELib.Core
             base.Deserialize();
 
             // _SuperIndex got moved into UStruct since 700+
-            if( (Package.Version < 756 
+            if( (Package.Version < 756
 #if SPECIALFORCE2
                 || Package.Build == UnrealPackage.GameBuild.BuildName.SpecialForce2
 #endif

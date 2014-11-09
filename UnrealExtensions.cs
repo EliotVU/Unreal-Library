@@ -19,10 +19,10 @@ namespace UELib
         public static readonly string[] CacheExt        = new[]{ ".uxx" };
         // UT2004, UDK, Unreal, Red Orchestra Map
         public static readonly string[] MapExt          = new[]
-        { 
+        {
             ".ut2", ".udk", ".unr", ".rom", ".un2", ".aao",
-            ".run", ".sac", ".xcm", ".nrf", ".wot", ".scl", 
-            ".dvs", ".rsm", ".ut3" 
+            ".run", ".sac", ".xcm", ".nrf", ".wot", ".scl",
+            ".dvs", ".rsm", ".ut3"
         };
         public static readonly string[] SaveExt         = new[]{ ".uvx", ".md5", ".usa", ".ums", ".rsa", ".sav" };
         public static readonly string[] PackageExt      = new[]{ ".upk" };
@@ -47,13 +47,13 @@ namespace UELib
         {
             var exts = new List<string>
             (
-                ScriptExt.Length + 
-                TextureExt.Length + 
-                SoundExt.Length + 
-                MeshExt.Length + 
-                AnimExt.Length + 
-                CacheExt.Length + 
-                MapExt.Length + 
+                ScriptExt.Length +
+                TextureExt.Length +
+                SoundExt.Length +
+                MeshExt.Length +
+                AnimExt.Length +
+                CacheExt.Length +
+                MapExt.Length +
                 SaveExt.Length +
                 PackageExt.Length
             );

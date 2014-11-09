@@ -14,7 +14,7 @@ namespace UELib.Core
             if( HasInitializedNodes )
                 return;
 
-            node.ToolTipText = FormatHeader();	
+            node.ToolTipText = FormatHeader();
             InitNodes( node );
             AddChildren( node );
             PostAddChildren( node );
@@ -26,17 +26,17 @@ namespace UELib.Core
 
         public virtual string GetImageName()
         {
-            return GetType().IsSubclassOf( typeof(UProperty) ) 
-                ? typeof(UProperty).Name : this is UScriptStruct 
+            return GetType().IsSubclassOf( typeof(UProperty) )
+                ? typeof(UProperty).Name : this is UScriptStruct
                     ? "UStruct" : GetType().Name;
         }
 
         protected virtual void InitNodes( TreeNode node )
-        {			
+        {
             _ParentNode = AddSectionNode( node, typeof(UObject).Name );
             var flagNode = AddTextNode( _ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( _ObjectFlags ) );
-            flagNode.ToolTipText = UnrealMethods.FlagsListToString( 
-                UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), _ObjectFlags ) 
+            flagNode.ToolTipText = UnrealMethods.FlagsListToString(
+                UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), _ObjectFlags )
             );
 
             AddTextNode( _ParentNode, "Size:" + ExportTable.SerialSize );
@@ -70,7 +70,7 @@ namespace UELib.Core
         protected static ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject, string imageName = "" )
         {
             if( unrealObject == null )
-                return null; 
+                return null;
 
             var objN = new ObjectNode( unrealObject ){Text = unrealObject.Name};
             unrealObject.InitializeNodes( objN );
@@ -92,7 +92,7 @@ namespace UELib.Core
         protected static ObjectNode AddSimpleObjectNode( TreeNode parentNode, UObject unrealObject, string text, string imageName = "" )
         {
             if( unrealObject == null )
-                return null; 
+                return null;
 
             var objN = new ObjectNode( unrealObject ){Text = text + ":" + unrealObject.Name};
             if( imageName != string.Empty )
@@ -106,8 +106,8 @@ namespace UELib.Core
         }
 
         protected static ObjectListNode AddObjectListNode
-        ( 
-            TreeNode parentNode, 
+        (
+            TreeNode parentNode,
             string title,
             IEnumerable<UObject> objects,
             string imageName = "TreeView"
@@ -118,7 +118,7 @@ namespace UELib.Core
 
             var uObjects = objects as List<UObject> ?? objects.ToList();
             if( uObjects.Any() )
-            {	
+            {
                 var listNode = new ObjectListNode( imageName ){Text = title};
                 foreach( var obj in uObjects )
                 {

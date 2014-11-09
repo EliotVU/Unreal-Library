@@ -8,7 +8,7 @@ namespace UELib.Cache
     public abstract class CacheException : Exception
     {
         /// <summary>
-        /// Creates a new instance of the UELib.Cache.CacheException class. 
+        /// Creates a new instance of the UELib.Cache.CacheException class.
         /// </summary>
         public CacheException()
         {
@@ -19,7 +19,7 @@ namespace UELib.Cache
     public sealed class CacheEmptyException : CacheException
     {
         /// <summary>
-        /// Creates a new instance of the UELib.Cache.CacheEmptyException class. 
+        /// Creates a new instance of the UELib.Cache.CacheEmptyException class.
         /// </summary>
         public CacheEmptyException()
         {
@@ -109,7 +109,7 @@ namespace UELib.Cache
             bool success = false;
             try
             {
-                File.Move( Path.Combine( _CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension) ), 
+                File.Move( Path.Combine( _CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension) ),
                             Path.Combine( dirPath, (CacheEntries[index].FileName + CacheEntries[index].Extension) ) );
                 RemoveCacheEntry( index );
                 success = true;
@@ -135,7 +135,7 @@ namespace UELib.Cache
         }
 
         /// <summary>
-        /// Deletes the specified file of a cache entry by index. 
+        /// Deletes the specified file of a cache entry by index.
         /// </summary>
         /// <param name="index">The cache entry index that should be deleted.</param>
         public bool DeleteCacheEntry( int index )
@@ -160,7 +160,7 @@ namespace UELib.Cache
                 File.Move( filePath, _CachePath );
                 var cfs = new CacheFileStruct
                 {
-                    FileName = Path.GetFileNameWithoutExtension( filePath ), 
+                    FileName = Path.GetFileNameWithoutExtension( filePath ),
                     Extension = Path.GetExtension( filePath )
                 };
                 cfs.Guid = cfs.FileName;    // TODO: Generate a guid.

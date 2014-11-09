@@ -2,7 +2,7 @@
 using System.Linq;
 
 namespace UELib
-{   
+{
     using Core;
 
     public class CompressedChunk : IUnrealSerializableClass
@@ -88,7 +88,7 @@ namespace UELib
                     _UncompressedSize = stream.ReadInt32();
 
                     _CompressedData = new byte[_CompressedSize];
-                    stream.Read( _CompressedData, 0, _CompressedSize ); 
+                    stream.Read( _CompressedData, 0, _CompressedSize );
                 }
 
                 public byte[] Decompress()

@@ -5,7 +5,7 @@ using UELib.Flags;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal class. 
+    /// Represents a unreal class.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UClass : UState
@@ -43,7 +43,7 @@ namespace UELib.Core
 
         /// <summary>
         /// A list of class dependencies that this class depends on. Includes Imports and Exports.
-        /// 
+        ///
         /// Deprecated @ PackageVersion:186
         /// </summary>
         public UArray<Dependency> ClassDependencies;
@@ -116,7 +116,7 @@ namespace UELib.Core
                 Record( "???Bioshock_Int32", unknown );
             }
 #endif
-    
+
             ClassFlags = _Buffer.ReadUInt32();
             Record( "ClassFlags", (ClassFlags)ClassFlags );
 
@@ -197,9 +197,9 @@ namespace UELib.Core
                         if( Package.Version >= 185 )
                         {
                             // 490:GoW1, 576:CrimeCraft
-                            if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories )) 
+                            if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories ))
                                 || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576 )
-                            { 
+                            {
                                 AutoExpandCategories = DeserializeGroup( "AutoExpandCategories" );
                             }
 
@@ -207,9 +207,9 @@ namespace UELib.Core
                             {
                                 AutoCollapseCategories = DeserializeGroup( "AutoCollapseCategories" );
 
-                                if( Package.Version >= 749 
+                                if( Package.Version >= 749
                                     #if SPECIALFORCE2
-                                        && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2  
+                                        && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
                                     #endif
                                     )
                                 {
@@ -231,7 +231,7 @@ namespace UELib.Core
                                         if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
                                         {
                                             NativeClassName = _Buffer.ReadText();
-                                            Record( "NativeClassName", NativeClassName ); 
+                                            Record( "NativeClassName", NativeClassName );
                                             goto skipClassGroups;
                                         }
 #endif
@@ -257,12 +257,12 @@ namespace UELib.Core
 
                                 #if SINGULARITY
                                 if( Package.Build == UnrealPackage.GameBuild.BuildName.Singularity )
-                                { 
+                                {
                                     _Buffer.Skip( 8 );
                                 }
                                 #endif
-                            }   
-                        }                   
+                            }
+                        }
                     }
 
                     if( Package.Version >= UnrealPackage.VDLLBIND )
@@ -284,31 +284,31 @@ namespace UELib.Core
 #endif
 #if BORDERLANDS2
                         if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
-                        { 
+                        {
                             var unkval = _Buffer.ReadByte();
                             Record( "??BL2_Byte", unkval );
                         }
 #endif
                     }
                 }
-            }   
-    
-            // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere, 
+            }
+
+            // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
             // TODO: Corrigate Version
             if( Package.Version >= 322 )
-            { 
+            {
                 Default = _Buffer.ReadObject();
                 Record( "Default", Default );
             }
             else
-            {       
+            {
 #if SWAT4
                 if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
                 {
                     // We are done here!
                     return;
                 }
-#endif     
+#endif
                 DeserializeProperties();
             }
         }
@@ -360,7 +360,7 @@ namespace UELib.Core
                 if( child.IsClassType( "State" ) )
                 {
                     States.Insert( 0, (UState)child );
-                }           
+                }
             }
         }
         #endregion

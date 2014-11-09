@@ -9,7 +9,7 @@ namespace UELib.Engine
         private const string WAVExtension = "wav";
 
         public IEnumerable<string> ExportableExtensions
-        { 
+        {
             get{ return new[]{WAVExtension}; }
         }
 
@@ -24,7 +24,7 @@ namespace UELib.Engine
 
         public bool CompatableExport()
         {
-            return Package.Version >= 61 && Package.Version <= 129 
+            return Package.Version >= 61 && Package.Version <= 129
                 && SoundFormat != null && SoundFormat.ToLower() == WAVExtension && _SoundBuffer != null;
         }
 
@@ -49,7 +49,7 @@ namespace UELib.Engine
             if( (Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
                 || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/ )
             {
-                var unknownFloat = _Buffer.ReadFloat();   
+                var unknownFloat = _Buffer.ReadFloat();
                 Record( "???", unknownFloat );
             }
 #endif

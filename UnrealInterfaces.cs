@@ -15,7 +15,7 @@ namespace UELib
         /// <returns>The decompiled ouput of text.</returns>
         string Decompile();
     }
-              
+
     /// <summary>
     /// This class has a reference to an object and are both decompilable.
     /// </summary>

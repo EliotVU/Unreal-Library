@@ -5,8 +5,8 @@ namespace UELib.Core
     public partial class UFunction
     {
         protected override void InitNodes( TreeNode node )
-        {							
-            node.ToolTipText = FormatHeader();			
+        {
+            node.ToolTipText = FormatHeader();
             _ParentNode = AddSectionNode( node, typeof(UFunction).Name );
 
             var funcFlagsNode = AddTextNode( _ParentNode, "FunctionFlags:" + UnrealMethods.FlagToString( FunctionFlags ) );

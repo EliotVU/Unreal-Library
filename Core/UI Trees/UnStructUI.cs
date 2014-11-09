@@ -51,13 +51,13 @@ namespace UELib.Core
 
             var defNode = new ObjectListNode
             {
-                Text = "Default Values", 
-                ImageKey = "UDefaultProperty", 
+                Text = "Default Values",
+                ImageKey = "UDefaultProperty",
                 SelectedImageKey = "UDefaultProperty"
             };
             node.Nodes.Add( defNode );
             foreach( var def in Properties )
-            {	
+            {
                 var objN = new DefaultObjectNode( def ){Text = def.Name};
                 defNode.Nodes.Add( objN );
             }

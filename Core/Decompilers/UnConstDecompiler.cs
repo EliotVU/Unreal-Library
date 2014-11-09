@@ -5,7 +5,7 @@ namespace UELib.Core
     {
         /// <summary>
         /// Decompiles this object into a text format of:
-        /// 
+        ///
         /// const NAME = VALUE;
         /// </summary>
         /// <returns></returns>

@@ -33,7 +33,7 @@ namespace UELib.Core
                         catch
                         {
                             output += "\r\n// Failed to decompile defaultproperties for this object.";
-                        }	
+                        }
                     }
                 }
             }
@@ -44,5 +44,5 @@ namespace UELib.Core
         {
             return "// Postprocessed copy of the source code.";
         }
-    }	
+    }
 }

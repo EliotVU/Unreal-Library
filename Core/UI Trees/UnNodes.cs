@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using System.Windows.Forms;
 using System.Runtime.Serialization;
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
@@ -31,9 +31,9 @@ namespace UELib.Core
             catch( Exception e )
             {
                 return String.Format
-                ( 
-                    "An exception of type \"{0}\" occurred while decompiling {1}.\r\nDetails:\r\n{2}", 
-                    e.GetType().Name, Text, e 
+                (
+                    "An exception of type \"{0}\" occurred while decompiling {1}.\r\nDetails:\r\n{2}",
+                    e.GetType().Name, Text, e
                 );
             }
         }

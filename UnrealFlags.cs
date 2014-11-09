@@ -4,13 +4,13 @@ namespace UELib.Flags
 {
     /// <summary>
     /// Flags describing an package instance.
-    /// 
+    ///
     /// Note:
     ///     This is valid for UE3 as well unless otherwise noted.
-    ///     
+    ///
     /// @Redefined( Version, Clone )
     ///     The flag is redefined in (Version) as (Clone)
-    ///     
+    ///
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
@@ -58,13 +58,13 @@ namespace UELib.Flags
         /// <summary>
         /// Clients must download the package.
         /// </summary>
-        Need                = 0x00008000U,  
+        Need                = 0x00008000U,
 
         /// <summary>
         /// Unknown flags
         /// -   0x20000000  -- Probably means the package contains Content(Meshes, Textures)
         /// </summary>
-        /// 
+        ///
 
         /// Package holds map data.
         Map                 = 0x00020000U,
@@ -112,62 +112,62 @@ namespace UELib.Flags
 
     /// <summary>
     /// Flags describing an object instance.
-    /// 
+    ///
     /// Note:
     ///     This is valid for UE3 as well unless otherwise noted.
-    ///     
+    ///
     /// @Redefined( Version, Clone )
     ///     The flag is redefined in (Version) as (Clone)
-    ///     
+    ///
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
     [Flags]
     public enum ObjectFlagsLO : ulong   // 32bit aligned, see ObjectFlags64
     {
-        Transactional       = 0x00000001U,  
-        Public              = 0x00000004U,  
+        Transactional       = 0x00000001U,
+        Public              = 0x00000004U,
 
-        Private             = 0x00000080U,      
-        Automated           = 0x00000100U,  
-    
-        Transient           = 0x00004000U,  
-            
-        LoadForClient       = 0x00010000U,      
-        LoadForServer       = 0x00020000U,      
-        LoadForEdit         = 0x00040000U,      
-        Standalone          = 0x00080000U,      
-        NotForClient        = 0x00100000U,      
-        NotForServer        = 0x00200000U,      
-        NotForEdit          = 0x00400000U,  
-        
-        HasStack            = 0x02000000U,      
-        Native              = 0x04000000U,      
-        Marked              = 0x08000000U,      
-        //SWAT4_Unnamed         = 0x08000000U,      
+        Private             = 0x00000080U,
+        Automated           = 0x00000100U,
+
+        Transient           = 0x00004000U,
+
+        LoadForClient       = 0x00010000U,
+        LoadForServer       = 0x00020000U,
+        LoadForEdit         = 0x00040000U,
+        Standalone          = 0x00080000U,
+        NotForClient        = 0x00100000U,
+        NotForServer        = 0x00200000U,
+        NotForEdit          = 0x00400000U,
+
+        HasStack            = 0x02000000U,
+        Native              = 0x04000000U,
+        Marked              = 0x08000000U,
+        //SWAT4_Unnamed         = 0x08000000U,
     }
 
     /// <summary>
     /// Flags describing an object instance(32-64 part) (In Unreal Engine 3 2006+ builds only).
-    /// 
+    ///
     /// Note:
     ///     This is valid for UE3 as well unless otherwise noted.
-    ///     
+    ///
     /// @Redefined( Version, Clone )
     ///     The flag is redefined in (Version) as (Clone)
-    ///     
+    ///
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
     [Flags]
     public enum ObjectFlagsHO : ulong   // 32bit aligned, see ObjectFlags
     {
-        Obsolete                = 0x00000020U,      
-        Final                   = 0x00000080U,      
-        PerObjectLocalized      = 0x00000100U,      
+        Obsolete                = 0x00000020U,
+        Final                   = 0x00000080U,
+        PerObjectLocalized      = 0x00000100U,
         PropertiesObject        = 0x00000200U,
         ArchetypeObject         = 0x00000400U,
-        RemappedName            = 0x00000800U,      
+        RemappedName            = 0x00000800U,
     }
 
     /// <summary>
@@ -176,30 +176,30 @@ namespace UELib.Flags
     [Flags]
     public enum FunctionFlags : ulong // actually uint but were using ulong for UE2 and UE3 Compatably
     {
-        Final               = 0x00000001U,      
-        Defined             = 0x00000002U,      
-        Iterator            = 0x00000004U,      
-        Latent              = 0x00000008U,      
-        PreOperator         = 0x00000010U,      
-        Singular            = 0x00000020U,      
-        Net                 = 0x00000040U,      
-        NetReliable         = 0x00000080U,      
-        Simulated           = 0x00000100U,      
-        Exec                = 0x00000200U,      
-        Native              = 0x00000400U,      
-        Event               = 0x00000800U,      
-        Operator            = 0x00001000U,      
-        Static              = 0x00002000U,      
+        Final               = 0x00000001U,
+        Defined             = 0x00000002U,
+        Iterator            = 0x00000004U,
+        Latent              = 0x00000008U,
+        PreOperator         = 0x00000010U,
+        Singular            = 0x00000020U,
+        Net                 = 0x00000040U,
+        NetReliable         = 0x00000080U,
+        Simulated           = 0x00000100U,
+        Exec                = 0x00000200U,
+        Native              = 0x00000400U,
+        Event               = 0x00000800U,
+        Operator            = 0x00001000U,
+        Static              = 0x00002000U,
         NoExport            = 0x00004000U,      // Can also be an identifier for functions with Optional parameters.
         OptionalParameters  = 0x00004000U,
-        Const               = 0x00008000U,      
-        Invariant           = 0x00010000U,      
-        Public              = 0x00020000U,      
-        Private             = 0x00040000U,      
-        Protected           = 0x00080000U,      
-        Delegate            = 0x00100000U,      
-        NetServer           = 0x00200000U,      
-                                        
+        Const               = 0x00008000U,
+        Invariant           = 0x00010000U,
+        Public              = 0x00020000U,
+        Private             = 0x00040000U,
+        Protected           = 0x00080000U,
+        Delegate            = 0x00100000U,
+        NetServer           = 0x00200000U,
+
         NetClient           = 0x01000000U,
         DLLImport           = 0x02000000U,      // Also available in UE2(unknown meaning there)
         K2Call              = 0x04000000U,
@@ -209,13 +209,13 @@ namespace UELib.Flags
 
     /// <summary>
     /// Flags describing an property instance.
-    /// 
+    ///
     /// Note:
     ///     This is valid for UE3 as well unless otherwise noted.
-    ///     
+    ///
     /// @Redefined( Version, Clone )
     ///     The flag is redefined in (Version) as (Clone)
-    ///     
+    ///
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
@@ -224,7 +224,7 @@ namespace UELib.Flags
     {
         #region Parameters
         /// <summary>
-        /// The parameter is optional. 
+        /// The parameter is optional.
         /// </summary>
         OptionalParm        = 0x00000010U,
 
@@ -261,22 +261,22 @@ namespace UELib.Flags
         Localized           = 0x00008000U,      // Language ...
         Travel              = 0x00010000U,      // Keep value after travel
         EditConst           = 0x00020000U,      // ReadOnly in UnrealEd
-                                   
+
         GlobalConfig        = 0x00040000U,
         /// <summary>
         /// The property is a component.
-        /// 
+        ///
         /// => UE3
         /// </summary>
         Component           = 0x00080000U,      // NetAlways in 61 <=
         OnDemand            = 0x00100000U,      // @Redefined(UE3, Init) Load on demand
-        Init                = 0x00100000U,      // 
+        Init                = 0x00100000U,      //
 
         New                 = 0x00200000U,      // Inner object. @Removed(UE3)
         DuplicateTransient  = 0x00200000U,
 
         NeedCtorLink        = 0x00400000U,
-        NoExport            = 0x00800000U,      // Don't export properties to clipboard 
+        NoExport            = 0x00800000U,      // Don't export properties to clipboard
 
         EditorData          = 0x02000000U,      // @Redefined(UE3, NoClear)
         NoClear             = 0x02000000U,      // Don't permit reference clearing.
@@ -305,13 +305,13 @@ namespace UELib.Flags
 
     /// <summary>
     /// Flags describing an property instance.
-    /// 
+    ///
     /// Note:
     ///     This is valid for UE3 as well unless otherwise noted.
-    ///     
+    ///
     /// @Redefined( Version, Clone )
     ///     The flag is redefined in (Version) as (Clone)
-    ///     
+    ///
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
@@ -326,7 +326,7 @@ namespace UELib.Flags
         RepRetry            = 0x00000020U,
         PrivateWrite        = 0x00000040U,
         ProtectedWrite      = 0x00000080U,
-        Archetype           = 0x00000100U,  
+        Archetype           = 0x00000100U,
         EditHide            = 0x00000200U,
         EditTextBox         = 0x00000400U,
         // GAP!
@@ -343,30 +343,30 @@ namespace UELib.Flags
 
         // Possible flags: CrossLevel, AllowAbstract
     }
-           
+
     /// <summary>
     /// Flags describing an state instance.
     /// </summary>
     [Flags]
     public enum StateFlags : uint
     {
-        Editable            = 0x00000001U,  
-        Auto                = 0x00000002U,  
-        Simulated           = 0x00000004U,  
+        Editable            = 0x00000001U,
+        Auto                = 0x00000002U,
+        Simulated           = 0x00000004U,
     }
 
     /// <summary>
     /// Flags describing an class instance.
-    /// 
+    ///
     /// Note:
     ///     This is valid for UE3 as well unless otherwise noted.
-    ///     
+    ///
     /// @Redefined( Version, Clone )
     ///     The flag is redefined in (Version) as (Clone)
-    ///     
+    ///
     /// @Removed( Version )
     ///     The flag is removed in (Version)
-    ///     
+    ///
     /// @Moved( Version, New )
     ///     The flag was moved since (Version) to a different value (New)
     /// </summary>
@@ -402,28 +402,28 @@ namespace UELib.Flags
         HasComponents       = 0x00400000U,      // @Redefined Class has component properties.
         Hidden              = 0x00800000U,      // @Redefined Don't show this class in the editor class browser or edit inline new menus.
         Deprecated          = 0x01000000U,      // @Redefined Don't save objects of this class when serializing
-        HideDropDown2       = 0x02000000U,      
-        Exported            = 0x04000000U,      
+        HideDropDown2       = 0x02000000U,
+        Exported            = 0x04000000U,
         NativeOnly          = 0x20000000U,
         #endregion
     }
 
     /// <summary>
     /// Flags describing an struct instance.
-    /// 
+    ///
     /// Note:
     ///     This is valid for UE3 as well unless otherwise noted.
-    ///     
+    ///
     /// @Redefined( Version, Clone )
     ///     The flag is redefined in (Version) as (Clone)
-    ///     
+    ///
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
     [Flags]
     public enum StructFlags : uint
     {
-        Native              = 0x00000001U,  
+        Native              = 0x00000001U,
         Export              = 0x00000002U,
         Long                = 0x00000004U,      // @Redefined(UE3, HasComponents)
         Init                = 0x00000008U,      // @Redefined(UE3, Transient)

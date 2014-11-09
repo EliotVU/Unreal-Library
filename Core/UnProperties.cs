@@ -5,7 +5,7 @@ namespace UELib.Core
     using Types;
 
     /// <summary>
-    /// Represents a unreal property. 
+    /// Represents a unreal property.
     /// </summary>
     public partial class UProperty : UField, IUnrealNetObject
     {
@@ -24,19 +24,19 @@ namespace UELib.Core
             private set;
         }
 
-        public ushort 	ElementSize 
+        public ushort 	ElementSize
         {
             get;
             private set;
         }
 
-        public ulong 	PropertyFlags 
+        public ulong 	PropertyFlags
         {
             get;
             private set;
         }
 
-        public int 		CategoryIndex 
+        public int 		CategoryIndex
         {
             get;
             private set;
@@ -44,7 +44,7 @@ namespace UELib.Core
 
         public UEnum	ArrayEnum{ get; private set; }
 
-        public ushort 	RepOffset 
+        public ushort 	RepOffset
         {
             get;
             private set;
@@ -75,7 +75,7 @@ namespace UELib.Core
 
         #region Constructors
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UProperty class. 
+        /// Creates a new instance of the UELib.Core.UProperty class.
         /// </summary>
         public UProperty()
         {
@@ -90,7 +90,7 @@ namespace UELib.Core
             if( Package.Build == UnrealPackage.GameBuild.BuildName.XIII )
             {
                 ArrayDim = _Buffer.ReadUShort();
-                Record( "ArrayDim", ArrayDim );		
+                Record( "ArrayDim", ArrayDim );
                 goto skipInfo;
             }
 #endif
@@ -147,12 +147,12 @@ namespace UELib.Core
         #region Methods
         public bool HasPropertyFlag( Flags.PropertyFlagsLO flag )
         {
-            return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0; 
+            return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;
         }
 
         public bool HasPropertyFlag( Flags.PropertyFlagsHO flag )
         {
-            return ((PropertyFlags >> 32) & (uint)flag) != 0; 
+            return ((PropertyFlags >> 32) & (uint)flag) != 0;
         }
 
         public bool IsParm()
@@ -169,7 +169,7 @@ namespace UELib.Core
 
     /// <summary>
     /// Interface Property
-    /// 
+    ///
     /// UE3 Only
     /// </summary>
     [UnrealRegisterClass]
@@ -181,7 +181,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UInterfaceProperty class. 
+        /// Creates a new instance of the UELib.Core.UInterfaceProperty class.
         /// </summary>
         public UInterfaceProperty()
         {
@@ -208,7 +208,7 @@ namespace UELib.Core
 
     /// <summary>
     /// Delegate Property
-    /// 
+    ///
     /// UE2+
     /// </summary>
     [UnrealRegisterClass]
@@ -220,7 +220,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UDelegateProperty class. 
+        /// Creates a new instance of the UELib.Core.UDelegateProperty class.
         /// </summary>
         public UDelegateProperty()
         {
@@ -252,14 +252,14 @@ namespace UELib.Core
 
     /// <summary>
     /// Pointer Property
-    /// 
+    ///
     /// UE2 Only (UStructProperty in UE3)
     /// </summary>
     [UnrealRegisterClass]
     public class UPointerProperty : UProperty
     {
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UPointerProperty class. 
+        /// Creates a new instance of the UELib.Core.UPointerProperty class.
         /// </summary>
         public UPointerProperty()
         {
@@ -275,14 +275,14 @@ namespace UELib.Core
 
     /// <summary>
     /// Component Property
-    /// 
+    ///
     /// UE3 Only
     /// </summary>
     [UnrealRegisterClass]
     public class UComponentProperty : UObjectProperty
     {
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UComponentProperty class. 
+        /// Creates a new instance of the UELib.Core.UComponentProperty class.
         /// </summary>
         public UComponentProperty()
         {
@@ -292,7 +292,7 @@ namespace UELib.Core
 
     /// <summary>
     /// Class Property
-    /// 
+    ///
     /// var class'Actor' ActorClass;
     /// </summary>
     [UnrealRegisterClass]
@@ -304,7 +304,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UClassProperty class. 
+        /// Creates a new instance of the UELib.Core.UClassProperty class.
         /// </summary>
         public UClassProperty()
         {
@@ -324,8 +324,8 @@ namespace UELib.Core
         {
             if( ClassObject != null )
             {
-                return (String.Compare( ClassObject.Name, "Object", StringComparison.OrdinalIgnoreCase ) == 0) 
-                    ? Object.GetFriendlyType() 
+                return (String.Compare( ClassObject.Name, "Object", StringComparison.OrdinalIgnoreCase ) == 0)
+                    ? Object.GetFriendlyType()
                     : ("class" + "<" + GetFriendlyInnerType() + ">");
             }
             return "class";
@@ -348,14 +348,14 @@ namespace UELib.Core
 
         public int Count
         {
-            get; 
+            get;
             private set;
         }
 
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UFixedArrayProperty class. 
+        /// Creates a new instance of the UELib.Core.UFixedArrayProperty class.
         /// </summary>
         public UFixedArrayProperty()
         {
@@ -391,7 +391,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UArrayProperty class. 
+        /// Creates a new instance of the UELib.Core.UArrayProperty class.
         /// </summary>
         public UArrayProperty()
         {
@@ -405,7 +405,7 @@ namespace UELib.Core
             int innerIndex = _Buffer.ReadObjectIndex();
             InnerProperty = (UProperty)GetIndexObject( innerIndex );
         }
-    
+
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
@@ -418,9 +418,9 @@ namespace UELib.Core
 
         public override string GetFriendlyInnerType()
         {
-            return InnerProperty != null 
-                ? (InnerProperty.IsClassType( "ClassProperty" ) || InnerProperty.IsClassType( "DelegateProperty" )) 
-                    ? (" " + InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType() + " ") 
+            return InnerProperty != null
+                ? (InnerProperty.IsClassType( "ClassProperty" ) || InnerProperty.IsClassType( "DelegateProperty" ))
+                    ? (" " + InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType() + " ")
                     : (InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType())
                 : "@NULL";
         }
@@ -428,7 +428,7 @@ namespace UELib.Core
 
     /// <summary>
     /// Dynamic Map Property
-    /// 
+    ///
     /// Obsolete
     /// </summary>
     [UnrealRegisterClass]
@@ -440,7 +440,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UMapProperty class. 
+        /// Creates a new instance of the UELib.Core.UMapProperty class.
         /// </summary>
         public UMapProperty()
         {
@@ -473,7 +473,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UStructProperty class. 
+        /// Creates a new instance of the UELib.Core.UStructProperty class.
         /// </summary>
         public UStructProperty()
         {
@@ -505,7 +505,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UByteProperty class. 
+        /// Creates a new instance of the UELib.Core.UByteProperty class.
         /// </summary>
         public UByteProperty()
         {
@@ -538,7 +538,7 @@ namespace UELib.Core
 
             var pkg = LoadImportPackage();
             if( pkg != null )
-            {		
+            {
                 if( pkg.Objects == null )
                 {
                     pkg.RegisterClass( "ByteProperty", typeof(UByteProperty) );
@@ -567,7 +567,7 @@ namespace UELib.Core
     public class UIntProperty : UProperty
     {
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UIntProperty class. 
+        /// Creates a new instance of the UELib.Core.UIntProperty class.
         /// </summary>
         public UIntProperty()
         {
@@ -588,7 +588,7 @@ namespace UELib.Core
     public class UBoolProperty : UProperty
     {
         /// <summary>
-        ///	Creates a new instance of the UELib.Core.UBoolProperty class. 
+        ///	Creates a new instance of the UELib.Core.UBoolProperty class.
         /// </summary>
         public UBoolProperty()
         {
@@ -609,7 +609,7 @@ namespace UELib.Core
     public class UFloatProperty : UProperty
     {
         /// <summary>
-        ///	Creates a new instance of the UELib.Core.UFloatProperty class. 
+        ///	Creates a new instance of the UELib.Core.UFloatProperty class.
         /// </summary>
         public UFloatProperty()
         {
@@ -630,7 +630,7 @@ namespace UELib.Core
     public class UNameProperty : UProperty
     {
         /// <summary>
-        ///	Creates a new instance of the UELib.Core.UNameProperty class. 
+        ///	Creates a new instance of the UELib.Core.UNameProperty class.
         /// </summary>
         public UNameProperty()
         {
@@ -651,7 +651,7 @@ namespace UELib.Core
     public class UStrProperty : UProperty
     {
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UStrProperty class. 
+        /// Creates a new instance of the UELib.Core.UStrProperty class.
         /// </summary>
         public UStrProperty()
         {
@@ -667,7 +667,7 @@ namespace UELib.Core
 
     /// <summary>
     /// Fixed String
-    /// 
+    ///
     /// UE1 Only
     /// </summary>
     [UnrealRegisterClass]
@@ -676,7 +676,7 @@ namespace UELib.Core
         public int Size;
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UStringProperty class. 
+        /// Creates a new instance of the UELib.Core.UStringProperty class.
         /// </summary>
         public UStringProperty()
         {
@@ -712,7 +712,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UObjectProperty class. 
+        /// Creates a new instance of the UELib.Core.UObjectProperty class.
         /// </summary>
         public UObjectProperty()
         {

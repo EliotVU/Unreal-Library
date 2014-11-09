@@ -16,8 +16,8 @@ namespace UELib.Core
                 // Multiline comment?
                 if( tag.TagValue.IndexOf( '\n' ) != -1 )
                 {
-                    comment += " \r\n" + UDecompilingState.Tabs + " *" 
-                        + tag.TagValue.Replace( "\n", "\n" + UDecompilingState.Tabs + " *" ) 
+                    comment += " \r\n" + UDecompilingState.Tabs + " *"
+                        + tag.TagValue.Replace( "\n", "\n" + UDecompilingState.Tabs + " *" )
                         + "\r\n" + UDecompilingState.Tabs;
                 }
                 else
@@ -53,7 +53,7 @@ namespace UELib.Core
             if( IsPrivate() )
             {
                 output += "private ";
-            }       
+            }
             else if( IsProtected() )
             {
                 output += "protected ";
@@ -264,7 +264,7 @@ namespace UELib.Core
                         output += "archetype ";
                         copyFlags &= ~(ulong)Flags.PropertyFlagsHO.Archetype << 32;
                     }
-                    
+
                     if( HasPropertyFlag( Flags.PropertyFlagsHO.NotForConsole ) )
                     {
                         output += "notforconsole ";
@@ -276,7 +276,7 @@ namespace UELib.Core
                         output += "repretry ";
                         copyFlags &= ~(ulong)Flags.PropertyFlagsHO.RepRetry << 32;
                     }
-    
+
                     // Instanced is only an alias for Export and EditInline.
                     /*if( HasPropertyFlag( Flags.PropertyFlagsLO.Instanced ) )
                     {
@@ -365,7 +365,7 @@ namespace UELib.Core
                         if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineUse) != 0 )
                         {
                             copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInlineUse;
-                            output += "editinlineuse ";     
+                            output += "editinlineuse ";
                         }
                         else if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineNotify) != 0 )
                         {
@@ -376,7 +376,7 @@ namespace UELib.Core
                         {
                             output += "editinline ";
                         }
-                        copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInline;  
+                        copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInline;
                     }
                 }
 
@@ -403,7 +403,7 @@ namespace UELib.Core
                 {
                     output += "config ";
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Config;
-                }   
+                }
 
                 if( (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Localized) != 0 )
                 {
@@ -439,7 +439,7 @@ namespace UELib.Core
                 }
             }
             // Local's may never output any of their implied flags!
-            if( !IsParm() && Super != null 
+            if( !IsParm() && Super != null
                 && String.Compare( Super.GetClassName(), "Function", StringComparison.OrdinalIgnoreCase ) == 0 )
             {
                 return string.Empty;

@@ -85,7 +85,7 @@ namespace UELib.Core
                 const short vObjectSizeTo8 = 587;
                 if( Buffer.Version >= vObjectSizeTo8 )
                 {
-                    _ObjectMemorySize = 8;    
+                    _ObjectMemorySize = 8;
                 }
             }
 
@@ -115,17 +115,16 @@ namespace UELib.Core
             private byte FixToken( byte tokenCode )
             {
                 // Adjust UE2 tokens to UE3
-                if( _Container.Package.Version >= 184 
-                    && 
+                if( _Container.Package.Version >= 184
+                    &&
                     (
-                        (tokenCode >= (byte)ExprToken.Unknown && tokenCode < (byte)ExprToken.ReturnNothing) 
-                        || 
-                        (tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative)) 
+                        (tokenCode >= (byte)ExprToken.Unknown && tokenCode < (byte)ExprToken.ReturnNothing)
+                        ||
+                        (tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative))
                     )
                 {
                     ++ tokenCode;
                 }
-
 
                 #if APB
                 if( _Container.Package.Build == UnrealPackage.GameBuild.BuildName.APB && _Container.Package.LicenseeVersion >= 32 )
@@ -214,7 +213,7 @@ namespace UELib.Core
             private void DeserializeDebugToken()
             {
                 Buffer.StartPeek();
-                byte token = FixToken( Buffer.ReadByte() ); 
+                byte token = FixToken( Buffer.ReadByte() );
                 Buffer.EndPeek();
 
                 if( token == (byte)ExprToken.DebugInfo )
@@ -228,8 +227,8 @@ namespace UELib.Core
                 var nativeFuncToken = new NativeFunctionToken();
                 try
                 {
-                    var nativeTableItem = _Container.Package.NTLPackage != null 
-                        ? _Container.Package.NTLPackage.FindTableItem( nativeIndex ) 
+                    var nativeTableItem = _Container.Package.NTLPackage != null
+                        ? _Container.Package.NTLPackage.FindTableItem( nativeIndex )
                         : null;
                     if( nativeTableItem != null )
                     {
@@ -238,8 +237,8 @@ namespace UELib.Core
                     else
                     {
                         // TODO: Rewrite as FindChild( lambda )
-                        var table = _Container.Package.Exports.Find( 
-                            e => (e.ClassName == "Function" && ((UFunction)(e.Object)).NativeToken == nativeIndex) 
+                        var table = _Container.Package.Exports.Find(
+                            e => (e.ClassName == "Function" && ((UFunction)(e.Object)).NativeToken == nativeIndex)
                         );
 
                         if( table != null )
@@ -327,7 +326,7 @@ namespace UELib.Core
                     case (byte)ExprToken.InterfaceContext:
                         if( Buffer.Version < PrimitveCastVersion )
                         {
-                            tokenItem = new ByteToStringToken(); 
+                            tokenItem = new ByteToStringToken();
                         }
                         else
                         {
@@ -349,7 +348,7 @@ namespace UELib.Core
                         tokenItem = new LetToken();
                         break;
 
-                    case (byte)ExprToken.LetBool: 
+                    case (byte)ExprToken.LetBool:
                         tokenItem = new LetBoolToken();
                         break;
 
@@ -360,7 +359,7 @@ namespace UELib.Core
                     // Redefined, can be FloatToBool!(UE1)
                     case (byte)ExprToken.LetDelegate:
                         if( Buffer.Version < PrimitveCastVersion )
-                        {           
+                        {
                             tokenItem = new FloatToBoolToken();
                         }
                         else
@@ -405,7 +404,7 @@ namespace UELib.Core
                         {
                             tokenItem = new DynamicArrayInsertToken();
                         }
-                        else 
+                        else
                         {
                             tokenItem = new ReturnNothingToken();
                         }
@@ -450,7 +449,7 @@ namespace UELib.Core
                         tokenItem = new IteratorNextToken();
                         break;
 
-                    case (byte)ExprToken.IteratorPop: 
+                    case (byte)ExprToken.IteratorPop:
                         tokenItem = new IteratorPopToken();
                         break;
 
@@ -591,7 +590,7 @@ namespace UELib.Core
                     // End of state code.
                     case (byte)ExprToken.Stop:
                         tokenItem = new StopToken();
-                        break;      
+                        break;
 
                     case (byte)ExprToken.Assert:
                         tokenItem = new AssertToken();
@@ -638,7 +637,7 @@ namespace UELib.Core
                             tokenItem = new DelegateFunctionCmpEqToken();
                         }
                         break;
-                
+
                     case (byte)ExprToken.DelegateCmpNE:
                         tokenItem = new DelegateCmpNEToken();
                         break;
@@ -681,7 +680,7 @@ namespace UELib.Core
                     case (byte)ExprToken.VarFloat:
                     case (byte)ExprToken.VarByte:
                     case (byte)ExprToken.VarBool:
-                    //case (byte)ExprToken.VarObject:   // See UndefinedVariable    
+                    //case (byte)ExprToken.VarObject:   // See UndefinedVariable
                         tokenItem = new DynamicVariableToken();
                         break;
                     #endregion
@@ -786,7 +785,7 @@ namespace UELib.Core
                         }
                         else
                         {
-                            tokenItem = new DynamicArrayInsertItemToken();  
+                            tokenItem = new DynamicArrayInsertItemToken();
                         }
                         break;
 
@@ -859,14 +858,14 @@ namespace UELib.Core
                         }
                         break;
                         #endregion
-                    }   
+                    }
                 }
 
                 if( tokenItem == null )
                 {
-                    tokenItem = new UnknownExprToken(); 
+                    tokenItem = new UnknownExprToken();
                 }
-                
+
                 tokenItem.Decompiler = this;
                 tokenItem.RepresentToken = tokenCode;
                 tokenItem.Position = tokenPosition;// + (uint)Owner._ScriptOffset;
@@ -939,7 +938,7 @@ namespace UELib.Core
                         tokenitem = new StringToBoolToken();
                         break;
 
-                    case Tokens.CastToken.ByteToBool:   
+                    case Tokens.CastToken.ByteToBool:
                         tokenitem = new ByteToBoolToken();
                         break;
 
@@ -1040,7 +1039,7 @@ namespace UELib.Core
                         break;
                 }
 
-                // Unsure what this is, found in:  ClanManager1h_6T.CMBanReplicationInfo.Timer: 
+                // Unsure what this is, found in:  ClanManager1h_6T.CMBanReplicationInfo.Timer:
                 //  xyz = UnknownCastToken(0x1b);
                 //  UnknownCastToken(0x1b)
                 //  UnknownCastToken(0x1b)
@@ -1101,8 +1100,8 @@ namespace UELib.Core
                         #if DEBUG_NESTS
                             return "\r\n" + UDecompilingState.Tabs + "//<" + Type + ">";
                         #else
-                        return Type != NestType.Case && Type != NestType.Default 
-                            ? UnrealConfig.PrintBeginBracket() 
+                        return Type != NestType.Case && Type != NestType.Default
+                            ? UnrealConfig.PrintBeginBracket()
                             : String.Empty;
                         #endif
                     }
@@ -1115,8 +1114,8 @@ namespace UELib.Core
                         #if DEBUG_NESTS
                             return "\r\n" + UDecompilingState.Tabs + "//</" + Type + ">";
                         #else
-                        return Type != NestType.Case && Type != NestType.Default 
-                            ? UnrealConfig.PrintEndBracket() 
+                        return Type != NestType.Case && Type != NestType.Default
+                            ? UnrealConfig.PrintEndBracket()
                             : String.Empty;
                         #endif
                     }
@@ -1125,14 +1124,14 @@ namespace UELib.Core
                 public readonly List<Nest> Nests = new List<Nest>();
 
                 public void AddNest( Nest.NestType type, uint position, uint endPosition, Token creator = null )
-                {   
+                {
                     creator = creator ?? Decompiler.CurrentToken;
                     Nests.Add( new NestBegin{Position = position, Type = type, Creator = creator} );
                     Nests.Add( new NestEnd{Position = endPosition, Type = type, Creator = creator} );
                 }
 
                 public NestBegin AddNestBegin( Nest.NestType type, uint position, Token creator = null )
-                {   
+                {
                     var n = new NestBegin {Position = position, Type = type};
                     Nests.Add( n );
                     n.Creator = creator ?? Decompiler.CurrentToken;
@@ -1230,9 +1229,9 @@ namespace UELib.Core
                 {
                     var func = _Container as UFunction;
                     if( func != null && func.Params != null )
-                    { 
-                        DefaultParameterToken._NextParamIndex = func.Params.FindIndex( 
-                            p => p.HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm ) 
+                    {
+                        DefaultParameterToken._NextParamIndex = func.Params.FindIndex(
+                            p => p.HasPropertyFlag( Flags.PropertyFlagsLO.OptionalParm )
                         );
                     }
                 }
@@ -1278,7 +1277,7 @@ namespace UELib.Core
 
             /// <summary>
             /// Whether we are currently decompiling within a ClassContext token.
-            /// 
+            ///
             /// HACK: For static calls -> class'ClassA'.static.FuncA();
             /// </summary>
             private bool _IsWithinClassContext;
@@ -1296,9 +1295,9 @@ namespace UELib.Core
             public string Decompile()
             {
                 // Make sure that everything is deserialized!
-                if( !_WasDeserialized )            
+                if( !_WasDeserialized )
                 {
-                    Deserialize();      
+                    Deserialize();
                 }
 
                 var output = new StringBuilder();
@@ -1307,7 +1306,7 @@ namespace UELib.Core
 
 #if DEBUG_TOKENPOSITIONS
                 UDecompilingState.AddTabs( 3 );
-#endif          
+#endif
                 try
                 {
                     //Initialize==========
@@ -1431,14 +1430,14 @@ namespace UELib.Core
                                             CurrentToken.Position + CurrentToken.Size
                                         ) );
 
-                                        var orgTabs = UDecompilingState.Tabs; 
+                                        var orgTabs = UDecompilingState.Tabs;
                                         var spaces = Math.Max( 3*UnrealConfig.Indention.Length, 8 );
                                         UDecompilingState.RemoveSpaces( spaces );
 #endif
                                         output.Append( UDecompilingState.Tabs + tokenOutput );
 #if DEBUG_TOKENPOSITIONS
                                         UDecompilingState.Tabs = orgTabs;
-#endif                                                                                                                                      
+#endif
                                         // One of the decompiled tokens wanted to be ended.
                                         if( _CanAddSemicolon )
                                         {
@@ -1525,7 +1524,7 @@ namespace UELib.Core
                     );
                 }
                 finally
-                { 
+                {
                     UDecompilingState.Tabs = initTabs;
                 }
                 return output.ToString();
@@ -1543,7 +1542,7 @@ namespace UELib.Core
                 string output = String.Empty;
                 for( int i = beginIndex; i < endIndex; ++ i )
                 {
-                    output += DeserializedTokens[i].GetType().Name 
+                    output += DeserializedTokens[i].GetType().Name
                         + (i % 4 == 0 ? "\r\n" + UDecompilingState.Tabs : " ");
                 }
                 return output;
@@ -1560,8 +1559,8 @@ namespace UELib.Core
 
                     var isStateLabel = !label.Name.StartsWith( "J0x", StringComparison.Ordinal );
 
-                    output += isStateLabel 
-                        ? String.Format( "\r\n{0}:\r\n", label.Name ) 
+                    output += isStateLabel
+                        ? String.Format( "\r\n{0}:\r\n", label.Name )
                         : String.Format( "\r\n{0}:", UDecompilingState.Tabs + label.Name );
                     _TempLabels.RemoveAt( i );
                     -- i;
@@ -1576,7 +1575,7 @@ namespace UELib.Core
                 // Give { priority hence separated loops
                 for( int i = 0; i < _Nester.Nests.Count; ++ i )
                 {
-                    if( !(_Nester.Nests[i] is NestManager.NestBegin) ) 
+                    if( !(_Nester.Nests[i] is NestManager.NestBegin) )
                         continue;
 
                     if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position ) || outputAllRemainingNests )
@@ -1591,10 +1590,10 @@ namespace UELib.Core
 
                 for( int i = 0; i < _Nester.Nests.Count; ++ i )
                 {
-                    if( !(_Nester.Nests[i] is NestManager.NestEnd) ) 
+                    if( !(_Nester.Nests[i] is NestManager.NestEnd) )
                         continue;
 
-                    if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position + CurrentToken.Size ) 
+                    if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position + CurrentToken.Size )
                         || outputAllRemainingNests )
                     {
                         UDecompilingState.RemoveTab();
@@ -1624,7 +1623,7 @@ namespace UELib.Core
             public abstract class Token : IUnrealDecompilable, IUnrealDeserializableClass
             {
                 public UByteCodeDecompiler Decompiler
-                { 
+                {
                     get;
                     set;
                 }
@@ -1638,7 +1637,7 @@ namespace UELib.Core
 
                 /// <summary>
                 /// The relative position of this token.
-                /// Storage--The actual token position within the Buffer. 
+                /// Storage--The actual token position within the Buffer.
                 /// </summary>
                 public uint Position;
                 public uint StoragePosition;
@@ -1705,9 +1704,9 @@ namespace UELib.Core
 
                 public override string ToString()
                 {
-                    return String.Format( "\r\nType:{0}\r\nToken:{1:X2}\r\nPosition:{2}\r\nSize:{3}", 
-                        GetType().Name, RepresentToken, Position, Size ).Replace( "\n", "\n" 
-                        + UDecompilingState.Tabs 
+                    return String.Format( "\r\nType:{0}\r\nToken:{1:X2}\r\nPosition:{2}\r\nSize:{3}",
+                        GetType().Name, RepresentToken, Position, Size ).Replace( "\n", "\n"
+                        + UDecompilingState.Tabs
                     );
                 }
             }
@@ -1762,11 +1761,11 @@ namespace UELib.Core
                     var addParenthesises = true;
                     if( t is NativeFunctionToken )
                     {
-                        addParenthesises = ((NativeFunctionToken)t).NativeTable.Type == FunctionType.Operator;    
+                        addParenthesises = ((NativeFunctionToken)t).NativeTable.Type == FunctionType.Operator;
                     }
                     else if( t is FinalFunctionToken )
                     {
-                        addParenthesises = ((FinalFunctionToken)t).Function.IsOperator(); 
+                        addParenthesises = ((FinalFunctionToken)t).Function.IsOperator();
                     }
                     return addParenthesises ? String.Format( "({0})", t.Decompile() ) : t.Decompile();
                 }
@@ -1780,10 +1779,10 @@ namespace UELib.Core
 
                 protected string DecompileOperator( string operatorName )
                 {
-                    string output = String.Format( "{0} {1} {2}", 
-                        PrecedenceToken( GrabNextToken() ), 
-                        operatorName, 
-                        PrecedenceToken( GrabNextToken() ) 
+                    string output = String.Format( "{0} {1} {2}",
+                        PrecedenceToken( GrabNextToken() ),
+                        operatorName,
+                        PrecedenceToken( GrabNextToken() )
                     );
                     DecompileNext(); // )
                     return output;
@@ -1800,10 +1799,10 @@ namespace UELib.Core
                 {
                     if( Decompiler._IsWithinClassContext )
                     {
-                        functionName = "static." + functionName;    
-                
+                        functionName = "static." + functionName;
+
                         // Set false elsewhere as well but to be sure we set it to false here to avoid getting static calls inside the params.
-                        // e.g.     
+                        // e.g.
                         // A1233343.DrawText(Class'BTClient_Interaction'.static.A1233332(static.Max(0, A1233328 - A1233322[A1233222].StartTime)), true);
                         Decompiler._IsWithinClassContext = false;
                     }
@@ -1827,7 +1826,7 @@ namespace UELib.Core
                     {
                         var t = tokens[i].Item1; // Token
                         var v = tokens[i].Item2; // Value
-   
+
                         if( t is NoParmToken ) // Skipped optional parameters
                         {
                             output.Append( v );
@@ -1840,9 +1839,9 @@ namespace UELib.Core
                         {
                             if( i != tokens.Count - 1 && i > 0 ) // Skipped optional parameters
                             {
-                                output.Append( v == String.Empty ? "," : ", " );    
+                                output.Append( v == String.Empty ? "," : ", " );
                             }
-                            output.Append( v );       
+                            output.Append( v );
                         }
                     }
                     return output.ToString();
@@ -1870,7 +1869,7 @@ namespace UELib.Core
                 {
                     string output = String.Empty;
                     if( Function != null )
-                    {       
+                    {
                         // Support for non native operators.
                         if( Function.IsPost() )
                         {
@@ -1882,7 +1881,7 @@ namespace UELib.Core
                         }
                         else if( Function.IsOperator() )
                         {
-                            output = DecompileOperator( Function.FriendlyName );    
+                            output = DecompileOperator( Function.FriendlyName );
                         }
                         else
                         {
@@ -1913,8 +1912,8 @@ namespace UELib.Core
                             }
                             output += DecompileCall( Function.Name );
                         }
-                    }   
-                    Decompiler._CanAddSemicolon = true; 
+                    }
+                    Decompiler._CanAddSemicolon = true;
                     return output;
                 }
             }
@@ -1945,7 +1944,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     return DecompileCall( Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
@@ -1964,7 +1963,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     return "global." + DecompileCall( Package.GetIndexName( FunctionNameIndex ) );
                 }
             }
@@ -1984,8 +1983,8 @@ namespace UELib.Core
 
                     // Delegate object index
                     stream.ReadObjectIndex();
-                    Decompiler.AlignObjectSize();   
- 
+                    Decompiler.AlignObjectSize();
+
                     // Delegate name index
                     FunctionNameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
@@ -2010,8 +2009,8 @@ namespace UELib.Core
                     {
                         NativeTable = new NativeTableItem
                         {
-                            Type = FunctionType.Function, 
-                            Name = "UnresolvedNativeFunction_" + RepresentToken, 
+                            Type = FunctionType.Function,
+                            Name = "UnresolvedNativeFunction_" + RepresentToken,
                             ByteToken = RepresentToken
                         };
                     }
@@ -2073,7 +2072,7 @@ namespace UELib.Core
             {
                 // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
                 // Greater or Equal than
-                private const ushort VSizeByteMoved = 588;  
+                private const ushort VSizeByteMoved = 588;
 
                 public override void Deserialize( IUnrealStream stream )
                 {
@@ -2094,13 +2093,13 @@ namespace UELib.Core
 
                     // PropertyType
                     stream.ReadByte();
-                    Decompiler.AlignSize( sizeof(byte) );   
+                    Decompiler.AlignSize( sizeof(byte) );
 
                     // Additional byte in APB?
                     if( stream.Version > 512 && stream.Version < VSizeByteMoved )
                     {
                         stream.ReadByte();
-                        Decompiler.AlignSize( sizeof(byte) );   
+                        Decompiler.AlignSize( sizeof(byte) );
                     }
 
                     // ?.B
@@ -2151,7 +2150,7 @@ namespace UELib.Core
                     if( stream.Version > 369 )
                     {
                         // Struct index
-                        stream.ReadObjectIndex();   
+                        stream.ReadObjectIndex();
                         Decompiler.AlignObjectSize();
 
                         stream.Position ++;
@@ -2180,13 +2179,13 @@ namespace UELib.Core
                 public override void Deserialize( IUnrealStream stream )
                 {
                     // A = B
-                    DeserializeNext();    
-                    DeserializeNext();              
+                    DeserializeNext();
+                    DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     return DecompileNext() + " = " + DecompileNext();
                 }
             }
@@ -2212,7 +2211,7 @@ namespace UELib.Core
                 public override void Deserialize( IUnrealStream stream )
                 {
                     // Condition
-                    DeserializeNext();  
+                    DeserializeNext();
 
                     // Size. Used to skip ? if Condition is False.
                     stream.ReadUInt16();
@@ -2226,7 +2225,7 @@ namespace UELib.Core
                     Decompiler.AlignSize( sizeof(ushort) );
 
                     // If FALSE expression
-                    DeserializeNext();  
+                    DeserializeNext();
                 }
 
                 public override string Decompile()
@@ -2242,7 +2241,7 @@ namespace UELib.Core
                 public override void Deserialize( IUnrealStream stream )
                 {
                     // Expression
-                    DeserializeNext();  
+                    DeserializeNext();
                 }
 
                 public override string Decompile()
@@ -2255,7 +2254,7 @@ namespace UELib.Core
                         Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
                     }
                     #endregion
-    
+
                     string returnValue = DecompileNext();
                     Decompiler._CanAddSemicolon = true;
                     return "return" + (returnValue.Length != 0 ? " " + returnValue : String.Empty);
@@ -2299,12 +2298,12 @@ namespace UELib.Core
                 public override void Deserialize( IUnrealStream stream )
                 {
                     // Expression
-                    DeserializeNext();  
+                    DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     return "goto " + DecompileNext();
                 }
             }
@@ -2323,28 +2322,28 @@ namespace UELib.Core
                 {
                     if( GetType() == typeof(JumpToken) )
                         Decompiler._Labels.Add
-                        ( 
+                        (
                             new ULabelEntry
                             {
-                                Name = String.Format( "J0x{0:X2}", CodeOffset ), 
+                                Name = String.Format( "J0x{0:X2}", CodeOffset ),
                                 Position = CodeOffset
-                            } 
+                            }
                         );
                 }
 
                 protected void Commentize()
                 {
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );   
+                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
                 }
 
                 protected void Commentize( string statement )
                 {
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2} [{1}]", CodeOffset, statement );   
+                    Decompiler.PreComment = String.Format( "// End:0x{0:X2} [{1}]", CodeOffset, statement );
                 }
 
                 protected void CommentStatement( string statement )
                 {
-                    Decompiler.PreComment = String.Format( "// [{0}]", statement );                       
+                    Decompiler.PreComment = String.Format( "// [{0}]", statement );
                 }
 
                 /// <summary>
@@ -2355,9 +2354,9 @@ namespace UELib.Core
                 ///         {
                 ///             continue;
                 ///         }
-                ///         
+                ///
                 ///         // Actual code
-                ///         
+                ///
                 ///         -> Decompiled
                 ///         if( continueCodition )
                 ///         {
@@ -2366,14 +2365,14 @@ namespace UELib.Core
                 ///         {
                 ///             // Actual code
                 ///         }
-                ///         
-                ///         
+                ///
+                ///
                 ///     2:(-> ...)  ...
                 ///         -> Original
                 ///             ...
                 ///         -> Decompiled
                 ///             ...
-                ///         
+                ///
                 /// </summary>
                 public override string Decompile()
                 {
@@ -2383,13 +2382,13 @@ namespace UELib.Core
                         //==================We're inside a Case and at the end of it!
                         if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
                         {
-                            //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position );            
+                            //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position );
                             NoJumpLabel();
                             Commentize();
-                            Decompiler._CanAddSemicolon = true; 
+                            Decompiler._CanAddSemicolon = true;
                             return "break";
                         }
-                        
+
                         //==================We're inside a Default and at the end of it!
                         if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
                         {
@@ -2397,7 +2396,7 @@ namespace UELib.Core
                             Commentize();
                             Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
                             Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position );
-                            Decompiler._CanAddSemicolon = true; 
+                            Decompiler._CanAddSemicolon = true;
                             return "break";
                         }
 
@@ -2472,10 +2471,10 @@ namespace UELib.Core
                                     NoJumpLabel();
 
                                     // HACK: This should be handled by UByteCodeDecompiler.Decompile()
-                                    return "}" + "\r\n" + 
-                                        (UnrealConfig.SuppressComments 
-                                        ? UDecompilingState.Tabs + "else" 
-                                        : UDecompilingState.Tabs + String.Format( "// End:0x{0:X2}", CodeOffset ) + "\r\n" + 
+                                    return "}" + "\r\n" +
+                                        (UnrealConfig.SuppressComments
+                                        ? UDecompilingState.Tabs + "else"
+                                        : UDecompilingState.Tabs + String.Format( "// End:0x{0:X2}", CodeOffset ) + "\r\n" +
                                             UDecompilingState.Tabs + "else");
                                 }
                             }
@@ -2516,8 +2515,8 @@ namespace UELib.Core
                 }
 
                 public override string Decompile()
-                {       
-                    // Check whether there's a JumpToken pointing to the begin of this JumpIfNot, 
+                {
+                    // Check whether there's a JumpToken pointing to the begin of this JumpIfNot,
                     //  if detected, we assume that this If is part of a loop.
                     IsLoop = false;
                     for( int i = Decompiler.CurrentTokenIndex + 1; i < Decompiler.DeserializedTokens.Count; ++ i )
@@ -2541,16 +2540,16 @@ namespace UELib.Core
                     if( (CodeOffset & UInt16.MaxValue) < Position )
                     {
                         Decompiler._CanAddSemicolon = true;
-                        return output + "\r\n" 
-                            + UDecompilingState.Tabs + UnrealConfig.Indention 
-                            + String.Format( "goto J0x{0:X2}", CodeOffset ); 
+                        return output + "\r\n"
+                            + UDecompilingState.Tabs + UnrealConfig.Indention
+                            + String.Format( "goto J0x{0:X2}", CodeOffset );
                     }
 
                     Decompiler._CanAddSemicolon = false;
-                    Decompiler._Nester.AddNest( IsLoop 
-                        ? NestManager.Nest.NestType.Loop 
-                        : NestManager.Nest.NestType.If, 
-                        Position, CodeOffset, this 
+                    Decompiler._Nester.AddNest( IsLoop
+                        ? NestManager.Nest.NestType.Loop
+                        : NestManager.Nest.NestType.If,
+                        Position, CodeOffset, this
                     );
                     return output;
                 }
@@ -2574,7 +2573,7 @@ namespace UELib.Core
                 {
                     if( stream.Version >= 600 )
                     {
-                        // Points to the object that was passed to the switch, 
+                        // Points to the object that was passed to the switch,
                         // beware that the followed token chain contains it as well!
                         stream.ReadObjectIndex();
                         Decompiler.AlignObjectSize();
@@ -2597,26 +2596,26 @@ namespace UELib.Core
                 }
 
                 /// <summary>
-                /// FORMATION ISSUESSES:    
+                /// FORMATION ISSUESSES:
                 ///     1:(-> ...)  NestEnd is based upon the break in a default case, however a case does not always break/return,
                 ///         causing that there will be no default with a break detected, thus no ending for the Switch block.
-                ///         
+                ///
                 ///         -> Original
                 ///             Switch( A )
                 ///             {
                 ///                 case 0:
                 ///                     CallA();
                 ///             }
-                ///             
+                ///
                 ///             CallB();
-                ///             
+                ///
                 ///         -> Decompiled
                 ///             Switch( A )
                 ///             {
                 ///                 case 0:
                 ///                     CallA();
                 ///                 default:    // End is detect of case 0 due some other hack :)
-                ///                     CallB();    
+                ///                     CallB();
                 /// </summary>
                 public override string Decompile()
                 {
@@ -2639,7 +2638,7 @@ namespace UELib.Core
                     }   // Else "Default:"
                 }
 
-                // HACK: To avoid from decrementing tabs more than once, 
+                // HACK: To avoid from decrementing tabs more than once,
                 //  e.g. in a situation of case a1: case a2: case a3: that use the same block code.
                 private static byte _CaseStack;
                 public override string Decompile()
@@ -2651,7 +2650,7 @@ namespace UELib.Core
                     //      case 2:
                     //          CallA();
                     //          break;
-                    //      
+                    //
                     //  ->(Without the hack) Decompiled
                     //      case 0:
                     //          case 1:
@@ -2675,10 +2674,10 @@ namespace UELib.Core
                         Decompiler._CanAddSemicolon = false;
                         return output;
                     }
-                    
+
                     Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Default, Position, this );
                     Decompiler._CanAddSemicolon = false;
-                    return "default:";  
+                    return "default:";
                 }
             }
 
@@ -2691,7 +2690,7 @@ namespace UELib.Core
                 }
 
                 public override string Decompile()
-                {                 
+                {
                     Decompiler._Nester.AddNest( NestManager.Nest.NestType.ForEach, Position, CodeOffset, this );
                     Commentize();
 
@@ -2722,9 +2721,9 @@ namespace UELib.Core
                 }
 
                 public override string Decompile()
-                {                 
+                {
                     Decompiler._Nester.AddNest( NestManager.Nest.NestType.ForEach, Position, CodeOffset, this );
-    
+
                     Commentize();
 
                     // foreach ArrayVariable( Parameters )
@@ -2752,7 +2751,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    if( Decompiler.PreviousToken is IteratorNextToken 
+                    if( Decompiler.PreviousToken is IteratorNextToken
                         || Decompiler.PeekToken is ReturnToken )
                     {
                         return String.Empty;
@@ -2765,14 +2764,14 @@ namespace UELib.Core
 
             #region FieldTokens
             public abstract class FieldToken : Token
-            {                           
+            {
                 public UObject Object{ get; private set; }
                 public static UObject LastField{ get; internal set; }
 
                 public override void Deserialize( IUnrealStream stream )
                 {
                     Object = Decompiler._Container.TryGetIndexObject( stream.ReadObjectIndex() );
-                    Decompiler.AlignObjectSize();   
+                    Decompiler.AlignObjectSize();
                 }
 
                 public override string Decompile()
@@ -2791,7 +2790,7 @@ namespace UELib.Core
                     Decompiler._MustCommentStatement = true;
                     return "native." + base.Decompile();
 #else
-                    return String.Empty;    
+                    return String.Empty;
 #endif
                 }
             }
@@ -2815,7 +2814,7 @@ namespace UELib.Core
 
                 public override void Deserialize( IUnrealStream stream )
                 {
-                    LocalIndex = stream.ReadInt32();    
+                    LocalIndex = stream.ReadInt32();
                     Decompiler.AlignSize( sizeof(int) );
                 }
 
@@ -2838,7 +2837,7 @@ namespace UELib.Core
                 public int NameIndex;
 
                 public override void Deserialize( IUnrealStream stream )
-                {         
+                {
                     // FIXME: MOHA or general?
                     if( stream.Version == 421 )
                     {
@@ -2885,7 +2884,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    string expression = DecompileNext();        
+                    string expression = DecompileNext();
                     DecompileNext();    // EndParmValue
                     Decompiler._CanAddSemicolon = true;
                     var param = _NextParam;
@@ -2989,11 +2988,11 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     return "stop";
                 }
             }
-    
+
             public class AssertToken : Token
             {
                 public bool DebugMode;
@@ -3019,7 +3018,7 @@ namespace UELib.Core
                         Decompiler.PreComment = "// DebugMode:" + DebugMode;
                     }
                     string expr = DecompileNext();
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     return "assert(" + expr + ")";
                 }
             }
@@ -3036,12 +3035,12 @@ namespace UELib.Core
                         if( label != String.Empty )
                         {
                             Decompiler._Labels.Add
-                            ( 
+                            (
                                 new ULabelEntry
                                 {
-                                    Name = label, 
+                                    Name = label,
                                     Position = labelPos
-                                } 
+                                }
                             );
                         }
                         label = stream.ReadName();
@@ -3057,7 +3056,7 @@ namespace UELib.Core
                 public override void Deserialize( IUnrealStream stream )
                 {
                     stream.ReadUInt16();    // Size
-                    Decompiler.AlignSize( sizeof(ushort) ); 
+                    Decompiler.AlignSize( sizeof(ushort) );
 
                     DeserializeNext();
                 }
@@ -3095,7 +3094,7 @@ namespace UELib.Core
                 {
                      return DecompileNext() + " != " + DecompileNext();
                 }
-            }   
+            }
 
             public class DelegateComparisonToken : Token
             {
@@ -3169,7 +3168,7 @@ namespace UELib.Core
                         stream.ReadObjectIndex();
                         Decompiler.AlignObjectSize();
                     }
-                
+
                     // The Field
                     DeserializeNext();
                 }
@@ -3222,15 +3221,15 @@ namespace UELib.Core
                 public override void Deserialize( IUnrealStream stream )
                 {
                     // Outer
-                    DeserializeNext();    
+                    DeserializeNext();
                     // Name
-                    DeserializeNext();      
+                    DeserializeNext();
                     // Flags
                     DeserializeNext();
 
                     // Class?
                     DeserializeNext();
-                        
+
                     // TODO: Corrigate Version
                     if( stream.Version > TemplateVersion )
                     {
@@ -3332,7 +3331,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return String.Format( "{0}", Value ); 
+                    return String.Format( "{0}", Value );
                 }
             }
 
@@ -3388,7 +3387,7 @@ namespace UELib.Core
                                 return Enum.GetName( typeof(ENetMode), Value );
                         }
                     }
-                    return Value.ToString( CultureInfo.InvariantCulture ); 
+                    return Value.ToString( CultureInfo.InvariantCulture );
                 }
             }
 
@@ -3404,7 +3403,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return String.Format( "{0:d}", Value ); 
+                    return String.Format( "{0:d}", Value );
                 }
             }
 
@@ -3420,7 +3419,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return Value.ToUFloat(); 
+                    return Value.ToUFloat();
                 }
             }
 
@@ -3445,7 +3444,7 @@ namespace UELib.Core
                         {
                             Class = "class";
                         }
-                        return Class.ToLower() + "'" + obj.Name + "'"; 
+                        return Class.ToLower() + "'" + obj.Name + "'";
                     }
                     return "none";
                 }
@@ -3555,7 +3554,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "(" + DecompileNext() + ")"; 
+                    return "(" + DecompileNext() + ")";
                 }
             }
 
@@ -3568,7 +3567,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return DecompileNext(); 
+                    return DecompileNext();
                 }
             }
 
@@ -3582,7 +3581,7 @@ namespace UELib.Core
                     Decompiler.AlignObjectSize();
 
                     base.Deserialize( stream );
-                }   
+                }
             }
 
             public class DynamicCastToken : ObjectCastToken
@@ -3607,7 +3606,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "vector" + base.Decompile(); 
+                    return "vector" + base.Decompile();
                 }
             }
 
@@ -3616,7 +3615,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     return DecompileNext();
-                    //return "int" + base.Decompile(); 
+                    //return "int" + base.Decompile();
                 }
             }
 
@@ -3624,7 +3623,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile(); 
+                    return "float" + base.Decompile();
                 }
             }
 
@@ -3632,7 +3631,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3640,7 +3639,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile(); 
+                    return "byte" + base.Decompile();
                 }
             }
 
@@ -3649,7 +3648,7 @@ namespace UELib.Core
 #if !SUPPRESS_BOOLINTEXPLOIT
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
 #endif
             }
@@ -3658,7 +3657,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile(); 
+                    return "float" + base.Decompile();
                 }
             }
 
@@ -3666,7 +3665,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile(); 
+                    return "byte" + base.Decompile();
                 }
             }
 
@@ -3675,7 +3674,7 @@ namespace UELib.Core
 #if !SUPPRESS_BOOLINTEXPLOIT
                 public override string Decompile()
                 {
-                    return "int" + base.Decompile(); 
+                    return "int" + base.Decompile();
                 }
 #endif
             }
@@ -3684,7 +3683,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile(); 
+                    return "float" + base.Decompile();
                 }
             }
 
@@ -3692,7 +3691,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile(); 
+                    return "byte" + base.Decompile();
                 }
             }
 
@@ -3700,7 +3699,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "int" + base.Decompile(); 
+                    return "int" + base.Decompile();
                 }
             }
 
@@ -3708,7 +3707,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3716,7 +3715,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3724,7 +3723,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3732,7 +3731,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile(); 
+                    return "byte" + base.Decompile();
                 }
             }
 
@@ -3740,7 +3739,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "int" + base.Decompile(); 
+                    return "int" + base.Decompile();
                 }
             }
 
@@ -3748,7 +3747,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3756,7 +3755,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile(); 
+                    return "float" + base.Decompile();
                 }
             }
 
@@ -3764,7 +3763,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "vector" + base.Decompile(); 
+                    return "vector" + base.Decompile();
                 }
             }
 
@@ -3772,7 +3771,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "rotator" + base.Decompile(); 
+                    return "rotator" + base.Decompile();
                 }
             }
 
@@ -3780,7 +3779,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3788,7 +3787,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "rotator" + base.Decompile(); 
+                    return "rotator" + base.Decompile();
                 }
             }
 
@@ -3796,7 +3795,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3804,7 +3803,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3812,7 +3811,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3820,7 +3819,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3828,7 +3827,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3836,7 +3835,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3844,7 +3843,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3852,7 +3851,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3860,7 +3859,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "name" + base.Decompile(); 
+                    return "name" + base.Decompile();
                 }
             }
 
@@ -3868,7 +3867,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3876,7 +3875,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
+                    return "string" + base.Decompile();
                 }
             }
 
@@ -3884,7 +3883,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile(); 
+                    return "bool" + base.Decompile();
                 }
             }
 
@@ -3895,8 +3894,8 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile(); 
-                }   
+                    return "string" + base.Decompile();
+                }
             }
             #endregion
 
@@ -3914,7 +3913,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     string keyName = DecompileNext();
                     string arrayName = DecompileNext();
                     return arrayName + "[" + keyName + "]";
@@ -3935,7 +3934,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true; 
+                    Decompiler._CanAddSemicolon = true;
                     return DecompileNext() + ".Length";
                 }
             }
@@ -3996,15 +3995,15 @@ namespace UELib.Core
 
                 protected string DecompileMethodOne( string functionName, bool skipEndParms = false )
                 {
-                    Decompiler._CanAddSemicolon = true; 
-                    return DecompileNext() + "." + functionName + 
+                    Decompiler._CanAddSemicolon = true;
+                    return DecompileNext() + "." + functionName +
                         "(" + DecompileNext() + (Package.Version > ArrayMethodEndParmsVersion && !skipEndParms ? DecompileNext() : ")");
                 }
 
                 protected string DecompileMethodTwo( string functionName, bool skipEndParms = false )
                 {
-                    Decompiler._CanAddSemicolon = true; 
-                    return DecompileNext() + "." + functionName + 
+                    Decompiler._CanAddSemicolon = true;
+                    return DecompileNext() + "." + functionName +
                         "(" + DecompileNext() + ", " + DecompileNext() + (Package.Version > ArrayMethodEndParmsVersion && !skipEndParms ? DecompileNext() : ")");
                 }
             }
@@ -4040,7 +4039,7 @@ namespace UELib.Core
                     return DecompileMethodTwo( "Insert" );
                 }
 
-                //(0x033) DynamicArrayInsertToken -> LocalVariableToken -> EndFunctionParmsToken 
+                //(0x033) DynamicArrayInsertToken -> LocalVariableToken -> EndFunctionParmsToken
             }
 
             public class DynamicArrayInsertItemToken : DynamicArrayMethodToken
@@ -4177,7 +4176,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return String.Format( "@UnknownExprToken(0x{0:X2})", RepresentToken ); 
+                    return String.Format( "@UnknownExprToken(0x{0:X2})", RepresentToken );
                 }
             }
 
@@ -4185,11 +4184,11 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return String.Format( "@UnknownCastToken(0x{0:X2})", RepresentToken ); 
+                    return String.Format( "@UnknownCastToken(0x{0:X2})", RepresentToken );
                 }
             }
             #endregion
 #endif
-        }   
+        }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Collections.Generic;
 using UELib.Core;
 
 namespace UELib
@@ -17,12 +17,12 @@ namespace UELib
 
         public void Serialize( IUnrealStream stream )
         {
-            stream.Write( ExportsCount );  
-            stream.Write( NamesCount );  
+            stream.Write( ExportsCount );
+            stream.Write( NamesCount );
             if( stream.Version >= VNetObjectsCount )
             {
-                stream.Write( NetObjectsCount ); 
-            }   
+                stream.Write( NetObjectsCount );
+            }
         }
 
         public void Deserialize( IUnrealStream stream )
@@ -38,7 +38,7 @@ namespace UELib
             if( stream.Version >= VNetObjectsCount )
             {
                 NetObjectsCount = stream.ReadInt32();
-            }       
+            }
         }
     }
 
@@ -67,8 +67,8 @@ namespace UELib
         #region Methods
         public string ToString( bool shouldPrintMembers )
         {
-            return shouldPrintMembers 
-                ? String.Format( "\r\nTable Index:{0}\r\nTable Offset:0x{1:X8}\r\nTable Size:0x{2:X8}\r\n", Index, Offset, Size ) 
+            return shouldPrintMembers
+                ? String.Format( "\r\nTable Index:{0}\r\nTable Offset:0x{1:X8}\r\nTable Size:0x{2:X8}\r\n", Index, Offset, Size )
                 : base.ToString();
         }
         #endregion
@@ -100,7 +100,7 @@ namespace UELib
         {
             get{ return _Text.Length; }
         }
-        
+
         public UName( IUnrealStream stream )
         {
             Deserialize( stream );
@@ -133,7 +133,7 @@ namespace UELib
             {
                 Console.WriteLine( _Number + " " + _Text );
                 stream.Write( (uint)_Number + 1 );
-            }   
+            }
         }
 
         public override string ToString()
@@ -198,7 +198,7 @@ namespace UELib
         public void Deserialize( IUnrealStream stream )
         {
             Name = stream.ReadText();
-            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();                 
+            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
 #if DEOBFUSCATE
             // De-obfuscate names that contain unprintable characters!
             foreach( char c in Name )
@@ -267,7 +267,7 @@ namespace UELib
 
         /// <summary>
         /// Reference to the serialized object based on this table.
-        /// 
+        ///
         /// Only valid if Owner != null and Owner is fully serialized or on demand.
         /// </summary>
         public UObject Object;
@@ -420,18 +420,18 @@ namespace UELib
                 stream.Skip( sizeof(int) );
             }
 #endif
-            ObjectName  = stream.ReadNameReference();   
-            
+            ObjectName  = stream.ReadNameReference();
+
             if( stream.Version >= VArchetype )
             {
                 ArchetypeIndex = stream.ReadInt32();
             }
 
-            _ObjectFlagsOffset = stream.Position;   
+            _ObjectFlagsOffset = stream.Position;
             ObjectFlags = stream.ReadUInt32();
-            if( stream.Version >= VObjectFlagsToULONG 
+            if( stream.Version >= VObjectFlagsToULONG
 #if BIOSHOCK
-                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Package.LicenseeVersion >= 40) 
+                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Package.LicenseeVersion >= 40)
 #endif
                 )
             {
@@ -454,13 +454,13 @@ namespace UELib
             if( stream.Version < 220 )
                 return;
 
-            if( stream.Version < 543 
+            if( stream.Version < 543
 #if ALPHAPROTOCOL
-                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtcol          
-#endif     
+                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtcol
+#endif
             )
             {
-                int componentMapCount = stream.ReadInt32();  
+                int componentMapCount = stream.ReadInt32();
                 stream.Skip( componentMapCount * 12 );
                 //if( componentMapCount > 0 )
                 //{
@@ -488,7 +488,7 @@ namespace UELib
                     var flags = stream.ReadUInt32();
                     if( (flags & 1) != 0x0 )
                     {
-                        stream.ReadUInt32();  
+                        stream.ReadUInt32();
                     }
                     stream.Skip( 16 );  // guid
                     stream.ReadUInt32();    // 01000020

@@ -5,7 +5,7 @@ using UELib.Flags;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal struct with the functionality to contain Constants, Enums, Structs and Properties. 
+    /// Represents a unreal struct with the functionality to contain Constants, Enums, Structs and Properties.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UStruct : UField
@@ -38,7 +38,7 @@ namespace UELib.Core
         protected uint      StructFlags{ get; set; }
         protected UField    Children{ get; private set; }
         protected int       DataScriptSize{ get; private set; }
-        private int         ByteScriptSize{ get; set; }    
+        private int         ByteScriptSize{ get; set; }
         #endregion
 
         #region Script Members
@@ -63,7 +63,7 @@ namespace UELib.Core
 
         public long ScriptOffset
         {
-            get; 
+            get;
             private set;
         }
 
@@ -86,7 +86,7 @@ namespace UELib.Core
             Record( "Children", Children );
 
             if( Package.Version < VFriendlyNameMoved )
-            { 
+            {
                 // Moved to UFunction in UE3
                 FriendlyName = _Buffer.ReadNameReference();
                 Record( "FriendlyName", FriendlyName );
@@ -94,7 +94,7 @@ namespace UELib.Core
 
             if( Package.Version >= VStructFlags )
             {
-                if( Package.Version >= VCppText && !Package.IsConsoleCooked() 
+                if( Package.Version >= VCppText && !Package.IsConsoleCooked()
 #if VANGUARD
                     && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
 #endif
@@ -107,7 +107,7 @@ namespace UELib.Core
                 if( Package.Version < VStructFlagsMoved )
                 {
                     StructFlags = _Buffer.ReadUInt32();
-                    Record( "StructFlags", (StructFlags)StructFlags );  
+                    Record( "StructFlags", (StructFlags)StructFlags );
 
                     // Note: Bioshock inherits from the SWAT4's UE2 build.
 #if BIOSHOCK
@@ -119,7 +119,7 @@ namespace UELib.Core
                     }
 #endif
                     // This is high likely to be only for "Irrational Games" builds.
-                    if( Package.Version >= VProcessedText 
+                    if( Package.Version >= VProcessedText
 #if VANGUARD
                         && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
 #endif
@@ -147,7 +147,7 @@ namespace UELib.Core
                 DataScriptSize = _Buffer.ReadInt32();
                 Record( "DataScriptSize", DataScriptSize );
             }
-            else 
+            else
             {
                 DataScriptSize = ByteScriptSize;
             }
@@ -168,9 +168,9 @@ namespace UELib.Core
                 const int shadowcomplexVersion = 590;
                 const int mohaVersion = 421;
 
-                var isTrueScriptSize = Package.Version == mohaVersion || 
+                var isTrueScriptSize = Package.Version == mohaVersion ||
                 (
-                    Package.Version >= UnrealPackage.VINDEXDEPRECATED 
+                    Package.Version >= UnrealPackage.VINDEXDEPRECATED
                     && (Package.Version < moonbaseVersion && Package.Version > shadowcomplexVersion )
                 );
                 if( isTrueScriptSize )
@@ -213,7 +213,7 @@ namespace UELib.Core
             Variables = new List<UProperty>();
 
             for( var child = Children; child != null; child = child.NextField )
-            {       
+            {
                 if( child.GetType().IsSubclassOf( typeof(UProperty) ) )
                 {
                     Variables.Add( (UProperty)child );
@@ -225,7 +225,7 @@ namespace UELib.Core
                 else if( child.IsClassType( "Enum" ) )
                 {
                     Enums.Insert( 0, (UEnum)child );
-                }   
+                }
                 else if( child is UStruct && ((UStruct)(child)).IsPureStruct() )
                 {
                     Structs.Insert( 0, (UStruct)child );
@@ -244,7 +244,7 @@ namespace UELib.Core
                     }
                 }
             }
-        }   
+        }
         #endregion
 
         #region Methods

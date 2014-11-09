@@ -30,7 +30,7 @@ namespace UELib
             else if( function.IsPre() )
             {
                 Type = FunctionType.PreOperator;
-            } 
+            }
             else
             {
                 Type = FunctionType.Function;
@@ -38,8 +38,8 @@ namespace UELib
 
             OperPrecedence = function.OperPrecedence;
             ByteToken = function.NativeToken;
-            Name = Type == FunctionType.Function 
-                ? function.Name 
+            Name = Type == FunctionType.Function
+                ? function.Name
                 : function.FriendlyName;
         }
     }
@@ -73,14 +73,14 @@ namespace UELib
                 for( int i = 0; i < count; ++ i )
                 {
                     NativeTableList.Add
-                    ( 
+                    (
                         new NativeTableItem
                         {
                             Name = binReader.ReadString(),
                             OperPrecedence = binReader.ReadByte(),
                             Type = (FunctionType)binReader.ReadByte(),
                             ByteToken = binReader.ReadInt32()
-                        } 
+                        }
                     );
                 }
                 NativeTableList.Sort( (nt1, nt2) => nt1.ByteToken.CompareTo( nt2.ByteToken ) );
@@ -115,7 +115,7 @@ namespace UELib
             var stream = new FileStream( name + Extension, FileMode.Create, FileAccess.Write );
             using( var binWriter = new BinaryWriter( stream ) )
             {
-                binWriter.Write( Signature ); 
+                binWriter.Write( Signature );
                 binWriter.Write( NativeTableList.Count );
                 foreach( var item in NativeTableList )
                 {
@@ -124,7 +124,7 @@ namespace UELib
                     binWriter.Write( (byte)item.Type );
                     binWriter.Write( item.ByteToken );
                 }
-            }   
+            }
         }
     }
 }

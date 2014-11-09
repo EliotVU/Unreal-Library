@@ -18,13 +18,13 @@ namespace UELib.Core
             UDecompilingState.AddTabs( 1 );
             try
             {
-                output += DecompileProperties();    
+                output += DecompileProperties();
             }
             finally
             {
                 UDecompilingState.RemoveTabs( 1 );
             }
-            return output + String.Format( "{0}object end\r\n{0}// Reference: {1}'{2}'", UDecompilingState.Tabs, Class.Name, GetOuterGroup() );     
+            return output + String.Format( "{0}object end\r\n{0}// Reference: {1}'{2}'", UDecompilingState.Tabs, Class.Name, GetOuterGroup() );
         }
 
         // Ment to be overriden!
@@ -40,7 +40,7 @@ namespace UELib.Core
                 return UDecompilingState.Tabs + "// This object has no properties!\r\n";
 
             string output = String.Empty;
-            
+
             #if DEBUG
             output += UDecompilingState.Tabs + "// Object Offset:" + UnrealMethods.FlagToString( (uint)ExportTable.SerialOffset ) + "\r\n";
             #endif
@@ -50,8 +50,8 @@ namespace UELib.Core
                 string propOutput = Properties[i].Decompile();
 
                 // This is the first element of a static array
-                if( i+1 < Properties.Count 
-                    && Properties[i+1].Name == Properties[i].Name 
+                if( i+1 < Properties.Count
+                    && Properties[i+1].Name == Properties[i].Name
                     && Properties[i].ArrayIndex <= 0
                     && Properties[i+1].ArrayIndex > 0 )
                 {

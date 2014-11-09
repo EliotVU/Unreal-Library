@@ -31,7 +31,7 @@ namespace UELib
             }
 
             Fields.Push
-            ( 
+            (
                 new BinaryField
                 {
                     Name = name,

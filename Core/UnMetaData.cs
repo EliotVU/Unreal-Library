@@ -13,7 +13,7 @@ namespace UELib.Core
         #region Serialized Members
         public sealed class UMetaField : IUnrealDecompilable, IUnrealSerializableClass
         {
-            public int                  FieldIndex;         // ObjectIndex      
+            public int                  FieldIndex;         // ObjectIndex
             public string               FieldName;          // UT3, Mirrors Edge
             public UArray<UMetaTag>     MetaTags;
             public UnrealPackage        Owner;
@@ -30,7 +30,7 @@ namespace UELib.Core
                     // e.g. Core.Object.X
                     FieldName = stream.ReadText();
                 }
-                else 
+                else
                 {
                     FieldIndex = stream.ReadObjectIndex();
                 }
@@ -40,7 +40,7 @@ namespace UELib.Core
 
             /// <summary>
             /// Decompiles this object into a text format of:
-            /// 
+            ///
             /// LeftArrow
             ///     "ForEach MetaTags"
             ///     Tag.Decompile()|
@@ -71,7 +71,7 @@ namespace UELib.Core
                     tags.Remove( OItag );
                 }*/
 
-                if( tags.Count <= 0 ) 
+                if( tags.Count <= 0 )
                     return String.Empty;
 
                 var output = "<";
@@ -86,7 +86,7 @@ namespace UELib.Core
             {
                 return MetaTags.Find( tag => tag.TagName == tagName );
             }
-        }                                                               
+        }
 
         public sealed class UMetaTag : IUnrealDecompilable, IUnrealSerializableClass
         {
@@ -107,12 +107,12 @@ namespace UELib.Core
 
             /// <summary>
             /// Decompiles this object into a text format of:
-            /// 
+            ///
             /// TagName=TagValue
             /// </summary>
             /// <returns></returns>
             public string Decompile()
-            {                               
+            {
                 return TagName + "=" + TagValue;
             }
         }
@@ -146,11 +146,11 @@ namespace UELib.Core
         #region Decompilation
         /// <summary>
         /// Decompiles this object into a text format of:
-        /// 
+        ///
         /// Meta Count _MetaFields.Count
-        ///     
+        ///
         /// "ForEach _MetaFields"
-        /// 
+        ///
         ///     fieldname+Field.Decompile()
         /// </summary>
         /// <returns></returns>
@@ -173,7 +173,7 @@ namespace UELib.Core
                 {
                     content += "\r\n" + fieldname + field.Decompile();
                 }
-            }   
+            }
             return content;
         }
 
@@ -194,7 +194,7 @@ namespace UELib.Core
                     if( tags.Find( tag => tag.TagName == dfield.TagName ) != null )
                     {
                         continue;
-                    }           
+                    }
                     ut.TagName = dfield.TagName;
                     ut.TagValue = field.FieldName;
                     tags.Add( ut );

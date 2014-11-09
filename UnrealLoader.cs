@@ -10,7 +10,7 @@ namespace UELib
     {
         /// <summary>
         /// Stored packages that were imported by certain objects. Kept here that in case re-use is necessary, that it will be loaded faster.
-        /// The packages and the list is closed and cleared by the main package that loaded them with ImportObjects(). 
+        /// The packages and the list is closed and cleared by the main package that loaded them with ImportObjects().
         /// In any other case the list needs to be cleared manually.
         /// <summary>
         private static readonly List<UnrealPackage> CachedPackages = new List<UnrealPackage>();
@@ -28,7 +28,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Looks if the package is already loaded before by looking into the CachedPackages list first. 
+        /// Looks if the package is already loaded before by looking into the CachedPackages list first.
         /// If it is not found then it loads the given file specified by PackagePath and returns the serialized UnrealPackage.
         /// </summary>
         public static UnrealPackage LoadCachedPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
