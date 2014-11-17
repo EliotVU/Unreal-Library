@@ -1,3 +1,4 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/451gy3lrr06wfxcw?svg=true)](https://ci.appveyor.com/project/EliotVU/unreal-library)
 What is UE Library
 ==============
 
