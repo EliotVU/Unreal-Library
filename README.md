@@ -1,4 +1,6 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/451gy3lrr06wfxcw?svg=true)](https://ci.appveyor.com/project/EliotVU/unreal-library)
+[![Build status](https://ci.appveyor.com/api/projects/status/451gy3lrr06wfxcw?svg=true)](https://ci.appveyor.com/project/EliotVU/unreal-library) 
+[![Gratipay](https://img.shields.io/gratipay/EliotVU.svg)](https://www.gratipay.com/eliotvu/)
+
 What is UE Library
 ==============
 
