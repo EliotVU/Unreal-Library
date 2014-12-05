@@ -12,6 +12,16 @@ namespace UELib
 {
     using Core;
 
+    public class ObjectEventArgs : EventArgs
+    {
+        public UObject ObjectRef{ get; private set; }
+
+        public ObjectEventArgs( UObject objectRef )
+        {
+            ObjectRef = objectRef;
+        }
+    }
+
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
     /// event of a new added UELib.Core.UObject.
@@ -1568,14 +1578,5 @@ namespace UELib
             Stream.Dispose();
         }
         #endregion
-    }
-
-    [UnrealRegisterClass]
-    public class UPackage : UObject
-    {
-        public UPackage()
-        {
-            ShouldDeserializeOnDemand = true;
-        }
     }
 }

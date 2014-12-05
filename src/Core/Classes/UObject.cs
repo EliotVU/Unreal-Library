@@ -5,16 +5,6 @@ using System.IO;
 
 namespace UELib.Core
 {
-    public class ObjectEventArgs : EventArgs
-    {
-        public UObject ObjectRef{ get; private set; }
-
-        public ObjectEventArgs( UObject objectRef )
-        {
-            ObjectRef = objectRef;
-        }
-    }
-
     /// <summary>
     /// Represents a unreal object.
     /// </summary>
@@ -314,11 +304,9 @@ namespace UELib.Core
         /// </summary>
         public virtual void PostInitialize()
         {
-
         }
         public virtual void InitializeImports()
         {
-
         }
         #endregion
 
@@ -741,10 +729,5 @@ namespace UELib.Core
         {
             return false;
         }
-    }
-
-    [UnrealRegisterClass]
-    public partial class UPackage : UObject
-    {
     }
 }
