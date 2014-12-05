@@ -135,6 +135,12 @@
     <Compile Include="Core\Classes\Props\UXWeakReferenceProperty.cs" />
     <Compile Include="Core\Classes\UPackage.cs" />
     <Compile Include="Core\Classes\UPackageNode.cs" />
+    <Compile Include="Core\Tables\UDependencyTableItem.cs" />
+    <Compile Include="Core\Tables\UExportTableItem.cs" />
+    <Compile Include="Core\Tables\UGenerationTableItem.cs" />
+    <Compile Include="Core\Tables\UImportTableItem.cs" />
+    <Compile Include="Core\Tables\UNameTableItem.cs" />
+    <Compile Include="Core\Tables\UObjectTableItem.cs" />
     <Compile Include="Core\Tokens\ArrayTokens.cs" />
     <Compile Include="Core\Tokens\CastTokens.cs" />
     <Compile Include="Core\Tokens\ConstTokens.cs" />
@@ -201,7 +207,7 @@
     <Compile Include="UnrealPackageCompression.cs" />
     <Compile Include="UnrealStream.cs" />
     <Compile Include="UnrealSyntax.cs" />
-    <Compile Include="UnrealTables.cs" />
+    <Compile Include="Core\Tables\UTableItem.cs" />
     <Compile Include="UnrealTokens.cs" />
     <Compile Include="UnrealTypes.cs" />
   </ItemGroup>
@@ -227,9 +233,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Core\Tables\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
