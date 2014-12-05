@@ -114,37 +114,37 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMetaData.cs" />
-    <Compile Include="Core\Decompilers\Tokens\ArrayTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\CastTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\ConstTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\ContextTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\FieldTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\FunctionTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\JumpTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\LetTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\OtherTokens.cs" />
-    <Compile Include="Core\Decompilers\Tokens\Token.cs" />
-    <Compile Include="Core\Decompilers\UnClassDecompiler.cs" />
-    <Compile Include="Core\UnComponent.cs" />
-    <Compile Include="Core\Decompilers\UnDecompiler.cs" />
+    <Compile Include="Core\Tokens\ArrayTokens.cs" />
+    <Compile Include="Core\Tokens\CastTokens.cs" />
+    <Compile Include="Core\Tokens\ConstTokens.cs" />
+    <Compile Include="Core\Tokens\ContextTokens.cs" />
+    <Compile Include="Core\Tokens\FieldTokens.cs" />
+    <Compile Include="Core\Tokens\FunctionTokens.cs" />
+    <Compile Include="Core\Tokens\JumpTokens.cs" />
+    <Compile Include="Core\Tokens\LetTokens.cs" />
+    <Compile Include="Core\Tokens\OtherTokens.cs" />
+    <Compile Include="Core\Tokens\Token.cs" />
+    <Compile Include="Core\Classes\UnClassDecompiler.cs" />
+    <Compile Include="Core\Classes\UnComponent.cs" />
+    <Compile Include="UnDecompiler.cs" />
     <Compile Include="Core\UI Trees\UnNodes.cs" />
-    <Compile Include="Core\UnArray.cs" />
-    <Compile Include="Core\UnScriptStruct.cs" />
-    <Compile Include="Core\UnTextBuffer.cs" />
-    <Compile Include="Engine\UnModel.cs" />
-    <Compile Include="Engine\UnTexture.cs" />
-    <Compile Include="Engine\UnSound.cs" />
+    <Compile Include="Core\Classes\UnArray.cs" />
+    <Compile Include="Core\Classes\UnScriptStruct.cs" />
+    <Compile Include="Core\Classes\UnTextBuffer.cs" />
+    <Compile Include="Engine\Classes\UnModel.cs" />
+    <Compile Include="Engine\Classes\UnTexture.cs" />
+    <Compile Include="Engine\Classes\UnSound.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Core\Decompilers\UnConstDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnEnumDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnFieldDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnFunctionDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnObjectDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnPropertiesDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnStateDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnStructDecompiler.cs" />
-    <Compile Include="Core\Decompilers\UnTextBufferDecompiler.cs" />
+    <Compile Include="Core\Classes\UnConstDecompiler.cs" />
+    <Compile Include="Core\Classes\UnEnumDecompiler.cs" />
+    <Compile Include="Core\Classes\UnFieldDecompiler.cs" />
+    <Compile Include="Core\Classes\UnFunctionDecompiler.cs" />
+    <Compile Include="Core\Classes\UnObjectDecompiler.cs" />
+    <Compile Include="Core\Classes\UnPropertiesDecompiler.cs" />
+    <Compile Include="Core\Classes\UnStateDecompiler.cs" />
+    <Compile Include="Core\Classes\UnStructDecompiler.cs" />
+    <Compile Include="Core\Classes\UnTextBufferDecompiler.cs" />
     <Compile Include="Core\UI Trees\UnClassUI.cs" />
     <Compile Include="Core\UI Trees\UnFieldUI.cs" />
     <Compile Include="Core\UI Trees\UnFunctionUI.cs" />
@@ -152,18 +152,18 @@
     <Compile Include="Core\UI Trees\UnPropertiesUI.cs" />
     <Compile Include="Core\UI Trees\UnStateUI.cs" />
     <Compile Include="Core\UI Trees\UnStructUI.cs" />
-    <Compile Include="Core\UnClass.cs" />
-    <Compile Include="Core\UnConst.cs" />
+    <Compile Include="Core\Classes\UnClass.cs" />
+    <Compile Include="Core\Classes\UnConst.cs" />
     <Compile Include="Core\UnDefaultProperties.cs" />
-    <Compile Include="Core\UnEnum.cs" />
-    <Compile Include="Core\UnField.cs" />
-    <Compile Include="Core\UnFunction.cs" />
-    <Compile Include="Core\UnMetaData.cs" />
-    <Compile Include="Core\UnObject.cs" />
+    <Compile Include="Core\Classes\UnEnum.cs" />
+    <Compile Include="Core\Classes\UnField.cs" />
+    <Compile Include="Core\Classes\UnFunction.cs" />
+    <Compile Include="Core\Classes\UnMetaData.cs" />
+    <Compile Include="Core\Classes\UnObject.cs" />
     <Compile Include="Core\UnProperties.cs" />
-    <Compile Include="Core\UnState.cs" />
-    <Compile Include="Core\UnStruct.cs" />
-    <Compile Include="Engine\UnFont.cs" />
+    <Compile Include="Core\Classes\UnState.cs" />
+    <Compile Include="Core\Classes\UnStruct.cs" />
+    <Compile Include="Engine\Classes\UnFont.cs" />
     <Compile Include="NativesTablePackage.cs" />
     <Compile Include="UDecompilingState.cs" />
     <Compile Include="UnrealCache.cs" />
@@ -204,10 +204,11 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
