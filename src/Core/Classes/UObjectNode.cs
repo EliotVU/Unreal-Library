@@ -130,12 +130,4 @@ namespace UELib.Core
             return null;
         }
     }
-
-    public partial class UPackage
-    {
-        public override string GetImageName()
-        {
-            return "Library";
-        }
-    }
 }
