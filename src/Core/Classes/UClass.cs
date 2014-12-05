@@ -157,6 +157,11 @@ namespace UELib.Core
                 Record( "ConfigName", ConfigName );
 
                 const int vHideCategoriesOldOrder = 539;
+                var isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
+#if TERA
+                            || Package.Build == UnrealPackage.GameBuild.BuildName.Tera 
+#endif           
+                    ;
 
                 // TODO: Corrigate Version
                 if( Package.Version >= 100 )
@@ -165,11 +170,7 @@ namespace UELib.Core
                     if( Package.Version >= 220 )
                     {
                         // TODO: Corrigate Version
-                        if( Package.Version <= vHideCategoriesOldOrder
-#if TERA
-                            || Package.Build == UnrealPackage.GameBuild.BuildName.Tera
-#endif
-                            )
+                        if( isHideCategoriesOldOrder )
                         {
                             DeserializeHideCategories();
                         }
@@ -196,11 +197,7 @@ namespace UELib.Core
                         }
 
                         // TODO: Corrigate Version
-                        if( (Package.Version < 220 || Package.Version > vHideCategoriesOldOrder) 
-#if TERA
-                            && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
-#endif
-                            )
+                        if( Package.Version < 220 || !isHideCategoriesOldOrder )
                         {
                             DeserializeHideCategories();
                         }
