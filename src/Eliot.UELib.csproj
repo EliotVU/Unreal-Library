@@ -148,8 +148,9 @@
     <Compile Include="Core\Classes\UClassDecompiler.cs" />
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
+    <Compile Include="Engine\Classes\UPalette.cs" />
     <Compile Include="ObjectNodes.cs" />
-    <Compile Include="Core\Classes\UArray.cs" />
+    <Compile Include="Core\Types\UArray.cs" />
     <Compile Include="Core\Classes\UScriptStruct.cs" />
     <Compile Include="Core\Classes\UTextBuffer.cs" />
     <Compile Include="Engine\Classes\UModel.cs" />
@@ -187,6 +188,7 @@
     <Compile Include="Engine\Classes\UFont.cs" />
     <Compile Include="NativesTablePackage.cs" />
     <Compile Include="UDecompilingState.cs" />
+    <Compile Include="Core\Types\UName.cs" />
     <Compile Include="UnrealCache.cs" />
     <Compile Include="UnrealConfig.cs" />
     <Compile Include="UnrealFlags.cs" />
@@ -225,7 +227,9 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Core\Tables\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
