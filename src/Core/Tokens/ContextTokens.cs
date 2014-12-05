@@ -12,6 +12,12 @@
 
                 public override void Deserialize( IUnrealStream stream )
                 {
+                    var propertyAdded = stream.Version >= VSizeByteMoved
+#if TERA
+                        && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                        ; 
+
                     // A.?
                     DeserializeNext();
 
@@ -20,7 +26,7 @@
                     Decompiler.AlignSize( sizeof(ushort) );
 
                     // Doesn't seem to exist in APB
-                    if( stream.Version >= VSizeByteMoved )
+                    if( propertyAdded )
                     {
                         // Property
                         stream.ReadObjectIndex();
@@ -32,7 +38,7 @@
                     Decompiler.AlignSize( sizeof(byte) );
 
                     // Additional byte in APB?
-                    if( stream.Version > 512 && stream.Version < VSizeByteMoved )
+                    if( stream.Version > 512 && !propertyAdded )
                     {
                         stream.ReadByte();
                         Decompiler.AlignSize( sizeof(byte) );

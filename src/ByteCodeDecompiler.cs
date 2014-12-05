@@ -81,7 +81,11 @@ namespace UELib.Core
                 }
 
                 const short vObjectSizeTo8 = 587;
-                if( Buffer.Version >= vObjectSizeTo8 )
+                if( Buffer.Version >= vObjectSizeTo8
+#if TERA
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                    )
                 {
                     _ObjectMemorySize = 8;
                 }

@@ -350,6 +350,12 @@ namespace UELib
                 ShadowComplex,
 
                 /// <summary>
+                /// 610/014
+                /// </summary>
+                [Build( 610, 14 )]
+                Tera,
+
+                /// <summary>
                 /// 727/075
                 /// </summary>
                 [Build( 727, 75 )]
@@ -874,9 +880,23 @@ namespace UELib
                 GUID = stream.ReadGuid();
                 Console.Write( "\r\n\tGUID:" + GUID + "\r\n" );
 
+#if TERA
+                if( Build == GameBuild.BuildName.Tera )
+                {
+                    stream.Position -= 4;
+                }
+#endif
+
                 int generationCount = stream.ReadInt32();
                 Generations = new UArray<UGenerationTableItem>( stream, generationCount );
                 Console.WriteLine( "Deserialized {0} generations", Generations.Count );
+
+#if TERA
+                if( Build == GameBuild.BuildName.Tera )
+                {
+                    _TablesData.NamesCount = (uint)Generations.Last().NamesCount;
+                }
+#endif
 
                 if( Version >= VEngineVersion )
                 {
