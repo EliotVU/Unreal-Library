@@ -350,6 +350,12 @@ namespace UELib
                 ShadowComplex,
 
                 /// <summary>
+                /// 610/014
+                /// </summary>
+                [Build( 610, 14 )]
+                Tera,
+
+                /// <summary>
                 /// 727/075
                 /// </summary>
                 [Build( 727, 75 )]
@@ -874,9 +880,23 @@ namespace UELib
                 GUID = stream.ReadGuid();
                 Console.Write( "\r\n\tGUID:" + GUID + "\r\n" );
 
+#if TERA
+                if( Build == GameBuild.BuildName.Tera )
+                {
+                    stream.Position -= 4;
+                }
+#endif
+
                 int generationCount = stream.ReadInt32();
                 Generations = new UArray<UGenerationTableItem>( stream, generationCount );
                 Console.WriteLine( "Deserialized {0} generations", Generations.Count );
+
+#if TERA
+                if( Build == GameBuild.BuildName.Tera )
+                {
+                    _TablesData.NamesCount = (uint)Generations.Last().NamesCount;
+                }
+#endif
 
                 if( Version >= VEngineVersion )
                 {
@@ -1194,12 +1214,26 @@ namespace UELib
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Construct ) );
             foreach( var exp in Exports )
             {
-                CreateObjectForTable( exp );
+                try
+                {
+                    CreateObjectForTable( exp );
+                }
+                catch( Exception exc )
+                {
+                    throw new UnrealException( "couldn't create export object for " + exp, exc );
+                }
             }
 
             foreach( var imp in Imports )
             {
-                CreateObjectForTable( imp );
+                try
+                {
+                    CreateObjectForTable( imp );
+                }
+                catch( Exception exc )
+                {
+                    throw new UnrealException( "couldn't create import object for " + imp, exc );
+                }
             }
         }
 
@@ -1334,10 +1368,10 @@ namespace UELib
         }
 
         /// <summary>
-        /// Returns a Object that resides at the specified ObjectIndex.
-        ///
-        /// if index is positive a exported Object will be returned.
-        /// if index is negative a imported Object will be returned.
+        /// Returns an Object that resides at the specified ObjectIndex.
+        /// 
+        /// if index is positive an exported Object will be returned.
+        /// if index is negative an imported Object will be returned.
         /// if index is zero null will be returned.
         /// </summary>
         /// <param name="objectIndex">The index of the Object in a tablelist.</param>
@@ -1350,7 +1384,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Returns a Object name that resides at the specified ObjectIndex.
+        /// Returns an Object name that resides at the specified ObjectIndex.
         /// </summary>
         /// <param name="objectIndex">The index of the object in a tablelist.</param>
         /// <returns>The found UELib.Core.UObject name if any.</returns>
@@ -1370,10 +1404,10 @@ namespace UELib
         }
 
         /// <summary>
-        /// Returns a UnrealTable that resides at the specified TableIndex.
-        ///
-        /// if index is positive a ExportTable will be returned.
-        /// if index is negative a ImportTable will be returned.
+        /// Returns an UnrealTable that resides at the specified TableIndex.
+        /// 
+        /// if index is positive an ExportTable will be returned.
+        /// if index is negative an ImportTable will be returned.
         /// if index is zero null will be returned.
         /// </summary>
         /// <param name="tableIndex">The index of the Table.</param>
@@ -1386,7 +1420,7 @@ namespace UELib
         }
 
         /// <summary>
-        /// Tries to find a UELib.Core.UObject with a specified name and type.
+        /// Tries to find an UELib.Core.UObject with a specified name and type.
         /// </summary>
         /// <param name="objectName">The name of the object to find.</param>
         /// <param name="type">The type of the object to find.</param>
@@ -1399,7 +1433,7 @@ namespace UELib
                 return null;
             }
 
-            var obj = Objects.Find( o => String.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+            var obj = Objects.Find( o => String.Compare( o.Name, objectName, StringComparison.OrdinalIgnoreCase ) == 0 &&
                 (checkForSubclass ? o.GetType().IsSubclassOf( type ) : o.GetType() == type) );
             return obj;
         }

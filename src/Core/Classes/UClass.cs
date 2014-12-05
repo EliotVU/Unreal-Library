@@ -157,6 +157,11 @@ namespace UELib.Core
                 Record( "ConfigName", ConfigName );
 
                 const int vHideCategoriesOldOrder = 539;
+                var isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
+#if TERA
+                            || Package.Build == UnrealPackage.GameBuild.BuildName.Tera 
+#endif           
+                    ;
 
                 // TODO: Corrigate Version
                 if( Package.Version >= 100 )
@@ -165,7 +170,7 @@ namespace UELib.Core
                     if( Package.Version >= 220 )
                     {
                         // TODO: Corrigate Version
-                        if( Package.Version <= vHideCategoriesOldOrder )
+                        if( isHideCategoriesOldOrder )
                         {
                             DeserializeHideCategories();
                         }
@@ -182,13 +187,17 @@ namespace UELib.Core
 
                     if( !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed )
                     {
-                        if( Package.Version >= 603 )
+                        if( Package.Version >= 603
+ #if TERA
+                            && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                            )
                         {
                             DontSortCategories = DeserializeGroup( "DontSortCategories" );
                         }
 
                         // TODO: Corrigate Version
-                        if( Package.Version < 220 || Package.Version > vHideCategoriesOldOrder )
+                        if( Package.Version < 220 || !isHideCategoriesOldOrder )
                         {
                             DeserializeHideCategories();
                         }
@@ -198,7 +207,7 @@ namespace UELib.Core
                         {
                             // 490:GoW1, 576:CrimeCraft
                             if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories ))
-                                || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576 )
+                                || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576)
                             {
                                 AutoExpandCategories = DeserializeGroup( "AutoExpandCategories" );
                             }
@@ -250,7 +259,11 @@ namespace UELib.Core
 
                             // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
-                            if( Package.Version > 575 && Package.Version < 674 )
+                            if( Package.Version > 575 && Package.Version < 674 
+#if TERA
+                                && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                                )
                             {
                                 int unk2 = _Buffer.ReadInt32();
                                 Record( "??Int32", unk2 );

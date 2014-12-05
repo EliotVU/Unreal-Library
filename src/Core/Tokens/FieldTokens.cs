@@ -87,10 +87,12 @@ namespace UELib.Core
                         Decompiler.AlignSize( sizeof(int) );
                     }
 
+                    // Unknown purpose.
                     NameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
-                    // TODO: Corrigate version. Definitely not in Mirrors Edge(536)
-                    if( stream.Version > 536 )
+
+                    // TODO: Corrigate version. Seen in version ~648(The Ball) may have been introduced earlier, but not prior 610.
+                    if( stream.Version > 610 )
                     {
                         base.Deserialize( stream );
                     }
