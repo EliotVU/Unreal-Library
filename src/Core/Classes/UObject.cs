@@ -5,6 +5,16 @@ using System.IO;
 
 namespace UELib.Core
 {
+    public class ObjectEventArgs : EventArgs
+    {
+        public UObject ObjectRef{ get; private set; }
+
+        public ObjectEventArgs( UObject objectRef )
+        {
+            ObjectRef = objectRef;
+        }
+    }
+
     /// <summary>
     /// Represents a unreal object.
     /// </summary>
