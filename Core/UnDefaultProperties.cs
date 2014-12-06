@@ -28,12 +28,12 @@ namespace UELib.Core
         private const int           VEnumName           = 633;
         private const int           VBoolSizeToOne      = 673;
 
-        private IUnrealStream       _Buffer{ get{ return _Container.Buffer; } }
+        public IUnrealStream       _Buffer{ get{ return _Container.Buffer; } }
         private readonly UObject    _Container;
         private UStruct             _Outer;
 
         internal long               _BeginOffset{ get; set; }
-        private long                _ValueOffset{ get; set; }
+        public long                _ValueOffset{ get; set; }
         private long                _EndOffset{ get{ return _ValueOffset + Size; } }
         private byte                _TempFlags{ get; set; }
 

@@ -133,6 +133,8 @@
     <Compile Include="Core\UnScriptStruct.cs" />
     <Compile Include="Core\UnTextBuffer.cs" />
     <Compile Include="Engine\UnModel.cs" />
+    <Compile Include="Engine\UnPrimative.cs" />
+    <Compile Include="Engine\UnStaticMesh.cs" />
     <Compile Include="Engine\UnTexture.cs" />
     <Compile Include="Engine\UnSound.cs" />
     <Compile Include="GlobalSuppressions.cs" />
@@ -183,6 +185,7 @@
     <Compile Include="UnrealTables.cs" />
     <Compile Include="UnrealTokens.cs" />
     <Compile Include="UnrealTypes.cs" />
+    <Compile Include="Utility.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
@@ -209,7 +212,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
