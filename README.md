@@ -1,11 +1,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/451gy3lrr06wfxcw?svg=true)](https://ci.appveyor.com/project/EliotVU/unreal-library) 
 [![Gratipay](https://img.shields.io/gratipay/EliotVU.svg)](https://www.gratipay.com/eliotvu/)
 
-What is UE Library
-==============
-
-This provides you an API to parse/deserialize package files from the Unreal Engine such as .UDK, .UPK, etc.
-The API grants access to every object that resides within such packages. 
+The Unreal library provides you an API to parse/deserialize package files such as .UDK, .UPK, from Unreal Engine games, and provide you the necessary methods to navigate its contents.
 
 At the moment these are all the object classes that are supported by this API:
 
