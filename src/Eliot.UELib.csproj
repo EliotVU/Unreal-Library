@@ -42,7 +42,7 @@
     <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -90,7 +90,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
     <OutputPath>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\</OutputPath>
-    <DefineConstants>DECOMPILE BINARYMETADATA SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE</DefineConstants>
+    <DefineConstants>DECOMPILE BINARYMETADATA SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE  BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE</DefineConstants>
     <Optimize>true</Optimize>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -102,7 +102,8 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <DocumentationFile>..\..\..\..\..\..\..\Program Files %28x86%29\UE Explorer\Eliot.UELib.XML</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -125,14 +126,18 @@
     <Compile Include="Core\Classes\Props\UInterfaceProperty.cs" />
     <Compile Include="Core\Classes\Props\UIntProperty.cs" />
     <Compile Include="Core\Classes\Props\UMapProperty.cs" />
+    <Compile Include="Core\Classes\Props\Custom\UMKItemNoDestroyProperty.cs" />
     <Compile Include="Core\Classes\Props\UNameProperty.cs" />
     <Compile Include="Core\Classes\Props\UObjectProperty.cs" />
     <Compile Include="Core\Classes\Props\UPointerProperty.cs" />
-    <Compile Include="Core\Classes\Props\UQWordProperty.cs" />
+    <Compile Include="Core\Classes\Props\Custom\UQWordProperty.cs" />
+    <Compile Include="Core\Classes\Props\Custom\UNativeTypeProperty.cs" />
+    <Compile Include="Core\Classes\Props\Custom\UMKItemProperty.cs" />
     <Compile Include="Core\Classes\Props\UStringProperty.cs" />
     <Compile Include="Core\Classes\Props\UStrProperty.cs" />
     <Compile Include="Core\Classes\Props\UStructProperty.cs" />
-    <Compile Include="Core\Classes\Props\UXWeakReferenceProperty.cs" />
+    <Compile Include="Core\Classes\Props\Custom\UResourceProperty.cs" />
+    <Compile Include="Core\Classes\Props\Custom\UXWeakReferenceProperty.cs" />
     <Compile Include="Core\Classes\UPackage.cs" />
     <Compile Include="Core\Classes\UPackageNode.cs" />
     <Compile Include="Core\Tables\UDependencyTableItem.cs" />

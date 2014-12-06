@@ -109,14 +109,12 @@ namespace UELib
             {
                 SerialOffset = stream.ReadIndex();
             }
-
 #if BIOSHOCK
             if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Version >= 130 )
             {
                 stream.Skip( sizeof(int) );
             }
 #endif
-
             if( stream.Version < 220 )
                 return;
 
@@ -144,7 +142,6 @@ namespace UELib
             ExportFlags = stream.ReadUInt32();
             if( stream.Version < 322 )
                 return;
-
 #if BIOSHOCK
             if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite )
             {
@@ -162,18 +159,23 @@ namespace UELib
                 return;
             }
 #endif
-
-            int netObjectCount = stream.ReadInt32();
-            stream.Skip( netObjectCount * 4 );
-            //if( netObjectCount > 0 )
-            //{
-            //    NetObjects = new List<int>( netObjectCount );
-            //    for( int i = 0; i < netObjectCount; ++ i )
-            //    {
-            //        NetObjects.Add( stream.ReadObjectIndex() );
-            //    }
-            //}
-
+#if MKKE
+            if( stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE )
+            {            
+#endif
+                int netObjectCount = stream.ReadInt32();
+                stream.Skip( netObjectCount * 4 );
+                //if( netObjectCount > 0 )
+                //{
+                //    NetObjects = new List<int>( netObjectCount );
+                //    for( int i = 0; i < netObjectCount; ++ i )
+                //    {
+                //        NetObjects.Add( stream.ReadObjectIndex() );
+                //    }
+                //}
+#if MKKE
+            }
+#endif
             stream.Skip( 16 );  // Package guid
             if( stream.Version > 486 )  // 475?  486(> Stargate Worlds)
             {
