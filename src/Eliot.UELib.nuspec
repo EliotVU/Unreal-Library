@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Eliot.UELib.dll</id>
+    <version>1.2.6.0</version>
+    <authors>Eliot</authors>
+    <owners>Eliot</owners>
+    <licenseUrl>https://github.com/EliotVU/Unreal-Library/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/EliotVU/Unreal-Library</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A library for parsing data from games built with the Unreal Engine such as .u, and .upk files.</description>
+    <releaseNotes>Initial release</releaseNotes>
+    <copyright>Copyright 2009-2014 Eliot van Uytfanghe</copyright>
+    <tags>UnrealEngine UnrealScript Decompiler UPK Explorer Viewer Exporter</tags>
+    <dependencies>
+    </dependencies>
+  </metadata>
+</package>
