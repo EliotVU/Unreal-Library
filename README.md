@@ -13,16 +13,18 @@ At the moment these are all the object classes that are supported by this API:
     UClass, UTextBuffer, UMetaData, UFont, USound, UPackage
 
 
-Installing
+Installation
 ==============
 
-Fork this project and grab the Eliot.UELib.dll from your forked repository, or grab this repository from the Releases tab.
+Either use NuGet's package manager console or download from: https://www.nuget.org/packages/Eliot.UELib.dll/
 
-Using the Library
+    PM> Install-Package Eliot.UELib.dll
+
+Usage
 ==============
 
-Assuming the library is referenced by your project, you should now be able to use the API by starting with the static class named UnrealLoader.
-Start by importing the library for example: "using UELib;"
+Include the either the library's .dll file or the forked source code into your own project.
+Once referenced, you can start using the library by using the namespace UELib as follows: "using UELib;"
 
 Loading a Unreal Package
 ==============
