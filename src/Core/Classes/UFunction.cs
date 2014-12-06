@@ -89,7 +89,11 @@ namespace UELib.Core
                 Record( "RepOffset", RepOffset );
             }
 
-            if( Package.Version >= VFriendlyName && !Package.IsConsoleCooked() )
+            if( (Package.Version >= VFriendlyName && !Package.IsConsoleCooked())
+#if MKKE
+                || Package.Build == UnrealPackage.GameBuild.BuildName.MKKE
+#endif
+                )
             {
                 FriendlyName = _Buffer.ReadNameReference();
                 Record( "FriendlyName", FriendlyName );

@@ -201,7 +201,11 @@ namespace UELib.Core
             Record( "ExportSize", ExportTable.SerialSize );
 #endif
             // TODO: Corrigate version
-            if( Package.Version >= 322 )
+            if( Package.Version >= 322 
+#if MKKE
+                && Package.Build != UnrealPackage.GameBuild.BuildName.MKKE
+#endif
+                )
             {
                 // TODO: Corrigate version. Fix component detection!
                 //if( _Buffer.Version > 400

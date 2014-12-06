@@ -94,11 +94,18 @@
                         // Struct index
                         stream.ReadObjectIndex();
                         Decompiler.AlignObjectSize();
+#if MKKE
+                        if( Package.Build != UnrealPackage.GameBuild.BuildName.MKKE )
+                        {
+#endif
+                            stream.Position ++;
+                            Decompiler.AlignSize( sizeof(byte) );
+#if MKKE
+                        }
+#endif
 
-                        stream.Position ++;
-                        Decompiler.AlignSize( sizeof(byte) );
-                        // TODO: Corrigate version. Definitely didn't exist in MOHA(421)
-                        if( stream.Version > 421 )
+                        // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in SWG(486).
+                        if( stream.Version > 472 )
                         {
                             stream.Position ++;
                             Decompiler.AlignSize( sizeof(byte) );

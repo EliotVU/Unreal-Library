@@ -284,6 +284,12 @@ namespace UELib
                 MOHA,
 
                 /// <summary>
+                /// 472/046
+                /// </summary>
+                [Build( 472, 46, 1 )]
+                MKKE,
+
+                /// <summary>
                 /// 490/009
                 /// </summary>
                 [Build( 490, 9 )]
@@ -834,6 +840,12 @@ namespace UELib
                     unk.ToString();
                 }
 #endif
+#if MKKE
+                if( Build == GameBuild.BuildName.MKKE )
+                {
+                    stream.Skip( 8 );
+                }
+#endif
                 // Offset to the first class(not object) in the package.
                 HeaderSize = stream.ReadUInt32();
                 Console.WriteLine( "\tHeader Size: " + HeaderSize );
@@ -877,27 +889,36 @@ namespace UELib
                     stream.Skip( 4 );
                 }
 #endif
+#if MKKE
+                if( Build == GameBuild.BuildName.MKKE )
+                {
+                    stream.Skip( 4 );
+                }
+#endif
                 GUID = stream.ReadGuid();
                 Console.Write( "\r\n\tGUID:" + GUID + "\r\n" );
-
 #if TERA
                 if( Build == GameBuild.BuildName.Tera )
                 {
                     stream.Position -= 4;
                 }
 #endif
-
+#if MKKE
+                if( Build != GameBuild.BuildName.MKKE )
+                {
+#endif
                 int generationCount = stream.ReadInt32();
                 Generations = new UArray<UGenerationTableItem>( stream, generationCount );
                 Console.WriteLine( "Deserialized {0} generations", Generations.Count );
-
+#if MKKE
+                }
+#endif
 #if TERA
                 if( Build == GameBuild.BuildName.Tera )
                 {
                     _TablesData.NamesCount = (uint)Generations.Last().NamesCount;
                 }
 #endif
-
                 if( Version >= VEngineVersion )
                 {
                     // The Engine Version this package was created with
