@@ -1,7 +1,10 @@
 ﻿using System;
 using UELib.Core;
-
-
+using System.Text.RegularExpressions;
+using Microsoft.CSharp;
+using System.Collections.Generic;
+using System.CodeDom.Compiler;
+using System.Reflection;
 namespace UELib.Engine
 {
     [UnrealRegisterClass]
@@ -15,7 +18,7 @@ namespace UELib.Engine
         public UArray<SMeshCoords> texture_coords { get; private set; }
         public ushort[] vertex_indicies_1;
         public ushort[] vertex_indicies_2;
-
+        public List<UMaterial> Materials;
         public UStaticMesh()
         {
             ShouldDeserializeOnDemand = true;
@@ -24,7 +27,7 @@ namespace UELib.Engine
         {
 
             base.Deserialize();
-
+            Materials = new List<UMaterial>();
             Surfices = new UArray<SMeshSurface>();
             Surfices.Deserialize(_Buffer, delegate(SMeshSurface mm) { mm.Owner = this; });
             another_bb = new Box(_Buffer);
@@ -60,15 +63,54 @@ namespace UELib.Engine
                 {
                     case "Materials":
                        var str =  property.Decompile();
-                        Console.WriteLine(str);
+                       string[] stringSeparators = new string[] { "\r\n" };
+                       string[] str2 = str.Split(stringSeparators, StringSplitOptions.None);
+                       foreach (string mat in str2)
+                       {
+                           Materials.Add(new UMaterial(mat));
+                       }
                         break;
                     default:
+                        Console.WriteLine("Unprocessed property");
                         break;
                 }
-                //property.Deserialize();
-                Console.WriteLine();
             }
 
+        }
+    }
+    public class UMaterial{
+        public bool bNoDynamicShadowCast { get; set; }
+        public bool EnableCollisionforShadow { get; set; }
+        public bool EnableCollision { get; set; }
+        public string Material { get; set; }
+        public UMaterial(string data) {
+            var str3 = data.Split(new char[] { '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+            var str4 = str3[3].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            Type type = this.GetType();
+            foreach (string s in str4) {
+                var kv = s.Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+               
+                    SetValue(kv[0], kv[1]);
+            }
+        }
+        //probably is not a bad idea to make it an extension
+        public void SetValue( string propertyName, object propertyVal)
+        {
+            Type type = this.GetType();
+
+            PropertyInfo propertyInfo = type.GetProperty(propertyName);
+            if (propertyInfo == null) {
+                return;
+            }
+            Type propertyType = propertyInfo.PropertyType;
+            var targetType = IsNullableType(propertyInfo.PropertyType) ? Nullable.GetUnderlyingType(propertyInfo.PropertyType) : propertyInfo.PropertyType;
+            propertyVal = Convert.ChangeType(propertyVal, targetType);
+            propertyInfo.SetValue(this, propertyVal, null);
+
+        }
+        private static bool IsNullableType(Type type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition().Equals(typeof(Nullable<>));
         }
     }
     public class SMeshCoord : IUnrealSerializableClass
