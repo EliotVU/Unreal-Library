@@ -46,7 +46,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>C:\Program Files %28x86%29\UE Explorer\Eliot.UELib.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <NoWarn>
     </NoWarn>
@@ -135,6 +136,7 @@
     <Compile Include="Engine\UnTexture.cs" />
     <Compile Include="Engine\UnSound.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="LineagePackageLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Decompilers\UnConstDecompiler.cs" />
     <Compile Include="Core\Decompilers\UnEnumDecompiler.cs" />
@@ -207,7 +209,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
