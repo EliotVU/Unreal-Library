@@ -68,8 +68,6 @@ namespace UELib
         }
         public static bool Initialize(string root_path)
         {
-            if (!Directory.Exists("Decrypt"))
-                Directory.CreateDirectory("Decrypt");
             L2Paths = new Dictionary<string, string>();
             L2Paths.Add("Animations", "ukx");
             L2Paths.Add("MAPS", "unr");
