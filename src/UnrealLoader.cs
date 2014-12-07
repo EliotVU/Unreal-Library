@@ -20,7 +20,19 @@ namespace UELib
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadPackage( string packagePath, FileAccess fileAccess = FileAccess.Read, IBufferDecoder decoder = null )
+        public static UnrealPackage LoadPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
+        {
+            var stream = new UPackageStream( packagePath, FileMode.Open, fileAccess );
+            var package = new UnrealPackage( stream );
+            package.Deserialize( stream );
+            return package;
+        }
+
+        /// <summary>
+        /// Loads the given file specified by PackagePath and
+        /// returns the serialized UnrealPackage.
+        /// </summary>
+        public static UnrealPackage LoadPackage( string packagePath, IBufferDecoder decoder = null, FileAccess fileAccess = FileAccess.Read )
         {
             var stream = new UPackageStream( packagePath, FileMode.Open, fileAccess );
             var package = new UnrealPackage( stream ) {Decoder = decoder};
@@ -32,13 +44,13 @@ namespace UELib
         /// Looks if the package is already loaded before by looking into the CachedPackages list first.
         /// If it is not found then it loads the given file specified by PackagePath and returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadCachedPackage( string packagePath, FileAccess fileAccess = FileAccess.Read, IBufferDecoder decoder = null )
+        public static UnrealPackage LoadCachedPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
         {
             var package = _CachedPackages.Find( pkg => pkg.PackageName == Path.GetFileNameWithoutExtension( packagePath ) );
-            if( package != null ) 
+            if( package != null )
                 return package;
 
-            package = LoadPackage( packagePath, fileAccess, decoder );
+            package = LoadPackage( packagePath, fileAccess);
             if( package != null )
             {
                 _CachedPackages.Add( package );

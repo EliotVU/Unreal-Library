@@ -739,7 +739,7 @@ namespace UELib
         {
             _FullPackageName = stream.Name;
             Stream = stream;
-            Stream.Package = this;
+            Stream.PostInit( this );
 
             // File Type
             // Signature is tested in UPackageStream
@@ -1417,7 +1417,7 @@ namespace UELib
 
         /// <summary>
         /// Returns an Object that resides at the specified ObjectIndex.
-        /// 
+        ///
         /// if index is positive an exported Object will be returned.
         /// if index is negative an imported Object will be returned.
         /// if index is zero null will be returned.
@@ -1453,7 +1453,7 @@ namespace UELib
 
         /// <summary>
         /// Returns an UnrealTable that resides at the specified TableIndex.
-        /// 
+        ///
         /// if index is positive an ExportTable will be returned.
         /// if index is negative an ImportTable will be returned.
         /// if index is zero null will be returned.

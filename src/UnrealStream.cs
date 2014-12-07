@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UELib.Core;
-using UELib.Decoding;
 
 namespace UELib
 {
@@ -390,7 +389,7 @@ namespace UELib
 
     public class UPackageStream : FileStream, IUnrealStream
     {
-        public UnrealPackage Package{ get; set; }
+        public UnrealPackage Package{ get; private set; }
 
         /// <inheritdoc/>
         public uint Version
@@ -410,26 +409,6 @@ namespace UELib
         {
             UR = null;
             UW = null;
-            if( CanRead && mode == FileMode.Open )
-            {
-                var bytes = new byte[4];
-                Read( bytes, 0, 4 );
-                uint readSignature = BitConverter.ToUInt32( bytes, 0 );
-                if( readSignature == UnrealPackage.Signature_BigEndian )
-                {
-                    Console.WriteLine( "Encoding:BigEndian" );
-                    BigEndianCode = true;
-                }
-
-                if( !UnrealConfig.SuppressSignature
-                    && readSignature != UnrealPackage.Signature
-                    && readSignature != UnrealPackage.Signature_BigEndian )
-                {
-                    throw new FileLoadException( path + " isn't a UnrealPackage file!" );
-                }
-                Position = 4;
-            }
-
             InitBuffer();
         }
 
@@ -438,10 +417,6 @@ namespace UELib
             if( CanRead && UR == null )
             {
                 UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
-                if( Package.Decoder != null )
-                {
-                    Package.Decoder.PreDecode( this );
-                }
             }
 
             if( CanWrite && UW == null )
@@ -450,6 +425,40 @@ namespace UELib
             }
         }
 
+        public void PostInit( UnrealPackage package )
+        {
+            Package = package;
+
+            if( !CanRead )
+                return;
+
+            if( package.Decoder != null )
+            {
+                package.Decoder.PreDecode( this );
+            }
+
+            var bytes = new byte[4];
+            Read( bytes, 0, 4 );
+            var readSignature = BitConverter.ToUInt32( bytes, 0 );
+            if( readSignature == UnrealPackage.Signature_BigEndian )
+            {
+                Console.WriteLine( "Encoding:BigEndian" );
+                BigEndianCode = true;
+            }
+
+            if( !UnrealConfig.SuppressSignature
+                && readSignature != UnrealPackage.Signature
+                && readSignature != UnrealPackage.Signature_BigEndian )
+            {
+                throw new FileLoadException( package.PackageName + " isn't an UnrealPackage!" );
+            }
+            Position = 4;
+        }
+
+        /// <summary>
+        /// Called as soon the build for @Package is detected.
+        /// </summary>
+        /// <param name="build"></param>
         public void BuildDetected( UnrealPackage.GameBuild build )
         {
             if( Package.Decoder != null )
@@ -463,12 +472,15 @@ namespace UELib
 #if DEBUG || BINARYMETADATA
             LastPosition = Position;
 #endif
-            int r = base.Read( array, offset, count );
+            var r = base.Read( array, offset, count );
             if( BigEndianCode && r > 1 )
             {
                 Array.Reverse( array, 0, r );
             }
-            return Package.Decoder != null ? Package.Decoder.DecodeRead( array, offset, count ) : r;
+            // Give the decoder a chance to modify the read output.
+            return (Package != null && Package.Decoder != null)
+                ? Package.Decoder.DecodeRead( array, offset, count )
+                : r;
         }
 
         /// <summary>
