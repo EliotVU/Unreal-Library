@@ -160,6 +160,7 @@
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
     <Compile Include="Engine\Classes\UPalette.cs" />
+    <Compile Include="Decoding\IBufferDecoder.cs" />
     <Compile Include="ObjectNodes.cs" />
     <Compile Include="Core\Types\UArray.cs" />
     <Compile Include="Core\Classes\UScriptStruct.cs" />
@@ -242,7 +243,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UELib.Core;
+using UELib.Decoding;
 
 namespace UELib
 {
@@ -437,11 +438,23 @@ namespace UELib
             if( CanRead && UR == null )
             {
                 UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
+                if( Package.Decoder != null )
+                {
+                    Package.Decoder.PreDecode( this );
+                }
             }
 
             if( CanWrite && UW == null )
             {
                 UW = new UnrealWriter( this );
+            }
+        }
+
+        public void BuildDetected( UnrealPackage.GameBuild build )
+        {
+            if( Package.Decoder != null )
+            {
+                Package.Decoder.DecodeBuild( this, build );
             }
         }
 
@@ -455,7 +468,7 @@ namespace UELib
             {
                 Array.Reverse( array, 0, r );
             }
-            return r;
+            return Package.Decoder != null ? Package.Decoder.DecodeRead( array, offset, count ) : r;
         }
 
         /// <summary>
