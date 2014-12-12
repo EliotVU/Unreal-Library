@@ -37,8 +37,12 @@ namespace UELib
     public delegate void NotifyUpdateEvent();
 
     /// <summary>
-    /// Registers an unreal class. Any class with this attribute will automatically be registered.
+    /// Registers the class as an Unreal class. The class's name is required to begin with the letter "U".
+    /// When an Unreal Package is initializing, all described objects will be initialized as the registered class if its name matches as described by its export item.
+    /// 
+    /// Note: Usage restricted to the executing assembly(UELib) only!
     /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public sealed class UnrealRegisterClassAttribute : Attribute
     {
     }
@@ -142,9 +146,10 @@ namespace UELib
         [SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
         public static ushort OverrideLicenseeVersion;
 
-        public class GameBuild
+        public sealed class GameBuild
         {
             [UsedImplicitly]
+            [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
             private sealed class BuildDecoderAttribute : Attribute
             {
                 private readonly Type _BuildDecoder;
@@ -160,6 +165,7 @@ namespace UELib
                 }
             }
 
+            [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
             private sealed class BuildAttribute : Attribute
             {
                 private readonly int _MinVersion;
