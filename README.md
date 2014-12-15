@@ -24,6 +24,10 @@ Once referenced, you can start using the library by using the namespace UELib as
 
 See further instructions at: https://github.com/EliotVU/Unreal-Library/wiki/Usage
 
+How-To
+==============
+[Adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes) 
+
 Contribute
 ==============
 
