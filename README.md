@@ -40,11 +40,20 @@ How-To
 Contribute
 ==============
 
-Feel free to fill in an issue to request documentation for a specific feature. Or contribute missing documentation by editing this file.
+The following kind of contributions are welcome:
+* Any bug fix or issue as reported under "issues" on this github repository.
+* Support for a new game.
+* Support for decompression, and/or decryption.
+* Documentation on how to use this library.
+* General improvements in the decompilation output. 
+* Mono compatibility.
 
-TODO
+Code style
 ==============
-* Re-organize and rename most of the files.
-* Decompress LZO .upk files.
-* Full UE4 Support.
-* Make it Mono compatible.
+
+Any contribution should follow the styling of the current code style as seen in the source files:
+* 4 indentation spaces.
+* _CamelCase for private/protected fields.
+* CamelCase naming for everything else but constants which use CAMEL_CASE.
+* Keep code lines readable by using spaces and new lines as a way of grouping code statements.
+* It is too much to mention every restriction here, so it is best to match the style of the nearby code.
