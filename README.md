@@ -40,6 +40,10 @@ How-To
 Contribute
 ==============
 
+To contribute click the [fork button at the top right](https://help.github.com/articles/fork-a-repo/) and follow it by cloning your fork of this repository.
+
+This project uses Visual Studio for development, while it is not restricted to Visual Studio it is recommended to use VS because it has the best support for C#, you can get Visual Studio from http://www.visualstudio.com/ for free, if you already have Visual Studio, it should be atleast Visual Studio 2010+.
+
 The following kind of contributions are welcome:
 * Any bug fix or issue as reported under "issues" on this github repository.
 * Support for a new game.
