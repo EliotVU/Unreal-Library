@@ -24,6 +24,15 @@ Once referenced, you can start using the library by using the namespace UELib as
 
 See further instructions at: https://github.com/EliotVU/Unreal-Library/wiki/Usage
 
+Interface
+==============
+
+Common sense tells me you'd like to test UE Library using an interface, luckily you can use the latest version of UE Explorer to use your latest build of Eliot.UELib.dll by replacing the file in the installed folder of UE Explorer e.g.
+  "%programfiles(x86)%\Eliot\UE Explorer\"
+Replace Eliot.UELib.dll with yours.
+
+Grab the latest [UE-Explorer.1.2.7.0.rar](http://eliotvu.com/updates/UE-Explorer.1.2.7.0.rar)
+
 How-To
 ==============
 [Adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes) 
