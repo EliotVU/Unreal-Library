@@ -241,6 +241,12 @@ namespace UELib
                 UT,
 
                 /// <summary>
+                /// 95/69
+                /// </summary>
+                [Build( 95, 69 )]
+                DeusEx_IW,
+
+                /// <summary>
                 /// 95/133
                 /// </summary>
                 [Build( 95, 133 )]
@@ -928,10 +934,20 @@ namespace UELib
             }
             else
             {
+#if DEUSEXINVISIBLEWAR
+                if( Build == GameBuild.BuildName.DeusEx_IW )
+                {
+                    //stream.Skip( 4 );
+                    int unknown = stream.ReadInt32();
+                    Console.WriteLine( "\tUnknown:" + unknown );
+                }
+#endif
 #if THIEFDEADLYSHADOWS
                 if( Build == GameBuild.BuildName.Thief_DS )
                 {
-                    stream.Skip( 4 );
+                    //stream.Skip( 4 );
+                    int unknown = stream.ReadInt32();
+                    Console.WriteLine( "\tUnknown:" + unknown );
                 }
 #endif
 #if BORDERLANDS
