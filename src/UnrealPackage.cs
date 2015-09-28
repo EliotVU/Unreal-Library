@@ -139,6 +139,7 @@ namespace UELib
 
         public class GameBuild
         {
+            [AttributeUsage(AttributeTargets.Field, AllowMultiple = true)]
             private sealed class BuildAttribute : Attribute
             {
                 private readonly int _MinVersion;
@@ -406,6 +407,16 @@ namespace UELib
                 XCOM_EU,
 
                 /// <summary>
+                /// 846/181
+                /// </summary>
+                [Build( 511, 039 )] // The Bourne Conspiracy
+                [Build( 511, 145 )] // Transformers: War for Cybertron (PC version)
+                [Build( 511, 144 )] // Transformers: War for Cybertron (PS3 and XBox 360 version)
+                [Build( 537, 174 )] // Transformers: Dark of the Moon
+                [Build( 846, 181, 2, 1 )] // Transformers: Fall of Cybertron
+                Transformers,
+
+                /// <summary>
                 /// 860/004
                 /// </summary>
                 [Build( 860, 4 )]
@@ -449,11 +460,8 @@ namespace UELib
                         continue;
 
                     var attribs = gameBuildMember[0].GetCustomAttributes( false );
-                    if( attribs.Length == 0 )
-                        continue;
-
-                    var myAttrib = attribs[0] as BuildAttribute;
-                    if( !myAttrib.Verify( this, package ) )
+                    var game = attribs.OfType<BuildAttribute>().SingleOrDefault(attr => attr.Verify( this, package ));
+                    if( game == null ) 
                         continue;
 
                     Name = (BuildName)Enum.Parse( typeof(BuildName), Enum.GetName( typeof(BuildName), gameBuild ) );
@@ -573,12 +581,19 @@ namespace UELib
                     return;
 
                 DependsOffset = stream.ReadUInt32();
-                if( stream.Version >= 584 )
+                if( stream.Version >= 584 
+#if TRANSFORMERS
+                    || (stream.Package.Build == GameBuild.BuildName.Transformers && stream.Version >= 535)
+#endif
+                    )
                 {
                     // Additional tables, like thumbnail, and guid data.
                     if( stream.Version >= 623
 #if BIOSHOCK
                         && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+#endif
+#if TRANSFORMERS
+                        && stream.Package.Build != GameBuild.BuildName.Transformers // FIXME: This is not skipped Gildor's UModel game support odd?
 #endif
                         )
                     {
@@ -834,6 +849,16 @@ namespace UELib
                 if( Build == GameBuild.BuildName.MKKE )
                 {
                     stream.Skip( 8 );
+                }
+#endif
+#if TRANSFORMERS
+                if( Build == GameBuild.BuildName.Transformers && LicenseeVersion >= 55 )
+                {
+                    if( LicenseeVersion >= 181 )
+                    {
+                        stream.Skip( 16 );
+                    }
+                    stream.Skip( 4 );
                 }
 #endif
                 // Offset to the first class(not object) in the package.

@@ -139,10 +139,23 @@ namespace UELib.Core
                 Record( "TextPos", TextPos );
             }
 
+#if TRANSFORMERS
+            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+            {
+                // The line where the struct's code body ends.
+                _Buffer.Skip( 4 );
+            }
+#endif
+
             ByteScriptSize = _Buffer.ReadInt32();
             Record( "ByteScriptSize", ByteScriptSize );
             const int vDataScriptSize = 639;
-            if( Package.Version >= vDataScriptSize )
+            var hasFixedScriptSize = Package.Version >= vDataScriptSize
+                #if TRANSFORMERS
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers 
+                #endif
+            ;
+            if( hasFixedScriptSize )
             {
                 DataScriptSize = _Buffer.ReadInt32();
                 Record( "DataScriptSize", DataScriptSize );
@@ -158,7 +171,7 @@ namespace UELib.Core
                 return;
 
             ByteCodeManager = new UByteCodeDecompiler( this );
-            if( Package.Version >= vDataScriptSize )
+            if( hasFixedScriptSize )
             {
                 _Buffer.Skip( DataScriptSize );
             }

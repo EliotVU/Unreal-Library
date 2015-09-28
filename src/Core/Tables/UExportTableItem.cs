@@ -122,6 +122,9 @@ namespace UELib
 #if ALPHAPROTOCOL
                 && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtcol
 #endif
+#if TRANSFORMERS
+                && (stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers || stream.Package.LicenseeVersion < 37)
+#endif
                 )
             {
                 int componentMapCount = stream.ReadInt32();
@@ -142,6 +145,16 @@ namespace UELib
             ExportFlags = stream.ReadUInt32();
             if( stream.Version < 322 )
                 return;
+#if TRANSFORMERS
+            if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers && stream.Package.LicenseeVersion >= 116 )
+            {
+                var flag = stream.ReadByte();
+                if( flag == 0 )
+                {
+                    return;
+                }
+            }
+#endif
 #if BIOSHOCK
             if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite )
             {

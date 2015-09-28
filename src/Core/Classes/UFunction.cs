@@ -81,13 +81,25 @@ namespace UELib.Core
                 _Buffer.Skip( 5 );
             }
 
+#if TRANSFORMERS
+            FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
+#else
             FunctionFlags = _Buffer.ReadUInt32();
+#endif
             Record( "FunctionFlags", (FunctionFlags)FunctionFlags );
             if( HasFunctionFlag( Flags.FunctionFlags.Net ) )
             {
                 RepOffset = _Buffer.ReadUShort();
                 Record( "RepOffset", RepOffset );
             }
+
+#if TRANSFORMERS
+            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+            {
+                FriendlyName = Table.ObjectName;
+                return;
+            }
+#endif
 
             if( (Package.Version >= VFriendlyName && !Package.IsConsoleCooked())
 #if MKKE

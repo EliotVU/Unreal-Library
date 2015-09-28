@@ -170,7 +170,11 @@ namespace UELib.Core
                     if( Package.Version >= 220 )
                     {
                         // TODO: Corrigate Version
-                        if( isHideCategoriesOldOrder && !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed )
+                        if( (isHideCategoriesOldOrder && !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed)
+                            #if TRANSFORMERS
+                                || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers 
+                            #endif
+                            )
                         {
                             DeserializeHideCategories();
                         }

@@ -31,6 +31,9 @@ namespace UELib.Core
 #if SPECIALFORCE2
                 || Package.Build == UnrealPackage.GameBuild.BuildName.SpecialForce2
 #endif
+#if TRANSFORMERS
+                || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
+#endif
                 )
 #if BIOSHOCK
                 && Package.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
