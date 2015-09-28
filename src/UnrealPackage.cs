@@ -453,7 +453,7 @@ namespace UELib
                 /// <summary>
                 /// 904/009
                 /// </summary>
-                [Build( 904, 904, 9u, 9u, 0, 0 )]
+                [Build( 904, 904, 09u, 014u, 0, 0 )]
                 SpecialForce2
             }
 
