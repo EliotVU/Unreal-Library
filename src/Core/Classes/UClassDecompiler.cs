@@ -433,12 +433,12 @@ namespace UELib.Core
             var replicatedObjects = new List<IUnrealNetObject>();
             if( Variables != null )
             {
-                replicatedObjects.AddRange( Variables.Where( prop => prop.HasPropertyFlag( Flags.PropertyFlagsLO.Net ) ) );
+                replicatedObjects.AddRange( Variables.Where( prop => prop.HasPropertyFlag( Flags.PropertyFlagsLO.Net ) && prop.RepOffset != ushort.MaxValue ) );
             }
 
             if( Package.Version < VReliableDeprecation && Functions != null )
             {
-                replicatedObjects.AddRange( Functions.Where( func => func.HasFunctionFlag( Flags.FunctionFlags.Net ) ) );
+                replicatedObjects.AddRange( Functions.Where( func => func.HasFunctionFlag( Flags.FunctionFlags.Net ) && func.RepOffset != ushort.MaxValue ) );
             }
 
             if( replicatedObjects.Count == 0 )

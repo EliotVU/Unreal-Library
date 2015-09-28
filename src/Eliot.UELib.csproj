@@ -161,6 +161,7 @@
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
     <Compile Include="Engine\Classes\UPalette.cs" />
+    <Compile Include="Decoding\IBufferDecoder.cs" />
     <Compile Include="ObjectNodes.cs" />
     <Compile Include="Core\Types\UArray.cs" />
     <Compile Include="Core\Classes\UScriptStruct.cs" />
@@ -169,6 +170,7 @@
     <Compile Include="Engine\Classes\UTexture.cs" />
     <Compile Include="Engine\Classes\USound.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Classes\UConstDecompiler.cs" />
     <Compile Include="Core\Classes\UEnumDecompiler.cs" />

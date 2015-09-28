@@ -1,11 +1,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/451gy3lrr06wfxcw?svg=true)](https://ci.appveyor.com/project/EliotVU/unreal-library) 
 [![Gratipay](https://img.shields.io/gratipay/EliotVU.svg)](https://www.gratipay.com/eliotvu/)
 
-What is UE Library
-==============
-
-This provides you an API to parse/deserialize package files from the Unreal Engine such as .UDK, .UPK, etc.
-The API grants access to every object that resides within such packages. 
+The Unreal library provides you an API to parse/deserialize package files such as .UDK, .UPK, from Unreal Engine games, and provide you the necessary methods to navigate its contents.
 
 At the moment these are all the object classes that are supported by this API:
 
@@ -26,142 +22,42 @@ Usage
 Include the either the library's .dll file or the forked source code into your own project.
 Once referenced, you can start using the library by using the namespace UELib as follows: "using UELib;"
 
-Loading a Unreal Package
+See further instructions at: https://github.com/EliotVU/Unreal-Library/wiki/Usage
+
+Interface
 ==============
+
+Common sense tells me you'd like to test UE Library using an interface, luckily you can use the latest version of UE Explorer to use your latest build of Eliot.UELib.dll by replacing the file in the installed folder of UE Explorer e.g.
+
+    "%programfiles(x86)%\Eliot\UE Explorer\"
   
-    var package = UnrealLoader.LoadFullPackage( <PATH_TO_PACKAGE>, System.IO.FileAccess.Read );
-    
-Iterating its objects
-==============    
+Grab the latest [UE-Explorer.1.2.7.0.rar](http://eliotvu.com/updates/UE-Explorer.1.2.7.0.rar) and replace Eliot.UELib.dll with yours, I recommend that you change the output path to your installation folder of UE Explorer.
 
-After having loaded a package you can do the following:
-
-    foreach( UObject obj in package.Objects )
-    {
-      Console.WriteLine( "Name: {0}, Class: {1}, Outer: {2}", obj.Name, obj.Class.Name, obj.Outer.Name );
-    }
-    
-Loading a Unreal Package with custom classes
-==============  
-  
-This code will first load a package and deserialize its summary, then bind every occurrence of class "UTexture" to your "UMyTexture" class, and then deserialize the whole package.
-  
-    var package = UnrealLoader.LoadPackage( <PATH_TO_PACKAGE>, System.IO.FileAccess.Read );
-    if( package != null )
-    {
-        package.RegisterClass( "UTexture", typeof(UMyTexture) );
-        package.InitializePackage();
-    }
-    
-    ...
-    
-    public class UMyTexture : UObject
-    {
-    }
-    
-    
-Decompiling an Object
+How-To
 ==============
-
-You can get the programming-friendly contents of any object by calling its "Decompile()" method:
-
-    // public UObject FindObject( string objectName, Type type, bool checkForSubclass = false )
-    var obj = package.FindObject( <OBJECT_NAME>, typeof(<OBJECT_CLASS>) );
-    if( obj != null )
-    {
-      Console.WriteLine( obj.Decompile() );
-    }
-    
-    
-Extending the output of "Decompile()":
-
-    public class UMyTexture : UObject
-    {
-        public override string Decompile()
-        {
-            var output = base.Decompile();
-            return output + "\r\n\tUMyTexture has its own decompile output!";       
-        }
-    }
-    
-Teaching UMyTexture its binary structure:
-
-    public class UMyTexture : UObject
-    {
-        private int _MipMapCount;
-        
-        protected override void Deserialize()
-        {
-            base.Deserialize();
-            
-            _MipMapCount = _Buffer.ReadIndex();
-        }
-        
-        public override string Decompile()
-        {
-            return "Mip Maps: " + _MipMapCount;   
-        }
-    }
-    
-Note: The above UTexture implementation assumes the binary structure of Unreal Engine 2 games. (It is quite different for UDK and not official supported by the library, but you can do so using the example given.)
-
-Scanning packages for Assets
-==============
-
-    var textures = new List<UObject>();
-    var sounds = new List<UObject>();
-
-    foreach( UObject obj in package.Objects )
-    {
-        if( obj.IsClassType( "Texture" ) || obj.IsClassType( "Texture2D" ) )
-        {
-            textures.Add( obj );
-        }
-        else if( obj.IsClassType( "Sound" ) || obj.IsClassType( "SoundCue" ) )
-        {
-            sounds.Add( obj ); 
-        }
-    }
-
-    foreach( var snd in sounds )
-    {
-        Console.WriteLine( "Reference for sound {0} is {2}'{1}'", snd.Name, snd.GetOuterGroup(), snd.GetClassName() );
-    }
-
-    foreach( var tex in textures )
-    {
-        Console.WriteLine( "Reference for texture {0} is {2}'{1}'", tex.Name, tex.GetOuterGroup(), tex.GetClassName() );
-    }
-
-
-The above code would first scan every object in the package for objects of class Texture and Sound and its UE3 equivalent. Organizing each object into its own list. Then each sound and texture reference will be written to the console. This can particually be useful in cases you want to make a tool that provides a searchable list of assets such as the Content Browser in UnrealEd but with the advantage of performance, or as an addition feature for UnrealScript text editors as an autcomplete suggestion!
-
-Output of function "Max" would be written as "Function'Object.Max".
-
-UObject API
-==============
-
-    string              Name                The name of the object.
-    UObject             Class               The class of the object. Use Class.Name to get the class's name.
-    UObject             Outer               The outer of this object. Function "Max" outer would be "Object". Use Outer.Name to get the outer's name.
-    UDefaultProperty    Properties          Properties of this object. That is what you see as "DefaultProperties" in UnrealScript classes.
-    UnrealPackage       Package             The package of this object.
-    
-    function    Decompile()         Returns the output of this object. As experienced in UE Explorer "View Object".
-    function    CopyBuffer()        Returns a copy of bytes of this object.
-    function    GetBufferPosition() Returns the position whereas this object resides in the package's stream.
-    function    GetBufferSize()     Returns the size this object consumes in the package's stream.      
-    function    HasObjectFlag()     Returns true if object is masked with specified flag(s).
-    function    IsClassType()       Returns true if object is of class e.g. "SoundCue".
+[Adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes) 
 
 Contribute
 ==============
 
-Feel free to fill in an issue to request documentation for a specific feature. Or contribute missing documentation by editing this file.
+To contribute click the [fork button at the top right](https://help.github.com/articles/fork-a-repo/) and follow it by cloning your fork of this repository.
 
-TODO
+This project uses Visual Studio for development, while it is not restricted to Visual Studio it is recommended to use VS because it has the best support for C#, you can get Visual Studio from http://www.visualstudio.com/ for free, if you already have Visual Studio, it should be atleast Visual Studio 2010+.
+
+The following kind of contributions are welcome:
+* Any bug fix or issue as reported under "issues" on this github repository.
+* Support for a new game.
+* Support for decompression, and/or decryption.
+* Documentation on how to use this library.
+* General improvements in the decompilation output. 
+* Mono compatibility.
+
+Code style
 ==============
-* Re-organize and rename most of the files.
-* Decompress LZO .upk files.
-* Full UE4 Support.
-* Make it Mono compatible.
+
+Any contribution should follow the styling of the current code style as seen in the source files:
+* 4 indentation spaces.
+* _CamelCase for private/protected fields.
+* CamelCase naming for everything else but constants which use CAMEL_CASE.
+* Keep code lines readable by using spaces and new lines as a way of grouping code statements.
+* It is too much to mention every restriction here, so it is best to match the style of the nearby code.
