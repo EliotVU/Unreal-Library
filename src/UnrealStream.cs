@@ -167,6 +167,7 @@ namespace UELib
                 return ReadAnsi();
             }
 
+            byte[] strBytes;
             int unfixedSize; var size = (unfixedSize =
 #if BIOSHOCK
                 _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock ? -ReadIndex() :
@@ -175,9 +176,18 @@ namespace UELib
             System.Diagnostics.Debug.Assert( size < 1000000, "Dangerous string size detected! IT'S OVER 9000 THOUSAND!" );
             if( unfixedSize > 0 ) // ANSI
             {
-                var strBytes = new byte[size - 1];
+#if TRANSFORMERS
+                if( _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers && _UnrealStream.Package.LicenseeVersion >= 181 )
+                {
+                    strBytes = new byte[size];
+                    Read( strBytes, 0, size);
+                    goto reverse;
+                }
+#endif
+                strBytes = new byte[size - 1];
                 Read( strBytes, 0, size - 1 );
                 ++ BaseStream.Position; // null
+            reverse:
                 if( _MyEncoding == Encoding.BigEndianUnicode )
                 {
                     Array.Reverse( strBytes );
@@ -190,9 +200,19 @@ namespace UELib
 
             if( unfixedSize < 0 ) // UNICODE
             {
-                var strBytes = new byte[(size * 2) - 2];
-                Read( strBytes, 0, (size * 2) - 2 );
+                size *= 2;
+#if TRANSFORMERS
+                if( _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers && _UnrealStream.Package.LicenseeVersion >= 181 )
+                {
+                    strBytes = new byte[size];
+                    Read( strBytes, 0, size);
+                    goto reverse;
+                }
+#endif
+                strBytes = new byte[size - 2];
+                Read( strBytes, 0, size - 2 );
                 BaseStream.Position += 2; // null
+            reverse:
                 // Convert Byte Str to a String type
                 if( _MyEncoding == Encoding.BigEndianUnicode )
                 {
