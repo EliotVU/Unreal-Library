@@ -413,7 +413,7 @@ namespace UELib
                 [Build( 511, 145 )] // Transformers: War for Cybertron (PC version)
                 [Build( 511, 144 )] // Transformers: War for Cybertron (PS3 and XBox 360 version)
                 [Build( 537, 174 )] // Transformers: Dark of the Moon
-                [Build( 846, 181 )] // Transformers: Fall of Cybertron
+                [Build( 846, 181, 2, 1 )] // Transformers: Fall of Cybertron
                 Transformers,
 
                 /// <summary>
