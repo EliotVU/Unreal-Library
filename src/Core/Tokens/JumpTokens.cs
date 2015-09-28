@@ -342,6 +342,14 @@ namespace UELib.Core
 
                 public override void Deserialize( IUnrealStream stream )
                 {
+#if TRANSFORMERS
+                    if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+                    {
+                        PropertyType = stream.ReadUInt16();
+                        Decompiler.AlignSize( sizeof(ushort) );
+                        goto deserialize;
+                    }
+#endif
                     if( stream.Version >= 600 )
                     {
                         // Points to the object that was passed to the switch,
@@ -362,6 +370,7 @@ namespace UELib.Core
                         Decompiler.AlignSize( sizeof(byte) );
                     }
 
+                deserialize:
                     // Expression
                     DeserializeNext();
                 }

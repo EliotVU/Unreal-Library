@@ -16,6 +16,9 @@
 #if TERA
                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
+#if TRANSFORMERS
+                        && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+#endif
                         ; 
 
                     // A.?
