@@ -156,13 +156,6 @@ namespace UELib.Core
         private void InitBuffer()
         {
             //Console.WriteLine( "Init buffer for {0}", (string)this );
-            if( _Buffer != null )
-            {
-                //Console.WriteLine( "Short initialization" );
-                _Buffer.InitBuffer();
-                return;
-            }
-
             var buff = new byte[ExportTable.SerialSize];
             Package.Stream.Seek( ExportTable.SerialOffset, SeekOrigin.Begin );
             Package.Stream.Read( buff, 0, ExportTable.SerialSize );

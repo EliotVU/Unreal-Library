@@ -144,24 +144,31 @@ namespace UELib
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
         private IUnrealStream _UnrealStream;
-        private readonly Encoding _MyEncoding;
 
         private uint _Version
         {
             get{ return _UnrealStream.Version; }
         }
 
-        public UnrealReader( Stream stream, Encoding enc ) : base( stream, enc )
+        public UnrealReader( Stream stream ) : base( stream )
         {
             _UnrealStream = stream as IUnrealStream;
-            _MyEncoding = enc;
         }
 
+        /// <summary>
+        /// Reads a string that was serialized for Unreal Packages, these strings use a positive or negative size to:
+        /// - indicate that the bytes were encoded in ASCII.
+        /// - indicate that the bytes were encoded in Unicode.
+        /// 
+        /// Several exceptions may exist in games such as Transformers, and Bioshock, etc.
+        /// </summary>
+        /// <returns>A string in either ASCII or Unicode.</returns>
         public string ReadText()
         {
 #if DEBUG || BINARYMETADATA
             var lastPosition = _UnrealStream.Position;
 #endif
+            // Very old packages use a simple Ansi encoding.
             if( _Version < UnrealPackage.VSIZEPREFIXDEPRECATED )
             {
                 return ReadAnsi();
@@ -170,6 +177,7 @@ namespace UELib
             byte[] strBytes;
             int unfixedSize; var size = (unfixedSize =
 #if BIOSHOCK
+                // In Bioshock packages always give a positive Size despite being Unicode, so we reverse this.
                 _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock ? -ReadIndex() :
 #endif
                 ReadIndex()) < 0 ? -unfixedSize : unfixedSize;
@@ -177,6 +185,7 @@ namespace UELib
             if( unfixedSize > 0 ) // ANSI
             {
 #if TRANSFORMERS
+                // No null-termination in Transformer games.
                 if( _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers && _UnrealStream.Package.LicenseeVersion >= 181 )
                 {
                     strBytes = new byte[size];
@@ -187,8 +196,10 @@ namespace UELib
                 strBytes = new byte[size - 1];
                 Read( strBytes, 0, size - 1 );
                 ++ BaseStream.Position; // null
+
             reverse:
-                if( _MyEncoding == Encoding.BigEndianUnicode )
+                // The Read function always reverses all read bytes, but since strings are an exception to BigEndianCode, we have to re-reverse the bytes.
+                if( _UnrealStream.BigEndianCode )
                 {
                     Array.Reverse( strBytes );
                 }
@@ -202,6 +213,7 @@ namespace UELib
             {
                 size *= 2;
 #if TRANSFORMERS
+                // No null-termination in Transformer games.
                 if( _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers && _UnrealStream.Package.LicenseeVersion >= 181 )
                 {
                     strBytes = new byte[size];
@@ -212,9 +224,10 @@ namespace UELib
                 strBytes = new byte[size - 2];
                 Read( strBytes, 0, size - 2 );
                 BaseStream.Position += 2; // null
+
             reverse:
-                // Convert Byte Str to a String type
-                if( _MyEncoding == Encoding.BigEndianUnicode )
+                // The Read function always reverses all read bytes, but since strings are an exception to BigEndianCode, we have to re-reverse the bytes.
+                if( _UnrealStream.BigEndianCode )
                 {
                     Array.Reverse( strBytes );
                 }
@@ -240,7 +253,7 @@ namespace UELib
                     goto nextChar;
                 }
             var s = Encoding.UTF8.GetString( strBytes.ToArray() );
-            if( _MyEncoding == Encoding.BigEndianUnicode )
+            if( _UnrealStream.BigEndianCode )
             {
                 Enumerable.Reverse( s );
             }
@@ -259,7 +272,7 @@ namespace UELib
                     goto nextWord;
                 }
             var s = Encoding.Unicode.GetString( strBytes.ToArray() );
-            if( _MyEncoding == Encoding.BigEndianUnicode )
+            if( _UnrealStream.BigEndianCode )
             {
                 Enumerable.Reverse( s );
             }
@@ -422,7 +435,7 @@ namespace UELib
 
         public long LastPosition{ get; set; }
 
-        public bool BigEndianCode{ get; set; }
+        public bool BigEndianCode{ get; private set; }
         public bool IsChunked{ get{ return Package.CompressedChunks != null && Package.CompressedChunks.Any(); } }
 
         public UPackageStream( string path, FileMode mode, FileAccess access ) : base( path, mode, access, FileShare.ReadWrite )
@@ -432,11 +445,11 @@ namespace UELib
             InitBuffer();
         }
 
-        public void InitBuffer()
+        private void InitBuffer()
         {
             if( CanRead && UR == null )
             {
-                UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
+                UR = new UnrealReader( this );
             }
 
             if( CanWrite && UW == null )
@@ -735,15 +748,13 @@ namespace UELib
 
         private long _PeekStartPosition;
         public long LastPosition{ get; set; }
-
-        public bool BigEndianCode{ get; set; }
+        public bool BigEndianCode { get { return Package.Stream.BigEndianCode; } }
 
         public UObjectStream( IUnrealStream stream )
         {
             UW = null;
             UR = null;
             Package = stream.Package;
-            BigEndianCode = stream.BigEndianCode;
             InitBuffer();
         }
 
@@ -752,15 +763,14 @@ namespace UELib
             UW = null;
             UR = null;
             Package = str.Package;
-            BigEndianCode = str.BigEndianCode;
             InitBuffer();
         }
 
-        public void InitBuffer()
+        private void InitBuffer()
         {
             if( CanRead && UR == null )
             {
-                UR = new UnrealReader( this, BigEndianCode ? Encoding.BigEndianUnicode : Encoding.Unicode );
+                UR = new UnrealReader( this );
             }
 
             if( CanWrite && UW == null )
