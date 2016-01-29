@@ -31,7 +31,7 @@ Common sense tells me you'd like to test UE Library using an interface, luckily 
 
     "%programfiles(x86)%\Eliot\UE Explorer\"
   
-Grab the latest [UE-Explorer.1.2.7.0.rar](http://eliotvu.com/updates/UE-Explorer.1.2.7.0.rar) and replace Eliot.UELib.dll with yours, I recommend that you change the output path to your installation folder of UE Explorer.
+Grab the latest [UE-Explorer.1.2.7.1.rar](http://eliotvu.com/updates/UE-Explorer.1.2.7.1.rar) and replace the Eliot.UELib.dll with yours, I recommend that you change the output path to your UE Explorer's installation folder.
 
 How-To
 ==============
