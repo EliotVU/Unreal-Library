@@ -451,6 +451,12 @@ namespace UELib
                 Hawken,
 
                 /// <summary>
+                /// 867/009
+                /// </summary>
+                [Build( 867, 9 )]
+                RocketLeague,
+
+                /// <summary>
                 /// 904/009
                 /// </summary>
                 [Build( 904, 904, 09u, 014u, 0, 0 )]
