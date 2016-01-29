@@ -634,6 +634,10 @@ namespace UELib
 #if UE4
                     if( stream.Package.UE4Version > 0 )
                     {
+                        if( stream.Package.UE4Version >= 384 )
+                        {
+                            stream.Skip( 4 + 4 ); // StringAssetReferencesCount, StringAssetReferencesOffset
+                        }
                         stream.Skip( 4 );   // Thumbnailoffset
                         return;
                     }
