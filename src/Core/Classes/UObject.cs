@@ -208,6 +208,9 @@ namespace UELib.Core
 #if MKKE
                 && Package.Build != UnrealPackage.GameBuild.BuildName.MKKE
 #endif
+#if UE4
+                && Package.UE4Version == 0
+#endif
                 )
             {
                 // TODO: Corrigate version. Fix component detection!
@@ -304,6 +307,15 @@ namespace UELib.Core
             {
                 _Properties = null;
             }
+
+#if UE4
+            if( Package.UE4Version > 0 )
+            {
+                // Archetype?
+                var archetype = _Buffer.ReadObject();
+                Record( "Archetype", archetype );
+            }
+#endif
         }
 
         /// <summary>

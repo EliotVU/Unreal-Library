@@ -28,6 +28,14 @@ namespace UELib
 #endif
             ExportsCount = stream.ReadInt32();
             NamesCount = stream.ReadInt32();
+
+#if UE4
+            if( stream.Package.UE4Version >= 186 )
+            {
+                return;
+            }
+#endif
+
             if( stream.Version >= VNetObjectsCount )
             {
                 NetObjectsCount = stream.ReadInt32();

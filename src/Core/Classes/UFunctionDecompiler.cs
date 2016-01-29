@@ -8,13 +8,14 @@ namespace UELib.Core
     {
         /// <summary>
         /// Decompiles this object into a text format of:
-        ///
-        /// [FLAGS] function NAME([VARIABLES]) [const]
-        /// {
-        ///     [LOCALS]
-        ///
-        ///     [CODE]
-        /// }
+        /// 
+        /// [COMMENT]
+        ///	[FLAGS] [FUNCTION|EVENT|DELEGATE|POST/PRE?OPERATOR] [[FLAGS] RETURN TYPE] NAME([VARIABLES]) [const] [[META DATA];]
+        ///	[{
+        ///		[LOCALS]
+        ///		
+        ///		[CODE]
+        /// }[META DATA]]
         /// </summary>
         /// <returns></returns>
         public override string Decompile()
@@ -28,7 +29,7 @@ namespace UELib.Core
             {
                 code = e.Message;
             }
-            return FormatHeader() + (String.IsNullOrEmpty( code ) ? ";" : code);
+            return FormatHeader() + (String.IsNullOrEmpty( code ) ? DecompileMeta() + ";" : code + DecompileMeta());
         }
 
         private string FormatFlags()
@@ -191,10 +192,10 @@ namespace UELib.Core
                 );
             }
 
-            var metaData = DecompileMeta();
-            if( metaData != String.Empty )
+            var comment = FetchToolTipAsComment();
+            if( comment != String.Empty )
             {
-                output = metaData + "\r\n" + output;
+                output = comment + output;
             }
 
             output += FormatFlags()

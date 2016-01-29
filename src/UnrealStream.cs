@@ -326,6 +326,12 @@ namespace UELib
 
         public long ReadNameIndex()
         {
+//#if UE4
+//            if( _UnrealStream.Package.UE4Version > 0 )
+//            {
+//                return _UnrealStream.ReadInt32();
+//            }
+//#endif
 #if DEBUG || BINARYMETADATA
             var lastPosition = _UnrealStream.Position;
 #endif

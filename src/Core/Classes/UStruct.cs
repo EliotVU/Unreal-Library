@@ -76,7 +76,7 @@ namespace UELib.Core
             base.Deserialize();
 
             // --SuperField
-            if( !Package.IsConsoleCooked() )
+            if( !Package.IsConsoleCooked() && Package.UE4Version < 117 )
             {
                 ScriptText = _Buffer.ReadObject() as UTextBuffer;
                 Record( "ScriptText", ScriptText );
@@ -92,7 +92,7 @@ namespace UELib.Core
                 Record( "FriendlyName", FriendlyName );
             }
 
-            if( Package.Version >= VStructFlags )
+            if( Package.Version >= VStructFlags && Package.UE4Version < 117 )
             {
                 if( Package.Version >= VCppText && !Package.IsConsoleCooked()
 #if VANGUARD
@@ -131,7 +131,7 @@ namespace UELib.Core
                 }
             }
 
-            if( !Package.IsConsoleCooked() )
+            if( !Package.IsConsoleCooked() && Package.UE4Version < 117 )
             {
                 Line = _Buffer.ReadInt32();
                 Record( "Line", Line );

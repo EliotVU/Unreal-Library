@@ -271,7 +271,7 @@ namespace UELib.Core
             string output = String.Empty;
             string innerOutput;
 
-            if( IsClassType( "Class" ) )
+            if( this is UClass )
             {
                 output += "\r\ndefaultproperties\r\n{\r\n";
             }

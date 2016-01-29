@@ -28,6 +28,12 @@ namespace UELib
         public void Deserialize( IUnrealStream stream )
         {
             Name = stream.ReadText();
+#if UE4
+            if( stream.Package.UE4Version > 0 )
+            {
+                return;
+            }
+#endif
             Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
 #if DEOBFUSCATE
     // De-obfuscate names that contain unprintable characters!

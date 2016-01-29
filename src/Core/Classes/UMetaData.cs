@@ -84,7 +84,7 @@ namespace UELib.Core
 
             public UMetaTag GetMetaTag( string tagName )
             {
-                return MetaTags.Find( tag => tag.TagName == tagName );
+                return MetaTags.Find( tag => String.Equals( tag.TagName, tagName, StringComparison.OrdinalIgnoreCase ) );
             }
         }
 

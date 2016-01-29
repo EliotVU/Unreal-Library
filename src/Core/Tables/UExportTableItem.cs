@@ -77,6 +77,34 @@ namespace UELib
 
         public void Deserialize( IUnrealStream stream )
         {
+#if UE4
+            if( stream.Package.UE4Version > 0 )
+            {
+                ClassIndex = stream.ReadInt32();
+                SuperIndex = stream.ReadInt32();
+                OuterIndex = stream.ReadInt32();
+                ObjectName = stream.ReadNameReference();
+
+                if( stream.Package.UE4Version < 142 )
+                {
+                    ArchetypeIndex = stream.ReadInt32();
+                }
+
+                ObjectFlags = stream.ReadUInt32();
+
+                SerialSize = stream.ReadInt32();
+                SerialOffset = stream.ReadInt32();
+                stream.Skip( 12 );  // bForcedExport, bNotForClient, bNotForServer
+                if( stream.Package.UE4Version < 186 )
+                {
+                    // GenerationNetObjectCount
+                    stream.Skip( 4*stream.ReadInt32() );
+                }
+                stream.Skip( 16 ); // PackageGuid
+                stream.Skip( 4 ); // PackageFlags
+                return;
+            }
+#endif
             ClassIndex      = stream.ReadObjectIndex();
             SuperIndex      = stream.ReadObjectIndex();
             OuterIndex      = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.

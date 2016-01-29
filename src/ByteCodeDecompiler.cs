@@ -370,6 +370,21 @@ namespace UELib.Core
                         }
                         break;
 
+#if UE4
+                    // TracePoint
+                    case (byte)0x5F:
+                        tokenItem = new TracepointToken();
+                        break;
+
+                    case (byte)0x60:
+                        tokenItem = new LetObjToken();
+                        break;
+
+                    case (byte)0x61:
+                        tokenItem = new LetWeakObjPtrToken();
+                        break;
+#endif
+
                     // Redefined, can be NameToBool!(UE1)
                     case (byte)ExprToken.Conditional:
                         tokenItem = new ConditionalToken();
@@ -456,6 +471,14 @@ namespace UELib.Core
                         break;
 
                     case (byte)ExprToken.FilterEditorOnly:
+#if UE4
+                        // WireTracepoint
+                        if( Package.UE4Version > 0 )
+                        {
+                            tokenItem = new WireTracepointToken();
+                            break;
+                        }
+#endif
                         tokenItem = new FilterEditorOnlyToken();
                         break;
 
@@ -679,8 +702,28 @@ namespace UELib.Core
                         break;
 
                     case (byte)ExprToken.VarInt:
-                    case (byte)ExprToken.VarFloat:
+#if UE4
+                        if( Package.UE4Version > 0 )
+                        {
+                            tokenItem = new PushExecutionFlowToken();
+                            break;
+                        }
+#endif
+                        tokenItem = new DynamicVariableToken();
+                        break;
+
                     case (byte)ExprToken.VarByte:
+#if UE4
+                        if( Package.UE4Version > 0 )
+                        {
+                            tokenItem = new PopExecutionFlowToken();
+                            break;
+                        }
+#endif
+                        tokenItem = new DynamicVariableToken();
+                        break;
+
+                    case (byte)ExprToken.VarFloat:
                     case (byte)ExprToken.VarBool:
                     //case (byte)ExprToken.VarObject:   // See UndefinedVariable
                         tokenItem = new DynamicVariableToken();

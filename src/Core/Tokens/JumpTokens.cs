@@ -85,6 +85,14 @@ namespace UELib.Core
 
                 public override void Deserialize( IUnrealStream stream )
                 {
+#if UE4
+                    if( Package.UE4Version > 0 )
+                    {
+                        CodeOffset = (ushort)stream.ReadInt32();
+                        Decompiler.AlignSize( sizeof(int) );
+                        return;
+                    }
+#endif
                     CodeOffset = stream.ReadUInt16();
                     Decompiler.AlignSize( sizeof(ushort) );
                 }
