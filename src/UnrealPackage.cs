@@ -1053,10 +1053,11 @@ namespace UELib
 #if UE4
                     if( UE4Version >= 336 )
                     {
-                        stream.ReadUInt16();
-                        stream.ReadUInt16();
-                        stream.ReadUInt16();
-                        stream.ReadUInt32();
+                        // EngineVersion
+                        stream.ReadUInt16(); // Major
+                        stream.ReadUInt16(); // Minor
+                        stream.ReadUInt16(); // Patch
+                        stream.ReadUInt32(); // Changelist
                         stream.ReadText(); // Branch
                     }
                     else
@@ -1066,6 +1067,13 @@ namespace UELib
                         EngineVersion = stream.ReadInt32();
                         Console.WriteLine( "\tEngineVersion:" + EngineVersion );
 #if UE4
+                    }
+
+                    if( UE4Version >= 444 )
+                    {
+                        // Compatible EngineVersion
+                        stream.Skip( 10 );
+                        stream.ReadText();
                     }
 #endif
                     if( Version >= VCOOKEDPACKAGES )
