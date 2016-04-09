@@ -15,7 +15,8 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UState : UStruct
     {
-        private const uint VStateFlags = 101;
+        // TODO: Corrigate version. 61 is the lowest package version I know that supports StateFlags.
+        private const uint VStateFlags = 61;
 
         #region Serialized Members
         /// <summary>
@@ -96,7 +97,7 @@ namespace UELib.Core
             _LabelTableOffset = _Buffer.ReadInt16();
             Record( "_LabelTableOffset", _LabelTableOffset );
 
-            if( Package.Version > VStateFlags )
+            if( Package.Version >= VStateFlags )
             {
                 #if BORDERLANDS2 || TRANSFORMERS
                     // FIXME:Temp fix
