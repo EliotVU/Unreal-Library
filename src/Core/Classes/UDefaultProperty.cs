@@ -217,6 +217,13 @@ namespace UELib.Core
                     case PropertyType.StructProperty:
                         ItemName = _Buffer.ReadNameReference();
                         _Container.Record( "ItemName", ItemName );
+
+#if UE4
+                        if( _Buffer.Package.UE4Version >= 441 )
+                        {
+                            _Buffer.Skip( 16 );
+                        }
+#endif
                         break;
 
                     case PropertyType.ByteProperty:
