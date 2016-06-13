@@ -1,3 +1,4 @@
+using System.Text;
 #if DECOMPILE
 using System;
 using System.Collections.Generic;
@@ -471,7 +472,7 @@ namespace UELib.Core
             }
             replicatedObjects.Clear();
 
-            var output = "\r\nreplication" + UnrealConfig.PrintBeginBracket();
+            var output = new StringBuilder( "\r\n" + "replication" +  UnrealConfig.PrintBeginBracket() ); 
             UDecompilingState.AddTab();
 
             foreach( var statement in statements )
@@ -481,10 +482,10 @@ namespace UELib.Core
                     var pos = (ushort)(statement.Key & 0x0000FFFF);
                     var rel = Convert.ToBoolean( statement.Key & 0xFFFF0000 );
 
-                    output += "\r\n" + UDecompilingState.Tabs;
+                    output.Append( "\r\n" + UDecompilingState.Tabs );
                     if( !UnrealConfig.SuppressComments )
                     {
-                        output += String.Format( "// Pos:0x{0:X3}\r\n{1}", pos, UDecompilingState.Tabs );
+                        output.AppendFormat( "// Pos:0x{0:X3}\r\n{1}", pos, UDecompilingState.Tabs );
                     }
 
                     ByteCodeManager.Deserialize();
@@ -498,9 +499,9 @@ namespace UELib.Core
                     {
                         statementCode = String.Format( "/* An exception occurred while decompiling condition ({0}) */", e );
                     }
-                    var statementType = Package.Version < VReliableDeprecation ? rel ? "reliable " : "unreliable " : String.Empty;
-                    var statementFormat = String.Format( "{0}if({1})", statementType, statementCode );
-                    output += statementFormat;
+                    var statementType = Package.Version < VReliableDeprecation ? rel ? "reliable" : "unreliable" : String.Empty;
+                    var statementFormat = String.Format( "{0} if({1})", statementType, statementCode );
+                    output.Append( statementFormat );
 
                     UDecompilingState.AddTab();
                     // NetObjects
@@ -509,33 +510,31 @@ namespace UELib.Core
                         var shouldSplit = i % 2 == 0;
                         if( shouldSplit )
                         {
-                            output += "\r\n" + UDecompilingState.Tabs;
+                            output.Append( "\r\n" + UDecompilingState.Tabs );
                         }
 
                         var netObject = statement.Value[i];
-                        output += netObject.Name;
+                        output.Append( netObject.Name );
 
                         var isNotLast = i != statement.Value.Count - 1;
-                        if( isNotLast )
-                        {
-                            output += ", ";
-                        }
+                        output.Append( isNotLast ? ", " : ";" );
                     }
                     UDecompilingState.RemoveTab();
 
                     // IsNotLast
                     if( statements.Last().Key != statement.Key )
                     {
-                        output += "\r\n";
+                        output.Append( "\r\n" );
                     }
                 }
                 catch( Exception e )
                 {
-                    output += String.Format( "/* An exception occurred while decompiling an statement! ({0}) */", e );
+                    output.AppendFormat( "/* An exception occurred while decompiling a statement! ({0}) */", e );
                 }
             }
             UDecompilingState.RemoveTab();
-            return output + UnrealConfig.PrintEndBracket() + "\r\n";
+            output.Append( UnrealConfig.PrintEndBracket() + "\r\n" );
+            return output.ToString();
         }
 
         private string FormatStates()
