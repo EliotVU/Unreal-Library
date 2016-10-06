@@ -104,14 +104,6 @@ namespace UELib.Core
         /// </summary>
         public void BeginDeserializing()
         {
-            #if THIEFDEADLYSHADOWS
-            // FIXME: Objects deserialization is not supported for Thief's Deadly Shadows!
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS )
-            {
-                return;
-            }
-            #endif
-
             // Imported objects cannot be deserialized!
             if( ImportTable != null )
             {
@@ -251,6 +243,23 @@ namespace UELib.Core
                     _Buffer.Skip( 8 );
                 }
 #endif
+
+#if DEUSEXINVISIBLEWAR
+                if( Package.Build == UnrealPackage.GameBuild.BuildName.DeusEx_IW )
+                {
+                    // var native private const int ObjectInternalPropertyHash[1]
+                    _Buffer.Skip( 4 );
+                }
+#endif
+
+#if THIEFDEADLYSHADOWS
+                if( Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS )
+                {
+                    // var native private const int ObjectInternalPropertyHash[1]
+                    _Buffer.Skip( 4 );
+                }
+#endif
+
             }
 
             if( !IsClassType( "Class" ) )
