@@ -112,17 +112,16 @@ namespace UELib.Core
 
             PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
             Record( "PropertyFlags", PropertyFlags );
-            if( !Package.IsConsoleCooked() )
-            {
 
 #if XCOM2
-                if( Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC )
-                {
-                    ConfigName = _Buffer.ReadNameReference();
-                    Record( "ConfigName", ConfigName );
-                }
+            if( Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC )
+            {
+                ConfigName = _Buffer.ReadNameReference();
+                Record( "ConfigName", ConfigName );
+            }
 #endif
-
+            if( !Package.IsConsoleCooked() )
+            {
                 CategoryIndex = _Buffer.ReadNameIndex();
                 Record( "CategoryIndex", CategoryIndex );
 
