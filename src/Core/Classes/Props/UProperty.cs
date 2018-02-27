@@ -36,6 +36,14 @@ namespace UELib.Core
             private set;
         }
 
+#if XCOM2
+        public UName    ConfigName
+        {
+            get;
+            private set;
+        }
+#endif
+
         public int 		CategoryIndex
         {
             get;
@@ -106,6 +114,15 @@ namespace UELib.Core
             Record( "PropertyFlags", PropertyFlags );
             if( !Package.IsConsoleCooked() )
             {
+
+#if XCOM2
+                if( Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC )
+                {
+                    ConfigName = _Buffer.ReadNameReference();
+                    Record( "ConfigName", ConfigName );
+                }
+#endif
+
                 CategoryIndex = _Buffer.ReadNameIndex();
                 Record( "CategoryIndex", CategoryIndex );
 
