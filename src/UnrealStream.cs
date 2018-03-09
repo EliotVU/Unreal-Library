@@ -74,6 +74,8 @@ namespace UELib
         long ReadInt64();
         ulong ReadUInt64();
 
+        string ReadGuid();
+
         void Skip( int bytes );
 
         // Stream

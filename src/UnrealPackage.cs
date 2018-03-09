@@ -52,7 +52,6 @@ namespace UELib
     /// </summary>
     public sealed class UnrealPackage : IDisposable, IBuffered
     {
-        #region General Members
         // Reference to the stream used when reading this package
         public readonly UPackageStream Stream;
 
@@ -62,35 +61,20 @@ namespace UELib
         public const uint Signature = 0x9E2A83C1;
         public const uint Signature_BigEndian = 0xC1832A9E;
 
-        /// <summary>
-        /// The full name of this package including directory.
-        /// </summary>
-        private readonly string _FullPackageName = "UnrealPackage";
         [PublicAPI]
-        public string FullPackageName
-        {
-            get{ return _FullPackageName; }
-        }
+        public string FullPackageName { get; }
 
         [PublicAPI]
-        public string PackageName
-        {
-            get{ return Path.GetFileNameWithoutExtension( _FullPackageName ); }
-        }
+        public string PackageName => Path.GetFileNameWithoutExtension( FullPackageName );
 
         [PublicAPI]
-        public string PackageDirectory
-        {
-            get{ return Path.GetDirectoryName( _FullPackageName ); }
-        }
-        #endregion
+        public string PackageDirectory => Path.GetDirectoryName( FullPackageName );
 
-        #region Serialized Members
         private uint _Version;
         public uint Version
         {
-            get{ return OverrideVersion > 0 ? OverrideVersion : _Version; }
-            private set{ _Version = value; }
+            get => OverrideVersion > 0 ? OverrideVersion : _Version;
+            private set => _Version = value;
         }
 
         /// <summary>
@@ -136,8 +120,8 @@ namespace UELib
         private ushort _LicenseeVersion;
         public ushort LicenseeVersion
         {
-            get{ return OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion; }
-            private set{ _LicenseeVersion = value; }
+            get => OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion;
+            private set => _LicenseeVersion = value;
         }
 
         /// <summary>
@@ -558,7 +542,7 @@ namespace UELib
         /// <summary>
         /// Whether the package was serialized in BigEndian encoding.
         /// </summary>
-        public bool IsBigEndianEncoded{ get; private set; }
+        public bool IsBigEndianEncoded{ get; }
 
         /// <summary>
         /// The bitflags of this package.
@@ -575,15 +559,10 @@ namespace UELib
         /// </summary>
         public string Group;
 
-        public struct UEngineVersion : IUnrealDeserializableClass
+        private struct UEngineVersion : IUnrealDeserializableClass
         {
-            [PublicAPI]
             public uint Major, Minor, Patch;
-
-            [PublicAPI]
             public uint Changelist;
-
-            [PublicAPI]
             public string Branch;
 
             public void Deserialize(IUnrealStream stream)
@@ -594,21 +573,36 @@ namespace UELib
                 Changelist = stream.ReadUInt32();
                 Branch = stream.ReadText();
             }
+
+            public override string ToString()
+            {
+                return $"{Major}.{Minor}.{Patch}";
+            }
         }
 
-        private struct TablesData : IUnrealSerializableClass
+        private struct UPackageSummary : IUnrealSerializableClass
         {
             public uint NamesCount{ get; internal set; }
             public uint NamesOffset{ get; internal set; }
 
             public uint ExportsCount{ get; internal set; }
-            public uint ExportsOffset{ get; internal set; }
+            public uint ExportsOffset{ get; private set; }
 
             public uint ImportsCount{ get; internal set; }
             public uint ImportsOffset{ get; internal set; }
 
             public uint DependsOffset{ get; internal set; }
-            public uint DependsCount{ get{ return ExportsCount; } }
+            public uint DependsCount => ExportsCount;
+
+            public string Guid { get; private set; }
+            public UArray<UGenerationTableItem> Generations { get; private set; }
+
+            [DefaultValue(-1)]
+            public int EngineVersion { get; private set; }
+            public int CookerVersion { get; private set; }
+
+            public uint CompressionFlags { get; private set; }
+            public UArray<CompressedChunk> CompressedChunks { get; private set; }
 
             public void Serialize( IUnrealStream stream )
             {
@@ -642,8 +636,8 @@ namespace UELib
 #if UE4
                 if (stream.Package.UE4Version >= 459)
                 {
-                    var gatherableTextDataCount = stream.ReadUInt32();
-                    var gatherableTextDataOffset = stream.ReadUInt32();
+                    uint gatherableTextDataCount = stream.ReadUInt32();
+                    uint gatherableTextDataOffset = stream.ReadUInt32();
                 }
 #endif
 
@@ -663,86 +657,242 @@ namespace UELib
                     + "\r\n\tImports Count:" + ImportsCount + "\tImports Offset:" + ImportsOffset
                 );
 
-                if( stream.Version < 415 )
-                    return;
-
-                DependsOffset = stream.ReadUInt32();
-                if (stream.Version < 584 && (stream.Package.Build != GameBuild.BuildName.Transformers || stream.Version < 535))
-                    return;
-#if UE4
-                if( stream.Package.UE4Version > 0 )
+                if (stream.Version >= 415)
                 {
-                    if( stream.Package.UE4Version >= 384 )
+                    DependsOffset = stream.ReadUInt32();
+                    if (stream.Version >= 584 ||
+                        (stream.Package.Build == GameBuild.BuildName.Transformers && stream.Version >= 535))
                     {
-                        stream.Skip( 4 + 4 ); // StringAssetReferencesCount, StringAssetReferencesOffset
-                        if (stream.Package.UE4Version >= 510)
+                        if (stream.Package.UE4Version > 0)
                         {
-                            var searchableNamesOffset = stream.ReadUInt32();
+                            if (stream.Package.UE4Version >= 384)
+                            {
+                                stream.Skip(4 + 4); // StringAssetReferencesCount, StringAssetReferencesOffset
+                                if (stream.Package.UE4Version >= 510)
+                                {
+                                    uint searchableNamesOffset = stream.ReadUInt32();
+                                }
+                            }
                         }
-                    }
-                    stream.Skip( 4 );   // Thumbnailoffset
-                    return;
-                }
-#endif
-                // Additional tables, like thumbnail, and guid data.
-                if( stream.Version >= 623
+                        // Additional tables, like thumbnail, and guid data.
+                        else if (stream.Version >= 623
 #if BIOSHOCK
-                    && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+                            && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
 #endif
 #if TRANSFORMERS
-                    && stream.Package.Build != GameBuild.BuildName.Transformers
+                            && stream.Package.Build != GameBuild.BuildName.Transformers
 #endif
-                )
-                {
-                    stream.Skip( 12 );
+                        )
+                        {
+                            stream.Skip(12);
+                        }
+
+                        stream.Skip(4);
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
-                stream.Skip( 4 );
+
+                if (stream.Version < 68)
+                {
+                    int heritageCount = stream.ReadInt32();
+                    int heritageOffset = stream.ReadInt32();
+
+                    // Uncommented because this is not in use and should in theory only be read after PackageSummary's deserialization.
+//                    stream.Seek(heritageOffset, SeekOrigin.Begin);
+//                    var heritages = new List<ushort>(heritageCount);
+//                    for (var i = 0; i < heritageCount; ++i)
+//                    {
+//                        heritages.Add(stream.ReadUInt16());
+//                    }
+                }
+                else
+                {
+#if DEUSEXINVISIBLEWAR
+                if( stream.Package.Build == GameBuild.BuildName.DeusEx_IW )
+                {
+                    //stream.Skip( 4 );
+                    int unknown = stream.ReadInt32();
+                    Console.WriteLine( "\tUnknown:" + unknown );
+                }
+#endif
+#if THIEFDEADLYSHADOWS
+                    if (stream.Package.Build == GameBuild.BuildName.Thief_DS)
+                    {
+                        //stream.Skip( 4 );
+                        int unknown = stream.ReadInt32();
+                        Console.WriteLine("\tUnknown:" + unknown);
+                    }
+#endif
+#if BORDERLANDS
+                    if (stream.Package.Build == GameBuild.BuildName.Borderlands)
+                    {
+                        stream.Skip(4);
+                    }
+#endif
+#if MKKE
+                    if (stream.Package.Build == GameBuild.BuildName.MKKE)
+                    {
+                        stream.Skip(4);
+                    }
+#endif
+                    Guid = stream.ReadGuid();
+                    Console.Write("\r\n\tGUID:" + Guid + "\r\n");
+#if TERA
+                    if (stream.Package.Build == GameBuild.BuildName.Tera)
+                    {
+                        stream.Position -= 4;
+                    }
+#endif
+#if MKKE
+                    if (stream.Package.Build != GameBuild.BuildName.MKKE)
+                    {
+#endif
+                        int generationCount = stream.ReadInt32();
+                        Generations = new UArray<UGenerationTableItem>(stream, generationCount);
+                        Console.WriteLine("Deserialized {0} generations", Generations.Count);
+#if MKKE
+                    }
+#endif
+#if TERA
+                    if (stream.Package.Build == GameBuild.BuildName.Tera)
+                    {
+                        NamesCount = (uint)Generations.Last().NamesCount;
+                    }
+#endif
+                    if (stream.Version < VEngineVersion)
+                        return;
+#if UE4
+                    if (stream.Package.UE4Version >= 336)
+                    {
+                        // EngineVersion
+                        var engineVersion = new UEngineVersion();
+                        engineVersion.Deserialize(stream);
+                    }
+                    else
+                    {
+#endif
+                        // The Engine Version this package was created with
+                        EngineVersion = stream.ReadInt32();
+                        Console.WriteLine("\tEngineVersion:" + EngineVersion);
+#if UE4
+                    }
+
+                    if (stream.Package.UE4Version >= 444)
+                    {
+                        // Compatible EngineVersion
+                        var engineVersion = new UEngineVersion();
+                        engineVersion.Deserialize(stream);
+                    }
+#endif
+                    if (stream.Version < VCOOKEDPACKAGES)
+                        return;
+#if UE4
+                    if (stream.Package.UE4Version == 0)
+                    {
+#endif
+                        // The Cooker Version this package was cooked with
+                        CookerVersion = stream.ReadInt32();
+                        Console.WriteLine("\tCookerVersion:" + CookerVersion);
+#if UE4
+                    }
+#endif
+                    // Read compressed info?
+                    if (stream.Version < VCompression)
+                        return;
+
+                    if (stream.Package.IsCooked())
+                    {
+                        CompressionFlags = stream.ReadUInt32();
+                        Console.WriteLine("\tCompressionFlags:" + CompressionFlags);
+                        CompressedChunks = new UArray<CompressedChunk> { Capacity = stream.ReadInt32() };
+                        //long uncookedSize = stream.Position;
+                        if (CompressedChunks.Capacity > 0)
+                        {
+                            CompressedChunks.Deserialize(stream, CompressedChunks.Capacity);
+                            return;
+
+                            //try
+                            //{
+                            //    UPackageStream outStream = new UPackageStream( packagePath + ".dec", System.IO.FileMode.Create, FileAccess.ReadWrite );
+                            //    //File.SetAttributes( packagePath + ".dec", FileAttributes.Temporary );
+                            //    outStream.Package = pkg;
+                            //    outStream._BigEndianCode = stream._BigEndianCode;
+
+                            //    var headerBytes = new byte[uncookedSize];
+                            //    stream.Seek( 0, SeekOrigin.Begin );
+                            //    stream.Read( headerBytes, 0, (int)uncookedSize );
+                            //    outStream.Write( headerBytes, 0, (int)uncookedSize );
+                            //    foreach( var chunk in pkg.CompressedChunks )
+                            //    {
+                            //        chunk.Decompress( stream, outStream );
+                            //    }
+                            //    outStream.Flush();
+                            //    pkg.Stream = outStream;
+                            //    stream = outStream;
+                            //    return pkg;
+                            //}
+                            //catch( Exception e )
+                            //{
+                            //    throw new DecompressPackageException();
+                            //}
+                        }
+                    }
+#if UE4
+                    if (stream.Package.UE4Version <= 0)
+                        return;
+
+                    uint source = stream.ReadUInt32();
+                    Console.WriteLine("\tSource:{0}", source);
+
+                    // AdditionalPackagesToCook
+                    // NumTextureAllocations
+#endif
+                }
+
             }
         }
 
-        private TablesData _TablesData;
+        private UPackageSummary _Summary;
 
         /// <summary>
         /// The guid of this package. Used to test if the package on a client is equal to the one on a server.
         /// </summary>
         [PublicAPI]
-        public string GUID{ get; private set; }
-
-        /// <summary>
-        /// List of heritages. UE1 way of defining generations.
-        /// </summary>
-        private IList<ushort> _Heritages;
+        public string GUID => _Summary.Guid;
 
         /// <summary>
         /// List of package generations.
         /// </summary>
         [PublicAPI]
-        public UArray<UGenerationTableItem> Generations{ get; private set; }
+        public UArray<UGenerationTableItem> Generations => _Summary.Generations;
 
         /// <summary>
         /// The Engine version the package was created with.
         /// </summary>
         [DefaultValue(-1)]
         [PublicAPI]
-        public int EngineVersion{ get; private set; }
+        public int EngineVersion => _Summary.EngineVersion;
 
         /// <summary>
         /// The Cooker version the package was cooked with.
         /// </summary>
         [PublicAPI]
-        public int CookerVersion{ get; private set; }
+        public int CookerVersion => _Summary.CookerVersion;
 
         /// <summary>
         /// The type of compression the package is compressed with.
         /// </summary>
         [PublicAPI]
-        public uint CompressionFlags{ get; private set; }
+        public uint CompressionFlags => _Summary.CompressionFlags;
 
         /// <summary>
         /// List of compressed chunks throughout the package.
         /// </summary>
         [PublicAPI]
-        public UArray<CompressedChunk> CompressedChunks{ get; private set; }
+        public UArray<CompressedChunk> CompressedChunks => _Summary.CompressedChunks;
 
         /// <summary>
         /// List of unique unreal names.
@@ -766,7 +916,6 @@ namespace UELib
         /// List of info about dependency objects.
         /// </summary>
         //public List<UDependencyTableItem> Dependencies{ get; private set; }
-        #endregion
 
         #region Initialized Members
         private struct ClassType
@@ -827,7 +976,7 @@ namespace UELib
         /// <param name="stream">A loaded UELib.PackageStream.</param>
         public UnrealPackage( UPackageStream stream )
         {
-            _FullPackageName = stream.Name;
+            FullPackageName = stream.Name;
             Stream = stream;
             Stream.PostInit( this );
 
@@ -877,12 +1026,12 @@ namespace UELib
 
             stream.Write( PackageFlags );
 
-            _TablesData.NamesCount = (uint)Names.Count;
-            _TablesData.ExportsCount = (uint)Exports.Count;
-            _TablesData.ImportsCount = (uint)Imports.Count;
+            _Summary.NamesCount = (uint)Names.Count;
+            _Summary.ExportsCount = (uint)Exports.Count;
+            _Summary.ImportsCount = (uint)Imports.Count;
 
             var tablesDataPosition = stream.Position;
-            _TablesData.Serialize( stream );
+            _Summary.Serialize( stream );
 
             // TODO: Serialize Heritages
 
@@ -916,13 +1065,13 @@ namespace UELib
 
             // names
             Console.WriteLine( "Writing names at position " + stream.Position );
-            _TablesData.NamesOffset = (uint)stream.Position;
+            _Summary.NamesOffset = (uint)stream.Position;
             var namesBytes = namesBuffer.GetBuffer();
             stream.Write( namesBytes, 0, (int)namesBuffer.Length );
 
             // imports
             Console.WriteLine( "Writing imports at position " + stream.Position );
-            _TablesData.ImportsOffset = (uint)stream.Position;
+            _Summary.ImportsOffset = (uint)stream.Position;
             var importsBytes = importsBuffer.GetBuffer();
             stream.Write( importsBytes, 0, (int)importsBuffer.Length );
 
@@ -932,7 +1081,7 @@ namespace UELib
             // Serialize tables data again now that offsets are known.
             var currentPosition = stream.Position;
             stream.Seek( tablesDataPosition, SeekOrigin.Begin );
-            _TablesData.Serialize( stream );
+            _Summary.Serialize( stream );
             stream.Seek( currentPosition, SeekOrigin.Begin );
         }
 
@@ -940,7 +1089,7 @@ namespace UELib
         public void Deserialize( UPackageStream stream )
         {
             // Read as one variable due Big Endian Encoding.       
-            var legacyVersion = stream.ReadInt32();
+            int legacyVersion = stream.ReadInt32();
             if( legacyVersion < 0 )
             {
 #if UE4
@@ -1016,7 +1165,7 @@ namespace UELib
 #if BIOSHOCK
                 if( Build == GameBuild.BuildName.Bioshock_Infinite )
                 {
-                    var unk = stream.ReadInt32();
+                    int unk = stream.ReadInt32();
                 }
 #endif
 #if MKKE
@@ -1050,174 +1199,17 @@ namespace UELib
             Console.WriteLine( "\tPackage Flags:" + PackageFlags );
 
             // Summary data such as ObjectCount.
-            _TablesData = new TablesData();
-            _TablesData.Deserialize( stream );
-            if( Version < 68 )
-            {
-                int heritageCount = stream.ReadInt32();
-                int heritageOffset = stream.ReadInt32();
-
-                stream.Seek( heritageOffset, SeekOrigin.Begin );
-                _Heritages = new List<ushort>( heritageCount );
-                for( var i = 0; i < heritageCount; ++ i )
-                {
-                    _Heritages.Add( stream.ReadUShort() );
-                }
-            }
-            else
-            {
-#if DEUSEXINVISIBLEWAR
-                if( Build == GameBuild.BuildName.DeusEx_IW )
-                {
-                    //stream.Skip( 4 );
-                    int unknown = stream.ReadInt32();
-                    Console.WriteLine( "\tUnknown:" + unknown );
-                }
-#endif
-#if THIEFDEADLYSHADOWS
-                if( Build == GameBuild.BuildName.Thief_DS )
-                {
-                    //stream.Skip( 4 );
-                    int unknown = stream.ReadInt32();
-                    Console.WriteLine( "\tUnknown:" + unknown );
-                }
-#endif
-#if BORDERLANDS
-                if( Build == GameBuild.BuildName.Borderlands )
-                {
-                    stream.Skip( 4 );
-                }
-#endif
-#if MKKE
-                if( Build == GameBuild.BuildName.MKKE )
-                {
-                    stream.Skip( 4 );
-                }
-#endif
-                GUID = stream.ReadGuid();
-                Console.Write( "\r\n\tGUID:" + GUID + "\r\n" );
-#if TERA
-                if( Build == GameBuild.BuildName.Tera )
-                {
-                    stream.Position -= 4;
-                }
-#endif
-#if MKKE
-                if( Build != GameBuild.BuildName.MKKE )
-                {
-#endif
-                int generationCount = stream.ReadInt32();
-                Generations = new UArray<UGenerationTableItem>( stream, generationCount );
-                Console.WriteLine( "Deserialized {0} generations", Generations.Count );
-#if MKKE
-                }
-#endif
-#if TERA
-                if( Build == GameBuild.BuildName.Tera )
-                {
-                    _TablesData.NamesCount = (uint)Generations.Last().NamesCount;
-                }
-#endif
-                if( Version >= VEngineVersion )
-                {
-#if UE4
-                    if( UE4Version >= 336 )
-                    {
-                        // EngineVersion
-                        UEngineVersion engineVersion = new UEngineVersion();
-                        engineVersion.Deserialize(stream);
-                    }
-                    else
-                    {
-#endif
-                        // The Engine Version this package was created with
-                        EngineVersion = stream.ReadInt32();
-                        Console.WriteLine( "\tEngineVersion:" + EngineVersion );
-#if UE4
-                    }
-
-                    if( UE4Version >= 444 )
-                    {
-                        // Compatible EngineVersion
-                        UEngineVersion engineVersion = new UEngineVersion();
-                        engineVersion.Deserialize(stream);
-                    }
-#endif
-                    if( Version >= VCOOKEDPACKAGES )
-                    {
-#if UE4
-                        if( UE4Version == 0 )
-                        {
-#endif
-                        // The Cooker Version this package was cooked with
-                        CookerVersion = stream.ReadInt32();
-                        Console.WriteLine( "\tCookerVersion:" + CookerVersion );
-#if UE4
-                        }
-#endif
-                        // Read compressed info?
-                        if( Version >= VCompression )
-                        {
-                            if( IsCooked() )
-                            {
-                                CompressionFlags = stream.ReadUInt32();
-                                Console.WriteLine( "\tCompressionFlags:" + CompressionFlags );
-                                CompressedChunks = new UArray<CompressedChunk> {Capacity = stream.ReadInt32()};
-                                //long uncookedSize = stream.Position;
-                                if( CompressedChunks.Capacity > 0 )
-                                {
-                                    CompressedChunks.Deserialize( stream, CompressedChunks.Capacity );
-                                    return;
-
-                                    //try
-                                    //{
-                                    //    UPackageStream outStream = new UPackageStream( packagePath + ".dec", System.IO.FileMode.Create, FileAccess.ReadWrite );
-                                    //    //File.SetAttributes( packagePath + ".dec", FileAttributes.Temporary );
-                                    //    outStream.Package = pkg;
-                                    //    outStream._BigEndianCode = stream._BigEndianCode;
-
-                                    //    var headerBytes = new byte[uncookedSize];
-                                    //    stream.Seek( 0, SeekOrigin.Begin );
-                                    //    stream.Read( headerBytes, 0, (int)uncookedSize );
-                                    //    outStream.Write( headerBytes, 0, (int)uncookedSize );
-                                    //    foreach( var chunk in pkg.CompressedChunks )
-                                    //    {
-                                    //        chunk.Decompress( stream, outStream );
-                                    //    }
-                                    //    outStream.Flush();
-                                    //    pkg.Stream = outStream;
-                                    //    stream = outStream;
-                                    //    return pkg;
-                                    //}
-                                    //catch( Exception e )
-                                    //{
-                                    //    throw new DecompressPackageException();
-                                    //}
-                                }
-                            }
-#if UE4
-                            if( UE4Version > 0 )
-                            {
-                                var source = stream.ReadUInt32();
-                                Console.WriteLine( "\tSource:{0}", source );
-
-                                // AdditionalPackagesToCook
-                                // NumTextureAllocations
-                            }
-#endif
-                        }
-                    }
-                }
-            }
+            _Summary = new UPackageSummary();
+            _Summary.Deserialize( stream );
 
             // Read the name table
-            if( _TablesData.NamesCount > 0 )
+            if( _Summary.NamesCount > 0 )
             {
-                Console.WriteLine( "P: " + stream.Position + " NP: " + _TablesData.NamesOffset );
+                Console.WriteLine( "P: " + stream.Position + " NP: " + _Summary.NamesOffset );
 
-                stream.Seek( _TablesData.NamesOffset, SeekOrigin.Begin );
-                Names = new List<UNameTableItem>( (int)_TablesData.NamesCount );
-                for( var i = 0; i < _TablesData.NamesCount; ++ i )
+                stream.Seek( _Summary.NamesOffset, SeekOrigin.Begin );
+                Names = new List<UNameTableItem>( (int)_Summary.NamesCount );
+                for( var i = 0; i < _Summary.NamesCount; ++ i )
                 {
                     var nameEntry = new UNameTableItem{Offset = (int)stream.Position, Index = i};
                     nameEntry.Deserialize( stream );
@@ -1228,13 +1220,13 @@ namespace UELib
             }
 
             // Read Import Table
-            if( _TablesData.ImportsCount > 0 )
+            if( _Summary.ImportsCount > 0 )
             {
-                Console.WriteLine( "P: " + stream.Position + " IP: " + _TablesData.ImportsOffset );
+                Console.WriteLine( "P: " + stream.Position + " IP: " + _Summary.ImportsOffset );
 
-                stream.Seek( _TablesData.ImportsOffset, SeekOrigin.Begin );
-                Imports = new List<UImportTableItem>( (int)_TablesData.ImportsCount );
-                for( var i = 0; i < _TablesData.ImportsCount; ++ i )
+                stream.Seek( _Summary.ImportsOffset, SeekOrigin.Begin );
+                Imports = new List<UImportTableItem>( (int)_Summary.ImportsCount );
+                for( var i = 0; i < _Summary.ImportsCount; ++ i )
                 {
                     var imp = new UImportTableItem{Offset = (int)stream.Position, Index = i, Owner = this};
                     imp.Deserialize( stream );
@@ -1245,13 +1237,13 @@ namespace UELib
             }
 
             // Read Export Table
-            if( _TablesData.ExportsCount > 0 )
+            if( _Summary.ExportsCount > 0 )
             {
-                Console.WriteLine( "P: " + stream.Position + " EP: " + _TablesData.ExportsOffset );
+                Console.WriteLine( "P: " + stream.Position + " EP: " + _Summary.ExportsOffset );
 
-                stream.Seek( _TablesData.ExportsOffset, SeekOrigin.Begin );
-                Exports = new List<UExportTableItem>( (int)_TablesData.ExportsCount );
-                for( var i = 0; i < _TablesData.ExportsCount; ++ i )
+                stream.Seek( _Summary.ExportsOffset, SeekOrigin.Begin );
+                Exports = new List<UExportTableItem>( (int)_Summary.ExportsCount );
+                for( var i = 0; i < _Summary.ExportsCount; ++ i )
                 {
                     var exp = new UExportTableItem{Offset = (int)stream.Position, Index = i, Owner = this};
                     // For the GetObjectName like functions
