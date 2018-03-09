@@ -244,6 +244,12 @@ namespace UELib
                 UT,
 
                 /// <summary>
+                /// 95/69
+                /// </summary>
+                [Build( 95, 69 )]
+                DeusEx_IW,
+
+                /// <summary>
                 /// 95/133
                 /// </summary>
                 [Build( 95, 133 )]
@@ -457,7 +463,13 @@ namespace UELib
                 /// 904/009
                 /// </summary>
                 [Build( 904, 904, 09u, 014u, 0, 0 )]
-                SpecialForce2
+                SpecialForce2,
+
+                /// <summary>
+                /// 845/120
+                /// </summary>
+                [Build(845, 120)]
+                XCOM2WotC
             }
 
             public BuildName Name
@@ -1006,10 +1018,20 @@ namespace UELib
             }
             else
             {
+#if DEUSEXINVISIBLEWAR
+                if( Build == GameBuild.BuildName.DeusEx_IW )
+                {
+                    //stream.Skip( 4 );
+                    int unknown = stream.ReadInt32();
+                    Console.WriteLine( "\tUnknown:" + unknown );
+                }
+#endif
 #if THIEFDEADLYSHADOWS
                 if( Build == GameBuild.BuildName.Thief_DS )
                 {
-                    stream.Skip( 4 );
+                    //stream.Skip( 4 );
+                    int unknown = stream.ReadInt32();
+                    Console.WriteLine( "\tUnknown:" + unknown );
                 }
 #endif
 #if BORDERLANDS

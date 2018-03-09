@@ -11,7 +11,7 @@ namespace UELib
         public const string UnrealCodeExt = ".uc";
         public const string UnrealFlagsExt = ".UPKG";
 
-        public static readonly string[] ScriptExt       = new[]{ ".u", ".t3u" };
+        public static readonly string[] ScriptExt       = new[]{ ".u", ".d2u", ".t3u" };
         public static readonly string[] TextureExt      = new[]{ ".utx" };
         public static readonly string[] SoundExt        = new[]{ ".uax", ".umx" };
         public static readonly string[] MeshExt         = new[]{ ".usx", ".upx", ".ugx" };

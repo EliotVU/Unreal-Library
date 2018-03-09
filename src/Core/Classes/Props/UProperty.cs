@@ -36,6 +36,14 @@ namespace UELib.Core
             private set;
         }
 
+#if XCOM2
+        public UName    ConfigName
+        {
+            get;
+            private set;
+        }
+#endif
+
         public int 		CategoryIndex
         {
             get;
@@ -104,7 +112,15 @@ namespace UELib.Core
 
             PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
             Record( "PropertyFlags", PropertyFlags );
-            CategoryIndex = -1;
+
+#if XCOM2
+            if( Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC )
+            {
+                ConfigName = _Buffer.ReadNameReference();
+                Record( "ConfigName", ConfigName );
+            }
+#endif
+
             if( !Package.IsConsoleCooked() )
             {
 #if UE4
@@ -124,6 +140,7 @@ namespace UELib.Core
                 }
 #endif
             }
+			else CategoryIndex = -1;
 
 #if UE4
             if( Package.UE4Version > 0 )

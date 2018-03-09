@@ -10,7 +10,8 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UFunction : UStruct, IUnrealNetObject
     {
-        private const uint VDeprecatedData = 69;
+        // TODO: Corrigate version. Attested in version 61, but deprecated since at least version 68.
+        private const uint VDeprecatedData = 68;
         private const uint VFriendlyName = 189;
 
         #region Serialized Members
@@ -89,12 +90,14 @@ namespace UELib.Core
             Record( "OperPrecedence", OperPrecedence );
             if( Package.Version < VDeprecatedData )
             {
-                // ParmsSize, NumParms, and ReturnValueOffse
+                // ParmsSize, NumParms, and ReturnValueOffset
                 _Buffer.Skip( 5 );
             }
 
 #if TRANSFORMERS
-            FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
+            FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers 
+                ? _Buffer.ReadUInt64() 
+                : _Buffer.ReadUInt32();
 #else
             FunctionFlags = _Buffer.ReadUInt32();
 #endif

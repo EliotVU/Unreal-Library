@@ -105,7 +105,7 @@ namespace UELib.Core
 
             if( Package.Version <= 61 )
             {
-                var oldClassRecordSize = _Buffer.ReadIndex();
+                var oldClassRecordSize = _Buffer.ReadInt32();
                 Record( "oldClassRecordSize", oldClassRecordSize );
             }
 
