@@ -23,36 +23,28 @@ namespace UELib
         public ulong Flags;
         #endregion
 
-        private const int QWORDVersion = 141;
+        private const int VerToQword = 141;
 
         public void Deserialize( IUnrealStream stream )
         {
             Name = stream.ReadText();
 #if UE4
-            if( stream.Package.UE4Version > 0 )
+            if( stream.Package.UE4Version >= 504 )
             {
+                stream.Skip(4);
+//                ushort nonCasePreservingHash = stream.ReadUInt16();
+//                ushort casePreservingHash = stream.ReadUInt16();
                 return;
             }
 #endif
-            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
-#if DEOBFUSCATE
-    // De-obfuscate names that contain unprintable characters!
-            foreach( char c in Name )
-            {
-                if( !char.IsLetterOrDigit( c ) )
-                {
-                    Name = "N" + TableIndex + "_OBF";
-                    break;
-                }
-            }
-#endif
+            Flags = stream.Version >= VerToQword ? stream.ReadUInt64() : stream.ReadUInt32();
         }
 
         public void Serialize( IUnrealStream stream )
         {
             stream.WriteString( Name );
 
-            if( stream.Version < QWORDVersion )
+            if( stream.Version < VerToQword )
             {
                 // Writing UINT
                 stream.UW.Write( (uint)Flags );
