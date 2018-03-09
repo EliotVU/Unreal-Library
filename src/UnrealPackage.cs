@@ -460,7 +460,13 @@ namespace UELib
                 /// 904/009
                 /// </summary>
                 [Build( 904, 904, 09u, 014u, 0, 0 )]
-                SpecialForce2
+                SpecialForce2,
+
+                /// <summary>
+                /// 845/120
+                /// </summary>
+                [Build(845, 120)]
+                XCOM2WotC
             }
 
             public BuildName Name
