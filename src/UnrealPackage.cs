@@ -575,6 +575,27 @@ namespace UELib
         /// </summary>
         public string Group;
 
+        public struct UEngineVersion : IUnrealDeserializableClass
+        {
+            [PublicAPI]
+            public uint Major, Minor, Patch;
+
+            [PublicAPI]
+            public uint Changelist;
+
+            [PublicAPI]
+            public string Branch;
+
+            public void Deserialize(IUnrealStream stream)
+            {
+                Major = stream.ReadUInt16();
+                Minor = stream.ReadUInt16();
+                Patch = stream.ReadUInt16();
+                Changelist = stream.ReadUInt32();
+                Branch = stream.ReadText();
+            }
+        }
+
         private struct TablesData : IUnrealSerializableClass
         {
             public uint NamesCount{ get; internal set; }
@@ -617,6 +638,15 @@ namespace UELib
 #endif
                 NamesCount = stream.ReadUInt32();
                 NamesOffset = stream.ReadUInt32();
+
+#if UE4
+                if (stream.Package.UE4Version >= 459)
+                {
+                    var gatherableTextDataCount = stream.ReadUInt32();
+                    var gatherableTextDataOffset = stream.ReadUInt32();
+                }
+#endif
+
                 ExportsCount = stream.ReadUInt32();
                 ExportsOffset = stream.ReadUInt32();
 #if APB
@@ -637,37 +667,36 @@ namespace UELib
                     return;
 
                 DependsOffset = stream.ReadUInt32();
-                if( stream.Version >= 584 
-#if TRANSFORMERS
-                    || (stream.Package.Build == GameBuild.BuildName.Transformers && stream.Version >= 535)
-#endif
-                    )
-                {
+                if (stream.Version < 584 && (stream.Package.Build != GameBuild.BuildName.Transformers || stream.Version < 535))
+                    return;
 #if UE4
-                    if( stream.Package.UE4Version > 0 )
+                if( stream.Package.UE4Version > 0 )
+                {
+                    if( stream.Package.UE4Version >= 384 )
                     {
-                        if( stream.Package.UE4Version >= 384 )
+                        stream.Skip( 4 + 4 ); // StringAssetReferencesCount, StringAssetReferencesOffset
+                        if (stream.Package.UE4Version >= 510)
                         {
-                            stream.Skip( 4 + 4 ); // StringAssetReferencesCount, StringAssetReferencesOffset
+                            var searchableNamesOffset = stream.ReadUInt32();
                         }
-                        stream.Skip( 4 );   // Thumbnailoffset
-                        return;
                     }
+                    stream.Skip( 4 );   // Thumbnailoffset
+                    return;
+                }
 #endif
-                    // Additional tables, like thumbnail, and guid data.
-                    if( stream.Version >= 623
+                // Additional tables, like thumbnail, and guid data.
+                if( stream.Version >= 623
 #if BIOSHOCK
-                        && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+                    && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
 #endif
 #if TRANSFORMERS
-                        && stream.Package.Build != GameBuild.BuildName.Transformers // FIXME: This is not skipped Gildor's UModel game support odd?
+                    && stream.Package.Build != GameBuild.BuildName.Transformers
 #endif
-                        )
-                    {
-                        stream.Skip( 12 );
-                    }
-                    stream.Skip( 4 );
+                )
+                {
+                    stream.Skip( 12 );
                 }
+                stream.Skip( 4 );
             }
         }
 
@@ -907,37 +936,47 @@ namespace UELib
             stream.Seek( currentPosition, SeekOrigin.Begin );
         }
 
+        private const short MaxLegacyVersion = -7;
         public void Deserialize( UPackageStream stream )
         {
             // Read as one variable due Big Endian Encoding.       
-            var version = stream.ReadInt32();
-            if( version < 0 )
+            var legacyVersion = stream.ReadInt32();
+            if( legacyVersion < 0 )
             {
 #if UE4
-                if( version > -3 )
+                if( legacyVersion < MaxLegacyVersion)
                 {
-                    //throw new Exception( "This version of the Unreal Engine 4 is not supported!" );
+                    throw new Exception( "This version of the Unreal Engine 4 is not supported!" );
                 }
-                Version = stream.ReadUInt32();
+
+                uint ue3Version = 0;
+                if (legacyVersion != -4)
+                {
+                    ue3Version = stream.ReadUInt32();
+                }
                 UE4Version = stream.ReadUInt32();
                 UE4LicenseeVersion = stream.ReadUInt32();
-                if( UE4Version >= 138 && UE4Version < 142 )
+
+                Version = ue3Version;
+
+                // Really old, probably no longer in production files? Other than some UE4 assets found in the first public release
+                if ( UE4Version >= 138 && UE4Version < 142 )
                 {
                     stream.Skip( 8 ); // CookedVersion, CookedLicenseeVersion   
                 }
 
-                if( version <= -2 )
+                if( legacyVersion <= -2 )
                 {
                     // Read enum based version
-                    if( version <= -3 )
+                    if( legacyVersion == -2 )
                     {
-                        var count = stream.ReadInt32(); // Versions
+                        int count = stream.ReadInt32(); // Versions
                         stream.Skip( count*(4 + 4) ); // Tag, Version
                     }
-                    else
+                    else if( legacyVersion < -2 && legacyVersion >= -5)
                     {
-                        var count = stream.ReadInt32();
-                        for( int i = 0; i < count; ++ i )
+                        int count = stream.ReadInt32();
+                        for( var i = 0; i < count; ++ i )
                         {
                             // Key
                             stream.ReadGuid();
@@ -947,12 +986,21 @@ namespace UELib
                             stream.ReadText();
                         }
                     }
+                    else
+                    {
+                        int count = stream.ReadInt32();
+                        for( var i = 0; i < count; ++ i )
+                        {
+                            stream.ReadGuid(); // Key
+                            stream.ReadInt32(); // Version
+                        }
+                    }
                 }
 #endif
             }
             else
             {
-                Version = (uint)version;
+                Version = (uint)legacyVersion;
             }
             LicenseeVersion = (ushort)(Version >> 16);
             Version = (Version & 0xFFFFU);
@@ -1076,11 +1124,8 @@ namespace UELib
                     if( UE4Version >= 336 )
                     {
                         // EngineVersion
-                        stream.ReadUInt16(); // Major
-                        stream.ReadUInt16(); // Minor
-                        stream.ReadUInt16(); // Patch
-                        stream.ReadUInt32(); // Changelist
-                        stream.ReadText(); // Branch
+                        UEngineVersion engineVersion = new UEngineVersion();
+                        engineVersion.Deserialize(stream);
                     }
                     else
                     {
@@ -1094,8 +1139,8 @@ namespace UELib
                     if( UE4Version >= 444 )
                     {
                         // Compatible EngineVersion
-                        stream.Skip( 10 );
-                        stream.ReadText();
+                        UEngineVersion engineVersion = new UEngineVersion();
+                        engineVersion.Deserialize(stream);
                     }
 #endif
                     if( Version >= VCOOKEDPACKAGES )
@@ -1155,6 +1200,9 @@ namespace UELib
                             {
                                 var source = stream.ReadUInt32();
                                 Console.WriteLine( "\tSource:{0}", source );
+
+                                // AdditionalPackagesToCook
+                                // NumTextureAllocations
                             }
 #endif
                         }
