@@ -732,16 +732,10 @@ namespace UELib
         #endregion
 
         #region Initialized Members
-        private struct ClassType
-        {
-            public string Name;
-            public Type Class;
-        }
-
         /// <summary>
         /// Class types that should get added to the ObjectsList.
         /// </summary>
-        private readonly List<ClassType> _RegisteredClasses = new List<ClassType>();
+        private readonly Dictionary<string, Type> _ClassTypes = new Dictionary<string, Type>();
 
         /// <summary>
         /// List of UObjects that were constructed by function ConstructObjects, later deserialized and linked.
@@ -1201,7 +1195,7 @@ namespace UELib
             Objects = new List<UObject>( Exports.Count );
             foreach( var exp in Exports )
             {
-                CreateObjectForTable( exp );
+                CreateObject( exp );
             }
 
             if( (initFlags & InitFlags.Deserialize) == 0 )
@@ -1224,7 +1218,7 @@ namespace UELib
             Objects = new List<UObject>( Imports.Count );
             foreach( var imp in Imports )
             {
-                CreateObjectForTable( imp );
+                CreateObject( imp );
             }
 
             if( !initialize )
@@ -1248,7 +1242,7 @@ namespace UELib
         {
             if( (initFlags & InitFlags.RegisterClasses) != 0 )
             {
-                RegisterAllClasses();
+                RegisterExportedClassTypes();
             }
 
             if( (initFlags & InitFlags.Construct) == 0 )
@@ -1379,7 +1373,7 @@ namespace UELib
             {
                 try
                 {
-                    CreateObjectForTable( exp );
+                    CreateObject( exp );
                 }
                 catch( Exception exc )
                 {
@@ -1391,7 +1385,7 @@ namespace UELib
             {
                 try
                 {
-                    CreateObjectForTable( imp );
+                    CreateObject( imp );
                 }
                 catch( Exception exc )
                 {
@@ -1460,7 +1454,7 @@ namespace UELib
             }
         }
 
-        private void RegisterAllClasses()
+        private void RegisterExportedClassTypes()
         {
             var exportedTypes = Assembly.GetExecutingAssembly().GetExportedTypes();
             foreach( var exportedType in exportedTypes )
@@ -1468,34 +1462,28 @@ namespace UELib
                 var attributes = exportedType.GetCustomAttributes( typeof(UnrealRegisterClassAttribute), false );
                 if( attributes.Length == 1 )
                 {
-                    RegisterClass( exportedType.Name.Substring( 1 ), exportedType );
+                    AddClassType( exportedType.Name.Substring( 1 ), exportedType );
                 }
             }
         }
         #endregion
 
         #region Methods
-        [System.Diagnostics.Contracts.Pure]private Type GetClassTypeByClassName( string className )
+        private void CreateObject( UObjectTableItem table )
         {
-            return _RegisteredClasses.FirstOrDefault
-            (
-                registered => String.Compare( registered.Name, className, StringComparison.OrdinalIgnoreCase ) == 0
-            ).Class;
-        }
-
-        private void CreateObjectForTable( UObjectTableItem table )
-        {
-            var objectType = GetClassTypeByClassName( table.ClassName );
-            table.Object = objectType == null ? new UnknownObject() : (UObject)Activator.CreateInstance( objectType );
+            var classType = GetClassType( table.ClassName );
+            table.Object = classType == null 
+                ? new UnknownObject() 
+                : (UObject)Activator.CreateInstance( classType );
             AddObject( table.Object, table );
             OnNotifyPackageEvent( new PackageEventArgs( PackageEventArgs.Id.Object ) );
         }
 
-        private void AddObject( UObject obj, UObjectTableItem T )
+        private void AddObject( UObject obj, UObjectTableItem table )
         {
-            T.Object = obj;
+            table.Object = obj;
             obj.Package = this;
-            obj.Table = T;
+            obj.Table = table;
 
             Objects.Add( obj );
             if( NotifyObjectAdded != null )
@@ -1515,21 +1503,24 @@ namespace UELib
         }
 
         [PublicAPI]
-        public void RegisterClass( string className, Type classObject )
+        public void AddClassType( string className, Type classObject )
         {
-            var obj = new ClassType{ Name = className, Class = classObject };
-            _RegisteredClasses.Add( obj );
+            _ClassTypes.Add(className.ToLower(), classObject);
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="className"></param>
-        /// <returns></returns>
+        [System.Diagnostics.Contracts.Pure]
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsRegisteredClass( string className )
+        public Type GetClassType( string className )
         {
-            return _RegisteredClasses.Exists( o => o.Name.ToLower() == className.ToLower() );
+            _ClassTypes.TryGetValue(className.ToLower(), out Type classType);
+            return classType;
+        }
+
+        [System.Diagnostics.Contracts.Pure]
+        [PublicAPI]
+        public bool HasClassType(string className)
+        {
+            return _ClassTypes.ContainsKey(className.ToLower());
         }
 
         /// <summary>
@@ -1542,7 +1533,8 @@ namespace UELib
         /// <param name="objectIndex">The index of the Object in a tablelist.</param>
         /// <returns>The found UELib.Core.UObject if any.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public UObject GetIndexObject( int objectIndex )
+        [System.Diagnostics.Contracts.Pure]
+        public UObject GetIndexObject( int objectIndex )
         {
             return (objectIndex < 0 ? Imports[-objectIndex - 1].Object
                         : (objectIndex > 0 ? Exports[objectIndex - 1].Object
@@ -1555,7 +1547,8 @@ namespace UELib
         /// <param name="objectIndex">The index of the object in a tablelist.</param>
         /// <returns>The found UELib.Core.UObject name if any.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public string GetIndexObjectName( int objectIndex )
+        [System.Diagnostics.Contracts.Pure]
+        public string GetIndexObjectName( int objectIndex )
         {
             return GetIndexTable( objectIndex ).ObjectName;
         }
@@ -1566,7 +1559,8 @@ namespace UELib
         /// <param name="nameIndex">A NameIndex into the NameTableList.</param>
         /// <returns>The name at specified NameIndex.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public string GetIndexName( int nameIndex )
+        [System.Diagnostics.Contracts.Pure]
+        public string GetIndexName( int nameIndex )
         {
             return Names[nameIndex].Name;
         }
@@ -1581,7 +1575,8 @@ namespace UELib
         /// <param name="tableIndex">The index of the Table.</param>
         /// <returns>The found UELib.Core.UnrealTable if any.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public UObjectTableItem GetIndexTable( int tableIndex )
+        [System.Diagnostics.Contracts.Pure]
+        public UObjectTableItem GetIndexTable( int tableIndex )
         {
             return  (tableIndex < 0 ? Imports[-tableIndex - 1]
                     : (tableIndex > 0 ? (UObjectTableItem)Exports[tableIndex - 1]
@@ -1592,11 +1587,12 @@ namespace UELib
         /// Tries to find an UELib.Core.UObject with a specified name and type.
         /// </summary>
         /// <param name="objectName">The name of the object to find.</param>
-        /// <param name="type">The type of the object to find.</param>
+        /// <param name="classType">The type of the object to find.</param>
         /// <param name="checkForSubclass">Whether to test for subclasses of type as well.</param>
         /// <returns>The found UELib.Core.UObject if any.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public UObject FindObject( string objectName, Type type, bool checkForSubclass = false )
+        [System.Diagnostics.Contracts.Pure]
+        public UObject FindObject( string objectName, Type classType, bool checkForSubclass = false )
         {
             if( Objects == null )
             {
@@ -1604,12 +1600,13 @@ namespace UELib
             }
 
             var obj = Objects.Find( o => String.Compare( o.Name, objectName, StringComparison.OrdinalIgnoreCase ) == 0 &&
-                (checkForSubclass ? o.GetType().IsSubclassOf( type ) : o.GetType() == type) );
+                (checkForSubclass ? o.GetType().IsSubclassOf( classType ) : o.GetType() == classType) );
             return obj;
         }
 
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public UObject FindObjectByGroup( string objectGroup )
+        [System.Diagnostics.Contracts.Pure]
+        public UObject FindObjectByGroup( string objectGroup )
         {
             var groups = objectGroup.Split( '.' );
             UObject lastObj = null;
@@ -1636,7 +1633,8 @@ namespace UELib
         /// <param name="flag">The enum @flag to test.</param>
         /// <returns>Whether this package is marked with @flag.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool HasPackageFlag( PackageFlags flag )
+        [System.Diagnostics.Contracts.Pure]
+        public bool HasPackageFlag( PackageFlags flag )
         {
             return (PackageFlags & (uint)flag) != 0;
         }
@@ -1647,7 +1645,8 @@ namespace UELib
         /// <param name="flag">The uint @flag to test</param>
         /// <returns>Whether this package is marked with @flag.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool HasPackageFlag( uint flag )
+        [System.Diagnostics.Contracts.Pure]
+        public bool HasPackageFlag( uint flag )
         {
             return (PackageFlags & flag) != 0;
         }
@@ -1657,7 +1656,8 @@ namespace UELib
         /// </summary>
         /// <returns>True if cooked or False if not.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsCooked()
+        [System.Diagnostics.Contracts.Pure]
+        public bool IsCooked()
         {
             return HasPackageFlag( Flags.PackageFlags.Cooked ) && Version >= VCOOKEDPACKAGES;
         }
@@ -1667,7 +1667,8 @@ namespace UELib
         /// </summary>
         /// <returns>Whether package is cooked for consoles.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsConsoleCooked()
+        [System.Diagnostics.Contracts.Pure]
+        public bool IsConsoleCooked()
         {
             return IsCooked() && (IsBigEndianEncoded || Build.IsConsoleCompressed) && !Build.IsXenonCompressed;
         }
@@ -1677,7 +1678,8 @@ namespace UELib
         /// </summary>
         /// <returns>Whether if this package is a map.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsMap()
+        [System.Diagnostics.Contracts.Pure]
+        public bool IsMap()
         {
             return HasPackageFlag( Flags.PackageFlags.Map );
         }
@@ -1687,7 +1689,8 @@ namespace UELib
         /// </summary>
         /// <returns>Whether if this package contains code classes.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsScript()
+        [System.Diagnostics.Contracts.Pure]
+        public bool IsScript()
         {
             return HasPackageFlag( Flags.PackageFlags.Script );
         }
@@ -1697,7 +1700,8 @@ namespace UELib
         /// </summary>
         /// <returns>Whether if this package was built in debug configuration.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsDebug()
+        [System.Diagnostics.Contracts.Pure]
+        public bool IsDebug()
         {
             return HasPackageFlag( Flags.PackageFlags.Debug );
         }
@@ -1707,7 +1711,8 @@ namespace UELib
         /// </summary>
         /// <returns>Whether if this package is stripped.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsStripped()
+        [System.Diagnostics.Contracts.Pure]
+        public bool IsStripped()
         {
             return HasPackageFlag( Flags.PackageFlags.Stripped );
         }
@@ -1717,7 +1722,8 @@ namespace UELib
         /// </summary>
         /// <returns>True if encrypted or False if not.</returns>
         [PublicAPI]
-        [System.Diagnostics.Contracts.Pure]public bool IsEncrypted()
+        [System.Diagnostics.Contracts.Pure]
+        public bool IsEncrypted()
         {
             return HasPackageFlag( Flags.PackageFlags.Encrypted );
         }

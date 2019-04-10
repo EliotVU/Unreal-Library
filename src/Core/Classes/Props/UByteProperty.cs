@@ -49,8 +49,8 @@ namespace UELib.Core
             {
                 if( pkg.Objects == null )
                 {
-                    pkg.RegisterClass( "ByteProperty", typeof(UByteProperty) );
-                    pkg.RegisterClass( "Enum", typeof(UEnum) );
+                    pkg.AddClassType( "ByteProperty", typeof(UByteProperty) );
+                    pkg.AddClassType( "Enum", typeof(UEnum) );
                     pkg.InitializeExportObjects();
                 }
                 var b = (UByteProperty)pkg.FindObject( Name, typeof(UByteProperty) );
