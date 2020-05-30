@@ -18,7 +18,7 @@ namespace UELib.Core
         /// Initialized by the UMetaData object,
         /// This Meta contains comments and other meta related info that belongs to this instance.
         /// </summary>
-        public UMetaData.UMetaField Meta;
+        public UMetaData.UFieldData MetaData;
         #endregion
 
         #region Constructors

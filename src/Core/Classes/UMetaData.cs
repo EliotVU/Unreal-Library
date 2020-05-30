@@ -11,12 +11,14 @@ namespace UELib.Core
     public sealed class UMetaData : UObject
     {
         #region Serialized Members
-        public sealed class UMetaField : IUnrealDecompilable, IUnrealSerializableClass
+        public sealed class UFieldData : IUnrealDecompilable, IUnrealSerializableClass
         {
-            public int                  FieldIndex;         // ObjectIndex
-            public string               FieldName;          // UT3, Mirrors Edge
-            public UArray<UMetaTag>     MetaTags;
-            public UnrealPackage        Owner;
+            private string FieldName;
+
+            public UField Field;
+
+            // Dated qualified identifier to this meta data's field. e.g. UT3, Mirrors Edge
+            public Dictionary<UName, string> TagsMap;
 
             public void Serialize( IUnrealStream stream )
             {
@@ -32,114 +34,52 @@ namespace UELib.Core
                 }
                 else
                 {
-                    FieldIndex = stream.ReadObjectIndex();
+                    // TODO: Possibly linked to a non-ufield?
+                    Field = (UField)stream.ReadObject();
+                    Field.MetaData = this;
                 }
-                MetaTags = new UArray<UMetaTag>();
-                MetaTags.Deserialize( stream, tag => tag.Owner = Owner );
+
+                var length = stream.ReadInt32();
+                TagsMap = new Dictionary<UName, string>(length);
+                for (var i = 0; i < length; ++ i) {
+                    var key = stream.ReadNameReference();
+                    var value = stream.ReadText();
+                    TagsMap.Add(key, value);
+                }
             }
 
-            /// <summary>
-            /// Decompiles this object into a text format of:
-            ///
-            /// LeftArrow
-            ///     "ForEach MetaTags"
-            ///     Tag.Decompile()|
-            /// RightArrow
-            /// </summary>
-            /// <returns></returns>
             public string Decompile()
             {
-                var tags = new List<UMetaTag>( MetaTags.Count );
-                tags.AddRange( MetaTags );
+                var tags = new List<string>(TagsMap.Count);
+                foreach (var tag in TagsMap) {
+                    if (tag.Key == "OrderIndex" || tag.Key == "ToolTip") {
+                        continue;
+                    }
 
-                // We remove this because OrderIndex is an implicit added MetaTag.
-                var oItag = GetMetaTag( "OrderIndex" );
-                if( oItag != null )
-                {
-                    tags.Remove( oItag );
+                    tags.Add(tag.Key + "=" + tag.Value);
                 }
-
-                oItag = GetMetaTag( "ToolTip" );
-                if( oItag != null )
-                {
-                    tags.Remove( oItag );
-                }
-
-                /*OItag = GetMetaTag( "ToolTip" );
-                if( OItag != null )
-                {
-                    tags.Remove( OItag );
-                }*/
 
                 if( tags.Count <= 0 )
                     return String.Empty;
 
-                var output = "<";
-                foreach( var tag in tags )
-                {
-                    output += tag.Decompile() + (tag != tags.Last() ? "|" : ">");
-                }
-                return output;
+                return "<" + string.Join("|", tags) + ">";
             }
 
-            public UMetaTag GetMetaTag( string tagName )
+            public override string ToString()
             {
-                return MetaTags.Find( tag => tag.TagName == tagName );
+                return Field != null ? Field.GetOuterGroup() : FieldName;
             }
         }
 
-        public sealed class UMetaTag : IUnrealDecompilable, IUnrealSerializableClass
-        {
-            public UName            TagName;
-            public string           TagValue;
-            public UnrealPackage    Owner;
-
-            public void Serialize( IUnrealStream stream )
-            {
-                throw new NotImplementedException();
-            }
-
-            public void Deserialize( IUnrealStream stream )
-            {
-                TagName = stream.ReadNameReference();
-                TagValue = stream.ReadText();
-            }
-
-            /// <summary>
-            /// Decompiles this object into a text format of:
-            ///
-            /// TagName=TagValue
-            /// </summary>
-            /// <returns></returns>
-            public string Decompile()
-            {
-                return TagName + "=" + TagValue;
-            }
-        }
-
-        private UArray<UMetaField> _MetaFields;
+        public UArray<UFieldData> MetaObjects;
         #endregion
 
         #region Constructors
         protected override void Deserialize()
         {
             base.Deserialize();
-            _MetaFields = new UArray<UMetaField>();
-            _MetaFields.Deserialize( _Buffer, field => field.Owner = Package );
-        }
-
-        public override void PostInitialize()
-        {
-            base.PostInitialize();
-            // Link the metas to the owners
-            foreach( var metaProp in _MetaFields )
-            {
-                var field = (UField)Package.GetIndexObject( metaProp.FieldIndex );
-                if( field != null )
-                {
-                    field.Meta = metaProp;
-                }
-            }
+            MetaObjects = new UArray<UFieldData>();
+            MetaObjects.Deserialize( _Buffer );
         }
         #endregion
 
@@ -158,58 +98,11 @@ namespace UELib.Core
         {
             // UE3 Debug
             BeginDeserializing();
-
-            if( _MetaFields == null )
+            if( MetaObjects == null )
             {
-                return "No MetaFields found!";
+                return "";
             }
-
-            var content = FormatHeader();
-            foreach( var field in _MetaFields )
-            {
-                var fieldname = field.FieldIndex != 0 ? GetIndexObject( field.FieldIndex ).GetOuterGroup() : field.FieldName;                                                                             // Max string length!
-                var fieldOutput = field.Decompile();
-                if( fieldOutput.Length != 0 )
-                {
-                    content += "\r\n" + fieldname + field.Decompile();
-                }
-            }
-            return content;
-        }
-
-        protected override string FormatHeader()
-        {
-            return _MetaFields == null ? "No MetaFields found!" : "Meta count: " + _MetaFields.Count + "\r\n";
-        }
-
-        public string GetUniqueMetas()
-        {
-            var output = String.Empty;
-            var tags = new List<UMetaTag>();
-            foreach( var field in _MetaFields )
-            {
-                foreach( var dfield in field.MetaTags )
-                {
-                    var ut = new UMetaTag{Owner = dfield.Owner};
-                    if( tags.Find( tag => tag.TagName == dfield.TagName ) != null )
-                    {
-                        continue;
-                    }
-                    ut.TagName = dfield.TagName;
-                    ut.TagValue = field.FieldName;
-                    tags.Add( ut );
-                }
-            }
-
-            foreach( var ut in tags )
-            {
-                var tagsOutput = ut.Decompile().TrimEnd( '=' );
-                if( tagsOutput.Length != 0 )
-                {
-                    output += tagsOutput + "\r\n";
-                }
-            }
-            return output;
+            return string.Join("\r\n", MetaObjects.ConvertAll<string>(data => data.ToString() + data.Decompile()));
         }
         #endregion
     }

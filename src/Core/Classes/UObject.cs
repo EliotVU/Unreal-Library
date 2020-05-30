@@ -678,6 +678,11 @@ namespace UELib.Core
             return Name + String.Format( "({0})", (int)this );
         }
 
+        public override int GetHashCode()
+        {
+            return _ObjectIndex;
+        }
+
         public void Dispose()
         {
             Dispose( true );

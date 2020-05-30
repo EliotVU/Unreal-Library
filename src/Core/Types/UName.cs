@@ -77,6 +77,11 @@ namespace UELib
             return _Text;
         }
 
+        public override int GetHashCode()
+        {
+            return _Index;
+        }
+
         public static bool operator ==( UName a, object b )
         {
             return Equals( a, b );
