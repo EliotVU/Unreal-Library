@@ -27,7 +27,24 @@ namespace UELib
 
         public void Deserialize( IUnrealStream stream )
         {
-            Name = stream.ReadText();
+#if DCUO
+            if ( stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO )
+            {
+                //DCUO doesn't null terminate name table entries
+                int size = stream.ReadInt32();
+                var strBytes = new byte[size];
+                stream.Read( strBytes, 0, size );
+                if ( stream.BigEndianCode )
+                {
+                    Array.Reverse( strBytes );
+                }
+                Name = System.Text.Encoding.ASCII.GetString( strBytes );
+            }
+            else
+#endif
+            {
+                Name = stream.ReadText();
+            }
             Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
 #if DEOBFUSCATE
     // De-obfuscate names that contain unprintable characters!

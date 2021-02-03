@@ -387,6 +387,12 @@ namespace UELib
                 Tera,
 
                 /// <summary>
+                /// 648/6405
+                /// </summary>
+                [Build( 648, 6405 )]
+                DCUO,
+
+                /// <summary>
                 /// 727/075
                 /// </summary>
                 [Build( 727, 75 )]
@@ -1068,6 +1074,42 @@ namespace UELib
                     }
                 }
             }
+
+#if DCUO
+            if( Build == GameBuild.BuildName.DCUO )
+            {
+                //We need to back up because our package has already been decompressed
+                stream.Position -= 4;
+
+                int unkCount = stream.ReadInt32();
+
+                stream.Skip( 16 * unkCount );
+
+                stream.Skip( 4 );
+
+                if( Version >= 516 )
+                {
+                    int textCount = stream.ReadInt32();
+
+                    var texts = new List<string>();
+                    for( int i = 0; i < textCount; i++ )
+                    {
+                        texts.Add( stream.ReadText() );
+                    }
+                }
+                
+                uint realNameOffset = (uint)stream.Position;
+
+                System.Diagnostics.Debug.Assert( realNameOffset <= _TablesData.NamesOffset, "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!" );
+
+                uint offsetDif = _TablesData.NamesOffset - realNameOffset;
+
+                //The offsets parsed above are off, maybe due to decompression?
+                _TablesData.NamesOffset -= offsetDif;
+                _TablesData.ImportsOffset -= offsetDif;
+                _TablesData.ExportsOffset -= offsetDif;
+            }
+#endif
 
             // Read the name table
             if( _TablesData.NamesCount > 0 )
