@@ -4,7 +4,8 @@ using System.Diagnostics.Contracts;
 namespace UELib
 {
     /// <summary>
-    /// Represents a unreal import table with deserialized data from a unreal package header.
+    /// An import table entry, representing a @UObject dependency in a package.
+    /// This includes the name of the package that this dependency belongs to.
     /// </summary>
     public sealed class UImportTableItem : UObjectTableItem, IUnrealSerializableClass
     {

@@ -3,7 +3,7 @@ using System;
 namespace UELib
 {
     /// <summary>
-    /// Represents a unreal name table with serialized data from a unreal package header.
+    /// A names table entry, representing all unique names within a package.
     /// </summary>
     public sealed class UNameTableItem : UTableItem, IUnrealSerializableClass
     {
@@ -28,23 +28,25 @@ namespace UELib
         public void Deserialize( IUnrealStream stream )
         {
 #if DCUO
-            if ( stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO )
+            if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO )
             {
                 //DCUO doesn't null terminate name table entries
                 int size = stream.ReadInt32();
                 var strBytes = new byte[size];
                 stream.Read( strBytes, 0, size );
-                if ( stream.BigEndianCode )
+                if( stream.BigEndianCode )
                 {
                     Array.Reverse( strBytes );
                 }
                 Name = System.Text.Encoding.ASCII.GetString( strBytes );
             }
             else
-#endif
             {
+#endif
                 Name = stream.ReadText();
+#if DCUO
             }
+#endif
             Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
 #if DEOBFUSCATE
     // De-obfuscate names that contain unprintable characters!
@@ -78,16 +80,6 @@ namespace UELib
         public override string ToString()
         {
             return Name;
-        }
-
-        public static bool operator ==( UNameTableItem a, string b )
-        {
-            return String.Equals( a, b );
-        }
-
-        public static bool operator !=( UNameTableItem a, string b )
-        {
-            return !String.Equals( a, b );
         }
 
         public static implicit operator string( UNameTableItem a )

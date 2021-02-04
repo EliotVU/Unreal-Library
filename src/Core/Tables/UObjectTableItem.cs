@@ -6,7 +6,7 @@ using UELib.Core;
 namespace UELib
 {
     /// <summary>
-    /// Represents a unreal table with general deserialized data from a unreal package header.
+    /// An abstract implementation of the export and import table entries.
     /// </summary>
     public abstract class UObjectTableItem : UTableItem, IBuffered
     {

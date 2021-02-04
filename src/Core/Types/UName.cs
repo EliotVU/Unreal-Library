@@ -3,6 +3,9 @@ using System.Diagnostics;
 
 namespace UELib
 {
+    /// <summary>
+    /// Represents a datatype that represents a string, possibly acquired from a names table.
+    /// </summary>
     public sealed class UName : IUnrealSerializableClass
     {
         private const string    None = "None";
@@ -11,6 +14,10 @@ namespace UELib
 
         private UNameTableItem  _NameItem;
         private int             _Number;
+
+        /// <summary>
+        /// Represents the number in a name, e.g. "Component_1"
+        /// </summary>
         public int              Number{ get; private set; }
 
         private string          _Text
@@ -23,12 +30,12 @@ namespace UELib
             get{ return _NameItem.Index; }
         }
 
+        /// <summary>
+        /// The index into the names table.
+        /// </summary>
         public int              Index{ get; private set; }
 
-        public int              Length
-        {
-            get{ return _Text.Length; }
-        }
+        public int              Length => _Text.Length;
 
         public UName( IUnrealStream stream )
         {
@@ -48,7 +55,7 @@ namespace UELib
 
         public void Deserialize( IUnrealStream stream )
         {
-            var index = stream.ReadNameIndex( out _Number );
+            int index = stream.ReadNameIndex( out _Number );
             _NameItem = stream.Package.Names[index];
 
             Debug.Assert( _NameItem != null, "_NameItem cannot be null! " + index );
@@ -82,12 +89,12 @@ namespace UELib
 
         public static bool operator ==( UName a, string b )
         {
-            return String.Equals( a, b );
+            return string.Equals( a, b );
         }
 
         public static bool operator !=( UName a, string b )
         {
-            return !String.Equals( a, b );
+            return !string.Equals( a, b );
         }
 
         public static implicit operator string( UName a )

@@ -5,7 +5,7 @@ using System.IO;
 namespace UELib
 {
     /// <summary>
-    /// Represents a unreal export table with deserialized data from a unreal package header.
+    /// An export table entry, representing a @UObject in a package.
     /// </summary>
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
@@ -174,7 +174,7 @@ namespace UELib
 #endif
 #if MKKE
             if( stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE )
-            {            
+            {
 #endif
                 int netObjectCount = stream.ReadInt32();
                 stream.Skip( netObjectCount * 4 );

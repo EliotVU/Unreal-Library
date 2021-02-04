@@ -3,7 +3,7 @@
 namespace UELib
 {
     /// <summary>
-    /// Represents a basic file table.
+    /// An abstract class for any table entry to inherit from.
     /// </summary>
     public abstract class UTableItem
     {
