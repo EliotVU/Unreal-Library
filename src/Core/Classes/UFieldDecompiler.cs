@@ -1,13 +1,11 @@
 ﻿#if DECOMPILE
-using System;
-
 namespace UELib.Core
 {
     public partial class UField
     {
         protected string DecompileMeta()
         {
-            return Meta != null ? Meta.Decompile() : String.Empty;
+            return MetaData == null ? string.Empty : MetaData.Decompile();
         }
 
         // Introduction of the change from intrinsic to native.

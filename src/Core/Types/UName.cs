@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace UELib
 {
     /// <summary>
-    /// Represents a datatype that represents a string, possibly acquired from a names table.
+    /// Represents a data type that represents a string, possibly acquired from a names table.
     /// </summary>
     public sealed class UName : IUnrealSerializableClass
     {
@@ -13,29 +13,18 @@ namespace UELib
         internal const int      VNameNumbered = 343;
 
         private UNameTableItem  _NameItem;
-        private int             _Number;
 
         /// <summary>
         /// Represents the number in a name, e.g. "Component_1"
         /// </summary>
-        public int              Number{ get; private set; }
+        private int             _Number;
 
-        private string          _Text
-        {
-            get{ return _Number > Numeric ? _NameItem.Name + "_" + _Number : _NameItem.Name; }
-        }
+        public string           Name => _NameItem.Name;
+        private string          Text => _Number > Numeric ? _NameItem.Name + "_" + _Number : _NameItem.Name;
 
-        private int             _Index
-        {
-            get{ return _NameItem.Index; }
-        }
+        private int             Index => _NameItem.Index;
 
-        /// <summary>
-        /// The index into the names table.
-        /// </summary>
-        public int              Index{ get; private set; }
-
-        public int              Length => _Text.Length;
+        public int              Length => Text.Length;
 
         public UName( IUnrealStream stream )
         {
@@ -64,22 +53,23 @@ namespace UELib
 
         public void Serialize( IUnrealStream stream )
         {
-            stream.WriteIndex( _Index );
-            if( stream.Version >= VNameNumbered )
-            {
-                Console.WriteLine( _Number + " " + _Text );
-                stream.Write( (uint)_Number + 1 );
-            }
+            stream.WriteIndex( Index );
+
+            if (stream.Version < VNameNumbered) 
+                return;
+
+            Console.WriteLine( _Number + " " + Text );
+            stream.Write( (uint)_Number + 1 );
         }
 
         public override string ToString()
         {
-            return _Text;
+            return Text;
         }
 
         public override int GetHashCode()
         {
-            return _Index;
+            return Index;
         }
 
         public static bool operator ==( UName a, object b )
@@ -104,12 +94,12 @@ namespace UELib
 
         public static implicit operator string( UName a )
         {
-            return !Equals( a, null ) ? a._Text : null;
+            return a?.Text;
         }
 
         public static explicit operator int( UName a )
         {
-            return a._Index;
+            return a.Index;
         }
     }
 }

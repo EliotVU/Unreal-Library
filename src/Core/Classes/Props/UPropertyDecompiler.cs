@@ -9,45 +9,52 @@ namespace UELib.Core
         // Called before the var () is printed.
         public virtual string PreDecompile()
         {
-            var tag = Meta != null ? Meta.GetMetaTag( "ToolTip" ) : null;
-            if( tag != null )
+            string tooltipValue = null;
+            MetaData?.Tags.TryGetValue("ToolTip", out tooltipValue);
+            if (tooltipValue == null)
             {
-                string comment = UDecompilingState.Tabs + "/** ";
-                // Multiline comment?
-                if( tag.TagValue.IndexOf( '\n' ) != -1 )
-                {
-                    comment += " \r\n" + UDecompilingState.Tabs + " *"
-                        + tag.TagValue.Replace( "\n", "\n" + UDecompilingState.Tabs + " *" )
-                        + "\r\n" + UDecompilingState.Tabs;
-                }
-                else
-                {
-                    comment += tag.TagValue;
-                }
-                return comment + " */\r\n";
+                return string.Empty;
             }
-            return String.Empty;
+
+            string comment = UDecompilingState.Tabs + "/** ";
+            // Multiline comment?
+            if( tooltipValue.IndexOf( '\n' ) != -1 )
+            {
+                comment += " \r\n" + UDecompilingState.Tabs + " *"
+                           + tooltipValue.Replace( "\n", "\n" + UDecompilingState.Tabs + " *" )
+                           + "\r\n" + UDecompilingState.Tabs;
+            }
+            else
+            {
+                comment += tooltipValue;
+            }
+            return comment + " */\r\n";
         }
 
         public override string Decompile()
         {
-            return FormatFlags() + GetFriendlyType() + " " + Name + FormatSize() + DecompileMeta();
+            return FormatFlags() + GetFriendlyType() 
+                                 + " " + Name
+                                 + FormatSize() 
+                                 + DecompileMeta();
         }
 
         private string FormatSize()
         {
             if( !_IsArray )
             {
-                return String.Empty;
+                return string.Empty;
             }
 
-            var arraySizeDecl = ArrayEnum != null ? ArrayEnum.GetFriendlyType() : ArrayDim.ToString( CultureInfo.InvariantCulture );
-            return String.Format( "[{0}]", arraySizeDecl );
+            string arraySizeDecl = ArrayEnum != null 
+                ? ArrayEnum.GetFriendlyType() 
+                : ArrayDim.ToString( CultureInfo.InvariantCulture );
+            return $"[{arraySizeDecl}]";
         }
 
         private string FormatAccess()
         {
-            string output = String.Empty;
+            var output = string.Empty;
 
             // none are true in StreamInteraction.uc???
             if( IsPrivate() )
@@ -64,7 +71,7 @@ namespace UELib.Core
         public string FormatFlags()
         {
             ulong copyFlags = PropertyFlags;
-            string output = String.Empty;
+            var output = string.Empty;
 
             if( PropertyFlags == 0 )
             {

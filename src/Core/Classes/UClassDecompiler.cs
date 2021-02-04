@@ -9,10 +9,7 @@ namespace UELib.Core
 {
     public partial class UClass
     {
-        protected override string CPPTextKeyword
-        {
-            get{ return "cpptext"; }
-        }
+        protected override string CPPTextKeyword => "cpptext";
 
         /**
          * Structure looks like this, even though said XX.GetFriendlyName() actually it's XX.Decompile() which handles then the rest on its own.
@@ -68,7 +65,7 @@ namespace UELib.Core
         public override string Decompile()
         {
             var assembly = Assembly.GetAssembly( GetType() );
-            var content = String.Format
+            var content = string.Format
             (
                 "/*******************************************************************************" +
                 "\r\n " +
@@ -106,9 +103,9 @@ namespace UELib.Core
         public string GetDependencies()
         {
             if( ClassDependencies == null )
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            string output = string.Empty;
             foreach( var dep in ClassDependencies )
             {
                 var obj = GetIndexObject( dep.Class );
@@ -117,15 +114,15 @@ namespace UELib.Core
                     output += " *\t" + obj.GetClassName() + " " + obj.GetOuterGroup() + "\r\n";
                 }
             }
-            return output.Length != 0 ? "Class Dependencies:\r\n" + output + " *" : String.Empty;
+            return output.Length != 0 ? "Class Dependencies:\r\n" + output + " *" : string.Empty;
         }
 
         private string GetImports()
         {
             if( PackageImports == null )
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            string output = string.Empty;
             foreach( int packageImport in PackageImports )
             {
                 output += " *\t" + Package.Names[packageImport].Name + "\r\n";
@@ -135,12 +132,12 @@ namespace UELib.Core
                 }
                 i += i;*/
             }
-            return output.Length != 0 ? "Package Imports:\r\n" + output + " *" : String.Empty;
+            return output.Length != 0 ? "Package Imports:\r\n" + output + " *" : string.Empty;
         }
 
         public string GetStats()
         {
-            string output = String.Empty;
+            string output = string.Empty;
 
             if( Constants != null && Constants.Count > 0 )
                 output += " *\tConstants:" + Constants.Count + "\r\n";
@@ -160,7 +157,7 @@ namespace UELib.Core
             if( States != null && States.Count > 0 )
                 output += " *\tStates:" + States.Count + "\r\n";
 
-            return output.Length != 0 ? "Stats:\r\n" + output + " *" : String.Empty;
+            return output.Length != 0 ? "Stats:\r\n" + output + " *" : string.Empty;
         }
 
         protected override string FormatHeader()
@@ -173,7 +170,7 @@ namespace UELib.Core
             }
             // Object doesn't have an extension so only try add the extension if theres a SuperField
             if( Super != null
-                && !(IsClassInterface() && String.Compare( Super.Name, "Object", StringComparison.OrdinalIgnoreCase ) == 0) )
+                && !(IsClassInterface() && string.Compare( Super.Name, "Object", StringComparison.OrdinalIgnoreCase ) == 0) )
             {
                 output += " " + FormatExtends() + " " + Super.Name;
             }
@@ -184,12 +181,12 @@ namespace UELib.Core
             }
 
             string rules = FormatFlags().Replace( "\t", UnrealConfig.Indention );
-            return output + (String.IsNullOrEmpty( rules ) ? ";" : rules);
+            return output + (string.IsNullOrEmpty( rules ) ? ";" : rules);
         }
 
         private string FormatNameGroup( string groupName, IList<int> enumerableList )
         {
-            string output = String.Empty;
+            string output = string.Empty;
             if( enumerableList != null && enumerableList.Any() )
             {
                 output += "\r\n\t" + groupName + "(";
@@ -203,7 +200,7 @@ namespace UELib.Core
                 }
                 catch
                 {
-                    output += String.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
+                    output += string.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
                 }
             }
             return output;
@@ -211,7 +208,7 @@ namespace UELib.Core
 
         private string FormatObjectGroup( string groupName, IList<int> enumerableList )
         {
-            string output = String.Empty;
+            string output = string.Empty;
             if( enumerableList != null && enumerableList.Any() )
             {
                 output += "\r\n\t" + groupName + "(";
@@ -225,7 +222,7 @@ namespace UELib.Core
                 }
                 catch
                 {
-                    output += String.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
+                    output += string.Format( "\r\n\t/* An exception occurred while decompiling {0}. */", groupName );
                 }
             }
             return output;
@@ -233,7 +230,7 @@ namespace UELib.Core
 
         private string FormatFlags()
         {
-            string output = String.Empty;
+            string output = string.Empty;
 
             if( (ClassFlags & (uint)Flags.ClassFlags.Abstract) != 0 )
             {
@@ -277,8 +274,8 @@ namespace UELib.Core
             if( (ClassFlags & (uint)Flags.ClassFlags.Config) != 0 )
             {
                 string inner = ConfigName;
-                if( String.Compare( inner, "None", StringComparison.OrdinalIgnoreCase ) == 0
-                    || String.Compare( inner, "System", StringComparison.OrdinalIgnoreCase ) == 0 )
+                if( string.Compare( inner, "None", StringComparison.OrdinalIgnoreCase ) == 0
+                    || string.Compare( inner, "System", StringComparison.OrdinalIgnoreCase ) == 0 )
                 {
                     output += "\r\n\tconfig";
                 }
@@ -383,7 +380,7 @@ namespace UELib.Core
             try
             {
                 if( Package.Version >= UnrealPackage.VDLLBIND
-                    && String.Compare( DLLBindName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
+                    && string.Compare( DLLBindName, "None", StringComparison.OrdinalIgnoreCase ) != 0 )
                 {
                     output += "\r\n\tdllbind(" + DLLBindName + ")";
                 }
@@ -395,10 +392,10 @@ namespace UELib.Core
 
             if( ClassDependencies != null )
             {
-                var dependson = new List<int>();
+                var dependsOn = new List<int>();
                 foreach( var dependency in ClassDependencies )
                 {
-                    if( dependson.Exists( dep => dep == dependency.Class ) )
+                    if( dependsOn.Exists( dep => dep == dependency.Class ) )
                     {
                         continue;
                     }
@@ -408,7 +405,7 @@ namespace UELib.Core
                     {
                         output += "\r\n\tdependson(" + obj.Name + ")";
                     }
-                    dependson.Add( dependency.Class );
+                    dependsOn.Add( dependency.Class );
                 }
             }
 
@@ -428,7 +425,7 @@ namespace UELib.Core
         {
             if( DataScriptSize <= 0 )
             {
-                return String.Empty;
+                return string.Empty;
             }
 
             var replicatedObjects = new List<IUnrealNetObject>();
@@ -444,7 +441,7 @@ namespace UELib.Core
 
             if( replicatedObjects.Count == 0 )
             {
-                return String.Empty;
+                return string.Empty;
             }
 
             var statements = new Dictionary<uint, List<IUnrealNetObject>>();
@@ -466,7 +463,7 @@ namespace UELib.Core
                     netObjects.Add( nextObject );
                 }
 
-                netObjects.Sort( (o, o2) => String.Compare( o.Name, o2.Name, StringComparison.Ordinal ) );
+                netObjects.Sort( (o, o2) => string.Compare( o.Name, o2.Name, StringComparison.Ordinal ) );
                 if( !statements.ContainsKey( firstObject.RepKey ) )
                     statements.Add( firstObject.RepKey, netObjects );
             }
@@ -497,10 +494,10 @@ namespace UELib.Core
                     }
                     catch( Exception e )
                     {
-                        statementCode = String.Format( "/* An exception occurred while decompiling condition ({0}) */", e );
+                        statementCode = string.Format( "/* An exception occurred while decompiling condition ({0}) */", e );
                     }
-                    var statementType = Package.Version < VReliableDeprecation ? rel ? "reliable" : "unreliable" : String.Empty;
-                    var statementFormat = String.Format( "{0} if({1})", statementType, statementCode );
+                    var statementType = Package.Version < VReliableDeprecation ? rel ? "reliable" : "unreliable" : string.Empty;
+                    var statementFormat = string.Format( "{0} if({1})", statementType, statementCode );
                     output.Append( statementFormat );
 
                     UDecompilingState.AddTab();
@@ -540,9 +537,9 @@ namespace UELib.Core
         private string FormatStates()
         {
             if( States == null || !States.Any() )
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            string output = string.Empty;
             foreach( var scriptState in States )
             {
                 output += "\r\n" + scriptState.Decompile() + "\r\n";

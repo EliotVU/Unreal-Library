@@ -13,12 +13,12 @@ namespace UELib.Core
         #region Serialized Members
         public sealed class UFieldData : IUnrealDecompilable, IUnrealSerializableClass
         {
-            private string FieldName;
+            private string _FieldName;
 
-            public UField Field;
+            private UField _Field;
 
             // Dated qualified identifier to this meta data's field. e.g. UT3, Mirrors Edge
-            public Dictionary<UName, string> TagsMap;
+            public Dictionary<string, string> Tags;
 
             public void Serialize( IUnrealStream stream )
             {
@@ -30,44 +30,43 @@ namespace UELib.Core
                 if( stream.Version <= 540 )
                 {
                     // e.g. Core.Object.X
-                    FieldName = stream.ReadText();
+                    _FieldName = stream.ReadText();
                 }
                 else
                 {
                     // TODO: Possibly linked to a non-ufield?
-                    Field = (UField)stream.ReadObject();
-                    Field.MetaData = this;
+                    _Field = (UField)stream.ReadObject();
+                    _Field.MetaData = this;
                 }
 
-                var length = stream.ReadInt32();
-                TagsMap = new Dictionary<UName, string>(length);
+                int length = stream.ReadInt32();
+                Tags = new Dictionary<string, string>(length);
                 for (var i = 0; i < length; ++ i) {
                     var key = stream.ReadNameReference();
-                    var value = stream.ReadText();
-                    TagsMap.Add(key, value);
+                    string value = stream.ReadText();
+                    Tags.Add(key.Name, value);
                 }
             }
 
             public string Decompile()
             {
-                var tags = new List<string>(TagsMap.Count);
-                foreach (var tag in TagsMap) {
-                    if (tag.Key == "OrderIndex" || tag.Key == "ToolTip") {
-                        continue;
-                    }
-
-                    tags.Add(tag.Key + "=" + tag.Value);
+                if (Tags.Count == 0)
+                {
+                    return string.Empty;
                 }
 
-                if( tags.Count <= 0 )
-                    return String.Empty;
+                // Filter out compiler-generated tags
+                var tags = Tags
+                    .Where((tag) => tag.Key != "OrderIndex" && tag.Key != "ToolTip")
+                    .ToList()
+                    .ConvertAll((tag) => $"{tag.Key}={tag.Value}");
 
-                return "<" + string.Join("|", tags) + ">";
+                return tags.Count == 0 ? string.Empty : $"<{string.Join("|", tags)}>";
             }
 
             public override string ToString()
             {
-                return Field != null ? Field.GetOuterGroup() : FieldName;
+                return _Field != null ? _Field.GetOuterGroup() : _FieldName;
             }
         }
 
@@ -102,8 +101,14 @@ namespace UELib.Core
             {
                 return "";
             }
-            return string.Join("\r\n", MetaObjects.ConvertAll<string>(data => data.ToString() + data.Decompile()));
+            return string.Join("\r\n", MetaObjects.ConvertAll(data => data + data.Decompile()));
         }
         #endregion
+
+        [Obsolete()]
+        public string GetUniqueMetas()
+        {
+            return "";
+        }
     }
 }
