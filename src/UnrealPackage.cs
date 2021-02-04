@@ -1523,6 +1523,12 @@ namespace UELib
             return _ClassTypes.ContainsKey(className.ToLower());
         }
 
+        [Obsolete]
+        public bool IsRegisteredClass(string className)
+        {
+            return HasClassType(className);
+        }
+
         /// <summary>
         /// Returns an Object that resides at the specified ObjectIndex.
         ///
