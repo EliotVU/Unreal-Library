@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// An abstract class for any table entry to inherit from.

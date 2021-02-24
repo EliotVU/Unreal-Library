@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// Represents a unreal enum.

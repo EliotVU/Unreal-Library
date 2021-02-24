@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using UELib.Core;
+using UELib.JsonDecompiler.Core;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     public sealed class UDependencyTableItem : UTableItem, IUnrealDeserializableClass
     {

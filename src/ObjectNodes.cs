@@ -3,7 +3,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Windows.Forms;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     [Serializable]
     [System.Runtime.InteropServices.ComVisible( false )]

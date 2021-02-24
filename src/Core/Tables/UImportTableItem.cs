@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics.Contracts;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// An import table entry, representing a @UObject dependency in a package.

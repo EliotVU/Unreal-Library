@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     public partial class UStruct
     {

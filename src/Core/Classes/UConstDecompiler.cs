@@ -1,5 +1,5 @@
 ﻿#if DECOMPILE
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     public partial class UConst
     {

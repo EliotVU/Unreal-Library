@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// MetaData objects contain all the metadata of UField objects.

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using UELib.Types;
+using UELib.JsonDecompiler.Types;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// [Default]Properties values deserializer.

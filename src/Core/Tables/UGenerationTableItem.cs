@@ -1,4 +1,4 @@
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     public struct UGenerationTableItem : IUnrealSerializableClass
     {

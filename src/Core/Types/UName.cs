@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// Represents a data type that represents a string, possibly acquired from a names table.

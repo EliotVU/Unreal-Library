@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using UELib.Flags;
+using UELib.JsonDecompiler.Flags;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     public struct ULabelEntry
     {

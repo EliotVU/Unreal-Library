@@ -8,8 +8,8 @@
     <ProjectGuid>{7E45273F-434F-42FA-8269-0E760AEB41E1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>UELib</RootNamespace>
-    <AssemblyName>Eliot.UELib</AssemblyName>
+    <RootNamespace>UELib.JsonDecompiler</RootNamespace>
+    <AssemblyName>Eliot.UELib.JsonDecompiler</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>

@@ -1,6 +1,6 @@
-using UELib.Flags;
+using UELib.JsonDecompiler.Flags;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     [UnrealRegisterClass]
     public class UScriptStruct : UStruct

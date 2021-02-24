@@ -2,7 +2,7 @@
 using System;
 using System.Globalization;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     public partial class UProperty
     {

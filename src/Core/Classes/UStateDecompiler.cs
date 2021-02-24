@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     public partial class UState
     {

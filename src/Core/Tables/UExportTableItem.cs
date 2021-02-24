@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics.Contracts;
 using System.IO;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// An export table entry, representing a @UObject in a package.

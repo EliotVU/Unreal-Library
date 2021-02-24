@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using UELib.Decoding;
+using UELib.JsonDecompiler.Decoding;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// Provides static methods for loading unreal packages.

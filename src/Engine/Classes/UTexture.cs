@@ -1,7 +1,7 @@
 ﻿using System;
-using UELib.Core;
+using UELib.JsonDecompiler.Core;
 
-namespace UELib.Engine
+namespace UELib.JsonDecompiler.Engine
 {
     [UnrealRegisterClass]
     public class UTexture : UObject, IUnrealViewable

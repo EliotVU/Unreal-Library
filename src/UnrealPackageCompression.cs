@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     using Core;
 

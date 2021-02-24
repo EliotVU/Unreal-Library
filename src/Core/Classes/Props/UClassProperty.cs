@@ -1,7 +1,7 @@
 using System;
-using UELib.Types;
+using UELib.JsonDecompiler.Types;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// Class Property

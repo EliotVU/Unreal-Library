@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// Represents a unreal field.

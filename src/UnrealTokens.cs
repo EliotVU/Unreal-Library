@@ -1,4 +1,4 @@
-﻿namespace UELib.Tokens
+﻿namespace UELib.JsonDecompiler.Tokens
 {
     /// <summary>
     /// A collection of tokens describing a expression.

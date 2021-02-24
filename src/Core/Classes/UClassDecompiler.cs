@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     public partial class UClass
     {

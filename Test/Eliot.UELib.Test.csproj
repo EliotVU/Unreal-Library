@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Eliot.UELib.csproj" />
+    <ProjectReference Include="..\src\Eliot.UELib.JsonDecompiler.csproj" />
   </ItemGroup>
 
 </Project>

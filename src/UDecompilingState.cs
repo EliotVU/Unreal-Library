@@ -1,6 +1,6 @@
 using System;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     public static class UDecompilingState
     {

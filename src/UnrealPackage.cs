@@ -5,10 +5,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using UELib.Annotations;
-using UELib.Flags;
+using UELib.JsonDecompiler.Annotations;
+using UELib.JsonDecompiler.Flags;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     using Core;
     using Decoding;

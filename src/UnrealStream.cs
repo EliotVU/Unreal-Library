@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UELib.Core;
+using UELib.JsonDecompiler.Core;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     public interface IUnrealStream : IDisposable
     {

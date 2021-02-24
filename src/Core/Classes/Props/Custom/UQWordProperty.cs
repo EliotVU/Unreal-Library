@@ -1,5 +1,5 @@
 #if BIOSHOCK
-    namespace UELib.Core
+    namespace UELib.JsonDecompiler.Core
     {
         /// <summary>
         /// QWord Property

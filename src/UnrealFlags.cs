@@ -1,6 +1,6 @@
 using System;
 
-namespace UELib.Flags
+namespace UELib.JsonDecompiler.Flags
 {
     /// <summary>
     /// Flags describing an package instance.

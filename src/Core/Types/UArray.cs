@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     //Mirrored docu' from List<T>
 

@@ -1,4 +1,4 @@
-﻿namespace UELib.Core
+﻿namespace UELib.JsonDecompiler.Core
 {
     public class UComponent : UObject
     {

@@ -2,7 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.IO;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// This class can be decompiled.

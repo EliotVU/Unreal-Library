@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using UELib.Types;
+using UELib.JsonDecompiler.Types;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     public static class UnrealConfig
     {

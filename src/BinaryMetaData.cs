@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UELib.Annotations;
+using UELib.JsonDecompiler.Annotations;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// Collects a log of deserialized fields.

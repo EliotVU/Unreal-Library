@@ -1,6 +1,6 @@
 using System;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     [UnrealRegisterClass]
     public partial class UTextBuffer : UObject

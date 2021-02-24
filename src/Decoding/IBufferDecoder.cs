@@ -1,4 +1,4 @@
-﻿namespace UELib.Decoding
+﻿namespace UELib.JsonDecompiler.Decoding
 {
     public interface IBufferDecoder
     {

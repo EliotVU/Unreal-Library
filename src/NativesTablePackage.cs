@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     using Core;
 

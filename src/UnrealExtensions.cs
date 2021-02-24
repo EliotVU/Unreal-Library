@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     public static class UnrealExtensions
     {

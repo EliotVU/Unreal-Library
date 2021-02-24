@@ -1,6 +1,6 @@
-﻿using UELib.Types;
+﻿using UELib.JsonDecompiler.Types;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// Component Property

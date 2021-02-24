@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using UELib.Tokens;
+using UELib.JsonDecompiler.Tokens;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     using System.Text;
 

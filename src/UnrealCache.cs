@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace UELib.Cache
+namespace UELib.JsonDecompiler.Cache
 {
     [Serializable]
     public abstract class CacheException : Exception
@@ -60,7 +60,7 @@ namespace UELib.Cache
         /// <summary>
         /// Load all cache entries from the cache.ini located in the set CachePath.
         /// </summary>
-        /// <exception cref="UELib.Cache.CacheEmptyException">
+        /// <exception cref="CacheEmptyException">
         /// </exception>
         public void LoadCacheEntries()
         {

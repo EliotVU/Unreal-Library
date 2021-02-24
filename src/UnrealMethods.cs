@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     #region Exceptions
     [Serializable]
@@ -24,7 +24,7 @@ namespace UELib
     [Serializable]
     public class DeserializationException : UnrealException
     {
-        [NonSerializedAttribute]
+        [NonSerialized]
         private readonly string _Output;
 
         public DeserializationException()
@@ -51,7 +51,7 @@ namespace UELib
     [Serializable]
     public class DecompilingHeaderException : UnrealException
     {
-        [NonSerializedAttribute]
+        [NonSerialized]
         private readonly string _Output;
 
         public DecompilingHeaderException()

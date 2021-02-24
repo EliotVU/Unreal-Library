@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace UELib.Test
+namespace UELib.JsonDecompiler.Test
 {
     public class L2PackageTests
     {

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using UELib.Flags;
+using UELib.JsonDecompiler.Flags;
 
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// Represents a unreal struct with the functionality to contain Constants, Enums, Structs and Properties.

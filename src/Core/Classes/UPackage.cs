@@ -1,4 +1,4 @@
-namespace UELib.Core
+namespace UELib.JsonDecompiler.Core
 {
     /// <summary>
     /// Represents a group within an actual package.

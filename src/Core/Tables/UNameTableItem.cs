@@ -1,6 +1,6 @@
 using System;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// A names table entry, representing all unique names within a package.

@@ -1,9 +1,9 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.IO;
-using UELib.Core;
+using UELib.JsonDecompiler.Core;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     /// <summary>
     /// An abstract implementation of the export and import table entries.

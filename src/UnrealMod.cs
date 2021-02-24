@@ -1,7 +1,7 @@
 ﻿using System;
-using UELib.Core;
+using UELib.JsonDecompiler.Core;
 
-namespace UELib
+namespace UELib.JsonDecompiler
 {
     public class UnrealMod : IUnrealDeserializableClass
     {

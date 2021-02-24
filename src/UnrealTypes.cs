@@ -1,4 +1,4 @@
-﻿namespace UELib.Types
+﻿namespace UELib.JsonDecompiler.Types
 {
     /// <summary>
     /// Types describing a default property type.
