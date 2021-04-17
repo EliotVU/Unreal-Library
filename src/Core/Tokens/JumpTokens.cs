@@ -18,11 +18,12 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     #region CaseToken Support
-                    // HACK: for case's that end with a return instead of a break.
-                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+                    // HACK: for cases that end with a return instead of a break.
+                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) is NestManager.NestBegin nest )
                     {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
+                        if( Decompiler.IsInNestDeep( NestManager.Nest.NestType.Switch ) is NestManager.NestBegin nestSwitch )
+                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size, nestSwitch );
+                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size, nest ); // First switch then default, order by depth
                     }
                     #endregion
 
@@ -50,14 +51,15 @@ namespace UELib.Core
                 {
                     #region CaseToken Support
                     // HACK: for case's that end with a return instead of a break.
-                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
+                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) is NestManager.NestBegin caseBegin )
                     {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position + Size );
+                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position + Size, caseBegin );
                     }
-                    else if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+                    else if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) is NestManager.NestBegin defaultBegin )
                     {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
+                        if( Decompiler.IsInNestDeep( NestManager.Nest.NestType.Switch ) is NestManager.NestBegin switchBegin )
+                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size, switchBegin );
+                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size, defaultBegin ); // First switch then default, order by depth
                     }
                     #endregion
                     return _ReturnObject != null ? _ReturnObject.Name : String.Empty;
@@ -161,12 +163,13 @@ namespace UELib.Core
                         }
 
                         //==================We're inside a Default and at the end of it!
-                        if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+                        if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) is NestManager.NestBegin defaultBegin )
                         {
                             NoJumpLabel();
                             Commentize();
-                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
-                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position );
+                            if( Decompiler.IsInNestDeep( NestManager.Nest.NestType.Switch ) is NestManager.NestBegin switchBegin )
+                                Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position, switchBegin );
+                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position, defaultBegin ); // First switch then default, order by depth
                             Decompiler._CanAddSemicolon = true;
                             return "break";
                         }
@@ -437,14 +440,14 @@ namespace UELib.Core
                     //              case 2:
                     //                  CallA();
                     //                  break;
-                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Switch ) == null && _CaseStack == 0 )
+                    /*if( Decompiler.IsInNest( NestManager.Nest.NestType.Switch ) == null && _CaseStack == 0 )
                     {
                         Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
                         Decompiler._PreDecrementTabs = 1;
 
                         ++ _CaseStack;
                     }
-                    else _CaseStack = 0;
+                    else _CaseStack = 0;*/
 
                     Commentize();
                     if( CodeOffset != UInt16.MaxValue )

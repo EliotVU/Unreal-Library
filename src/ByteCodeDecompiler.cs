@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using UELib.Tokens;
 
 namespace UELib.Core
@@ -1111,11 +1112,14 @@ namespace UELib.Core
 
                 public class NestEnd : Nest
                 {
+                    public NestBegin Begin;
                     public override string Decompile()
                     {
                         #if DEBUG_NESTS
                             return "\r\n" + UDecompilingState.Tabs + "//</" + Type + ">";
                         #else
+                        if (Type == NestType.Switch)
+                            return $"\r\n{UDecompilingState.Tabs}{UnrealConfig.Indention}{UnrealConfig.Indention}break;{UnrealConfig.PrintEndBracket()}";
                         return Type != NestType.Case && Type != NestType.Default
                             ? UnrealConfig.PrintEndBracket()
                             : String.Empty;
@@ -1128,8 +1132,9 @@ namespace UELib.Core
                 public void AddNest( Nest.NestType type, uint position, uint endPosition, Token creator = null )
                 {
                     creator = creator ?? Decompiler.CurrentToken;
-                    Nests.Add( new NestBegin{Position = position, Type = type, Creator = creator} );
-                    Nests.Add( new NestEnd{Position = endPosition, Type = type, Creator = creator} );
+                    var begin = new NestBegin {Position = position, Type = type, Creator = creator};
+                    Nests.Add( begin );
+                    Nests.Add( new NestEnd{Position = endPosition, Type = type, Creator = creator, Begin = begin} );
                 }
 
                 public NestBegin AddNestBegin( Nest.NestType type, uint position, Token creator = null )
@@ -1140,9 +1145,9 @@ namespace UELib.Core
                     return n;
                 }
 
-                public NestEnd AddNestEnd( Nest.NestType type, uint position, Token creator = null )
+                public NestEnd AddNestEnd( Nest.NestType type, uint position, NestBegin begin, Token creator = null )
                 {
-                    var n = new NestEnd {Position = position, Type = type};
+                    var n = new NestEnd {Position = position, Type = type, Begin = begin};
                     Nests.Add( n );
                     n.Creator = creator ?? Decompiler.CurrentToken;
                     return n;
@@ -1187,6 +1192,19 @@ namespace UELib.Core
                 if( _NestChain[i].Type == nestType )
                 {
                     return _NestChain[i];
+                }
+                return null;
+            }
+            
+            // Checks if any of the nests in the current stack is of type nestType!
+            // Only BeginNests that have been decompiled will be tested for!
+            // Returns the closest one (aka the deepest one).
+            private NestManager.Nest IsInNestDeep( NestManager.Nest.NestType nestType )
+            {
+                for (int i = _NestChain.Count - 1; i >= 0; i--)
+                {
+                    if (_NestChain[i].Type == nestType)
+                        return _NestChain[i];
                 }
                 return null;
             }
@@ -1532,7 +1550,7 @@ namespace UELib.Core
                 return output.ToString();
             }
 
-            private readonly List<NestManager.Nest> _NestChain = new List<NestManager.Nest>();
+            private readonly List<NestManager.NestBegin> _NestChain = new List<NestManager.NestBegin>();
 
             private static string FormatTabs( string nonTabbedText )
             {
@@ -1577,37 +1595,62 @@ namespace UELib.Core
                 // Give { priority hence separated loops
                 for( int i = 0; i < _Nester.Nests.Count; ++ i )
                 {
-                    if( !(_Nester.Nests[i] is NestManager.NestBegin) )
+                    if( !(_Nester.Nests[i] is NestManager.NestBegin nestBegin) )
                         continue;
 
-                    if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position ) || outputAllRemainingNests )
+                    if( nestBegin.IsPastOffset( CurrentToken.Position ) || outputAllRemainingNests )
                     {
-                        output += _Nester.Nests[i].Decompile();
+                        output += nestBegin.Decompile();
                         UDecompilingState.AddTab();
 
-                        _NestChain.Add( _Nester.Nests[i] );
+                        _NestChain.Add( nestBegin );
                         _Nester.Nests.RemoveAt( i -- );
                     }
                 }
 
-                for( int i = 0; i < _Nester.Nests.Count; ++ i )
+                // Close inner nests that should have been closed by now given the fact that we're closing their outer nests, reverse order to process deepest first
+                for (int i = _Nester.Nests.Count - 1; i >= 0; i--)
                 {
-                    if( !(_Nester.Nests[i] is NestManager.NestEnd) )
+                    if( !(_Nester.Nests[i] is NestManager.NestEnd thisNestEnd) )
                         continue;
 
-                    if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position + CurrentToken.Size )
-                        || outputAllRemainingNests )
+                    if (thisNestEnd.IsPastOffset(CurrentToken.Position + CurrentToken.Size) == false
+                        && !outputAllRemainingNests)
+                        continue;
+                    
+                    // HACK: Close any nests within this one, we should have run into their matching NestEnd before now but didn't, might hint at some other issues with the decompiling process
+                    for (int j = _NestChain.Count - 1; j >= 0; j--)
                     {
-                        UDecompilingState.RemoveTab();
-                        output += _Nester.Nests[i].Decompile();
+                        var someNest = _NestChain[j];
+                        _NestChain.RemoveAt( j );
 
-                        // TODO: This should not happen!
-                        if( _NestChain.Count > 0 )
+                        bool isCurrentNest = thisNestEnd.Begin == someNest;
+                        // An issue might have placed this nest's NestEnd after its parent's NestEnd, look for it here and process it now
+                        NestManager.Nest matchingNestEnd = isCurrentNest
+                            ? thisNestEnd
+                            : _Nester.Nests.FirstOrDefault(x => x is NestManager.NestEnd ne && ne.Begin == someNest);
+                        if (matchingNestEnd != null)
                         {
-                            _NestChain.RemoveAt( _NestChain.Count - 1 );
+                            _Nester.Nests.Remove(matchingNestEnd);
+                            UDecompilingState.RemoveTab();
+                            output += matchingNestEnd.Decompile();
+                            if (isCurrentNest)
+                                break; // We're done here, the rest of the chain are outer nests
+                            output += "/*wrong order:force close*/";
                         }
-                        _Nester.Nests.RemoveAt( i -- );
+                        else if (someNest.Type == NestManager.Nest.NestType.Default)
+                        {
+                            output +=  $"\r\n{UDecompilingState.Tabs}break;/*missing:force close*/";
+                            UDecompilingState.RemoveTab();
+                        }
+                        else 
+                        {
+                            UDecompilingState.RemoveTab();
+                            output +=  $"\r\n{UDecompilingState.Tabs}}}/*missing:force close*/";
+                        }
                     }
+
+                    i = i >= _Nester.Nests.Count ? _Nester.Nests.Count - 1 : i;
                 }
                 return output;
             }
