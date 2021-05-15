@@ -21,7 +21,6 @@ namespace UELib.Core
                     // HACK: for case's that end with a return instead of a break.
                     if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
                     {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
                         Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
                     }
                     #endregion
@@ -56,7 +55,6 @@ namespace UELib.Core
                     }
                     else if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
                     {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
                         Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
                     }
                     #endregion
@@ -150,23 +148,23 @@ namespace UELib.Core
                     // Break offset!
                     if( CodeOffset >= Position )
                     {
-                        //==================We're inside a Case and at the end of it!
-                        if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
-                        {
-                            //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position );
-                            NoJumpLabel();
-                            Commentize();
-                            Decompiler._CanAddSemicolon = true;
-                            return "break";
-                        }
-
-                        //==================We're inside a Default and at the end of it!
-                        if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+                        if(
+                            //==================We're inside a Case and at the end of it!
+                            Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null
+                            //==================We're inside a Default and at the end of it!
+                            || Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null)
                         {
                             NoJumpLabel();
                             Commentize();
-                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
-                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position );
+                            // 'break' CodeOffset sits at the end of the switch,
+                            // check that it doesn't exist already and add it
+                            var switchEnd = Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null ? Position + Size : CodeOffset;
+                            if ((from n in Decompiler._Nester.Nests
+                                where n.Type == NestManager.Nest.NestType.Switch && n.Position == switchEnd
+                                select n).FirstOrDefault() == null)
+                            {
+                                Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, switchEnd );
+                            }
                             Decompiler._CanAddSemicolon = true;
                             return "break";
                         }

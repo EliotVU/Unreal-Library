@@ -1590,23 +1590,45 @@ namespace UELib.Core
                     }
                 }
 
-                for( int i = 0; i < _Nester.Nests.Count; ++ i )
+                for( int i = _Nester.Nests.Count - 1; i >= 0; i-- )
                 {
-                    if( !(_Nester.Nests[i] is NestManager.NestEnd) )
-                        continue;
-
-                    if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position + CurrentToken.Size )
-                        || outputAllRemainingNests )
+                    if( _Nester.Nests[i] is NestManager.NestEnd nestEnd 
+                        && (outputAllRemainingNests || nestEnd.IsPastOffset( CurrentToken.Position + CurrentToken.Size )))
                     {
-                        UDecompilingState.RemoveTab();
-                        output += _Nester.Nests[i].Decompile();
-
-                        // TODO: This should not happen!
-                        if( _NestChain.Count > 0 )
+                        var topOfStack = _NestChain[_NestChain.Count - 1];
+                        if (topOfStack.Type == NestManager.Nest.NestType.Default && nestEnd.Type != NestManager.Nest.NestType.Default)
                         {
+                            // Automatically close default when one of its outer nest closes
+                            output += $"\r\n{UDecompilingState.Tabs}break;";
+                            UDecompilingState.RemoveTab();
                             _NestChain.RemoveAt( _NestChain.Count - 1 );
+                            
+                            // We closed off the last case, it's safe to close of the switch as well
+                            if (nestEnd.Type != NestManager.Nest.NestType.Switch)
+                            {
+                                var switchScope = _NestChain[_NestChain.Count - 1];
+                                if (switchScope.Type == NestManager.Nest.NestType.Switch)
+                                {
+                                    output += $"\r\n{UDecompilingState.Tabs}}}";
+                                    UDecompilingState.RemoveTab();
+                                    _NestChain.RemoveAt( _NestChain.Count - 1 );
+                                }
+                                else
+                                {
+                                    output += $"/* Tried to find Switch scope, found {switchScope.Type} instead */";
+                                }
+                            }
                         }
-                        _Nester.Nests.RemoveAt( i -- );
+
+                        UDecompilingState.RemoveTab();
+                        output += nestEnd.Decompile();
+
+                        topOfStack = _NestChain[_NestChain.Count - 1];
+                        if(topOfStack.Type != nestEnd.Type)
+                            output += $"/* !MISMATCHING REMOVE, tried {nestEnd.Type} got {topOfStack}! */";
+                        _NestChain.RemoveAt( _NestChain.Count - 1 );
+
+                        _Nester.Nests.RemoveAt( i );
                     }
                 }
                 return output;
