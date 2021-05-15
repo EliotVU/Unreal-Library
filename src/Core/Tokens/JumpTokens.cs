@@ -264,10 +264,19 @@ namespace UELib.Core
 
                 private void NoJumpLabel()
                 {
-                    int i = Decompiler._TempLabels.FindIndex( p => p.Position == CodeOffset );
+                    int i = Decompiler._TempLabels.FindIndex( p => p.entry.Position == CodeOffset );
                     if( i != -1 )
                     {
-                        Decompiler._TempLabels.RemoveAt( i );
+                        var data = Decompiler._TempLabels[i];
+                        if (data.refs == 1)
+                        {
+                            Decompiler._TempLabels.RemoveAt( i );
+                        }
+                        else
+                        {
+                            data.refs -= 1;
+                            Decompiler._TempLabels[i] = data;
+                        }
                     }
                 }
             }
@@ -275,6 +284,23 @@ namespace UELib.Core
             public class JumpIfNotToken : JumpToken
             {
                 public bool IsLoop;
+                
+                public override void PostDeserialized()
+                {
+                    base.PostDeserialized();
+                    // Add jump label for 'do until' jump pattern
+                    if ((CodeOffset & UInt16.MaxValue) < Position)
+                    {
+                        Decompiler._Labels.Add
+                        (
+                            new ULabelEntry
+                            {
+                                Name = $"J0x{CodeOffset}",
+                                Position = CodeOffset
+                            }
+                        );
+                    }
+                }
 
                 public override void Deserialize( IUnrealStream stream )
                 {
@@ -310,10 +336,10 @@ namespace UELib.Core
 
                     if( (CodeOffset & UInt16.MaxValue) < Position )
                     {
+                        Decompiler.PreComment += " [Loop Until]";
                         Decompiler._CanAddSemicolon = true;
-                        return output + "\r\n"
-                            + UDecompilingState.Tabs + UnrealConfig.Indention
-                            + String.Format( "goto J0x{0:X2}", CodeOffset );
+                        // Inverse condition only here as we're explicitly jumping while other cases create proper scopes 
+                        return $"if(({condition}) == false)\r\n{UDecompilingState.Tabs}{UnrealConfig.Indention}goto J0x{CodeOffset:X2}";
                     }
 
                     Decompiler._CanAddSemicolon = false;
@@ -541,7 +567,8 @@ namespace UELib.Core
                 }
             }
 
-            private List<ULabelEntry> _Labels, _TempLabels;
+            private List<ULabelEntry> _Labels;
+            private List<(ULabelEntry entry, int refs)> _TempLabels;
             public class LabelTableToken : Token
             {
                 public override void Deserialize( IUnrealStream stream )

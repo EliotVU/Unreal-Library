@@ -1249,15 +1249,22 @@ namespace UELib.Core
                 PreComment = String.Empty;
                 PostComment = String.Empty;
 
-                _TempLabels = new List<ULabelEntry>();
+                _TempLabels = new List<(ULabelEntry, int)>();
                 if( _Labels != null )
                 {
                     for( int i = 0; i < _Labels.Count; ++ i )
                     {
                         // No duplicates, caused by having multiple goto's with the same destination
-                        if( !_TempLabels.Exists( p => p.Position == _Labels[i].Position ) )
+                        var index = _TempLabels.FindIndex(p => p.entry.Position == _Labels[i].Position);
+                        if( index == -1 )
                         {
-                            _TempLabels.Add( _Labels[i] );
+                            _TempLabels.Add( (_Labels[i], 1) );
+                        }
+                        else
+                        {
+                            var data = _TempLabels[index];
+                            data.refs++;
+                            _TempLabels[index] = data;
                         }
                     }
                 }
@@ -1555,7 +1562,7 @@ namespace UELib.Core
                 string output = String.Empty;
                 for( int i = 0; i < _TempLabels.Count; ++ i )
                 {
-                    var label = _TempLabels[i];
+                    var label = _TempLabels[i].entry;
                     if( PeekToken.Position < label.Position )
                         continue;
 
