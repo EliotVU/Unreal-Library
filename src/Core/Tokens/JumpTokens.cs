@@ -21,8 +21,7 @@ namespace UELib.Core
                     // HACK: for case's that end with a return instead of a break.
                     if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
                     {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
+                        Decompiler._Nester.TryAddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
                     }
                     #endregion
 
@@ -50,14 +49,9 @@ namespace UELib.Core
                 {
                     #region CaseToken Support
                     // HACK: for case's that end with a return instead of a break.
-                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
+                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
                     {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position + Size );
-                    }
-                    else if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
-                    {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position + Size );
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
+                        Decompiler._Nester.TryAddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
                     }
                     #endregion
                     return _ReturnObject != null ? _ReturnObject.Name : String.Empty;
@@ -81,6 +75,8 @@ namespace UELib.Core
 
             public class JumpToken : Token
             {
+                public bool MarkedAsSwitchBreak;
+                public NestManager.NestEnd LinkedIfNest;
                 public ushort CodeOffset{ get; private set; }
 
                 public override void Deserialize( IUnrealStream stream )
@@ -147,108 +143,108 @@ namespace UELib.Core
                 /// </summary>
                 public override string Decompile()
                 {
+                    // Remove 'else' marking as long as other fallback are better suited
+                    var tempLinkedIf = LinkedIfNest?.HasElseNest;
+                    if (tempLinkedIf != null)
+                    {
+                        LinkedIfNest.HasElseNest = null;
+                    }
+                    
                     // Break offset!
                     if( CodeOffset >= Position )
                     {
-                        //==================We're inside a Case and at the end of it!
-                        if( Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null )
+                        if( MarkedAsSwitchBreak
+                            //==================We're inside a Case and at the end of it!
+                            || JumpsOutOfSwitch() && Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null
+                            //==================We're inside a Default and at the end of it!
+                            || Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null)
                         {
-                            //Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Case, Position );
                             NoJumpLabel();
                             Commentize();
+                            // 'break' CodeOffset sits at the end of the switch,
+                            // check that it doesn't exist already and add it
+                            var switchEnd = Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null ? Position + Size : CodeOffset;
+                            Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, switchEnd);
                             Decompiler._CanAddSemicolon = true;
                             return "break";
                         }
 
-                        //==================We're inside a Default and at the end of it!
-                        if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+                        if( Decompiler.IsWithinNest( NestManager.Nest.NestType.ForEach )?.Creator is IteratorToken iteratorToken )
                         {
-                            NoJumpLabel();
-                            Commentize();
-                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
-                            Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Switch, Position );
-                            Decompiler._CanAddSemicolon = true;
-                            return "break";
-                        }
-
-                        var nest = Decompiler.IsWithinNest( NestManager.Nest.NestType.ForEach );
-                        if( nest != null )
-                        {
-                            var dest = Decompiler.TokenAt( CodeOffset );
-                            if( dest != null )
+                            // Jumps to the end of the foreach ?
+                            if( CodeOffset == iteratorToken.CodeOffset )
                             {
-                                if( dest is IteratorPopToken )
-                                {
-                                    if( Decompiler.PreviousToken is IteratorNextToken )
-                                    {
-                                        NoJumpLabel();
-                                        return String.Empty;
-                                    }
-
-                                    NoJumpLabel();
-                                    Commentize();
-                                    Decompiler._CanAddSemicolon = true;
-                                    return "break";
-                                }
-
-                                if( dest is IteratorNextToken )
+                                if( Decompiler.PreviousToken is IteratorNextToken )
                                 {
                                     NoJumpLabel();
-                                    Commentize();
-                                    Decompiler._CanAddSemicolon = true;
-                                    return "continue";
+                                    return String.Empty;
                                 }
+
+                                NoJumpLabel();
+                                Commentize();
+                                Decompiler._CanAddSemicolon = true;
+                                return "break";
+                            }
+                            if( Decompiler.TokenAt( CodeOffset ) is IteratorNextToken )
+                            {
+                                NoJumpLabel();
+                                Commentize();
+                                Decompiler._CanAddSemicolon = true;
+                                return "continue";
                             }
                         }
 
-                        nest = Decompiler.IsWithinNest( NestManager.Nest.NestType.Loop );
-                        if( nest != null )
+                        if( Decompiler.IsWithinNest( NestManager.Nest.NestType.Loop )?.Creator is JumpToken destJump )
                         {
-                            var dest = nest.Creator as JumpToken;
-                            if( dest != null )
+                            if( CodeOffset + 10 == destJump.CodeOffset )
                             {
-                                if( CodeOffset + 10 == dest.CodeOffset )
+                                CommentStatement( "Explicit Continue" );
+                                goto gotoJump;
+                            }
+
+                            if( CodeOffset == destJump.CodeOffset )
+                            {
+                                CommentStatement( "Explicit Break" );
+                                goto gotoJump;
+                            }
+                        }
+                        
+                        if( tempLinkedIf != null )
+                        {
+                            // Would this potential else scope break out of one of its parent scope
+                            foreach (var nest in Decompiler._Nester.Nests)
+                            {
+                                if (nest is NestManager.NestEnd outerNestEnd 
+                                    && CodeOffset > outerNestEnd.Position
+                                    // It's not this if-else scope
+                                    && LinkedIfNest.Creator != outerNestEnd.Creator)
                                 {
+                                    // this is more likely a continue within a for(;;) loop
                                     CommentStatement( "Explicit Continue" );
                                     goto gotoJump;
                                 }
-
-                                if( CodeOffset == dest.CodeOffset )
-                                {
-                                    CommentStatement( "Explicit Break" );
-                                    goto gotoJump;
-                                }
                             }
+                            
+                            // this is indeed the else part of an if-else, re-instate the link
+                            // and let nest decompilation handle the rest
+                            LinkedIfNest.HasElseNest = tempLinkedIf;
+                            NoJumpLabel();
+                            Decompiler._CanAddSemicolon = false;
+                            return "";
                         }
 
-                        nest = Decompiler.IsInNest( NestManager.Nest.NestType.If );
-                        //==================We're inside a If and at the end of it!
-                        if( nest != null )
+                        // This can be inaccurate if the source goto jumps from within a case to in the middle of a default
+                        // If that's the case the nest decompilation process should spew comments about it
+                        if (JumpsOutOfSwitch())
                         {
-                            // We're inside a If however the kind of jump could range from: continue; break; goto; else
-                            var nestEnd = Decompiler.CurNestEnd();
-                            if( nestEnd != null )
-                            {
-                                // Else, Req:In If nest, nestends > 0, curendnest position == Position
-                                if( nestEnd.Position - Size == Position )
-                                {
-                                    // HACK: This should be handled by UByteCodeDecompiler.Decompile()
-                                    UDecompilingState.RemoveTabs( 1 );
-                                    Decompiler._NestChain.RemoveAt( Decompiler._NestChain.Count - 1 );
-                                    Decompiler._Nester.Nests.Remove( nestEnd );
+                            NoJumpLabel();
+                            Commentize();
+                            // 'break' CodeOffset sits at the end of the switch,
+                            // check that it doesn't exist already and add it
+                            Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, CodeOffset);
 
-                                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.Else, Position, CodeOffset );
-
-                                    NoJumpLabel();
-
-                                    // HACK: This should be handled by UByteCodeDecompiler.Decompile()
-                                    return "}" + "\r\n" +
-                                        (UnrealConfig.SuppressComments
-                                        ? UDecompilingState.Tabs + "else"
-                                        : UDecompilingState.Tabs + String.Format( "// End:0x{0:X2}", CodeOffset ) + "\r\n" +
-                                            UDecompilingState.Tabs + "else");
-                                }
-                            }
+                            Decompiler._CanAddSemicolon = true;
+                            return "break";
                         }
                     }
 
@@ -257,9 +253,46 @@ namespace UELib.Core
                         CommentStatement( "Loop Continue" );
                     }
                     gotoJump:
+                    if (Position + Size == CodeOffset)
+                    {
+                        // Remove jump to next token
+                        NoJumpLabel();
+                        return "";
+                    }
+
                     // This is an implicit GoToToken.
                     Decompiler._CanAddSemicolon = true;
                     return String.Format( "goto J0x{0:X2}", CodeOffset );
+                }
+
+                public bool JumpsOutOfSwitch()
+                {
+                    Token t;
+                    for (int i = Decompiler.DeserializedTokens.IndexOf(this)+1; 
+                        i < Decompiler.DeserializedTokens.Count && (t = Decompiler.DeserializedTokens[i]).Position <= CodeOffset; 
+                        i++)
+                    {
+                        // Skip switch nests
+                        if (t is SwitchToken)
+                        {
+                            var switchBalance = 1;
+                            for (i += 1; 
+                                i < Decompiler.DeserializedTokens.Count && switchBalance > 0 && (t = Decompiler.DeserializedTokens[i]).Position <= CodeOffset; 
+                                i++)
+                            {
+                                if (t is CaseToken ct && ct.IsDefault)
+                                    switchBalance -= 1;
+                                else if (t is SwitchToken)
+                                    switchBalance += 1;
+                            }
+                        }
+                        else if (t is CaseToken ct && ct.IsDefault && CodeOffset > ct.Position)
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 }
 
                 private void NoJumpLabel()
@@ -292,7 +325,7 @@ namespace UELib.Core
                     IsLoop = false;
                     for( int i = Decompiler.CurrentTokenIndex + 1; i < Decompiler.DeserializedTokens.Count; ++ i )
                     {
-                        if( Decompiler.DeserializedTokens[i] is JumpToken && ((JumpToken)Decompiler.DeserializedTokens[i]).CodeOffset == Position )
+                        if( Decompiler.DeserializedTokens[i] is JumpToken jt && jt.CodeOffset == Position )
                         {
                             IsLoop = true;
                             break;
@@ -317,6 +350,55 @@ namespace UELib.Core
                     }
 
                     Decompiler._CanAddSemicolon = false;
+
+                    if (IsLoop == false)
+                    {
+                        int i;
+                        for (i = Decompiler.DeserializedTokens.IndexOf(this); 
+                            i < Decompiler.DeserializedTokens.Count && (Decompiler.DeserializedTokens[i]).Position < CodeOffset; 
+                            i++)
+                        {
+                            // Seek to jump destination
+                        }
+
+                        var prevToken = Decompiler.DeserializedTokens[i - 1];
+                        var elseStartToken = Decompiler.DeserializedTokens[i];
+
+                        // Test to see if this JumpIfNotToken is the if part of an if-else nest
+                        if (elseStartToken.Position == CodeOffset && prevToken is JumpToken ifEndJump)
+                        {
+                            if (elseStartToken is CaseToken && ifEndJump.JumpsOutOfSwitch())
+                            {
+                                // It's an if containing a break. When the if is *not* taken, execution continues inside of a case below
+                                ifEndJump.MarkedAsSwitchBreak = true;
+                            }
+                            else if (elseStartToken.Position == CodeOffset && ifEndJump.CodeOffset != elseStartToken.Position)
+                            {
+                                // Most likely an if-else, mark it as such and let the rest of the logic figure it out further
+                                var begin = Position;
+                                var type = NestManager.Nest.NestType.If;
+                                Decompiler._Nester.Nests.Add( new NestManager.NestBegin{Position = begin, Type = type, Creator = this} );
+                                var nestEnd = new NestManager.NestEnd
+                                {
+                                    Position = CodeOffset,
+                                    Type = type,
+                                    Creator = this,
+                                    HasElseNest = ifEndJump,
+                                };
+                                Decompiler._Nester.Nests.Add( nestEnd );
+
+                                var outdatedLink = ifEndJump.LinkedIfNest;
+                                // This will hint to the jump token that it is likely an else scope
+                                ifEndJump.LinkedIfNest = nestEnd;
+                                // Let's make sure we break any previous link this jump had with other 'if's
+                                // the most recent is the most accurate
+                                if (outdatedLink != null)
+                                    outdatedLink.HasElseNest = null;
+                                return output;
+                            }
+                        }
+                    }
+                    
                     Decompiler._Nester.AddNest( IsLoop
                         ? NestManager.Nest.NestType.Loop
                         : NestManager.Nest.NestType.If,
@@ -409,6 +491,8 @@ namespace UELib.Core
 
             public class CaseToken : JumpToken
             {
+                public bool IsDefault => CodeOffset == UInt16.MaxValue;
+                
                 public override void Deserialize( IUnrealStream stream )
                 {
                     base.Deserialize( stream );
@@ -417,35 +501,9 @@ namespace UELib.Core
                         DeserializeNext();  // Condition
                     }   // Else "Default:"
                 }
-
-                // HACK: To avoid from decrementing tabs more than once,
-                //  e.g. in a situation of case a1: case a2: case a3: that use the same block code.
-                private static byte _CaseStack;
+                
                 public override string Decompile()
                 {
-                    // HACK: If this case is inside another case, end the last case to avoid broken indention.
-                    // -> Original
-                    //      case 0:
-                    //      case 1:
-                    //      case 2:
-                    //          CallA();
-                    //          break;
-                    //
-                    //  ->(Without the hack) Decompiled
-                    //      case 0:
-                    //          case 1:
-                    //              case 2:
-                    //                  CallA();
-                    //                  break;
-                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Switch ) == null && _CaseStack == 0 )
-                    {
-                        Decompiler._Nester.AddNestEnd( NestManager.Nest.NestType.Default, Position );
-                        Decompiler._PreDecrementTabs = 1;
-
-                        ++ _CaseStack;
-                    }
-                    else _CaseStack = 0;
-
                     Commentize();
                     if( CodeOffset != UInt16.MaxValue )
                     {

@@ -1111,6 +1111,7 @@ namespace UELib.Core
 
                 public class NestEnd : Nest
                 {
+                    public JumpToken HasElseNest;
                     public override string Decompile()
                     {
                         #if DEBUG_NESTS
@@ -1146,6 +1147,17 @@ namespace UELib.Core
                     Nests.Add( n );
                     n.Creator = creator ?? Decompiler.CurrentToken;
                     return n;
+                }
+
+                public bool TryAddNestEnd(Nest.NestType type, uint pos)
+                {
+                    foreach (var nest in Decompiler._Nester.Nests)
+                    {
+                        if (nest.Type == type && nest.Position == pos)
+                            return false;
+                    }
+                    Decompiler._Nester.AddNestEnd( type, pos );
+                    return true;
                 }
             }
 
@@ -1388,7 +1400,7 @@ namespace UELib.Core
                                 {
                                     if( PreComment.Length != 0 )
                                     {
-                                        tokenOutput = PreComment + "\r\n" + UDecompilingState.Tabs + tokenOutput;
+                                        tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput) ? tokenOutput : "\r\n" + UDecompilingState.Tabs + tokenOutput);
                                         PreComment = String.Empty;
                                     }
 
@@ -1556,7 +1568,7 @@ namespace UELib.Core
                 for( int i = 0; i < _TempLabels.Count; ++ i )
                 {
                     var label = _TempLabels[i];
-                    if( PeekToken.Position < label.Position )
+                    if( CurrentToken.Position < label.Position )
                         continue;
 
                     var isStateLabel = !label.Name.StartsWith( "J0x", StringComparison.Ordinal );
@@ -1590,23 +1602,64 @@ namespace UELib.Core
                     }
                 }
 
-                for( int i = 0; i < _Nester.Nests.Count; ++ i )
+                for( int i = _Nester.Nests.Count - 1; i >= 0; i-- )
                 {
-                    if( !(_Nester.Nests[i] is NestManager.NestEnd) )
-                        continue;
-
-                    if( _Nester.Nests[i].IsPastOffset( CurrentToken.Position + CurrentToken.Size )
-                        || outputAllRemainingNests )
+                    if( _Nester.Nests[i] is NestManager.NestEnd nestEnd 
+                        && (outputAllRemainingNests || nestEnd.IsPastOffset( CurrentToken.Position + CurrentToken.Size )))
                     {
-                        UDecompilingState.RemoveTab();
-                        output += _Nester.Nests[i].Decompile();
-
-                        // TODO: This should not happen!
-                        if( _NestChain.Count > 0 )
+                        var topOfStack = _NestChain[_NestChain.Count - 1];
+                        if (topOfStack.Type == NestManager.Nest.NestType.Default && nestEnd.Type != NestManager.Nest.NestType.Default)
                         {
+                            // Automatically close default when one of its outer nest closes
+                            output += $"\r\n{UDecompilingState.Tabs}break;";
+                            UDecompilingState.RemoveTab();
                             _NestChain.RemoveAt( _NestChain.Count - 1 );
+                            
+                            // We closed off the last case, it's safe to close of the switch as well
+                            if (nestEnd.Type != NestManager.Nest.NestType.Switch)
+                            {
+                                var switchScope = _NestChain[_NestChain.Count - 1];
+                                if (switchScope.Type == NestManager.Nest.NestType.Switch)
+                                {
+                                    output += $"\r\n{UDecompilingState.Tabs}}}";
+                                    UDecompilingState.RemoveTab();
+                                    _NestChain.RemoveAt( _NestChain.Count - 1 );
+                                }
+                                else
+                                {
+                                    output += $"/* Tried to find Switch scope, found {switchScope.Type} instead */";
+                                }
+                            }
                         }
-                        _Nester.Nests.RemoveAt( i -- );
+
+                        UDecompilingState.RemoveTab();
+                        output += nestEnd.Decompile();
+
+                        topOfStack = _NestChain[_NestChain.Count - 1];
+                        if(topOfStack.Type != nestEnd.Type)
+                            output += $"/* !MISMATCHING REMOVE, tried {nestEnd.Type} got {topOfStack}! */";
+                        _NestChain.RemoveAt( _NestChain.Count - 1 );
+
+                        _Nester.Nests.RemoveAt( i );
+                        if (nestEnd.HasElseNest != null)
+                        {
+                            output += $"\r\n{UDecompilingState.Tabs}else{UnrealConfig.PrintBeginBracket()}";
+                            UDecompilingState.AddTab();
+                            var begin = new NestManager.NestBegin
+                            {
+                                Type = NestManager.Nest.NestType.Else,
+                                Creator = nestEnd.HasElseNest, 
+                                Position = nestEnd.Position
+                            };
+                            var end = new NestManager.NestEnd
+                            {
+                                Type = NestManager.Nest.NestType.Else,
+                                Creator = nestEnd.HasElseNest, 
+                                Position = nestEnd.HasElseNest.CodeOffset
+                            };
+                            _Nester.Nests.Add( end );
+                            _NestChain.Add( begin );
+                        }
                     }
                 }
                 return output;
