@@ -2,6 +2,23 @@ class Labels extends Object;
 
 // We use the assert statement, i.e. "assert (condition);" here as a code filler.
 
+function TestSwitchNesting()
+{
+	switch (true)
+	{
+		case true:
+		case false:
+		case true:
+			break;
+
+		case false:
+			break;
+
+		default:
+			break;
+	}
+}
+
 /**
  * Test jump nesting case where a switch with a default case is missing a close of its outer nest.
  */
@@ -44,7 +61,7 @@ function TestSwitchAndCaseWithIfNesting()
 
 function TestSwitchAndCaseWithLabels()
 {
-	switch(true)
+	switch (true)
 	{
 		case true:
 			if (true)
