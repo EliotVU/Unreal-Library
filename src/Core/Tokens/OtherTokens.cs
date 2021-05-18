@@ -59,9 +59,9 @@ namespace UELib.Core
                     {
                         Decompiler.PreComment = "// DebugMode:" + DebugMode;
                     }
-                    string expr = DecompileNext();
+                    string condition = DecompileNext();
                     Decompiler._CanAddSemicolon = true;
-                    return "assert(" + expr + ")";
+                    return "assert(" + condition + ")";
                 }
             }
 

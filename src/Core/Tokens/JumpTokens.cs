@@ -92,7 +92,7 @@ namespace UELib.Core
                         (
                             new ULabelEntry
                             {
-                                Name = String.Format( "J0x{0:X2}", CodeOffset ),
+                                Name = UDecompilingState.OffsetLabelName(CodeOffset),
                                 Position = CodeOffset
                             }
                         );
@@ -115,7 +115,7 @@ namespace UELib.Core
 
                 /// <summary>
                 /// FORMATION ISSUESSES:
-                ///     1:(-> Logic remains the same)   Continue's are decompiled as Else's statements e.g.
+                ///     1:(-> Logic remains the same)   (Continue) statements are decompiled to (Else) statements e.g.
                 ///         -> Original
                 ///         if( continueCondition )
                 ///         {
@@ -252,17 +252,10 @@ namespace UELib.Core
                     {
                         CommentStatement( "Loop Continue" );
                     }
-                    gotoJump:
-                    if (Position + Size == CodeOffset)
-                    {
-                        // Remove jump to next token
-                        NoJumpLabel();
-                        return "";
-                    }
-
+                gotoJump:
                     // This is an implicit GoToToken.
                     Decompiler._CanAddSemicolon = true;
-                    return String.Format( "goto J0x{0:X2}", CodeOffset );
+                    return $"goto {UDecompilingState.OffsetLabelName(CodeOffset)}";
                 }
 
                 public bool JumpsOutOfSwitch()
@@ -328,7 +321,7 @@ namespace UELib.Core
                         (
                             new ULabelEntry
                             {
-                                Name = $"J0x{CodeOffset}",
+                                Name = UDecompilingState.OffsetLabelName(CodeOffset),
                                 Position = CodeOffset
                             }
                         );
@@ -346,8 +339,10 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    // Check whether there's a JumpToken pointing to the begin of this JumpIfNot,
-                    //  if detected, we assume that this If is part of a loop.
+                    string condition = DecompileNext();
+
+                    // Check if we are jumping to the start of a JumpIfNot token.
+                    // if true, we can assume that this (If) statement is contained within a loop.
                     IsLoop = false;
                     for( int i = Decompiler.CurrentTokenIndex + 1; i < Decompiler.DeserializedTokens.Count; ++ i )
                     {
@@ -364,17 +359,18 @@ namespace UELib.Core
                         Decompiler.PreComment += " [Loop If]";
                     }
 
-                    string condition = DecompileNext();
-                    string output = /*(IsLoop ? "while" : "if") +*/ "if(" + condition + ")";
-
+                    string output;
                     if( (CodeOffset & UInt16.MaxValue) < Position )
                     {
-                        Decompiler.PreComment += " [Loop Until]";
-                        Decompiler._CanAddSemicolon = true;
+                        string labelName = UDecompilingState.OffsetLabelName(CodeOffset);
+                        string gotoStatement = $"goto {labelName}";
                         // Inverse condition only here as we're explicitly jumping while other cases create proper scopes 
-                        return $"if(({condition}) == false)\r\n{UDecompilingState.Tabs}{UnrealConfig.Indention}goto J0x{CodeOffset:X2}";
+                        output = $"if(({condition}) == false)\r\n{UDecompilingState.Tabs}{UnrealConfig.Indention}{gotoStatement}";
+                        Decompiler._CanAddSemicolon = true;
+                        return output;
                     }
 
+                    output = /*(IsLoop ? "while" : "if") +*/ $"if({condition})";
                     Decompiler._CanAddSemicolon = false;
 
                     if (IsLoop == false)
