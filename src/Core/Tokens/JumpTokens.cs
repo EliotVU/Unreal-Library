@@ -252,7 +252,15 @@ namespace UELib.Core
                     {
                         CommentStatement( "Loop Continue" );
                     }
+
                 gotoJump:
+                    if (Position + Size == CodeOffset)
+                    {
+                        // Remove jump to next token
+                        NoJumpLabel();
+                        return "";
+                    }
+
                     // This is an implicit GoToToken.
                     Decompiler._CanAddSemicolon = true;
                     return $"goto {UDecompilingState.OffsetLabelName(CodeOffset)}";
