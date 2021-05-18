@@ -1,0 +1,15 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "Scripts"
+        }
+    ],
+    "settings": {
+		"unrealscript.indexAllDocuments": true,
+		"unrealscript.generation": "2",
+		"unrealscript.analyzeDocuments": "All"
+    }
+}
