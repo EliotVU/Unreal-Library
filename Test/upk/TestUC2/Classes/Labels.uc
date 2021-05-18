@@ -1,15 +1,17 @@
 class Labels extends Object;
 
+// We use the assert statement, i.e. "assert (condition);" here as a code filler.
+
 /**
  * Test jump nesting case where a switch with a default case is missing a close of its outer nest.
  */
 function TestIfAndSwitchWithDefaultNesting()
 {
-	if(true) // We are testing for this nesting block.
+	if (true) // We are testing for this nesting block.
 	{
-		if(true)
+		if (true)
 		{
-			switch(true)
+			switch (true)
 			{
 				case true:
 				default:
@@ -17,7 +19,7 @@ function TestIfAndSwitchWithDefaultNesting()
 		}
 	}
 
-	if(true)
+	if (true)
 	{
 		return;
 	}
@@ -26,12 +28,12 @@ function TestIfAndSwitchWithDefaultNesting()
 // Issue: The if is closed with along with a nesting block.
 function TestSwitchAndCaseWithIfNesting()
 {
-	switch(true)
+	switch (true)
 	{
 		case true:
-			if(true)
+			if (true)
 			{
-				assert(true);
+				assert (true);
 				break;
 			}
 
@@ -45,23 +47,23 @@ function TestSwitchAndCaseWithLabels()
 	switch(true)
 	{
 		case true:
-			if(true)
+			if (true)
 			{
-				assert(true);
+				assert (true);
 				goto Case2;
 			}
 			break;
 
 		case false:
-			if(true)
+			if (true)
 			{
-				assert(true);
+				assert (true);
 				break;
 			}
 			Case2:
 
 		default:
-			assert(true);
+			assert (true);
 	}
 }
 
@@ -69,59 +71,100 @@ function TestForAndIfWithElse()
 {
 	local int i;
 
-	for(i = 0; i < 0xFF; i++)
+	for (i = 0; i < 0xFF; i++)
 	{
-		if(true)
+		if (true)
 		{
-			if(false)
+			if (false)
 			{
-				assert(true);
+				assert (true);
 			}
 			else
 			{
-				assert(true);
-				if(false)
+				assert (true);
+				if (false)
 				{
-					assert(true);
+					assert (true);
 					continue;
 				}
 			}
 		}
-		assert(true);
+		assert (true);
 	}
-	assert(true);
+	assert (true);
 }
 
 function TestIfWithGoto()
 {
-	if(true)
+	if (true)
 	{
-		assert(true);
-		if(true)
+		assert (true);
+		if (true)
 		{
-			assert(true);
-			if(true)
+			assert (true);
+			if (true)
 			{
-				assert(true);
+				assert (true);
 				goto NextLabel;
 			}
 		}
 	}
 
 	NextLabel:
-	if(false)
+	if (false)
 	{
 	}
 	else
 	{
-		assert(true);
-		if(false)
+		assert (true);
+		if (false)
 		{
-			assert(true);
+			assert (true);
 		}
 		else
 		{
-			assert(false);
+			assert (false);
 		}
 	}
+}
+
+function TestIfAndWhileLoopLabel()
+{
+	if (false)
+	{
+	}
+	else
+	{
+	}
+
+	// We expect a loop label here.
+	while (true)
+	{
+	}
+}
+
+function TestForLoop()
+{
+	local int i;
+
+	for (i = 0; i < 0xFF; ++i)
+	{
+		assert (false);
+	}
+}
+
+function TestWhileLoop()
+{
+	while (true)
+	{
+		assert (false);
+	}
+}
+
+function TestDoUntilLoop()
+{
+	do
+	{
+		assert (true);
+	} until (true);
 }
