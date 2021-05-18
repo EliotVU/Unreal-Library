@@ -1344,14 +1344,22 @@ namespace UELib.Core
                             {
                                 string tokenOutput;
                                 var newToken = NextToken;
-                                output.Append( DecompileLabels() );
+
+                                // To ensure we print generated labels within a nesting block.
+                                string labelsOutput = DecompileLabels(false);
+                                if (labelsOutput != String.Empty)
+                                {
+                                    output.Append(labelsOutput);
+                                    output.Append("\r\n");
+                                }
+
                                 try
                                 {
                                     // FIX: Formatting issue on debug-compiled packages
                                     if( newToken is DebugInfoToken )
                                     {
                                         string nestsOutput = DecompileNests();
-                                        if( nestsOutput.Length != 0 )
+                                        if( nestsOutput != String.Empty )
                                         {
                                             output.Append( nestsOutput );
                                             spewOutput = true;
@@ -1405,13 +1413,13 @@ namespace UELib.Core
 
                                 if( !UnrealConfig.SuppressComments )
                                 {
-                                    if( PreComment.Length != 0 )
+                                    if( PreComment != String.Empty )
                                     {
                                         tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput) ? tokenOutput : "\r\n" + UDecompilingState.Tabs + tokenOutput);
                                         PreComment = String.Empty;
                                     }
 
-                                    if( PostComment.Length != 0 )
+                                    if( PostComment != String.Empty )
                                     {
                                         tokenOutput += PostComment;
                                         PostComment = String.Empty;
@@ -1428,7 +1436,7 @@ namespace UELib.Core
                                     }
 #endif
                                     // Previous did spew and this one spews? then a new line is required!
-                                    if( tokenOutput.Length != 0 )
+                                    if( tokenOutput != String.Empty )
                                     {
                                         // Spew before?
                                         if( spewOutput )
@@ -1486,13 +1494,18 @@ namespace UELib.Core
                             try
                             {
                                 string nestsOutput = DecompileNests();
-                                if( nestsOutput.Length != 0 )
+                                if( nestsOutput != String.Empty )
                                 {
                                     output.Append( nestsOutput );
                                     spewOutput = true;
                                 }
 
-                                output.Append( DecompileLabels() );
+                                // To ensure we print generated labels within a nesting block.
+                                string labelsOutput = DecompileLabels(true);
+                                if( labelsOutput != String.Empty )
+                                {
+                                    output.Append(labelsOutput);
+                                }
                             }
                             catch( Exception e )
                             {
@@ -1569,9 +1582,9 @@ namespace UELib.Core
                 return output;
             }
 
-            private string DecompileLabels()
+            private string DecompileLabels( bool isPost = false )
             {
-                string output = String.Empty;
+                var output = new StringBuilder();
                 for( int i = 0; i < _TempLabels.Count; ++ i )
                 {
                     var label = _TempLabels[i].entry;
@@ -1579,14 +1592,19 @@ namespace UELib.Core
                         continue;
 
                     var isStateLabel = !label.Name.StartsWith( "J0x", StringComparison.Ordinal );
+                    string statementOutput = isStateLabel
+                        ? $"{label.Name}:\r\n"
+                        : $"{UDecompilingState.Tabs}{label.Name}:";
+                    if (isPost)
+                    {
+                        output.Append("\r\n");
+                    }
+                    output.Append(statementOutput);
 
-                    output += isStateLabel
-                        ? String.Format( "\r\n{0}:\r\n", label.Name )
-                        : String.Format( "\r\n{0}:", UDecompilingState.Tabs + label.Name );
                     _TempLabels.RemoveAt( i );
                     -- i;
                 }
-                return output;
+                return output.ToString();
             }
 
             private string DecompileNests( bool outputAllRemainingNests = false )

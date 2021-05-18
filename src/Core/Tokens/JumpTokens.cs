@@ -363,9 +363,9 @@ namespace UELib.Core
                     if( (CodeOffset & UInt16.MaxValue) < Position )
                     {
                         string labelName = UDecompilingState.OffsetLabelName(CodeOffset);
-                        string gotoStatement = $"goto {labelName}";
+                        string gotoStatement = $"{UDecompilingState.Tabs}{UnrealConfig.Indention}goto {labelName}";
                         // Inverse condition only here as we're explicitly jumping while other cases create proper scopes 
-                        output = $"if(({condition}) == false)\r\n{UDecompilingState.Tabs}{UnrealConfig.Indention}{gotoStatement}";
+                        output = $"if(!({condition}))\r\n{gotoStatement}";
                         Decompiler._CanAddSemicolon = true;
                         return output;
                     }
