@@ -1111,6 +1111,7 @@ namespace UELib.Core
 
                 public class NestEnd : Nest
                 {
+                    public JumpToken HasElseNest;
                     public override string Decompile()
                     {
                         #if DEBUG_NESTS
@@ -1146,6 +1147,17 @@ namespace UELib.Core
                     Nests.Add( n );
                     n.Creator = creator ?? Decompiler.CurrentToken;
                     return n;
+                }
+
+                public bool TryAddNestEnd(Nest.NestType type, uint pos)
+                {
+                    foreach (var nest in Decompiler._Nester.Nests)
+                    {
+                        if (nest.Type == type && nest.Position == pos)
+                            return false;
+                    }
+                    Decompiler._Nester.AddNestEnd( type, pos );
+                    return true;
                 }
             }
 
@@ -1388,7 +1400,7 @@ namespace UELib.Core
                                 {
                                     if( PreComment.Length != 0 )
                                     {
-                                        tokenOutput = PreComment + "\r\n" + UDecompilingState.Tabs + tokenOutput;
+                                        tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput) ? tokenOutput : "\r\n" + UDecompilingState.Tabs + tokenOutput);
                                         PreComment = String.Empty;
                                     }
 
@@ -1556,7 +1568,7 @@ namespace UELib.Core
                 for( int i = 0; i < _TempLabels.Count; ++ i )
                 {
                     var label = _TempLabels[i];
-                    if( PeekToken.Position < label.Position )
+                    if( CurrentToken.Position < label.Position )
                         continue;
 
                     var isStateLabel = !label.Name.StartsWith( "J0x", StringComparison.Ordinal );
@@ -1629,6 +1641,25 @@ namespace UELib.Core
                         _NestChain.RemoveAt( _NestChain.Count - 1 );
 
                         _Nester.Nests.RemoveAt( i );
+                        if (nestEnd.HasElseNest != null)
+                        {
+                            output += $"\r\n{UDecompilingState.Tabs}else{UnrealConfig.PrintBeginBracket()}";
+                            UDecompilingState.AddTab();
+                            var begin = new NestManager.NestBegin
+                            {
+                                Type = NestManager.Nest.NestType.Else,
+                                Creator = nestEnd.HasElseNest, 
+                                Position = nestEnd.Position
+                            };
+                            var end = new NestManager.NestEnd
+                            {
+                                Type = NestManager.Nest.NestType.Else,
+                                Creator = nestEnd.HasElseNest, 
+                                Position = nestEnd.HasElseNest.CodeOffset
+                            };
+                            _Nester.Nests.Add( end );
+                            _NestChain.Add( begin );
+                        }
                     }
                 }
                 return output;
