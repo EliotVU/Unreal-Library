@@ -1,4 +1,4 @@
-name: .NET
+name: Test Solution
 
 on:
   push:
@@ -18,7 +18,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 4.7.2
+      # Legacy versions not supported? :(
+      # 5.0 will likely not work yet due legacy dependencies...
+        dotnet-version: 5.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
