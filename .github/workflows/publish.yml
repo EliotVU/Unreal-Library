@@ -1,17 +1,13 @@
-name: .NET
+name: Build .NET and Publish to NuGet
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
     branches: [ master ]
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
-    env:
-      working-directory: ./src
       
     steps:
     - uses: actions/checkout@v2
@@ -20,13 +16,13 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore src/Eliot.UELib.csproj
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build src/Eliot.UELib.csproj --no-restore
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test src/Eliot.UELib.csproj --no-build --verbosity normal
     - name: Publish Eliot.UELib
       uses: brandedoutcast/publish-nuget@v2.5.5
       with:
-          PROJECT_FILE_PATH: Eliot.UELib.csproj
+          PROJECT_FILE_PATH: src/Eliot.UELib.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
