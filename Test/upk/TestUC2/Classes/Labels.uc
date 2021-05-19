@@ -31,6 +31,29 @@ function TestIfAndSwitchWithDefaultNesting()
 			switch (true)
 			{
 				case true:
+					assert (true);
+				default:
+					assert (true);
+			}
+		}
+	}
+
+	if (true)
+	{
+		return;
+	}
+}
+
+function TestIfAndSwitchWithEmptyNesting()
+{
+	if (true)
+	{
+		if (true)
+		{
+			switch (true)
+			{
+				// FIXME: With empty rules, we run into decompile issues
+				case true:
 				default:
 			}
 		}
