@@ -1091,7 +1091,7 @@ namespace UELib.Core
 
                     public override string ToString()
                     {
-                        return "Type:" + Type + " Position:" + Position;
+                        return $"Type:{Type} Position:0x{Position:X2}";
                     }
                 }
 
@@ -1261,15 +1261,22 @@ namespace UELib.Core
                 PreComment = String.Empty;
                 PostComment = String.Empty;
 
-                _TempLabels = new List<ULabelEntry>();
+                _TempLabels = new List<(ULabelEntry, int)>();
                 if( _Labels != null )
                 {
                     for( int i = 0; i < _Labels.Count; ++ i )
                     {
                         // No duplicates, caused by having multiple goto's with the same destination
-                        if( !_TempLabels.Exists( p => p.Position == _Labels[i].Position ) )
+                        var index = _TempLabels.FindIndex(p => p.entry.Position == _Labels[i].Position);
+                        if( index == -1 )
                         {
-                            _TempLabels.Add( _Labels[i] );
+                            _TempLabels.Add( (_Labels[i], 1) );
+                        }
+                        else
+                        {
+                            var data = _TempLabels[index];
+                            data.refs++;
+                            _TempLabels[index] = data;
                         }
                     }
                 }
@@ -1290,7 +1297,7 @@ namespace UELib.Core
             }
 
             /// <summary>
-            /// Whether we are currently decompiling within a ClassContext token.
+            /// True if we are currently decompiling within a ClassContext token.
             ///
             /// HACK: For static calls -> class'ClassA'.static.FuncA();
             /// </summary>
@@ -1337,14 +1344,22 @@ namespace UELib.Core
                             {
                                 string tokenOutput;
                                 var newToken = NextToken;
-                                output.Append( DecompileLabels() );
+
+                                // To ensure we print generated labels within a nesting block.
+                                string labelsOutput = DecompileLabelForToken( CurrentToken, spewOutput );
+                                if( labelsOutput != String.Empty )
+                                {
+                                    output.Append( labelsOutput );
+                                    output.Append( "\r\n" );
+                                }
+
                                 try
                                 {
                                     // FIX: Formatting issue on debug-compiled packages
                                     if( newToken is DebugInfoToken )
                                     {
                                         string nestsOutput = DecompileNests();
-                                        if( nestsOutput.Length != 0 )
+                                        if( nestsOutput != String.Empty )
                                         {
                                             output.Append( nestsOutput );
                                             spewOutput = true;
@@ -1398,13 +1413,15 @@ namespace UELib.Core
 
                                 if( !UnrealConfig.SuppressComments )
                                 {
-                                    if( PreComment.Length != 0 )
+                                    if( PreComment != String.Empty )
                                     {
-                                        tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput) ? tokenOutput : "\r\n" + UDecompilingState.Tabs + tokenOutput);
+                                        tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput) 
+                                            ? tokenOutput 
+                                            : "\r\n" + UDecompilingState.Tabs + tokenOutput);
                                         PreComment = String.Empty;
                                     }
 
-                                    if( PostComment.Length != 0 )
+                                    if( PostComment != String.Empty )
                                     {
                                         tokenOutput += PostComment;
                                         PostComment = String.Empty;
@@ -1421,7 +1438,7 @@ namespace UELib.Core
                                     }
 #endif
                                     // Previous did spew and this one spews? then a new line is required!
-                                    if( tokenOutput.Length != 0 )
+                                    if( tokenOutput != String.Empty )
                                     {
                                         // Spew before?
                                         if( spewOutput )
@@ -1479,13 +1496,11 @@ namespace UELib.Core
                             try
                             {
                                 string nestsOutput = DecompileNests();
-                                if( nestsOutput.Length != 0 )
+                                if( nestsOutput != String.Empty )
                                 {
                                     output.Append( nestsOutput );
                                     spewOutput = true;
                                 }
-
-                                output.Append( DecompileLabels() );
                             }
                             catch( Exception e )
                             {
@@ -1562,24 +1577,28 @@ namespace UELib.Core
                 return output;
             }
 
-            private string DecompileLabels()
+            private string DecompileLabelForToken( Token token, bool appendNewline )
             {
-                string output = String.Empty;
-                for( int i = 0; i < _TempLabels.Count; ++ i )
+                var output = new StringBuilder();
+                var labelIndex = _TempLabels.FindIndex((l) => l.entry.Position == token.Position);
+                if( labelIndex == -1 )
                 {
-                    var label = _TempLabels[i];
-                    if( CurrentToken.Position < label.Position )
-                        continue;
-
-                    var isStateLabel = !label.Name.StartsWith( "J0x", StringComparison.Ordinal );
-
-                    output += isStateLabel
-                        ? String.Format( "\r\n{0}:\r\n", label.Name )
-                        : String.Format( "\r\n{0}:", UDecompilingState.Tabs + label.Name );
-                    _TempLabels.RemoveAt( i );
-                    -- i;
+                    return String.Empty;
                 }
-                return output;
+
+                var labelEntry = _TempLabels[labelIndex].entry;
+                var isStateLabel = !labelEntry.Name.StartsWith( "J0x", StringComparison.Ordinal );
+                string statementOutput = isStateLabel
+                    ? $"{labelEntry.Name}:\r\n"
+                    : $"{UDecompilingState.Tabs}{labelEntry.Name}:";
+                if( appendNewline )
+                { 
+                    output.Append("\r\n");
+                }
+                output.Append(statementOutput);
+
+                _TempLabels.RemoveAt(labelIndex);
+                return output.ToString();
             }
 
             private string DecompileNests( bool outputAllRemainingNests = false )
@@ -1664,7 +1683,7 @@ namespace UELib.Core
                 }
                 return output;
             }
-            #endregion
+#endregion
 
             #region Disassemble
             [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic" )]

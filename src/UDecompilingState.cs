@@ -49,5 +49,10 @@ namespace UELib
         {
             Tabs = String.Empty;
         }
+
+        public static string OffsetLabelName( uint offset )
+        {
+            return $"J0x{offset:X2}";
+        }
     }
 }
