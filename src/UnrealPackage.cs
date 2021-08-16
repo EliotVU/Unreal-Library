@@ -487,6 +487,12 @@ namespace UELib
                 Batman3,
 
                 /// <summary>
+                /// 807/104
+                /// </summary>
+                [Build(807, 104)]
+                Batman3MP,
+
+                /// <summary>
                 /// 863/32995
                 /// </summary>
                 [Build(863, 32995)]
