@@ -93,6 +93,16 @@ namespace UELib
                 ArchetypeIndex = stream.ReadInt32();
             }
 
+#if BATMAN
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman2 ||
+                stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman3 ||
+                stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman3MP ||
+                stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                stream.Skip( sizeof(int) );
+            }
+#endif
+
             _ObjectFlagsOffset = stream.Position;
             ObjectFlags = stream.ReadUInt32();
             if( stream.Version >= VObjectFlagsToULONG

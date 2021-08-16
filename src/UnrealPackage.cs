@@ -472,7 +472,31 @@ namespace UELib
                 /// 845/120
                 /// </summary>
                 [Build(845, 120)]
-                XCOM2WotC
+                XCOM2WotC,
+
+                /// <summary>
+                /// 805/101
+                /// </summary>
+                [Build(805, 101)]
+                Batman2,
+
+                /// <summary>
+                /// 807/138
+                /// </summary>
+                [Build(807, 138)]
+                Batman3,
+
+                /// <summary>
+                /// 807/104
+                /// </summary>
+                [Build(807, 104)]
+                Batman3MP,
+
+                /// <summary>
+                /// 863/32995
+                /// </summary>
+                [Build(863, 32995)]
+                Batman4,
             }
 
             public BuildName Name
