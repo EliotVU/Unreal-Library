@@ -94,10 +94,7 @@ namespace UELib
             }
 
 #if BATMAN
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman2 ||
-                stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman3 ||
-                stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman3MP ||
-                stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
             {
                 stream.Skip( sizeof(int) );
             }

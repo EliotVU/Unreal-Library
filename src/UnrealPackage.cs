@@ -146,6 +146,7 @@ namespace UELib
         [SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
         public static ushort OverrideLicenseeVersion;
 
+        // TODO: Move to UnrealBuild.cs
         public sealed class GameBuild
         {
             [UsedImplicitly]
@@ -171,31 +172,53 @@ namespace UELib
                 private readonly int _MinVersion;
                 private readonly int _MaxVersion;
                 private readonly uint _MinLicensee;
-                private readonly byte _IsConsoleCompressed;
-                private readonly byte _IsXenonCompressed;
                 private readonly uint _MaxLicensee;
+                private readonly BuildGeneration _Generation;
+                private readonly BuildFlags _Flags;
 
                 private readonly bool _VerifyEqual;
 
-                public BuildAttribute( int minVersion, uint minLicensee,
-                    byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
+                public BuildAttribute(int minVersion, uint minLicensee, 
+                    BuildGeneration gen = BuildGeneration.Undefined)
                 {
                     _MinVersion = minVersion;
                     _MinLicensee = minLicensee;
-                    _IsConsoleCompressed = isConsoleCompressed;
-                    _IsXenonCompressed = isXenonCompressed;
+                    _Generation = gen;
                     _VerifyEqual = true;
                 }
 
-                public BuildAttribute( int minVersion, int maxVersion, uint minLicensee, uint maxLicensee,
-                    byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
+
+                public BuildAttribute( int minVersion, uint minLicensee,
+                    BuildFlags flags, 
+                    BuildGeneration gen = BuildGeneration.Undefined )
+                {
+                    _MinVersion = minVersion;
+                    _MinLicensee = minLicensee;
+                    _Flags = flags;
+                    _Generation = gen;
+                    _VerifyEqual = true;
+                }
+
+                public BuildAttribute(int minVersion, int maxVersion, uint minLicensee, uint maxLicensee, 
+                    BuildGeneration gen = BuildGeneration.Undefined)
                 {
                     _MinVersion = minVersion;
                     _MaxVersion = maxVersion;
                     _MinLicensee = minLicensee;
                     _MaxLicensee = maxLicensee;
-                    _IsConsoleCompressed = isConsoleCompressed;
-                    _IsXenonCompressed = isXenonCompressed;
+                    _Generation = gen;
+                }
+
+                public BuildAttribute( int minVersion, int maxVersion, uint minLicensee, uint maxLicensee,
+                    BuildFlags flags, 
+                    BuildGeneration gen = BuildGeneration.Undefined )
+                {
+                    _MinVersion = minVersion;
+                    _MaxVersion = maxVersion;
+                    _MinLicensee = minLicensee;
+                    _MaxLicensee = maxLicensee;
+                    _Flags = flags;
+                    _Generation = gen;
                 }
 
                 public bool Verify( GameBuild gb, UnrealPackage package )
@@ -208,16 +231,8 @@ namespace UELib
 
                     gb.Version = package.Version;
                     gb.LicenseeVersion = package.LicenseeVersion;
-
-                    if( _IsConsoleCompressed < 2 )
-                    {
-                        gb.IsConsoleCompressed = _IsConsoleCompressed == 1;
-                    }
-
-                    if( _IsXenonCompressed < 2 )
-                    {
-                        gb.IsXenonCompressed = _IsXenonCompressed == 1;
-                    }
+                    gb._Flags = _Flags;
+                    gb.Generation = _Generation;
                     return true;
                 }
             }
@@ -311,7 +326,7 @@ namespace UELib
                 /// <summary>
                 /// 472/046
                 /// </summary>
-                [Build( 472, 46, 1 )]
+                [Build( 472, 46, BuildFlags.ConsoleCooked )]
                 MKKE,
 
                 /// <summary>
@@ -347,7 +362,8 @@ namespace UELib
                 /// <summary>
                 /// 575/000
                 /// </summary>
-                [Build( 575, 0, 0, 1 )]
+                // Xenon is enabled here, because the package is missing editor data, the editor data of UStruct is however still serialized.
+                [Build( 575, 0, BuildFlags.XenonCooked )]
                 GoW2,
 
                 /// <summary>
@@ -355,6 +371,14 @@ namespace UELib
                 /// </summary>
                 [Build( 576, 5 )]
                 CrimeCraft,
+
+                /// <summary>
+                /// 576/021
+                /// 
+                /// No Special support, but there's no harm in recognizing this build.
+                /// </summary>
+                [Build( 576, 21 )]
+                Batman1,
 
                 /// <summary>
                 /// 576/100
@@ -377,7 +401,7 @@ namespace UELib
                 /// <summary>
                 /// 590/001
                 /// </summary>
-                [Build( 590, 1, 0, 1 )]
+                [Build( 590, 1, BuildFlags.XenonCooked )]
                 ShadowComplex,
 
                 /// <summary>
@@ -437,7 +461,7 @@ namespace UELib
                 /// <summary>
                 /// 842/001
                 /// </summary>
-                [Build( 842, 1, 1 )]
+                [Build( 842, 1, BuildFlags.ConsoleCooked )]
                 InfinityBlade2,
 
                 /// <summary>
@@ -453,7 +477,8 @@ namespace UELib
                 [Build( 511, 145 )] // Transformers: War for Cybertron (PC version)
                 [Build( 511, 144 )] // Transformers: War for Cybertron (PS3 and XBox 360 version)
                 [Build( 537, 174 )] // Transformers: Dark of the Moon
-                [Build( 846, 181, 2, 1 )] // Transformers: Fall of Cybertron
+                // The package's structure seems to be ascending 537+ instead of UDK's 846
+                [Build( 846, 181 )] // Transformers: Fall of Cybertron, Deadpool. 
                 Transformers,
 
                 /// <summary>
@@ -465,38 +490,27 @@ namespace UELib
                 /// <summary>
                 /// 904/009
                 /// </summary>
-                [Build( 904, 904, 09u, 014u, 0, 0 )]
+                [Build( 904, 904, 09u, 014u )]
                 SpecialForce2,
 
                 /// <summary>
                 /// 845/120
                 /// </summary>
-                [Build(845, 120)]
+                [Build( 845, 120 )]
                 XCOM2WotC,
 
                 /// <summary>
-                /// 805/101
-                /// </summary>
-                [Build(805, 101)]
-                Batman2,
-
-                /// <summary>
-                /// 807/138
-                /// </summary>
-                [Build(807, 138)]
-                Batman3,
-
-                /// <summary>
+                /// 805-6/101-3
+                /// 807/137-8
                 /// 807/104
-                /// </summary>
-                [Build(807, 104)]
-                Batman3MP,
-
-                /// <summary>
                 /// 863/32995
                 /// </summary>
-                [Build(863, 32995)]
-                Batman4,
+                [Build( 805, 101, BuildGeneration.Batman2 )]
+                [Build( 806, 103, BuildGeneration.Batman3 )]
+                [Build( 807, 807, 137, 138, BuildGeneration.Batman3 )]
+                [Build( 807, 104, BuildGeneration.Batman3MP )]
+                [Build( 863, 32995, BuildGeneration.Batman4 )]
+                BatmanUDK,
             }
 
             public BuildName Name
@@ -511,18 +525,24 @@ namespace UELib
             /// <summary>
             /// Is cooked for consoles.
             /// </summary>
+            [Obsolete("See BuildFlags", true)]
             public bool IsConsoleCompressed{ get; private set; }
 
             /// <summary>
             /// Is cooked for Xenon(Xbox 360). Could be true on PC games.
             /// </summary>
+            [Obsolete("See BuildFlags", true)]
             public bool IsXenonCompressed{ get; private set; }
+
+            public BuildGeneration Generation { get; private set; }
+
+            private BuildFlags _Flags;
 
             public GameBuild( UnrealPackage package )
             {
                 if( UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console )
                 {
-                    IsConsoleCompressed = true;
+                    _Flags |= BuildFlags.ConsoleCooked;
                 }
 
                 var gameBuilds = Enum.GetValues( typeof(BuildName) ) as BuildName[];
@@ -577,6 +597,11 @@ namespace UELib
             public override int GetHashCode()
             {
                 return (int)Name;
+            }
+
+            public bool HasFlags(BuildFlags flags)
+            {
+                return (_Flags & flags) == flags;
             }
         }
 
@@ -1693,14 +1718,17 @@ namespace UELib
         }
 
         /// <summary>
-        /// Tests the package for console build indications.
+        /// If true, the package won't have any editor data such as HideCategories, ScriptText etc.
+        /// 
+        /// However this condition is not only determined by the package flags property.
+        /// Thus it is necessary to explicitally indicate this state.
         /// </summary>
         /// <returns>Whether package is cooked for consoles.</returns>
         [PublicAPI]
         [System.Diagnostics.Contracts.Pure]
         public bool IsConsoleCooked()
         {
-            return IsCooked() && (IsBigEndianEncoded || Build.IsConsoleCompressed) && !Build.IsXenonCompressed;
+            return IsCooked() && Build.HasFlags( BuildFlags.ConsoleCooked );
         }
 
         /// <summary>

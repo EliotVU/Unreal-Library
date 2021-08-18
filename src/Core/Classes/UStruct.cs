@@ -94,6 +94,7 @@ namespace UELib.Core
 
             if( Package.Version >= VStructFlags )
             {
+                // FIXME: IsStripped()?
                 if( Package.Version >= VCppText && !Package.IsConsoleCooked()
 #if VANGUARD
                     && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
