@@ -282,6 +282,13 @@ namespace UELib.Core
                         }
                     }
 
+#if BATMAN
+                    if ( _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK )
+                    {
+                        _Buffer.Skip(sizeof(int));
+                    }
+#endif
+
                     if( Package.Version >= UnrealPackage.VDLLBIND )
                     {
                         DLLBindName = _Buffer.ReadNameReference();
