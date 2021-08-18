@@ -15,26 +15,98 @@ Either use NuGet's package manager console or download from: https://www.nuget.o
 
     PM> Install-Package Eliot.UELib.dll
 
-Usage
+Instructions
 ==============
 
-Include the either the library's .dll file or the forked source code into your own project.
-Once referenced, you can start using the library by using the namespace UELib as follows: "using UELib;"
+See https://github.com/EliotVU/Unreal-Library/wiki/Usage
 
-See further instructions at: https://github.com/EliotVU/Unreal-Library/wiki/Usage
-
-Interface
+User Interface
 ==============
 
-Common sense tells me you'd like to test UE Library using an interface, luckily you can use the latest version of UE Explorer to use your latest build of Eliot.UELib.dll by replacing the file in the installed folder of UE Explorer e.g.
+The latest build is always compatible with the [latest UE Explorer](https://eliotvu.com/portfolio/view/21/ue-explorer)'s release, and because of that, you can replace the Eliot.UELib.dll in the installation folder with yours.
 
-    "%programfiles(x86)%\Eliot\UE Explorer\"
-  
-Grab the latest [UE-Explorer.1.2.7.1.rar](http://eliotvu.com/updates/UE-Explorer.1.2.7.1.rar) and replace the Eliot.UELib.dll with yours, I recommend that you change the output path to your UE Explorer's installation folder.
-
-How-To
+Compatible Games
 ==============
-[Adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes) 
+Below is a table of games that are known to be compatible with the UELib.
+
+| Name    | Engine    | Package/Licensee    | Developer    |
+| ------- | --------- | ------------------- | ------------ |
+| Unreal | 100-226 | 61/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | Unknown | 61/000 | [MicroProse](http://en.wikipedia.org/wiki/MicroProse "MicroProse") |
+| Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Unreal Tournament | 338-436 | 68/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Deus Ex | Unknown | Unknown |     |
+|     |     |     |     |
+|     |     |     |     |
+| XIII | Unknown | 100/058 |     |
+| Unreal Tournament 2003 | 1077-2225 | 119/025 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Unreal II | 829-2001 | 126/2609 | [Legend Entertainment](https://en.wikipedia.org/wiki/Legend_Entertainment "Legend Entertainment") |
+| Unreal Tournament 2004 | 3120-3369 | 128/029 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | [Tripwire Interactive](https://en.wikipedia.org/wiki/Tripwire_Interactive "Tripwire Interactive") |
+| Killing Floor | 3369 | 128/029 | [Tripwire Interactive](https://en.wikipedia.org/wiki/Tripwire_Interactive "Tripwire Interactive") |
+| Battle Territory Battery | Unknown | Unknown |     |
+| Swat 4 | Unknown | 129/027 |     |
+|     |     |     |     |
+|     |     |     |     |
+| Roboblitz | 2306 | 369/006 |     |
+| Medal of Honor: Airborne | 2859 | 421/011 |     |
+| Mortal Kombat Komplete Edition | 2605 | 472/046 |     |
+| Stargate Worlds | 3004 | 486/007 |     |
+| Gears of War | 3329 | 490/009 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Unreal Tournament 3 | 3809 | 512/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Mirrors Edge | 3716 | 536/043 |     |
+| Alpha Protocol | 3857 | 539/091 |     |
+| APB: All Points Bulletin | 3908 | 547/032 |     |
+| Gears of War 2 | 4638 | 575/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| CrimeCraft | 4701 | 576/005 |     |
+| Singularity | 4869 | 584/126 |     |
+| MoonBase Alpha | 4947 | 587/000 | NASA |
+| Saw | Unknown | 584/003 | [Zombie Studios](https://en.wikipedia.org/wiki/Zombie_Studios) |
+| The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
+| Monday Night Combat | 5697 | 638/000 |     |
+| Unreal Development Kit | 6094-10246 | 664-860 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Dungeon Defenders | 6262 | 678/002 |     |
+| Alice Madness Returns | 6760 | 690/000 |     |
+| The Ball | 6699 | 706/000 | [Teotl Studios](https://en.wikipedia.org/wiki/Teotl_Studios "Teotl Studios") |
+| Bioshock Infinite | 6829 | 727/075 |     |
+| Bulletstorm | 7052 | 742/029 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | [Tripwire Interactive](https://en.wikipedia.org/wiki/Tripwire_Interactive "Tripwire Interactive") |
+| Aliens: Colonial Marines | Unknown | 787/047 | [Gearbox Software](https://en.wikipedia.org/wiki/Gearbox_Software "Gearbox Software") |
+| [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
+| Tribes: Ascend | 7748 | 805/Unknown |     |
+| Rock of Ages | 7748 | 805/000 |     |
+| Sanctum | 7876 | 810/000 |     |
+| AntiChamber | 7977 | 812/000 |     |
+| Waves | 8171 | 813/000 |     |
+| Super Monday Night Combat | 8364 | 820/000 |     |
+| Gears of War 3 | 8653 | 828/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Quantum Conundrum | 8623 | 832/32870 | [Airtight Games](https://en.wikipedia.org/wiki/Airtight_Games "Airtight Games") |
+| Borderlands | Unknown | Unknown | [Gearbox Software](https://en.wikipedia.org/wiki/Gearbox_Software "Gearbox Software")[](https://en.wikipedia.org/wiki/Airtight_Games "Airtight Games") |
+| Borderlands 2 | 8623/023 | 832/056 | [Gearbox Software](https://en.wikipedia.org/wiki/Gearbox_Software "Gearbox Software") |
+| Remember Me | 8623 | 832/021 |     |
+| The Haunted: Hells Reach | 8788 | 841/000 |     |
+| Blacklight Retribution | 8788 | 841/Unknown |     |
+| Infinity Blade 2 | 9059 | 842/001 |     |
+| Q.U.B.E | 8916 | 845/000 |     |
+| XCOM: Enemy Unknown | 8916 | 845/059 | [Firaxis Games](http://en.wikipedia.org/wiki/Firaxis_Games "Firaxis Games") |
+| Gears of War: Judgement | 10566 | 846/000 |     |
+| InMomentum | 8980 | 848/000 |     |
+| [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
+| Deadlight | 9375 | 854/000 |     |
+| Ravaged | 9641 | 859/000 |     |
+| [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
+| Painkiller HD | 9953 | 860/000 |     |
+| Hawken | 10681 | 860/004 |     |
+| Soldier Front 2 | 6712 | 904/009 |     |
+| Rise of the Triad | Unknown | Unknown |     |
+| Outlast | Unknown | Unknown |     |
+| Sherlock Holmes: Crimes and Punishments | Unknown | Unknown | Frogwares |
+| Alien Rage | Unknown | Unknown |     |
+
+**Beware, opening an unsupported package could crash your system! Make sure you have 
+saved everything before opening any file!**
+
+Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes) 
 
 Contribute
 ==============
@@ -54,9 +126,4 @@ The following kind of contributions are welcome:
 Code style
 ==============
 
-Any contribution should follow the styling of the current code style as seen in the source files:
-* 4 indentation spaces.
-* _CamelCase for private/protected fields.
-* CamelCase naming for everything else but constants which use CAMEL_CASE.
-* Keep code lines readable by using spaces and new lines as a way of grouping code statements.
-* It is too much to mention every restriction here, so it is best to match the style of the nearby code.
+Any contribution should try to follow the already existing neighbouring code.
