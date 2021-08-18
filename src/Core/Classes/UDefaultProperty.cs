@@ -81,7 +81,7 @@ namespace UELib.Core
             _Outer = (outer ?? _Container as UStruct) ?? _Container.Outer as UStruct;
         }
 
-        private int DeserializeSize( byte sizePack )
+        private int DeserializeTagSizeUE1(byte sizePack)
         {
             switch( sizePack )
             {
@@ -116,7 +116,7 @@ namespace UELib.Core
 
         const byte ArrayIndexMask = 0x80;
 
-        private int DeserializeArrayIndex()
+        private int DeserializeTagArrayIndexUE1()
         {
             int arrayIndex;
 #if DEBUG || BINARYMETADATA
@@ -148,89 +148,27 @@ namespace UELib.Core
         {
             _BeginOffset = _Buffer.Position;
 
-            Name = _Buffer.ReadNameReference();
-            _Container.Record( "Name", Name );
-            if( Name.IsNone() )
-            {
-                return false;
-            }
-
+            bool isEnd;
             // Unreal Engine 1 and 2
-            if( _Buffer.Version < V3 )
+            if (_Buffer.Version < V3)
             {
-                const byte typeMask = 0x0F;
-                const byte sizeMask = 0x70;
-
-                // Packed byte
-                var info = _Buffer.ReadByte();
-                _Container.Record( String.Format(
-                    "Info(Type={0},SizeMask=0x{1:X2},ArrayIndexMask=0x{2:X2})",
-                    (PropertyType)(byte)(info & typeMask),
-                    (byte)(info & sizeMask),
-                    (info & ArrayIndexMask)
-                    ), info
-                );
-
-                Type = (PropertyType)(byte)(info & typeMask);
-                if( Type == PropertyType.StructProperty )
-                {
-                    ItemName = _Buffer.ReadNameReference();
-                    _Container.Record( "ItemName", ItemName );
-                }
-
-                Size = DeserializeSize( (byte)(info & sizeMask) );
-                if( Size >= 0x50 )
-                {
-                    _Container.Record( "Size", Size );
-                }
-
-                switch( Type )
-                {
-                    case PropertyType.BoolProperty:
-                        _BoolValue = (info & ArrayIndexMask) != 0;
-                        break;
-
-                    default:
-                        if( (info & ArrayIndexMask) != 0 )
-                        {
-                            ArrayIndex = DeserializeArrayIndex();
-                            _Container.Record( "ArrayIndex", ArrayIndex );
-                        }
-                        break;
-                }
+                isEnd = DeserializeTagUE1();
             }
+#if BATMAN
+            else if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
+            {
+                isEnd = DeserializeTagByOffset();
+            }
+#endif
             // Unreal Engine 3
             else
             {
-                string typeName = _Buffer.ReadName();
-                _Container.Record( "typeName", typeName );
-                Type = (PropertyType)Enum.Parse( typeof(PropertyType), typeName );
+                isEnd = DeserializeTagUE3();
+            }
 
-                Size = _Buffer.ReadInt32();
-                _Container.Record( "Size", Size );
-                ArrayIndex = _Buffer.ReadInt32();
-                _Container.Record( "ArrayIndex", ArrayIndex );
-
-                switch( Type )
-                {
-                    case PropertyType.StructProperty:
-                        ItemName = _Buffer.ReadNameReference();
-                        _Container.Record( "ItemName", ItemName );
-                        break;
-
-                    case PropertyType.ByteProperty:
-                        if( _Buffer.Version >= VEnumName )
-                        {
-                            EnumName = _Buffer.ReadNameReference();
-                            _Container.Record( "EnumName", EnumName );
-                        }
-                        break;
-
-                    case PropertyType.BoolProperty:
-                        _BoolValue = _Buffer.Version >= VBoolSizeToOne ? _Buffer.ReadByte() > 0 : _Buffer.ReadInt32() > 0;
-                        _Container.Record( "_BoolValue", _BoolValue );
-                        break;
-                }
+            if (isEnd)
+            {
+                return false;
             }
 
             _ValueOffset = _Buffer.Position;
@@ -244,6 +182,139 @@ namespace UELib.Core
                 _Buffer.Position = _EndOffset;
             }
             return true;
+        }
+
+        private bool DeserializeTagUE1()
+        {
+            Name = _Buffer.ReadNameReference();
+            _Container.Record( "Name", Name );
+            if( Name.IsNone() )
+            {
+                return true;
+            }
+
+            const byte typeMask = 0x0F;
+            const byte sizeMask = 0x70;
+
+            // Packed byte
+            var info = _Buffer.ReadByte();
+            _Container.Record(String.Format(
+                "Info(Type={0},SizeMask=0x{1:X2},ArrayIndexMask=0x{2:X2})",
+                (PropertyType)(byte)(info & typeMask),
+                (byte)(info & sizeMask),
+                (info & ArrayIndexMask)
+                ), info
+            );
+
+            Type = (PropertyType)(byte)(info & typeMask);
+            if (Type == PropertyType.StructProperty)
+            {
+                ItemName = _Buffer.ReadNameReference();
+                _Container.Record("ItemName", ItemName);
+            }
+
+            Size = DeserializeTagSizeUE1((byte)(info & sizeMask));
+            if (Size >= 0x50)
+            {
+                _Container.Record("Size", Size);
+            }
+
+            // TypeData
+            switch (Type)
+            {
+                case PropertyType.BoolProperty:
+                    _BoolValue = (info & ArrayIndexMask) != 0;
+                    break;
+
+                default:
+                    if ((info & ArrayIndexMask) != 0)
+                    {
+                        ArrayIndex = DeserializeTagArrayIndexUE1();
+                        _Container.Record("ArrayIndex", ArrayIndex);
+                    }
+                    break;
+            }
+            return false;
+        }
+
+        private bool DeserializeTagUE3()
+        {
+            Name = _Buffer.ReadNameReference();
+            _Container.Record("Name", Name);
+            if (Name.IsNone())
+            {
+                return true;
+            }
+
+            string typeName = _Buffer.ReadName();
+            _Container.Record("typeName", typeName);
+            Type = (PropertyType)Enum.Parse(typeof(PropertyType), typeName);
+
+            Size = _Buffer.ReadInt32();
+            _Container.Record("Size", Size);
+            ArrayIndex = _Buffer.ReadInt32();
+            _Container.Record("ArrayIndex", ArrayIndex);
+
+            DeserializeTypeDataUE3();
+            return false;
+        }
+
+#if BATMAN
+        private bool DeserializeTagByOffset()
+        {
+            var typeIndex = _Buffer.ReadInt16();
+            if (typeIndex == 0)
+            {
+                return true;
+            }
+
+            Type = (PropertyType)typeIndex;
+            _Container.Record("Type", Type);
+
+            var offset = _Buffer.ReadUInt16();
+            _Container.Record("Offset", offset);
+
+            if (_Buffer.Package.Build.Generation == BuildGeneration.Batman4
+                && Type == PropertyType.BoolProperty)
+            {
+                return false;
+            }
+
+            Name = _Buffer.ReadNameReference();
+            _Container.Record("Name", Name);
+
+            Size = _Buffer.ReadInt32();
+            _Container.Record("Size", Size);
+            ArrayIndex = _Buffer.ReadInt32();
+            _Container.Record("ArrayIndex", ArrayIndex);
+
+            DeserializeTypeDataUE3();
+            return false;
+        }
+#endif
+
+        private void DeserializeTypeDataUE3()
+        {
+            switch (Type)
+            {
+                case PropertyType.StructProperty:
+                    ItemName = _Buffer.ReadNameReference();
+                    _Container.Record("ItemName", ItemName);
+                    break;
+
+                case PropertyType.ByteProperty:
+                    if (_Buffer.Version >= VEnumName)
+                    {
+                        EnumName = _Buffer.ReadNameReference();
+                        _Container.Record("EnumName", EnumName);
+                    }
+                    break;
+
+                case PropertyType.BoolProperty:
+                    _BoolValue = _Buffer.Version >= VBoolSizeToOne ? _Buffer.ReadByte() > 0 : _Buffer.ReadInt32() > 0;
+                    _Container.Record("_BoolValue", _BoolValue);
+                    break;
+            }
         }
 
         /// <summary>
