@@ -29,21 +29,21 @@ Compatible Games
 ==============
 Below is a table of games that are known to be compatible with the UELib.
 
-| Name    | Engine    | Package/Licensee    | Developer    |
-| ------- | --------- | ------------------- | ------------ |
-| Unreal | 100-226 | 61/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | Unknown | 61/000 | [MicroProse](http://en.wikipedia.org/wiki/MicroProse "MicroProse") |
-| Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| Unreal Tournament | 338-436 | 68/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Name    | Engine    | Package/Licensee    | Support State     |
+| ------- | --------- | ------------------- | ----------------- 
+| Unreal | 100-226 | 61/000 | |
+| [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | Unknown | 61/000 | |
+| Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | |
+| Unreal Tournament | 338-436 | 68/000 | |
 | Deus Ex | Unknown | Unknown |     |
 |     |     |     |     |
 |     |     |     |     |
 | XIII | Unknown | 100/058 |     |
-| Unreal Tournament 2003 | 1077-2225 | 119/025 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| Unreal II | 829-2001 | 126/2609 | [Legend Entertainment](https://en.wikipedia.org/wiki/Legend_Entertainment "Legend Entertainment") |
-| Unreal Tournament 2004 | 3120-3369 | 128/029 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | [Tripwire Interactive](https://en.wikipedia.org/wiki/Tripwire_Interactive "Tripwire Interactive") |
-| Killing Floor | 3369 | 128/029 | [Tripwire Interactive](https://en.wikipedia.org/wiki/Tripwire_Interactive "Tripwire Interactive") |
+| Unreal Tournament 2003 | 1077-2225 | 119/025 | |
+| Unreal II | 829-2001 | 126/2609 | |
+| Unreal Tournament 2004 | 3120-3369 | 128/029 | |
+| Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
+| Killing Floor | 3369 | 128/029 | |
 | Battle Territory Battery | Unknown | Unknown |     |
 | Swat 4 | Unknown | 129/027 |     |
 |     |     |     |     |
@@ -52,26 +52,26 @@ Below is a table of games that are known to be compatible with the UELib.
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
 | Mortal Kombat Komplete Edition | 2605 | 472/046 |     |
 | Stargate Worlds | 3004 | 486/007 |     |
-| Gears of War | 3329 | 490/009 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| Unreal Tournament 3 | 3809 | 512/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Gears of War | 3329 | 490/009 | |
+| Unreal Tournament 3 | 3809 | 512/000 | |
 | Mirrors Edge | 3716 | 536/043 |     |
 | Alpha Protocol | 3857 | 539/091 |     |
 | APB: All Points Bulletin | 3908 | 547/032 |     |
-| Gears of War 2 | 4638 | 575/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| CrimeCraft | 4701 | 576/005 |     |
-| Singularity | 4869 | 584/126 |     |
-| MoonBase Alpha | 4947 | 587/000 | NASA |
-| Saw | Unknown | 584/003 | [Zombie Studios](https://en.wikipedia.org/wiki/Zombie_Studios) |
+| Gears of War 2 | 4638 | 575/000 | |
+| CrimeCraft | 4701 | 576/005 | |
+| Singularity | 4869 | 584/126 | |
+| MoonBase Alpha | 4947 | 587/000 | |
+| Saw | Unknown | 584/003 | |
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
 | Monday Night Combat | 5697 | 638/000 |     |
-| Unreal Development Kit | 6094-10246 | 664-860 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
+| Unreal Development Kit | 6094-10246 | 664-860 | |
 | Dungeon Defenders | 6262 | 678/002 |     |
 | Alice Madness Returns | 6760 | 690/000 |     |
-| The Ball | 6699 | 706/000 | [Teotl Studios](https://en.wikipedia.org/wiki/Teotl_Studios "Teotl Studios") |
+| The Ball | 6699 | 706/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |
-| Bulletstorm | 7052 | 742/029 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | [Tripwire Interactive](https://en.wikipedia.org/wiki/Tripwire_Interactive "Tripwire Interactive") |
-| Aliens: Colonial Marines | Unknown | 787/047 | [Gearbox Software](https://en.wikipedia.org/wiki/Gearbox_Software "Gearbox Software") |
+| Bulletstorm | 7052 | 742/029 | |
+| Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | |
+| Aliens: Colonial Marines | Unknown | 787/047 | |
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
 | Tribes: Ascend | 7748 | 805/Unknown |     |
 | Rock of Ages | 7748 | 805/000 |     |
@@ -79,16 +79,16 @@ Below is a table of games that are known to be compatible with the UELib.
 | AntiChamber | 7977 | 812/000 |     |
 | Waves | 8171 | 813/000 |     |
 | Super Monday Night Combat | 8364 | 820/000 |     |
-| Gears of War 3 | 8653 | 828/000 | [Epic Games](https://en.wikipedia.org/wiki/Epic_Games "Epic Games") |
-| Quantum Conundrum | 8623 | 832/32870 | [Airtight Games](https://en.wikipedia.org/wiki/Airtight_Games "Airtight Games") |
-| Borderlands | Unknown | Unknown | [Gearbox Software](https://en.wikipedia.org/wiki/Gearbox_Software "Gearbox Software")[](https://en.wikipedia.org/wiki/Airtight_Games "Airtight Games") |
-| Borderlands 2 | 8623/023 | 832/056 | [Gearbox Software](https://en.wikipedia.org/wiki/Gearbox_Software "Gearbox Software") |
+| Gears of War 3 | 8653 | 828/000 | |
+| Quantum Conundrum | 8623 | 832/32870 | |
+| Borderlands | Unknown | Unknown |  |
+| Borderlands 2 | 8623/023 | 832/056 | |
 | Remember Me | 8623 | 832/021 |     |
 | The Haunted: Hells Reach | 8788 | 841/000 |     |
 | Blacklight Retribution | 8788 | 841/Unknown |     |
 | Infinity Blade 2 | 9059 | 842/001 |     |
 | Q.U.B.E | 8916 | 845/000 |     |
-| XCOM: Enemy Unknown | 8916 | 845/059 | [Firaxis Games](http://en.wikipedia.org/wiki/Firaxis_Games "Firaxis Games") |
+| XCOM: Enemy Unknown | 8916 | 845/059 | |
 | Gears of War: Judgement | 10566 | 846/000 |     |
 | InMomentum | 8980 | 848/000 |     |
 | [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
@@ -97,10 +97,11 @@ Below is a table of games that are known to be compatible with the UELib.
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
 | Hawken | 10681 | 860/004 |     |
+| [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) |
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | Unknown | Unknown |     |
 | Outlast | Unknown | Unknown |     |
-| Sherlock Holmes: Crimes and Punishments | Unknown | Unknown | Frogwares |
+| Sherlock Holmes: Crimes and Punishments | Unknown | Unknown | |
 | Alien Rage | Unknown | Unknown |     |
 
 **Beware, opening an unsupported package could crash your system! Make sure you have 
