@@ -65,7 +65,7 @@ Below is a table of games that are known to be compatible with the UELib.
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
 | Monday Night Combat | 5697 | 638/000 |     |
 | Unreal Development Kit | 6094-10246 | 664-860 | |
-| Dungeon Defenders | 6262 | 678/002 |     |
+| Dungeon Defenders | 6262 | 678/002 |     | Earlier releases only
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |
@@ -106,6 +106,8 @@ Below is a table of games that are known to be compatible with the UELib.
 
 **Beware, opening an unsupported package could crash your system! Make sure you have 
 saved everything before opening any file!**
+
+**Note** UE3 production-ready packages are often **compressed** and must first be decompressed, [Unreal Package Decompressor](https://www.gildor.org/downloads) by **Gildor** is a tool that can decompress most packages for you; for some games you need a specialized decompressor, see for example [RLUPKTool](https://github.com/AltimorTASDK/RLUPKTool).
 
 Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes) 
 
