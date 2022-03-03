@@ -1,4 +1,5 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/451gy3lrr06wfxcw?svg=true)](https://ci.appveyor.com/project/EliotVU/unreal-library) 
+[![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
+[![Nuget](https://img.shields.io/nuget/v/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 
 The Unreal library provides you an API to parse/deserialize package files such as .UDK, .UPK, from Unreal Engine games, and provide you the necessary methods to navigate its contents.
 
@@ -10,14 +11,12 @@ At the moment these are all the object classes that are supported by this API:
 
 Installation
 ==============
-
 Either use NuGet's package manager console or download from: https://www.nuget.org/packages/Eliot.UELib.dll/
 
     PM> Install-Package Eliot.UELib.dll
 
 Instructions
 ==============
-
 See https://github.com/EliotVU/Unreal-Library/wiki/Usage
 
 User Interface
