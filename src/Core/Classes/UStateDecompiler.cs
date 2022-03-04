@@ -25,8 +25,8 @@ namespace UELib.Core
             string content = FormatHeader() + UnrealConfig.PrintBeginBracket();
             UDecompilingState.AddTabs(1);
 
-            var locals = FormatLocals();
-            if (locals != String.Empty)
+            string locals = FormatLocals();
+            if (locals != string.Empty)
             {
                 content += "\r\n" + locals;
             }
@@ -42,26 +42,26 @@ namespace UELib.Core
 
         private string GetAuto()
         {
-            return HasStateFlag(Flags.StateFlags.Auto) ? "auto " : String.Empty;
+            return HasStateFlag(Flags.StateFlags.Auto) ? "auto " : string.Empty;
         }
 
         private string GetSimulated()
         {
-            return HasStateFlag(Flags.StateFlags.Simulated) ? "simulated " : String.Empty;
+            return HasStateFlag(Flags.StateFlags.Simulated) ? "simulated " : string.Empty;
         }
 
         private string GetEdit()
         {
-            return HasStateFlag(Flags.StateFlags.Editable) ? "()" : String.Empty;
+            return HasStateFlag(Flags.StateFlags.Editable) ? "()" : string.Empty;
         }
 
         protected override string FormatHeader()
         {
-            string output = GetAuto() + GetSimulated() + "state" + GetEdit() + " " + Name;
+            var output = $"{GetAuto()}{GetSimulated()}state{GetEdit()} {Name}";
             if (Super != null && Super.Name != Name
                 /* Not the same because when overriding states it automatic extends the parent state */)
             {
-                output += " " + FormatExtends() + " " + Super.Name;
+                output += $" {FormatExtends()} {Super.Name}";
             }
 
             return output;
@@ -71,17 +71,17 @@ namespace UELib.Core
         {
             if (_IgnoreMask == long.MaxValue || Functions == null || !Functions.Any())
             {
-                return String.Empty;
+                return string.Empty;
             }
 
-            string output = "\r\n" + UDecompilingState.Tabs + "ignores ";
+            var output = $"\r\n{UDecompilingState.Tabs}ignores ";
             var ignores = new List<string>();
             foreach (var func in Functions.Where(func => !func.HasFunctionFlag(Flags.FunctionFlags.Defined)))
             {
                 ignores.Add(func.Name);
             }
 
-            for (int i = 0; i < ignores.Count; ++i)
+            for (var i = 0; i < ignores.Count; ++i)
             {
                 const int ignoresPerRow = 5;
                 output += ignores[i] +
@@ -91,36 +91,36 @@ namespace UELib.Core
                                     (
                                         i % ignoresPerRow == 0 && i >= ignoresPerRow
                                             ? "\r\n\t" + UDecompilingState.Tabs
-                                            : String.Empty
+                                            : string.Empty
                                     )
                                   : ";\r\n"
                           );
             }
 
-            return ignores.Count > 0 ? output : String.Empty;
+            return ignores.Count > 0 ? output : string.Empty;
         }
 
         protected string FormatFunctions()
         {
             if (Functions == null || !Functions.Any())
-                return String.Empty;
+                return string.Empty;
 
             // Remove functions from parent state, e.g. when overriding states.
             var formatFunctions = GetType() == typeof(UState)
                 ? Functions.Where(f => f.HasFunctionFlag(Flags.FunctionFlags.Defined))
                 : Functions;
 
-            string output = String.Empty;
+            var output = string.Empty;
             foreach (var scriptFunction in formatFunctions)
             {
                 try
                 {
-                    string functionOutput = "\r\n" + UDecompilingState.Tabs + scriptFunction.Decompile() + "\r\n";
+                    string functionOutput = $"\r\n{UDecompilingState.Tabs}{scriptFunction.Decompile()}\r\n";
                     output += functionOutput;
                 }
                 catch (Exception e)
                 {
-                    output += "\r\n" + UDecompilingState.Tabs + "// F:" + scriptFunction.Name + " E:" + e;
+                    output += $"\r\n{UDecompilingState.Tabs}// F:{scriptFunction.Name} E:{e}";
                 }
             }
 

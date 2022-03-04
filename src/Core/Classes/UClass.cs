@@ -39,7 +39,7 @@ namespace UELib.Core
         public UClass Within { get; private set; }
         public UName ConfigName { get; private set; }
         public UName DLLBindName { get; private set; }
-        public string NativeClassName = String.Empty;
+        public string NativeClassName = string.Empty;
         public bool ForceScriptOrder;
 
         /// <summary>
@@ -110,14 +110,14 @@ namespace UELib.Core
 
             if (Package.Version <= 61)
             {
-                var oldClassRecordSize = _Buffer.ReadInt32();
+                int oldClassRecordSize = _Buffer.ReadInt32();
                 Record("oldClassRecordSize", oldClassRecordSize);
             }
 
 #if BIOSHOCK
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
             {
-                var unknown = _Buffer.ReadInt32();
+                int unknown = _Buffer.ReadInt32();
                 Record("???Bioshock_Int32", unknown);
             }
 #endif
@@ -133,7 +133,7 @@ namespace UELib.Core
                 Record("ClassGuid", ClassGuid);
 
                 // Use ReadCount because Vanguard does no longer uses indexes but an int32 for arrays.
-                var depSize = ReadCount();
+                int depSize = ReadCount();
                 Record("DepSize", depSize);
                 if (depSize > 0)
                 {
@@ -150,7 +150,7 @@ namespace UELib.Core
                 // At least since Bioshock(140) - 547(APB)
                 if (Package.Version >= 140 && Package.Version < 547)
                 {
-                    var unknown = _Buffer.ReadByte();
+                    byte unknown = _Buffer.ReadByte();
                     Record("???", unknown);
                 }
 
@@ -162,9 +162,9 @@ namespace UELib.Core
                 Record("ConfigName", ConfigName);
 
                 const int vHideCategoriesOldOrder = 539;
-                var isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
+                bool isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
 #if TERA
-                                               || Package.Build == UnrealPackage.GameBuild.BuildName.Tera
+                                                || Package.Build == UnrealPackage.GameBuild.BuildName.Tera
 #endif
                     ;
 
@@ -238,7 +238,7 @@ namespace UELib.Core
 #if DISHONORED
                                     if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                                     {
-                                        var unk = _Buffer.ReadNameIndex();
+                                        int unk = _Buffer.ReadNameIndex();
                                         Record("??DISHONORED_NameIndex", Package.Names[unk]);
                                     }
 #endif
@@ -261,7 +261,7 @@ namespace UELib.Core
                                         }
                                     }
 #if DISHONORED
-                                    skipClassGroups: ;
+                                skipClassGroups:;
 #endif
                                 }
                             }
@@ -307,7 +307,7 @@ namespace UELib.Core
 #if BORDERLANDS2
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
                         {
-                            var unkval = _Buffer.ReadByte();
+                            byte unkval = _Buffer.ReadByte();
                             Record("??BL2_Byte", unkval);
                         }
 #endif
@@ -345,7 +345,7 @@ namespace UELib.Core
 
             AssertEOS(interfacesCount * 8, "Implemented");
             ImplementedInterfaces = new List<int>(interfacesCount);
-            for (int i = 0; i < interfacesCount; ++i)
+            for (var i = 0; i < interfacesCount; ++i)
             {
                 int interfaceIndex = _Buffer.ReadInt32();
                 Record("Implemented.InterfaceIndex", interfaceIndex);
@@ -397,22 +397,20 @@ namespace UELib.Core
                 count = ReadCount();
             }
 
-            Record(String.Format("{0}.Count", groupName), count);
-            if (count > 0)
+            Record($"{groupName}.Count", count);
+            if (count <= 0)
+                return null;
+
+            var groupList = new List<int>(count);
+            for (var i = 0; i < count; ++i)
             {
-                var groupList = new List<int>(count);
-                for (int i = 0; i < count; ++i)
-                {
-                    int index = _Buffer.ReadNameIndex();
-                    groupList.Add(index);
+                int index = _Buffer.ReadNameIndex();
+                groupList.Add(index);
 
-                    Record(String.Format("{0}({1})", groupName, Package.GetIndexName(index)), index);
-                }
-
-                return groupList;
+                Record($"{groupName}({Package.GetIndexName(index)})", index);
             }
 
-            return null;
+            return groupList;
         }
 
         public bool HasClassFlag(ClassFlags flag)
@@ -427,8 +425,8 @@ namespace UELib.Core
 
         public bool IsClassInterface()
         {
-            return (Super != null && String.Compare(Super.Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0)
-                   || String.Compare(Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0;
+            return (Super != null && string.Compare(Super.Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0)
+                   || string.Compare(Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         public bool IsClassWithin()

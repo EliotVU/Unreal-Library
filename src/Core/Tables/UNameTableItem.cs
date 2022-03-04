@@ -1,5 +1,3 @@
-using System;
-
 namespace UELib
 {
     /// <summary>
@@ -12,7 +10,7 @@ namespace UELib
         /// <summary>
         /// Object Name
         /// </summary>
-        public string Name = String.Empty;
+        public string Name = string.Empty;
 
         /// <summary>
         /// Object Flags, such as LoadForEdit, LoadForServer, LoadForClient

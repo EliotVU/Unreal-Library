@@ -121,7 +121,7 @@ namespace UELib.Core
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
                     {
                         // TODO: Unknown data, might be related to the above Swat4 data.
-                        var unknown = _Buffer.ReadObjectIndex();
+                        int unknown = _Buffer.ReadObjectIndex();
                         Record("???", TryGetIndexObject(unknown));
                     }
 #endif
@@ -157,9 +157,9 @@ namespace UELib.Core
             ByteScriptSize = _Buffer.ReadInt32();
             Record("ByteScriptSize", ByteScriptSize);
             const int vDataScriptSize = 639;
-            var hasFixedScriptSize = Package.Version >= vDataScriptSize
+            bool hasFixedScriptSize = Package.Version >= vDataScriptSize
 #if TRANSFORMERS
-                                     && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+                                      && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
 #endif
                 ;
             if (hasFixedScriptSize)
@@ -189,12 +189,12 @@ namespace UELib.Core
                 const int shadowcomplexVersion = 590;
                 const int mohaVersion = 421;
 
-                var isTrueScriptSize = Package.Version == mohaVersion ||
-                                       (
-                                           Package.Version >= UnrealPackage.VINDEXDEPRECATED
-                                           && (Package.Version < moonbaseVersion &&
-                                               Package.Version > shadowcomplexVersion)
-                                       );
+                bool isTrueScriptSize = Package.Version == mohaVersion ||
+                                        (
+                                            Package.Version >= UnrealPackage.VINDEXDEPRECATED
+                                            && (Package.Version < moonbaseVersion &&
+                                                Package.Version > shadowcomplexVersion)
+                                        );
                 if (isTrueScriptSize)
                 {
                     _Buffer.Skip(DataScriptSize);

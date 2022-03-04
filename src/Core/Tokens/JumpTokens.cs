@@ -29,7 +29,7 @@ namespace UELib.Core
 
                     string returnValue = DecompileNext();
                     Decompiler._CanAddSemicolon = true;
-                    return "return" + (returnValue.Length != 0 ? " " + returnValue : String.Empty);
+                    return "return" + (returnValue.Length != 0 ? " " + returnValue : string.Empty);
                 }
             }
 
@@ -59,7 +59,7 @@ namespace UELib.Core
 
                     #endregion
 
-                    return _ReturnObject != null ? _ReturnObject.Name : String.Empty;
+                    return _ReturnObject != null ? _ReturnObject.Name : string.Empty;
                 }
             }
 
@@ -74,7 +74,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return "goto " + DecompileNext();
+                    return $"goto {DecompileNext()}";
                 }
             }
 
@@ -105,17 +105,17 @@ namespace UELib.Core
 
                 protected void Commentize()
                 {
-                    Decompiler.PreComment = String.Format("// End:0x{0:X2}", CodeOffset);
+                    Decompiler.PreComment = $"// End:0x{CodeOffset:X2}";
                 }
 
                 protected void Commentize(string statement)
                 {
-                    Decompiler.PreComment = String.Format("// End:0x{0:X2} [{1}]", CodeOffset, statement);
+                    Decompiler.PreComment = $"// End:0x{CodeOffset:X2} [{statement}]";
                 }
 
                 protected void CommentStatement(string statement)
                 {
-                    Decompiler.PreComment = String.Format("// [{0}]", statement);
+                    Decompiler.PreComment = $"// [{statement}]";
                 }
 
                 /// <summary>
@@ -168,7 +168,7 @@ namespace UELib.Core
                             Commentize();
                             // 'break' CodeOffset sits at the end of the switch,
                             // check that it doesn't exist already and add it
-                            var switchEnd = Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null
+                            uint switchEnd = Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null
                                 ? Position + Size
                                 : CodeOffset;
                             Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, switchEnd);
@@ -185,7 +185,7 @@ namespace UELib.Core
                                 if (Decompiler.PreviousToken is IteratorNextToken)
                                 {
                                     NoJumpLabel();
-                                    return String.Empty;
+                                    return string.Empty;
                                 }
 
                                 NoJumpLabel();
@@ -334,7 +334,7 @@ namespace UELib.Core
                 {
                     base.PostDeserialized();
                     // Add jump label for 'do until' jump pattern
-                    if ((CodeOffset & UInt16.MaxValue) < Position)
+                    if ((CodeOffset & ushort.MaxValue) < Position)
                     {
                         Decompiler._Labels.Add
                         (
@@ -379,10 +379,10 @@ namespace UELib.Core
                     }
 
                     string output;
-                    if ((CodeOffset & UInt16.MaxValue) < Position)
+                    if ((CodeOffset & ushort.MaxValue) < Position)
                     {
                         string labelName = UDecompilingState.OffsetLabelName(CodeOffset);
-                        string gotoStatement = $"{UDecompilingState.Tabs}{UnrealConfig.Indention}goto {labelName}";
+                        var gotoStatement = $"{UDecompilingState.Tabs}{UnrealConfig.Indention}goto {labelName}";
                         // Inverse condition only here as we're explicitly jumping while other cases create proper scopes 
                         output = $"if(!({condition}))\r\n{gotoStatement}";
                         Decompiler._CanAddSemicolon = true;
@@ -418,7 +418,7 @@ namespace UELib.Core
                                      ifEndJump.CodeOffset != elseStartToken.Position)
                             {
                                 // Most likely an if-else, mark it as such and let the rest of the logic figure it out further
-                                var begin = Position;
+                                uint begin = Position;
                                 var type = NestManager.Nest.NestType.If;
                                 Decompiler._Nester.Nests.Add(new NestManager.NestBegin
                                     { Position = begin, Type = type, Creator = this });
@@ -529,18 +529,18 @@ namespace UELib.Core
 
                     string expr = DecompileNext();
                     Decompiler._CanAddSemicolon = false; // In case the decompiled token was a function call
-                    return "switch(" + expr + ")";
+                    return $"switch({expr})";
                 }
             }
 
             public class CaseToken : JumpToken
             {
-                public bool IsDefault => CodeOffset == UInt16.MaxValue;
+                public bool IsDefault => CodeOffset == ushort.MaxValue;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     base.Deserialize(stream);
-                    if (CodeOffset != UInt16.MaxValue)
+                    if (CodeOffset != ushort.MaxValue)
                     {
                         DeserializeNext(); // Condition
                     } // Else "Default:"
@@ -549,10 +549,10 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Commentize();
-                    if (CodeOffset != UInt16.MaxValue)
+                    if (CodeOffset != ushort.MaxValue)
                     {
                         Decompiler._Nester.AddNest(NestManager.Nest.NestType.Case, Position, CodeOffset);
-                        string output = "case " + DecompileNext() + ":";
+                        var output = $"case {DecompileNext()}:";
                         Decompiler._CanAddSemicolon = false;
                         return output;
                     }
@@ -579,7 +579,7 @@ namespace UELib.Core
                     // foreach FunctionCall
                     string expression = DecompileNext();
                     Decompiler._CanAddSemicolon = false; // Undo
-                    return "foreach " + expression;
+                    return $"foreach {expression}";
                 }
             }
 
@@ -609,10 +609,10 @@ namespace UELib.Core
                     Commentize();
 
                     // foreach ArrayVariable( Parameters )
-                    string output = "foreach " + DecompileNext() + "(" + DecompileNext();
-                    output += (HasSecondParm ? ", " : String.Empty) + DecompileNext();
+                    var output = $"foreach {DecompileNext()}({DecompileNext()}";
+                    output += (HasSecondParm ? ", " : string.Empty) + DecompileNext();
                     Decompiler._CanAddSemicolon = false;
-                    return output + ")";
+                    return $"{output})";
                 }
             }
 
@@ -622,7 +622,7 @@ namespace UELib.Core
                 {
                     if (Decompiler.PeekToken is IteratorPopToken)
                     {
-                        return String.Empty;
+                        return string.Empty;
                     }
 
                     Decompiler._CanAddSemicolon = true;
@@ -637,7 +637,7 @@ namespace UELib.Core
                     if (Decompiler.PreviousToken is IteratorNextToken
                         || Decompiler.PeekToken is ReturnToken)
                     {
-                        return String.Empty;
+                        return string.Empty;
                     }
 
                     Decompiler._CanAddSemicolon = true;
@@ -652,11 +652,11 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    var label = String.Empty;
+                    var label = string.Empty;
                     int labelPos = -1;
                     do
                     {
-                        if (label != String.Empty)
+                        if (label != string.Empty)
                         {
                             Decompiler._Labels.Add
                             (
@@ -672,7 +672,7 @@ namespace UELib.Core
                         Decompiler.AlignNameSize();
                         labelPos = stream.ReadInt32();
                         Decompiler.AlignSize(sizeof(int));
-                    } while (String.Compare(label, "None", StringComparison.OrdinalIgnoreCase) != 0);
+                    } while (string.Compare(label, "None", StringComparison.OrdinalIgnoreCase) != 0);
                 }
             }
 

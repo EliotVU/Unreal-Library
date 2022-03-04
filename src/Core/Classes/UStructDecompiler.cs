@@ -51,14 +51,12 @@ namespace UELib.Core
 
         protected override string FormatHeader()
         {
-            var output = "struct " + FormatFlags() + Name + (Super != null
-                ? " " + FormatExtends() + " "
-                  + Super.Name
-                : String.Empty);
-            var metaData = DecompileMeta();
-            if (metaData != String.Empty)
+            var output = $"struct {FormatFlags()}{Name}{(Super != null ? $" {FormatExtends()} {Super.Name}" : string.Empty)}";
+            string metaData = DecompileMeta();
+            if (metaData != string.Empty)
             {
-                output = metaData + "\r\n" + UDecompilingState.Tabs + output;
+                output = $"{metaData}" +
+                         $"\r\n{UDecompilingState.Tabs}{output}";
             }
 
             return output;
@@ -66,10 +64,10 @@ namespace UELib.Core
 
         private string FormatFlags()
         {
-            string output = String.Empty;
+            var output = string.Empty;
             if (StructFlags == 0)
             {
-                return String.Empty;
+                return string.Empty;
             }
 
             if ((StructFlags & (uint)Flags.StructFlags.Native) != 0)
@@ -127,64 +125,60 @@ namespace UELib.Core
             return output;
         }
 
-        protected virtual string CPPTextKeyword
-        {
-            get { return Package.Version < VCppText ? "cppstruct" : "structcpptext"; }
-        }
+        protected virtual string CPPTextKeyword => Package.Version < VCppText ? "cppstruct" : "structcpptext";
 
         protected string FormatCPPText()
         {
             if (CppText == null)
             {
-                return String.Empty;
+                return string.Empty;
             }
 
-            string output = String.Format("\r\n{0}{1}{2}\r\n",
-                UDecompilingState.Tabs,
-                CPPTextKeyword,
-                UnrealConfig.PrintBeginBracket()
-            );
-            output += CppText.Decompile() + UnrealConfig.PrintEndBracket() + "\r\n";
+            string output = $"\r\n{UDecompilingState.Tabs}{CPPTextKeyword}" +
+                            UnrealConfig.PrintBeginBracket() + "\r\n" + 
+                            CppText.Decompile() +
+                            UnrealConfig.PrintEndBracket() + "\r\n";
             return output;
         }
 
         protected string FormatConstants()
         {
             if (Constants == null || !Constants.Any())
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            var output = string.Empty;
             foreach (var scriptConstant in Constants)
             {
                 try
                 {
-                    output += "\r\n" + UDecompilingState.Tabs + scriptConstant.Decompile();
+                    output += $"\r\n{UDecompilingState.Tabs}{scriptConstant.Decompile()}";
                 }
                 catch
                 {
-                    output += String.Format("\r\nFailed at decompiling const: {0}", scriptConstant.Name);
+                    output += $"\r\nFailed at decompiling const: {scriptConstant.Name}";
                 }
             }
 
-            return output + "\r\n";
+            return output + 
+                   "\r\n";
         }
 
         protected string FormatEnums()
         {
             if (Enums == null || !Enums.Any())
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            var output = string.Empty;
             foreach (var scriptEnum in Enums)
             {
                 try
                 {
                     // And add a empty line between all enums!
-                    output += "\r\n" + scriptEnum.Decompile() + "\r\n";
+                    output += $"\r\n{scriptEnum.Decompile()}\r\n";
                 }
                 catch
                 {
-                    output += String.Format("\r\nFailed at decompiling enum: {0}", scriptEnum.Name);
+                    output += $"\r\nFailed at decompiling enum: {scriptEnum.Name}";
                 }
             }
 
@@ -194,19 +188,21 @@ namespace UELib.Core
         protected string FormatStructs()
         {
             if (Structs == null || !Structs.Any())
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            var output = string.Empty;
             foreach (var scriptStruct in Structs)
             {
                 // And add a empty line between all structs!
                 try
                 {
-                    output += "\r\n" + scriptStruct.Decompile() + "\r\n";
+                    output += "\r\n"
+                              + scriptStruct.Decompile()
+                              + "\r\n";
                 }
                 catch
                 {
-                    output += String.Format("\r\nFailed at decompiling struct: {0}", scriptStruct.Name);
+                    output += $"\r\nFailed at decompiling struct: {scriptStruct.Name}";
                 }
             }
 
@@ -216,9 +212,9 @@ namespace UELib.Core
         protected string FormatProperties()
         {
             if (Variables == null || !Variables.Any())
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            var output = string.Empty;
             // Only for pure UStructs because UClass handles this on its own
             if (IsPureStruct())
             {
@@ -231,16 +227,18 @@ namespace UELib.Core
                 try
                 {
                     // Fix for properties within structs
-                    output += "\r\n" + property.PreDecompile() + UDecompilingState.Tabs + "var";
+                    output += "\r\n" +
+                              property.PreDecompile() +
+                              $"{UDecompilingState.Tabs}var";
                     try
                     {
                         if (property.CategoryIndex > -1
-                            && String.Compare(property.CategoryName, "None",
+                            && string.Compare(property.CategoryName, "None",
                                 StringComparison.OrdinalIgnoreCase) != 0)
                         {
                             if (property.CategoryName != Name)
                             {
-                                output += "(" + property.CategoryName + ")";
+                                output += $"({property.CategoryName})";
                             }
                             else
                             {
@@ -250,18 +248,14 @@ namespace UELib.Core
                     }
                     catch (ArgumentOutOfRangeException)
                     {
-                        output += String.Format("/* INDEX:{0} */", property.CategoryIndex);
+                        output += $"/* INDEX:{property.CategoryIndex} */";
                     }
 
-                    output += " " + property.Decompile() + ";";
+                    output += $" {property.Decompile()};";
                 }
                 catch (Exception e)
                 {
-                    output += String.Format
-                    (
-                        " /* Property:{0} threw the following exception:{1} */",
-                        property.Name, e.Message
-                    );
+                    output += $" /* Property:{property.Name} threw the following exception:{e.Message} */";
                 }
             }
 
@@ -276,19 +270,26 @@ namespace UELib.Core
             }
 
             if (Properties == null || !Properties.Any())
-                return String.Empty;
+                return string.Empty;
 
-            string output = String.Empty;
+            var output = string.Empty;
             string innerOutput;
 
             if (IsClassType("Class"))
             {
-                output += "\r\ndefaultproperties\r\n{\r\n";
+                output += "\r\n" +
+                          "defaultproperties" +
+                          "\r\n" +
+                          "{" +
+                          "\r\n";
             }
             else
             {
-                output += "\r\n" + UDecompilingState.Tabs + "structdefaultproperties\r\n"
-                          + UDecompilingState.Tabs + "{\r\n";
+                output += "\r\n" +
+                          $"{UDecompilingState.Tabs}structdefaultproperties" +
+                          "\r\n" +
+                          $"{UDecompilingState.Tabs}{{" +
+                          "\r\n";
             }
 
             UDecompilingState.AddTabs(1);
@@ -298,34 +299,31 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                innerOutput = String.Format
-                (
-                    "{0}// {1} occurred while decompiling properties!\r\n",
-                    UDecompilingState.Tabs, e.GetType().Name
-                );
+                innerOutput = $"{UDecompilingState.Tabs}// {e.GetType().Name} occurred while decompiling properties!" +
+                              "\r\n";
             }
             finally
             {
                 UDecompilingState.RemoveTabs(1);
             }
 
-            return output + innerOutput + UDecompilingState.Tabs + "}";
+            return $"{output}{innerOutput}{UDecompilingState.Tabs}}}";
         }
 
         protected string FormatLocals()
         {
             if (Locals == null || !Locals.Any())
-                return String.Empty;
+                return string.Empty;
 
-            int numParms = 0;
-            string output = String.Empty;
-            string lastType = String.Empty;
+            var numParms = 0;
+            var output = string.Empty;
+            var lastType = string.Empty;
             for (var i = 0; i < Locals.Count; ++i)
             {
                 string curType = Locals[i].GetFriendlyType();
                 string nextType = ((i + 1) < Locals.Count
                     ? Locals[i + 1].GetFriendlyType()
-                    : String.Empty);
+                    : string.Empty);
 
                 // If previous is the same as the one now then format the params as one line until another type is reached
                 if (curType == lastType)
@@ -343,10 +341,10 @@ namespace UELib.Core
                 }
                 else
                 {
-                    output += (numParms >= 5 ? "\r\n" : String.Empty)
+                    output += (numParms >= 5 ? "\r\n" : string.Empty)
                               + UDecompilingState.Tabs + "local " + Locals[i].Decompile() +
                               (
-                                  (nextType != curType || String.IsNullOrEmpty(nextType))
+                                  (nextType != curType || string.IsNullOrEmpty(nextType))
                                       ? ";\r\n"
                                       : ", "
                               );
@@ -361,7 +359,7 @@ namespace UELib.Core
 
         protected string DecompileScript()
         {
-            return ByteCodeManager != null ? ByteCodeManager.Decompile() : String.Empty;
+            return ByteCodeManager != null ? ByteCodeManager.Decompile() : string.Empty;
         }
     }
 }

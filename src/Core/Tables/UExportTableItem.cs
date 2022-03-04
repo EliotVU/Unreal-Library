@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics.Contracts;
 using System.IO;
 
@@ -22,10 +21,7 @@ namespace UELib
         public int SuperIndex { get; private set; }
 
         [Pure]
-        public UObjectTableItem SuperTable
-        {
-            get { return Owner.GetIndexTable(SuperIndex); }
-        }
+        public UObjectTableItem SuperTable => Owner.GetIndexTable(SuperIndex);
 
         [Pure]
         public string SuperName
@@ -33,7 +29,7 @@ namespace UELib
             get
             {
                 var table = SuperTable;
-                return table != null ? table.ObjectName : String.Empty;
+                return table != null ? table.ObjectName : string.Empty;
             }
         }
 
@@ -44,10 +40,7 @@ namespace UELib
         public int ArchetypeIndex { get; private set; }
 
         [Pure]
-        public UObjectTableItem ArchetypeTable
-        {
-            get { return Owner.GetIndexTable(ArchetypeIndex); }
-        }
+        public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(ArchetypeIndex);
 
         [Pure]
         public string ArchetypeName
@@ -55,7 +48,7 @@ namespace UELib
             get
             {
                 var table = ArchetypeTable;
-                return table != null ? table.ObjectName : String.Empty;
+                return table != null ? table.ObjectName : string.Empty;
             }
         }
 
@@ -182,7 +175,7 @@ namespace UELib
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
                 stream.Package.LicenseeVersion >= 116)
             {
-                var flag = stream.ReadByte();
+                byte flag = stream.ReadByte();
                 if (flag == 0)
                 {
                     return;
@@ -192,10 +185,10 @@ namespace UELib
 #if BIOSHOCK
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite)
             {
-                var unk = stream.ReadUInt32();
+                uint unk = stream.ReadUInt32();
                 if (unk == 1)
                 {
-                    var flags = stream.ReadUInt32();
+                    uint flags = stream.ReadUInt32();
                     if ((flags & 1) != 0x0)
                     {
                         stream.ReadUInt32();

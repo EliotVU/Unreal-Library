@@ -36,7 +36,7 @@ namespace UELib.Core
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return "map<" + _Key + ", " + _Value + ">";
+            return $"map<{_Key}, {_Value}>";
         }
     }
 }

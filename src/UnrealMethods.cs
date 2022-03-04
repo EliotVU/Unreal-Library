@@ -128,10 +128,10 @@ namespace UELib
     {
         public static string FlagsListToString(List<string> flagsList)
         {
-            string output = String.Empty;
+            var output = string.Empty;
             foreach (string s in flagsList)
             {
-                output += s + (s != flagsList.Last() ? "\n" : String.Empty);
+                output += s + (s != flagsList.Last() ? "\n" : string.Empty);
             }
 
             return output;
@@ -184,7 +184,7 @@ namespace UELib
 
         public static string FlagToString(uint flags)
         {
-            return "0x" + String.Format("{0:X4}", flags).PadLeft(8, '0');
+            return "0x" + string.Format("{0:X4}", flags).PadLeft(8, '0');
         }
 
         public static string FlagToString(ulong flags)

@@ -6,15 +6,15 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, typeof(UStruct).Name);
+            _ParentNode = AddSectionNode(node, nameof(UStruct));
             if (IsPureStruct())
             {
-                var sFlagsNode = AddTextNode(_ParentNode, "Struct Flags:" + UnrealMethods.FlagToString(StructFlags));
+                var sFlagsNode = AddTextNode(_ParentNode, $"Struct Flags:{UnrealMethods.FlagToString(StructFlags)}");
                 sFlagsNode.ToolTipText =
                     UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.StructFlags), StructFlags));
             }
 
-            AddTextNode(_ParentNode, "Script Size:" + DataScriptSize);
+            AddTextNode(_ParentNode, $"Script Size:{DataScriptSize}");
             base.InitNodes(_ParentNode);
         }
 
@@ -22,26 +22,26 @@ namespace UELib.Core
         {
             if (ScriptText != null)
             {
-                AddObjectNode(node, ScriptText, "UObject");
+                AddObjectNode(node, ScriptText, nameof(UObject));
             }
 
             if (CppText != null)
             {
-                AddObjectNode(node, CppText, "UObject");
+                AddObjectNode(node, CppText, nameof(UObject));
             }
 
             if (ProcessedText != null)
             {
-                AddObjectNode(node, ProcessedText, "UObject");
+                AddObjectNode(node, ProcessedText, nameof(UObject));
             }
 
-            AddObjectListNode(node, "Constants", Constants, "UConst");
-            AddObjectListNode(node, "Enumerations", Enums, "UEnum");
-            AddObjectListNode(node, "Structures", Structs, "UStruct");
+            AddObjectListNode(node, "Constants", Constants, nameof(UConst));
+            AddObjectListNode(node, "Enumerations", Enums, nameof(UEnum));
+            AddObjectListNode(node, "Structures", Structs, nameof(UStruct));
             // Not if the upper class is a function; UFunction adds locals and parameters instead
             if (GetType() != typeof(UFunction))
             {
-                AddObjectListNode(node, "Variables", Variables, "UProperty");
+                AddObjectListNode(node, "Variables", Variables, nameof(UProperty));
             }
         }
 

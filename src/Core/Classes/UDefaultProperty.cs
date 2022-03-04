@@ -28,10 +28,7 @@ namespace UELib.Core
         private const int VEnumName = 633;
         private const int VBoolSizeToOne = 673;
 
-        private IUnrealStream _Buffer
-        {
-            get { return _Container.Buffer; }
-        }
+        private IUnrealStream _Buffer => _Container.Buffer;
 
         private readonly UObject _Container;
         private UStruct _Outer;
@@ -39,10 +36,7 @@ namespace UELib.Core
         internal long _BeginOffset { get; set; }
         private long _ValueOffset { get; set; }
 
-        private long _EndOffset
-        {
-            get { return _ValueOffset + Size; }
-        }
+        private long _EndOffset => _ValueOffset + Size;
 
         private byte _TempFlags { get; set; }
 
@@ -122,7 +116,7 @@ namespace UELib.Core
                     return _Buffer.ReadInt32();
 
                 default:
-                    throw new NotImplementedException(String.Format("Unknown sizePack {0}", sizePack));
+                    throw new NotImplementedException(string.Format("Unknown sizePack {0}", sizePack));
             }
         }
 
@@ -132,7 +126,7 @@ namespace UELib.Core
         {
             int arrayIndex;
 #if DEBUG || BINARYMETADATA
-            var startPos = _Buffer.Position;
+            long startPos = _Buffer.Position;
 #endif
             byte b = _Buffer.ReadByte();
             if ((b & ArrayIndexMask) == 0)
@@ -174,8 +168,8 @@ namespace UELib.Core
                 const byte sizeMask = 0x70;
 
                 // Packed byte
-                var info = _Buffer.ReadByte();
-                _Container.Record(String.Format(
+                byte info = _Buffer.ReadByte();
+                _Container.Record(string.Format(
                         "Info(Type={0},SizeMask=0x{1:X2},ArrayIndexMask=0x{2:X2})",
                         (PropertyType)(byte)(info & typeMask),
                         (byte)(info & sizeMask),
@@ -301,7 +295,7 @@ namespace UELib.Core
             }
 
             var orgOuter = _Outer;
-            string propertyValue = String.Empty;
+            var propertyValue = string.Empty;
             try
             {
                 // Deserialize Value
@@ -309,7 +303,7 @@ namespace UELib.Core
                 {
                     case PropertyType.BoolProperty:
                     {
-                        var value = _BoolValue;
+                        bool value = _BoolValue;
                         if (Size == 1 && _Buffer.Version < V3)
                         {
                             value = _Buffer.ReadByte() > 0;
@@ -349,7 +343,7 @@ namespace UELib.Core
                     case PropertyType.ByteProperty:
                         if (_Buffer.Version >= V3 && Size == 8)
                         {
-                            var enumValue = _Buffer.ReadName();
+                            string enumValue = _Buffer.ReadName();
                             propertyValue = enumValue;
                             if (_Buffer.Version >= VEnumName)
                             {
@@ -371,7 +365,7 @@ namespace UELib.Core
                         _Container.Record("object", obj);
                         if (obj != null)
                         {
-                            bool inline = false;
+                            var inline = false;
                             // If true, object is an archetype or subobject.
                             if (obj.Outer == _Container && (deserializeFlags & DeserializeFlags.WithinStruct) == 0)
                             {
@@ -398,7 +392,7 @@ namespace UELib.Core
                             if (!inline)
                             {
                                 // =CLASS'Package.Group(s)+.Name'
-                                propertyValue = String.Format("{0}\'{1}\'", obj.GetClassName(), obj.GetOuterGroup());
+                                propertyValue = string.Format("{0}\'{1}\'", obj.GetClassName(), obj.GetOuterGroup());
                             }
                         }
                         else
@@ -422,7 +416,7 @@ namespace UELib.Core
                     {
                         _TempFlags |= DoNotAppendName;
                         int outerIndex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
-                        var delegateValue = _Buffer.ReadName();
+                        string delegateValue = _Buffer.ReadName();
                         string delegateName = ((string)(Name)).Substring(2, Name.Length - 12);
                         propertyValue = delegateName + "=" + delegateValue;
                         break;
@@ -629,12 +623,12 @@ namespace UELib.Core
                     case PropertyType.StructProperty:
                     {
                         deserializeFlags |= DeserializeFlags.WithinStruct;
-                        bool isHardCoded = false;
+                        var isHardCoded = false;
                         var hardcodedStructs = (PropertyType[])Enum.GetValues(typeof(PropertyType));
                         for (var i = (byte)PropertyType.StructOffset; i < hardcodedStructs.Length; ++i)
                         {
-                            var structType = Enum.GetName(typeof(PropertyType), (byte)hardcodedStructs[i]);
-                            if (String.Compare(ItemName, structType, StringComparison.OrdinalIgnoreCase) != 0)
+                            string structType = Enum.GetName(typeof(PropertyType), (byte)hardcodedStructs[i]);
+                            if (string.Compare(ItemName, structType, StringComparison.OrdinalIgnoreCase) != 0)
                                 continue;
 
                             isHardCoded = true;
@@ -655,7 +649,7 @@ namespace UELib.Core
                                     propertyValue += tag.Name +
                                                      (tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty
                                                          ? "[" + tag.ArrayIndex + "]"
-                                                         : String.Empty) +
+                                                         : string.Empty) +
                                                      "=" + tag.DeserializeValue(deserializeFlags) + ",";
                                 }
                                 else
@@ -689,7 +683,7 @@ namespace UELib.Core
                         // Additionally we need to know the property to determine the array's type.
                         var arrayType = PropertyType.None;
                         var property = FindProperty(out _Outer) as UArrayProperty;
-                        if (property != null && property.InnerProperty != null)
+                        if (property?.InnerProperty != null)
                         {
                             arrayType = property.InnerProperty.Type;
                         }
@@ -714,22 +708,22 @@ namespace UELib.Core
                         if ((deserializeFlags & DeserializeFlags.WithinStruct) != 0)
                         {
                             // Hardcoded fix for InterpCurve and InterpCurvePoint.
-                            if (String.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
+                            if (string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
                             {
                                 arrayType = PropertyType.StructProperty;
                             }
 
-                            for (int i = 0; i < arraySize; ++i)
+                            for (var i = 0; i < arraySize; ++i)
                             {
                                 propertyValue += DeserializeDefaultPropertyValue(arrayType, ref deserializeFlags)
-                                                 + (i != arraySize - 1 ? "," : String.Empty);
+                                                 + (i != arraySize - 1 ? "," : string.Empty);
                             }
 
                             propertyValue = "(" + propertyValue + ")";
                         }
                         else
                         {
-                            for (int i = 0; i < arraySize; ++i)
+                            for (var i = 0; i < arraySize; ++i)
                             {
                                 string elementValue = DeserializeDefaultPropertyValue(arrayType, ref deserializeFlags);
                                 if ((_TempFlags & ReplaceNameMarker) != 0)
@@ -799,7 +793,7 @@ namespace UELib.Core
                 return value;
             }
 
-            string arrayindex = String.Empty;
+            var arrayindex = string.Empty;
             if (ArrayIndex > 0 && Type != PropertyType.BoolProperty)
             {
                 arrayindex += "[" + ArrayIndex + "]";

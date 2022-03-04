@@ -36,7 +36,7 @@ namespace UELib
             _Header.Deserialize(inStream);
 
             outStream.Seek(UncompressedOffset, System.IO.SeekOrigin.Begin);
-            foreach (var buffer in _Header.Blocks.Select(block => block.Decompress()))
+            foreach (byte[] buffer in _Header.Blocks.Select(block => block.Decompress()))
             {
                 outStream.Write(buffer, 0, buffer.Length);
             }
@@ -68,7 +68,7 @@ namespace UELib
                 _CompressedSize = stream.ReadInt32();
                 _UncompressedSize = stream.ReadInt32();
 
-                int blockCount = (int)Math.Ceiling(_UncompressedSize / (float)_BlockSize);
+                var blockCount = (int)Math.Ceiling(_UncompressedSize / (float)_BlockSize);
                 Blocks = new UArray<CompressedChunkBlock>(stream, blockCount);
             }
 

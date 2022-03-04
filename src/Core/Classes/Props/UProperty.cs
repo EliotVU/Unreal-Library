@@ -33,29 +33,17 @@ namespace UELib.Core
 
         public ushort RepOffset { get; private set; }
 
-        public bool RepReliable
-        {
-            get { return HasPropertyFlag(Flags.PropertyFlagsLO.Net); }
-        }
+        public bool RepReliable => HasPropertyFlag(Flags.PropertyFlagsLO.Net);
 
-        public uint RepKey
-        {
-            get { return RepOffset | ((uint)Convert.ToByte(RepReliable) << 16); }
-        }
+        public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         #endregion
 
         #region General Members
 
-        private bool _IsArray
-        {
-            get { return ArrayDim > 1; }
-        }
+        private bool _IsArray => ArrayDim > 1;
 
-        public string CategoryName
-        {
-            get { return CategoryIndex != -1 ? Package.Names[CategoryIndex].Name : "@Null"; }
-        }
+        public string CategoryName => CategoryIndex != -1 ? Package.Names[CategoryIndex].Name : "@Null";
 
         #endregion
 
@@ -82,7 +70,7 @@ namespace UELib.Core
             }
 #endif
 
-            var info = _Buffer.ReadUInt32();
+            uint info = _Buffer.ReadUInt32();
             ArrayDim = (ushort)(info & 0x0000FFFFU);
             Record("ArrayDim", ArrayDim);
             ElementSize = (ushort)(info >> 16);
@@ -159,7 +147,7 @@ namespace UELib.Core
 
         public virtual string GetFriendlyInnerType()
         {
-            return String.Empty;
+            return string.Empty;
         }
 
         #endregion

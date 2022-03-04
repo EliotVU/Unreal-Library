@@ -39,7 +39,7 @@ namespace UELib.Core
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return "delegate<" + GetFriendlyInnerType() + ">";
+            return $"delegate<{GetFriendlyInnerType()}>";
         }
 
         public override string GetFriendlyInnerType()

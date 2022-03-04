@@ -42,7 +42,7 @@ namespace UELib.Core
         public void Serialize(IUnrealStream stream)
         {
             stream.WriteIndex(Count);
-            for (int i = 0; i < Count; ++i)
+            for (var i = 0; i < Count; ++i)
             {
                 this[i].Serialize(stream);
             }
@@ -56,9 +56,9 @@ namespace UELib.Core
         {
             int c = stream.ReadIndex();
             Capacity = c;
-            for (int i = 0; i < c; ++i)
+            for (var i = 0; i < c; ++i)
             {
-                T item = new T();
+                var item = new T();
                 item.Deserialize(stream);
                 Add(item);
             }
@@ -72,9 +72,9 @@ namespace UELib.Core
         public void Deserialize(IUnrealStream stream, int count)
         {
             Capacity = count;
-            for (int i = 0; i < count; ++i)
+            for (var i = 0; i < count; ++i)
             {
-                T item = new T();
+                var item = new T();
                 item.Deserialize(stream);
                 Add(item);
             }
@@ -89,9 +89,9 @@ namespace UELib.Core
         {
             int c = stream.ReadIndex();
             Capacity = c;
-            for (int i = 0; i < c; ++i)
+            for (var i = 0; i < c; ++i)
             {
-                T item = new T();
+                var item = new T();
                 action.Invoke(item);
                 item.Deserialize(stream);
                 Add(item);
@@ -104,7 +104,7 @@ namespace UELib.Core
         public static void Deserialize(this List<int> indexes, IUnrealStream stream)
         {
             indexes.Capacity = stream.ReadInt32();
-            for (int i = 0; i < indexes.Capacity; ++i)
+            for (var i = 0; i < indexes.Capacity; ++i)
             {
                 indexes.Add(stream.ReadIndex());
             }

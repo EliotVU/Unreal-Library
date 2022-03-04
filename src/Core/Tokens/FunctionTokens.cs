@@ -64,23 +64,20 @@ namespace UELib.Core
                         addParenthesises = ((FinalFunctionToken)t).Function.IsOperator();
                     }
 
-                    return addParenthesises ? String.Format("({0})", t.Decompile()) : t.Decompile();
+                    return addParenthesises ? $"({t.Decompile()})" : t.Decompile();
                 }
 
                 protected string DecompilePreOperator(string operatorName)
                 {
-                    string output = operatorName + (operatorName.Length > 1 ? " " : String.Empty) + DecompileNext();
+                    string output = operatorName + (operatorName.Length > 1 ? " " : string.Empty) + DecompileNext();
                     DecompileNext(); // )
                     return output;
                 }
 
                 protected string DecompileOperator(string operatorName)
                 {
-                    string output = String.Format("{0} {1} {2}",
-                        PrecedenceToken(GrabNextToken()),
-                        operatorName,
-                        PrecedenceToken(GrabNextToken())
-                    );
+                    var output =
+                        $"{PrecedenceToken(GrabNextToken())} {operatorName} {PrecedenceToken(GrabNextToken())}";
                     DecompileNext(); // )
                     return output;
                 }
@@ -96,7 +93,7 @@ namespace UELib.Core
                 {
                     if (Decompiler._IsWithinClassContext)
                     {
-                        functionName = "static." + functionName;
+                        functionName = $"static.{functionName}";
 
                         // Set false elsewhere as well but to be sure we set it to false here to avoid getting static calls inside the params.
                         // e.g.
@@ -104,13 +101,13 @@ namespace UELib.Core
                         Decompiler._IsWithinClassContext = false;
                     }
 
-                    string output = functionName + "(" + DecompileParms();
+                    var output = $"{functionName}({DecompileParms()}";
                     return output;
                 }
 
                 private string DecompileParms()
                 {
-                    var tokens = new List<Tuple<Token, String>>();
+                    var tokens = new List<Tuple<Token, string>>();
                     {
                         next:
                         var t = GrabNextToken();
@@ -120,10 +117,10 @@ namespace UELib.Core
                     }
 
                     var output = new StringBuilder();
-                    for (int i = 0; i < tokens.Count; ++i)
+                    for (var i = 0; i < tokens.Count; ++i)
                     {
                         var t = tokens[i].Item1; // Token
-                        var v = tokens[i].Item2; // Value
+                        string v = tokens[i].Item2; // Value
 
                         if (t is NoParmToken) // Skipped optional parameters
                         {
@@ -137,7 +134,7 @@ namespace UELib.Core
                         {
                             if (i != tokens.Count - 1 && i > 0) // Skipped optional parameters
                             {
-                                output.Append(v == String.Empty ? "," : ", ");
+                                output.Append(v == string.Empty ? "," : ", ");
                             }
 
                             output.Append(v);
@@ -167,7 +164,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    string output = String.Empty;
+                    var output = string.Empty;
                     if (Function != null)
                     {
                         // Support for non native operators.
@@ -192,20 +189,19 @@ namespace UELib.Core
 
                                 // Check if the super call is within the super class of this functions outer(class)
                                 var myouter = (UField)Decompiler._Container.Outer;
-                                if (myouter == null || myouter.Super == null ||
-                                    Function.GetOuterName() != myouter.Super.Name)
+                                if (myouter?.Super == null || Function.GetOuterName() != myouter.Super.Name)
                                 {
                                     // There's no super to call then do a recursive super call.
                                     if (Decompiler._Container.Super == null)
                                     {
-                                        output += "(" + Decompiler._Container.GetOuterName() + ")";
+                                        output += $"({Decompiler._Container.GetOuterName()})";
                                     }
                                     else
                                     {
                                         // Different owners, then it is a deep super call.
                                         if (Function.GetOuterName() != Decompiler._Container.GetOuterName())
                                         {
-                                            output += "(" + Function.GetOuterName() + ")";
+                                            output += $"({Function.GetOuterName()})";
                                         }
                                     }
                                 }
@@ -268,7 +264,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return "global." + DecompileCall(Package.GetIndexName(FunctionNameIndex));
+                    return $"global.{DecompileCall(Package.GetIndexName(FunctionNameIndex))}";
                 }
             }
 

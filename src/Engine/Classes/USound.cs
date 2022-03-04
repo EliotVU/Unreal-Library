@@ -50,7 +50,7 @@ namespace UELib.Engine
             if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
                  || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/)
             {
-                var unknownFloat = _Buffer.ReadFloat();
+                float unknownFloat = _Buffer.ReadFloat();
                 Record("???", unknownFloat);
             }
 #endif
@@ -61,7 +61,7 @@ namespace UELib.Engine
                 Record("OffsetNext");
             }
 
-            var size = _Buffer.ReadIndex();
+            int size = _Buffer.ReadIndex();
             Record("soundSize", size);
             // Resource Interchange File Format
             _Buffer.Read(_SoundBuffer = new byte[size], 0, size);

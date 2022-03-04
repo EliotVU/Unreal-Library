@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace UELib.Core
+﻿namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -31,7 +29,7 @@ namespace UELib.Core
 #if DEBUG
                     Decompiler._CanAddSemicolon = true;
                     Decompiler._MustCommentStatement = true;
-                    return "native." + base.Decompile();
+                    return $"native.{base.Decompile()}";
 #else
                     return String.Empty;
 #endif
@@ -58,7 +56,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return "default." + base.Decompile();
+                    return $"default.{base.Decompile()}";
                 }
             }
 
@@ -74,7 +72,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "UnknownLocal_" + LocalIndex;
+                    return $"UnknownLocal_{LocalIndex}";
                 }
             }
 
@@ -82,7 +80,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return String.Empty;
+                    return string.Empty;
                 }
             }
 
@@ -155,8 +153,8 @@ namespace UELib.Core
                     DecompileNext(); // EndParmValue
                     Decompiler._CanAddSemicolon = true;
                     var param = _NextParam;
-                    var paramName = param != null ? param.Name : "@UnknownOptionalParam_" + (_NextParamIndex - 1);
-                    return String.Format("{0} = {1}", paramName, expression);
+                    string paramName = param != null ? param.Name : $"@UnknownOptionalParam_{(_NextParamIndex - 1)}";
+                    return $"{paramName} = {expression}";
                 }
             }
 

@@ -42,7 +42,7 @@ namespace UELib
     /// 
     /// Note: Usage restricted to the executing assembly(UELib) only!
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class)]
     public sealed class UnrealRegisterClassAttribute : Attribute
     {
     }
@@ -70,22 +70,13 @@ namespace UELib
         private readonly string _FullPackageName = "UnrealPackage";
 
         [PublicAPI]
-        public string FullPackageName
-        {
-            get { return _FullPackageName; }
-        }
+        public string FullPackageName => _FullPackageName;
 
         [PublicAPI]
-        public string PackageName
-        {
-            get { return Path.GetFileNameWithoutExtension(_FullPackageName); }
-        }
+        public string PackageName => Path.GetFileNameWithoutExtension(_FullPackageName);
 
         [PublicAPI]
-        public string PackageDirectory
-        {
-            get { return Path.GetDirectoryName(_FullPackageName); }
-        }
+        public string PackageDirectory => Path.GetDirectoryName(_FullPackageName);
 
         #endregion
 
@@ -95,8 +86,8 @@ namespace UELib
 
         public uint Version
         {
-            get { return OverrideVersion > 0 ? OverrideVersion : _Version; }
-            private set { _Version = value; }
+            get => OverrideVersion > 0 ? OverrideVersion : _Version;
+            private set => _Version = value;
         }
 
         /// <summary>
@@ -145,8 +136,8 @@ namespace UELib
 
         public ushort LicenseeVersion
         {
-            get { return OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion; }
-            private set { _LicenseeVersion = value; }
+            get => OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion;
+            private set => _LicenseeVersion = value;
         }
 
         /// <summary>
@@ -158,7 +149,7 @@ namespace UELib
         public sealed class GameBuild
         {
             [UsedImplicitly]
-            [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+            [AttributeUsage(AttributeTargets.Field)]
             private sealed class BuildDecoderAttribute : Attribute
             {
                 private readonly Type _BuildDecoder;
@@ -447,7 +438,7 @@ namespace UELib
                 [Build(845, 120)] XCOM2WotC
             }
 
-            public BuildName Name { get; private set; }
+            public BuildName Name { get; }
 
             public uint Version { get; private set; }
             public uint LicenseeVersion { get; private set; }
@@ -476,7 +467,7 @@ namespace UELib
                     if (gameBuildMember.Length == 0)
                         continue;
 
-                    var attribs = gameBuildMember[0].GetCustomAttributes(false);
+                    object[] attribs = gameBuildMember[0].GetCustomAttributes(false);
                     var game = attribs.OfType<BuildAttribute>().SingleOrDefault(attr => attr.Verify(this, package));
                     if (game == null)
                         continue;
@@ -530,7 +521,7 @@ namespace UELib
         /// <summary>
         /// Whether the package was serialized in BigEndian encoding.
         /// </summary>
-        public bool IsBigEndianEncoded { get; private set; }
+        public bool IsBigEndianEncoded { get; }
 
         /// <summary>
         /// The bitflags of this package.
@@ -560,10 +551,7 @@ namespace UELib
 
             public uint DependsOffset { get; internal set; }
 
-            public uint DependsCount
-            {
-                get { return ExportsCount; }
-            }
+            public uint DependsCount => ExportsCount;
 
             public void Serialize(IUnrealStream stream)
             {
@@ -796,10 +784,10 @@ namespace UELib
             stream.Write(Signature);
 
             // Serialize header
-            var version = (int)(Version & 0x0000FFFFU) | (LicenseeVersion << 16);
+            int version = (int)(Version & 0x0000FFFFU) | (LicenseeVersion << 16);
             stream.Write(version);
 
-            var headerSizePosition = stream.Position;
+            long headerSizePosition = stream.Position;
             if (Version >= VHeaderSize)
             {
                 stream.Write((int)HeaderSize);
@@ -815,7 +803,7 @@ namespace UELib
             _TablesData.ExportsCount = (uint)Exports.Count;
             _TablesData.ImportsCount = (uint)Imports.Count;
 
-            var tablesDataPosition = stream.Position;
+            long tablesDataPosition = stream.Position;
             _TablesData.Serialize(stream);
 
             // TODO: Serialize Heritages
@@ -851,20 +839,20 @@ namespace UELib
             // names
             Console.WriteLine("Writing names at position " + stream.Position);
             _TablesData.NamesOffset = (uint)stream.Position;
-            var namesBytes = namesBuffer.GetBuffer();
+            byte[] namesBytes = namesBuffer.GetBuffer();
             stream.Write(namesBytes, 0, (int)namesBuffer.Length);
 
             // imports
             Console.WriteLine("Writing imports at position " + stream.Position);
             _TablesData.ImportsOffset = (uint)stream.Position;
-            var importsBytes = importsBuffer.GetBuffer();
+            byte[] importsBytes = importsBuffer.GetBuffer();
             stream.Write(importsBytes, 0, (int)importsBuffer.Length);
 
             // exports
             Console.WriteLine("Writing exports at position " + stream.Position);
 
             // Serialize tables data again now that offsets are known.
-            var currentPosition = stream.Position;
+            long currentPosition = stream.Position;
             stream.Seek(tablesDataPosition, SeekOrigin.Begin);
             _TablesData.Serialize(stream);
             stream.Seek(currentPosition, SeekOrigin.Begin);
@@ -888,7 +876,7 @@ namespace UELib
 #if BIOSHOCK
                 if (Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
-                    var unk = stream.ReadInt32();
+                    int unk = stream.ReadInt32();
                 }
 #endif
 #if MKKE
@@ -1341,10 +1329,7 @@ namespace UELib
 
         private void OnNotifyPackageEvent(PackageEventArgs e)
         {
-            if (NotifyPackageEvent != null)
-            {
-                NotifyPackageEvent.Invoke(this, e);
-            }
+            NotifyPackageEvent?.Invoke(this, e);
         }
 
         /// <summary>
@@ -1453,7 +1438,7 @@ namespace UELib
             var exportedTypes = Assembly.GetExecutingAssembly().GetExportedTypes();
             foreach (var exportedType in exportedTypes)
             {
-                var attributes = exportedType.GetCustomAttributes(typeof(UnrealRegisterClassAttribute), false);
+                object[] attributes = exportedType.GetCustomAttributes(typeof(UnrealRegisterClassAttribute), false);
                 if (attributes.Length == 1)
                 {
                     AddClassType(exportedType.Name.Substring(1), exportedType);
@@ -1482,10 +1467,7 @@ namespace UELib
             obj.Table = table;
 
             Objects.Add(obj);
-            if (NotifyObjectAdded != null)
-            {
-                NotifyObjectAdded.Invoke(this, new ObjectEventArgs(obj));
-            }
+            NotifyObjectAdded?.Invoke(this, new ObjectEventArgs(obj));
         }
 
         /// <summary>
@@ -1508,7 +1490,7 @@ namespace UELib
         [PublicAPI]
         public Type GetClassType(string className)
         {
-            _ClassTypes.TryGetValue(className.ToLower(), out Type classType);
+            _ClassTypes.TryGetValue(className.ToLower(), out var classType);
             return classType;
         }
 
@@ -1600,15 +1582,10 @@ namespace UELib
         [System.Diagnostics.Contracts.Pure]
         public UObject FindObject(string objectName, Type classType, bool checkForSubclass = false)
         {
-            if (Objects == null)
-            {
-                return null;
-            }
-
-            var obj = Objects.Find(o => String.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
-                                        (checkForSubclass
-                                            ? o.GetType().IsSubclassOf(classType)
-                                            : o.GetType() == classType));
+            var obj = Objects?.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+                                         (checkForSubclass
+                                             ? o.GetType().IsSubclassOf(classType)
+                                             : o.GetType() == classType));
             return obj;
         }
 
@@ -1616,12 +1593,12 @@ namespace UELib
         [System.Diagnostics.Contracts.Pure]
         public UObject FindObjectByGroup(string objectGroup)
         {
-            var groups = objectGroup.Split('.');
+            string[] groups = objectGroup.Split('.');
             UObject lastObj = null;
             for (var i = 0; i < groups.Length; ++i)
             {
                 var obj = Objects.Find(o =>
-                    String.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0 && o.Outer == lastObj);
+                    string.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0 && o.Outer == lastObj);
                 if (obj != null)
                 {
                     lastObj = obj;
@@ -1629,7 +1606,7 @@ namespace UELib
                 else
                 {
                     lastObj = Objects.Find(o =>
-                        String.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0);
+                        string.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0);
                     break;
                 }
             }

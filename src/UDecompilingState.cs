@@ -1,16 +1,14 @@
-using System;
-
 namespace UELib
 {
     public static class UDecompilingState
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
             "CA2211:NonConstantFieldsShouldNotBeVisible")]
-        public static string Tabs = String.Empty;
+        public static string Tabs = string.Empty;
 
         public static void AddTabs(int count)
         {
-            for (int i = 0; i < count; ++i)
+            for (var i = 0; i < count; ++i)
             {
                 Tabs += UnrealConfig.Indention;
             }
@@ -24,7 +22,7 @@ namespace UELib
         public static void RemoveTabs(int count)
         {
             count *= UnrealConfig.Indention.Length;
-            Tabs = count > Tabs.Length ? String.Empty : Tabs.Substring(0, (Tabs.Length) - count);
+            Tabs = count > Tabs.Length ? string.Empty : Tabs.Substring(0, (Tabs.Length) - count);
         }
 
         public static void RemoveTab()
@@ -40,7 +38,7 @@ namespace UELib
         {
             if (Tabs.Length < count)
             {
-                Tabs = String.Empty;
+                Tabs = string.Empty;
                 return;
             }
 
@@ -49,7 +47,7 @@ namespace UELib
 
         public static void ResetTabs()
         {
-            Tabs = String.Empty;
+            Tabs = string.Empty;
         }
 
         public static string OffsetLabelName(uint offset)

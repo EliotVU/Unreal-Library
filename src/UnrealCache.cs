@@ -32,7 +32,7 @@ namespace UELib.Cache
     public sealed class UnrealCache
     {
         public const string CacheIniName = "\\Cache.ini";
-        private string _CachePath = string.Empty;
+        private string _CachePath;
 
         public struct CacheFileStruct
         {
@@ -81,7 +81,7 @@ namespace UELib.Cache
 
             var sep = new[] { '=' };
             CacheEntries = new List<CacheFileStruct>();
-            for (int i = 1; i < cacheinfo.Length; ++i)
+            for (var i = 1; i < cacheinfo.Length; ++i)
             {
                 string[] line = cacheinfo[i].Split(sep, 2);
                 if (line.Length == 0 || line[0].Length <= 2)
@@ -106,7 +106,7 @@ namespace UELib.Cache
 
         public bool ExtractCacheEntry(int index, string dirPath)
         {
-            bool success = false;
+            var success = false;
             try
             {
                 File.Move(Path.Combine(_CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension)),
@@ -123,7 +123,7 @@ namespace UELib.Cache
 
         public bool RemoveCacheEntry(int index)
         {
-            bool success = false;
+            var success = false;
             try
             {
                 CacheEntries.RemoveAt(index);
@@ -142,7 +142,7 @@ namespace UELib.Cache
         /// <param name="index">The cache entry index that should be deleted.</param>
         public bool DeleteCacheEntry(int index)
         {
-            bool success = false;
+            var success = false;
             try
             {
                 File.Delete(Path.Combine(_CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension)));
@@ -178,7 +178,7 @@ namespace UELib.Cache
         {
             var contents = new string[CacheEntries.Count + 1];
             contents[0] = "[Cache]";
-            for (int i = 0; i < CacheEntries.Count; ++i)
+            for (var i = 0; i < CacheEntries.Count; ++i)
             {
                 contents[i + 1] = CacheEntries[i].UnsplitCache();
             }

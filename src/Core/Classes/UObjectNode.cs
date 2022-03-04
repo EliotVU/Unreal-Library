@@ -27,22 +27,22 @@ namespace UELib.Core
         public virtual string GetImageName()
         {
             return GetType().IsSubclassOf(typeof(UProperty))
-                ? typeof(UProperty).Name
+                ? nameof(UProperty)
                 : this is UScriptStruct
-                    ? "UStruct"
+                    ? nameof(UStruct)
                     : GetType().Name;
         }
 
         protected virtual void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, typeof(UObject).Name);
-            var flagNode = AddTextNode(_ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString(_ObjectFlags));
+            _ParentNode = AddSectionNode(node, nameof(UObject));
+            var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{UnrealMethods.FlagToString(_ObjectFlags)}");
             flagNode.ToolTipText = UnrealMethods.FlagsListToString(
                 UnrealMethods.FlagsToList(typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), _ObjectFlags)
             );
 
-            AddTextNode(_ParentNode, "Size:" + ExportTable.SerialSize);
-            AddTextNode(_ParentNode, "Offset:" + ExportTable.SerialOffset);
+            AddTextNode(_ParentNode, $"Size:{ExportTable.SerialSize}");
+            AddTextNode(_ParentNode, $"Offset:{ExportTable.SerialOffset}");
         }
 
         protected virtual void AddChildren(TreeNode node)
@@ -97,7 +97,7 @@ namespace UELib.Core
             if (unrealObject == null)
                 return null;
 
-            var objN = new ObjectNode(unrealObject) { Text = text + ":" + unrealObject.Name };
+            var objN = new ObjectNode(unrealObject) { Text = $"{text}:{unrealObject.Name}" };
             if (imageName != string.Empty)
             {
                 objN.ImageKey = imageName;

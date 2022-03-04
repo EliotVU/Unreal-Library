@@ -10,10 +10,7 @@ namespace UELib.Core
             {
                 public UByteCodeDecompiler Decompiler { get; set; }
 
-                protected UnrealPackage Package
-                {
-                    get { return Decompiler.Package; }
-                }
+                protected UnrealPackage Package => Decompiler.Package;
 
                 public byte RepresentToken; // Fixed(adjusted at decompile time for compatibility)
 
@@ -43,12 +40,12 @@ namespace UELib.Core
 
                 public virtual string Decompile()
                 {
-                    return String.Empty;
+                    return string.Empty;
                 }
 
                 public virtual string Disassemble()
                 {
-                    return String.Format("0x{0:X2}", RepresentToken);
+                    return $"0x{RepresentToken:X2}";
                 }
 
                 protected string DecompileNext()
@@ -66,7 +63,7 @@ namespace UELib.Core
                     }
                     catch (Exception e)
                     {
-                        return t.GetType().Name + "(" + e.GetType().Name + ")";
+                        return $"{t.GetType().Name}({e.GetType().Name})";
                     }
                 }
 
@@ -89,8 +86,8 @@ namespace UELib.Core
 
                 public override string ToString()
                 {
-                    return String.Format("\r\nType:{0}\r\nToken:{1:X2}\r\nPosition:{2}\r\nSize:{3}",
-                        GetType().Name, RepresentToken, Position, Size).Replace("\n", "\n"
+                    return
+                        $"\r\nType:{GetType().Name}\r\nToken:{RepresentToken:X2}\r\nPosition:{Position}\r\nSize:{Size}".Replace("\n", "\n"
                         + UDecompilingState.Tabs
                     );
                 }
@@ -100,7 +97,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return String.Format("@UnknownExprToken(0x{0:X2})", RepresentToken);
+                    return $"@UnknownExprToken(0x{RepresentToken:X2})";
                 }
             }
 
@@ -108,7 +105,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return String.Format("@UnknownCastToken(0x{0:X2})", RepresentToken);
+                    return $"@UnknownCastToken(0x{RepresentToken:X2})";
                 }
             }
         }

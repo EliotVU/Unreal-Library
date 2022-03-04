@@ -67,10 +67,7 @@ namespace UELib
         public static UnrealPackage LoadFullPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
         {
             var package = LoadPackage(packagePath, fileAccess);
-            if (package != null)
-            {
-                package.InitializePackage();
-            }
+            package?.InitializePackage();
 
             return package;
         }

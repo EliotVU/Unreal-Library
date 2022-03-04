@@ -28,15 +28,9 @@ namespace UELib.Core
 
         public ushort RepOffset { get; private set; }
 
-        public bool RepReliable
-        {
-            get { return HasFunctionFlag(Flags.FunctionFlags.NetReliable); }
-        }
+        public bool RepReliable => HasFunctionFlag(Flags.FunctionFlags.NetReliable);
 
-        public uint RepKey
-        {
-            get { return RepOffset | ((uint)Convert.ToByte(RepReliable) << 16); }
-        }
+        public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         #endregion
 
@@ -54,7 +48,7 @@ namespace UELib.Core
 #if BORDERLANDS2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
             {
-                var size = _Buffer.ReadUShort();
+                ushort size = _Buffer.ReadUShort();
                 Record("??size_BL2", size);
                 _Buffer.Skip(size * 2);
             }

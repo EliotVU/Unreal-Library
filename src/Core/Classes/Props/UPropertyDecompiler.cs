@@ -16,20 +16,21 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-            string comment = UDecompilingState.Tabs + "/** ";
+            var comment = $"{UDecompilingState.Tabs}/** ";
             // Multiline comment?
             if (tooltipValue.IndexOf('\n') != -1)
             {
-                comment += " \r\n" + UDecompilingState.Tabs + " *"
-                           + tooltipValue.Replace("\n", "\n" + UDecompilingState.Tabs + " *")
-                           + "\r\n" + UDecompilingState.Tabs;
+                comment +=
+                    " \r\n" +
+                    $"{UDecompilingState.Tabs} *{tooltipValue.Replace("\n", "\n" + UDecompilingState.Tabs + " *")}" +
+                    $"\r\n{UDecompilingState.Tabs}";
             }
             else
             {
                 comment += tooltipValue;
             }
 
-            return comment + " */\r\n";
+            return $"{comment} */\r\n";
         }
 
         public override string Decompile()
@@ -463,7 +464,7 @@ namespace UELib.Core
 
             // Local's may never output any of their implied flags!
             if (!IsParm() && Super != null
-                          && String.Compare(Super.GetClassName(), "Function", StringComparison.OrdinalIgnoreCase) == 0)
+                          && string.Compare(Super.GetClassName(), "Function", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return string.Empty;
             }

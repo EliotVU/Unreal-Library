@@ -72,10 +72,10 @@ namespace UELib.Core
         [Pure]
         public string GetSuperGroup()
         {
-            string group = String.Empty;
+            var group = string.Empty;
             for (var field = Super; field != null; field = field.Super)
             {
-                group = field.Name + "." + group;
+                group = $"{field.Name}.{@group}";
             }
 
             return group + Name;
@@ -86,7 +86,7 @@ namespace UELib.Core
         {
             for (var field = Super; field != null; field = field.Super)
             {
-                if (String.Equals(field.Name, classType, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(field.Name, classType, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

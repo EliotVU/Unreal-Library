@@ -1,7 +1,6 @@
 using System.IO;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UELib.Core;
 
 namespace UELib.Test
 {

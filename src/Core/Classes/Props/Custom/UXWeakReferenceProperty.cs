@@ -10,7 +10,7 @@ namespace UELib.Core
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return base.GetFriendlyType() + "&";
+            return $"{base.GetFriendlyType()}&";
         }
     }
 }

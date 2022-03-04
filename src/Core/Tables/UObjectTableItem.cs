@@ -33,10 +33,7 @@ namespace UELib
         /// -- Fixed
         /// </summary>
         [Pure]
-        public UNameTableItem ObjectTable
-        {
-            get { return Owner.Names[(int)ObjectName]; }
-        }
+        public UNameTableItem ObjectTable => Owner.Names[(int)ObjectName];
 
         public UName ObjectName;
 
@@ -48,16 +45,10 @@ namespace UELib
         public int ClassIndex { get; protected set; }
 
         [Pure]
-        public UObjectTableItem ClassTable
-        {
-            get { return Owner.GetIndexTable(ClassIndex); }
-        }
+        public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
 
         [Pure]
-        public virtual string ClassName
-        {
-            get { return ClassIndex != 0 ? Owner.GetIndexTable(ClassIndex).ObjectName : "class"; }
-        }
+        public virtual string ClassName => ClassIndex != 0 ? Owner.GetIndexTable(ClassIndex).ObjectName : "class";
 
         /// <summary>
         /// Object index to the outer of this object
@@ -66,10 +57,7 @@ namespace UELib
         public int OuterIndex { get; protected set; }
 
         [Pure]
-        public UObjectTableItem OuterTable
-        {
-            get { return Owner.GetIndexTable(OuterIndex); }
-        }
+        public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
 
         [Pure]
         public string OuterName
@@ -77,7 +65,7 @@ namespace UELib
             get
             {
                 var table = OuterTable;
-                return table != null ? table.ObjectName : String.Empty;
+                return table != null ? table.ObjectName : string.Empty;
             }
         }
 

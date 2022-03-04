@@ -1,5 +1,3 @@
-using System;
-
 namespace UELib.Core
 {
     [UnrealRegisterClass]
@@ -9,7 +7,7 @@ namespace UELib.Core
 
         protected uint _Top;
         protected uint _Pos;
-        public string ScriptText = String.Empty;
+        public string ScriptText = string.Empty;
 
         #endregion
 

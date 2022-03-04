@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace UELib.Core
+﻿namespace UELib.Core
 {
     public partial class UObject : IUnrealDecompilable
     {
@@ -14,7 +12,7 @@ namespace UELib.Core
                 BeginDeserializing();
             }
 
-            string output = String.Format("begin object name={0} class={1}\r\n", Name, Class.Name);
+            var output = $"begin object name={Name} class={Class.Name}\r\n";
             UDecompilingState.AddTabs(1);
             try
             {
@@ -25,8 +23,7 @@ namespace UELib.Core
                 UDecompilingState.RemoveTabs(1);
             }
 
-            return output + String.Format("{0}object end\r\n{0}// Reference: {1}'{2}'", UDecompilingState.Tabs,
-                Class.Name, GetOuterGroup());
+            return $"{output}{UDecompilingState.Tabs}object end\r\n{UDecompilingState.Tabs}// Reference: {Class.Name}'{GetOuterGroup()}'";
         }
 
         // Ment to be overriden!
@@ -41,14 +38,14 @@ namespace UELib.Core
             if (Properties == null || Properties.Count == 0)
                 return UDecompilingState.Tabs + "// This object has no properties!\r\n";
 
-            string output = String.Empty;
+            var output = string.Empty;
 
 #if DEBUG
             output += UDecompilingState.Tabs + "// Object Offset:" +
                       UnrealMethods.FlagToString((uint)ExportTable.SerialOffset) + "\r\n";
 #endif
 
-            for (int i = 0; i < Properties.Count; ++i)
+            for (var i = 0; i < Properties.Count; ++i)
             {
                 string propOutput = Properties[i].Decompile();
 

@@ -21,7 +21,7 @@ namespace UELib.Engine
             if (count > 0)
             {
                 _ColorPalette = new Color[count];
-                for (int i = 0; i < count; ++i)
+                for (var i = 0; i < count; ++i)
                 {
                     _ColorPalette[i] = Color.FromArgb(_Buffer.ReadInt32());
                 }

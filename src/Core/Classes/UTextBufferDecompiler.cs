@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace UELib.Core
+﻿namespace UELib.Core
 {
     public partial class UTextBuffer
     {
@@ -11,7 +9,7 @@ namespace UELib.Core
                 BeginDeserializing();
             }
 
-            string output = String.Empty;
+            var output = string.Empty;
             if (ScriptText.Length <= 2)
             {
                 output += "// Stripped";
@@ -24,7 +22,7 @@ namespace UELib.Core
                 if (Name == "ScriptText")
                 {
                     var outerStruct = Outer as UStruct;
-                    if (outerStruct != null && outerStruct.Properties != null && outerStruct.Properties.Count > 0)
+                    if (outerStruct?.Properties != null && outerStruct.Properties.Count > 0)
                     {
                         try
                         {

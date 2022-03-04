@@ -65,7 +65,7 @@ namespace UELib.Core
         public override string Decompile()
         {
             var assembly = Assembly.GetAssembly(GetType());
-            var content = string.Format
+            string content = string.Format
             (
                 "/*******************************************************************************" +
                 "\r\n " +
@@ -106,13 +106,13 @@ namespace UELib.Core
             if (ClassDependencies == null)
                 return string.Empty;
 
-            string output = string.Empty;
+            var output = string.Empty;
             foreach (var dep in ClassDependencies)
             {
                 var obj = GetIndexObject(dep.Class);
                 if (obj != null)
                 {
-                    output += " *\t" + obj.GetClassName() + " " + obj.GetOuterGroup() + "\r\n";
+                    output += $" *\t{obj.GetClassName()} {obj.GetOuterGroup()}\r\n";
                 }
             }
 
@@ -124,7 +124,7 @@ namespace UELib.Core
             if (PackageImports == null)
                 return string.Empty;
 
-            string output = string.Empty;
+            var output = string.Empty;
             foreach (int packageImport in PackageImports)
             {
                 output += " *\t" + Package.Names[packageImport].Name + "\r\n";
@@ -140,7 +140,7 @@ namespace UELib.Core
 
         public string GetStats()
         {
-            string output = string.Empty;
+            var output = string.Empty;
 
             if (Constants != null && Constants.Count > 0)
                 output += " *\tConstants:" + Constants.Count + "\r\n";
@@ -166,7 +166,7 @@ namespace UELib.Core
         protected override string FormatHeader()
         {
             string output = (IsClassInterface() ? "interface " : "class ") + Name;
-            var metaData = DecompileMeta();
+            string metaData = DecompileMeta();
             if (metaData != string.Empty)
             {
                 output = metaData + "\r\n" + output;
@@ -177,12 +177,12 @@ namespace UELib.Core
                 && !(IsClassInterface() &&
                      string.Compare(Super.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0))
             {
-                output += " " + FormatExtends() + " " + Super.Name;
+                output += $" {FormatExtends()} {Super.Name}";
             }
 
             if (IsClassWithin())
             {
-                output += " within " + Within.Name;
+                output += $" within {Within.Name}";
             }
 
             string rules = FormatFlags().Replace("\t", UnrealConfig.Indention);
@@ -191,7 +191,7 @@ namespace UELib.Core
 
         private string FormatNameGroup(string groupName, IList<int> enumerableList)
         {
-            string output = string.Empty;
+            var output = string.Empty;
             if (enumerableList != null && enumerableList.Any())
             {
                 output += "\r\n\t" + groupName + "(";
@@ -215,7 +215,7 @@ namespace UELib.Core
 
         private string FormatObjectGroup(string groupName, IList<int> enumerableList)
         {
-            string output = string.Empty;
+            var output = string.Empty;
             if (enumerableList != null && enumerableList.Any())
             {
                 output += "\r\n\t" + groupName + "(";
@@ -239,7 +239,7 @@ namespace UELib.Core
 
         private string FormatFlags()
         {
-            string output = string.Empty;
+            var output = string.Empty;
 
             if ((ClassFlags & (uint)Flags.ClassFlags.Abstract) != 0)
             {
@@ -253,7 +253,7 @@ namespace UELib.Core
             else
             {
                 // Only do if parent had Transient
-                UClass parentClass = (UClass)Super;
+                var parentClass = (UClass)Super;
                 if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.Transient) != 0)
                 {
                     output += "\r\n\tnotransient";
@@ -265,7 +265,7 @@ namespace UELib.Core
                 output += "\r\n\t" + FormatNative();
                 if (NativeClassName.Length != 0)
                 {
-                    output += "(" + NativeClassName + ")";
+                    output += $"({NativeClassName})";
                 }
             }
 
@@ -288,7 +288,7 @@ namespace UELib.Core
                 {
                     output += "\r\n\tconfig";
                 }
-                else output += "\r\n\tconfig(" + inner + ")";
+                else output += $"\r\n\tconfig({inner})";
             }
 
             if ((ClassFlags & (uint)Flags.ClassFlags.ParseConfig) != 0)
@@ -303,7 +303,7 @@ namespace UELib.Core
             else
             {
                 // Only do if parent had PerObjectConfig
-                UClass parentClass = (UClass)Super;
+                var parentClass = (UClass)Super;
                 if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.PerObjectConfig) != 0)
                 {
                     output += "\r\n\tnoperobjectconfig";
@@ -317,7 +317,7 @@ namespace UELib.Core
             else
             {
                 // Only do if parent had EditInlineNew
-                UClass parentClass = (UClass)Super;
+                var parentClass = (UClass)Super;
                 if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0)
                 {
                     output += "\r\n\tnoteditinlinenew";
@@ -391,7 +391,7 @@ namespace UELib.Core
                 if (Package.Version >= UnrealPackage.VDLLBIND
                     && string.Compare(DLLBindName, "None", StringComparison.OrdinalIgnoreCase) != 0)
                 {
-                    output += "\r\n\tdllbind(" + DLLBindName + ")";
+                    output += $"\r\n\tdllbind({DLLBindName})";
                 }
             }
             catch
@@ -413,7 +413,7 @@ namespace UELib.Core
                     // Only exports and those who are further than this class
                     if (obj != null && (int)obj > (int)this)
                     {
-                        output += "\r\n\tdependson(" + obj.Name + ")";
+                        output += $"\r\n\tdependson({obj.Name})";
                     }
 
                     dependsOn.Add(dependency.Class);
@@ -459,7 +459,7 @@ namespace UELib.Core
 
             var statements = new Dictionary<uint, List<IUnrealNetObject>>();
             replicatedObjects.Sort((ro, ro2) => ro.RepKey.CompareTo(ro2.RepKey));
-            for (int netIndex = 0; netIndex < replicatedObjects.Count; ++netIndex)
+            for (var netIndex = 0; netIndex < replicatedObjects.Count; ++netIndex)
             {
                 var firstObject = replicatedObjects[netIndex];
                 var netObjects = new List<IUnrealNetObject> { firstObject };
@@ -484,7 +484,7 @@ namespace UELib.Core
 
             replicatedObjects.Clear();
 
-            var output = new StringBuilder("\r\n" + "replication" + UnrealConfig.PrintBeginBracket());
+            var output = new StringBuilder($"\r\nreplication{UnrealConfig.PrintBeginBracket()}");
             UDecompilingState.AddTab();
 
             foreach (var statement in statements)
@@ -509,21 +509,20 @@ namespace UELib.Core
                     }
                     catch (Exception e)
                     {
-                        statementCode = string.Format("/* An exception occurred while decompiling condition ({0}) */",
-                            e);
+                        statementCode = $"/* An exception occurred while decompiling condition ({e}) */";
                     }
 
-                    var statementType = Package.Version < VReliableDeprecation
+                    string statementType = Package.Version < VReliableDeprecation
                         ? rel ? "reliable" : "unreliable"
                         : string.Empty;
-                    var statementFormat = string.Format("{0} if({1})", statementType, statementCode);
+                    var statementFormat = $"{statementType} if({statementCode})";
                     output.Append(statementFormat);
 
                     UDecompilingState.AddTab();
                     // NetObjects
-                    for (int i = 0; i < statement.Value.Count; ++i)
+                    for (var i = 0; i < statement.Value.Count; ++i)
                     {
-                        var shouldSplit = i % 2 == 0;
+                        bool shouldSplit = i % 2 == 0;
                         if (shouldSplit)
                         {
                             output.Append("\r\n" + UDecompilingState.Tabs);
@@ -532,7 +531,7 @@ namespace UELib.Core
                         var netObject = statement.Value[i];
                         output.Append(netObject.Name);
 
-                        var isNotLast = i != statement.Value.Count - 1;
+                        bool isNotLast = i != statement.Value.Count - 1;
                         output.Append(isNotLast ? ", " : ";");
                     }
 
@@ -560,7 +559,7 @@ namespace UELib.Core
             if (States == null || !States.Any())
                 return string.Empty;
 
-            string output = string.Empty;
+            var output = string.Empty;
             foreach (var scriptState in States)
             {
                 output += "\r\n" + scriptState.Decompile() + "\r\n";

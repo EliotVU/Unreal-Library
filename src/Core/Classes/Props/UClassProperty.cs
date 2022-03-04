@@ -39,9 +39,9 @@ namespace UELib.Core
         {
             if (ClassObject != null)
             {
-                return (String.Compare(ClassObject.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0)
+                return (string.Compare(ClassObject.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0)
                     ? Object.GetFriendlyType()
-                    : ("class" + "<" + GetFriendlyInnerType() + ">");
+                    : ($"class<{GetFriendlyInnerType()}>");
             }
 
             return "class";

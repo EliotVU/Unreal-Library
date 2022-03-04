@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
 namespace UELib
@@ -66,12 +65,12 @@ namespace UELib
             {
                 if (binReader.ReadUInt32() != Signature)
                 {
-                    throw new UnrealException(String.Format("File {0} is not a NTL file!", stream.Name));
+                    throw new UnrealException($"File {stream.Name} is not a NTL file!");
                 }
 
                 int count = binReader.ReadInt32();
                 NativeTableList = new List<NativeTableItem>();
-                for (int i = 0; i < count; ++i)
+                for (var i = 0; i < count; ++i)
                 {
                     NativeTableList.Add
                     (
@@ -91,7 +90,7 @@ namespace UELib
 
         public NativeTableItem FindTableItem(int nativeToken)
         {
-            int lowNum = 0;
+            var lowNum = 0;
             int highNum = NativeTableList.Count - 1;
             while (lowNum <= highNum)
             {

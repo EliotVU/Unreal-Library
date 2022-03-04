@@ -65,7 +65,7 @@ namespace UELib.Engine
                 {
                     case "TEXF_RGBA8":
                     case "5":
-                        for (int i = 0; i < mipMapSize; ++i)
+                        for (var i = 0; i < mipMapSize; ++i)
                         {
                             Pixels[i] = stream.ReadInt32();
                         }
@@ -74,7 +74,7 @@ namespace UELib.Engine
 
                     case "TEXF_DXT1":
                     case "3":
-                        for (int i = 0; i < mipMapSize / 2; ++i)
+                        for (var i = 0; i < mipMapSize / 2; ++i)
                         {
                             byte c = stream.ReadByte();
                             Pixels[i++] = c & 0xF0;

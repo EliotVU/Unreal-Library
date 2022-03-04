@@ -7,7 +7,7 @@ namespace UELib.Core
 {
     public class ObjectEventArgs : EventArgs
     {
-        public UObject ObjectRef { get; private set; }
+        public UObject ObjectRef { get; }
 
         public ObjectEventArgs(UObject objectRef)
         {
@@ -20,7 +20,7 @@ namespace UELib.Core
     /// Instances of this class are deserialized from the exports table entries.
     /// </summary>
     [UnrealRegisterClass]
-    public partial class UObject : Object, IContainsTable, IBinaryData, IDisposable, IComparable
+    public partial class UObject : object, IContainsTable, IBinaryData, IDisposable, IComparable
     {
         #region PreInitialized Members
 
@@ -31,57 +31,33 @@ namespace UELib.Core
 
         public UObjectTableItem Table { get; internal set; }
 
-        public UExportTableItem ExportTable
-        {
-            get { return Table as UExportTableItem; }
-        }
+        public UExportTableItem ExportTable => Table as UExportTableItem;
 
-        public UImportTableItem ImportTable
-        {
-            get { return Table as UImportTableItem; }
-        }
+        public UImportTableItem ImportTable => Table as UImportTableItem;
 
-        public UNameTableItem NameTable
-        {
-            get { return Table.ObjectTable; }
-        }
+        public UNameTableItem NameTable => Table.ObjectTable;
 
         /// <summary>
         /// The internal represented class in UnrealScript.
         /// </summary>
-        public UObject Class
-        {
-            get { return Package.GetIndexObject(Table.ClassIndex); }
-        }
+        public UObject Class => Package.GetIndexObject(Table.ClassIndex);
 
         /// <summary>
         /// [Package.Group:Outer].Object
         /// </summary>
-        public UObject Outer
-        {
-            get { return Package.GetIndexObject(Table.OuterIndex); }
-        }
+        public UObject Outer => Package.GetIndexObject(Table.OuterIndex);
 
         /// <summary>
         /// The object's index represented as a table index.
         /// </summary>
-        private int _ObjectIndex
-        {
-            get { return Table is UExportTableItem ? Table.Index + 1 : -(Table.Index + 1); }
-        }
+        private int _ObjectIndex => Table is UExportTableItem ? Table.Index + 1 : -(Table.Index + 1);
 
         /// <summary>
         /// The object's flags.
         /// </summary>
-        private ulong _ObjectFlags
-        {
-            get { return ExportTable != null ? ExportTable.ObjectFlags : 0; }
-        }
+        private ulong _ObjectFlags => ExportTable?.ObjectFlags ?? 0;
 
-        public string Name
-        {
-            get { return Table.ObjectName; }
-        }
+        public string Name => Table.ObjectName;
 
         #endregion
 
@@ -92,10 +68,7 @@ namespace UELib.Core
         /// <summary>
         /// Copy of the Object bytes
         /// </summary>
-        public UObjectStream Buffer
-        {
-            get { return _Buffer; }
-        }
+        public UObjectStream Buffer => _Buffer;
 
         public UObject Default { get; protected set; }
         private DefaultPropertiesCollection _Properties;
@@ -103,10 +76,7 @@ namespace UELib.Core
         /// <summary>
         /// Object Properties e.g. SubObjects or/and DefaultProperties
         /// </summary>
-        public DefaultPropertiesCollection Properties
-        {
-            get { return Default != null ? Default._Properties : _Properties; }
-        }
+        public DefaultPropertiesCollection Properties => Default != null ? Default._Properties : _Properties;
 
         #endregion
 
@@ -166,7 +136,7 @@ namespace UELib.Core
             catch (Exception e)
             {
                 ThrownException = e;
-                ExceptionPosition = _Buffer != null ? _Buffer.Position : -1;
+                ExceptionPosition = _Buffer?.Position ?? -1;
                 DeserializationState |= ObjectState.Errorlized;
 
                 Console.WriteLine(e.Source + ":" + Name + ":" + e.GetType().Name + " occurred while deserializing;"
@@ -248,7 +218,7 @@ namespace UELib.Core
                 //    var componentName = _Buffer.ReadNameIndex();
                 //}
 
-                var netIndex = _Buffer.ReadObjectIndex();
+                int netIndex = _Buffer.ReadObjectIndex();
                 Record("netIndex", TryGetIndexObject(netIndex));
             }
             else
@@ -318,7 +288,7 @@ namespace UELib.Core
             else if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
             {
                 int count = _Buffer.ReadIndex();
-                for (int i = 0; i < count; ++i)
+                for (var i = 0; i < count; ++i)
                 {
                     _Buffer.ReadObjectIndex();
                 }
@@ -454,7 +424,7 @@ namespace UELib.Core
         public UObject GetHighestOuter(byte offset = (byte)0)
         {
             var parents = new List<UObject>();
-            for (UObject outer = Outer; outer != null; outer = outer.Outer)
+            for (var outer = Outer; outer != null; outer = outer.Outer)
             {
                 parents.Add(outer);
             }
@@ -471,9 +441,9 @@ namespace UELib.Core
         [Pure]
         public string GetOuterGroup()
         {
-            string group = String.Empty;
+            var group = string.Empty;
             // TODO:Should support importtable loop
-            for (UObject outer = Outer; outer != null; outer = outer.Outer)
+            for (var outer = Outer; outer != null; outer = outer.Outer)
             {
                 group = outer.Name + "." + group;
             }
@@ -509,7 +479,7 @@ namespace UELib.Core
         [Pure]
         public bool IsClassType(string className)
         {
-            return String.Compare(GetClassName(), className, StringComparison.OrdinalIgnoreCase) == 0;
+            return string.Compare(GetClassName(), className, StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         /// <summary>
@@ -522,7 +492,7 @@ namespace UELib.Core
         {
             for (var c = Table.ClassTable; c != null; c = c.ClassTable)
             {
-                if (String.Compare(c.ObjectName, className, StringComparison.OrdinalIgnoreCase) == 0)
+                if (string.Compare(c.ObjectName, className, StringComparison.OrdinalIgnoreCase) == 0)
                     return true;
             }
 
@@ -600,10 +570,7 @@ namespace UELib.Core
             }
             catch (IOException)
             {
-                if (pkg != null)
-                {
-                    pkg.Dispose();
-                }
+                pkg?.Dispose();
 
                 return null;
             }
@@ -619,16 +586,16 @@ namespace UELib.Core
             if (stream == null)
                 return null;
 
-            var offset = GetBufferPosition();
+            int offset = GetBufferPosition();
             if (offset == -1)
                 return null;
 
-            var size = GetBufferSize();
+            int size = GetBufferSize();
             if (size == 0)
                 return null;
 
             var bytes = new byte[size];
-            var prePosition = stream.Position;
+            long prePosition = stream.Position;
             stream.Seek(offset, SeekOrigin.Begin);
             stream.Read(bytes, 0, size);
             stream.Position = prePosition;
@@ -644,19 +611,19 @@ namespace UELib.Core
         [Pure]
         public IUnrealStream GetBuffer()
         {
-            return Package == null || Package.Stream == null ? null : Package.Stream;
+            return Package?.Stream == null ? null : Package.Stream;
         }
 
         [Pure]
         public int GetBufferPosition()
         {
-            return ExportTable == null ? -1 : ExportTable.SerialOffset;
+            return ExportTable?.SerialOffset ?? -1;
         }
 
         [Pure]
         public int GetBufferSize()
         {
-            return ExportTable == null ? 0 : ExportTable.SerialSize;
+            return ExportTable?.SerialSize ?? 0;
         }
 
         [Pure]
@@ -680,7 +647,7 @@ namespace UELib.Core
         [System.Diagnostics.Conditional("DEBUG"), System.Diagnostics.Conditional("BINARYMETADATA")]
         internal void Record(string varName, object varObject = null)
         {
-            var size = _Buffer.Position - _Buffer.LastPosition;
+            long size = _Buffer.Position - _Buffer.LastPosition;
             if (size <= 0)
                 return;
 
@@ -732,7 +699,7 @@ namespace UELib.Core
 
         public override string ToString()
         {
-            return Name + String.Format("({0})", (int)this);
+            return Name + string.Format("({0})", (int)this);
         }
 
         public override int GetHashCode()
@@ -762,12 +729,12 @@ namespace UELib.Core
 
         public static explicit operator int(UObject obj)
         {
-            return obj == null ? 0 : obj._ObjectIndex;
+            return obj?._ObjectIndex ?? 0;
         }
 
         public static explicit operator string(UObject obj)
         {
-            return obj == null ? null : obj.Name;
+            return obj?.Name;
         }
     }
 
@@ -794,7 +761,7 @@ namespace UELib.Core
             {
                 // componentClassIndex
                 _Buffer.Position += sizeof(int);
-                var componentNameIndex = _Buffer.ReadNameIndex();
+                int componentNameIndex = _Buffer.ReadNameIndex();
                 if (componentNameIndex == (int)Table.ObjectName)
                 {
                     base.Deserialize();

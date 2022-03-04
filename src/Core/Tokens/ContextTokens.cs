@@ -12,12 +12,12 @@
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    var propertyAdded = stream.Version >= VSizeByteMoved
+                    bool propertyAdded = stream.Version >= VSizeByteMoved
 #if TERA
-                                        && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
 #if TRANSFORMERS
-                                        && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
 #endif
                         ;
 
@@ -53,7 +53,7 @@
 
                 public override string Decompile()
                 {
-                    return DecompileNext() + "." + DecompileNext();
+                    return $"{DecompileNext()}.{DecompileNext()}";
                 }
             }
 
@@ -121,7 +121,7 @@
 
                 public override string Decompile()
                 {
-                    return DecompileNext() + "." + MemberProperty.Name;
+                    return $"{DecompileNext()}.{MemberProperty.Name}";
                 }
             }
         }

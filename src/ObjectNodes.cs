@@ -30,7 +30,7 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                return String.Format
+                return string.Format
                 (
                     "An exception of type \"{0}\" occurred while decompiling {1}.\r\nDetails:\r\n{2}",
                     e.GetType().Name, Text, e
@@ -44,7 +44,7 @@ namespace UELib.Core
     {
         public DefaultObjectNode(IUnrealDecompilable objectRef) : base(objectRef)
         {
-            ImageKey = typeof(UDefaultProperty).Name;
+            ImageKey = nameof(UDefaultProperty);
             SelectedImageKey = ImageKey;
         }
     }
@@ -66,7 +66,7 @@ namespace UELib.Core
 
         public string Decompile()
         {
-            string fullView = String.Empty;
+            var fullView = string.Empty;
             foreach (var node in Nodes.OfType<IUnrealDecompilable>())
             {
                 fullView += node.Decompile() + UnrealSyntax.NewLine;

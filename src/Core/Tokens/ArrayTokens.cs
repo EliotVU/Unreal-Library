@@ -25,7 +25,7 @@
                     Decompiler._CanAddSemicolon = true;
                     string keyName = DecompileNext();
                     string arrayName = DecompileNext();
-                    return arrayName + "[" + keyName + "]";
+                    return $"{arrayName}[{keyName}]";
                 }
             }
 
@@ -44,7 +44,7 @@
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileNext() + ".Length";
+                    return $"{DecompileNext()}.Length";
                 }
             }
 

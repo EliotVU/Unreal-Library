@@ -6,9 +6,9 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, typeof(UProperty).Name);
+            _ParentNode = AddSectionNode(node, nameof(UProperty));
             var propertyFlagsNode = AddTextNode(_ParentNode,
-                "Property Flags:" + UnrealMethods.FlagToString(PropertyFlags)
+                $"Property Flags:{UnrealMethods.FlagToString(PropertyFlags)}"
             );
             propertyFlagsNode.ToolTipText = UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(
                 typeof(Flags.PropertyFlagsLO),
@@ -17,7 +17,7 @@ namespace UELib.Core
 
             if (RepOffset > 0)
             {
-                AddTextNode(_ParentNode, "Replication Offset:" + RepOffset);
+                AddTextNode(_ParentNode, $"Replication Offset:{RepOffset}");
             }
 
             base.InitNodes(_ParentNode);
@@ -30,14 +30,14 @@ namespace UELib.Core
                 return "ReturnValue";
             }
 
-            var which = base.GetImageName();
+            string which = base.GetImageName();
             if (IsPrivate())
             {
-                return which + "-Private";
+                return $"{which}-Private";
             }
             else if (IsProtected())
             {
-                return which + "-Protected";
+                return $"{which}-Protected";
             }
 
             return which;

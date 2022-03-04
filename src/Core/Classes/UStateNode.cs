@@ -6,11 +6,11 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, typeof(UState).Name);
+            _ParentNode = AddSectionNode(node, nameof(UState));
 
             if (GetType() == typeof(UState))
             {
-                var stateFlagsNode = AddTextNode(_ParentNode, "State Flags:" + UnrealMethods.FlagToString(_StateFlags));
+                var stateFlagsNode = AddTextNode(_ParentNode, $"State Flags:{UnrealMethods.FlagToString(_StateFlags)}");
                 stateFlagsNode.ToolTipText =
                     UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.StateFlags), _StateFlags));
             }
@@ -21,7 +21,7 @@ namespace UELib.Core
         protected override void AddChildren(TreeNode node)
         {
             base.AddChildren(node);
-            AddObjectListNode(node, "Functions", Functions, "UFunction");
+            AddObjectListNode(node, "Functions", Functions, nameof(UFunction));
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace UELib.Core
 {
@@ -19,7 +18,7 @@ namespace UELib.Core
                 {
                     // Empty default option parameter!
                     ++DefaultParameterToken._NextParamIndex;
-                    return String.Empty;
+                    return string.Empty;
                 }
             }
 
@@ -72,7 +71,7 @@ namespace UELib.Core
 
                     string condition = DecompileNext();
                     Decompiler._CanAddSemicolon = true;
-                    return "assert(" + condition + ")";
+                    return $"assert({condition})";
                 }
             }
 
@@ -93,7 +92,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return DecompileNext() + " == " + DecompileNext();
+                    return $"{DecompileNext()} == {DecompileNext()}";
                 }
             }
 
@@ -101,7 +100,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return DecompileNext() + " != " + DecompileNext();
+                    return $"{DecompileNext()} != {DecompileNext()}";
                 }
             }
 
@@ -122,7 +121,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " == " + DecompileNext();
+                    string output = $"{DecompileNext()} == {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -132,7 +131,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " == " + DecompileNext();
+                    string output = $"{DecompileNext()} == {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -142,7 +141,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " != " + DecompileNext();
+                    string output = $"{DecompileNext()} != {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -152,7 +151,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " != " + DecompileNext();
+                    string output = $"{DecompileNext()} != {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -247,7 +246,7 @@ namespace UELib.Core
                     string flagsStr = DecompileNext();
                     string classStr = DecompileNext();
 
-                    string templateStr = String.Empty;
+                    var templateStr = string.Empty;
                     // TODO: Corrigate Version
                     if (Package.Version > TemplateVersion)
                     {
@@ -255,8 +254,8 @@ namespace UELib.Core
                     }
 
                     // Handles: new [( [outer [, name [, flags]]] )] class [( template )]
-                    string output = String.Empty;
-                    bool addComma = false;
+                    var output = string.Empty;
+                    var addComma = false;
 
                     if (outerStr.Length != 0)
                     {
@@ -284,21 +283,21 @@ namespace UELib.Core
 
                     if (addComma)
                     {
-                        output = " (" + output + ")";
+                        output = $" ({output})";
                     }
 
                     if (classStr.Length != 0)
                     {
-                        output += " " + classStr;
+                        output += $" {classStr}";
                     }
 
                     if (templateStr.Length != 0)
                     {
-                        output += " (" + templateStr + ")";
+                        output += $" ({templateStr})";
                     }
 
                     Decompiler._CanAddSemicolon = true;
-                    return "new" + output;
+                    return $"new{output}";
                 }
             }
 

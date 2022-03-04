@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace UELib.Core
+﻿namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -18,7 +16,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileNext() + " = " + DecompileNext();
+                    return $"{DecompileNext()} = {DecompileNext()}";
                 }
             }
 
@@ -34,7 +32,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return String.Empty;
+                    return string.Empty;
                 }
             }
 
@@ -62,7 +60,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "((" + DecompileNext() + ") ? " + DecompileNext() + " : " + DecompileNext() + ")";
+                    return $"(({DecompileNext()}) ? {DecompileNext()} : {DecompileNext()})";
                 }
             }
         }

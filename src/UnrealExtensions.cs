@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace UELib
@@ -30,7 +29,7 @@ namespace UELib
 
         public static string FormatUnrealExtensionsAsFilter()
         {
-            string extensions = String.Empty;
+            var extensions = string.Empty;
             var exts = FormatUnrealExtensionsAsList();
             foreach (string ext in exts)
             {

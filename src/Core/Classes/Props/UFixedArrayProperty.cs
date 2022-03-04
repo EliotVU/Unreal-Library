@@ -38,7 +38,7 @@ namespace UELib.Core
         public override string GetFriendlyType()
         {
             // Just move to decompiling?
-            return base.GetFriendlyType() + "[" + Count + "]";
+            return $"{base.GetFriendlyType()}[{Count}]";
         }
     }
 }

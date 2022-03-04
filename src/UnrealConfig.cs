@@ -28,12 +28,12 @@ namespace UELib
 
         public static string PrintBeginBracket()
         {
-            return String.Format(PreBeginBracket, UDecompilingState.Tabs) + UnrealSyntax.BeginBracket;
+            return string.Format(PreBeginBracket, UDecompilingState.Tabs) + UnrealSyntax.BeginBracket;
         }
 
         public static string PrintEndBracket()
         {
-            return String.Format(PreEndBracket, UDecompilingState.Tabs) + UnrealSyntax.EndBracket;
+            return string.Format(PreEndBracket, UDecompilingState.Tabs) + UnrealSyntax.EndBracket;
         }
 
         public static string ToUFloat(this float value)

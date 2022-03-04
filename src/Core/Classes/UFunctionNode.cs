@@ -7,15 +7,15 @@ namespace UELib.Core
         protected override void InitNodes(TreeNode node)
         {
             node.ToolTipText = FormatHeader();
-            _ParentNode = AddSectionNode(node, typeof(UFunction).Name);
+            _ParentNode = AddSectionNode(node, nameof(UFunction));
 
-            var funcFlagsNode = AddTextNode(_ParentNode, "FunctionFlags:" + UnrealMethods.FlagToString(FunctionFlags));
+            var funcFlagsNode = AddTextNode(_ParentNode, $"FunctionFlags:{UnrealMethods.FlagToString(FunctionFlags)}");
             funcFlagsNode.ToolTipText =
                 UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.FunctionFlags), FunctionFlags));
 
             if (RepOffset > 0)
             {
-                AddTextNode(_ParentNode, "Replication Offset:" + RepOffset);
+                AddTextNode(_ParentNode, $"Replication Offset:{RepOffset}");
             }
 
             base.InitNodes(_ParentNode);
@@ -24,8 +24,8 @@ namespace UELib.Core
         protected override void AddChildren(TreeNode node)
         {
             base.AddChildren(node);
-            AddObjectListNode(node, "Parameters", Params, "UProperty");
-            AddObjectListNode(node, "Locals", Locals, "UProperty");
+            AddObjectListNode(node, "Parameters", Params, nameof(UProperty));
+            AddObjectListNode(node, "Locals", Locals, nameof(UProperty));
         }
 
         public override string GetImageName()
@@ -48,11 +48,11 @@ namespace UELib.Core
             {
                 if (IsPrivate())
                 {
-                    return name + "-Private";
+                    return $"{name}-Private";
                 }
                 else if (IsProtected())
                 {
-                    return name + "-Protected";
+                    return $"{name}-Protected";
                 }
 
                 return name;

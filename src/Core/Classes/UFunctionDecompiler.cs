@@ -29,13 +29,13 @@ namespace UELib.Core
                 code = e.Message;
             }
 
-            return FormatHeader() + (String.IsNullOrEmpty(code) ? ";" : code);
+            return FormatHeader() + (string.IsNullOrEmpty(code) ? ";" : code);
         }
 
         private string FormatFlags()
         {
-            string output = String.Empty;
-            bool isNormalFunction = true;
+            var output = string.Empty;
+            var isNormalFunction = true;
 
             if (HasFunctionFlag(Flags.FunctionFlags.Private))
             {
@@ -75,7 +75,7 @@ namespace UELib.Core
 
             if (HasFunctionFlag(Flags.FunctionFlags.Native))
             {
-                output += NativeToken > 0 ? FormatNative() + "(" + NativeToken + ") " : FormatNative() + " ";
+                output += NativeToken > 0 ? $"{FormatNative()}({NativeToken}) " : $"{FormatNative()} ";
             }
 
             if (HasFunctionFlag(Flags.FunctionFlags.Static))
@@ -165,7 +165,7 @@ namespace UELib.Core
                 }
                 else
                 {
-                    output += "operator(" + OperPrecedence + ") ";
+                    output += $"operator({OperPrecedence}) ";
                 }
 
                 isNormalFunction = false;
@@ -182,20 +182,16 @@ namespace UELib.Core
 
         protected override string FormatHeader()
         {
-            string output = String.Empty;
+            var output = string.Empty;
             // static function (string?:) Name(Parms)...
             if (HasFunctionFlag(Flags.FunctionFlags.Native))
             {
                 // Output native declaration.
-                output = String.Format("// Export U{0}::exec{1}(FFrame&, void* const)\r\n{2}",
-                    Outer.Name,
-                    Name,
-                    UDecompilingState.Tabs
-                );
+                output = $"// Export U{Outer.Name}::exec{Name}(FFrame&, void* const)\r\n{UDecompilingState.Tabs}";
             }
 
-            var metaData = DecompileMeta();
-            if (metaData != String.Empty)
+            string metaData = DecompileMeta();
+            if (metaData != string.Empty)
             {
                 output = metaData + "\r\n" + output;
             }
@@ -203,7 +199,7 @@ namespace UELib.Core
             output += FormatFlags()
                       + (ReturnProperty != null
                           ? ReturnProperty.GetFriendlyType() + " "
-                          : String.Empty)
+                          : string.Empty)
                       + FriendlyName + FormatParms();
             if (HasFunctionFlag(Flags.FunctionFlags.Const))
             {
@@ -215,24 +211,24 @@ namespace UELib.Core
 
         private string FormatParms()
         {
-            string output = "(";
+            var output = string.Empty;
             if (Params != null && Params.Any())
             {
                 var parameters = Params.Where((p) => p != ReturnProperty);
                 foreach (var parm in parameters)
                 {
-                    output += parm.Decompile() + (parm != parameters.Last() ? ", " : String.Empty);
+                    output += parm.Decompile() + (parm != parameters.Last() ? ", " : string.Empty);
                 }
             }
 
-            return output + ")";
+            return $"({output})";
         }
 
         private string FormatCode()
         {
             UDecompilingState.AddTabs(1);
             string locals = FormatLocals();
-            if (locals != String.Empty)
+            if (locals != string.Empty)
             {
                 locals += "\r\n";
             }
@@ -252,9 +248,9 @@ namespace UELib.Core
             }
 
             // Empty function!
-            if (String.IsNullOrEmpty(locals) && String.IsNullOrEmpty(code))
+            if (string.IsNullOrEmpty(locals) && string.IsNullOrEmpty(code))
             {
-                return String.Empty;
+                return string.Empty;
             }
 
             return UnrealConfig.PrintBeginBracket() + "\r\n" +

@@ -67,7 +67,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return String.Format("{0}", Value);
+                    return Value.ToString();
                 }
             }
 
@@ -141,7 +141,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return String.Format("{0:d}", Value);
+                    return $"{Value:d}";
                 }
             }
 
@@ -173,17 +173,17 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    UObject obj = Decompiler._Container.GetIndexObject(ObjectIndex);
+                    var obj = Decompiler._Container.GetIndexObject(ObjectIndex);
                     if (obj != null)
                     {
                         // class'objectclasshere'
                         string Class = obj.GetClassName();
-                        if (String.IsNullOrEmpty(Class))
+                        if (string.IsNullOrEmpty(Class))
                         {
                             Class = "class";
                         }
 
-                        return Class.ToLower() + "'" + obj.Name + "'";
+                        return $"{Class}'{obj.Name}'";
                     }
 
                     return "none";
@@ -202,7 +202,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "\'" + Decompiler._Container.Package.GetIndexName(NameIndex) + "\'";
+                    return $"'{Decompiler._Container.Package.GetIndexName(NameIndex)}'";
                 }
             }
 
@@ -218,7 +218,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "\"" + Value.Escape() + "\"";
+                    return $"\"{Value.Escape()}\"";
                 }
             }
 
@@ -234,7 +234,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "\"" + Value.Escape() + "\"";
+                    return $"\"{Value.Escape()}\"";
                 }
             }
 
@@ -259,7 +259,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "rot(" + Value.Pitch + ", " + Value.Yaw + ", " + Value.Roll + ")";
+                    return $"rot({Value.Pitch}, {Value.Yaw}, {Value.Roll})";
                 }
             }
 
@@ -279,7 +279,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return String.Format("vect({0}, {1}, {2})", X.ToUFloat(), Y.ToUFloat(), Z.ToUFloat());
+                    return $"vect({X.ToUFloat()}, {Y.ToUFloat()}, {Z.ToUFloat()})";
                 }
             }
         }

@@ -15,10 +15,7 @@ namespace UELib
         private UName _ClassName;
 
         [Pure]
-        public override string ClassName
-        {
-            get { return _ClassName; }
-        }
+        public override string ClassName => _ClassName;
 
         #endregion
 
