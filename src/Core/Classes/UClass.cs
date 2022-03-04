@@ -12,14 +12,14 @@ namespace UELib.Core
     {
         public struct Dependency : IUnrealSerializableClass
         {
-            public int Class{ get; private set; }
+            public int Class { get; private set; }
 
-            public void Serialize( IUnrealStream stream )
+            public void Serialize(IUnrealStream stream)
             {
                 // TODO: Implement code
             }
 
-            public void Deserialize( IUnrealStream stream )
+            public void Deserialize(IUnrealStream stream)
             {
                 Class = stream.ReadObjectIndex();
 
@@ -32,14 +32,15 @@ namespace UELib.Core
         }
 
         #region Serialized Members
-        private ulong   ClassFlags{ get; set; }
 
-        public string   ClassGuid{ get; private set; }
-        public UClass   Within{ get; private set; }
-        public UName    ConfigName{ get; private set; }
-        public UName    DLLBindName{ get; private set; }
-        public string   NativeClassName = String.Empty;
-        public bool     ForceScriptOrder;
+        private ulong ClassFlags { get; set; }
+
+        public string ClassGuid { get; private set; }
+        public UClass Within { get; private set; }
+        public UName ConfigName { get; private set; }
+        public UName DLLBindName { get; private set; }
+        public string NativeClassName = String.Empty;
+        public bool ForceScriptOrder;
 
         /// <summary>
         /// A list of class dependencies that this class depends on. Includes Imports and Exports.
@@ -92,89 +93,93 @@ namespace UELib.Core
         /// UE3
         /// </summary>
         public IList<int> ImplementedInterfaces;
+
         #endregion
 
         #region Script Members
-        public IList<UState> States{ get; protected set; }
+
+        public IList<UState> States { get; protected set; }
+
         #endregion
 
         #region Constructors
+
         protected override void Deserialize()
         {
             base.Deserialize();
 
-            if( Package.Version <= 61 )
+            if (Package.Version <= 61)
             {
                 var oldClassRecordSize = _Buffer.ReadInt32();
-                Record( "oldClassRecordSize", oldClassRecordSize );
+                Record("oldClassRecordSize", oldClassRecordSize);
             }
 
 #if BIOSHOCK
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
             {
                 var unknown = _Buffer.ReadInt32();
-                Record( "???Bioshock_Int32", unknown );
+                Record("???Bioshock_Int32", unknown);
             }
 #endif
 
             ClassFlags = _Buffer.ReadUInt32();
-            Record( "ClassFlags", (ClassFlags)ClassFlags );
+            Record("ClassFlags", (ClassFlags)ClassFlags);
 
             // Both were deprecated since then
             // TODO: Corrigate Version
-            if( Package.Version < 140 )
+            if (Package.Version < 140)
             {
                 ClassGuid = _Buffer.ReadGuid();
-                Record( "ClassGuid", ClassGuid );
+                Record("ClassGuid", ClassGuid);
 
                 // Use ReadCount because Vanguard does no longer uses indexes but an int32 for arrays.
                 var depSize = ReadCount();
-                Record( "DepSize", depSize );
-                if( depSize > 0 )
+                Record("DepSize", depSize);
+                if (depSize > 0)
                 {
-                    ClassDependencies = new UArray<Dependency>( _Buffer, depSize );
-                    Record( "ClassDependencies", ClassDependencies );
+                    ClassDependencies = new UArray<Dependency>(_Buffer, depSize);
+                    Record("ClassDependencies", ClassDependencies);
                 }
 
-                PackageImports = DeserializeGroup( "PackageImports" );
+                PackageImports = DeserializeGroup("PackageImports");
             }
 
-            if( Package.Version >= 62 )
+            if (Package.Version >= 62)
             {
                 // TODO: Corrigate Version
                 // At least since Bioshock(140) - 547(APB)
-                if( Package.Version >= 140 && Package.Version < 547  )
+                if (Package.Version >= 140 && Package.Version < 547)
                 {
                     var unknown = _Buffer.ReadByte();
-                    Record( "???", unknown );
+                    Record("???", unknown);
                 }
 
                 // Class Name Extends Super.Name Within _WithinIndex
                 //      Config(_ConfigIndex);
                 Within = _Buffer.ReadObject() as UClass;
-                Record( "Within", Within );
+                Record("Within", Within);
                 ConfigName = _Buffer.ReadNameReference();
-                Record( "ConfigName", ConfigName );
+                Record("ConfigName", ConfigName);
 
                 const int vHideCategoriesOldOrder = 539;
                 var isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
 #if TERA
-                            || Package.Build == UnrealPackage.GameBuild.BuildName.Tera 
-#endif           
+                                               || Package.Build == UnrealPackage.GameBuild.BuildName.Tera
+#endif
                     ;
 
                 // TODO: Corrigate Version
-                if( Package.Version >= 100 )
+                if (Package.Version >= 100)
                 {
                     // TODO: Corrigate Version
-                    if( Package.Version >= 220 )
+                    if (Package.Version >= 220)
                     {
                         // TODO: Corrigate Version
-                        if( (isHideCategoriesOldOrder && !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed)
-                            #if TRANSFORMERS
-                                || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers 
-                            #endif
-                            )
+                        if ((isHideCategoriesOldOrder && !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed)
+#if TRANSFORMERS
+                            || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
+#endif
+                           )
                         {
                             DeserializeHideCategories();
                         }
@@ -183,127 +188,127 @@ namespace UELib.Core
 
                         // RoboBlitz(369)
                         // TODO: Corrigate Version
-                        if( Package.Version >= 369 )
+                        if (Package.Version >= 369)
                         {
                             DeserializeInterfaces();
                         }
                     }
 
-                    if( !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed )
+                    if (!Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed)
                     {
-                        if( Package.Version >= 603
- #if TERA
+                        if (Package.Version >= 603
+#if TERA
                             && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
-                            )
+                           )
                         {
-                            DontSortCategories = DeserializeGroup( "DontSortCategories" );
+                            DontSortCategories = DeserializeGroup("DontSortCategories");
                         }
 
                         // TODO: Corrigate Version
-                        if( Package.Version < 220 || !isHideCategoriesOldOrder )
+                        if (Package.Version < 220 || !isHideCategoriesOldOrder)
                         {
                             DeserializeHideCategories();
                         }
 
                         // TODO: Corrigate Version
-                        if( Package.Version >= 185 )
+                        if (Package.Version >= 185)
                         {
                             // 490:GoW1, 576:CrimeCraft
-                            if( (!HasClassFlag( Flags.ClassFlags.CollapseCategories ))
+                            if ((!HasClassFlag(Flags.ClassFlags.CollapseCategories))
                                 || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576)
                             {
-                                AutoExpandCategories = DeserializeGroup( "AutoExpandCategories" );
+                                AutoExpandCategories = DeserializeGroup("AutoExpandCategories");
                             }
 
-                            if( Package.Version > 670 )
+                            if (Package.Version > 670)
                             {
-                                AutoCollapseCategories = DeserializeGroup( "AutoCollapseCategories" );
+                                AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
 
-                                if( Package.Version >= 749
-                                    #if SPECIALFORCE2
-                                        && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
-                                    #endif
-                                    )
+                                if (Package.Version >= 749
+#if SPECIALFORCE2
+                                    && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
+#endif
+                                   )
                                 {
                                     // bForceScriptOrder
                                     ForceScriptOrder = _Buffer.ReadInt32() > 0;
-                                    Record( "ForceScriptOrder", ForceScriptOrder );
+                                    Record("ForceScriptOrder", ForceScriptOrder);
 
 #if DISHONORED
-                                    if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
+                                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                                     {
                                         var unk = _Buffer.ReadNameIndex();
-                                        Record( "??DISHONORED_NameIndex", Package.Names[unk] );
+                                        Record("??DISHONORED_NameIndex", Package.Names[unk]);
                                     }
 #endif
 
-                                    if( Package.Version >= UnrealPackage.VCLASSGROUP )
+                                    if (Package.Version >= UnrealPackage.VCLASSGROUP)
                                     {
 #if DISHONORED
-                                        if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
+                                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                                         {
                                             NativeClassName = _Buffer.ReadText();
-                                            Record( "NativeClassName", NativeClassName );
+                                            Record("NativeClassName", NativeClassName);
                                             goto skipClassGroups;
                                         }
 #endif
-                                        ClassGroups = DeserializeGroup( "ClassGroups" );
-                                        if( Package.Version >= 813 )
+                                        ClassGroups = DeserializeGroup("ClassGroups");
+                                        if (Package.Version >= 813)
                                         {
                                             NativeClassName = _Buffer.ReadText();
-                                            Record( "NativeClassName", NativeClassName );
+                                            Record("NativeClassName", NativeClassName);
                                         }
                                     }
 #if DISHONORED
-                                    skipClassGroups:;
+                                    skipClassGroups: ;
 #endif
                                 }
                             }
 
                             // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
-                            if( Package.Version > 575 && Package.Version < 674 
+                            if (Package.Version > 575 && Package.Version < 674
 #if TERA
-                                && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+                                                      && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
-                                )
+                               )
                             {
                                 int unk2 = _Buffer.ReadInt32();
-                                Record( "??Int32", unk2 );
+                                Record("??Int32", unk2);
 
-                                #if SINGULARITY
-                                if( Package.Build == UnrealPackage.GameBuild.BuildName.Singularity )
+#if SINGULARITY
+                                if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity)
                                 {
-                                    _Buffer.Skip( 8 );
+                                    _Buffer.Skip(8);
                                 }
-                                #endif
+#endif
                             }
                         }
                     }
 
-                    if( Package.Version >= UnrealPackage.VDLLBIND )
+                    if (Package.Version >= UnrealPackage.VDLLBIND)
                     {
                         DLLBindName = _Buffer.ReadNameReference();
-                        Record( "DLLBindName", DLLBindName );
+                        Record("DLLBindName", DLLBindName);
 #if REMEMBERME
-                        if( Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe )
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
                         {
                             var unknownName = _Buffer.ReadNameReference();
-                            Record( "??RM_Name", unknownName );
+                            Record("??RM_Name", unknownName);
                         }
 #endif
 #if DISHONORED
-                        if( Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored )
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                         {
-                            ClassGroups = DeserializeGroup( "ClassGroups" );
+                            ClassGroups = DeserializeGroup("ClassGroups");
                         }
 #endif
 #if BORDERLANDS2
-                        if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
                         {
                             var unkval = _Buffer.ReadByte();
-                            Record( "??BL2_Byte", unkval );
+                            Record("??BL2_Byte", unkval);
                         }
 #endif
                     }
@@ -312,15 +317,15 @@ namespace UELib.Core
 
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
             // TODO: Corrigate Version
-            if( Package.Version >= 322 )
+            if (Package.Version >= 322)
             {
                 Default = _Buffer.ReadObject();
-                Record( "Default", Default );
+                Record("Default", Default);
             }
             else
             {
 #if SWAT4
-                if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
                 {
                     // We are done here!
                     return;
@@ -334,98 +339,103 @@ namespace UELib.Core
         {
             // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
             int interfacesCount = _Buffer.ReadInt32();
-            Record( "Implements.Count", interfacesCount );
-            if( interfacesCount <= 0 )
+            Record("Implements.Count", interfacesCount);
+            if (interfacesCount <= 0)
                 return;
 
-            AssertEOS( interfacesCount*8, "Implemented" );
-            ImplementedInterfaces = new List<int>( interfacesCount );
-            for( int i = 0; i < interfacesCount; ++ i )
+            AssertEOS(interfacesCount * 8, "Implemented");
+            ImplementedInterfaces = new List<int>(interfacesCount);
+            for (int i = 0; i < interfacesCount; ++i)
             {
                 int interfaceIndex = _Buffer.ReadInt32();
-                Record( "Implemented.InterfaceIndex", interfaceIndex );
+                Record("Implemented.InterfaceIndex", interfaceIndex);
                 int typeIndex = _Buffer.ReadInt32();
-                Record( "Implemented.TypeIndex", typeIndex );
-                ImplementedInterfaces.Add( interfaceIndex );
+                Record("Implemented.TypeIndex", typeIndex);
+                ImplementedInterfaces.Add(interfaceIndex);
             }
         }
 
         private void DeserializeHideCategories()
         {
-            HideCategories = DeserializeGroup( "HideCategories" );
+            HideCategories = DeserializeGroup("HideCategories");
         }
 
         private void DeserializeComponentsMap()
         {
             int componentsCount = _Buffer.ReadInt32();
-            Record( "Components.Count", componentsCount );
-            if( componentsCount <= 0 )
+            Record("Components.Count", componentsCount);
+            if (componentsCount <= 0)
                 return;
 
             // NameIndex/ObjectIndex
-            int numBytes = componentsCount*12;
-            AssertEOS( numBytes, "Components" );
-            _Buffer.Skip( numBytes );
+            int numBytes = componentsCount * 12;
+            AssertEOS(numBytes, "Components");
+            _Buffer.Skip(numBytes);
         }
 
         protected override void FindChildren()
         {
             base.FindChildren();
             States = new List<UState>();
-            for( var child = Children; child != null; child = child.NextField )
+            for (var child = Children; child != null; child = child.NextField)
             {
-                if( child.IsClassType( "State" ) )
+                if (child.IsClassType("State"))
                 {
-                    States.Insert( 0, (UState)child );
+                    States.Insert(0, (UState)child);
                 }
             }
         }
+
         #endregion
 
         #region Methods
-        private IList<int> DeserializeGroup( string groupName = "List", int count = -1 )
+
+        private IList<int> DeserializeGroup(string groupName = "List", int count = -1)
         {
-            if( count == -1 )
+            if (count == -1)
             {
                 count = ReadCount();
             }
 
-            Record( String.Format( "{0}.Count", groupName ), count );
-            if( count > 0 )
+            Record(String.Format("{0}.Count", groupName), count);
+            if (count > 0)
             {
-                var groupList = new List<int>( count );
-                for( int i = 0; i < count; ++ i )
+                var groupList = new List<int>(count);
+                for (int i = 0; i < count; ++i)
                 {
                     int index = _Buffer.ReadNameIndex();
-                    groupList.Add( index );
+                    groupList.Add(index);
 
-                    Record( String.Format( "{0}({1})", groupName, Package.GetIndexName( index ) ), index );
+                    Record(String.Format("{0}({1})", groupName, Package.GetIndexName(index)), index);
                 }
+
                 return groupList;
             }
+
             return null;
         }
 
-        public bool HasClassFlag( ClassFlags flag )
+        public bool HasClassFlag(ClassFlags flag)
         {
             return (ClassFlags & (uint)flag) != 0;
         }
 
-        public bool HasClassFlag( uint flag )
+        public bool HasClassFlag(uint flag)
         {
             return (ClassFlags & flag) != 0;
         }
 
         public bool IsClassInterface()
         {
-            return (Super != null && String.Compare( Super.Name, "Interface", StringComparison.OrdinalIgnoreCase ) == 0)
-                || String.Compare( Name, "Interface", StringComparison.OrdinalIgnoreCase ) == 0;
+            return (Super != null && String.Compare(Super.Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0)
+                   || String.Compare(Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         public bool IsClassWithin()
         {
-            return Within != null && !string.Equals( Within.Name, "Object", StringComparison.OrdinalIgnoreCase );
+            return Within != null && !string.Equals(Within.Name, "Object", StringComparison.OrdinalIgnoreCase);
         }
+
         #endregion
     }
 }

@@ -10,10 +10,10 @@ namespace UELib.Engine
 
         public IEnumerable<string> ExportableExtensions
         {
-            get{ return new[]{WAVExtension}; }
+            get { return new[] { WAVExtension }; }
         }
 
-        private string SoundFormat{ get; set; }
+        private string SoundFormat { get; set; }
 
         private byte[] _SoundBuffer;
 
@@ -25,15 +25,16 @@ namespace UELib.Engine
         public bool CompatableExport()
         {
             return Package.Version >= 61 && Package.Version <= 129
-                && SoundFormat != null && SoundFormat.ToLower() == WAVExtension && _SoundBuffer != null;
+                                         && SoundFormat != null && SoundFormat.ToLower() == WAVExtension &&
+                                         _SoundBuffer != null;
         }
 
-        public void SerializeExport( string desiredExportExtension, System.IO.Stream exportStream )
+        public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
         {
-            switch( desiredExportExtension )
+            switch (desiredExportExtension)
             {
                 case WAVExtension:
-                    exportStream.Write( _SoundBuffer, 0, _SoundBuffer.Length );
+                    exportStream.Write(_SoundBuffer, 0, _SoundBuffer.Length);
                     break;
             }
         }
@@ -43,27 +44,27 @@ namespace UELib.Engine
             base.Deserialize();
 
             // Format
-            SoundFormat = Package.GetIndexName( _Buffer.ReadNameIndex() );
-            Record( "SoundFormat", SoundFormat );
+            SoundFormat = Package.GetIndexName(_Buffer.ReadNameIndex());
+            Record("SoundFormat", SoundFormat);
 #if UT
-            if( (Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
-                || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/ )
+            if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
+                 || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/)
             {
                 var unknownFloat = _Buffer.ReadFloat();
-                Record( "???", unknownFloat );
+                Record("???", unknownFloat);
             }
 #endif
-            if( Package.Version >= 63 )
+            if (Package.Version >= 63)
             {
                 // OffsetNext
-                _Buffer.Skip( 4 );
-                Record( "OffsetNext" );
+                _Buffer.Skip(4);
+                Record("OffsetNext");
             }
 
             var size = _Buffer.ReadIndex();
-            Record( "soundSize", size );
+            Record("soundSize", size);
             // Resource Interchange File Format
-            _Buffer.Read( _SoundBuffer = new byte[size], 0, size );
+            _Buffer.Read(_SoundBuffer = new byte[size], 0, size);
         }
     }
 }

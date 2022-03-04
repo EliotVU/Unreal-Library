@@ -8,7 +8,7 @@ namespace UELib.Core
         {
             public class LetToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // A = B
                     DeserializeNext();
@@ -40,21 +40,21 @@ namespace UELib.Core
 
             public class ConditionalToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Condition
                     DeserializeNext();
 
                     // Size. Used to skip ? if Condition is False.
                     stream.ReadUInt16();
-                    Decompiler.AlignSize( sizeof(ushort) );
+                    Decompiler.AlignSize(sizeof(ushort));
 
                     // If TRUE expression
                     DeserializeNext();
 
                     // Size. Used to skip : if Condition is True.
                     stream.ReadUInt16();
-                    Decompiler.AlignSize( sizeof(ushort) );
+                    Decompiler.AlignSize(sizeof(ushort));
 
                     // If FALSE expression
                     DeserializeNext();

@@ -6,7 +6,7 @@
         {
             public class CastToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     DeserializeNext();
                 }
@@ -19,7 +19,7 @@
 
             public class PrimitiveCastToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     DeserializeNext();
                 }
@@ -34,12 +34,12 @@
             {
                 public UObject CastedObject;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     CastedObject = stream.ReadObject();
                     Decompiler.AlignObjectSize();
 
-                    base.Deserialize( stream );
+                    base.Deserialize(stream);
                 }
             }
 
@@ -59,7 +59,9 @@
                 }
             }
 
-            public class InterfaceCastToken : ObjectCastToken{}
+            public class InterfaceCastToken : ObjectCastToken
+            {
+            }
 
             public class RotatorToVectorToken : CastToken
             {
@@ -346,8 +348,13 @@
                 }
             }
 
-            public class InterfaceToObjectToken : CastToken{}
-            public class ObjectToInterfaceToken : CastToken{}
+            public class InterfaceToObjectToken : CastToken
+            {
+            }
+
+            public class ObjectToInterfaceToken : CastToken
+            {
+            }
 
             public class DelegateToStringToken : CastToken
             {

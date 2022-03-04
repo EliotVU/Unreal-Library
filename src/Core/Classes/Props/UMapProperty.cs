@@ -11,8 +11,10 @@ namespace UELib.Core
     public class UMapProperty : UProperty
     {
         #region Serialized Members
+
         private int _Key;
         private int _Value;
+
         #endregion
 
         /// <summary>

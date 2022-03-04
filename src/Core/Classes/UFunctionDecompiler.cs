@@ -24,11 +24,12 @@ namespace UELib.Core
             {
                 code = FormatCode();
             }
-            catch( Exception e )
+            catch (Exception e)
             {
                 code = e.Message;
             }
-            return FormatHeader() + (String.IsNullOrEmpty( code ) ? ";" : code);
+
+            return FormatHeader() + (String.IsNullOrEmpty(code) ? ";" : code);
         }
 
         private string FormatFlags()
@@ -36,23 +37,23 @@ namespace UELib.Core
             string output = String.Empty;
             bool isNormalFunction = true;
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Private ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Private))
             {
                 output += "private ";
             }
-            else if( HasFunctionFlag( Flags.FunctionFlags.Protected ) )
+            else if (HasFunctionFlag(Flags.FunctionFlags.Protected))
             {
                 output += "protected ";
             }
 
-            if( Package.Version >= UnrealPackage.VDLLBIND && HasFunctionFlag( Flags.FunctionFlags.DLLImport ) )
+            if (Package.Version >= UnrealPackage.VDLLBIND && HasFunctionFlag(Flags.FunctionFlags.DLLImport))
             {
                 output += "dllimport ";
             }
 
-            if( Package.Version > 180 && HasFunctionFlag( Flags.FunctionFlags.Net ) )
+            if (Package.Version > 180 && HasFunctionFlag(Flags.FunctionFlags.Net))
             {
-                if( HasFunctionFlag( Flags.FunctionFlags.NetReliable ) )
+                if (HasFunctionFlag(Flags.FunctionFlags.NetReliable))
                 {
                     output += "reliable ";
                 }
@@ -61,28 +62,28 @@ namespace UELib.Core
                     output += "unreliable ";
                 }
 
-                if( HasFunctionFlag( Flags.FunctionFlags.NetClient ) )
+                if (HasFunctionFlag(Flags.FunctionFlags.NetClient))
                 {
                     output += "client ";
                 }
 
-                if( HasFunctionFlag( Flags.FunctionFlags.NetServer ) )
+                if (HasFunctionFlag(Flags.FunctionFlags.NetServer))
                 {
                     output += "server ";
                 }
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Native ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Native))
             {
                 output += NativeToken > 0 ? FormatNative() + "(" + NativeToken + ") " : FormatNative() + " ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Static ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Static))
             {
                 output += "static ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Final ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Final))
             {
                 output += "final ";
             }
@@ -90,75 +91,75 @@ namespace UELib.Core
             // NoExport is no longer available in UE3+ builds,
             // - instead it is replaced with (FunctionFlags.OptionalParameters)
             // - as an indicator that the function has optional parameters.
-            if( HasFunctionFlag( Flags.FunctionFlags.NoExport ) && Package.Version <= 220 )
+            if (HasFunctionFlag(Flags.FunctionFlags.NoExport) && Package.Version <= 220)
             {
                 output += "noexport ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.K2Call ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.K2Call))
             {
                 output += "k2call ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.K2Override ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
             {
                 output += "k2override ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.K2Pure ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
             {
                 output += "k2pure ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Invariant ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Invariant))
             {
                 output += "invariant ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Iterator ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Iterator))
             {
                 output += "iterator ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Latent ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Latent))
             {
                 output += "latent ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Singular ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Singular))
             {
                 output += "singular ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Simulated ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Simulated))
             {
                 output += "simulated ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Exec ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Exec))
             {
                 output += "exec ";
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Event ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Event))
             {
                 output += "event ";
                 isNormalFunction = false;
             }
 
-            if( HasFunctionFlag( Flags.FunctionFlags.Delegate ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Delegate))
             {
                 output += "delegate ";
                 isNormalFunction = false;
             }
 
-            if( IsOperator() )
+            if (IsOperator())
             {
-                if( IsPre() )
+                if (IsPre())
                 {
                     output += "preoperator ";
                 }
-                else if( IsPost() )
+                else if (IsPost())
                 {
                     output += "postoperator ";
                 }
@@ -166,14 +167,16 @@ namespace UELib.Core
                 {
                     output += "operator(" + OperPrecedence + ") ";
                 }
+
                 isNormalFunction = false;
             }
 
             // Don't add function if it's an operator or event or delegate function type!
-            if( isNormalFunction )
+            if (isNormalFunction)
             {
                 output += "function ";
             }
+
             return output;
         }
 
@@ -181,10 +184,10 @@ namespace UELib.Core
         {
             string output = String.Empty;
             // static function (string?:) Name(Parms)...
-            if( HasFunctionFlag( Flags.FunctionFlags.Native ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Native))
             {
                 // Output native declaration.
-                output = String.Format( "// Export U{0}::exec{1}(FFrame&, void* const)\r\n{2}",
+                output = String.Format("// Export U{0}::exec{1}(FFrame&, void* const)\r\n{2}",
                     Outer.Name,
                     Name,
                     UDecompilingState.Tabs
@@ -192,69 +195,72 @@ namespace UELib.Core
             }
 
             var metaData = DecompileMeta();
-            if( metaData != String.Empty )
+            if (metaData != String.Empty)
             {
                 output = metaData + "\r\n" + output;
             }
 
             output += FormatFlags()
-                + (ReturnProperty != null
-                    ? ReturnProperty.GetFriendlyType() + " "
-                    : String.Empty)
-                + FriendlyName + FormatParms();
-            if( HasFunctionFlag( Flags.FunctionFlags.Const ) )
+                      + (ReturnProperty != null
+                          ? ReturnProperty.GetFriendlyType() + " "
+                          : String.Empty)
+                      + FriendlyName + FormatParms();
+            if (HasFunctionFlag(Flags.FunctionFlags.Const))
             {
                 output += " const";
             }
+
             return output;
         }
 
         private string FormatParms()
         {
             string output = "(";
-            if( Params != null && Params.Any() )
+            if (Params != null && Params.Any())
             {
-                var parameters = Params.Where( (p) => p != ReturnProperty );
-                foreach( var parm in parameters )
+                var parameters = Params.Where((p) => p != ReturnProperty);
+                foreach (var parm in parameters)
                 {
                     output += parm.Decompile() + (parm != parameters.Last() ? ", " : String.Empty);
                 }
             }
+
             return output + ")";
         }
 
         private string FormatCode()
         {
-            UDecompilingState.AddTabs( 1 );
+            UDecompilingState.AddTabs(1);
             string locals = FormatLocals();
-            if( locals != String.Empty )
+            if (locals != String.Empty)
             {
                 locals += "\r\n";
             }
+
             string code;
             try
             {
                 code = DecompileScript();
             }
-            catch( Exception e )
+            catch (Exception e)
             {
                 code = e.Message;
             }
             finally
             {
-                UDecompilingState.RemoveTabs( 1 );
+                UDecompilingState.RemoveTabs(1);
             }
 
             // Empty function!
-            if( String.IsNullOrEmpty( locals ) && String.IsNullOrEmpty( code ) )
+            if (String.IsNullOrEmpty(locals) && String.IsNullOrEmpty(code))
             {
                 return String.Empty;
             }
 
             return UnrealConfig.PrintBeginBracket() + "\r\n" +
-                locals +
-                code +
-                UnrealConfig.PrintEndBracket();
+                   locals +
+                   code +
+                   UnrealConfig.PrintEndBracket();
         }
     }
 }

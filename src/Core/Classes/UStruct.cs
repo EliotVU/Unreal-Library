@@ -17,43 +17,52 @@ namespace UELib.Core
 
         // Version might actually be correct!
         private const uint VCppText = 129;
+
         // TODO: Corrigate version
         private const uint VStructFlags = 102;
+
         // TODO: Corrigate version
         private const uint VProcessedText = 129;
+
         // TODO: Corrigate version
         private const uint VFriendlyNameMoved = 154;
+
         // TODO: Corrigate version
         private const uint VStructFlagsMoved = 154;
 
         #region Serialized Members
-        public UTextBuffer  ScriptText{ get; private set; }
-        public UTextBuffer  ProcessedText{ get; private set; }
-        public UTextBuffer  CppText{ get; private set; }
-        public UName        FriendlyName{ get; protected set; }
 
-        public int          Line;
-        public int          TextPos;
+        public UTextBuffer ScriptText { get; private set; }
+        public UTextBuffer ProcessedText { get; private set; }
+        public UTextBuffer CppText { get; private set; }
+        public UName FriendlyName { get; protected set; }
 
-        protected uint      StructFlags{ get; set; }
-        protected UField    Children{ get; private set; }
-        protected int       DataScriptSize{ get; private set; }
-        private int         ByteScriptSize{ get; set; }
+        public int Line;
+        public int TextPos;
+
+        protected uint StructFlags { get; set; }
+        protected UField Children { get; private set; }
+        protected int DataScriptSize { get; private set; }
+        private int ByteScriptSize { get; set; }
+
         #endregion
 
         #region Script Members
-        public IList<UConst>    Constants{ get; private set; }
 
-        public IList<UEnum>     Enums{ get; private set; }
+        public IList<UConst> Constants { get; private set; }
 
-        public IList<UStruct>   Structs{ get; private set; }
+        public IList<UEnum> Enums { get; private set; }
 
-        public List<UProperty>  Variables{ get; private set; }
+        public IList<UStruct> Structs { get; private set; }
 
-        public List<UProperty>  Locals{ get; private set; }
+        public List<UProperty> Variables { get; private set; }
+
+        public List<UProperty> Locals { get; private set; }
+
         #endregion
 
         #region General Members
+
         /// <summary>
         /// Default Properties buffer offset
         /// </summary>
@@ -61,119 +70,118 @@ namespace UELib.Core
 
         //protected uint _CodePosition;
 
-        public long ScriptOffset
-        {
-            get;
-            private set;
-        }
+        public long ScriptOffset { get; private set; }
 
         public UByteCodeDecompiler ByteCodeManager;
+
         #endregion
 
         #region Constructors
+
         protected override void Deserialize()
         {
             base.Deserialize();
 
             // --SuperField
-            if( !Package.IsConsoleCooked() )
+            if (!Package.IsConsoleCooked())
             {
                 ScriptText = _Buffer.ReadObject() as UTextBuffer;
-                Record( "ScriptText", ScriptText );
+                Record("ScriptText", ScriptText);
             }
 
             Children = _Buffer.ReadObject() as UField;
-            Record( "Children", Children );
+            Record("Children", Children);
 
-            if( Package.Version < VFriendlyNameMoved )
+            if (Package.Version < VFriendlyNameMoved)
             {
                 // Moved to UFunction in UE3
                 FriendlyName = _Buffer.ReadNameReference();
-                Record( "FriendlyName", FriendlyName );
+                Record("FriendlyName", FriendlyName);
             }
 
-            if( Package.Version >= VStructFlags )
+            if (Package.Version >= VStructFlags)
             {
-                if( Package.Version >= VCppText && !Package.IsConsoleCooked()
+                if (Package.Version >= VCppText && !Package.IsConsoleCooked()
 #if VANGUARD
-                    && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
+                                                && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
 #endif
-                    )
+                   )
                 {
                     CppText = _Buffer.ReadObject() as UTextBuffer;
-                    Record( "CppText", CppText );
+                    Record("CppText", CppText);
                 }
 
-                if( Package.Version < VStructFlagsMoved )
+                if (Package.Version < VStructFlagsMoved)
                 {
                     StructFlags = _Buffer.ReadUInt32();
-                    Record( "StructFlags", (StructFlags)StructFlags );
+                    Record("StructFlags", (StructFlags)StructFlags);
 
                     // Note: Bioshock inherits from the SWAT4's UE2 build.
 #if BIOSHOCK
-                    if( Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock )
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
                     {
                         // TODO: Unknown data, might be related to the above Swat4 data.
                         var unknown = _Buffer.ReadObjectIndex();
-                        Record( "???", TryGetIndexObject( unknown ) );
+                        Record("???", TryGetIndexObject(unknown));
                     }
 #endif
                     // This is high likely to be only for "Irrational Games" builds.
-                    if( Package.Version >= VProcessedText
+                    if (Package.Version >= VProcessedText
 #if VANGUARD
                         && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
 #endif
-                        )
+                       )
                     {
                         ProcessedText = _Buffer.ReadObject() as UTextBuffer;
-                        Record( "ProcessedText", ProcessedText );
+                        Record("ProcessedText", ProcessedText);
                     }
                 }
             }
 
-            if( !Package.IsConsoleCooked() )
+            if (!Package.IsConsoleCooked())
             {
                 Line = _Buffer.ReadInt32();
-                Record( "Line", Line );
+                Record("Line", Line);
                 TextPos = _Buffer.ReadInt32();
-                Record( "TextPos", TextPos );
+                Record("TextPos", TextPos);
             }
 
 #if TRANSFORMERS
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
             {
                 // The line where the struct's code body ends.
-                _Buffer.Skip( 4 );
+                _Buffer.Skip(4);
             }
 #endif
 
             ByteScriptSize = _Buffer.ReadInt32();
-            Record( "ByteScriptSize", ByteScriptSize );
+            Record("ByteScriptSize", ByteScriptSize);
             const int vDataScriptSize = 639;
             var hasFixedScriptSize = Package.Version >= vDataScriptSize
-                #if TRANSFORMERS
-                    && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers 
-                #endif
-            ;
-            if( hasFixedScriptSize )
+#if TRANSFORMERS
+                                     && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+#endif
+                ;
+            if (hasFixedScriptSize)
             {
                 DataScriptSize = _Buffer.ReadInt32();
-                Record( "DataScriptSize", DataScriptSize );
+                Record("DataScriptSize", DataScriptSize);
             }
             else
             {
                 DataScriptSize = ByteScriptSize;
             }
+
             ScriptOffset = _Buffer.Position;
 
             // Code Statements
-            if( DataScriptSize <= 0 )
+            if (DataScriptSize <= 0)
                 return;
 
-            ByteCodeManager = new UByteCodeDecompiler( this );
-            if( hasFixedScriptSize )
+            ByteCodeManager = new UByteCodeDecompiler(this);
+            if (hasFixedScriptSize)
             {
-                _Buffer.Skip( DataScriptSize );
+                _Buffer.Skip(DataScriptSize);
             }
             else
             {
@@ -182,13 +190,14 @@ namespace UELib.Core
                 const int mohaVersion = 421;
 
                 var isTrueScriptSize = Package.Version == mohaVersion ||
-                (
-                    Package.Version >= UnrealPackage.VINDEXDEPRECATED
-                    && (Package.Version < moonbaseVersion && Package.Version > shadowcomplexVersion )
-                );
-                if( isTrueScriptSize )
+                                       (
+                                           Package.Version >= UnrealPackage.VINDEXDEPRECATED
+                                           && (Package.Version < moonbaseVersion &&
+                                               Package.Version > shadowcomplexVersion)
+                                       );
+                if (isTrueScriptSize)
                 {
-                    _Buffer.Skip( DataScriptSize );
+                    _Buffer.Skip(DataScriptSize);
                 }
                 else
                 {
@@ -205,16 +214,16 @@ namespace UELib.Core
         public override void PostInitialize()
         {
             base.PostInitialize();
-            if( Children == null )
+            if (Children == null)
                 return;
 
             try
             {
                 FindChildren();
             }
-            catch( InvalidCastException ice )
+            catch (InvalidCastException ice)
             {
-                Console.WriteLine( ice.Message );
+                Console.WriteLine(ice.Message);
             }
         }
 
@@ -225,51 +234,54 @@ namespace UELib.Core
             Structs = new List<UStruct>();
             Variables = new List<UProperty>();
 
-            for( var child = Children; child != null; child = child.NextField )
+            for (var child = Children; child != null; child = child.NextField)
             {
-                if( child.GetType().IsSubclassOf( typeof(UProperty) ) )
+                if (child.GetType().IsSubclassOf(typeof(UProperty)))
                 {
-                    Variables.Add( (UProperty)child );
+                    Variables.Add((UProperty)child);
                 }
-                else if( child.IsClassType( "Const" ) )
+                else if (child.IsClassType("Const"))
                 {
-                    Constants.Insert( 0, (UConst)child );
+                    Constants.Insert(0, (UConst)child);
                 }
-                else if( child.IsClassType( "Enum" ) )
+                else if (child.IsClassType("Enum"))
                 {
-                    Enums.Insert( 0, (UEnum)child );
+                    Enums.Insert(0, (UEnum)child);
                 }
-                else if( child is UStruct && ((UStruct)(child)).IsPureStruct() )
+                else if (child is UStruct && ((UStruct)(child)).IsPureStruct())
                 {
-                    Structs.Insert( 0, (UStruct)child );
+                    Structs.Insert(0, (UStruct)child);
                 }
             }
 
             // TODO: Introduced since UDK 2011-06+(not sure on exaclty which month).
-            if( (Package.Version >= 805 && GetType() == typeof(UState)) || GetType() == typeof(UFunction) )
+            if ((Package.Version >= 805 && GetType() == typeof(UState)) || GetType() == typeof(UFunction))
             {
                 Locals = new List<UProperty>();
-                foreach( var local in Variables )
+                foreach (var local in Variables)
                 {
-                    if( !local.IsParm() )
+                    if (!local.IsParm())
                     {
-                        Locals.Add( local );
+                        Locals.Add(local);
                     }
                 }
             }
         }
+
         #endregion
 
         #region Methods
-        public bool HasStructFlag( StructFlags flag )
+
+        public bool HasStructFlag(StructFlags flag)
         {
             return (StructFlags & (uint)flag) != 0;
         }
 
         public bool IsPureStruct()
         {
-            return IsClassType( "Struct" ) || IsClassType( "ScriptStruct" );
+            return IsClassType("Struct") || IsClassType("ScriptStruct");
         }
+
         #endregion
     }
 }

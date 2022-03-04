@@ -52,7 +52,7 @@ namespace UELib.Cache
         /// Creates a new instance of the UELib.Cache.UnrealCache class with the specified cache path.
         /// </summary>
         /// <param name="cachePath">A full directory path to the cache folder of a specific game, not including the cache ini file.</param>
-        public UnrealCache( string cachePath )
+        public UnrealCache(string cachePath)
         {
             _CachePath = cachePath;
         }
@@ -67,24 +67,24 @@ namespace UELib.Cache
             string[] cacheinfo;
             try
             {
-                cacheinfo = File.ReadAllLines( _CachePath + CacheIniName );
+                cacheinfo = File.ReadAllLines(_CachePath + CacheIniName);
             }
-            catch( IOException )
+            catch (IOException)
             {
                 throw new CacheEmptyException();
             }
 
-            if( cacheinfo.Length <= 1 )
+            if (cacheinfo.Length <= 1)
             {
                 throw new CacheEmptyException();
             }
 
-            var sep = new[]{ '=' };
+            var sep = new[] { '=' };
             CacheEntries = new List<CacheFileStruct>();
-            for( int i = 1; i < cacheinfo.Length; ++ i )
+            for (int i = 1; i < cacheinfo.Length; ++i)
             {
-                string[] line = cacheinfo[i].Split( sep, 2 );
-                if( line.Length == 0 || line[0].Length <= 2 )
+                string[] line = cacheinfo[i].Split(sep, 2);
+                if (line.Length == 0 || line[0].Length <= 2)
                 {
                     continue;
                 }
@@ -92,45 +92,47 @@ namespace UELib.Cache
                 CacheFileStruct cfs;
                 cfs.Guid = line[0];
 
-                if( line.Length == 1 )
+                if (line.Length == 1)
                 {
                     continue;
                 }
 
                 string fullfname = line[1];
-                cfs.FileName = Path.GetFileNameWithoutExtension( fullfname );
-                cfs.Extension = Path.GetExtension( fullfname );
-                CacheEntries.Add( cfs );
+                cfs.FileName = Path.GetFileNameWithoutExtension(fullfname);
+                cfs.Extension = Path.GetExtension(fullfname);
+                CacheEntries.Add(cfs);
             }
         }
 
-        public bool ExtractCacheEntry( int index, string dirPath )
+        public bool ExtractCacheEntry(int index, string dirPath)
         {
             bool success = false;
             try
             {
-                File.Move( Path.Combine( _CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension) ),
-                            Path.Combine( dirPath, (CacheEntries[index].FileName + CacheEntries[index].Extension) ) );
-                RemoveCacheEntry( index );
+                File.Move(Path.Combine(_CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension)),
+                    Path.Combine(dirPath, (CacheEntries[index].FileName + CacheEntries[index].Extension)));
+                RemoveCacheEntry(index);
                 success = true;
             }
-            catch( Exception )
+            catch (Exception)
             {
             }
+
             return success;
         }
 
-        public bool RemoveCacheEntry( int index )
+        public bool RemoveCacheEntry(int index)
         {
             bool success = false;
             try
             {
-                CacheEntries.RemoveAt( index );
+                CacheEntries.RemoveAt(index);
                 success = true;
             }
-            catch( ArgumentOutOfRangeException )
+            catch (ArgumentOutOfRangeException)
             {
             }
+
             return success;
         }
 
@@ -138,35 +140,36 @@ namespace UELib.Cache
         /// Deletes the specified file of a cache entry by index.
         /// </summary>
         /// <param name="index">The cache entry index that should be deleted.</param>
-        public bool DeleteCacheEntry( int index )
+        public bool DeleteCacheEntry(int index)
         {
             bool success = false;
             try
             {
-                File.Delete( Path.Combine( _CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension) ) );
-                RemoveCacheEntry( index );
+                File.Delete(Path.Combine(_CachePath, (CacheEntries[index].FileName + CacheEntries[index].Extension)));
+                RemoveCacheEntry(index);
                 success = true;
             }
-            catch( Exception )
+            catch (Exception)
             {
             }
+
             return success;
         }
 
-        public void ImportFileToCache( string filePath )
+        public void ImportFileToCache(string filePath)
         {
             try
             {
-                File.Move( filePath, _CachePath );
+                File.Move(filePath, _CachePath);
                 var cfs = new CacheFileStruct
                 {
-                    FileName = Path.GetFileNameWithoutExtension( filePath ),
-                    Extension = Path.GetExtension( filePath )
+                    FileName = Path.GetFileNameWithoutExtension(filePath),
+                    Extension = Path.GetExtension(filePath)
                 };
-                cfs.Guid = cfs.FileName;    // TODO: Generate a guid.
-                CacheEntries.Add( cfs );
+                cfs.Guid = cfs.FileName; // TODO: Generate a guid.
+                CacheEntries.Add(cfs);
             }
-            catch( Exception )
+            catch (Exception)
             {
             }
         }
@@ -175,11 +178,12 @@ namespace UELib.Cache
         {
             var contents = new string[CacheEntries.Count + 1];
             contents[0] = "[Cache]";
-            for( int i = 0; i < CacheEntries.Count; ++ i )
+            for (int i = 0; i < CacheEntries.Count; ++i)
             {
                 contents[i + 1] = CacheEntries[i].UnsplitCache();
             }
-            File.WriteAllLines( _CachePath + CacheIniName, contents );
+
+            File.WriteAllLines(_CachePath + CacheIniName, contents);
         }
     }
 }

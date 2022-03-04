@@ -13,16 +13,16 @@ namespace UELib
         public int CompressedSize;
         private CompressedChunkHeader _Header;
 
-        public void Serialize( IUnrealStream stream )
+        public void Serialize(IUnrealStream stream)
         {
             // TODO: Implement code
-            stream.Write( UncompressedOffset );
-            stream.Write( UncompressedSize );
-            stream.Write( CompressedOffset );
-            stream.Write( CompressedSize );
+            stream.Write(UncompressedOffset);
+            stream.Write(UncompressedSize);
+            stream.Write(CompressedOffset);
+            stream.Write(CompressedSize);
         }
 
-        public void Deserialize( IUnrealStream stream )
+        public void Deserialize(IUnrealStream stream)
         {
             UncompressedOffset = stream.ReadInt32();
             UncompressedSize = stream.ReadInt32();
@@ -30,15 +30,15 @@ namespace UELib
             CompressedSize = stream.ReadInt32();
         }
 
-        public void Decompress( UPackageStream inStream, UPackageStream outStream )
+        public void Decompress(UPackageStream inStream, UPackageStream outStream)
         {
-            inStream.Seek( CompressedOffset, System.IO.SeekOrigin.Begin );
-            _Header.Deserialize( inStream );
+            inStream.Seek(CompressedOffset, System.IO.SeekOrigin.Begin);
+            _Header.Deserialize(inStream);
 
-            outStream.Seek( UncompressedOffset, System.IO.SeekOrigin.Begin );
-            foreach( var buffer in _Header.Blocks.Select( block => block.Decompress() ) )
+            outStream.Seek(UncompressedOffset, System.IO.SeekOrigin.Begin);
+            foreach (var buffer in _Header.Blocks.Select(block => block.Decompress()))
             {
-                outStream.Write( buffer, 0, buffer.Length );
+                outStream.Write(buffer, 0, buffer.Length);
             }
         }
 
@@ -51,24 +51,25 @@ namespace UELib
 
             public UArray<CompressedChunkBlock> Blocks;
 
-            public void Serialize( IUnrealStream stream )
+            public void Serialize(IUnrealStream stream)
             {
                 // TODO: Implement code
             }
 
-            public void Deserialize( IUnrealStream stream )
+            public void Deserialize(IUnrealStream stream)
             {
                 _Signature = stream.ReadUInt32();
-                if( _Signature != UnrealPackage.Signature )
+                if (_Signature != UnrealPackage.Signature)
                 {
-                    throw new System.IO.FileLoadException( "Unrecognized signature!" );
+                    throw new System.IO.FileLoadException("Unrecognized signature!");
                 }
+
                 _BlockSize = stream.ReadInt32();
                 _CompressedSize = stream.ReadInt32();
                 _UncompressedSize = stream.ReadInt32();
 
-                int blockCount = (int)Math.Ceiling( _UncompressedSize / (float)_BlockSize );
-                Blocks = new UArray<CompressedChunkBlock>( stream, blockCount );
+                int blockCount = (int)Math.Ceiling(_UncompressedSize / (float)_BlockSize);
+                Blocks = new UArray<CompressedChunkBlock>(stream, blockCount);
             }
 
             public struct CompressedChunkBlock : IUnrealSerializableClass
@@ -77,18 +78,18 @@ namespace UELib
                 private int _UncompressedSize;
                 private byte[] _CompressedData;
 
-                public void Serialize( IUnrealStream stream )
+                public void Serialize(IUnrealStream stream)
                 {
                     // TODO: Implement code
                 }
 
-                public void Deserialize( IUnrealStream stream )
+                public void Deserialize(IUnrealStream stream)
                 {
                     _CompressedSize = stream.ReadInt32();
                     _UncompressedSize = stream.ReadInt32();
 
                     _CompressedData = new byte[_CompressedSize];
-                    stream.Read( _CompressedData, 0, _CompressedSize );
+                    stream.Read(_CompressedData, 0, _CompressedSize);
                 }
 
                 public byte[] Decompress()
@@ -100,7 +101,7 @@ namespace UELib
             }
         }
 
-        public bool IsChunked( long offset )
+        public bool IsChunked(long offset)
         {
             return offset >= UncompressedOffset && offset < UncompressedOffset + UncompressedSize;
         }

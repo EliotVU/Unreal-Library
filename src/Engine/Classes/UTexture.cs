@@ -8,7 +8,7 @@ namespace UELib.Engine
     {
         protected UDefaultProperty _Format;
 
-        public UArray<MipMap> MipMaps{ get; private set; }
+        public UArray<MipMap> MipMaps { get; private set; }
 
         public UTexture()
         {
@@ -19,9 +19,9 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
-            _Format = Properties.Find( "Format" );
+            _Format = Properties.Find("Format");
             MipMaps = new UArray<MipMap>();
-            MipMaps.Deserialize( _Buffer, delegate( MipMap mm ){ mm.Owner = this; } );
+            MipMaps.Deserialize(_Buffer, delegate(MipMap mm) { mm.Owner = this; });
         }
 
         public class MipMap : IUnrealSerializableClass
@@ -40,41 +40,44 @@ namespace UELib.Engine
             public byte BitsWidth;
             public byte BitsHeight;
 
-            public void Serialize( IUnrealStream stream )
+            public void Serialize(IUnrealStream stream)
             {
                 throw new NotImplementedException();
             }
 
-            public void Deserialize( IUnrealStream stream )
+            public void Deserialize(IUnrealStream stream)
             {
-                if( stream.Version >= 63 )
+                if (stream.Version >= 63)
                 {
                     // Offset to (Width = ...)
                     WidthOffset = stream.ReadUInt32();
 
                     long opos = stream.Position;
-                    stream.Seek( WidthOffset, System.IO.SeekOrigin.Begin );
+                    stream.Seek(WidthOffset, System.IO.SeekOrigin.Begin);
                     Width = stream.ReadUInt32();
                     Height = stream.ReadUInt32();
-                    stream.Seek( opos, System.IO.SeekOrigin.Begin );
+                    stream.Seek(opos, System.IO.SeekOrigin.Begin);
                 }
 
                 int mipMapSize = stream.ReadIndex();
                 Pixels = new int[mipMapSize];
-                switch( Owner._Format.Decompile().Substring( 6 ) )
+                switch (Owner._Format.Decompile().Substring(6))
                 {
-                    case "TEXF_RGBA8": case "5":
-                        for( int i = 0; i < mipMapSize; ++ i )
+                    case "TEXF_RGBA8":
+                    case "5":
+                        for (int i = 0; i < mipMapSize; ++i)
                         {
                             Pixels[i] = stream.ReadInt32();
                         }
+
                         break;
 
-                    case "TEXF_DXT1": case "3":
-                        for( int i = 0; i < mipMapSize / 2; ++ i )
+                    case "TEXF_DXT1":
+                    case "3":
+                        for (int i = 0; i < mipMapSize / 2; ++i)
                         {
                             byte c = stream.ReadByte();
-                            Pixels[i ++] = c & 0xF0;
+                            Pixels[i++] = c & 0xF0;
                             Pixels[i] = c & 0x0F;
                         }
 
@@ -85,7 +88,7 @@ namespace UELib.Engine
                 }
 
                 // Width, Height. See above!
-                stream.Skip( 8 );
+                stream.Skip(8);
                 BitsWidth = stream.ReadByte();
                 BitsHeight = stream.ReadByte();
             }

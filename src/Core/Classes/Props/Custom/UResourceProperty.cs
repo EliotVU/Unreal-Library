@@ -1,12 +1,12 @@
 ﻿#if MKKE
-    namespace UELib.Core
+namespace UELib.Core
+{
+    /// <summary>
+    /// Resource Property
+    /// </summary>
+    [UnrealRegisterClass]
+    public class UResourceProperty : UObjectProperty
     {
-        /// <summary>
-        /// Resource Property
-        /// </summary>
-        [UnrealRegisterClass]
-        public class UResourceProperty : UObjectProperty
-        {
-        }
     }
+}
 #endif

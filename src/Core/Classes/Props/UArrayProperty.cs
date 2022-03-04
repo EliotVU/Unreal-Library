@@ -9,7 +9,9 @@ namespace UELib.Core
     public class UArrayProperty : UProperty
     {
         #region Serialized Members
+
         public UProperty InnerProperty;
+
         #endregion
 
         /// <summary>
@@ -25,23 +27,24 @@ namespace UELib.Core
             base.Deserialize();
 
             int innerIndex = _Buffer.ReadObjectIndex();
-            InnerProperty = (UProperty)GetIndexObject( innerIndex );
+            InnerProperty = (UProperty)GetIndexObject(innerIndex);
         }
 
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            if( InnerProperty != null )
+            if (InnerProperty != null)
             {
                 return "array" + "<" + GetFriendlyInnerType() + ">";
             }
+
             return "array";
         }
 
         public override string GetFriendlyInnerType()
         {
             return InnerProperty != null
-                ? (InnerProperty.IsClassType( "ClassProperty" ) || InnerProperty.IsClassType( "DelegateProperty" ))
+                ? (InnerProperty.IsClassType("ClassProperty") || InnerProperty.IsClassType("DelegateProperty"))
                     ? (" " + InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType() + " ")
                     : (InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType())
                 : "@NULL";

@@ -11,6 +11,7 @@ namespace UELib.Core
     public sealed class UMetaData : UObject
     {
         #region Serialized Members
+
         public sealed class UFieldData : IUnrealDecompilable, IUnrealSerializableClass
         {
             private string _FieldName;
@@ -20,14 +21,14 @@ namespace UELib.Core
             // Dated qualified identifier to this meta data's field. e.g. UT3, Mirrors Edge
             public Dictionary<string, string> Tags;
 
-            public void Serialize( IUnrealStream stream )
+            public void Serialize(IUnrealStream stream)
             {
                 throw new NotImplementedException();
             }
 
-            public void Deserialize( IUnrealStream stream )
+            public void Deserialize(IUnrealStream stream)
             {
-                if( stream.Version <= 540 )
+                if (stream.Version <= 540)
                 {
                     // e.g. Core.Object.X
                     _FieldName = stream.ReadText();
@@ -41,7 +42,8 @@ namespace UELib.Core
 
                 int length = stream.ReadInt32();
                 Tags = new Dictionary<string, string>(length);
-                for (var i = 0; i < length; ++ i) {
+                for (var i = 0; i < length; ++i)
+                {
                     var key = stream.ReadNameReference();
                     string value = stream.ReadText();
                     Tags.Add(key.Name, value);
@@ -71,18 +73,22 @@ namespace UELib.Core
         }
 
         public UArray<UFieldData> MetaObjects;
+
         #endregion
 
         #region Constructors
+
         protected override void Deserialize()
         {
             base.Deserialize();
             MetaObjects = new UArray<UFieldData>();
-            MetaObjects.Deserialize( _Buffer );
+            MetaObjects.Deserialize(_Buffer);
         }
+
         #endregion
 
         #region Decompilation
+
         /// <summary>
         /// Decompiles this object into a text format of:
         ///
@@ -97,12 +103,14 @@ namespace UELib.Core
         {
             // UE3 Debug
             BeginDeserializing();
-            if( MetaObjects == null )
+            if (MetaObjects == null)
             {
                 return "";
             }
+
             return string.Join("\r\n", MetaObjects.ConvertAll(data => data + data.Decompile()));
         }
+
         #endregion
 
         [Obsolete()]

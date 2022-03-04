@@ -5,6 +5,7 @@ using System.Linq;
 namespace UELib
 {
     #region Exceptions
+
     [Serializable]
     public class UnrealException : Exception
     {
@@ -12,11 +13,11 @@ namespace UELib
         {
         }
 
-        public UnrealException( string message ) : base( message )
+        public UnrealException(string message) : base(message)
         {
         }
 
-        public UnrealException( string message, Exception innerException ) : base( message, innerException )
+        public UnrealException(string message, Exception innerException) : base(message, innerException)
         {
         }
     }
@@ -24,15 +25,14 @@ namespace UELib
     [Serializable]
     public class DeserializationException : UnrealException
     {
-        [NonSerializedAttribute]
-        private readonly string _Output;
+        [NonSerializedAttribute] private readonly string _Output;
 
         public DeserializationException()
         {
             _Output = "DeserializationException";
         }
 
-        public DeserializationException( string output ) : base( output )
+        public DeserializationException(string output) : base(output)
         {
             _Output = output;
         }
@@ -51,15 +51,14 @@ namespace UELib
     [Serializable]
     public class DecompilingHeaderException : UnrealException
     {
-        [NonSerializedAttribute]
-        private readonly string _Output;
+        [NonSerializedAttribute] private readonly string _Output;
 
         public DecompilingHeaderException()
         {
             _Output = "DecompilingHeaderException";
         }
 
-        public DecompilingHeaderException( string output )
+        public DecompilingHeaderException(string output)
         {
             _Output = output;
         }
@@ -73,7 +72,7 @@ namespace UELib
     [Serializable]
     public class CookedPackageException : UnrealException
     {
-        public CookedPackageException() : base( "The package is cooked" )
+        public CookedPackageException() : base("The package is cooked")
         {
         }
     }
@@ -81,7 +80,7 @@ namespace UELib
     [Serializable]
     public class DecompressPackageException : UnrealException
     {
-        public DecompressPackageException() : base( "Failed to decompress this package" )
+        public DecompressPackageException() : base("Failed to decompress this package")
         {
         }
     }
@@ -89,7 +88,7 @@ namespace UELib
     [Serializable]
     public class OccurredWhileException : UnrealException
     {
-        public OccurredWhileException( string postMessage ) : base( "An exception occurred while " + postMessage )
+        public OccurredWhileException(string postMessage) : base("An exception occurred while " + postMessage)
         {
         }
     }
@@ -97,7 +96,7 @@ namespace UELib
     [Serializable]
     public class DeserializingObjectsException : OccurredWhileException
     {
-        public DeserializingObjectsException() : base( "deserializing objects" )
+        public DeserializingObjectsException() : base("deserializing objects")
         {
         }
     }
@@ -105,7 +104,7 @@ namespace UELib
     [Serializable]
     public class ImportingObjectsException : OccurredWhileException
     {
-        public ImportingObjectsException() : base( "importing objects" )
+        public ImportingObjectsException() : base("importing objects")
         {
         }
     }
@@ -113,90 +112,96 @@ namespace UELib
     [Serializable]
     public class LinkingObjectsException : OccurredWhileException
     {
-        public LinkingObjectsException() : base( "linking objects" )
+        public LinkingObjectsException() : base("linking objects")
         {
         }
     }
+
     #endregion
 
     #region Static Methods
+
     /// <summary>
     /// Provides static methods for formating flags.
     /// </summary>
     public static class UnrealMethods
     {
-        public static string FlagsListToString( List<string> flagsList )
+        public static string FlagsListToString(List<string> flagsList)
         {
             string output = String.Empty;
-            foreach( string s in flagsList )
+            foreach (string s in flagsList)
             {
                 output += s + (s != flagsList.Last() ? "\n" : String.Empty);
             }
+
             return output;
         }
 
-        public static List<string> FlagsToList( Type flagEnum, uint flagsDWORD )
+        public static List<string> FlagsToList(Type flagEnum, uint flagsDWORD)
         {
             var flagsList = new List<string>();
-            var flagValues = Enum.GetValues( flagEnum );
-            foreach( uint flag in flagValues )
+            var flagValues = Enum.GetValues(flagEnum);
+            foreach (uint flag in flagValues)
             {
-                if( (flagsDWORD & flag) != flag )
+                if ((flagsDWORD & flag) != flag)
                     continue;
 
-                string eName = Enum.GetName( flagEnum, flag );
-                if( flagsList.Contains( eName ) )
+                string eName = Enum.GetName(flagEnum, flag);
+                if (flagsList.Contains(eName))
                     continue;
 
-                flagsList.Add( "0x" + flag.ToString( "X8" ) + ":" + eName );
+                flagsList.Add("0x" + flag.ToString("X8") + ":" + eName);
             }
+
             return flagsList;
         }
 
-        public static List<string> FlagsToList( Type flagEnum, ulong flagsDWORD )
+        public static List<string> FlagsToList(Type flagEnum, ulong flagsDWORD)
         {
             var flagsList = new List<string>();
-            var flagValues = Enum.GetValues( flagEnum );
-            foreach( ulong flag in flagValues )
+            var flagValues = Enum.GetValues(flagEnum);
+            foreach (ulong flag in flagValues)
             {
-                if( (flagsDWORD & flag) != flag )
+                if ((flagsDWORD & flag) != flag)
                     continue;
 
-                string eName = Enum.GetName( flagEnum, flag );
-                if( flagsList.Contains( eName ) )
+                string eName = Enum.GetName(flagEnum, flag);
+                if (flagsList.Contains(eName))
                     continue;
 
-                flagsList.Add( "0x" + flag.ToString( "X8" ) + ":" + eName );
+                flagsList.Add("0x" + flag.ToString("X8") + ":" + eName);
             }
+
             return flagsList;
         }
 
-        public static List<string> FlagsToList( Type flagEnum, Type flagEnum2, ulong flagsQWORD )
+        public static List<string> FlagsToList(Type flagEnum, Type flagEnum2, ulong flagsQWORD)
         {
-            var list = FlagsToList( flagEnum, flagsQWORD );
-            list.AddRange( FlagsToList( flagEnum2, flagsQWORD >> 32 ) );
+            var list = FlagsToList(flagEnum, flagsQWORD);
+            list.AddRange(FlagsToList(flagEnum2, flagsQWORD >> 32));
             return list;
         }
 
-        public static string FlagToString( uint flags )
+        public static string FlagToString(uint flags)
         {
-            return "0x" + String.Format( "{0:X4}", flags ).PadLeft( 8, '0' );
+            return "0x" + String.Format("{0:X4}", flags).PadLeft(8, '0');
         }
 
-        public static string FlagToString( ulong flags )
+        public static string FlagToString(ulong flags)
         {
-            return FlagToString( (uint)(flags >> 32) ) + "-" + FlagToString( (uint)(flags) );
+            return FlagToString((uint)(flags >> 32)) + "-" + FlagToString((uint)(flags));
         }
 
-        public static string Escape( this string s )
+        public static string Escape(this string s)
         {
             return s
-                .Replace( "\"", "\\\"" )
-                .Replace( "\n", "\\n" )
-                .Replace( "\r", "\\r" )
-                .Replace( "\t", "\\t" )
-                .Replace( "\\", "\\\\" );
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r")
+                .Replace("\t", "\\t")
+                .Replace("\\", "\\\\");
         }
     }
+
     #endregion
 }

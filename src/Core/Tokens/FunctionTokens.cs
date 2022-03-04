@@ -27,7 +27,7 @@ namespace UELib.Core
                 private void DeserializeParms()
                 {
 #pragma warning disable 642
-                    while( !(DeserializeNext() is EndFunctionParmsToken) );
+                    while (!(DeserializeNext() is EndFunctionParmsToken)) ;
 #pragma warning restore 642
                 }
 
@@ -48,52 +48,53 @@ namespace UELib.Core
                     Decompiler.DeserializeDebugToken();
                 }
 
-                private static string PrecedenceToken( Token t )
+                private static string PrecedenceToken(Token t)
                 {
-                    if( !(t is FunctionToken) )
+                    if (!(t is FunctionToken))
                         return t.Decompile();
 
                     // Always add ( and ) unless the conditions below are not met, in case of a VirtualFunctionCall.
                     var addParenthesises = true;
-                    if( t is NativeFunctionToken )
+                    if (t is NativeFunctionToken)
                     {
                         addParenthesises = ((NativeFunctionToken)t).NativeTable.Type == FunctionType.Operator;
                     }
-                    else if( t is FinalFunctionToken )
+                    else if (t is FinalFunctionToken)
                     {
                         addParenthesises = ((FinalFunctionToken)t).Function.IsOperator();
                     }
-                    return addParenthesises ? String.Format( "({0})", t.Decompile() ) : t.Decompile();
+
+                    return addParenthesises ? String.Format("({0})", t.Decompile()) : t.Decompile();
                 }
 
-                protected string DecompilePreOperator( string operatorName )
+                protected string DecompilePreOperator(string operatorName)
                 {
                     string output = operatorName + (operatorName.Length > 1 ? " " : String.Empty) + DecompileNext();
                     DecompileNext(); // )
                     return output;
                 }
 
-                protected string DecompileOperator( string operatorName )
+                protected string DecompileOperator(string operatorName)
                 {
-                    string output = String.Format( "{0} {1} {2}",
-                        PrecedenceToken( GrabNextToken() ),
+                    string output = String.Format("{0} {1} {2}",
+                        PrecedenceToken(GrabNextToken()),
                         operatorName,
-                        PrecedenceToken( GrabNextToken() )
+                        PrecedenceToken(GrabNextToken())
                     );
                     DecompileNext(); // )
                     return output;
                 }
 
-                protected string DecompilePostOperator( string operatorName )
+                protected string DecompilePostOperator(string operatorName)
                 {
                     string output = operatorName + " " + DecompileNext();
                     DecompileNext(); // )
                     return output;
                 }
 
-                protected string DecompileCall( string functionName )
+                protected string DecompileCall(string functionName)
                 {
-                    if( Decompiler._IsWithinClassContext )
+                    if (Decompiler._IsWithinClassContext)
                     {
                         functionName = "static." + functionName;
 
@@ -102,6 +103,7 @@ namespace UELib.Core
                         // A1233343.DrawText(Class'BTClient_Interaction'.static.A1233332(static.Max(0, A1233328 - A1233322[A1233222].StartTime)), true);
                         Decompiler._IsWithinClassContext = false;
                     }
+
                     string output = functionName + "(" + DecompileParms();
                     return output;
                 }
@@ -110,36 +112,38 @@ namespace UELib.Core
                 {
                     var tokens = new List<Tuple<Token, String>>();
                     {
-                    next:
+                        next:
                         var t = GrabNextToken();
-                        tokens.Add( Tuple.Create( t, t.Decompile() ) );
-                        if( !(t is EndFunctionParmsToken) )
+                        tokens.Add(Tuple.Create(t, t.Decompile()));
+                        if (!(t is EndFunctionParmsToken))
                             goto next;
                     }
 
                     var output = new StringBuilder();
-                    for( int i = 0; i < tokens.Count; ++ i )
+                    for (int i = 0; i < tokens.Count; ++i)
                     {
                         var t = tokens[i].Item1; // Token
                         var v = tokens[i].Item2; // Value
 
-                        if( t is NoParmToken ) // Skipped optional parameters
+                        if (t is NoParmToken) // Skipped optional parameters
                         {
-                            output.Append( v );
+                            output.Append(v);
                         }
-                        else if( t is EndFunctionParmsToken ) // End ")"
+                        else if (t is EndFunctionParmsToken) // End ")"
                         {
-                            output = new StringBuilder( output.ToString().TrimEnd( ',' ) + v );
+                            output = new StringBuilder(output.ToString().TrimEnd(',') + v);
                         }
                         else // Any passed values
                         {
-                            if( i != tokens.Count - 1 && i > 0 ) // Skipped optional parameters
+                            if (i != tokens.Count - 1 && i > 0) // Skipped optional parameters
                             {
-                                output.Append( v == String.Empty ? "," : ", " );
+                                output.Append(v == String.Empty ? "," : ", ");
                             }
-                            output.Append( v );
+
+                            output.Append(v);
                         }
                     }
+
                     return output.ToString();
                 }
             }
@@ -148,11 +152,11 @@ namespace UELib.Core
             {
                 public UFunction Function;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    if( stream.Version == 421 )
+                    if (stream.Version == 421)
                     {
-                        Decompiler.AlignSize( sizeof(int) );
+                        Decompiler.AlignSize(sizeof(int));
                     }
 
                     Function = stream.ReadObject() as UFunction;
@@ -164,51 +168,55 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     string output = String.Empty;
-                    if( Function != null )
+                    if (Function != null)
                     {
                         // Support for non native operators.
-                        if( Function.IsPost() )
+                        if (Function.IsPost())
                         {
-                            output = DecompilePreOperator( Function.FriendlyName );
+                            output = DecompilePreOperator(Function.FriendlyName);
                         }
-                        else if( Function.IsPre() )
+                        else if (Function.IsPre())
                         {
-                            output = DecompilePostOperator( Function.FriendlyName );
+                            output = DecompilePostOperator(Function.FriendlyName);
                         }
-                        else if( Function.IsOperator() )
+                        else if (Function.IsOperator())
                         {
-                            output = DecompileOperator( Function.FriendlyName );
+                            output = DecompileOperator(Function.FriendlyName);
                         }
                         else
                         {
                             // Calling Super??.
-                            if( Function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext )
+                            if (Function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext)
                             {
                                 output = "super";
 
                                 // Check if the super call is within the super class of this functions outer(class)
                                 var myouter = (UField)Decompiler._Container.Outer;
-                                if( myouter == null || myouter.Super == null || Function.GetOuterName() != myouter.Super.Name  )
+                                if (myouter == null || myouter.Super == null ||
+                                    Function.GetOuterName() != myouter.Super.Name)
                                 {
                                     // There's no super to call then do a recursive super call.
-                                    if( Decompiler._Container.Super == null )
+                                    if (Decompiler._Container.Super == null)
                                     {
                                         output += "(" + Decompiler._Container.GetOuterName() + ")";
                                     }
                                     else
                                     {
                                         // Different owners, then it is a deep super call.
-                                        if( Function.GetOuterName() != Decompiler._Container.GetOuterName() )
+                                        if (Function.GetOuterName() != Decompiler._Container.GetOuterName())
                                         {
                                             output += "(" + Function.GetOuterName() + ")";
                                         }
                                     }
                                 }
+
                                 output += ".";
                             }
-                            output += DecompileCall( Function.Name );
+
+                            output += DecompileCall(Function.Name);
                         }
                     }
+
                     Decompiler._CanAddSemicolon = true;
                     return output;
                 }
@@ -218,18 +226,18 @@ namespace UELib.Core
             {
                 public int FunctionNameIndex;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // TODO: Corrigate Version (Definitely not in MOHA, but in roboblitz(369))
-                    if( stream.Version >= 178 && stream.Version < 421/*MOHA*/ )
+                    if (stream.Version >= 178 && stream.Version < 421 /*MOHA*/)
                     {
                         byte isSuperCall = stream.ReadByte();
-                        Decompiler.AlignSize( sizeof(byte) );
+                        Decompiler.AlignSize(sizeof(byte));
                     }
 
-                    if( stream.Version == 421 )
+                    if (stream.Version == 421)
                     {
-                        Decompiler.AlignSize( sizeof(int) );
+                        Decompiler.AlignSize(sizeof(int));
                     }
 
                     FunctionNameIndex = stream.ReadNameIndex();
@@ -241,7 +249,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileCall( Package.GetIndexName( FunctionNameIndex ) );
+                    return DecompileCall(Package.GetIndexName(FunctionNameIndex));
                 }
             }
 
@@ -249,7 +257,7 @@ namespace UELib.Core
             {
                 public int FunctionNameIndex;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     FunctionNameIndex = stream.ReadNameIndex();
                     Decompiler.AlignNameSize();
@@ -260,7 +268,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return "global." + DecompileCall( Package.GetIndexName( FunctionNameIndex ) );
+                    return "global." + DecompileCall(Package.GetIndexName(FunctionNameIndex));
                 }
             }
 
@@ -268,13 +276,13 @@ namespace UELib.Core
             {
                 public int FunctionNameIndex;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // TODO: Corrigate Version
-                    if( stream.Version > 180 )
+                    if (stream.Version > 180)
                     {
-                        ++ stream.Position; // ReadByte()
-                        Decompiler.AlignSize( sizeof(byte) );
+                        ++stream.Position; // ReadByte()
+                        Decompiler.AlignSize(sizeof(byte));
                     }
 
                     // Delegate object index
@@ -291,7 +299,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileCall( Decompiler._Container.Package.GetIndexName( FunctionNameIndex ) );
+                    return DecompileCall(Decompiler._Container.Package.GetIndexName(FunctionNameIndex));
                 }
             }
 
@@ -299,9 +307,9 @@ namespace UELib.Core
             {
                 public NativeTableItem NativeTable;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    if( NativeTable == null )
+                    if (NativeTable == null)
                     {
                         NativeTable = new NativeTableItem
                         {
@@ -311,7 +319,7 @@ namespace UELib.Core
                         };
                     }
 
-                    switch( NativeTable.Type )
+                    switch (NativeTable.Type)
                     {
                         case FunctionType.Function:
                             DeserializeCall();
@@ -335,28 +343,29 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     string output;
-                    switch( NativeTable.Type )
+                    switch (NativeTable.Type)
                     {
                         case FunctionType.Function:
-                            output = DecompileCall( NativeTable.Name );
+                            output = DecompileCall(NativeTable.Name);
                             break;
 
                         case FunctionType.Operator:
-                            output = DecompileOperator( NativeTable.Name );
+                            output = DecompileOperator(NativeTable.Name);
                             break;
 
                         case FunctionType.PostOperator:
-                            output = DecompilePostOperator( NativeTable.Name );
+                            output = DecompilePostOperator(NativeTable.Name);
                             break;
 
                         case FunctionType.PreOperator:
-                            output = DecompilePreOperator( NativeTable.Name );
+                            output = DecompilePreOperator(NativeTable.Name);
                             break;
 
                         default:
-                            output = DecompileCall( NativeTable.Name );
+                            output = DecompileCall(NativeTable.Name);
                             break;
                     }
+
                     Decompiler._CanAddSemicolon = true;
                     return output;
                 }

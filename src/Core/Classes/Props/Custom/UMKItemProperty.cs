@@ -1,17 +1,17 @@
 ﻿#if MKKE
-    namespace UELib.Core
+namespace UELib.Core
+{
+    /// <summary>
+    /// MK Item Property
+    /// </summary>
+    [UnrealRegisterClass]
+    public class UMKItemProperty : UProperty
     {
-        /// <summary>
-        /// MK Item Property
-        /// </summary>
-        [UnrealRegisterClass]
-        public class UMKItemProperty : UProperty
+        /// <inheritdoc/>
+        public override string GetFriendlyType()
         {
-            /// <inheritdoc/>
-            public override string GetFriendlyType()
-            {
-                return "MKItem";
-            }
+            return "MKItem";
         }
     }
+}
 #endif

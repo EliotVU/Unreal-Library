@@ -9,7 +9,9 @@ namespace UELib.Core
     public class UByteProperty : UProperty
     {
         #region Serialized Members
+
         public UEnum EnumObject;
+
         #endregion
 
         /// <summary>
@@ -25,7 +27,7 @@ namespace UELib.Core
             base.Deserialize();
 
             int enumIndex = _Buffer.ReadObjectIndex();
-            EnumObject = (UEnum)GetIndexObject( enumIndex );
+            EnumObject = (UEnum)GetIndexObject(enumIndex);
         }
 
         /// <inheritdoc/>
@@ -39,22 +41,23 @@ namespace UELib.Core
         private void ImportObject()
         {
             // Already imported...
-            if( EnumObject != null )
+            if (EnumObject != null)
             {
                 return;
             }
 
             var pkg = LoadImportPackage();
-            if( pkg != null )
+            if (pkg != null)
             {
-                if( pkg.Objects == null )
+                if (pkg.Objects == null)
                 {
-                    pkg.AddClassType( "ByteProperty", typeof(UByteProperty) );
-                    pkg.AddClassType( "Enum", typeof(UEnum) );
+                    pkg.AddClassType("ByteProperty", typeof(UByteProperty));
+                    pkg.AddClassType("Enum", typeof(UEnum));
                     pkg.InitializeExportObjects();
                 }
-                var b = (UByteProperty)pkg.FindObject( Name, typeof(UByteProperty) );
-                if( b != null )
+
+                var b = (UByteProperty)pkg.FindObject(Name, typeof(UByteProperty));
+                if (b != null)
                 {
                     EnumObject = b.EnumObject;
                 }

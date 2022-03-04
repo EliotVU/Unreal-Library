@@ -6,25 +6,25 @@ namespace UELib.Core
     {
         public override string Decompile()
         {
-            if( ShouldDeserializeOnDemand )
+            if (ShouldDeserializeOnDemand)
             {
                 BeginDeserializing();
             }
 
             string output = String.Empty;
-            if( ScriptText.Length <= 2 )
+            if (ScriptText.Length <= 2)
             {
                 output += "// Stripped";
             }
 
-            if( ScriptText.Length > 0 )
+            if (ScriptText.Length > 0)
             {
                 output = ScriptText + output;
                 // Only ScriptTexts should merge defaultproperties.
-                if( Name == "ScriptText" )
+                if (Name == "ScriptText")
                 {
                     var outerStruct = Outer as UStruct;
-                    if( outerStruct != null && outerStruct.Properties != null && outerStruct.Properties.Count > 0 )
+                    if (outerStruct != null && outerStruct.Properties != null && outerStruct.Properties.Count > 0)
                     {
                         try
                         {
@@ -37,6 +37,7 @@ namespace UELib.Core
                     }
                 }
             }
+
             return output;
         }
 

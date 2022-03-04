@@ -1,17 +1,17 @@
 ﻿#if MKKE
-    namespace UELib.Core
+namespace UELib.Core
+{
+    /// <summary>
+    /// MK Item NoDestroy Property
+    /// </summary>
+    [UnrealRegisterClass]
+    public class UMKItemNoDestroyProperty : UMKItemProperty
     {
-        /// <summary>
-        /// MK Item NoDestroy Property
-        /// </summary>
-        [UnrealRegisterClass]
-        public class UMKItemNoDestroyProperty : UMKItemProperty
+        /// <inheritdoc/>
+        public override string GetFriendlyType()
         {
-            /// <inheritdoc/>
-            public override string GetFriendlyType()
-            {
-                return "MKNoDestroyItem";
-            }
+            return "MKNoDestroyItem";
         }
     }
+}
 #endif

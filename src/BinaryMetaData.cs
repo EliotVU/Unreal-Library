@@ -21,26 +21,22 @@ namespace UELib
             /// <summary>
             /// Name of this field.
             /// </summary>
-            [PublicAPI]
-            public string Name;
+            [PublicAPI] public string Name;
 
             /// <summary>
             /// Value of this field.
             /// </summary>
-            [PublicAPI]
-            public object Tag;
+            [PublicAPI] public object Tag;
 
             /// <summary>
             /// The position in bytes where this field's value was read from.
             /// </summary>
-            [PublicAPI]
-            public long Position;
+            [PublicAPI] public long Position;
 
             /// <summary>
             /// The size in bytes of this field's value.
             /// </summary>
-            [PublicAPI]
-            public long Size;
+            [PublicAPI] public long Size;
 
             /// <summary>
             /// Decompiles and returns the output of @Tag.
@@ -56,8 +52,7 @@ namespace UELib
         /// <summary>
         /// Stack of all deserialized fields.
         /// </summary>
-        [PublicAPI]
-        public Stack<BinaryField> Fields;
+        [PublicAPI] public Stack<BinaryField> Fields;
 
         /// <summary>
         /// Adds a new field to the @Fields stack.
@@ -66,12 +61,12 @@ namespace UELib
         /// <param name="tag">Value of the field</param>
         /// <param name="position">Position in bytes where the field is read from</param>
         /// <param name="size">Size in bytes of the field</param>
-        [Conditional( "DEBUG" ), Conditional( "BINARYMETADATA" )]
+        [Conditional("DEBUG"), Conditional("BINARYMETADATA")]
         [PublicAPI]
-        public void AddField( string name, object tag, long position, long size )
+        public void AddField(string name, object tag, long position, long size)
         {
-            Debug.Assert( size > 0, String.Format( "Invalid {0} binary field!", name ) );
-            if( Fields == null )
+            Debug.Assert(size > 0, String.Format("Invalid {0} binary field!", name));
+            if (Fields == null)
             {
                 Fields = new Stack<BinaryField>(1);
             }

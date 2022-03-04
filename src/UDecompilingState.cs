@@ -4,12 +4,13 @@ namespace UELib
 {
     public static class UDecompilingState
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible" )]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
+            "CA2211:NonConstantFieldsShouldNotBeVisible")]
         public static string Tabs = String.Empty;
 
-        public static void AddTabs( int count )
+        public static void AddTabs(int count)
         {
-            for( int i = 0; i < count; ++ i )
+            for (int i = 0; i < count; ++i)
             {
                 Tabs += UnrealConfig.Indention;
             }
@@ -20,29 +21,30 @@ namespace UELib
             Tabs += UnrealConfig.Indention;
         }
 
-        public static void RemoveTabs( int count )
+        public static void RemoveTabs(int count)
         {
             count *= UnrealConfig.Indention.Length;
-            Tabs = count > Tabs.Length ? String.Empty : Tabs.Substring( 0, (Tabs.Length) - count );
+            Tabs = count > Tabs.Length ? String.Empty : Tabs.Substring(0, (Tabs.Length) - count);
         }
 
         public static void RemoveTab()
         {
             // TODO: FIXME! This should not occur but it does in MutBestTimes.KeyConsumed(huge nested switch cases)
-            if( Tabs.Length == 0 )
+            if (Tabs.Length == 0)
                 return;
 
-            Tabs = Tabs.Substring( 0, Tabs.Length - UnrealConfig.Indention.Length );
+            Tabs = Tabs.Substring(0, Tabs.Length - UnrealConfig.Indention.Length);
         }
 
-        public static void RemoveSpaces( int count )
+        public static void RemoveSpaces(int count)
         {
-            if( Tabs.Length < count )
+            if (Tabs.Length < count)
             {
                 Tabs = String.Empty;
                 return;
             }
-            Tabs = Tabs.Substring( 0, Tabs.Length - count );
+
+            Tabs = Tabs.Substring(0, Tabs.Length - count);
         }
 
         public static void ResetTabs()
@@ -50,7 +52,7 @@ namespace UELib
             Tabs = String.Empty;
         }
 
-        public static string OffsetLabelName( uint offset )
+        public static string OffsetLabelName(uint offset)
         {
             return $"J0x{offset:X2}";
         }

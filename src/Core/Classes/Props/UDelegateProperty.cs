@@ -11,8 +11,10 @@ namespace UELib.Core
     public class UDelegateProperty : UProperty
     {
         #region Serialized Members
+
         public UObject FunctionObject;
         public UObject DelegateObject;
+
         #endregion
 
         /// <summary>
@@ -27,10 +29,10 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            FunctionObject = GetIndexObject( _Buffer.ReadObjectIndex() );
-            if( Package.Version > 184 )
+            FunctionObject = GetIndexObject(_Buffer.ReadObjectIndex());
+            if (Package.Version > 184)
             {
-                DelegateObject = GetIndexObject( _Buffer.ReadObjectIndex() );
+                DelegateObject = GetIndexObject(_Buffer.ReadObjectIndex());
             }
         }
 

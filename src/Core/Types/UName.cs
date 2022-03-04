@@ -28,10 +28,10 @@ namespace UELib
 
         public UName( IUnrealStream stream )
         {
-            Deserialize( stream );
+            Deserialize(stream);
         }
 
-        public UName( UNameTableItem nameItem, int num )
+        public UName(UNameTableItem nameItem, int num)
         {
             _NameItem = nameItem;
             _Number = num;
@@ -39,27 +39,27 @@ namespace UELib
 
         public bool IsNone()
         {
-            return _NameItem.Name.Equals( None, StringComparison.OrdinalIgnoreCase );
+            return _NameItem.Name.Equals(None, StringComparison.OrdinalIgnoreCase);
         }
 
-        public void Deserialize( IUnrealStream stream )
+        public void Deserialize(IUnrealStream stream)
         {
-            int index = stream.ReadNameIndex( out _Number );
+            int index = stream.ReadNameIndex(out _Number);
             _NameItem = stream.Package.Names[index];
 
-            Debug.Assert( _NameItem != null, "_NameItem cannot be null! " + index );
-            Debug.Assert( _Number >= -1, "Invalid _Number value! " + _Number );
+            Debug.Assert(_NameItem != null, "_NameItem cannot be null! " + index);
+            Debug.Assert(_Number >= -1, "Invalid _Number value! " + _Number);
         }
 
-        public void Serialize( IUnrealStream stream )
+        public void Serialize(IUnrealStream stream)
         {
-            stream.WriteIndex( Index );
+            stream.WriteIndex(Index);
 
-            if (stream.Version < VNameNumbered) 
+            if (stream.Version < VNameNumbered)
                 return;
 
-            Console.WriteLine( _Number + " " + Text );
-            stream.Write( (uint)_Number + 1 );
+            Console.WriteLine(_Number + " " + Text);
+            stream.Write((uint)_Number + 1);
         }
 
         public override string ToString()
@@ -72,32 +72,32 @@ namespace UELib
             return Index;
         }
 
-        public static bool operator ==( UName a, object b )
+        public static bool operator ==(UName a, object b)
         {
-            return Equals( a, b );
+            return Equals(a, b);
         }
 
-        public static bool operator !=( UName a, object b )
+        public static bool operator !=(UName a, object b)
         {
-            return !Equals( a, b );
+            return !Equals(a, b);
         }
 
-        public static bool operator ==( UName a, string b )
+        public static bool operator ==(UName a, string b)
         {
-            return string.Equals( a, b );
+            return string.Equals(a, b);
         }
 
-        public static bool operator !=( UName a, string b )
+        public static bool operator !=(UName a, string b)
         {
-            return !string.Equals( a, b );
+            return !string.Equals(a, b);
         }
 
-        public static implicit operator string( UName a )
+        public static implicit operator string(UName a)
         {
             return a?.Text;
         }
 
-        public static explicit operator int( UName a )
+        public static explicit operator int(UName a)
         {
             return a.Index;
         }

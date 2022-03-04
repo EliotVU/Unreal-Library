@@ -11,8 +11,10 @@ namespace UELib.Core
     public class UInterfaceProperty : UProperty
     {
         #region Serialized Members
+
         public UClass InterfaceObject;
         //public UInterfaceProperty InterfaceType = null;
+
         #endregion
 
         /// <summary>
@@ -28,7 +30,7 @@ namespace UELib.Core
             base.Deserialize();
 
             int index = _Buffer.ReadObjectIndex();
-            InterfaceObject = (UClass)GetIndexObject( index );
+            InterfaceObject = (UClass)GetIndexObject(index);
 
             //Index = _Buffer.ReadObjectIndex();
             //_InterfaceType = (UInterfaceProperty)GetIndexObject( Index );

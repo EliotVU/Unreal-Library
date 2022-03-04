@@ -9,15 +9,15 @@ namespace UELib.Core
         protected TreeNode _ParentNode;
         public bool HasInitializedNodes;
 
-        public void InitializeNodes( TreeNode node )
+        public void InitializeNodes(TreeNode node)
         {
-            if( HasInitializedNodes )
+            if (HasInitializedNodes)
                 return;
 
             node.ToolTipText = FormatHeader();
-            InitNodes( node );
-            AddChildren( node );
-            PostAddChildren( node );
+            InitNodes(node);
+            AddChildren(node);
+            PostAddChildren(node);
 
             node.ImageKey = GetImageName();
             node.SelectedImageKey = node.ImageKey;
@@ -26,82 +26,85 @@ namespace UELib.Core
 
         public virtual string GetImageName()
         {
-            return GetType().IsSubclassOf( typeof(UProperty) )
-                ? typeof(UProperty).Name : this is UScriptStruct
-                    ? "UStruct" : GetType().Name;
+            return GetType().IsSubclassOf(typeof(UProperty))
+                ? typeof(UProperty).Name
+                : this is UScriptStruct
+                    ? "UStruct"
+                    : GetType().Name;
         }
 
-        protected virtual void InitNodes( TreeNode node )
+        protected virtual void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode( node, typeof(UObject).Name );
-            var flagNode = AddTextNode( _ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString( _ObjectFlags ) );
+            _ParentNode = AddSectionNode(node, typeof(UObject).Name);
+            var flagNode = AddTextNode(_ParentNode, "ObjectFlags:" + UnrealMethods.FlagToString(_ObjectFlags));
             flagNode.ToolTipText = UnrealMethods.FlagsListToString(
-                UnrealMethods.FlagsToList( typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), _ObjectFlags )
+                UnrealMethods.FlagsToList(typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), _ObjectFlags)
             );
 
-            AddTextNode( _ParentNode, "Size:" + ExportTable.SerialSize );
-            AddTextNode( _ParentNode, "Offset:" + ExportTable.SerialOffset );
+            AddTextNode(_ParentNode, "Size:" + ExportTable.SerialSize);
+            AddTextNode(_ParentNode, "Offset:" + ExportTable.SerialOffset);
         }
 
-        protected virtual void AddChildren( TreeNode node )
+        protected virtual void AddChildren(TreeNode node)
         {
         }
 
-        protected virtual void PostAddChildren( TreeNode node )
+        protected virtual void PostAddChildren(TreeNode node)
         {
         }
 
-        protected static TreeNode AddSectionNode( TreeNode p, string n )
+        protected static TreeNode AddSectionNode(TreeNode p, string n)
         {
-            var nn = new TreeNode( n ){ImageKey = "Extend"};
+            var nn = new TreeNode(n) { ImageKey = "Extend" };
             nn.SelectedImageKey = nn.ImageKey;
-            p.Nodes.Add( nn );
+            p.Nodes.Add(nn);
             return nn;
         }
 
-        protected static TreeNode AddTextNode( TreeNode p, string n )
+        protected static TreeNode AddTextNode(TreeNode p, string n)
         {
-            var nn = new TreeNode( n ){ImageKey = "Info"};
+            var nn = new TreeNode(n) { ImageKey = "Info" };
             nn.SelectedImageKey = nn.ImageKey;
-            p.Nodes.Add( nn );
+            p.Nodes.Add(nn);
             return nn;
         }
 
-        protected static ObjectNode AddObjectNode( TreeNode parentNode, UObject unrealObject, string imageName = "" )
+        protected static ObjectNode AddObjectNode(TreeNode parentNode, UObject unrealObject, string imageName = "")
         {
-            if( unrealObject == null )
+            if (unrealObject == null)
                 return null;
 
-            var objN = new ObjectNode( unrealObject ){Text = unrealObject.Name};
-            unrealObject.InitializeNodes( objN );
-            if( imageName != string.Empty )
+            var objN = new ObjectNode(unrealObject) { Text = unrealObject.Name };
+            unrealObject.InitializeNodes(objN);
+            if (imageName != string.Empty)
             {
                 objN.ImageKey = imageName;
                 objN.SelectedImageKey = imageName;
             }
 
-            if( unrealObject.DeserializationState.HasFlag( ObjectState.Errorlized ) )
+            if (unrealObject.DeserializationState.HasFlag(ObjectState.Errorlized))
             {
                 objN.ForeColor = System.Drawing.Color.Red;
             }
 
-            parentNode.Nodes.Add( objN );
+            parentNode.Nodes.Add(objN);
             return objN;
         }
 
-        protected static ObjectNode AddSimpleObjectNode( TreeNode parentNode, UObject unrealObject, string text, string imageName = "" )
+        protected static ObjectNode AddSimpleObjectNode(TreeNode parentNode, UObject unrealObject, string text,
+            string imageName = "")
         {
-            if( unrealObject == null )
+            if (unrealObject == null)
                 return null;
 
-            var objN = new ObjectNode( unrealObject ){Text = text + ":" + unrealObject.Name};
-            if( imageName != string.Empty )
+            var objN = new ObjectNode(unrealObject) { Text = text + ":" + unrealObject.Name };
+            if (imageName != string.Empty)
             {
                 objN.ImageKey = imageName;
                 objN.SelectedImageKey = imageName;
             }
 
-            parentNode.Nodes.Add( objN );
+            parentNode.Nodes.Add(objN);
             return objN;
         }
 
@@ -113,20 +116,22 @@ namespace UELib.Core
             string imageName = "TreeView"
         )
         {
-            if( objects == null )
+            if (objects == null)
                 return null;
 
             var uObjects = objects as List<UObject> ?? objects.ToList();
-            if( uObjects.Any() )
+            if (uObjects.Any())
             {
-                var listNode = new ObjectListNode( imageName ){Text = title};
-                foreach( var obj in uObjects )
+                var listNode = new ObjectListNode(imageName) { Text = title };
+                foreach (var obj in uObjects)
                 {
-                    AddObjectNode( listNode, obj );
+                    AddObjectNode(listNode, obj);
                 }
-                parentNode.Nodes.Add( listNode );
+
+                parentNode.Nodes.Add(listNode);
                 return listNode;
             }
+
             return null;
         }
     }

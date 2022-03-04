@@ -11,7 +11,8 @@ namespace UELib.Test
         [TestMethod]
         public void LoadPackageTest()
         {
-            string testPackagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk", "TestUC2", "TestUC2.u");
+            string testPackagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk",
+                "TestUC2", "TestUC2.u");
             var package = UnrealLoader.LoadPackage(testPackagePath);
             Assert.IsNotNull(package);
 

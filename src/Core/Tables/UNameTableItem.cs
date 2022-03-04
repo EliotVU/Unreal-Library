@@ -8,6 +8,7 @@ namespace UELib
     public sealed class UNameTableItem : UTableItem, IUnrealSerializableClass
     {
         #region Serialized Members
+
         /// <summary>
         /// Object Name
         /// </summary>
@@ -21,11 +22,12 @@ namespace UELib
         /// 64bit in UE3
         /// </value>
         public ulong Flags;
+
         #endregion
 
         private const int QWORDVersion = 141;
 
-        public void Deserialize( IUnrealStream stream )
+        public void Deserialize(IUnrealStream stream)
         {
 #if DCUO
             if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO )
@@ -43,7 +45,7 @@ namespace UELib
             else
             {
 #endif
-                Name = stream.ReadText();
+            Name = stream.ReadText();
 #if DCUO
             }
 #endif
@@ -61,19 +63,19 @@ namespace UELib
 #endif
         }
 
-        public void Serialize( IUnrealStream stream )
+        public void Serialize(IUnrealStream stream)
         {
-            stream.WriteString( Name );
+            stream.WriteString(Name);
 
-            if( stream.Version < QWORDVersion )
+            if (stream.Version < QWORDVersion)
             {
                 // Writing UINT
-                stream.UW.Write( (uint)Flags );
+                stream.UW.Write((uint)Flags);
             }
             else
             {
                 // Writing ULONG
-                stream.UW.Write( Flags );
+                stream.UW.Write(Flags);
             }
         }
 
@@ -82,12 +84,12 @@ namespace UELib
             return Name;
         }
 
-        public static implicit operator string( UNameTableItem a )
+        public static implicit operator string(UNameTableItem a)
         {
             return a.Name;
         }
 
-        public static implicit operator int( UNameTableItem a )
+        public static implicit operator int(UNameTableItem a)
         {
             return a.Index;
         }

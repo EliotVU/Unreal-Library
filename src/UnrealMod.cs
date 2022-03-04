@@ -14,7 +14,7 @@ namespace UELib
             public uint Version;
             public uint CRC32;
 
-            public void Deserialize( IUnrealStream stream )
+            public void Deserialize(IUnrealStream stream)
             {
                 FileTableOffset = stream.ReadUInt32();
                 FileSize = stream.ReadUInt32();
@@ -39,12 +39,12 @@ namespace UELib
                 NoSystem = 0x03
             }*/
 
-            public void Serialize( IUnrealStream stream )
+            public void Serialize(IUnrealStream stream)
             {
                 throw new NotImplementedException();
             }
 
-            public void Deserialize( IUnrealStream stream )
+            public void Deserialize(IUnrealStream stream)
             {
                 FileName = stream.ReadText();
                 SerialOffset = (uint)stream.ReadIndex();
@@ -55,18 +55,18 @@ namespace UELib
 
         public UArray<FileTable> FileTableList;
 
-        public void Deserialize( IUnrealStream stream )
+        public void Deserialize(IUnrealStream stream)
         {
-            if( stream.ReadUInt32() != Signature )
+            if (stream.ReadUInt32() != Signature)
             {
-                throw new System.IO.FileLoadException( stream + " isn't a UnrealMod file!" );
+                throw new System.IO.FileLoadException(stream + " isn't a UnrealMod file!");
             }
 
             Summary = new FileSummary();
-            Summary.Deserialize( stream );
+            Summary.Deserialize(stream);
 
-            stream.Seek( Summary.FileTableOffset, System.IO.SeekOrigin.Begin );
-            FileTableList = new UArray<FileTable>( stream );
+            stream.Seek(Summary.FileTableOffset, System.IO.SeekOrigin.Begin);
+            FileTableList = new UArray<FileTable>(stream);
         }
     }
 }

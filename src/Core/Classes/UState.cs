@@ -19,6 +19,7 @@ namespace UELib.Core
         private const uint VStateFlags = 61;
 
         #region Serialized Members
+
         /// <summary>
         /// Mask of current functions being probed by this class.
         /// </summary>
@@ -38,13 +39,17 @@ namespace UELib.Core
         /// This state's flags mask e.g. Auto, Simulated.
         /// </summary>
         private uint _StateFlags;
+
         #endregion
 
         #region Script Members
-        public IList<UFunction> Functions{ get; private set; }
+
+        public IList<UFunction> Functions { get; private set; }
+
         #endregion
 
         #region Constructors
+
         protected override void Deserialize()
         {
             base.Deserialize();
@@ -60,75 +65,76 @@ namespace UELib.Core
             // 64b IgnoreMask
 
 #if TRANSFORMERS
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
             {
                 goto noMasks;
             }
 #endif
 
             // UE3
-            if( Package.Version >= 220 )
+            if (Package.Version >= 220)
             {
                 // TODO: Corrigate Version; Somewhere between 690 - 706
-                if( Package.Version < 700 )
+                if (Package.Version < 700)
                 {
                     // TODO: Unknown!
                     int unknown = _Buffer.ReadInt32();
-                    Record( "???", unknown );
+                    Record("???", unknown);
                 }
 
                 _ProbeMask = _Buffer.ReadInt32();
-                Record( "_ProbeMask", _ProbeMask );
+                Record("_ProbeMask", _ProbeMask);
             }
-            else  // UE2 and 1
+            else // UE2 and 1
             {
                 _ProbeMask = _Buffer.ReadInt64();
-                Record( "_ProbeMask", _ProbeMask );
+                Record("_ProbeMask", _ProbeMask);
             }
 
             // TODO: Corrigate Version; Somewhere between 690 - 706
-            if( Package.Version < 700 )
+            if (Package.Version < 700)
             {
                 _IgnoreMask = _Buffer.ReadInt64();
-                Record( "_IgnoreMask", _IgnoreMask );
+                Record("_IgnoreMask", _IgnoreMask);
             }
 
-        noMasks:
+            noMasks:
             _LabelTableOffset = _Buffer.ReadInt16();
-            Record( "_LabelTableOffset", _LabelTableOffset );
+            Record("_LabelTableOffset", _LabelTableOffset);
 
-            if( Package.Version >= VStateFlags )
+            if (Package.Version >= VStateFlags)
             {
-                #if BORDERLANDS2 || TRANSFORMERS
-                    // FIXME:Temp fix
-                    if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
-                    {
-                        _StateFlags = _Buffer.ReadUShort();
-                        goto skipStateFlags;
-                    }
-                #endif
+#if BORDERLANDS2 || TRANSFORMERS
+                // FIXME:Temp fix
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                {
+                    _StateFlags = _Buffer.ReadUShort();
+                    goto skipStateFlags;
+                }
+#endif
 
                 _StateFlags = _Buffer.ReadUInt32();
                 skipStateFlags:
-                Record( "StateFlags", (StateFlags)_StateFlags );
+                Record("StateFlags", (StateFlags)_StateFlags);
             }
 
 #if TRANSFORMERS
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
             {
-                _Buffer.Skip( 4 );
+                _Buffer.Skip(4);
                 return;
             }
 #endif
 
-            if( Package.Version >= 220 )
+            if (Package.Version >= 220)
             {
                 int mapCount = _Buffer.ReadIndex();
-                Record( "mapcount", mapCount );
-                if( mapCount > 0 )
+                Record("mapcount", mapCount);
+                if (mapCount > 0)
                 {
-                    AssertEOS( mapCount * 12, "Maps" );
-                    _Buffer.Skip( mapCount * 12 );
+                    AssertEOS(mapCount * 12, "Maps");
+                    _Buffer.Skip(mapCount * 12);
                     // We don't have to store this.
                     // We don't use it and all that could happen is a OutOfMemory exception!
                     /*_FuncMap = new Dictionary<int,int>( mapCount );
@@ -144,26 +150,29 @@ namespace UELib.Core
         {
             base.FindChildren();
             Functions = new List<UFunction>();
-            for( var child = Children; child != null; child = child.NextField )
+            for (var child = Children; child != null; child = child.NextField)
             {
-                if( child.IsClassType( "Function" ) )
+                if (child.IsClassType("Function"))
                 {
-                    Functions.Insert( 0, (UFunction)child );
+                    Functions.Insert(0, (UFunction)child);
                 }
             }
         }
+
         #endregion
 
         #region Methods
-        public bool HasStateFlag( StateFlags flag )
+
+        public bool HasStateFlag(StateFlags flag)
         {
             return (_StateFlags & (uint)flag) != 0;
         }
 
-        public bool HasStateFlag( uint flag )
+        public bool HasStateFlag(uint flag)
         {
             return (_StateFlags & flag) != 0;
         }
+
         #endregion
     }
 }

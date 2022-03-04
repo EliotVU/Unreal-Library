@@ -24,7 +24,7 @@ namespace UELib
         /// <summary>
         /// The decompileable object that will be decompiled when this object's Decompile() function is called.
         /// </summary>
-        IUnrealDecompilable Object{ get; }
+        IUnrealDecompilable Object { get; }
     }
 
     /// <summary>
@@ -48,7 +48,7 @@ namespace UELib
         int GetBufferSize();
 
         [Pure]
-        string GetBufferId( bool fullName = false );
+        string GetBufferId(bool fullName = false);
     }
 
     /// <summary>
@@ -56,12 +56,12 @@ namespace UELib
     /// </summary>
     public interface IBinaryData : IBuffered
     {
-        BinaryMetaData BinaryMetaData{ get; }
+        BinaryMetaData BinaryMetaData { get; }
     }
 
     public interface IContainsTable
     {
-        UObjectTableItem Table{ get; }
+        UObjectTableItem Table { get; }
     }
 
     /// <summary>
@@ -76,12 +76,12 @@ namespace UELib
     /// </summary>
     public interface IUnrealDeserializableClass
     {
-        void Deserialize( IUnrealStream stream );
+        void Deserialize(IUnrealStream stream);
     }
 
     public interface IUnrealSerializableClass : IUnrealDeserializableClass
     {
-        void Serialize( IUnrealStream stream );
+        void Serialize(IUnrealStream stream);
     }
 
     /// <summary>
@@ -89,10 +89,10 @@ namespace UELib
     /// </summary>
     public interface IUnrealExportable
     {
-        IEnumerable<string> ExportableExtensions{ get; }
+        IEnumerable<string> ExportableExtensions { get; }
 
         bool CompatableExport();
-        void SerializeExport( string desiredExportExtension, Stream exportStream );
+        void SerializeExport(string desiredExportExtension, Stream exportStream);
     }
 
     /// <summary>
@@ -100,9 +100,9 @@ namespace UELib
     /// </summary>
     public interface IUnrealNetObject
     {
-        string Name{ get; }
-        ushort RepOffset{ get; }
-        bool RepReliable{ get; }
-        uint RepKey{ get; }
+        string Name { get; }
+        ushort RepOffset { get; }
+        bool RepReliable { get; }
+        uint RepKey { get; }
     }
 }

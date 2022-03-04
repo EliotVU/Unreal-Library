@@ -24,9 +24,9 @@ namespace UELib.Core
         /// Initialize a new instance based from the specified stream.
         /// </summary>
         /// <param name="stream">The stream to use for initializing this array.</param>
-        public UArray( IUnrealStream stream )
+        public UArray(IUnrealStream stream)
         {
-            Deserialize( stream );
+            Deserialize(stream);
         }
 
         /// <summary>
@@ -34,17 +34,17 @@ namespace UELib.Core
         /// </summary>
         /// <param name="stream">The stream to use for initializing this array.</param>
         /// <param name="count">The size to allocate for the list.</param>
-        public UArray( IUnrealStream stream, int count )
+        public UArray(IUnrealStream stream, int count)
         {
-            Deserialize( stream, count );
+            Deserialize(stream, count);
         }
 
-        public void Serialize( IUnrealStream stream )
+        public void Serialize(IUnrealStream stream)
         {
-            stream.WriteIndex( Count );
-            for( int i = 0; i < Count; ++ i )
+            stream.WriteIndex(Count);
+            for (int i = 0; i < Count; ++i)
             {
-                this[i].Serialize( stream );
+                this[i].Serialize(stream);
             }
         }
 
@@ -52,15 +52,15 @@ namespace UELib.Core
         /// Initialize this array with items in the specified stream.
         /// </summary>
         /// <param name="stream">The stream to use for initializing this array.</param>
-        public void Deserialize( IUnrealStream stream )
+        public void Deserialize(IUnrealStream stream)
         {
             int c = stream.ReadIndex();
             Capacity = c;
-            for( int i = 0; i < c; ++ i )
+            for (int i = 0; i < c; ++i)
             {
                 T item = new T();
-                item.Deserialize( stream );
-                Add( item );
+                item.Deserialize(stream);
+                Add(item);
             }
         }
 
@@ -69,14 +69,14 @@ namespace UELib.Core
         /// </summary>
         /// <param name="stream">The stream to use for initializing this array.</param>
         /// <param name="count">The size to allocate for the list.</param>
-        public void Deserialize( IUnrealStream stream, int count )
+        public void Deserialize(IUnrealStream stream, int count)
         {
             Capacity = count;
-            for( int i = 0; i < count; ++ i )
+            for (int i = 0; i < count; ++i)
             {
                 T item = new T();
-                item.Deserialize( stream );
-                Add( item );
+                item.Deserialize(stream);
+                Add(item);
             }
         }
 
@@ -85,28 +85,28 @@ namespace UELib.Core
         /// </summary>
         /// <param name="stream">The stream to use for initializing this array.</param>
         /// <param name="action">The action to invoke before serializing a item.</param>
-        public void Deserialize( IUnrealStream stream, Action<T> action )
+        public void Deserialize(IUnrealStream stream, Action<T> action)
         {
             int c = stream.ReadIndex();
             Capacity = c;
-            for( int i = 0; i < c; ++ i )
+            for (int i = 0; i < c; ++i)
             {
                 T item = new T();
-                action.Invoke( item );
-                item.Deserialize( stream );
-                Add( item );
+                action.Invoke(item);
+                item.Deserialize(stream);
+                Add(item);
             }
         }
     }
 
     public static class UArrayList
     {
-        public static void Deserialize( this List<int> indexes, IUnrealStream stream )
+        public static void Deserialize(this List<int> indexes, IUnrealStream stream)
         {
             indexes.Capacity = stream.ReadInt32();
-            for( int i = 0; i < indexes.Capacity; ++ i )
+            for (int i = 0; i < indexes.Capacity; ++i)
             {
-                indexes.Add( stream.ReadIndex() );
+                indexes.Add(stream.ReadIndex());
             }
         }
     }
