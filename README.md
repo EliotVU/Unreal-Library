@@ -45,6 +45,7 @@ Below is a table of games that are known to be compatible with the UELib.
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory Battery | Unknown | Unknown |     |
 | Swat 4 | Unknown | 129/027 |     |
+| Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | (Third-party) https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/ | 
 |     |     |     |     |
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |
