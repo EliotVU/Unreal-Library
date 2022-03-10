@@ -1,13 +1,15 @@
 [![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 
-The Unreal library provides you an API to parse/deserialize package files such as .UDK, .UPK, from Unreal Engine games, and provide you the necessary methods to navigate its contents.
+The Unreal library provides you an API to read (parse/deserialize) the contents of Unreal Engine game package files such as .UDK, .UPK. 
+Its main purpose is to decompile the UnrealScript byte-code in order to re-construct original source-code.
 
-At the moment these are all the object classes that are supported by this API:
+It accomplishes this by reading the necessary Unreal data classes such as:
 
     UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState,
     UClass, UTextBuffer, UMetaData, UFont, USound, UPackage
-
+    
+Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source. 
 
 Installation
 ==============
