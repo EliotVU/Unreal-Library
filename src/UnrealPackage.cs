@@ -538,7 +538,7 @@ namespace UELib
         /// </summary>
         public string Group;
 
-        private struct TablesData : IUnrealSerializableClass
+        public struct TablesData : IUnrealSerializableClass
         {
             public uint NamesCount { get; internal set; }
             public uint NamesOffset { get; internal set; }
@@ -627,6 +627,7 @@ namespace UELib
         }
 
         private TablesData _TablesData;
+        public TablesData Summary => _TablesData;
 
         /// <summary>
         /// The guid of this package. Used to test if the package on a client is equal to the one on a server.
