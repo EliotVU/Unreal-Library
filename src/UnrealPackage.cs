@@ -1481,6 +1481,13 @@ namespace UELib
         }
 
         [PublicAPI]
+        [Obsolete]
+        public void RegisterClass(string className, Type classObject)
+        {
+            AddClassType(className, classObject);
+        }
+
+        [PublicAPI]
         public void AddClassType(string className, Type classObject)
         {
             _ClassTypes.Add(className.ToLower(), classObject);

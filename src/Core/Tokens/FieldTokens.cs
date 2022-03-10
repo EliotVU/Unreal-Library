@@ -31,7 +31,7 @@
                     Decompiler._MustCommentStatement = true;
                     return $"native.{base.Decompile()}";
 #else
-                    return String.Empty;
+                    return string.Empty;
 #endif
                 }
             }
