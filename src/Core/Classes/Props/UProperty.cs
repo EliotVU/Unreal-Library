@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace UELib.Core
 {
@@ -60,7 +61,6 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
 #if XIII
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII)
             {
@@ -69,8 +69,15 @@ namespace UELib.Core
                 goto skipInfo;
             }
 #endif
-
-            uint info = _Buffer.ReadUInt32();
+#if AA2
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
+            {
+                // Always 26125 (hardcoded in the assembly) 
+                uint unknown = _Buffer.ReadUInt32();
+                Record("Unknown:AA2", unknown);
+            }
+#endif
+            int info = _Buffer.ReadInt32();
             ArrayDim = (ushort)(info & 0x0000FFFFU);
             Record("ArrayDim", ArrayDim);
             ElementSize = (ushort)(info >> 16);

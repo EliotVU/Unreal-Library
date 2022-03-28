@@ -269,6 +269,13 @@ namespace UELib
                 /// </summary>
                 [Build(118, 128, 25u, 29u)] UT2004,
 
+                // Built on UT2004
+                // Represents both AAO and AAA
+                /// <summary>
+                /// 128/032
+                /// </summary>
+                [Build(128, 32)] AA2,
+
                 /// <summary>
                 /// 129/027
                 /// </summary>
@@ -1079,6 +1086,23 @@ namespace UELib
  -= offsetDif;
                 _TablesData.ExportsOffset
  -= offsetDif;
+            }
+#endif
+
+#if AA2
+            if (Build == GameBuild.BuildName.AA2)
+            {
+                bool isEncrypted = stream.ReadInt32() > 0;
+                if (isEncrypted)
+                {
+                	throw new UnrealException("Package is encrypted, aborting!");
+                    // TODO: Use a stream wrapper instead; but this is blocked by an overly intertwined use of PackageStream.
+                    //var decoder = new AA2CryptoReader();
+                    //byte b = stream.ReadByte();
+                    //decoder.Key = 0x05;
+                    //decoder.Key = decoder.DecryptByte((int)stream.Position, b);
+                    //Decoder = decoder;
+                }
             }
 #endif
 

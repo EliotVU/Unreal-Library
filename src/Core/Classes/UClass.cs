@@ -114,6 +114,15 @@ namespace UELib.Core
                 Record("oldClassRecordSize", oldClassRecordSize);
             }
 
+#if AA2
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
+            {
+                // Could this be the same DWORD that bioshock has?
+                uint unknown = _Buffer.ReadUInt32();
+                Record("Unknown:AA2", unknown);
+            }
+#endif
+
 #if BIOSHOCK
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
             {
