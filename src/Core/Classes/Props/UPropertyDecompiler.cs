@@ -59,7 +59,12 @@ namespace UELib.Core
             var output = string.Empty;
 
             // none are true in StreamInteraction.uc???
-            if (IsPrivate())
+
+            if (IsProtected())
+            {
+                output += "protected ";
+            }
+            else if (IsPrivate())
             {
                 output += "private ";
             }

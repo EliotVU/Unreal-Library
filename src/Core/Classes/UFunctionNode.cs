@@ -46,15 +46,14 @@ namespace UELib.Core
 
             if (name != string.Empty)
             {
+                if (IsProtected())
+                {
+                    return $"{name}-Protected";
+                }
                 if (IsPrivate())
                 {
                     return $"{name}-Private";
                 }
-                else if (IsProtected())
-                {
-                    return $"{name}-Protected";
-                }
-
                 return name;
             }
 

@@ -130,6 +130,7 @@ namespace UELib.Flags
 
         Private             = 0x00000080U,
         Automated           = 0x00000100U,
+        Protected           = 0x00000800U,
 
         Transient           = 0x00004000U,
 
@@ -165,6 +166,7 @@ namespace UELib.Flags
         Obsolete                = 0x00000020U,
         Final                   = 0x00000080U,
         PerObjectLocalized      = 0x00000100U,
+        Protected               = 0x00000100U,
         PropertiesObject        = 0x00000200U,
         ArchetypeObject         = 0x00000400U,
         RemappedName            = 0x00000800U,
@@ -290,7 +292,6 @@ namespace UELib.Flags
         DataBinding         = 0x40000000U,
 
         SerializeText       = 0x80000000U,
-
         #region UT2004 Flags
         Cache               = 0x01000000U,      // @Removed(UE3) Generate cache file: .ucl
         NoImport            = 0x01000000U,

@@ -29,7 +29,7 @@ namespace UELib.Core
             {
                 return "Interface";
             }
-            else if (IsClassWithin())
+            if (IsClassWithin())
             {
                 return "UClass-Within";
             }
