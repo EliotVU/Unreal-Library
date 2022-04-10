@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if Forms
+using System;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Windows.Forms;
@@ -76,3 +77,4 @@ namespace UELib.Core
         }
     }
 }
+#endif

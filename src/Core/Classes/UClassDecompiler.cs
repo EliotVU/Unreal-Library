@@ -1,5 +1,5 @@
-using System.Text;
 #if DECOMPILE
+using System.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -83,7 +83,11 @@ namespace UELib.Core
                 assembly.GetName().Name,
                 ((AssemblyCopyrightAttribute)assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0])
                 .Copyright,
+#if Forms
                 System.Windows.Forms.Application.ProductName,
+#else
+                "UELib",
+#endif
                 GetOuterGroup()
             );
 

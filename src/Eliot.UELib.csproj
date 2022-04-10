@@ -41,13 +41,14 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE Forms UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 AA2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>bin\Debug\Eliot.UELib.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <NoWarn>
     </NoWarn>
@@ -60,7 +61,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE HAWKEN UT DISHONORED REMEMBERME BIOSHOCK DEUSEXINVISIBLEWAR XCOM2 AA2</DefineConstants>
+    <DefineConstants>TRACE;Forms DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE HAWKEN UT DISHONORED REMEMBERME BIOSHOCK DEUSEXINVISIBLEWAR XCOM2 AA2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -72,10 +73,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Publish\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE XCOM2</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE Forms DEBUG_TEST DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 AA2</DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <WarningLevel>0</WarningLevel>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -94,7 +95,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
     <OutputPath>bin\Publish\</OutputPath>
-    <DefineConstants>DECOMPILE BINARYMETADATA SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2</DefineConstants>
+    <DefineConstants>Forms DECOMPILE BINARYMETADATA SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2</DefineConstants>
     <Optimize>true</Optimize>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -246,11 +247,10 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
