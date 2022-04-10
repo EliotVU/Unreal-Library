@@ -68,10 +68,6 @@ namespace UELib.Core
             {
                 output += "private ";
             }
-            else if (IsProtected())
-            {
-                output += "protected ";
-            }
 
             return output;
         }

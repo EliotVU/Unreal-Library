@@ -27,6 +27,7 @@
         LabelTable              = 0x0C,
         GotoLabel               = 0x0D,
         EatString               = 0x0E,
+        EatReturnValue          = 0x0E,     // Formerly known as EatString
         Let                     = 0x0F,     // A = B
         DynArrayElement         = 0x10,
         New                     = 0x11,     // new(OUTER) CLASS...

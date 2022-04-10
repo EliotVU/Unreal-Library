@@ -55,13 +55,14 @@ namespace UELib.Core
 
                     // Always add ( and ) unless the conditions below are not met, in case of a VirtualFunctionCall.
                     var addParenthesises = true;
-                    if (t is NativeFunctionToken)
+                    switch (t)
                     {
-                        addParenthesises = ((NativeFunctionToken)t).NativeTable.Type == FunctionType.Operator;
-                    }
-                    else if (t is FinalFunctionToken)
-                    {
-                        addParenthesises = ((FinalFunctionToken)t).Function.IsOperator();
+                        case NativeFunctionToken token:
+                            addParenthesises = token.NativeItem.Type == FunctionType.Operator;
+                            break;
+                        case FinalFunctionToken token:
+                            addParenthesises = token.Function.IsOperator();
+                            break;
                     }
 
                     return addParenthesises ? $"({t.Decompile()})" : t.Decompile();
@@ -109,7 +110,7 @@ namespace UELib.Core
                 {
                     var tokens = new List<Tuple<Token, string>>();
                     {
-                        next:
+                    next:
                         var t = GrabNextToken();
                         tokens.Add(Tuple.Create(t, t.Decompile()));
                         if (!(t is EndFunctionParmsToken))
@@ -122,22 +123,29 @@ namespace UELib.Core
                         var t = tokens[i].Item1; // Token
                         string v = tokens[i].Item2; // Value
 
-                        if (t is NoParmToken) // Skipped optional parameters
+                        switch (t)
                         {
-                            output.Append(v);
-                        }
-                        else if (t is EndFunctionParmsToken) // End ")"
-                        {
-                            output = new StringBuilder(output.ToString().TrimEnd(',') + v);
-                        }
-                        else // Any passed values
-                        {
-                            if (i != tokens.Count - 1 && i > 0) // Skipped optional parameters
-                            {
-                                output.Append(v == string.Empty ? "," : ", ");
-                            }
+                            // Skipped optional parameters
+                            case NoParmToken _:
+                                output.Append(v);
+                                break;
 
-                            output.Append(v);
+                            // End ")"
+                            case EndFunctionParmsToken _:
+                                output = new StringBuilder(output.ToString().TrimEnd(',') + v);
+                                break;
+
+                            // Any passed values
+                            default:
+                                {
+                                    if (i != tokens.Count - 1 && i > 0) // Skipped optional parameters
+                                    {
+                                        output.Append(v == string.Empty ? "," : ", ");
+                                    }
+
+                                    output.Append(v);
+                                    break;
+                                }
                         }
                     }
 
@@ -220,7 +228,7 @@ namespace UELib.Core
 
             public class VirtualFunctionToken : FunctionToken
             {
-                public int FunctionNameIndex;
+                public UName FunctionName;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -236,8 +244,9 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(int));
                     }
 
-                    FunctionNameIndex = stream.ReadNameIndex();
+                    FunctionName = stream.ReadNameReference();
                     Decompiler.AlignNameSize();
+                    Decompiler._Container.Record(nameof(FunctionName), FunctionName);
 
                     DeserializeCall();
                 }
@@ -245,7 +254,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileCall(Package.GetIndexName(FunctionNameIndex));
+                    return DecompileCall(FunctionName);
                 }
             }
 
@@ -301,64 +310,108 @@ namespace UELib.Core
 
             public class NativeFunctionToken : FunctionToken
             {
-                public NativeTableItem NativeTable;
+                public NativeTableItem NativeItem;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (NativeTable == null)
+                    if (NativeItem != null)
                     {
-                        NativeTable = new NativeTableItem
+                        switch (NativeItem.Type)
                         {
-                            Type = FunctionType.Function,
-                            Name = "UnresolvedNativeFunction_" + RepresentToken,
-                            ByteToken = RepresentToken
-                        };
+                            case FunctionType.Function:
+                                DeserializeCall();
+                                break;
+
+                            case FunctionType.PreOperator:
+                            case FunctionType.PostOperator:
+                                DeserializeUnaryOperator();
+                                break;
+
+                            case FunctionType.Operator:
+                                DeserializeBinaryOperator();
+                                break;
+
+                            default:
+                                DeserializeCall();
+                                break;
+                        }
+
+                        return;
                     }
 
-                    switch (NativeTable.Type)
+                    NativeItem = new NativeTableItem
                     {
-                        case FunctionType.Function:
-                            DeserializeCall();
-                            break;
+                        Type = FunctionType.Function,
+                        Name = "UnresolvedNativeFunction_" + RepresentToken,
+                        ByteToken = RepresentToken
+                    };
 
-                        case FunctionType.PreOperator:
-                        case FunctionType.PostOperator:
-                            DeserializeUnaryOperator();
-                            break;
+                tryAgain:
+                    int position = Decompiler.CodePosition;
+                    int tokensCount = Decompiler.DeserializedTokens.Count;
+                    try
+                    {
+                        switch (NativeItem.Type)
+                        {
+                            case FunctionType.Function:
+                                DeserializeCall();
+                                break;
 
-                        case FunctionType.Operator:
-                            DeserializeBinaryOperator();
-                            break;
+                            case FunctionType.PreOperator:
+                            case FunctionType.PostOperator:
+                                DeserializeUnaryOperator();
+                                break;
 
-                        default:
-                            DeserializeCall();
-                            break;
+                            case FunctionType.Operator:
+                                DeserializeBinaryOperator();
+                                break;
+
+                            default:
+                                DeserializeCall();
+                                break;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        throw new UnrealException($"Bad NativeCall({NativeItem.ByteToken}) deserialization", e);
+                        //if (++NativeTable.Type > FunctionType.Max)
+                        //{
+                        //    throw new UnrealException($"Bad NativeCall({NativeTable.ByteToken}) deserialization", e);
+                        //}
+                        //// Try to recover, this however does not recover the decompiled state!
+                        //Position = position;
+                        //if (Decompiler.DeserializedTokens.Count - tokensCount > 0)
+                        //{
+                        //    Decompiler.DeserializedTokens.RemoveRange(tokensCount - 1,
+                        //        Decompiler.DeserializedTokens.Count - tokensCount);
+                        //}
+                        //goto tryAgain;
                     }
                 }
 
                 public override string Decompile()
                 {
                     string output;
-                    switch (NativeTable.Type)
+                    switch (NativeItem.Type)
                     {
                         case FunctionType.Function:
-                            output = DecompileCall(NativeTable.Name);
+                            output = DecompileCall(NativeItem.Name);
                             break;
 
                         case FunctionType.Operator:
-                            output = DecompileOperator(NativeTable.Name);
+                            output = DecompileOperator(NativeItem.Name);
                             break;
 
                         case FunctionType.PostOperator:
-                            output = DecompilePostOperator(NativeTable.Name);
+                            output = DecompilePostOperator(NativeItem.Name);
                             break;
 
                         case FunctionType.PreOperator:
-                            output = DecompilePreOperator(NativeTable.Name);
+                            output = DecompilePreOperator(NativeItem.Name);
                             break;
 
                         default:
-                            output = DecompileCall(NativeTable.Name);
+                            output = DecompileCall(NativeItem.Name);
                             break;
                     }
 

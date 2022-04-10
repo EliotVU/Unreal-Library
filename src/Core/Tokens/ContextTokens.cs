@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using UELib.Annotations;
+
+namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -84,18 +86,19 @@
             public class StructMemberToken : Token
             {
                 public UField MemberProperty;
+                [CanBeNull] public UStruct Struct;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // Property index
-                    MemberProperty = Decompiler._Container.TryGetIndexObject(stream.ReadObjectIndex()) as UField;
+                    MemberProperty = stream.ReadObject() as UField;
                     Decompiler.AlignObjectSize();
 
                     // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
                     if (stream.Version > 369)
                     {
                         // Struct index
-                        stream.ReadObjectIndex();
+                        Struct = stream.ReadObject() as UStruct;
                         Decompiler.AlignObjectSize();
 #if MKKE
                         if (Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
@@ -121,6 +124,12 @@
 
                 public override string Decompile()
                 {
+#if DEBUG_HIDDENTOKENS
+                    if (Struct != null)
+                    {
+                        Decompiler.PreComment = $"Struct:{Struct.GetOuterGroup()}";
+                    }
+#endif
                     return $"{DecompileNext()}.{MemberProperty.Name}";
                 }
             }

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -157,25 +158,18 @@ namespace UELib.Core
                 }
             }
 
-            public class EatStringToken : Token
+            public class EatReturnValueToken : Token
             {
+                [CanBeNull] public UProperty ReturnValueProperty;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // TODO: Corrigate Version(Lowest known version 369(Roboblitz))
-                    if (stream.Version > 300)
-                    {
-                        stream.ReadObjectIndex();
-                        Decompiler.AlignObjectSize();
-                    }
-
-                    // The Field
-                    DeserializeNext();
-                }
-
-                public override string Decompile()
-                {
-                    // The Field
-                    return DecompileNext();
+                    // TODO: Correct version, confirmed to at least exist as of the earliest UE3-game v369(Roboblitz).
+                    // -- definitely not in the older UE3 builds v186
+                    if (stream.Version < 200) return;
+                    
+                    ReturnValueProperty = stream.ReadObject() as UProperty;
+                    Decompiler.AlignObjectSize();
                 }
             }
 

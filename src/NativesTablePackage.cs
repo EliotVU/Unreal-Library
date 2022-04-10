@@ -1,16 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace UELib
 {
     using Core;
+    using System.Runtime.CompilerServices;
 
     public sealed class NativeTableItem
     {
         public string Name;
         public byte OperPrecedence;
         public FunctionType Type;
-        public int ByteToken;
+        public uint ByteToken;
 
         public NativeTableItem()
         {
@@ -48,7 +50,8 @@ namespace UELib
         Function = 1,
         Operator = 2,
         PreOperator = 3,
-        PostOperator = 4
+        PostOperator = 4,
+        Max = PostOperator
     }
 
     public sealed class NativesTablePackage
@@ -57,6 +60,8 @@ namespace UELib
         public const string Extension = ".NTL";
 
         public List<NativeTableItem> NativeTableList;
+
+        private Dictionary<uint, NativeTableItem> _NativeFunctionMap;
 
         public void LoadPackage(string name)
         {
@@ -72,44 +77,25 @@ namespace UELib
                 NativeTableList = new List<NativeTableItem>();
                 for (var i = 0; i < count; ++i)
                 {
-                    NativeTableList.Add
-                    (
-                        new NativeTableItem
-                        {
-                            Name = binReader.ReadString(),
-                            OperPrecedence = binReader.ReadByte(),
-                            Type = (FunctionType)binReader.ReadByte(),
-                            ByteToken = binReader.ReadInt32()
-                        }
-                    );
+                    var item = new NativeTableItem
+                    {
+                        Name = binReader.ReadString(),
+                        OperPrecedence = binReader.ReadByte(),
+                        Type = (FunctionType)binReader.ReadByte(),
+                        ByteToken = binReader.ReadUInt32()
+                    };
+                    NativeTableList.Add(item);
                 }
-
-                NativeTableList.Sort((nt1, nt2) => nt1.ByteToken.CompareTo(nt2.ByteToken));
             }
+            NativeTableList.Sort((nt1, nt2) => nt1.ByteToken.CompareTo(nt2.ByteToken));
+            _NativeFunctionMap = NativeTableList.ToDictionary(item => item.ByteToken);
         }
 
-        public NativeTableItem FindTableItem(int nativeToken)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeTableItem FindTableItem(uint nativeToken)
         {
-            var lowNum = 0;
-            int highNum = NativeTableList.Count - 1;
-            while (lowNum <= highNum)
-            {
-                int midNum = (lowNum + highNum) / 2;
-                if (nativeToken > NativeTableList[midNum].ByteToken)
-                {
-                    lowNum = midNum + 1;
-                }
-                else if (nativeToken < NativeTableList[midNum].ByteToken)
-                {
-                    highNum = midNum - 1;
-                }
-                else
-                {
-                    return NativeTableList[midNum];
-                }
-            }
-
-            return null;
+            _NativeFunctionMap.TryGetValue(nativeToken, out var item);
+            return item;
         }
 
         public void CreatePackage(string name)
