@@ -41,6 +41,14 @@ namespace UELib.Core
 
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
+        /// <summary>
+        /// Stored meta-data in the "option" format (i.e. WebAdmin, and commandline options), used to assist developers in the editor.
+        /// e.g. <code>var int MyVariable "PI:Property Two:Game:1:60:Check" ...["SecondOption"]</code>
+        /// 
+        /// An original terminating \" character is serialized as a \n character, the string will also end with a newline character.
+        /// </summary>
+        [CanBeNull] public string EditorDataText;
+
         #endregion
 
         #region General Members
@@ -71,7 +79,7 @@ namespace UELib.Core
             }
 #endif
 #if AA2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2 && Package.LicenseeVersion > 7)
             {
                 // Always 26125 (hardcoded in the assembly) 
                 uint unknown = _Buffer.ReadUInt32();
@@ -115,10 +123,11 @@ namespace UELib.Core
                 Record("RepOffset", RepOffset);
             }
 
-            if (HasPropertyFlag(Flags.PropertyFlagsLO.New) && Package.Version <= 128)
+            // FIXME: At which version was this feature removed?
+            if (HasPropertyFlag(Flags.PropertyFlagsLO.EditorData) && Package.Version <= 128)
             {
-                string unknown = _Buffer.ReadText();
-                Console.WriteLine("Found a property flagged with New:" + unknown);
+                EditorDataText = _Buffer.ReadText();
+                Record(nameof(EditorDataText), EditorDataText);
             }
 
 #if SWAT4
