@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -25,12 +25,15 @@ namespace UELib.Core
         public ulong PropertyFlags { get; private set; }
 
 #if XCOM2
-        public UName ConfigName { get; private set; }
+        [CanBeNull] public UName ConfigName;
 #endif
 
-        public int CategoryIndex { get; private set; }
+        [CanBeNull] public UName CategoryName;
+        
+        [Obsolete("See CategoryName")]
+        public int CategoryIndex { get; }
 
-        public UEnum ArrayEnum { get; private set; }
+        [CanBeNull] public UEnum ArrayEnum { get; private set; }
 
         public ushort RepOffset { get; private set; }
 
@@ -43,8 +46,6 @@ namespace UELib.Core
         #region General Members
 
         private bool _IsArray => ArrayDim > 1;
-
-        public string CategoryName => CategoryIndex != -1 ? Package.Names[CategoryIndex].Name : "@Null";
 
         #endregion
 
@@ -84,7 +85,9 @@ namespace UELib.Core
             Record("ElementSize", ElementSize);
             skipInfo:
 
-            PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
+            PropertyFlags = Package.Version >= 220 
+                ? _Buffer.ReadUInt64() 
+                : _Buffer.ReadUInt32();
             Record("PropertyFlags", PropertyFlags);
 
 #if XCOM2
@@ -96,8 +99,8 @@ namespace UELib.Core
 #endif
             if (!Package.IsConsoleCooked())
             {
-                CategoryIndex = _Buffer.ReadNameIndex();
-                Record("CategoryIndex", CategoryIndex);
+                CategoryName = _Buffer.ReadNameReference();
+                Record(nameof(CategoryName), CategoryName);
 
                 if (Package.Version > 400)
                 {
@@ -105,7 +108,6 @@ namespace UELib.Core
                     Record("ArrayEnum", ArrayEnum);
                 }
             }
-            else CategoryIndex = -1;
 
             if (HasPropertyFlag(Flags.PropertyFlagsLO.Net))
             {

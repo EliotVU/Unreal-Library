@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using System.Diagnostics;
+
+namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -361,6 +363,22 @@
                 public override string Decompile()
                 {
                     return $"string{base.Decompile()}";
+                }
+            }
+
+            public sealed class UnresolvedCastToken : CastToken
+            {
+                public override void Deserialize(IUnrealStream stream)
+                {
+#if DEBUG_HIDDENTOKENS
+                    Debug.WriteLine("Detected an unresolved token.");
+#endif
+                }
+                
+                public override string Decompile()
+                {
+                    Decompiler.PreComment = $"// {FormatTokenInfo(this)}";
+                    return base.Decompile();
                 }
             }
         }

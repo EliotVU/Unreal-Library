@@ -54,18 +54,18 @@ namespace UELib.Core
                         return t.Decompile();
 
                     // Always add ( and ) unless the conditions below are not met, in case of a VirtualFunctionCall.
-                    var addParenthesises = true;
+                    var addParenthesis = true;
                     switch (t)
                     {
                         case NativeFunctionToken token:
-                            addParenthesises = token.NativeItem.Type == FunctionType.Operator;
+                            addParenthesis = token.NativeItem.Type == FunctionType.Operator;
                             break;
                         case FinalFunctionToken token:
-                            addParenthesises = token.Function.IsOperator();
+                            addParenthesis = token.Function.IsOperator();
                             break;
                     }
 
-                    return addParenthesises ? $"({t.Decompile()})" : t.Decompile();
+                    return addParenthesis ? $"({t.Decompile()})" : t.Decompile();
                 }
 
                 protected string DecompilePreOperator(string operatorName)
@@ -85,7 +85,7 @@ namespace UELib.Core
 
                 protected string DecompilePostOperator(string operatorName)
                 {
-                    string output = operatorName + " " + DecompileNext();
+                    string output = $"{operatorName} {DecompileNext()}";
                     DecompileNext(); // )
                     return output;
                 }
@@ -159,7 +159,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (stream.Version == 421)
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
                     {
                         Decompiler.AlignSize(sizeof(int));
                     }
@@ -196,18 +196,19 @@ namespace UELib.Core
                                 output = "super";
 
                                 // Check if the super call is within the super class of this functions outer(class)
-                                var myouter = (UField)Decompiler._Container.Outer;
-                                if (myouter?.Super == null || Function.GetOuterName() != myouter.Super.Name)
+                                var container = Decompiler._Container;
+                                var context = (UField)container.Outer;
+                                if (context?.Super == null || Function.GetOuterName() != context.Super.Name)
                                 {
                                     // There's no super to call then do a recursive super call.
-                                    if (Decompiler._Container.Super == null)
+                                    if (container.Super == null)
                                     {
-                                        output += $"({Decompiler._Container.GetOuterName()})";
+                                        output += $"({container.GetOuterName()})";
                                     }
                                     else
                                     {
                                         // Different owners, then it is a deep super call.
-                                        if (Function.GetOuterName() != Decompiler._Container.GetOuterName())
+                                        if (Function.GetOuterName() != container.GetOuterName())
                                         {
                                             output += $"({Function.GetOuterName()})";
                                         }
@@ -239,14 +240,13 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
-                    if (stream.Version == 421)
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
                     {
                         Decompiler.AlignSize(sizeof(int));
                     }
 
                     FunctionName = stream.ReadNameReference();
                     Decompiler.AlignNameSize();
-                    Decompiler._Container.Record(nameof(FunctionName), FunctionName);
 
                     DeserializeCall();
                 }
@@ -260,11 +260,11 @@ namespace UELib.Core
 
             public class GlobalFunctionToken : FunctionToken
             {
-                public int FunctionNameIndex;
+                public UName FunctionName;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    FunctionNameIndex = stream.ReadNameIndex();
+                    FunctionName = stream.ReadNameReference();
                     Decompiler.AlignNameSize();
 
                     DeserializeCall();
@@ -273,13 +273,13 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return $"global.{DecompileCall(Package.GetIndexName(FunctionNameIndex))}";
+                    return $"global.{DecompileCall(FunctionName)}";
                 }
             }
 
             public class DelegateFunctionToken : FunctionToken
             {
-                public int FunctionNameIndex;
+                public UName FunctionName;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -294,8 +294,7 @@ namespace UELib.Core
                     stream.ReadObjectIndex();
                     Decompiler.AlignObjectSize();
 
-                    // Delegate name index
-                    FunctionNameIndex = stream.ReadNameIndex();
+                    FunctionName = stream.ReadNameReference();
                     Decompiler.AlignNameSize();
 
                     DeserializeCall();
@@ -304,7 +303,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileCall(Decompiler._Container.Package.GetIndexName(FunctionNameIndex));
+                    return DecompileCall(FunctionName);
                 }
             }
 

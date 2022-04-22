@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UELib.Annotations;
 
 namespace UELib
 {
@@ -18,6 +19,7 @@ namespace UELib
         {
         }
 
+        [PublicAPI]
         public NativeTableItem(UFunction function)
         {
             if (function.IsOperator())
@@ -57,12 +59,16 @@ namespace UELib
     public sealed class NativesTablePackage
     {
         private const uint Signature = 0x2C8D14F1;
+        
+        [PublicAPI]
         public const string Extension = ".NTL";
 
+        [PublicAPI]
         public List<NativeTableItem> NativeTableList;
 
         private Dictionary<uint, NativeTableItem> _NativeFunctionMap;
 
+        [PublicAPI]
         public void LoadPackage(string name)
         {
             var stream = new FileStream(name + Extension, FileMode.Open, FileAccess.Read);
@@ -92,12 +98,13 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeTableItem FindTableItem(uint nativeToken)
+        public NativeTableItem FindTableItem(uint nativeIndex)
         {
-            _NativeFunctionMap.TryGetValue(nativeToken, out var item);
+            _NativeFunctionMap.TryGetValue(nativeIndex, out var item);
             return item;
         }
 
+        [PublicAPI]
         public void CreatePackage(string name)
         {
             var stream = new FileStream(name + Extension, FileMode.Create, FileAccess.Write);

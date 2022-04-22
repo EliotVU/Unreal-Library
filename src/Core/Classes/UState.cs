@@ -23,17 +23,17 @@ namespace UELib.Core
         /// <summary>
         /// Mask of current functions being probed by this class.
         /// </summary>
-        private long _ProbeMask;
+        private ulong _ProbeMask;
 
         /// <summary>
         /// Mask of current functions being ignored by the present state node.
         /// </summary>
-        private long _IgnoreMask;
+        private ulong _IgnoreMask;
 
         /// <summary>
         /// Offset into the ScriptStack where the FLabelEntry persist.
         /// </summary>
-        private short _LabelTableOffset;
+        private ushort _LabelTableOffset;
 
         /// <summary>
         /// This state's flags mask e.g. Auto, Simulated.
@@ -78,28 +78,28 @@ namespace UELib.Core
                 if (Package.Version < 700)
                 {
                     // TODO: Unknown!
-                    int unknown = _Buffer.ReadInt32();
+                    uint unknown = _Buffer.ReadUInt32();
                     Record("???", unknown);
                 }
 
-                _ProbeMask = _Buffer.ReadInt32();
+                _ProbeMask = _Buffer.ReadUInt32();
                 Record("_ProbeMask", _ProbeMask);
             }
             else // UE2 and 1
             {
-                _ProbeMask = _Buffer.ReadInt64();
+                _ProbeMask = _Buffer.ReadUInt64();
                 Record("_ProbeMask", _ProbeMask);
             }
 
             // TODO: Corrigate Version; Somewhere between 690 - 706
             if (Package.Version < 700)
             {
-                _IgnoreMask = _Buffer.ReadInt64();
+                _IgnoreMask = _Buffer.ReadUInt64();
                 Record("_IgnoreMask", _IgnoreMask);
             }
 
             noMasks:
-            _LabelTableOffset = _Buffer.ReadInt16();
+            _LabelTableOffset = _Buffer.ReadUInt16();
             Record("_LabelTableOffset", _LabelTableOffset);
 
             if (Package.Version >= VStateFlags)

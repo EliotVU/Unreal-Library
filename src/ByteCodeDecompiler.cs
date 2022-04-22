@@ -97,6 +97,7 @@ namespace UELib.Core
                 CodePosition += _ObjectMemorySize;
             }
 
+            // TODO: Retrieve the byte-codes from a NTL file instead.
             [CanBeNull] private Dictionary<byte, byte> _ByteCodeMap;
 #if APB
             private static readonly Dictionary<byte, byte> ByteCodeMap_BuildApb = new Dictionary<byte, byte>
@@ -125,18 +126,18 @@ namespace UELib.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private byte FixToken(byte tokenCode)
             {
+                // TODO: Map directly to a Token type instead of a byte-code.
                 if (_ByteCodeMap != null)
-                {
-                    _ByteCodeMap.TryGetValue(tokenCode, out tokenCode);
-                    return tokenCode;
-                }
+                    return _ByteCodeMap.TryGetValue(tokenCode, out byte newTokenCode)
+                        ? newTokenCode
+                        : tokenCode;
 
                 // Adjust UE2 tokens to UE3
                 // TODO: Use ByteCodeMap
                 if (Package.Version >= 184
                     &&
                     (
-                        tokenCode >= (byte)ExprToken.Unknown && tokenCode < (byte)ExprToken.ReturnNothing
+                        tokenCode >= (byte)ExprToken.Unused35 && tokenCode < (byte)ExprToken.ReturnNothing
                         ||
                         tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative)
                    )
@@ -224,6 +225,7 @@ namespace UELib.Core
                     AlignSize(sizeof(byte));
                 }
 
+                byte serializedByte = tokenCode;
                 Token token = null;
                 if (tokenCode >= (byte)ExprToken.ExtendedNative)
                 {
@@ -236,8 +238,9 @@ namespace UELib.Core
                         byte extendedByte = Buffer.ReadByte();
                         AlignSize(sizeof(byte));
 
-                        var nativeToken = (ushort)(((tokenCode - (byte)ExprToken.ExtendedNative) << 8) | extendedByte);
-                        token = CreateNativeToken(nativeToken);
+                        var nativeIndex = (ushort)(((tokenCode - (byte)ExprToken.ExtendedNative) << 8) | extendedByte);
+                        Debug.Assert(nativeIndex < (ushort)ExprToken.MaxNative);
+                        token = CreateNativeToken(nativeIndex);
                     }
                 }
                 else
@@ -518,7 +521,7 @@ namespace UELib.Core
                             break;
 
                         // No value passed to an optional parameter.
-                        case (byte)ExprToken.NoParm:
+                        case (byte)ExprToken.EmptyParmValue:
                             token = new NoParmToken();
                             break;
 
@@ -599,7 +602,7 @@ namespace UELib.Core
                             token = new NewToken();
                             break;
 
-                        case (byte)ExprToken.FunctionEnd: // case (byte)ExprToken.DynArrayFind:
+                        case (byte)ExprToken.FunctionEnd:
                             if (Buffer.Version < 300)
                                 token = new EndOfScriptToken();
                             else
@@ -764,23 +767,23 @@ namespace UELib.Core
                         #endregion
 
                         default:
-                            {
-                                #region Casts
+                        {
+                            #region Casts
 
-                                if (Buffer.Version < PrimitveCastVersion)
-                                    // No other token was matched. Check if it matches any of the CastTokens
-                                    // We don't just use PrimitiveCast detection due compatible with UE1 games
-                                    token = DeserializeCastToken(tokenCode);
+                            if (Buffer.Version < PrimitveCastVersion)
+                                // No other token was matched. Check if it matches any of the CastTokens
+                                // We don't just use PrimitiveCast detection due compatible with UE1 games
+                                token = DeserializeCastToken(tokenCode);
 
-                                break;
+                            break;
 
-                                #endregion
-                            }
+                            #endregion
+                        }
                     }
                 }
 
-                if (token == null) token = new UnknownExprToken();
-                AddToken(token, tokenCode, tokenPosition);
+                if (token == null) token = new UnresolvedToken();
+                AddToken(token, serializedByte, tokenPosition);
                 return token;
             }
 
@@ -958,16 +961,9 @@ namespace UELib.Core
                         break;
 
                     default:
-                        token = new UnknownCastToken();
+                        token = new UnresolvedCastToken();
                         break;
                 }
-
-                // Unsure what this is, found in:  ClanManager1h_6T.CMBanReplicationInfo.Timer:
-                //  xyz = UnknownCastToken(0x1b);
-                //  UnknownCastToken(0x1b)
-                //  UnknownCastToken(0x1b)
-                if (castToken == 0x1b)
-                    token = new FloatToIntToken();
 
                 return token;
             }
@@ -1211,7 +1207,7 @@ namespace UELib.Core
                     //Initialize==========
                     InitDecompile();
                     var spewOutput = false;
-                    var tokenBeginIndex = 0;
+                    var tokenEndIndex = 0;
                     Token lastStatementToken = null;
 
                     while (CurrentTokenIndex + 1 < DeserializedTokens.Count)
@@ -1220,6 +1216,7 @@ namespace UELib.Core
                         {
                             string tokenOutput;
                             var newToken = NextToken;
+                            int tokenBeginIndex = CurrentTokenIndex;
 
                             // To ensure we print generated labels within a nesting block.
                             string labelsOutput = DecompileLabelForToken(CurrentToken, spewOutput);
@@ -1237,7 +1234,9 @@ namespace UELib.Core
                                         spewOutput = true;
                                     }
 
+#if !DEBUG_HIDDENTOKENS
                                     continue;
+#endif
                                 }
                             }
                             catch (Exception e)
@@ -1247,7 +1246,6 @@ namespace UELib.Core
 
                             try
                             {
-                                tokenBeginIndex = CurrentTokenIndex;
                                 tokenOutput = newToken.Decompile();
                                 if (CurrentTokenIndex + 1 < DeserializedTokens.Count &&
                                     PeekToken is EndOfScriptToken)
@@ -1268,7 +1266,7 @@ namespace UELib.Core
                                                   + e.Message);
 
                                 UDecompilingState.AddTab();
-                                string tokensOutput = FormatAndDecompileTokens(tokenBeginIndex, CurrentTokenIndex + 1);
+                                string tokensOutput = FormatAndDecompileTokens(tokenBeginIndex, tokenEndIndex);
                                 output.Append(UDecompilingState.Tabs);
                                 output.Append(tokensOutput);
                                 UDecompilingState.RemoveTab();
@@ -1278,6 +1276,10 @@ namespace UELib.Core
                                                   + "*/");
 
                                 tokenOutput = "/*@Error*/";
+                            }
+                            finally
+                            {
+                                tokenEndIndex = CurrentTokenIndex;
                             }
 
                             // HACK: for multiple cases for one block of code, etc!
@@ -1330,25 +1332,24 @@ namespace UELib.Core
                                     else spewOutput = true;
                                 }
 
+#if DEBUG_TOKENPOSITIONS
+                                string orgTabs = UDecompilingState.Tabs;
+                                int spaces = Math.Max(3 * UnrealConfig.Indention.Length, 4);
+                                UDecompilingState.RemoveSpaces(spaces);
+
+                                var tokens = DeserializedTokens
+                                    .GetRange(tokenBeginIndex, tokenEndIndex - tokenBeginIndex + 1)
+                                    .Select(FormatTokenInfo);
+                                string tokensInfo = string.Join(", ", tokens);
+
+                                output.Append(UDecompilingState.Tabs);
+                                output.AppendLine($"  [{tokensInfo}] ");
+                                output.Append(UDecompilingState.Tabs);
+                                output.Append(
+                                    $"  (+{newToken.Position:X3}  {CurrentToken.Position + CurrentToken.Size:X3}) ");
+#endif
                                 if (spewOutput)
                                 {
-#if DEBUG_TOKENPOSITIONS
-                                    string orgTabs = UDecompilingState.Tabs;
-                                    int spaces = Math.Max(3 * UnrealConfig.Indention.Length, 4);
-                                    UDecompilingState.RemoveSpaces(spaces);
-
-                                    var tokens = GetTokensAt(tokenBeginIndex, CurrentTokenIndex + 1)
-                                        .Select(FormatTokenInfo);
-                                    string tokensInfo = !tokens.Any()
-                                        ? FormatTokenInfo(newToken)
-                                        : string.Join(", ", tokens);
-
-                                    output.Append(UDecompilingState.Tabs);
-                                    output.AppendLine($"  [{tokensInfo}] ");
-                                    output.Append(UDecompilingState.Tabs);
-                                    output.Append(
-                                        $"  (+{newToken.Position:X3}  {CurrentToken.Position + CurrentToken.Size:X3}) ");
-#endif
                                     if (_MustCommentStatement)
                                     {
                                         output.Append(UDecompilingState.Tabs);
@@ -1360,9 +1361,7 @@ namespace UELib.Core
                                         output.Append(UDecompilingState.Tabs);
                                         output.Append(tokenOutput);
                                     }
-#if DEBUG_TOKENPOSITIONS
-                                    UDecompilingState.Tabs = orgTabs;
-#endif
+
                                     // One of the decompiled tokens wanted to be ended.
                                     if (_CanAddSemicolon)
                                     {
@@ -1370,6 +1369,9 @@ namespace UELib.Core
                                         _CanAddSemicolon = false;
                                     }
                                 }
+#if DEBUG_TOKENPOSITIONS
+                                UDecompilingState.Tabs = orgTabs;
+#endif
                             }
                             lastStatementToken = newToken;
                         }
@@ -1421,18 +1423,12 @@ namespace UELib.Core
                 }
                 catch (Exception e)
                 {
-                    output.AppendFormat(
-                        "{0} // Failed to decompile this {1}'s code." +
-                        "\r\n {2} at position {3} " +
-                        "\r\n Message: {4} " +
-                        "\r\n\r\n StackTrace: {5}",
-                        UDecompilingState.Tabs,
-                        _Container.Class.Name,
-                        UDecompilingState.Tabs,
-                        CodePosition,
-                        FormatTabs(e.Message),
-                        FormatTabs(e.StackTrace)
-                    );
+                    output.Append(UDecompilingState.Tabs);
+                    output.AppendLine("// Cannot recover from this decompilation error.");
+                    output.Append(UDecompilingState.Tabs);
+                    output.AppendLine($"// Error: {FormatTabs(e.Message)}");
+                    output.Append(UDecompilingState.Tabs);
+                    output.AppendLine($"// Token Index: {CurrentTokenIndex} / {DeserializedTokens.Count}");
                 }
                 finally
                 {
@@ -1449,17 +1445,9 @@ namespace UELib.Core
                 return nonTabbedText.Replace("\n", "\n" + UDecompilingState.Tabs);
             }
 
-            private IEnumerable<Token> GetTokensAt(int beginIndex, int endIndex)
+            public static string FormatTokenInfo(Token token)
             {
-                int count = Math.Abs(endIndex - beginIndex);
-                var tokens = new Token[count];
-                for (int i = beginIndex, j = 0; i < endIndex && i < DeserializedTokens.Count; ++i, ++j)
-                    tokens[j] = DeserializedTokens[i];
-                return tokens;
-            }
-
-            private string FormatTokenInfo(Token token)
-            {
+                Debug.Assert(token != null);
                 return $"{token.GetType().Name} (0x{token.RepresentToken:X2})";
             }
 

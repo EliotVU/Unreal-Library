@@ -127,7 +127,7 @@ namespace UELib.Core
             InitBuffer();
             try
             {
-#if DEBUG || BINARYMETADATA
+#if BINARYMETADATA
                 BinaryMetaData = new BinaryMetaData();
 #endif
                 DeserializationState |= ObjectState.Deserializing;

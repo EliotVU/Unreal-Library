@@ -48,7 +48,7 @@ namespace UELib
         public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
 
         [Pure]
-        public virtual string ClassName => ClassIndex != 0 ? Owner.GetIndexTable(ClassIndex).ObjectName : "class";
+        public virtual string ClassName => ClassIndex != 0 ? Owner.GetIndexTable(ClassIndex).ObjectName : "Class";
 
         /// <summary>
         /// Object index to the outer of this object

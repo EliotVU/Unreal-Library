@@ -11,7 +11,7 @@
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Object = Decompiler._Container.TryGetIndexObject(stream.ReadObjectIndex());
+                    Object = stream.ReadObject();
                     Decompiler.AlignObjectSize();
                 }
 
@@ -86,18 +86,16 @@
 
             public class DelegatePropertyToken : FieldToken
             {
-                public int NameIndex;
+                public UName PropertyName;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // FIXME: MOHA or general?
-                    if (stream.Version == 421)
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
                     {
                         Decompiler.AlignSize(sizeof(int));
                     }
 
-                    // Unknown purpose.
-                    NameIndex = stream.ReadNameIndex();
+                    PropertyName = stream.ReadNameReference();
                     Decompiler.AlignNameSize();
 
                     // TODO: Corrigate version. Seen in version ~648(The Ball) may have been introduced earlier, but not prior 610.
@@ -109,7 +107,7 @@
 
                 public override string Decompile()
                 {
-                    return Decompiler._Container.Package.GetIndexName(NameIndex);
+                    return PropertyName;
                 }
             }
 
@@ -137,8 +135,7 @@
                     stream.ReadUInt16(); // Size
                     Decompiler.AlignSize(sizeof(ushort));
 
-                    // FIXME: MOHA or general?
-                    if (stream.Version == 421)
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
                     {
                         Decompiler.AlignSize(sizeof(ushort));
                     }
@@ -153,7 +150,7 @@
                     DecompileNext(); // EndParmValue
                     Decompiler._CanAddSemicolon = true;
                     var param = _NextParam;
-                    string paramName = param != null ? param.Name : $"@UnknownOptionalParam_{(_NextParamIndex - 1)}";
+                    string paramName = param != null ? param.Name : $"@UnknownOptionalParam_{_NextParamIndex - 1}";
                     return $"{paramName} = {expression}";
                 }
             }

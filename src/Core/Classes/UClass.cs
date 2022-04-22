@@ -134,11 +134,10 @@ namespace UELib.Core
             ClassFlags = _Buffer.ReadUInt32();
             Record("ClassFlags", (ClassFlags)ClassFlags);
 
-            // Both were deprecated since then
-            // TODO: Corrigate Version
+            // FIXME: Both were deprecated since then
             if (Package.Version < 140)
             {
-                ClassGuid = _Buffer.ReadGuid();
+                ClassGuid = _Buffer.ReadGuid().ToString();
                 Record("ClassGuid", ClassGuid);
 
                 // Use ReadCount because Vanguard does no longer uses indexes but an int32 for arrays.
@@ -153,10 +152,9 @@ namespace UELib.Core
                 PackageImports = DeserializeGroup("PackageImports");
             }
 
-            if (Package.Version >= 62)
+            if (Package.Version > 61)
             {
-                // TODO: Corrigate Version
-                // At least since Bioshock(140) - 547(APB)
+                // FIXME: At least since Bioshock(140) - 547(APB)
                 if (Package.Version >= 140 && Package.Version < 547)
                 {
                     byte unknown = _Buffer.ReadByte();
@@ -177,8 +175,8 @@ namespace UELib.Core
 #endif
                     ;
 
-                // TODO: Corrigate Version
-                if (Package.Version >= 100)
+                // +HideCategories
+                if (Package.Version > 98)
                 {
                     // TODO: Corrigate Version
                     if (Package.Version >= 220)
@@ -214,13 +212,13 @@ namespace UELib.Core
                             DontSortCategories = DeserializeGroup("DontSortCategories");
                         }
 
-                        // TODO: Corrigate Version
+                        // FIXME: Added in v99, removed in ~220?
                         if (Package.Version < 220 || !isHideCategoriesOldOrder)
                         {
                             DeserializeHideCategories();
                         }
 
-                        // TODO: Corrigate Version
+                        // +AutoExpandCategories
                         if (Package.Version >= 185)
                         {
                             // 490:GoW1, 576:CrimeCraft

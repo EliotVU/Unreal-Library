@@ -43,7 +43,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE Forms UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 AA2</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 AA2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -73,7 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Publish\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE Forms DEBUG_TEST DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 AA2</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms DEBUG_TEST DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 AA2</DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
     <Optimize>false</Optimize>
@@ -250,7 +250,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

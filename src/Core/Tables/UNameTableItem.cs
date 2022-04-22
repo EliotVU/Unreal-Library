@@ -30,7 +30,7 @@ namespace UELib
 #if DCUO
             if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO )
             {
-                //DCUO doesn't null terminate name table entries
+                // DCUO doesn't null terminate name entry strings
                 int size = stream.ReadInt32();
                 var strBytes = new byte[size];
                 stream.Read( strBytes, 0, size );
@@ -66,15 +66,11 @@ namespace UELib
             stream.WriteString(Name);
 
             if (stream.Version < QWORDVersion)
-            {
                 // Writing UINT
                 stream.UW.Write((uint)Flags);
-            }
             else
-            {
                 // Writing ULONG
                 stream.UW.Write(Flags);
-            }
         }
 
         public override string ToString()

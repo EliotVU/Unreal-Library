@@ -11,7 +11,7 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (stream.Version == 421)
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
                         Decompiler.AlignSize(sizeof(int));
                 }
 
@@ -122,7 +122,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = $"{DecompileNext()} == {DecompileNext()}";
+                    var output = $"{DecompileNext()} == {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -132,7 +132,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = $"{DecompileNext()} == {DecompileNext()}";
+                    var output = $"{DecompileNext()} == {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -142,7 +142,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = $"{DecompileNext()} != {DecompileNext()}";
+                    var output = $"{DecompileNext()} != {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -152,7 +152,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = $"{DecompileNext()} != {DecompileNext()}";
+                    var output = $"{DecompileNext()} != {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -160,6 +160,7 @@ namespace UELib.Core
 
             public class EatReturnValueToken : Token
             {
+                // Null if version < 200
                 [CanBeNull] public UProperty ReturnValueProperty;
                 
                 public override void Deserialize(IUnrealStream stream)

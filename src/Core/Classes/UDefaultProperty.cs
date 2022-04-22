@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using UELib.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -116,7 +117,7 @@ namespace UELib.Core
                     return _Buffer.ReadInt32();
 
                 default:
-                    throw new NotImplementedException(string.Format("Unknown sizePack {0}", sizePack));
+                    throw new NotImplementedException($"Unknown sizePack {sizePack}");
             }
         }
 
@@ -125,7 +126,7 @@ namespace UELib.Core
         private int DeserializeArrayIndex()
         {
             int arrayIndex;
-#if DEBUG || BINARYMETADATA
+#if BINARYMETADATA
             long startPos = _Buffer.Position;
 #endif
             byte b = _Buffer.ReadByte();
@@ -144,7 +145,7 @@ namespace UELib.Core
                              + (_Buffer.ReadByte() << 8)
                              + _Buffer.ReadByte();
             }
-#if DEBUG || BINARYMETADATA
+#if BINARYMETADATA
             _Buffer.LastPosition = startPos;
 #endif
             return arrayIndex;
@@ -264,7 +265,8 @@ namespace UELib.Core
         ///     Only call after the whole package has been deserialized!
         /// </summary>
         /// <returns>The deserialized value if any.</returns>
-        private string DeserializeValue(DeserializeFlags deserializeFlags = DeserializeFlags.None)
+        [PublicAPI]
+        public string DeserializeValue(DeserializeFlags deserializeFlags = DeserializeFlags.None)
         {
             if (_Buffer == null)
             {
@@ -347,7 +349,7 @@ namespace UELib.Core
                             propertyValue = enumValue;
                             if (_Buffer.Version >= VEnumName)
                             {
-                                propertyValue = EnumName + "." + propertyValue;
+                                propertyValue = $"{EnumName}.{propertyValue}";
                             }
                         }
                         else
@@ -380,11 +382,11 @@ namespace UELib.Core
                                     if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
                                     {
                                         _TempFlags |= ReplaceNameMarker;
-                                        propertyValue += "%ARRAYNAME%=" + obj.Name;
+                                        propertyValue += $"%ARRAYNAME%={obj.Name}";
                                     }
                                     else
                                     {
-                                        propertyValue += Name + "=" + obj.Name;
+                                        propertyValue += $"{Name}={obj.Name}";
                                     }
                                 }
                             }
@@ -392,7 +394,7 @@ namespace UELib.Core
                             if (!inline)
                             {
                                 // =CLASS'Package.Group(s)+.Name'
-                                propertyValue = string.Format("{0}\'{1}\'", obj.GetClassName(), obj.GetOuterGroup());
+                                propertyValue = $"{obj.GetClassName()}\'{obj.GetOuterGroup()}\'";
                             }
                         }
                         else
@@ -418,7 +420,7 @@ namespace UELib.Core
                         int outerIndex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
                         string delegateValue = _Buffer.ReadName();
                         string delegateName = ((string)(Name)).Substring(2, Name.Length - 12);
-                        propertyValue = delegateName + "=" + delegateValue;
+                        propertyValue = $"{delegateName}={delegateValue}";
                         break;
                     }
 
@@ -648,7 +650,7 @@ namespace UELib.Core
                                 {
                                     propertyValue += tag.Name +
                                                      (tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty
-                                                         ? "[" + tag.ArrayIndex + "]"
+                                                         ? $"[{tag.ArrayIndex}]"
                                                          : string.Empty) +
                                                      "=" + tag.DeserializeValue(deserializeFlags) + ",";
                                 }
@@ -664,7 +666,7 @@ namespace UELib.Core
                             }
                         }
 
-                        propertyValue = propertyValue.Length != 0 ? "(" + propertyValue + ")" : "none";
+                        propertyValue = propertyValue.Length != 0 ? $"({propertyValue})" : "none";
                         break;
                     }
 
@@ -719,7 +721,7 @@ namespace UELib.Core
                                                  + (i != arraySize - 1 ? "," : string.Empty);
                             }
 
-                            propertyValue = "(" + propertyValue + ")";
+                            propertyValue = $"({propertyValue})";
                         }
                         else
                         {
@@ -728,12 +730,12 @@ namespace UELib.Core
                                 string elementValue = DeserializeDefaultPropertyValue(arrayType, ref deserializeFlags);
                                 if ((_TempFlags & ReplaceNameMarker) != 0)
                                 {
-                                    propertyValue += elementValue.Replace("%ARRAYNAME%", Name + "(" + i + ")");
+                                    propertyValue += elementValue.Replace("%ARRAYNAME%", $"{Name}({i})");
                                     _TempFlags = 0x00;
                                 }
                                 else
                                 {
-                                    propertyValue += Name + "(" + i + ")=" + elementValue;
+                                    propertyValue += $"{Name}({i})={elementValue}";
                                 }
 
                                 if (i != arraySize - 1)
@@ -754,7 +756,7 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                return propertyValue + "\r\n/* Exception thrown while deserializing " + Name + "\r\n" + e + " */";
+                return $"{propertyValue}\r\n/* Exception thrown while deserializing {Name}\r\n{e} */";
             }
             finally
             {
@@ -779,7 +781,7 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                value = "//" + e;
+                value = $"//{e}";
             }
             finally
             {
@@ -793,13 +795,13 @@ namespace UELib.Core
                 return value;
             }
 
-            var arrayindex = string.Empty;
+            var arrayIndex = string.Empty;
             if (ArrayIndex > 0 && Type != PropertyType.BoolProperty)
             {
-                arrayindex += "[" + ArrayIndex + "]";
+                arrayIndex += $"[{ArrayIndex}]";
             }
 
-            return Name + arrayindex + "=" + value;
+            return $"{Name}{arrayIndex}={value}";
         }
 
         #endregion

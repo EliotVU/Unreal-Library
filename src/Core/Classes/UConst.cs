@@ -21,6 +21,7 @@
         {
             base.Deserialize();
             Value = _Buffer.ReadText();
+            Record(nameof(Value), Value);
         }
 
         #endregion
