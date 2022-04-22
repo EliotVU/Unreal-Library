@@ -10,8 +10,6 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UFunction : UStruct, IUnrealNetObject
     {
-        // TODO: Corrigate version. Attested in version 61, but deprecated since at least version 68.
-        private const uint VDeprecatedData = 68;
         private const uint VFriendlyName = 189;
 
         #region Serialized Members
@@ -56,17 +54,38 @@ namespace UELib.Core
 
             base.Deserialize();
 
+            if (Package.Version <= 63)
+            {
+                ushort parmsSize = _Buffer.ReadUShort();
+                Record("Unknown", parmsSize);
+            }
+
             NativeToken = _Buffer.ReadUShort();
             Record("NativeToken", NativeToken);
+
+            if (Package.Version <= 63)
+            {
+                byte numParms = _Buffer.ReadByte();
+                Record("Unknown", numParms);
+            }
+
             OperPrecedence = _Buffer.ReadByte();
             Record("OperPrecedence", OperPrecedence);
-            if (Package.Version < VDeprecatedData)
+
+            if (Package.Version <= 63)
             {
-                // ParmsSize, NumParms, and ReturnValueOffset
-                _Buffer.Skip(5);
+                ushort returnValueOffset = _Buffer.ReadUShort();
+                Record("Unknown", returnValueOffset);
+            }
+
+            if (Package.Version <= 63)
+            {
+                ushort unknown = _Buffer.ReadUShort();
+                Record("Unknown", unknown);
             }
 
 #if TRANSFORMERS
+            // TODO: Version?
             FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
@@ -80,22 +99,26 @@ namespace UELib.Core
                 Record("RepOffset", RepOffset);
             }
 
+            // TODO: Data-strip version?
+            if (Package.Version >= VFriendlyName && !Package.IsConsoleCooked()
 #if TRANSFORMERS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
-            {
-                FriendlyName = Table.ObjectName;
-                return;
-            }
+                // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
+                && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
 #endif
-
-            if ((Package.Version >= VFriendlyName && !Package.IsConsoleCooked())
 #if MKKE
+                // Cooked and stripped, but FriendlyName still remains
                 || Package.Build == UnrealPackage.GameBuild.BuildName.MKKE
 #endif
                )
             {
                 FriendlyName = _Buffer.ReadNameReference();
                 Record("FriendlyName", FriendlyName);
+            }
+            else
+            {
+                // HACK: Workaround for packages that have stripped FriendlyName data.
+                // FIXME: Operator names need to be translated.
+                FriendlyName = Table.ObjectName;
             }
         }
 
@@ -105,15 +128,9 @@ namespace UELib.Core
             Params = new List<UProperty>();
             foreach (var property in Variables)
             {
-                if (property.HasPropertyFlag(PropertyFlagsLO.ReturnParm))
-                {
-                    ReturnProperty = property;
-                }
+                if (property.HasPropertyFlag(PropertyFlagsLO.ReturnParm)) ReturnProperty = property;
 
-                if (property.IsParm())
-                {
-                    Params.Add(property);
-                }
+                if (property.IsParm()) Params.Add(property);
             }
         }
 

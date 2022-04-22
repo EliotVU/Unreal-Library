@@ -170,12 +170,6 @@ namespace UELib
 #if BINARYMETADATA
             long lastPosition = BaseStream.Position;
 #endif
-            // Very old packages use a simple Ansi encoding.
-            if (_Archive.Version < UnrealPackage.VSIZEPREFIXDEPRECATED)
-            {
-                return ReadAnsi();
-            }
-
             int unfixedSize;
             int size = (unfixedSize =
 #if BIOSHOCK

@@ -27,38 +27,27 @@ namespace UELib
 
         public void Deserialize(IUnrealStream stream)
         {
+            Name = DeserializeName(stream);
+            Debug.Assert(Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
+            Flags = stream.Version >= QWORDVersion
+                ? stream.ReadUInt64()
+                : stream.ReadUInt32();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private string DeserializeName(IUnrealStream stream)
+        {
+#if UE1
+            // Very old packages use a simple Ansi encoding.
+            if (stream.Version < UnrealPackage.VSIZEPREFIXDEPRECATED) return stream.ReadASCIIString();
+#endif
 #if DCUO
-            if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO )
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO)
             {
-                // DCUO doesn't null terminate name entry strings
-                int size = stream.ReadInt32();
-                var strBytes = new byte[size];
-                stream.Read( strBytes, 0, size );
-                if( stream.BigEndianCode )
-                {
-                    Array.Reverse( strBytes );
-                }
-                Name = System.Text.Encoding.ASCII.GetString( strBytes );
-            }
-            else
-            {
-#endif
-            Name = stream.ReadText();
-#if DCUO
+                // FIXME: DCUO doesn't null terminate name entry strings
             }
 #endif
-            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
-#if DEOBFUSCATE
-    // De-obfuscate names that contain unprintable characters!
-            foreach( char c in Name )
-            {
-                if( !char.IsLetterOrDigit( c ) )
-                {
-                    Name = "N" + TableIndex + "_OBF";
-                    break;
-                }
-            }
-#endif
+            return stream.ReadText();
         }
 
         public void Serialize(IUnrealStream stream)
