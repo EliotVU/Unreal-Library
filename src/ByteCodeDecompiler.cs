@@ -99,6 +99,200 @@ namespace UELib.Core
 
             // TODO: Retrieve the byte-codes from a NTL file instead.
             [CanBeNull] private Dictionary<byte, byte> _ByteCodeMap;
+#if AA2
+            private readonly Dictionary<byte, byte> ByteCodeMap_BuildAa2_8 = new Dictionary<byte, byte>
+            {
+                { 0x00, (byte)ExprToken.LocalVariable },
+                { 0x01, (byte)ExprToken.InstanceVariable },
+                { 0x02, (byte)ExprToken.DefaultVariable },
+                { 0x03, (byte)ExprToken.Unused },
+                { 0x04, (byte)ExprToken.Switch },
+                { 0x05, (byte)ExprToken.ClassContext },
+                { 0x06, (byte)ExprToken.Jump },
+                { 0x07, (byte)ExprToken.GotoLabel },
+                { 0x08, (byte)ExprToken.VirtualFunction },
+                { 0x09, (byte)ExprToken.IntConst },
+                { 0x0A, (byte)ExprToken.JumpIfNot },
+                { 0x0B, (byte)ExprToken.LabelTable },
+                { 0x0C, (byte)ExprToken.FinalFunction },
+                { 0x0D, (byte)ExprToken.EatString },
+                { 0x0E, (byte)ExprToken.Let },
+                { 0x0F, (byte)ExprToken.Stop },
+                { 0x10, (byte)ExprToken.New },
+                { 0x11, (byte)ExprToken.Context },
+                { 0x12, (byte)ExprToken.MetaCast },
+                { 0x13, (byte)ExprToken.Skip },
+                { 0x14, (byte)ExprToken.Self },
+                { 0x15, (byte)ExprToken.Return },
+                { 0x16, (byte)ExprToken.EndFunctionParms },
+                { 0x17, (byte)ExprToken.Unused },
+                { 0x18, (byte)ExprToken.LetBool },
+                { 0x19, (byte)ExprToken.DynArrayElement },
+                { 0x1A, (byte)ExprToken.Assert },
+                { 0x1B, (byte)ExprToken.ByteConst },
+                { 0x1C, (byte)ExprToken.Nothing },
+                { 0x1D, (byte)ExprToken.DelegateProperty },
+                { 0x1E, (byte)ExprToken.IntZero },
+                { 0x1F, (byte)ExprToken.LetDelegate },
+                { 0x20, (byte)ExprToken.False },
+                { 0x21, (byte)ExprToken.ArrayElement },
+                { 0x22, (byte)ExprToken.EndOfScript },
+                { 0x23, (byte)ExprToken.True },
+                { 0x24, (byte)ExprToken.Unused },
+                { 0x25, (byte)ExprToken.FloatConst },
+                { 0x26, (byte)ExprToken.Case },
+                { 0x27, (byte)ExprToken.IntOne },
+                { 0x28, (byte)ExprToken.StringConst },
+                { 0x29, (byte)ExprToken.NoObject },
+                { 0x2A, (byte)ExprToken.NativeParm },
+                { 0x2B, (byte)ExprToken.Unused },
+                { 0x2C, (byte)ExprToken.DebugInfo },
+                { 0x2D, (byte)ExprToken.StructCmpEq },
+                // FIXME: Verify IteratorNext/IteratorPop?
+                { 0x2E, (byte)ExprToken.IteratorNext },
+                { 0x2F, (byte)ExprToken.DynArrayRemove },
+                { 0x30, (byte)ExprToken.StructCmpNE },
+                { 0x31, (byte)ExprToken.DynamicCast },
+                { 0x32, (byte)ExprToken.Iterator },
+                { 0x33, (byte)ExprToken.IntConstByte },
+                { 0x34, (byte)ExprToken.BoolVariable },
+                // FIXME: Verify IteratorNext/IteratorPop?
+                { 0x35, (byte)ExprToken.IteratorPop },
+                { 0x36, (byte)ExprToken.UniStringConst },
+                { 0x37, (byte)ExprToken.StructMember },
+                { 0x38, (byte)ExprToken.Unused },
+                { 0x39, (byte)ExprToken.DelegateFunction },
+                { 0x3A, (byte)ExprToken.Unused },
+                { 0x3B, (byte)ExprToken.Unused },
+                { 0x3C, (byte)ExprToken.Unused },
+                { 0x3D, (byte)ExprToken.Unused },
+                { 0x3E, (byte)ExprToken.Unused },
+                { 0x3F, (byte)ExprToken.Unused },
+                { 0x40, (byte)ExprToken.ObjectConst },
+                { 0x41, (byte)ExprToken.NameConst },
+                { 0x42, (byte)ExprToken.DynArrayLength },
+                { 0x43, (byte)ExprToken.DynArrayInsert },
+                { 0x44, (byte)ExprToken.PrimitiveCast },
+                { 0x45, (byte)ExprToken.GlobalFunction },
+                { 0x46, (byte)ExprToken.VectorConst },
+                { 0x47, (byte)ExprToken.RotatorConst },
+                { 0x48, (byte)ExprToken.Unused },
+                { 0x49, (byte)ExprToken.Unused },
+                { 0x4A, (byte)ExprToken.Unused },
+                { 0x4B, (byte)ExprToken.Unused },
+                { 0x4C, (byte)ExprToken.Unused },
+                { 0x4D, (byte)ExprToken.Unused },
+                { 0x4E, (byte)ExprToken.Unused },
+                { 0x4F, (byte)ExprToken.Unused },
+                { 0x50, (byte)ExprToken.Unused },
+                { 0x51, (byte)ExprToken.Unused },
+                { 0x52, (byte)ExprToken.Unused },
+                { 0x53, (byte)ExprToken.Unused },
+                { 0x54, (byte)ExprToken.Unused },
+                { 0x55, (byte)ExprToken.Unused },
+                { 0x56, (byte)ExprToken.Unused },
+                { 0x57, (byte)ExprToken.Unused },
+                { 0x58, (byte)ExprToken.Unused },
+                { 0x59, (byte)ExprToken.Unused }
+            };
+
+            /// <summary>
+            /// The shifted byte-code map for AAA 2.6
+            /// </summary>
+            private readonly Dictionary<byte, byte> ByteCodeMap_BuildAa2_6 = new Dictionary<byte, byte>
+            {
+                { 0x00, (byte)ExprToken.LocalVariable },
+                { 0x01, (byte)ExprToken.InstanceVariable },
+                { 0x02, (byte)ExprToken.DefaultVariable },
+                { 0x03, (byte)ExprToken.Unused },
+                { 0x04, (byte)ExprToken.Jump },
+                { 0x05, (byte)ExprToken.Return },
+                { 0x06, (byte)ExprToken.Switch },
+                { 0x07, (byte)ExprToken.Stop },
+                { 0x08, (byte)ExprToken.JumpIfNot },
+                { 0x09, (byte)ExprToken.Nothing },
+                { 0x0A, (byte)ExprToken.LabelTable },
+                { 0x0B, (byte)ExprToken.Assert },
+                { 0x0C, (byte)ExprToken.Case },
+                { 0x0D, (byte)ExprToken.EatString },
+                { 0x0E, (byte)ExprToken.Let },
+                { 0x0F, (byte)ExprToken.GotoLabel },
+                { 0x10, (byte)ExprToken.DynArrayElement },
+                { 0x11, (byte)ExprToken.New },
+                { 0x12, (byte)ExprToken.ClassContext },
+                { 0x13, (byte)ExprToken.MetaCast },
+                { 0x14, (byte)ExprToken.LetBool },
+                { 0x15, (byte)ExprToken.EndFunctionParms },
+                { 0x16, (byte)ExprToken.Skip },
+                { 0x17, (byte)ExprToken.Unused },
+                { 0x18, (byte)ExprToken.Context },
+                { 0x19, (byte)ExprToken.Self },
+                { 0x1A, (byte)ExprToken.FinalFunction },
+                { 0x1B, (byte)ExprToken.ArrayElement },
+                { 0x1C, (byte)ExprToken.IntConst },
+                { 0x1D, (byte)ExprToken.FloatConst },
+                { 0x1E, (byte)ExprToken.StringConst },
+                { 0x1F, (byte)ExprToken.VirtualFunction },
+                { 0x20, (byte)ExprToken.IntOne },
+                { 0x21, (byte)ExprToken.VectorConst },
+                { 0x22, (byte)ExprToken.NameConst },
+                { 0x23, (byte)ExprToken.IntZero },
+                { 0x24, (byte)ExprToken.ObjectConst },
+                { 0x25, (byte)ExprToken.ByteConst },
+                { 0x26, (byte)ExprToken.RotatorConst },
+                { 0x27, (byte)ExprToken.False },
+                { 0x28, (byte)ExprToken.True },
+                { 0x29, (byte)ExprToken.NoObject },
+                { 0x2A, (byte)ExprToken.NativeParm },
+                { 0x2B, (byte)ExprToken.Unused },
+                { 0x2C, (byte)ExprToken.BoolVariable },
+                { 0x2D, (byte)ExprToken.Iterator },
+                { 0x2E, (byte)ExprToken.IntConstByte },
+                { 0x2F, (byte)ExprToken.DynamicCast },
+                { 0x30, (byte)ExprToken.Unused },
+                { 0x31, (byte)ExprToken.StructCmpNE },
+                { 0x32, (byte)ExprToken.UniStringConst },
+                { 0x33, (byte)ExprToken.IteratorNext },
+                { 0x34, (byte)ExprToken.StructCmpEq },
+                { 0x35, (byte)ExprToken.IteratorPop },
+                { 0x36, (byte)ExprToken.GlobalFunction },
+                { 0x37, (byte)ExprToken.StructMember },
+                { 0x38, (byte)ExprToken.PrimitiveCast },
+                { 0x39, (byte)ExprToken.DynArrayLength },
+                { 0x3A, (byte)ExprToken.Unused },
+                { 0x3B, (byte)ExprToken.Unused },
+                { 0x3C, (byte)ExprToken.Unused },
+                { 0x3D, (byte)ExprToken.Unused },
+                { 0x3E, (byte)ExprToken.Unused },
+                { 0x3F, (byte)ExprToken.Unused },
+                { 0x40, (byte)ExprToken.Unused },
+                { 0x41, (byte)ExprToken.EndOfScript },
+                { 0x42, (byte)ExprToken.DynArrayRemove },
+                { 0x43, (byte)ExprToken.DynArrayInsert },
+                { 0x44, (byte)ExprToken.DelegateFunction },
+                { 0x45, (byte)ExprToken.DebugInfo },
+                { 0x46, (byte)ExprToken.LetDelegate },
+                { 0x47, (byte)ExprToken.DelegateProperty },
+                { 0x48, (byte)ExprToken.Unused },
+                { 0x49, (byte)ExprToken.Unused },
+                { 0x4A, (byte)ExprToken.Unused },
+                { 0x4B, (byte)ExprToken.Unused },
+                { 0x4C, (byte)ExprToken.Unused },
+                { 0x4D, (byte)ExprToken.Unused },
+                { 0x4E, (byte)ExprToken.Unused },
+                { 0x4F, (byte)ExprToken.Unused },
+                { 0x50, (byte)ExprToken.Unused },
+                { 0x51, (byte)ExprToken.Unused },
+                { 0x52, (byte)ExprToken.Unused },
+                { 0x53, (byte)ExprToken.Unused },
+                { 0x54, (byte)ExprToken.Unused },
+                { 0x55, (byte)ExprToken.Unused },
+                { 0x56, (byte)ExprToken.Unused },
+                { 0x57, (byte)ExprToken.Unused },
+                { 0x58, (byte)ExprToken.Unused },
+                { 0x59, (byte)ExprToken.Unused }
+            };
+#endif
 #if APB
             private static readonly Dictionary<byte, byte> ByteCodeMap_BuildApb = new Dictionary<byte, byte>
             {
@@ -112,7 +306,45 @@ namespace UELib.Core
 #endif
             private void SetupByteCodeMap()
             {
+#if AA2
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
+                {
+                    if (Package.LicenseeVersion >= 33)
+                    {
+                        _ByteCodeMap = ByteCodeMap_BuildAa2_8;
+                    }
+                    else
+                    {
+                        // FIXME: The byte-code shifted as of V2.6, but there is no way to tell which game-version the package was compiled with.
+                        // This hacky-solution also doesn't handle UState nor UClass cases.
+                        // This can be solved by moving the byte-code maps to their own NTL files.
 
+                        // Flags
+                        //sizeof(uint) + 
+                        // Oper
+                        //sizeof(byte)
+                        // NativeToken
+                        //sizeof(ushort) + 
+                        // EndOfScript ExprToken
+                        //sizeof(byte), 
+                        long functionBacktrackLength = -8;
+                        if (_Container is UFunction function && function.HasFunctionFlag(Flags.FunctionFlags.Net))
+                            // RepOffset
+                            functionBacktrackLength -= sizeof(ushort);
+
+                        Buffer.StartPeek();
+                        Buffer.Seek(functionBacktrackLength, SeekOrigin.End);
+                        byte valueOfEndOfScriptToken = Buffer.ReadByte();
+                        Buffer.EndPeek();
+
+                        // Shifted?
+                        if (valueOfEndOfScriptToken != (byte)ExprToken.FunctionEnd)
+                            _ByteCodeMap = ByteCodeMap_BuildAa2_6;
+                    }
+
+                    return;
+                }
+#endif
 #if APB
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.APB &&
                     Package.LicenseeVersion >= 32)

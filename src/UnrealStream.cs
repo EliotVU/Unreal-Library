@@ -198,9 +198,7 @@ namespace UELib
                 // No null-termination in Transformer games.
                 if (_Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
                     _Archive.Package.LicenseeVersion >= 181)
-                {
                     return Encoding.ASCII.GetString(chars, 0, chars.Length);
-                }
 #endif
                 return Encoding.ASCII.GetString(chars, 0, chars.Length - 1);
             }
@@ -220,9 +218,7 @@ namespace UELib
                 // No null-termination in Transformer games.
                 if (_Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
                     _Archive.Package.LicenseeVersion >= 181)
-                {
                     return new string(chars);
-                }
 #endif
                 // Strip off the null
                 return new string(chars, 0, chars.Length - 1);
@@ -239,7 +235,7 @@ namespace UELib
             long lastPosition = BaseStream.Position;
 #endif
             var strBytes = new List<byte>();
-        nextChar:
+            nextChar:
             byte c = ReadByte();
             if (c != '\0')
             {
@@ -259,7 +255,7 @@ namespace UELib
             long lastPosition = BaseStream.Position;
 #endif
             var strBytes = new List<byte>();
-        nextWord:
+            nextWord:
             short w = ReadInt16();
             if (w != 0)
             {
@@ -440,10 +436,13 @@ namespace UELib
             if (Package.Decoder == null)
                 return base.ReadByte();
 
-            long p = Position;
-            var buffer = new[] { (byte)base.ReadByte() };
-            Package.Decoder?.DecodeRead(p, buffer, 0, 1);
-            return buffer[0];
+            unsafe
+            {
+                long p = Position;
+                var b = (byte)base.ReadByte();
+                Package.Decoder?.DecodeByte(p, &b);
+                return b;
+            }
         }
     }
 

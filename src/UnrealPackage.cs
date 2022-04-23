@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -273,9 +274,9 @@ namespace UELib
                 // Built on UT2004
                 // Represents both AAO and AAA
                 /// <summary>
-                /// 128/032
+                /// 128/032:033
                 /// </summary>
-                [Build(128, 32)] AA2,
+                [Build(128, 128, 32u, 33u)] AA2,
 
                 /// <summary>
                 /// 129/027
@@ -1048,67 +1049,84 @@ namespace UELib
                     }
                 }
             }
-
 #if DCUO
-            if( Build == GameBuild.BuildName.DCUO )
+            if (Build == GameBuild.BuildName.DCUO)
             {
                 //We need to back up because our package has already been decompressed
-                stream.Position
- -= 4;
+                stream.Position -= 4;
+                int unkCount = stream.ReadInt32();
+                stream.Skip(16 * unkCount);
+                stream.Skip(4);
 
-                int unkCount
- = stream.ReadInt32();
-
-                stream.Skip( 16 * unkCount );
-
-                stream.Skip( 4 );
-
-                if( Version >= 516 )
+                if (Version >= 516)
                 {
-                    int textCount
- = stream.ReadInt32();
-
-                    var texts
- = new List<string>();
-                    for( int i
- = 0; i < textCount; i++ )
+                    int textCount = stream.ReadInt32();
+                    var texts = new List<string>(textCount);
+                    for (var i = 0; i < textCount; i++)
                     {
-                        texts.Add( stream.ReadText() );
+                        texts.Add(stream.ReadText());
                     }
                 }
-                
-                uint realNameOffset
- = (uint)stream.Position;
 
-                System.Diagnostics.Debug.Assert( realNameOffset <= _TablesData.NamesOffset, "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!" );
+                var realNameOffset = (uint)stream.Position;
+                System.Diagnostics.Debug.Assert(
+                    realNameOffset <= _TablesData.NamesOffset,
+                    "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!"
+                );
 
-                uint offsetDif
- = _TablesData.NamesOffset - realNameOffset;
-
-                //The offsets parsed above are off, maybe due to decompression?
-                _TablesData.NamesOffset
- -= offsetDif;
-                _TablesData.ImportsOffset
- -= offsetDif;
-                _TablesData.ExportsOffset
- -= offsetDif;
+                uint offsetDif = _TablesData.NamesOffset - realNameOffset;
+                _TablesData.NamesOffset -= offsetDif;
+                _TablesData.ImportsOffset -= offsetDif;
+                _TablesData.ExportsOffset -= offsetDif;
             }
 #endif
-
 #if AA2
-            if (Build == GameBuild.BuildName.AA2)
+            if (Build == GameBuild.BuildName.AA2
+                // Note: Never true, AA2 is not a detected build for packages with LicenseeVersion 27 or less
+                // But we'll preserve this nonetheless
+                && LicenseeVersion >= 19)
             {
                 bool isEncrypted = stream.ReadInt32() > 0;
                 if (isEncrypted)
                 {
-                	throw new UnrealException("Package is encrypted, aborting!");
                     // TODO: Use a stream wrapper instead; but this is blocked by an overly intertwined use of PackageStream.
-                    //var decoder = new AA2CryptoReader();
-                    //byte b = stream.ReadByte();
-                    //decoder.Key = 0x05;
-                    //decoder.Key = decoder.DecryptByte((int)stream.Position, b);
-                    //Decoder = decoder;
+                    if (LicenseeVersion >= 33)
+                    {
+                        var decoder = new CryptoDecoderAA2();
+                        Decoder = decoder;
+                    }
+                    else
+                    {
+                        var decoder = new CryptoDecoderWithKeyAA2();
+                        Decoder = decoder;
+
+                        uint nonePosition = _TablesData.NamesOffset;
+                        stream.Seek(nonePosition, SeekOrigin.Begin);
+                        byte scrambledNoneLength = stream.ReadByte();
+                        decoder.Key = scrambledNoneLength;
+                        stream.Seek(nonePosition, SeekOrigin.Begin);
+                        byte unscrambledNoneLength = stream.ReadByte();
+                        Debug.Assert((unscrambledNoneLength & 0x3F) == 5);
+                    }
                 }
+
+                // Always one
+                //int unkCount = stream.ReadInt32();
+                //for (var i = 0; i < unkCount; i++)
+                //{
+                //    // All zero
+                //    stream.Skip(24);
+                //    // Always identical to the package's GUID
+                //    var guid = stream.ReadGuid();
+                //}
+
+                //// Always one
+                //int unk2Count = stream.ReadInt32();
+                //for (var i = 0; i < unk2Count; i++)
+                //{
+                //    // All zero
+                //    stream.Skip(12);
+                //}
             }
 #endif
 
