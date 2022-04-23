@@ -1,21 +1,25 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using UELib.Annotations;
 
 namespace UELib
 {
     using Core;
+    using System.Runtime.CompilerServices;
 
     public sealed class NativeTableItem
     {
         public string Name;
         public byte OperPrecedence;
         public FunctionType Type;
-        public int ByteToken;
+        public uint ByteToken;
 
         public NativeTableItem()
         {
         }
 
+        [PublicAPI]
         public NativeTableItem(UFunction function)
         {
             if (function.IsOperator())
@@ -48,16 +52,23 @@ namespace UELib
         Function = 1,
         Operator = 2,
         PreOperator = 3,
-        PostOperator = 4
+        PostOperator = 4,
+        Max = PostOperator
     }
 
     public sealed class NativesTablePackage
     {
         private const uint Signature = 0x2C8D14F1;
+        
+        [PublicAPI]
         public const string Extension = ".NTL";
 
+        [PublicAPI]
         public List<NativeTableItem> NativeTableList;
 
+        private Dictionary<uint, NativeTableItem> _NativeFunctionMap;
+
+        [PublicAPI]
         public void LoadPackage(string name)
         {
             var stream = new FileStream(name + Extension, FileMode.Open, FileAccess.Read);
@@ -72,46 +83,28 @@ namespace UELib
                 NativeTableList = new List<NativeTableItem>();
                 for (var i = 0; i < count; ++i)
                 {
-                    NativeTableList.Add
-                    (
-                        new NativeTableItem
-                        {
-                            Name = binReader.ReadString(),
-                            OperPrecedence = binReader.ReadByte(),
-                            Type = (FunctionType)binReader.ReadByte(),
-                            ByteToken = binReader.ReadInt32()
-                        }
-                    );
+                    var item = new NativeTableItem
+                    {
+                        Name = binReader.ReadString(),
+                        OperPrecedence = binReader.ReadByte(),
+                        Type = (FunctionType)binReader.ReadByte(),
+                        ByteToken = binReader.ReadUInt32()
+                    };
+                    NativeTableList.Add(item);
                 }
-
-                NativeTableList.Sort((nt1, nt2) => nt1.ByteToken.CompareTo(nt2.ByteToken));
             }
+            NativeTableList.Sort((nt1, nt2) => nt1.ByteToken.CompareTo(nt2.ByteToken));
+            _NativeFunctionMap = NativeTableList.ToDictionary(item => item.ByteToken);
         }
 
-        public NativeTableItem FindTableItem(int nativeToken)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeTableItem FindTableItem(uint nativeIndex)
         {
-            var lowNum = 0;
-            int highNum = NativeTableList.Count - 1;
-            while (lowNum <= highNum)
-            {
-                int midNum = (lowNum + highNum) / 2;
-                if (nativeToken > NativeTableList[midNum].ByteToken)
-                {
-                    lowNum = midNum + 1;
-                }
-                else if (nativeToken < NativeTableList[midNum].ByteToken)
-                {
-                    highNum = midNum - 1;
-                }
-                else
-                {
-                    return NativeTableList[midNum];
-                }
-            }
-
-            return null;
+            _NativeFunctionMap.TryGetValue(nativeIndex, out var item);
+            return item;
         }
 
+        [PublicAPI]
         public void CreatePackage(string name)
         {
             var stream = new FileStream(name + Extension, FileMode.Create, FileAccess.Write);

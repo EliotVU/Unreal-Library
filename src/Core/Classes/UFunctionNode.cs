@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿#if Forms
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
@@ -46,15 +47,14 @@ namespace UELib.Core
 
             if (name != string.Empty)
             {
+                if (IsProtected())
+                {
+                    return $"{name}-Protected";
+                }
                 if (IsPrivate())
                 {
                     return $"{name}-Private";
                 }
-                else if (IsProtected())
-                {
-                    return $"{name}-Protected";
-                }
-
                 return name;
             }
 
@@ -62,3 +62,4 @@ namespace UELib.Core
         }
     }
 }
+#endif

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -126,7 +127,7 @@ namespace UELib.Core
             InitBuffer();
             try
             {
-#if DEBUG || BINARYMETADATA
+#if BINARYMETADATA
                 BinaryMetaData = new BinaryMetaData();
 #endif
                 DeserializationState |= ObjectState.Deserializing;
@@ -223,7 +224,7 @@ namespace UELib.Core
             }
             else
             {
-                if (HasObjectFlag(Flags.ObjectFlagsLO.HasStack))
+                if (HasObjectFlag(ObjectFlagsLO.HasStack))
                 {
                     int node = _Buffer.ReadIndex();
                     Record("node", GetIndexObject(node));
@@ -344,8 +345,7 @@ namespace UELib.Core
         /// </summary>
         /// <param name="flag">The flag(s) to compare to.</param>
         /// <returns>Whether it contained one of the specified flags.</returns>
-        [Pure]
-        public bool HasObjectFlag(Flags.ObjectFlagsLO flag)
+        public bool HasObjectFlag(ObjectFlagsLO flag)
         {
             return ((uint)_ObjectFlags & (uint)flag) != 0;
         }
@@ -357,46 +357,28 @@ namespace UELib.Core
         /// </summary>
         /// <param name="flag">The flag(s) to compare to.</param>
         /// <returns>Whether it contained one of the specified flags.</returns>
-        [Pure]
-        public bool HasObjectFlag(Flags.ObjectFlagsHO flag)
+        public bool HasObjectFlag(ObjectFlagsHO flag)
         {
             return ((_ObjectFlags >> 32) & (uint)flag) != 0;
         }
 
-        // 32bit aligned.
-
-        // OBJECTFLAG:PUBLIC
-        /// <summary>
-        /// Whether object is publically accessable.
-        /// </summary>
-        /// <returns>Whether it is publically accessable.</returns>
-        [Pure]
         public bool IsPublic()
         {
-            return HasObjectFlag(Flags.ObjectFlagsLO.Public);
+            return (_ObjectFlags & (ulong)ObjectFlagsLO.Public) != 0;
         }
 
-        // The rules of protected and private changed since:
-        private const uint AccessFlagChangeVersion = 180;
-
-        // OBJECTFLAG:!PUBLIC
-        [Pure]
         public bool IsProtected()
         {
-            //return !HasObjectFlag( Flags.ObjectFlagsLO.Public );
-            return Package.Version < AccessFlagChangeVersion
-                ? !IsPublic() && !IsPrivate()
-                : HasObjectFlag(Flags.ObjectFlagsHO.PerObjectLocalized);
+            // Protected was shifted to the higher order in later UE3 builds
+            return HasObjectFlag(ObjectFlagsHO.Protected) 
+                   || (_ObjectFlags & (
+                       (ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected)) 
+                   == ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected);
         }
 
-        // OBJECTFLAG:!PUBLIC, FINAL
-        [Pure]
         public bool IsPrivate()
         {
-            //return !HasObjectFlag( Flags.ObjectFlagsLO.Public ) && HasObjectFlag( Flags.ObjectFlagsLO.Private );
-            return Package.Version < AccessFlagChangeVersion
-                ? HasObjectFlag(Flags.ObjectFlagsLO.Private)
-                : (!IsPublic() && !HasObjectFlag(Flags.ObjectFlagsHO.Final));
+            return (_ObjectFlags & ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Private)) != (ulong)ObjectFlagsLO.Public;
         }
 
         /// <summary>

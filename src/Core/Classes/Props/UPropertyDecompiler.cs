@@ -1,6 +1,7 @@
 ﻿#if DECOMPILE
 using System;
 using System.Globalization;
+using System.Linq;
 
 namespace UELib.Core
 {
@@ -38,7 +39,19 @@ namespace UELib.Core
             return FormatFlags() + GetFriendlyType()
                                  + " " + Name
                                  + FormatSize()
+                                 + DecompileEditorData()
                                  + DecompileMeta();
+        }
+
+        // FIXME: Rewrite without performing this many string copies, however this part of the decompilation process is not crucial.
+        private string DecompileEditorData()
+        {
+            if (EditorDataText == null)
+                return string.Empty;
+
+            string[] options = EditorDataText.TrimEnd('\n').Split('\n');
+            string decodedOptions = string.Join(" ", options.Select(s => $"\"{s}\""));
+            return " " + decodedOptions;
         }
 
         private string FormatSize()
@@ -59,13 +72,14 @@ namespace UELib.Core
             var output = string.Empty;
 
             // none are true in StreamInteraction.uc???
-            if (IsPrivate())
-            {
-                output += "private ";
-            }
-            else if (IsProtected())
+
+            if (IsProtected())
             {
                 output += "protected ";
+            }
+            else if (IsPrivate())
+            {
+                output += "private ";
             }
 
             return output;
@@ -416,7 +430,7 @@ namespace UELib.Core
 #if XCOM2
                     if (ConfigName != null && !ConfigName.IsNone())
                     {
-                        output += "config(" + ConfigName.ToString() + ") ";
+                        output += "config(" + ConfigName + ") ";
                     }
                     else
                     {
@@ -434,6 +448,7 @@ namespace UELib.Core
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Localized;
                 }
 
+                // FIXME: Is this exclusively UT2004?
                 if (Package.Version == 128)
                 {
                     if (HasPropertyFlag(Flags.PropertyFlagsLO.Cache))

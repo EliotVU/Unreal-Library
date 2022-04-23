@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#if Forms
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -108,31 +109,26 @@ namespace UELib.Core
             return objN;
         }
 
-        protected static ObjectListNode AddObjectListNode
+        protected static ObjectListNode AddObjectListNode<T>
         (
             TreeNode parentNode,
             string title,
-            IEnumerable<UObject> objects,
+            IList<T> objects,
             string imageName = "TreeView"
-        )
+        ) where T : UObject
         {
-            if (objects == null)
+            if (objects == null || !objects.Any())
                 return null;
 
-            var uObjects = objects as List<UObject> ?? objects.ToList();
-            if (uObjects.Any())
+            var listNode = new ObjectListNode(imageName) { Text = title };
+            foreach (var obj in objects)
             {
-                var listNode = new ObjectListNode(imageName) { Text = title };
-                foreach (var obj in uObjects)
-                {
-                    AddObjectNode(listNode, obj);
-                }
-
-                parentNode.Nodes.Add(listNode);
-                return listNode;
+                AddObjectNode(listNode, obj, obj.GetType().Name);
             }
 
-            return null;
+            parentNode.Nodes.Add(listNode);
+            return listNode;
         }
     }
 }
+#endif

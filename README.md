@@ -1,25 +1,27 @@
 [![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 
-The Unreal library provides you an API to read (parse/deserialize) the contents of Unreal Engine game package files such as .UDK, .UPK. 
+The Unreal library provides you an API to read (parse/deserialize) the contents of Unreal Engine game package files such as .UDK, .UPK.
 Its main purpose is to decompile the UnrealScript byte-code to its original source-code.
 
 It accomplishes this by reading the necessary Unreal data classes such as:
 
     UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState,
     UClass, UTextBuffer, UMetaData, UFont, USound, UPackage
-    
-Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source. 
+
+Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
 
 Installation
 ==============
-Either use NuGet's package manager console or download from: https://www.nuget.org/packages/Eliot.UELib.dll/
+
+Either use NuGet's package manager console or download from: <https://www.nuget.org/packages/Eliot.UELib.dll/>
 
     PM> Install-Package Eliot.UELib.dll
 
 Instructions
 ==============
-See https://github.com/EliotVU/Unreal-Library/wiki/Usage
+
+See <https://github.com/EliotVU/Unreal-Library/wiki/Usage>
 
 User Interface
 ==============
@@ -28,10 +30,11 @@ The latest build is always compatible with the [latest UE Explorer](https://elio
 
 Compatible Games
 ==============
+
 Below is a table of games that are known to be compatible with the UELib.
 
 | Name    | Engine    | Package/Licensee    | Support State     |
-| ------- | --------- | ------------------- | ----------------- 
+| ------- | --------- | ------------------- | -----------------
 | Unreal | 100-226 | 61/000 | |
 | [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | Unknown | 61/000 | |
 | Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | |
@@ -43,11 +46,13 @@ Below is a table of games that are known to be compatible with the UELib.
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Unreal II | 829-2001 | 126/2609 | |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
+| America's Army 2 | 3369 | 128/032:033 | | 2.5, 2.6, 2.8
+| America's Army (Arcade) | 3369 | 128/032 | | 2.6
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory Battery | Unknown | Unknown |     |
 | Swat 4 | Unknown | 129/027 |     |
-| Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | (Third-party) https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/ | 
+| Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | (Third-party) <https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/> |
 |     |     |     |     |
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |
@@ -106,26 +111,27 @@ Below is a table of games that are known to be compatible with the UELib.
 | Sherlock Holmes: Crimes and Punishments | Unknown | Unknown | |
 | Alien Rage | Unknown | Unknown |     |
 
-**Beware, opening an unsupported package could crash your system! Make sure you have 
+**Beware, opening an unsupported package could crash your system! Make sure you have
 saved everything before opening any file!**
 
 **Note** UE3 production-ready packages are often **compressed** and must first be decompressed, [Unreal Package Decompressor](https://www.gildor.org/downloads) by **Gildor** is a tool that can decompress most packages for you; for some games you need a specialized decompressor, see for example [RLUPKTool](https://github.com/AltimorTASDK/RLUPKTool).
 
-Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes) 
+Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes)
 
 Contribute
 ==============
 
 To contribute click the [fork button at the top right](https://help.github.com/articles/fork-a-repo/) and follow it by cloning your fork of this repository.
 
-This project uses Visual Studio for development, while it is not restricted to Visual Studio it is recommended to use VS because it has the best support for C#, you can get Visual Studio from http://www.visualstudio.com/ for free, if you already have Visual Studio, it should be atleast Visual Studio 2010+.
+This project uses Visual Studio for development, while it is not restricted to Visual Studio it is recommended to use VS because it has the best support for C#, you can get Visual Studio from <http://www.visualstudio.com/> for free, if you already have Visual Studio, it should be atleast Visual Studio 2010+.
 
 The following kind of contributions are welcome:
+
 * Any bug fix or issue as reported under "issues" on this github repository.
 * Support for a new game.
 * Support for decompression, and/or decryption.
 * Documentation on how to use this library.
-* General improvements in the decompilation output. 
+* General improvements in the decompilation output.
 * Mono compatibility.
 
 Code style

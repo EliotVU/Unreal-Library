@@ -117,8 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Packages_Path_AAA_2_6" xml:space="preserve">
+    <value>D:\Downloads\AAA-2.6-Linux-All\System</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="TestUC2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>upk\TestUC2\TestUC2.u;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="TestUC3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>upk\testuc3\testuc3.u;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

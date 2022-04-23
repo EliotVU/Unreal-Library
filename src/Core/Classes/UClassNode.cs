@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿#if Forms
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
@@ -29,7 +30,7 @@ namespace UELib.Core
             {
                 return "Interface";
             }
-            else if (IsClassWithin())
+            if (IsClassWithin())
             {
                 return "UClass-Within";
             }
@@ -38,3 +39,4 @@ namespace UELib.Core
         }
     }
 }
+#endif

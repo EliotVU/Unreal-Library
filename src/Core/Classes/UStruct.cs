@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UELib.Annotations;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -19,6 +20,7 @@ namespace UELib.Core
         private const uint VCppText = 129;
 
         // TODO: Corrigate version
+        // > 119?
         private const uint VStructFlags = 102;
 
         // TODO: Corrigate version
@@ -32,16 +34,16 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        public UTextBuffer ScriptText { get; private set; }
-        public UTextBuffer ProcessedText { get; private set; }
-        public UTextBuffer CppText { get; private set; }
+        [CanBeNull] public UTextBuffer ScriptText { get; private set; }
+        [CanBeNull] public UTextBuffer ProcessedText { get; private set; }
+        [CanBeNull] public UTextBuffer CppText { get; private set; }
         public UName FriendlyName { get; protected set; }
 
         public int Line;
         public int TextPos;
 
         protected uint StructFlags { get; set; }
-        protected UField Children { get; private set; }
+        [CanBeNull] protected UField Children { get; private set; }
         protected int DataScriptSize { get; private set; }
         private int ByteScriptSize { get; set; }
 
@@ -187,9 +189,8 @@ namespace UELib.Core
             {
                 const int moonbaseVersion = 587;
                 const int shadowcomplexVersion = 590;
-                const int mohaVersion = 421;
 
-                bool isTrueScriptSize = Package.Version == mohaVersion ||
+                bool isTrueScriptSize = Package.Build == UnrealPackage.GameBuild.BuildName.MOHA ||
                                         (
                                             Package.Version >= UnrealPackage.VINDEXDEPRECATED
                                             && (Package.Version < moonbaseVersion &&

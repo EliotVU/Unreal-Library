@@ -61,11 +61,30 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to D:\Downloads\AAA-2.6-Linux-All\System.
+        /// </summary>
+        public static string Packages_Path_AAA_2_6 {
+            get {
+                return ResourceManager.GetString("Packages_Path_AAA_2_6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         public static byte[] TestUC2 {
             get {
                 object obj = ResourceManager.GetObject("TestUC2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] TestUC3 {
+            get {
+                object obj = ResourceManager.GetObject("TestUC3", resourceCulture);
                 return ((byte[])(obj));
             }
         }

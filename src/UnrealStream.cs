@@ -3,19 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UELib.Annotations;
 using UELib.Core;
 
 namespace UELib
 {
     public interface IUnrealStream : IDisposable
     {
-        string Name { get; }
-
         UnrealPackage Package { get; }
         UnrealReader UR { get; }
         UnrealWriter UW { get; }
-
-        bool BigEndianCode { get; }
 
         /// <summary>
         /// The version of the package this stream is working for.
@@ -28,6 +25,8 @@ namespace UELib
         /// <returns></returns>
         string ReadText();
 
+        string ReadASCIIString();
+
         /// <summary>
         /// Reads the next bytes as a index to an Object.
         /// </summary>
@@ -35,6 +34,8 @@ namespace UELib
         int ReadObjectIndex();
 
         UObject ReadObject();
+
+        [PublicAPI("UE Explorer")]
         UObject ParseObject(int index);
 
         /// <summary>
@@ -44,6 +45,8 @@ namespace UELib
         int ReadNameIndex();
 
         UName ReadNameReference();
+
+        [PublicAPI("UE Explorer")]
         string ParseName(int index);
 
         /// <summary>
@@ -81,7 +84,7 @@ namespace UELib
         long Length { get; }
         long Position { get; set; }
         long LastPosition { get; set; }
-        int Read(byte[] array, int offset, int count);
+        int Read(byte[] buffer, int index, int count);
         long Seek(long offset, SeekOrigin origin);
     }
 
@@ -117,13 +120,9 @@ namespace UELib
         public void WriteIndex(int index)
         {
             if (_Version >= UnrealPackage.VINDEXDEPRECATED)
-            {
                 Write(index);
-            }
             else
-            {
                 throw new InvalidDataException("UE1 and UE2 are not supported for writing indexes!");
-            }
         }
 
         protected override void Dispose(bool disposing)
@@ -136,6 +135,15 @@ namespace UELib
         }
     }
 
+    public interface IUnrealArchive
+    {
+        UnrealPackage Package { get; }
+        uint Version { get; }
+
+        bool BigEndianCode { get; }
+        long LastPosition { get; set; }
+    }
+
     /// <summary>
     /// Wrapper for Streams with specific functions for deserializing UELib.UnrealPackage.
     /// </summary>
@@ -143,158 +151,130 @@ namespace UELib
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security",
             "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
-        private IUnrealStream _UnrealStream;
+        private IUnrealArchive _Archive;
 
-        private uint _Version => _UnrealStream.Version;
-
-        public UnrealReader(Stream stream) : base(stream)
+        // Dirty hack to implement crypto-reading, pending overhaul ;)
+        public UnrealReader(IUnrealArchive archive, Stream baseStream) : base(baseStream)
         {
-            _UnrealStream = stream as IUnrealStream;
+            _Archive = archive;
         }
 
         /// <summary>
         /// Reads a string that was serialized for Unreal Packages, these strings use a positive or negative size to:
         /// - indicate that the bytes were encoded in ASCII.
         /// - indicate that the bytes were encoded in Unicode.
-        /// 
-        /// Several exceptions may exist in games such as Transformers, and Bioshock, etc.
         /// </summary>
         /// <returns>A string in either ASCII or Unicode.</returns>
         public string ReadText()
         {
-#if DEBUG || BINARYMETADATA
-            long lastPosition = _UnrealStream.Position;
+#if BINARYMETADATA
+            long lastPosition = BaseStream.Position;
 #endif
-            // Very old packages use a simple Ansi encoding.
-            if (_Version < UnrealPackage.VSIZEPREFIXDEPRECATED)
-            {
-                return ReadAnsi();
-            }
-
-            byte[] strBytes;
             int unfixedSize;
             int size = (unfixedSize =
 #if BIOSHOCK
                 // In Bioshock packages always give a positive Size despite being Unicode, so we reverse this.
-                _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+                _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
                     ? -ReadIndex()
                     :
 #endif
                     ReadIndex()) < 0
                 ? -unfixedSize
                 : unfixedSize;
-            System.Diagnostics.Debug.Assert(size < 1000000, "Dangerous string size detected! IT'S OVER 9000 THOUSAND!");
             if (unfixedSize > 0) // ANSI
             {
+                // We don't want to use base.Read here because it may reverse the buffer if we are using BigEndianOrder
+                // TODO: Optimize
+                var chars = new byte[size];
+                for (var i = 0; i < chars.Length; ++i)
+                {
+                    byte c = ReadByte();
+                    chars[i] = c;
+                }
+#if BINARYMETADATA
+                _Archive.LastPosition = lastPosition;
+#endif
 #if TRANSFORMERS
                 // No null-termination in Transformer games.
-                if (_UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
-                    _UnrealStream.Package.LicenseeVersion >= 181)
-                {
-                    strBytes = new byte[size];
-                    Read(strBytes, 0, size);
-                    goto reverse;
-                }
+                if (_Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
+                    _Archive.Package.LicenseeVersion >= 181)
+                    return Encoding.ASCII.GetString(chars, 0, chars.Length);
 #endif
-                strBytes = new byte[size - 1];
-                Read(strBytes, 0, size - 1);
-                ++BaseStream.Position; // null
-
-                reverse:
-                // The Read function always reverses all read bytes, but since strings are an exception to BigEndianCode, we have to re-reverse the bytes.
-                if (_UnrealStream.BigEndianCode)
-                {
-                    Array.Reverse(strBytes);
-                }
-#if DEBUG || BINARYMETADATA
-                _UnrealStream.LastPosition = lastPosition;
-#endif
-                return Encoding.ASCII.GetString(strBytes);
+                return Encoding.ASCII.GetString(chars, 0, chars.Length - 1);
             }
 
             if (unfixedSize < 0) // UNICODE
             {
-                size *= 2;
+                var chars = new char[size];
+                for (var i = 0; i < chars.Length; ++i)
+                {
+                    var w = (char)ReadInt16();
+                    chars[i] = w;
+                }
+#if BINARYMETADATA
+                _Archive.LastPosition = lastPosition;
+#endif
 #if TRANSFORMERS
                 // No null-termination in Transformer games.
-                if (_UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
-                    _UnrealStream.Package.LicenseeVersion >= 181)
-                {
-                    strBytes = new byte[size];
-                    Read(strBytes, 0, size);
-                    goto reverse;
-                }
+                if (_Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
+                    _Archive.Package.LicenseeVersion >= 181)
+                    return new string(chars);
 #endif
-                strBytes = new byte[size - 2];
-                Read(strBytes, 0, size - 2);
-                BaseStream.Position += 2; // null
-
-                reverse:
-                // The Read function always reverses all read bytes, but since strings are an exception to BigEndianCode, we have to re-reverse the bytes.
-                if (_UnrealStream.BigEndianCode)
-                {
-                    Array.Reverse(strBytes);
-                }
-#if DEBUG || BINARYMETADATA
-                _UnrealStream.LastPosition = lastPosition;
-#endif
-                return Encoding.Unicode.GetString(strBytes);
+                // Strip off the null
+                return new string(chars, 0, chars.Length - 1);
             }
-#if DEBUG || BINARYMETADATA
-            _UnrealStream.LastPosition = lastPosition;
+#if BINARYMETADATA
+            _Archive.LastPosition = lastPosition;
 #endif
             return string.Empty;
         }
 
         public string ReadAnsi()
         {
+#if BINARYMETADATA
+            long lastPosition = BaseStream.Position;
+#endif
             var strBytes = new List<byte>();
             nextChar:
-            byte BYTE = ReadByte();
-            if (BYTE != '\0')
+            byte c = ReadByte();
+            if (c != '\0')
             {
-                strBytes.Add(BYTE);
+                strBytes.Add(c);
                 goto nextChar;
             }
-
+#if BINARYMETADATA
+            _Archive.LastPosition = lastPosition;
+#endif
             string s = Encoding.UTF8.GetString(strBytes.ToArray());
-            if (_UnrealStream.BigEndianCode)
-            {
-                Enumerable.Reverse(s);
-            }
-
             return s;
         }
 
         public string ReadUnicode()
         {
+#if BINARYMETADATA
+            long lastPosition = BaseStream.Position;
+#endif
             var strBytes = new List<byte>();
             nextWord:
-            ushort w = ReadUInt16();
+            short w = ReadInt16();
             if (w != 0)
             {
-                strBytes.Add((byte)(w & 0xFF00));
+                strBytes.Add((byte)(w >> 8));
                 strBytes.Add((byte)(w & 0x00FF));
                 goto nextWord;
             }
-
+#if BINARYMETADATA
+            _Archive.LastPosition = lastPosition;
+#endif
             string s = Encoding.Unicode.GetString(strBytes.ToArray());
-            if (_UnrealStream.BigEndianCode)
-            {
-                Enumerable.Reverse(s);
-            }
-
             return s;
         }
 
         public int ReadIndex()
         {
-            if (_Version >= UnrealPackage.VINDEXDEPRECATED)
-            {
-                return ReadInt32();
-            }
-#if DEBUG || BINARYMETADATA
-            long lastPosition = _UnrealStream.Position;
+            if (_Archive.Version >= UnrealPackage.VINDEXDEPRECATED) return ReadInt32();
+#if BINARYMETADATA
+            long lastPosition = BaseStream.Position;
 #endif
             const byte isIndiced = 0x40; // 7th bit
             const byte isNegative = 0x80; // 8th bit
@@ -327,29 +307,29 @@ namespace UELib
 
                 index = (index << 7) + (b1 & proceededValue);
             }
-#if DEBUG || BINARYMETADATA
-            _UnrealStream.LastPosition = lastPosition;
+#if BINARYMETADATA
+            _Archive.LastPosition = lastPosition;
 #endif
             return (b0 & isNegative) != 0 // The value is negative or positive?.
                 ? -((index << 6) + (b0 & value))
-                : ((index << 6) + (b0 & value));
+                : (index << 6) + (b0 & value);
         }
 
         public long ReadNameIndex()
         {
-#if DEBUG || BINARYMETADATA
-            long lastPosition = _UnrealStream.Position;
+#if BINARYMETADATA
+            long lastPosition = BaseStream.Position;
 #endif
             int index = ReadIndex();
-            if (_Version >= UName.VNameNumbered
+            if (_Archive.Version >= UName.VNameNumbered
 #if BIOSHOCK
-                || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+                || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
 #endif
                )
             {
                 uint num = ReadUInt32() - 1;
-#if DEBUG || BINARYMETADATA
-                _UnrealStream.LastPosition = lastPosition;
+#if BINARYMETADATA
+                _Archive.LastPosition = lastPosition;
 #endif
                 return (long)((ulong)num << 32) | (uint)index;
             }
@@ -359,19 +339,19 @@ namespace UELib
 
         public int ReadNameIndex(out int num)
         {
-#if DEBUG || BINARYMETADATA
-            long lastPosition = _UnrealStream.Position;
+#if BINARYMETADATA
+            long lastPosition = BaseStream.Position;
 #endif
             int index = ReadIndex();
-            if (_UnrealStream.Version >= UName.VNameNumbered
+            if (_Archive.Version >= UName.VNameNumbered
 #if BIOSHOCK
-                || _UnrealStream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+                || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
 #endif
                )
             {
                 num = ReadInt32() - 1;
-#if DEBUG || BINARYMETADATA
-                _UnrealStream.LastPosition = lastPosition;
+#if BINARYMETADATA
+                _Archive.LastPosition = lastPosition;
 #endif
                 return index;
             }
@@ -382,10 +362,7 @@ namespace UELib
 
         public static int ReadIndexFromBuffer(byte[] value, IUnrealStream stream)
         {
-            if (stream.Version >= UnrealPackage.VINDEXDEPRECATED)
-            {
-                return BitConverter.ToInt32(value, 0);
-            }
+            if (stream.Version >= UnrealPackage.VINDEXDEPRECATED) return BitConverter.ToInt32(value, 0);
 
             var index = 0;
             byte b0 = value[0];
@@ -415,16 +392,16 @@ namespace UELib
 
             return (b0 & 0x80) != 0 // The value is negative or positive?.
                 ? -((index << 6) + (b0 & 0x3F))
-                : ((index << 6) + (b0 & 0x3F));
+                : (index << 6) + (b0 & 0x3F);
         }
 
-        public string ReadGuid()
+        public Guid ReadGuid()
         {
             // A, B, C, D
             var guidBuffer = new byte[16];
             Read(guidBuffer, 0, 16);
             var g = new Guid(guidBuffer);
-            return g.ToString();
+            return g;
         }
 
         protected override void Dispose(bool disposing)
@@ -433,15 +410,44 @@ namespace UELib
             if (!disposing)
                 return;
 
-            _UnrealStream = null;
+            _Archive = null;
         }
     }
 
-    public class UPackageStream : FileStream, IUnrealStream
+    public class UPackageFileStream : FileStream
     {
-        public UnrealPackage Package { get; private set; }
+        public UnrealPackage Package { get; protected set; }
 
-        /// <inheritdoc/>
+        protected UPackageFileStream(string path, FileMode mode, FileAccess access, FileShare share) : base(path, mode,
+            access, share)
+        {
+        }
+
+        public override int Read(byte[] buffer, int index, int count)
+        {
+            long p = Position;
+            int length = base.Read(buffer, index, count);
+            Package.Decoder?.DecodeRead(p, buffer, index, count);
+            return length;
+        }
+
+        public override int ReadByte()
+        {
+            if (Package.Decoder == null)
+                return base.ReadByte();
+
+            unsafe
+            {
+                long p = Position;
+                var b = (byte)base.ReadByte();
+                Package.Decoder?.DecodeByte(p, &b);
+                return b;
+            }
+        }
+    }
+
+    public class UPackageStream : UPackageFileStream, IUnrealStream, IUnrealArchive
+    {
         public uint Version => Package?.Version ?? 0;
 
         public UnrealReader UR { get; private set; }
@@ -463,15 +469,9 @@ namespace UELib
 
         private void InitBuffer()
         {
-            if (CanRead && UR == null)
-            {
-                UR = new UnrealReader(this);
-            }
+            if (CanRead && UR == null) UR = new UnrealReader(this, this);
 
-            if (CanWrite && UW == null)
-            {
-                UW = new UnrealWriter(this);
-            }
+            if (CanWrite && UW == null) UW = new UnrealWriter(this);
         }
 
         public void PostInit(UnrealPackage package)
@@ -484,7 +484,7 @@ namespace UELib
             package.Decoder?.PreDecode(this);
 
             var bytes = new byte[4];
-            Read(bytes, 0, 4);
+            base.Read(bytes, 0, 4);
             var readSignature = BitConverter.ToUInt32(bytes, 0);
             if (readSignature == UnrealPackage.Signature_BigEndian)
             {
@@ -495,9 +495,7 @@ namespace UELib
             if (!UnrealConfig.SuppressSignature
                 && readSignature != UnrealPackage.Signature
                 && readSignature != UnrealPackage.Signature_BigEndian)
-            {
                 throw new FileLoadException(package.PackageName + " isn't an UnrealPackage!");
-            }
 
             Position = 4;
         }
@@ -511,21 +509,22 @@ namespace UELib
             Package.Decoder?.DecodeBuild(this, build);
         }
 
-        public override int Read(byte[] array, int offset, int count)
+        public override int Read(byte[] buffer, int index, int count)
         {
-#if DEBUG || BINARYMETADATA
+#if BINARYMETADATA
             LastPosition = Position;
 #endif
-            int r = base.Read(array, offset, count);
-            if (BigEndianCode && r > 1)
-            {
-                Array.Reverse(array, 0, r);
-            }
+            int length = base.Read(buffer, index, count);
+            if (BigEndianCode && length > 1) Array.Reverse(buffer, 0, length);
+            return length;
+        }
 
-            // Give the decoder a chance to modify the read output.
-            return (Package?.Decoder != null)
-                ? Package.Decoder.DecodeRead(array, offset, count)
-                : r;
+        public new byte ReadByte()
+        {
+#if BINARYMETADATA
+            LastPosition = Position;
+#endif
+            return (byte)base.ReadByte();
         }
 
         /// <summary>
@@ -540,21 +539,6 @@ namespace UELib
         }
 
         #region Macros
-
-        // Macros
-        /// <summary>
-        /// overidden: Reads a byte
-        ///
-        /// Advances the position.
-        /// </summary>
-        /// <returns>the read byte</returns>
-        public new byte ReadByte()
-        {
-#if DEBUG || BINARYMETADATA
-            LastPosition = Position;
-#endif
-            return UR.ReadByte();
-        }
 
         /// <summary>
         /// Reads a Unsigned Integer of 16bits
@@ -718,7 +702,7 @@ namespace UELib
         /// Advances the position.
         /// </summary>
         /// <returns>the read guid</returns>
-        public string ReadGuid()
+        public Guid ReadGuid()
         {
             return UR.ReadGuid();
         }
@@ -743,7 +727,7 @@ namespace UELib
         }
     }
 
-    public class UObjectStream : MemoryStream, IUnrealStream
+    public class UObjectStream : MemoryStream, IUnrealStream, IUnrealArchive
     {
         public string Name => Package.Stream.Name;
 
@@ -781,27 +765,18 @@ namespace UELib
 
         private void InitBuffer()
         {
-            if (CanRead && UR == null)
-            {
-                UR = new UnrealReader(this);
-            }
+            if (CanRead && UR == null) UR = new UnrealReader(this, this);
 
-            if (CanWrite && UW == null)
-            {
-                UW = new UnrealWriter(this);
-            }
+            if (CanWrite && UW == null) UW = new UnrealWriter(this);
         }
 
-        public override int Read(byte[] array, int offset, int count)
+        public override int Read(byte[] buffer, int index, int count)
         {
-#if DEBUG || BINARYMETADATA
+#if BINARYMETADATA
             LastPosition = Position;
 #endif
-            int r = base.Read(array, offset, count);
-            if (BigEndianCode && r > 1)
-            {
-                Array.Reverse(array, 0, r);
-            }
+            int r = base.Read(buffer, index, count);
+            if (BigEndianCode && r > 1) Array.Reverse(buffer, 0, r);
 
             return r;
         }
@@ -828,7 +803,7 @@ namespace UELib
         /// <returns>the read byte</returns>
         public new byte ReadByte()
         {
-#if DEBUG || BINARYMETADATA
+#if BINARYMETADATA
             LastPosition = Position;
 #endif
             return UR.ReadByte();
@@ -996,7 +971,7 @@ namespace UELib
         /// Advances the position.
         /// </summary>
         /// <returns>the read guid</returns>
-        public string ReadGuid()
+        public Guid ReadGuid()
         {
             return UR.ReadGuid();
         }
@@ -1056,10 +1031,7 @@ namespace UELib
         {
             int num;
             string name = stream.Package.GetIndexName(stream.ReadNameIndex(out num));
-            if (num > UName.Numeric)
-            {
-                name += "_" + num;
-            }
+            if (num > UName.Numeric) name += "_" + num;
 
             return name;
         }

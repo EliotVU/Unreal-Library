@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -33,20 +34,8 @@ namespace UELib.Core
                 }
             }
 
-            public class ReturnNothingToken : Token
+            public class ReturnNothingToken : EatReturnValueToken
             {
-                private UObject _ReturnObject;
-
-                public override void Deserialize(IUnrealStream stream)
-                {
-                    // TODO: Corrigate version.
-                    if (stream.Version <= 300)
-                        return;
-
-                    _ReturnObject = Decompiler._Container.TryGetIndexObject(stream.ReadObjectIndex());
-                    Decompiler.AlignObjectSize();
-                }
-
                 public override string Decompile()
                 {
                     #region CaseToken Support
@@ -59,7 +48,7 @@ namespace UELib.Core
 
                     #endregion
 
-                    return _ReturnObject != null ? _ReturnObject.Name : string.Empty;
+                    return ReturnValueProperty != null ? ReturnValueProperty.Name : string.Empty;
                 }
             }
 

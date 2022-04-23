@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace UELib.Core
 {
@@ -12,7 +13,7 @@ namespace UELib.Core
 
                 protected UnrealPackage Package => Decompiler.Package;
 
-                public byte RepresentToken; // Fixed(adjusted at decompile time for compatibility)
+                public byte RepresentToken;
 
                 /// <summary>
                 /// The relative position of this token.
@@ -52,10 +53,7 @@ namespace UELib.Core
                 {
                     tryNext:
                     var t = Decompiler.NextToken;
-                    if (t is DebugInfoToken)
-                    {
-                        goto tryNext;
-                    }
+                    if (t is DebugInfoToken) goto tryNext;
 
                     try
                     {
@@ -71,10 +69,7 @@ namespace UELib.Core
                 {
                     tryNext:
                     var t = Decompiler.NextToken;
-                    if (t is DebugInfoToken)
-                    {
-                        goto tryNext;
-                    }
+                    if (t is DebugInfoToken) goto tryNext;
 
                     return t;
                 }
@@ -87,25 +82,26 @@ namespace UELib.Core
                 public override string ToString()
                 {
                     return
-                        $"\r\nType:{GetType().Name}\r\nToken:{RepresentToken:X2}\r\nPosition:{Position}\r\nSize:{Size}".Replace("\n", "\n"
-                        + UDecompilingState.Tabs
-                    );
+                        $"\r\nType:{GetType().Name}\r\nToken:{RepresentToken:X2}\r\nPosition:{Position}\r\nSize:{Size}"
+                            .Replace("\n", "\n"
+                                           + UDecompilingState.Tabs
+                            );
                 }
             }
 
-            public sealed class UnknownExprToken : Token
+            public class UnresolvedToken : Token
             {
-                public override string Decompile()
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    return $"@UnknownExprToken(0x{RepresentToken:X2})";
+#if DEBUG_HIDDENTOKENS
+                    Debug.WriteLine("Detected an unresolved token.");
+#endif
                 }
-            }
 
-            public sealed class UnknownCastToken : Token
-            {
                 public override string Decompile()
                 {
-                    return $"@UnknownCastToken(0x{RepresentToken:X2})";
+                    Decompiler.PreComment = $"// {FormatTokenInfo(this)}";
+                    return default;
                 }
             }
         }

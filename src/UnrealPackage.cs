@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -42,6 +43,7 @@ namespace UELib
     /// 
     /// Note: Usage restricted to the executing assembly(UELib) only!
     /// </summary>
+    [MeansImplicitUse]
     [AttributeUsage(AttributeTargets.Class)]
     public sealed class UnrealRegisterClassAttribute : Attribute
     {
@@ -87,7 +89,7 @@ namespace UELib
         public uint Version
         {
             get => OverrideVersion > 0 ? OverrideVersion : _Version;
-            private set => _Version = value;
+            set => _Version = value;
         }
 
         /// <summary>
@@ -269,6 +271,13 @@ namespace UELib
                 /// </summary>
                 [Build(118, 128, 25u, 29u)] UT2004,
 
+                // Built on UT2004
+                // Represents both AAO and AAA
+                /// <summary>
+                /// 128/032:033
+                /// </summary>
+                [Build(128, 128, 32u, 33u)] AA2,
+
                 /// <summary>
                 /// 129/027
                 /// </summary>
@@ -340,6 +349,11 @@ namespace UELib
                 /// 576/100
                 /// </summary>
                 [Build(576, 100)] Homefront,
+
+                /// <summary>
+                /// 581/058
+                /// </summary>
+                [Build(581, 58, 1)] MOH,
 
                 /// <summary>
                 /// 584/058
@@ -418,7 +432,7 @@ namespace UELib
                 [Build(511, 145)] // Transformers: War for Cybertron (PC version)
                 [Build(511, 144)] // Transformers: War for Cybertron (PS3 and XBox 360 version)
                 [Build(537, 174)] // Transformers: Dark of the Moon
-                [Build(846, 181, 2, 1)]
+                [Build(846, 181, 2, 1)] // FIXME: No DLLBind
                 // Transformers: Fall of Cybertron
                 Transformers,
 
@@ -460,7 +474,7 @@ namespace UELib
                     IsConsoleCompressed = true;
                 }
 
-                var gameBuilds = Enum.GetValues(typeof(BuildName)) as BuildName[];
+                var gameBuilds = (BuildName[])Enum.GetValues(typeof(BuildName));
                 foreach (var gameBuild in gameBuilds)
                 {
                     var gameBuildMember = typeof(BuildName).GetMember(gameBuild.ToString());
@@ -592,9 +606,9 @@ namespace UELib
                 ImportsCount = stream.ReadUInt32();
                 ImportsOffset = stream.ReadUInt32();
 
-                Console.WriteLine("\tNames Count:" + NamesCount + "\tNames Offset:" + NamesOffset
-                                  + "\r\n\tExports Count:" + ExportsCount + "\tExports Offset:" + ExportsOffset
-                                  + "\r\n\tImports Count:" + ImportsCount + "\tImports Offset:" + ImportsOffset
+                Console.WriteLine("Names Count:" + NamesCount + " Names Offset:" + NamesOffset
+                                  + " Exports Count:" + ExportsCount + " Exports Offset:" + ExportsOffset
+                                  + " Imports Count:" + ImportsCount + " Imports Offset:" + ImportsOffset
                 );
 
                 if (stream.Version < 415)
@@ -865,10 +879,10 @@ namespace UELib
             Version = stream.ReadUInt32();
             LicenseeVersion = (ushort)(Version >> 16);
             Version = (Version & 0xFFFFU);
-            Console.WriteLine("\tPackage Version:" + Version + "/" + LicenseeVersion);
+            Console.WriteLine("Package Version:" + Version + "/" + LicenseeVersion);
 
             Build = new GameBuild(this);
-            Console.WriteLine("\tBuild:" + Build.Name);
+            Console.WriteLine("Build:" + Build.Name);
 
             stream.BuildDetected(Build);
 
@@ -899,7 +913,7 @@ namespace UELib
 #endif
                 // Offset to the first class(not object) in the package.
                 HeaderSize = stream.ReadUInt32();
-                Console.WriteLine("\tHeader Size: " + HeaderSize);
+                Console.WriteLine("Header Size: " + HeaderSize);
                 if (Version >= VGroup)
                 {
                     // UPK content category e.g. Weapons, Sounds or Meshes.
@@ -909,7 +923,7 @@ namespace UELib
 
             // Bitflags such as AllowDownload.
             PackageFlags = stream.ReadUInt32();
-            Console.WriteLine("\tPackage Flags:" + PackageFlags);
+            Console.WriteLine("Package Flags:" + PackageFlags);
 
             // Summary data such as ObjectCount.
             _TablesData = new TablesData();
@@ -941,7 +955,7 @@ namespace UELib
                 {
                     //stream.Skip( 4 );
                     int unknown = stream.ReadInt32();
-                    Console.WriteLine("\tUnknown:" + unknown);
+                    Console.WriteLine("Unknown:" + unknown);
                 }
 #endif
 #if BORDERLANDS
@@ -956,8 +970,8 @@ namespace UELib
                     stream.Skip(4);
                 }
 #endif
-                GUID = stream.ReadGuid();
-                Console.Write("\r\n\tGUID:" + GUID + "\r\n");
+                GUID = stream.ReadGuid().ToString();
+                Console.WriteLine("GUID:" + GUID);
 #if TERA
                 if (Build == GameBuild.BuildName.Tera)
                 {
@@ -969,8 +983,8 @@ namespace UELib
                 {
 #endif
                     int generationCount = stream.ReadInt32();
+                    Console.WriteLine("Generations Count:" + generationCount);
                     Generations = new UArray<UGenerationTableItem>(stream, generationCount);
-                    Console.WriteLine("Deserialized {0} generations", Generations.Count);
 #if MKKE
                 }
 #endif
@@ -984,12 +998,12 @@ namespace UELib
                 {
                     // The Engine Version this package was created with
                     EngineVersion = stream.ReadInt32();
-                    Console.WriteLine("\tEngineVersion:" + EngineVersion);
+                    Console.WriteLine("EngineVersion:" + EngineVersion);
                     if (Version >= VCOOKEDPACKAGES)
                     {
                         // The Cooker Version this package was cooked with
                         CookerVersion = stream.ReadInt32();
-                        Console.WriteLine("\tCookerVersion:" + CookerVersion);
+                        Console.WriteLine("CookerVersion:" + CookerVersion);
 
                         // Read compressed info?
                         if (Version >= VCompression)
@@ -997,7 +1011,7 @@ namespace UELib
                             if (IsCooked())
                             {
                                 CompressionFlags = stream.ReadUInt32();
-                                Console.WriteLine("\tCompressionFlags:" + CompressionFlags);
+                                Console.WriteLine("CompressionFlags:" + CompressionFlags);
                                 CompressedChunks = new UArray<CompressedChunk> { Capacity = stream.ReadInt32() };
                                 //long uncookedSize = stream.Position;
                                 if (CompressedChunks.Capacity > 0)
@@ -1035,58 +1049,90 @@ namespace UELib
                     }
                 }
             }
-
 #if DCUO
-            if( Build == GameBuild.BuildName.DCUO )
+            if (Build == GameBuild.BuildName.DCUO)
             {
                 //We need to back up because our package has already been decompressed
-                stream.Position
- -= 4;
+                stream.Position -= 4;
+                int unkCount = stream.ReadInt32();
+                stream.Skip(16 * unkCount);
+                stream.Skip(4);
 
-                int unkCount
- = stream.ReadInt32();
-
-                stream.Skip( 16 * unkCount );
-
-                stream.Skip( 4 );
-
-                if( Version >= 516 )
+                if (Version >= 516)
                 {
-                    int textCount
- = stream.ReadInt32();
-
-                    var texts
- = new List<string>();
-                    for( int i
- = 0; i < textCount; i++ )
+                    int textCount = stream.ReadInt32();
+                    var texts = new List<string>(textCount);
+                    for (var i = 0; i < textCount; i++)
                     {
-                        texts.Add( stream.ReadText() );
+                        texts.Add(stream.ReadText());
                     }
                 }
-                
-                uint realNameOffset
- = (uint)stream.Position;
 
-                System.Diagnostics.Debug.Assert( realNameOffset <= _TablesData.NamesOffset, "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!" );
+                var realNameOffset = (uint)stream.Position;
+                System.Diagnostics.Debug.Assert(
+                    realNameOffset <= _TablesData.NamesOffset,
+                    "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!"
+                );
 
-                uint offsetDif
- = _TablesData.NamesOffset - realNameOffset;
+                uint offsetDif = _TablesData.NamesOffset - realNameOffset;
+                _TablesData.NamesOffset -= offsetDif;
+                _TablesData.ImportsOffset -= offsetDif;
+                _TablesData.ExportsOffset -= offsetDif;
+            }
+#endif
+#if AA2
+            if (Build == GameBuild.BuildName.AA2
+                // Note: Never true, AA2 is not a detected build for packages with LicenseeVersion 27 or less
+                // But we'll preserve this nonetheless
+                && LicenseeVersion >= 19)
+            {
+                bool isEncrypted = stream.ReadInt32() > 0;
+                if (isEncrypted)
+                {
+                    // TODO: Use a stream wrapper instead; but this is blocked by an overly intertwined use of PackageStream.
+                    if (LicenseeVersion >= 33)
+                    {
+                        var decoder = new CryptoDecoderAA2();
+                        Decoder = decoder;
+                    }
+                    else
+                    {
+                        var decoder = new CryptoDecoderWithKeyAA2();
+                        Decoder = decoder;
 
-                //The offsets parsed above are off, maybe due to decompression?
-                _TablesData.NamesOffset
- -= offsetDif;
-                _TablesData.ImportsOffset
- -= offsetDif;
-                _TablesData.ExportsOffset
- -= offsetDif;
+                        uint nonePosition = _TablesData.NamesOffset;
+                        stream.Seek(nonePosition, SeekOrigin.Begin);
+                        byte scrambledNoneLength = stream.ReadByte();
+                        decoder.Key = scrambledNoneLength;
+                        stream.Seek(nonePosition, SeekOrigin.Begin);
+                        byte unscrambledNoneLength = stream.ReadByte();
+                        Debug.Assert((unscrambledNoneLength & 0x3F) == 5);
+                    }
+                }
+
+                // Always one
+                //int unkCount = stream.ReadInt32();
+                //for (var i = 0; i < unkCount; i++)
+                //{
+                //    // All zero
+                //    stream.Skip(24);
+                //    // Always identical to the package's GUID
+                //    var guid = stream.ReadGuid();
+                //}
+
+                //// Always one
+                //int unk2Count = stream.ReadInt32();
+                //for (var i = 0; i < unk2Count; i++)
+                //{
+                //    // All zero
+                //    stream.Skip(12);
+                //}
             }
 #endif
 
             // Read the name table
             if (_TablesData.NamesCount > 0)
             {
-                Console.WriteLine("P: " + stream.Position + " NP: " + _TablesData.NamesOffset);
-
                 stream.Seek(_TablesData.NamesOffset, SeekOrigin.Begin);
                 Names = new List<UNameTableItem>((int)_TablesData.NamesCount);
                 for (var i = 0; i < _TablesData.NamesCount; ++i)
@@ -1096,15 +1142,11 @@ namespace UELib
                     nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                     Names.Add(nameEntry);
                 }
-
-                Console.WriteLine("Deserialized {0} names", Names.Count);
             }
 
             // Read Import Table
             if (_TablesData.ImportsCount > 0)
             {
-                Console.WriteLine("P: " + stream.Position + " IP: " + _TablesData.ImportsOffset);
-
                 stream.Seek(_TablesData.ImportsOffset, SeekOrigin.Begin);
                 Imports = new List<UImportTableItem>((int)_TablesData.ImportsCount);
                 for (var i = 0; i < _TablesData.ImportsCount; ++i)
@@ -1114,15 +1156,11 @@ namespace UELib
                     imp.Size = (int)(stream.Position - imp.Offset);
                     Imports.Add(imp);
                 }
-
-                Console.WriteLine("Deserialized {0} imports", Imports.Count);
             }
 
             // Read Export Table
             if (_TablesData.ExportsCount > 0)
             {
-                Console.WriteLine("P: " + stream.Position + " EP: " + _TablesData.ExportsOffset);
-
                 stream.Seek(_TablesData.ExportsOffset, SeekOrigin.Begin);
                 Exports = new List<UExportTableItem>((int)_TablesData.ExportsCount);
                 for (var i = 0; i < _TablesData.ExportsCount; ++i)
@@ -1144,8 +1182,6 @@ namespace UELib
                         Exports.Add(exp);
                     }
                 }
-
-                Console.WriteLine("Deserialized {0} exports", Exports.Count);
             }
 
             /*if( pkg.Data.DependsOffset > 0 )

@@ -135,7 +135,7 @@ namespace UELib.Core
             }
 
             string output = $"\r\n{UDecompilingState.Tabs}{CPPTextKeyword}" +
-                            UnrealConfig.PrintBeginBracket() + "\r\n" + 
+                            UnrealConfig.PrintBeginBracket() + "\r\n" +
                             CppText.Decompile() +
                             UnrealConfig.PrintEndBracket() + "\r\n";
             return output;
@@ -149,17 +149,10 @@ namespace UELib.Core
             var output = string.Empty;
             foreach (var scriptConstant in Constants)
             {
-                try
-                {
-                    output += $"\r\n{UDecompilingState.Tabs}{scriptConstant.Decompile()}";
-                }
-                catch
-                {
-                    output += $"\r\nFailed at decompiling const: {scriptConstant.Name}";
-                }
+                output += $"\r\n{UDecompilingState.Tabs}{scriptConstant.Decompile()}";
             }
 
-            return output + 
+            return output +
                    "\r\n";
         }
 
@@ -171,15 +164,8 @@ namespace UELib.Core
             var output = string.Empty;
             foreach (var scriptEnum in Enums)
             {
-                try
-                {
-                    // And add a empty line between all enums!
-                    output += $"\r\n{scriptEnum.Decompile()}\r\n";
-                }
-                catch
-                {
-                    output += $"\r\nFailed at decompiling enum: {scriptEnum.Name}";
-                }
+                // And add a empty line between all enums!
+                output += $"\r\n{scriptEnum.Decompile()}\r\n";
             }
 
             return output;
@@ -194,16 +180,9 @@ namespace UELib.Core
             foreach (var scriptStruct in Structs)
             {
                 // And add a empty line between all structs!
-                try
-                {
-                    output += "\r\n"
-                              + scriptStruct.Decompile()
-                              + "\r\n";
-                }
-                catch
-                {
-                    output += $"\r\nFailed at decompiling struct: {scriptStruct.Name}";
-                }
+                output += "\r\n"
+                          + scriptStruct.Decompile()
+                          + "\r\n";
             }
 
             return output;
@@ -224,39 +203,17 @@ namespace UELib.Core
             // Don't use foreach, screws up order.
             foreach (var property in Variables)
             {
-                try
+                // Fix for properties within structs
+                output += "\r\n" +
+                          property.PreDecompile() +
+                          $"{UDecompilingState.Tabs}var";
+                if (property.CategoryName != null && !property.CategoryName.IsNone())
                 {
-                    // Fix for properties within structs
-                    output += "\r\n" +
-                              property.PreDecompile() +
-                              $"{UDecompilingState.Tabs}var";
-                    try
-                    {
-                        if (property.CategoryIndex > -1
-                            && string.Compare(property.CategoryName, "None",
-                                StringComparison.OrdinalIgnoreCase) != 0)
-                        {
-                            if (property.CategoryName != Name)
-                            {
-                                output += $"({property.CategoryName})";
-                            }
-                            else
-                            {
-                                output += "()";
-                            }
-                        }
-                    }
-                    catch (ArgumentOutOfRangeException)
-                    {
-                        output += $"/* INDEX:{property.CategoryIndex} */";
-                    }
-
-                    output += $" {property.Decompile()};";
+                    output += property.CategoryName == Name
+                        ? "()"
+                        : $"({property.CategoryName})";
                 }
-                catch (Exception e)
-                {
-                    output += $" /* Property:{property.Name} threw the following exception:{e.Message} */";
-                }
+                output += $" {property.Decompile()};";
             }
 
             return output + "\r\n";

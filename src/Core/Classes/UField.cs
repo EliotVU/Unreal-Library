@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -10,8 +10,8 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UField Super { get; private set; }
-        public UField NextField { get; private set; }
+        [CanBeNull] public UField Super { get; private set; }
+        [CanBeNull] public UField NextField { get; private set; }
 
         #endregion
 
@@ -21,7 +21,7 @@ namespace UELib.Core
         /// Initialized by the UMetaData object,
         /// This Meta contains comments and other meta related info that belongs to this instance.
         /// </summary>
-        public UMetaData.UFieldData MetaData;
+        [CanBeNull] public UMetaData.UFieldData MetaData;
 
         #endregion
 
@@ -69,7 +69,6 @@ namespace UELib.Core
 
         #region Methods
 
-        [Pure]
         public string GetSuperGroup()
         {
             var group = string.Empty;
@@ -81,7 +80,6 @@ namespace UELib.Core
             return group + Name;
         }
 
-        [Pure]
         public bool Extends(string classType)
         {
             for (var field = Super; field != null; field = field.Super)

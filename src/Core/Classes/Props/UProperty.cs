@@ -1,4 +1,5 @@
 ﻿using System;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -24,12 +25,15 @@ namespace UELib.Core
         public ulong PropertyFlags { get; private set; }
 
 #if XCOM2
-        public UName ConfigName { get; private set; }
+        [CanBeNull] public UName ConfigName;
 #endif
 
-        public int CategoryIndex { get; private set; }
+        [CanBeNull] public UName CategoryName;
+        
+        [Obsolete("See CategoryName")]
+        public int CategoryIndex { get; }
 
-        public UEnum ArrayEnum { get; private set; }
+        [CanBeNull] public UEnum ArrayEnum { get; private set; }
 
         public ushort RepOffset { get; private set; }
 
@@ -37,13 +41,19 @@ namespace UELib.Core
 
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
+        /// <summary>
+        /// Stored meta-data in the "option" format (i.e. WebAdmin, and commandline options), used to assist developers in the editor.
+        /// e.g. <code>var int MyVariable "PI:Property Two:Game:1:60:Check" ...["SecondOption"]</code>
+        /// 
+        /// An original terminating \" character is serialized as a \n character, the string will also end with a newline character.
+        /// </summary>
+        [CanBeNull] public string EditorDataText;
+
         #endregion
 
         #region General Members
 
         private bool _IsArray => ArrayDim > 1;
-
-        public string CategoryName => CategoryIndex != -1 ? Package.Names[CategoryIndex].Name : "@Null";
 
         #endregion
 
@@ -60,7 +70,6 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
 #if XIII
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII)
             {
@@ -69,15 +78,24 @@ namespace UELib.Core
                 goto skipInfo;
             }
 #endif
-
-            uint info = _Buffer.ReadUInt32();
+#if AA2
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2 && Package.LicenseeVersion > 7)
+            {
+                // Always 26125 (hardcoded in the assembly) 
+                uint unknown = _Buffer.ReadUInt32();
+                Record("Unknown:AA2", unknown);
+            }
+#endif
+            int info = _Buffer.ReadInt32();
             ArrayDim = (ushort)(info & 0x0000FFFFU);
             Record("ArrayDim", ArrayDim);
             ElementSize = (ushort)(info >> 16);
             Record("ElementSize", ElementSize);
             skipInfo:
 
-            PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
+            PropertyFlags = Package.Version >= 220 
+                ? _Buffer.ReadUInt64() 
+                : _Buffer.ReadUInt32();
             Record("PropertyFlags", PropertyFlags);
 
 #if XCOM2
@@ -89,8 +107,8 @@ namespace UELib.Core
 #endif
             if (!Package.IsConsoleCooked())
             {
-                CategoryIndex = _Buffer.ReadNameIndex();
-                Record("CategoryIndex", CategoryIndex);
+                CategoryName = _Buffer.ReadNameReference();
+                Record(nameof(CategoryName), CategoryName);
 
                 if (Package.Version > 400)
                 {
@@ -98,7 +116,6 @@ namespace UELib.Core
                     Record("ArrayEnum", ArrayEnum);
                 }
             }
-            else CategoryIndex = -1;
 
             if (HasPropertyFlag(Flags.PropertyFlagsLO.Net))
             {
@@ -106,10 +123,11 @@ namespace UELib.Core
                 Record("RepOffset", RepOffset);
             }
 
-            if (HasPropertyFlag(Flags.PropertyFlagsLO.New) && Package.Version <= 128)
+            // FIXME: At which version was this feature removed?
+            if (HasPropertyFlag(Flags.PropertyFlagsLO.EditorData) && Package.Version <= 128)
             {
-                string unknown = _Buffer.ReadText();
-                Console.WriteLine("Found a property flagged with New:" + unknown);
+                EditorDataText = _Buffer.ReadText();
+                Record(nameof(EditorDataText), EditorDataText);
             }
 
 #if SWAT4

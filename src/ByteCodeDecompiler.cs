@@ -2,11 +2,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.CompilerServices;
+using UELib.Annotations;
 using UELib.Tokens;
 
 namespace UELib.Core
 {
+    using System.Linq;
     using System.Text;
 
     public partial class UStruct
@@ -38,20 +42,11 @@ namespace UELib.Core
 
             public Token NextToken => DeserializedTokens[++CurrentTokenIndex];
 
-            public Token PeekToken
-            {
-                [Pure] get => DeserializedTokens[CurrentTokenIndex + 1];
-            }
+            public Token PeekToken => DeserializedTokens[CurrentTokenIndex + 1];
 
-            public Token PreviousToken
-            {
-                [Pure] get => DeserializedTokens[CurrentTokenIndex - 1];
-            }
+            public Token PreviousToken => DeserializedTokens[CurrentTokenIndex - 1];
 
-            public Token CurrentToken
-            {
-                [Pure] get => DeserializedTokens[CurrentTokenIndex];
-            }
+            public Token CurrentToken => DeserializedTokens[CurrentTokenIndex];
 
             public UByteCodeDecompiler(UStruct container)
             {
@@ -64,7 +59,7 @@ namespace UELib.Core
             /// <summary>
             /// The current simulated-memory-aligned position in @Buffer.
             /// </summary>
-            private uint CodePosition { get; set; }
+            private int CodePosition { get; set; }
 
             private const byte IndexMemorySize = 4;
             private byte _NameMemorySize = IndexMemorySize;
@@ -73,10 +68,7 @@ namespace UELib.Core
             private void AlignMemorySizes()
             {
                 const short vNameSizeTo8 = 500;
-                if (Buffer.Version >= vNameSizeTo8)
-                {
-                    _NameMemorySize = 8;
-                }
+                if (Buffer.Version >= vNameSizeTo8) _NameMemorySize = 8;
 
                 const short vObjectSizeTo8 = 587;
                 if (Buffer.Version >= vObjectSizeTo8
@@ -84,79 +76,304 @@ namespace UELib.Core
                     && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
                    )
-                {
                     _ObjectMemorySize = 8;
-                }
             }
 
-            private void AlignSize(byte size)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void AlignSize(int size)
             {
                 CodePosition += size;
             }
 
-            private void AlignSize(int size)
-            {
-                AlignSize((byte)size);
-            }
-
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void AlignNameSize()
             {
-                AlignSize(_NameMemorySize);
+                CodePosition += _NameMemorySize;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void AlignObjectSize()
             {
-                AlignSize(_ObjectMemorySize);
+                CodePosition += _ObjectMemorySize;
+            }
+
+            // TODO: Retrieve the byte-codes from a NTL file instead.
+            [CanBeNull] private Dictionary<byte, byte> _ByteCodeMap;
+#if AA2
+            private readonly Dictionary<byte, byte> ByteCodeMap_BuildAa2_8 = new Dictionary<byte, byte>
+            {
+                { 0x00, (byte)ExprToken.LocalVariable },
+                { 0x01, (byte)ExprToken.InstanceVariable },
+                { 0x02, (byte)ExprToken.DefaultVariable },
+                { 0x03, (byte)ExprToken.Unused },
+                { 0x04, (byte)ExprToken.Switch },
+                { 0x05, (byte)ExprToken.ClassContext },
+                { 0x06, (byte)ExprToken.Jump },
+                { 0x07, (byte)ExprToken.GotoLabel },
+                { 0x08, (byte)ExprToken.VirtualFunction },
+                { 0x09, (byte)ExprToken.IntConst },
+                { 0x0A, (byte)ExprToken.JumpIfNot },
+                { 0x0B, (byte)ExprToken.LabelTable },
+                { 0x0C, (byte)ExprToken.FinalFunction },
+                { 0x0D, (byte)ExprToken.EatString },
+                { 0x0E, (byte)ExprToken.Let },
+                { 0x0F, (byte)ExprToken.Stop },
+                { 0x10, (byte)ExprToken.New },
+                { 0x11, (byte)ExprToken.Context },
+                { 0x12, (byte)ExprToken.MetaCast },
+                { 0x13, (byte)ExprToken.Skip },
+                { 0x14, (byte)ExprToken.Self },
+                { 0x15, (byte)ExprToken.Return },
+                { 0x16, (byte)ExprToken.EndFunctionParms },
+                { 0x17, (byte)ExprToken.Unused },
+                { 0x18, (byte)ExprToken.LetBool },
+                { 0x19, (byte)ExprToken.DynArrayElement },
+                { 0x1A, (byte)ExprToken.Assert },
+                { 0x1B, (byte)ExprToken.ByteConst },
+                { 0x1C, (byte)ExprToken.Nothing },
+                { 0x1D, (byte)ExprToken.DelegateProperty },
+                { 0x1E, (byte)ExprToken.IntZero },
+                { 0x1F, (byte)ExprToken.LetDelegate },
+                { 0x20, (byte)ExprToken.False },
+                { 0x21, (byte)ExprToken.ArrayElement },
+                { 0x22, (byte)ExprToken.EndOfScript },
+                { 0x23, (byte)ExprToken.True },
+                { 0x24, (byte)ExprToken.Unused },
+                { 0x25, (byte)ExprToken.FloatConst },
+                { 0x26, (byte)ExprToken.Case },
+                { 0x27, (byte)ExprToken.IntOne },
+                { 0x28, (byte)ExprToken.StringConst },
+                { 0x29, (byte)ExprToken.NoObject },
+                { 0x2A, (byte)ExprToken.NativeParm },
+                { 0x2B, (byte)ExprToken.Unused },
+                { 0x2C, (byte)ExprToken.DebugInfo },
+                { 0x2D, (byte)ExprToken.StructCmpEq },
+                // FIXME: Verify IteratorNext/IteratorPop?
+                { 0x2E, (byte)ExprToken.IteratorNext },
+                { 0x2F, (byte)ExprToken.DynArrayRemove },
+                { 0x30, (byte)ExprToken.StructCmpNE },
+                { 0x31, (byte)ExprToken.DynamicCast },
+                { 0x32, (byte)ExprToken.Iterator },
+                { 0x33, (byte)ExprToken.IntConstByte },
+                { 0x34, (byte)ExprToken.BoolVariable },
+                // FIXME: Verify IteratorNext/IteratorPop?
+                { 0x35, (byte)ExprToken.IteratorPop },
+                { 0x36, (byte)ExprToken.UniStringConst },
+                { 0x37, (byte)ExprToken.StructMember },
+                { 0x38, (byte)ExprToken.Unused },
+                { 0x39, (byte)ExprToken.DelegateFunction },
+                { 0x3A, (byte)ExprToken.Unused },
+                { 0x3B, (byte)ExprToken.Unused },
+                { 0x3C, (byte)ExprToken.Unused },
+                { 0x3D, (byte)ExprToken.Unused },
+                { 0x3E, (byte)ExprToken.Unused },
+                { 0x3F, (byte)ExprToken.Unused },
+                { 0x40, (byte)ExprToken.ObjectConst },
+                { 0x41, (byte)ExprToken.NameConst },
+                { 0x42, (byte)ExprToken.DynArrayLength },
+                { 0x43, (byte)ExprToken.DynArrayInsert },
+                { 0x44, (byte)ExprToken.PrimitiveCast },
+                { 0x45, (byte)ExprToken.GlobalFunction },
+                { 0x46, (byte)ExprToken.VectorConst },
+                { 0x47, (byte)ExprToken.RotatorConst },
+                { 0x48, (byte)ExprToken.Unused },
+                { 0x49, (byte)ExprToken.Unused },
+                { 0x4A, (byte)ExprToken.Unused },
+                { 0x4B, (byte)ExprToken.Unused },
+                { 0x4C, (byte)ExprToken.Unused },
+                { 0x4D, (byte)ExprToken.Unused },
+                { 0x4E, (byte)ExprToken.Unused },
+                { 0x4F, (byte)ExprToken.Unused },
+                { 0x50, (byte)ExprToken.Unused },
+                { 0x51, (byte)ExprToken.Unused },
+                { 0x52, (byte)ExprToken.Unused },
+                { 0x53, (byte)ExprToken.Unused },
+                { 0x54, (byte)ExprToken.Unused },
+                { 0x55, (byte)ExprToken.Unused },
+                { 0x56, (byte)ExprToken.Unused },
+                { 0x57, (byte)ExprToken.Unused },
+                { 0x58, (byte)ExprToken.Unused },
+                { 0x59, (byte)ExprToken.Unused }
+            };
+
+            /// <summary>
+            /// The shifted byte-code map for AAA 2.6
+            /// </summary>
+            private readonly Dictionary<byte, byte> ByteCodeMap_BuildAa2_6 = new Dictionary<byte, byte>
+            {
+                { 0x00, (byte)ExprToken.LocalVariable },
+                { 0x01, (byte)ExprToken.InstanceVariable },
+                { 0x02, (byte)ExprToken.DefaultVariable },
+                { 0x03, (byte)ExprToken.Unused },
+                { 0x04, (byte)ExprToken.Jump },
+                { 0x05, (byte)ExprToken.Return },
+                { 0x06, (byte)ExprToken.Switch },
+                { 0x07, (byte)ExprToken.Stop },
+                { 0x08, (byte)ExprToken.JumpIfNot },
+                { 0x09, (byte)ExprToken.Nothing },
+                { 0x0A, (byte)ExprToken.LabelTable },
+                { 0x0B, (byte)ExprToken.Assert },
+                { 0x0C, (byte)ExprToken.Case },
+                { 0x0D, (byte)ExprToken.EatString },
+                { 0x0E, (byte)ExprToken.Let },
+                { 0x0F, (byte)ExprToken.GotoLabel },
+                { 0x10, (byte)ExprToken.DynArrayElement },
+                { 0x11, (byte)ExprToken.New },
+                { 0x12, (byte)ExprToken.ClassContext },
+                { 0x13, (byte)ExprToken.MetaCast },
+                { 0x14, (byte)ExprToken.LetBool },
+                { 0x15, (byte)ExprToken.EndFunctionParms },
+                { 0x16, (byte)ExprToken.Skip },
+                { 0x17, (byte)ExprToken.Unused },
+                { 0x18, (byte)ExprToken.Context },
+                { 0x19, (byte)ExprToken.Self },
+                { 0x1A, (byte)ExprToken.FinalFunction },
+                { 0x1B, (byte)ExprToken.ArrayElement },
+                { 0x1C, (byte)ExprToken.IntConst },
+                { 0x1D, (byte)ExprToken.FloatConst },
+                { 0x1E, (byte)ExprToken.StringConst },
+                { 0x1F, (byte)ExprToken.VirtualFunction },
+                { 0x20, (byte)ExprToken.IntOne },
+                { 0x21, (byte)ExprToken.VectorConst },
+                { 0x22, (byte)ExprToken.NameConst },
+                { 0x23, (byte)ExprToken.IntZero },
+                { 0x24, (byte)ExprToken.ObjectConst },
+                { 0x25, (byte)ExprToken.ByteConst },
+                { 0x26, (byte)ExprToken.RotatorConst },
+                { 0x27, (byte)ExprToken.False },
+                { 0x28, (byte)ExprToken.True },
+                { 0x29, (byte)ExprToken.NoObject },
+                { 0x2A, (byte)ExprToken.NativeParm },
+                { 0x2B, (byte)ExprToken.Unused },
+                { 0x2C, (byte)ExprToken.BoolVariable },
+                { 0x2D, (byte)ExprToken.Iterator },
+                { 0x2E, (byte)ExprToken.IntConstByte },
+                { 0x2F, (byte)ExprToken.DynamicCast },
+                { 0x30, (byte)ExprToken.Unused },
+                { 0x31, (byte)ExprToken.StructCmpNE },
+                { 0x32, (byte)ExprToken.UniStringConst },
+                { 0x33, (byte)ExprToken.IteratorNext },
+                { 0x34, (byte)ExprToken.StructCmpEq },
+                { 0x35, (byte)ExprToken.IteratorPop },
+                { 0x36, (byte)ExprToken.GlobalFunction },
+                { 0x37, (byte)ExprToken.StructMember },
+                { 0x38, (byte)ExprToken.PrimitiveCast },
+                { 0x39, (byte)ExprToken.DynArrayLength },
+                { 0x3A, (byte)ExprToken.Unused },
+                { 0x3B, (byte)ExprToken.Unused },
+                { 0x3C, (byte)ExprToken.Unused },
+                { 0x3D, (byte)ExprToken.Unused },
+                { 0x3E, (byte)ExprToken.Unused },
+                { 0x3F, (byte)ExprToken.Unused },
+                { 0x40, (byte)ExprToken.Unused },
+                { 0x41, (byte)ExprToken.EndOfScript },
+                { 0x42, (byte)ExprToken.DynArrayRemove },
+                { 0x43, (byte)ExprToken.DynArrayInsert },
+                { 0x44, (byte)ExprToken.DelegateFunction },
+                { 0x45, (byte)ExprToken.DebugInfo },
+                { 0x46, (byte)ExprToken.LetDelegate },
+                { 0x47, (byte)ExprToken.DelegateProperty },
+                { 0x48, (byte)ExprToken.Unused },
+                { 0x49, (byte)ExprToken.Unused },
+                { 0x4A, (byte)ExprToken.Unused },
+                { 0x4B, (byte)ExprToken.Unused },
+                { 0x4C, (byte)ExprToken.Unused },
+                { 0x4D, (byte)ExprToken.Unused },
+                { 0x4E, (byte)ExprToken.Unused },
+                { 0x4F, (byte)ExprToken.Unused },
+                { 0x50, (byte)ExprToken.Unused },
+                { 0x51, (byte)ExprToken.Unused },
+                { 0x52, (byte)ExprToken.Unused },
+                { 0x53, (byte)ExprToken.Unused },
+                { 0x54, (byte)ExprToken.Unused },
+                { 0x55, (byte)ExprToken.Unused },
+                { 0x56, (byte)ExprToken.Unused },
+                { 0x57, (byte)ExprToken.Unused },
+                { 0x58, (byte)ExprToken.Unused },
+                { 0x59, (byte)ExprToken.Unused }
+            };
+#endif
+#if APB
+            private static readonly Dictionary<byte, byte> ByteCodeMap_BuildApb = new Dictionary<byte, byte>
+            {
+                { (byte)ExprToken.Return, (byte)ExprToken.LocalVariable },
+                { (byte)ExprToken.LocalVariable, (byte)ExprToken.Return },
+                { (byte)ExprToken.Jump, (byte)ExprToken.JumpIfNot },
+                { (byte)ExprToken.JumpIfNot, (byte)ExprToken.Jump },
+                { (byte)ExprToken.Case, (byte)ExprToken.Nothing },
+                { (byte)ExprToken.Nothing, (byte)ExprToken.Case }
+            };
+#endif
+            private void SetupByteCodeMap()
+            {
+#if AA2
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
+                {
+                    if (Package.LicenseeVersion >= 33)
+                    {
+                        _ByteCodeMap = ByteCodeMap_BuildAa2_8;
+                    }
+                    else
+                    {
+                        // FIXME: The byte-code shifted as of V2.6, but there is no way to tell which game-version the package was compiled with.
+                        // This hacky-solution also doesn't handle UState nor UClass cases.
+                        // This can be solved by moving the byte-code maps to their own NTL files.
+
+                        // Flags
+                        //sizeof(uint) + 
+                        // Oper
+                        //sizeof(byte)
+                        // NativeToken
+                        //sizeof(ushort) + 
+                        // EndOfScript ExprToken
+                        //sizeof(byte), 
+                        long functionBacktrackLength = -8;
+                        if (_Container is UFunction function && function.HasFunctionFlag(Flags.FunctionFlags.Net))
+                            // RepOffset
+                            functionBacktrackLength -= sizeof(ushort);
+
+                        Buffer.StartPeek();
+                        Buffer.Seek(functionBacktrackLength, SeekOrigin.End);
+                        byte valueOfEndOfScriptToken = Buffer.ReadByte();
+                        Buffer.EndPeek();
+
+                        // Shifted?
+                        if (valueOfEndOfScriptToken != (byte)ExprToken.FunctionEnd)
+                            _ByteCodeMap = ByteCodeMap_BuildAa2_6;
+                    }
+
+                    return;
+                }
+#endif
+#if APB
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.APB &&
+                    Package.LicenseeVersion >= 32)
+                    _ByteCodeMap = ByteCodeMap_BuildApb;
+#endif
             }
 
             /// <summary>
             /// Fix the values of UE1/UE2 tokens to match the UE3 token values.
             /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private byte FixToken(byte tokenCode)
             {
+                // TODO: Map directly to a Token type instead of a byte-code.
+                if (_ByteCodeMap != null)
+                    return _ByteCodeMap.TryGetValue(tokenCode, out byte newTokenCode)
+                        ? newTokenCode
+                        : tokenCode;
+
                 // Adjust UE2 tokens to UE3
-                if (_Container.Package.Version >= 184
+                // TODO: Use ByteCodeMap
+                if (Package.Version >= 184
                     &&
                     (
-                        (tokenCode >= (byte)ExprToken.Unknown && tokenCode < (byte)ExprToken.ReturnNothing)
+                        tokenCode >= (byte)ExprToken.Unused35 && tokenCode < (byte)ExprToken.ReturnNothing
                         ||
-                        (tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative))
+                        tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative)
                    )
-                {
-                    ++tokenCode;
-                }
-
-#if APB
-                if (_Container.Package.Build == UnrealPackage.GameBuild.BuildName.APB &&
-                    _Container.Package.LicenseeVersion >= 32)
-                {
-                    if (tokenCode == (byte)ExprToken.Return)
-                    {
-                        tokenCode = (byte)ExprToken.LocalVariable;
-                    }
-                    else if (tokenCode == (byte)ExprToken.LocalVariable)
-                    {
-                        tokenCode = (byte)ExprToken.Return;
-                    }
-                    else if (tokenCode == (byte)ExprToken.Jump)
-                    {
-                        tokenCode = (byte)ExprToken.JumpIfNot;
-                    }
-                    else if (tokenCode == (byte)ExprToken.JumpIfNot)
-                    {
-                        tokenCode = (byte)ExprToken.Jump;
-                    }
-                    else if (tokenCode == (byte)ExprToken.Case)
-                    {
-                        tokenCode = (byte)ExprToken.Nothing;
-                    }
-                    else if (tokenCode == (byte)ExprToken.Nothing)
-                    {
-                        tokenCode = (byte)ExprToken.Case;
-                    }
-                }
-#endif
-
+                    return ++tokenCode;
                 return tokenCode;
             }
 
@@ -171,42 +388,40 @@ namespace UELib.Core
                 try
                 {
                     _Container.EnsureBuffer();
-                    Buffer.Seek(_Container.ScriptOffset, System.IO.SeekOrigin.Begin);
+                    Buffer.Seek(_Container.ScriptOffset, SeekOrigin.Begin);
                     CodePosition = 0;
                     int codeSize = _Container.ByteScriptSize;
 
                     CurrentTokenIndex = -1;
                     DeserializedTokens = new List<Token>();
                     _Labels = new List<ULabelEntry>();
+
+                    SetupByteCodeMap();
+
                     while (CodePosition < codeSize)
-                    {
                         try
                         {
-                            var t = DeserializeNext();
-                            if (!(t is EndOfScriptToken))
+                            var token = DeserializeNext();
+                            if (!(token is EndOfScriptToken))
                                 continue;
 
                             if (CodePosition < codeSize)
-                            {
                                 Console.WriteLine("End of script detected, but the loop condition is still true.");
-                            }
 
+                            break;
+                        }
+                        catch (EndOfStreamException error)
+                        {
+                            Console.WriteLine("Couldn't backup from this error! Decompiling aborted!");
                             break;
                         }
                         catch (SystemException e)
                         {
-                            if (e is System.IO.EndOfStreamException)
-                            {
-                                Console.WriteLine("Couldn't backup from this error! Decompiling aborted!");
-                                return;
-                            }
-
                             Console.WriteLine("Object:" + _Container.Name);
                             Console.WriteLine("Failed to deserialize token at position:" + CodePosition);
                             Console.WriteLine("Exception:" + e.Message);
                             Console.WriteLine("Stack:" + e.StackTrace);
                         }
-                    }
                 }
                 finally
                 {
@@ -214,92 +429,72 @@ namespace UELib.Core
                 }
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void DeserializeDebugToken()
             {
                 Buffer.StartPeek();
-                byte token = FixToken(Buffer.ReadByte());
+                byte tokenCode = FixToken(Buffer.ReadByte());
                 Buffer.EndPeek();
 
-                if (token == (byte)ExprToken.DebugInfo)
-                {
-                    DeserializeNext();
-                }
+                if (tokenCode == (byte)ExprToken.DebugInfo) DeserializeNext();
             }
 
-            private NativeFunctionToken FindNativeTable(int nativeIndex)
+            private NativeFunctionToken CreateNativeToken(ushort nativeIndex)
             {
-                var nativeFuncToken = new NativeFunctionToken();
-                try
+                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex);
+                return new NativeFunctionToken
                 {
-                    var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex);
-                    if (nativeTableItem != null)
-                    {
-                        nativeFuncToken.NativeTable = nativeTableItem;
-                    }
-                    else
-                    {
-                        // TODO: Rewrite as FindChild( lambda )
-                        var table = _Container.Package.Exports.Find(
-                            e => (e.ClassName == "Function" && ((UFunction)(e.Object)).NativeToken == nativeIndex)
-                        );
-
-                        var func = table?.Object as UFunction;
-                        if (func != null)
-                        {
-                            nativeTableItem = new NativeTableItem(func);
-                            nativeFuncToken.NativeTable = nativeTableItem;
-                        }
-                    }
-                }
-                catch (ArgumentOutOfRangeException)
-                {
-                    // ...
-                }
-
-                return nativeFuncToken;
+                    NativeItem = nativeTableItem
+                };
             }
 
             private Token DeserializeNext(byte tokenCode = byte.MaxValue)
             {
-                uint tokenPosition = CodePosition;
+                int tokenPosition = CodePosition;
                 if (tokenCode == byte.MaxValue)
                 {
-                    tokenCode = FixToken(Buffer.ReadByte());
+                    tokenCode = Buffer.ReadByte();
                     AlignSize(sizeof(byte));
                 }
 
-                Token tokenItem = null;
-                if (tokenCode >= (byte)ExprToken.FirstNative)
+                byte serializedByte = tokenCode;
+                Token token = null;
+                if (tokenCode >= (byte)ExprToken.ExtendedNative)
                 {
-                    tokenItem = FindNativeTable(tokenCode);
-                }
-                else if (tokenCode >= (byte)ExprToken.ExtendedNative)
-                {
-                    tokenItem = FindNativeTable((tokenCode - (byte)ExprToken.ExtendedNative) << 8 | Buffer.ReadByte());
-                    AlignSize(sizeof(byte));
+                    if (tokenCode >= (byte)ExprToken.FirstNative)
+                    {
+                        token = CreateNativeToken(tokenCode);
+                    }
+                    else
+                    {
+                        byte extendedByte = Buffer.ReadByte();
+                        AlignSize(sizeof(byte));
+
+                        var nativeIndex = (ushort)(((tokenCode - (byte)ExprToken.ExtendedNative) << 8) | extendedByte);
+                        Debug.Assert(nativeIndex < (ushort)ExprToken.MaxNative);
+                        token = CreateNativeToken(nativeIndex);
+                    }
                 }
                 else
+                {
+                    tokenCode = FixToken(tokenCode);
                     switch (tokenCode)
                     {
                         #region Cast
 
                         case (byte)ExprToken.DynamicCast:
-                            tokenItem = new DynamicCastToken();
+                            token = new DynamicCastToken();
                             break;
 
                         case (byte)ExprToken.MetaCast:
-                            tokenItem = new MetaCastToken();
+                            token = new MetaCastToken();
                             break;
 
                         case (byte)ExprToken.InterfaceCast:
                             if (Buffer.Version < PrimitveCastVersion) // UE1
-                            {
-                                tokenItem = new IntToStringToken();
-                            }
+                                token = new IntToStringToken();
                             else
-                            {
-                                tokenItem = new InterfaceCastToken();
-                            }
+                                token = new InterfaceCastToken();
 
                             break;
 
@@ -307,16 +502,14 @@ namespace UELib.Core
                         case (byte)ExprToken.PrimitiveCast:
                             if (Buffer.Version < PrimitveCastVersion) // UE1
                             {
-                                tokenItem = new RotatorToVectorToken();
+                                token = new RotatorToVectorToken();
                             }
                             else // UE2+
                             {
                                 // Next byte represents the CastToken!
                                 tokenCode = Buffer.ReadByte();
                                 AlignSize(sizeof(byte));
-
-                                tokenItem = DeserializeCastToken(tokenCode);
-                                //tokenitem = new PrimitiveCastToken();
+                                token = DeserializeCastToken(tokenCode);
                             }
 
                             break;
@@ -326,27 +519,23 @@ namespace UELib.Core
                         #region Context
 
                         case (byte)ExprToken.ClassContext:
-                            tokenItem = new ClassContextToken();
+                            token = new ClassContextToken();
                             break;
 
                         case (byte)ExprToken.InterfaceContext:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new ByteToStringToken();
-                            }
+                                token = new ByteToStringToken();
                             else
-                            {
-                                tokenItem = new InterfaceContextToken();
-                            }
+                                token = new InterfaceContextToken();
 
                             break;
 
                         case (byte)ExprToken.Context:
-                            tokenItem = new ContextToken();
+                            token = new ContextToken();
                             break;
 
                         case (byte)ExprToken.StructMember:
-                            tokenItem = new StructMemberToken();
+                            token = new StructMemberToken();
                             break;
 
                         #endregion
@@ -354,49 +543,39 @@ namespace UELib.Core
                         #region Assigns
 
                         case (byte)ExprToken.Let:
-                            tokenItem = new LetToken();
+                            token = new LetToken();
                             break;
 
                         case (byte)ExprToken.LetBool:
-                            tokenItem = new LetBoolToken();
+                            token = new LetBoolToken();
                             break;
 
                         case (byte)ExprToken.EndParmValue:
-                            tokenItem = new EndParmValueToken();
+                            token = new EndParmValueToken();
                             break;
 
                         // Redefined, can be FloatToBool!(UE1)
                         case (byte)ExprToken.LetDelegate:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new FloatToBoolToken();
-                            }
+                                token = new FloatToBoolToken();
                             else
-                            {
-                                tokenItem = new LetDelegateToken();
-                            }
+                                token = new LetDelegateToken();
 
                             break;
 
                         // Redefined, can be NameToBool!(UE1)
                         case (byte)ExprToken.Conditional:
-                            tokenItem = new ConditionalToken();
+                            token = new ConditionalToken();
                             break;
 
                         case (byte)ExprToken.Eval
                             : // case (byte)ExprToken.DynArrayFindStruct: case (byte)ExprToken.Conditional:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new NameToBoolToken();
-                            }
+                                token = new NameToBoolToken();
                             else if (Buffer.Version >= 300)
-                            {
-                                tokenItem = new DynamicArrayFindStructToken();
-                            }
+                                token = new DynamicArrayFindStructToken();
                             else
-                            {
-                                tokenItem = new ConditionalToken();
-                            }
+                                token = new ConditionalToken();
 
                             break;
 
@@ -405,74 +584,64 @@ namespace UELib.Core
                         #region Jumps
 
                         case (byte)ExprToken.Return:
-                            tokenItem = new ReturnToken();
+                            token = new ReturnToken();
                             break;
 
                         case (byte)ExprToken.ReturnNothing:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new ByteToIntToken();
-                            }
+                                token = new ByteToIntToken();
                             // Definitely existed since GoW(490)
-                            else if (Buffer.Version > 420 && (DeserializedTokens.Count > 0 &&
-                                                              !(DeserializedTokens[DeserializedTokens.Count - 1] is
-                                                                  ReturnToken))) // Should only be done if the last token wasn't Return
-                            {
-                                tokenItem = new DynamicArrayInsertToken();
-                            }
+                            else if (Buffer.Version > 420 && DeserializedTokens.Count > 0 &&
+                                     !(DeserializedTokens[DeserializedTokens.Count - 1] is
+                                         ReturnToken)) // Should only be done if the last token wasn't Return
+                                token = new DynamicArrayInsertToken();
                             else
-                            {
-                                tokenItem = new ReturnNothingToken();
-                            }
+                                token = new ReturnNothingToken();
 
                             break;
 
                         case (byte)ExprToken.GotoLabel:
-                            tokenItem = new GoToLabelToken();
+                            token = new GoToLabelToken();
                             break;
 
                         case (byte)ExprToken.Jump:
-                            tokenItem = new JumpToken();
+                            token = new JumpToken();
                             break;
 
                         case (byte)ExprToken.JumpIfNot:
-                            tokenItem = new JumpIfNotToken();
+                            token = new JumpIfNotToken();
                             break;
 
                         case (byte)ExprToken.Switch:
-                            tokenItem = new SwitchToken();
+                            token = new SwitchToken();
                             break;
 
                         case (byte)ExprToken.Case:
-                            tokenItem = new CaseToken();
+                            token = new CaseToken();
                             break;
 
                         case (byte)ExprToken.DynArrayIterator:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new RotatorToStringToken();
-                            }
+                                token = new RotatorToStringToken();
                             else
-                            {
-                                tokenItem = new ArrayIteratorToken();
-                            }
+                                token = new ArrayIteratorToken();
 
                             break;
 
                         case (byte)ExprToken.Iterator:
-                            tokenItem = new IteratorToken();
+                            token = new IteratorToken();
                             break;
 
                         case (byte)ExprToken.IteratorNext:
-                            tokenItem = new IteratorNextToken();
+                            token = new IteratorNextToken();
                             break;
 
                         case (byte)ExprToken.IteratorPop:
-                            tokenItem = new IteratorPopToken();
+                            token = new IteratorPopToken();
                             break;
 
                         case (byte)ExprToken.FilterEditorOnly:
-                            tokenItem = new FilterEditorOnlyToken();
+                            token = new FilterEditorOnlyToken();
                             break;
 
                         #endregion
@@ -480,20 +649,20 @@ namespace UELib.Core
                         #region Variables
 
                         case (byte)ExprToken.NativeParm:
-                            tokenItem = new NativeParameterToken();
+                            token = new NativeParameterToken();
                             break;
 
                         // Referenced variables that are from this function e.g. Local and params
                         case (byte)ExprToken.InstanceVariable:
-                            tokenItem = new InstanceVariableToken();
+                            token = new InstanceVariableToken();
                             break;
 
                         case (byte)ExprToken.LocalVariable:
-                            tokenItem = new LocalVariableToken();
+                            token = new LocalVariableToken();
                             break;
 
                         case (byte)ExprToken.StateVariable:
-                            tokenItem = new StateVariableToken();
+                            token = new StateVariableToken();
                             break;
 
                         // Referenced variables that are default
@@ -501,48 +670,40 @@ namespace UELib.Core
 #if BORDERLANDS2
                             if (_Container.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
                             {
-                                tokenItem = new DynamicVariableToken();
+                                token = new DynamicVariableToken();
                                 break;
                             }
 #endif
-                            tokenItem = new UndefinedVariableToken();
+                            token = new UndefinedVariableToken();
                             break;
 
                         case (byte)ExprToken.DefaultVariable:
-                            tokenItem = new DefaultVariableToken();
+                            token = new DefaultVariableToken();
                             break;
 
                         // UE3+
                         case (byte)ExprToken.OutVariable:
-                            tokenItem = new OutVariableToken();
+                            token = new OutVariableToken();
                             break;
 
                         case (byte)ExprToken.BoolVariable:
-                            tokenItem = new BoolVariableToken();
+                            token = new BoolVariableToken();
                             break;
 
                         // Redefined, can be FloatToInt!(UE1)
                         case (byte)ExprToken.DelegateProperty:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new FloatToIntToken();
-                            }
+                                token = new FloatToIntToken();
                             else
-                            {
-                                tokenItem = new DelegatePropertyToken();
-                            }
+                                token = new DelegatePropertyToken();
 
                             break;
 
                         case (byte)ExprToken.DefaultParmValue:
                             if (Buffer.Version < PrimitveCastVersion) // StringToInt
-                            {
-                                tokenItem = new StringToIntToken();
-                            }
+                                token = new StringToIntToken();
                             else
-                            {
-                                tokenItem = new DefaultParameterToken();
-                            }
+                                token = new DefaultParameterToken();
 
                             break;
 
@@ -553,155 +714,131 @@ namespace UELib.Core
                         // Redefined, can be BoolToFloat!(UE1)
                         case (byte)ExprToken.DebugInfo:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new BoolToFloatToken();
-                            }
+                                token = new BoolToFloatToken();
                             else
-                            {
-                                tokenItem = new DebugInfoToken();
-                            }
+                                token = new DebugInfoToken();
 
                             break;
 
                         case (byte)ExprToken.Nothing:
-                            tokenItem = new NothingToken();
+                            token = new NothingToken();
                             break;
 
                         case (byte)ExprToken.EndFunctionParms:
-                            tokenItem = new EndFunctionParmsToken();
+                            token = new EndFunctionParmsToken();
                             break;
 
                         case (byte)ExprToken.IntZero:
-                            tokenItem = new IntZeroToken();
+                            token = new IntZeroToken();
                             break;
 
                         case (byte)ExprToken.IntOne:
-                            tokenItem = new IntOneToken();
+                            token = new IntOneToken();
                             break;
 
                         case (byte)ExprToken.True:
-                            tokenItem = new TrueToken();
+                            token = new TrueToken();
                             break;
 
                         case (byte)ExprToken.False:
-                            tokenItem = new FalseToken();
+                            token = new FalseToken();
                             break;
 
                         case (byte)ExprToken.NoDelegate:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new IntToFloatToken();
-                            }
+                                token = new IntToFloatToken();
                             else
-                            {
-                                tokenItem = new NoDelegateToken();
-                            }
+                                token = new NoDelegateToken();
 
                             break;
 
                         // No value passed to an optional parameter.
-                        case (byte)ExprToken.NoParm:
-                            tokenItem = new NoParmToken();
+                        case (byte)ExprToken.EmptyParmValue:
+                            token = new NoParmToken();
                             break;
 
                         case (byte)ExprToken.NoObject:
-                            tokenItem = new NoObjectToken();
+                            token = new NoObjectToken();
                             break;
 
                         case (byte)ExprToken.Self:
-                            tokenItem = new SelfToken();
+                            token = new SelfToken();
                             break;
 
                         // End of state code.
                         case (byte)ExprToken.Stop:
-                            tokenItem = new StopToken();
+                            token = new StopToken();
                             break;
 
                         case (byte)ExprToken.Assert:
-                            tokenItem = new AssertToken();
+                            token = new AssertToken();
                             break;
 
                         case (byte)ExprToken.LabelTable:
-                            tokenItem = new LabelTableToken();
+                            token = new LabelTableToken();
                             break;
 
                         case (byte)ExprToken.EndOfScript: //CastToken.BoolToString:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new BoolToStringToken();
-                            }
+                                token = new BoolToStringToken();
                             else
-                            {
-                                tokenItem = new EndOfScriptToken();
-                            }
+                                token = new EndOfScriptToken();
 
                             break;
 
                         case (byte)ExprToken.Skip:
-                            tokenItem = new SkipToken();
+                            token = new SkipToken();
                             break;
 
                         case (byte)ExprToken.StructCmpEq:
-                            tokenItem = new StructCmpEqToken();
+                            token = new StructCmpEqToken();
                             break;
 
                         case (byte)ExprToken.StructCmpNE:
-                            tokenItem = new StructCmpNeToken();
+                            token = new StructCmpNeToken();
                             break;
 
                         case (byte)ExprToken.DelegateCmpEq:
-                            tokenItem = new DelegateCmpEqToken();
+                            token = new DelegateCmpEqToken();
                             break;
 
                         case (byte)ExprToken.DelegateFunctionCmpEq:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new IntToBoolToken();
-                            }
+                                token = new IntToBoolToken();
                             else
-                            {
-                                tokenItem = new DelegateFunctionCmpEqToken();
-                            }
+                                token = new DelegateFunctionCmpEqToken();
 
                             break;
 
                         case (byte)ExprToken.DelegateCmpNE:
-                            tokenItem = new DelegateCmpNEToken();
+                            token = new DelegateCmpNEToken();
                             break;
 
                         case (byte)ExprToken.DelegateFunctionCmpNE:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new IntToBoolToken();
-                            }
+                                token = new IntToBoolToken();
                             else
-                            {
-                                tokenItem = new DelegateFunctionCmpNEToken();
-                            }
+                                token = new DelegateFunctionCmpNEToken();
 
                             break;
 
                         case (byte)ExprToken.InstanceDelegate:
-                            tokenItem = new InstanceDelegateToken();
+                            token = new InstanceDelegateToken();
                             break;
 
-                        case (byte)ExprToken.EatString:
-                            tokenItem = new EatStringToken();
+                        case (byte)ExprToken.EatReturnValue:
+                            token = new EatReturnValueToken();
                             break;
 
                         case (byte)ExprToken.New:
-                            tokenItem = new NewToken();
+                            token = new NewToken();
                             break;
 
-                        case (byte)ExprToken.FunctionEnd: // case (byte)ExprToken.DynArrayFind:
+                        case (byte)ExprToken.FunctionEnd:
                             if (Buffer.Version < 300)
-                            {
-                                tokenItem = new EndOfScriptToken();
-                            }
+                                token = new EndOfScriptToken();
                             else
-                            {
-                                tokenItem = new DynamicArrayFindToken();
-                            }
+                                token = new DynamicArrayFindToken();
 
                             break;
 
@@ -710,7 +847,7 @@ namespace UELib.Core
                         case (byte)ExprToken.VarByte:
                         case (byte)ExprToken.VarBool:
                             //case (byte)ExprToken.VarObject:   // See UndefinedVariable
-                            tokenItem = new DynamicVariableToken();
+                            token = new DynamicVariableToken();
                             break;
 
                         #endregion
@@ -718,44 +855,44 @@ namespace UELib.Core
                         #region Constants
 
                         case (byte)ExprToken.IntConst:
-                            tokenItem = new IntConstToken();
+                            token = new IntConstToken();
                             break;
 
                         case (byte)ExprToken.ByteConst:
-                            tokenItem = new ByteConstToken();
+                            token = new ByteConstToken();
                             break;
 
                         case (byte)ExprToken.IntConstByte:
-                            tokenItem = new IntConstByteToken();
+                            token = new IntConstByteToken();
                             break;
 
                         case (byte)ExprToken.FloatConst:
-                            tokenItem = new FloatConstToken();
+                            token = new FloatConstToken();
                             break;
 
                         // ClassConst?
                         case (byte)ExprToken.ObjectConst:
-                            tokenItem = new ObjectConstToken();
+                            token = new ObjectConstToken();
                             break;
 
                         case (byte)ExprToken.NameConst:
-                            tokenItem = new NameConstToken();
+                            token = new NameConstToken();
                             break;
 
                         case (byte)ExprToken.StringConst:
-                            tokenItem = new StringConstToken();
+                            token = new StringConstToken();
                             break;
 
                         case (byte)ExprToken.UniStringConst:
-                            tokenItem = new UniStringConstToken();
+                            token = new UniStringConstToken();
                             break;
 
                         case (byte)ExprToken.RotatorConst:
-                            tokenItem = new RotatorConstToken();
+                            token = new RotatorConstToken();
                             break;
 
                         case (byte)ExprToken.VectorConst:
-                            tokenItem = new VectorConstToken();
+                            token = new VectorConstToken();
                             break;
 
                         #endregion
@@ -763,27 +900,23 @@ namespace UELib.Core
                         #region Functions
 
                         case (byte)ExprToken.FinalFunction:
-                            tokenItem = new FinalFunctionToken();
+                            token = new FinalFunctionToken();
                             break;
 
                         case (byte)ExprToken.VirtualFunction:
-                            tokenItem = new VirtualFunctionToken();
+                            token = new VirtualFunctionToken();
                             break;
 
                         case (byte)ExprToken.GlobalFunction:
-                            tokenItem = new GlobalFunctionToken();
+                            token = new GlobalFunctionToken();
                             break;
 
                         // Redefined, can be FloatToByte!(UE1)
                         case (byte)ExprToken.DelegateFunction:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new FloatToByteToken();
-                            }
+                                token = new FloatToByteToken();
                             else
-                            {
-                                tokenItem = new DelegateFunctionToken();
-                            }
+                                token = new DelegateFunctionToken();
 
                             break;
 
@@ -792,92 +925,68 @@ namespace UELib.Core
                         #region Arrays
 
                         case (byte)ExprToken.ArrayElement:
-                            tokenItem = new ArrayElementToken();
+                            token = new ArrayElementToken();
                             break;
 
                         case (byte)ExprToken.DynArrayElement:
-                            tokenItem = new DynamicArrayElementToken();
+                            token = new DynamicArrayElementToken();
                             break;
 
                         case (byte)ExprToken.DynArrayLength:
-                            tokenItem = new DynamicArrayLengthToken();
+                            token = new DynamicArrayLengthToken();
                             break;
 
                         case (byte)ExprToken.DynArrayInsert:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new BoolToByteToken();
-                            }
+                                token = new BoolToByteToken();
                             else
-                            {
-                                tokenItem = new DynamicArrayInsertToken();
-                            }
+                                token = new DynamicArrayInsertToken();
 
                             break;
 
                         case (byte)ExprToken.DynArrayInsertItem:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new VectorToStringToken();
-                            }
+                                token = new VectorToStringToken();
                             else
-                            {
-                                tokenItem = new DynamicArrayInsertItemToken();
-                            }
+                                token = new DynamicArrayInsertItemToken();
 
                             break;
 
                         // Redefined, can be BoolToInt!(UE1)
                         case (byte)ExprToken.DynArrayRemove:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new BoolToIntToken();
-                            }
+                                token = new BoolToIntToken();
                             else
-                            {
-                                tokenItem = new DynamicArrayRemoveToken();
-                            }
+                                token = new DynamicArrayRemoveToken();
 
                             break;
 
                         case (byte)ExprToken.DynArrayRemoveItem:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new NameToStringToken();
-                            }
+                                token = new NameToStringToken();
                             else
-                            {
-                                tokenItem = new DynamicArrayRemoveItemToken();
-                            }
+                                token = new DynamicArrayRemoveItemToken();
 
                             break;
 
                         case (byte)ExprToken.DynArrayAdd:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new FloatToStringToken();
-                            }
+                                token = new FloatToStringToken();
                             else
-                            {
-                                tokenItem = new DynamicArrayAddToken();
-                            }
+                                token = new DynamicArrayAddToken();
 
                             break;
 
                         case (byte)ExprToken.DynArrayAddItem:
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
-                                tokenItem = new ObjectToStringToken();
-                            }
+                                token = new ObjectToStringToken();
                             else
-                            {
-                                tokenItem = new DynamicArrayAddItemToken();
-                            }
+                                token = new DynamicArrayAddItemToken();
 
                             break;
 
                         case (byte)ExprToken.DynArraySort:
-                            tokenItem = new DynamicArraySortToken();
+                            token = new DynamicArraySortToken();
                             break;
 
                         // See FunctionEnd and Eval
@@ -894,205 +1003,201 @@ namespace UELib.Core
                             #region Casts
 
                             if (Buffer.Version < PrimitveCastVersion)
-                            {
                                 // No other token was matched. Check if it matches any of the CastTokens
                                 // We don't just use PrimitiveCast detection due compatible with UE1 games
-                                tokenItem = DeserializeCastToken(tokenCode);
-                            }
+                                token = DeserializeCastToken(tokenCode);
 
                             break;
 
                             #endregion
                         }
                     }
-
-                if (tokenItem == null)
-                {
-                    tokenItem = new UnknownExprToken();
                 }
 
-                tokenItem.Decompiler = this;
-                tokenItem.RepresentToken = tokenCode;
-                tokenItem.Position = tokenPosition; // + (uint)Owner._ScriptOffset;
-                tokenItem.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset - 1;
-                // IMPORTANT:Add before deserialize, due the possibility that the tokenitem might deserialize other tokens as well.
-                DeserializedTokens.Add(tokenItem);
-                tokenItem.Deserialize(Buffer);
+                if (token == null) token = new UnresolvedToken();
+                AddToken(token, serializedByte, tokenPosition);
+                return token;
+            }
+
+            private void AddToken(Token token, byte tokenCode, int tokenPosition)
+            {
+                DeserializedTokens.Add(token);
+                token.Decompiler = this;
+                token.RepresentToken = tokenCode;
+                token.Position = (uint)tokenPosition; // + (uint)Owner._ScriptOffset;
+                token.StoragePosition = (uint)Buffer.Position - (uint)_Container.ScriptOffset - 1;
+                token.Deserialize(Buffer);
                 // Includes all sizes of followed tokens as well! e.g. i = i + 1; is summed here but not i = i +1; (not>>)i ++;
-                tokenItem.Size = (ushort)(CodePosition - tokenPosition);
-                tokenItem.StorageSize =
-                    (ushort)((uint)Buffer.Position - (uint)_Container.ScriptOffset - tokenItem.StoragePosition);
-                tokenItem.PostDeserialized();
-                return tokenItem;
+                token.Size = (ushort)(CodePosition - tokenPosition);
+                token.StorageSize =
+                    (ushort)(Buffer.Position - _Container.ScriptOffset - token.StoragePosition);
+                token.PostDeserialized();
             }
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
             private Token DeserializeCastToken(byte castToken)
             {
-                Token tokenitem = null;
+                Token token;
                 switch ((Tokens.CastToken)castToken)
                 {
                     case Tokens.CastToken.StringToRotator:
-                        tokenitem = new StringToRotatorToken();
+                        token = new StringToRotatorToken();
                         break;
 
                     case Tokens.CastToken.VectorToRotator:
-                        tokenitem = new VectorToRotatorToken();
+                        token = new VectorToRotatorToken();
                         break;
 
                     case Tokens.CastToken.StringToVector:
-                        tokenitem = new StringToVectorToken();
+                        token = new StringToVectorToken();
                         break;
 
                     case Tokens.CastToken.RotatorToVector:
-                        tokenitem = new RotatorToVectorToken();
+                        token = new RotatorToVectorToken();
                         break;
 
                     case Tokens.CastToken.IntToFloat:
-                        tokenitem = new IntToFloatToken();
+                        token = new IntToFloatToken();
                         break;
 
                     case Tokens.CastToken.StringToFloat:
-                        tokenitem = new StringToFloatToken();
+                        token = new StringToFloatToken();
                         break;
 
                     case Tokens.CastToken.BoolToFloat:
-                        tokenitem = new BoolToFloatToken();
+                        token = new BoolToFloatToken();
                         break;
 
                     case Tokens.CastToken.StringToInt:
-                        tokenitem = new StringToIntToken();
+                        token = new StringToIntToken();
                         break;
 
                     case Tokens.CastToken.FloatToInt:
-                        tokenitem = new FloatToIntToken();
+                        token = new FloatToIntToken();
                         break;
 
                     case Tokens.CastToken.BoolToInt:
-                        tokenitem = new BoolToIntToken();
+                        token = new BoolToIntToken();
                         break;
 
                     case Tokens.CastToken.RotatorToBool:
-                        tokenitem = new RotatorToBoolToken();
+                        token = new RotatorToBoolToken();
                         break;
 
                     case Tokens.CastToken.VectorToBool:
-                        tokenitem = new VectorToBoolToken();
+                        token = new VectorToBoolToken();
                         break;
 
                     case Tokens.CastToken.StringToBool:
-                        tokenitem = new StringToBoolToken();
+                        token = new StringToBoolToken();
                         break;
 
                     case Tokens.CastToken.ByteToBool:
-                        tokenitem = new ByteToBoolToken();
+                        token = new ByteToBoolToken();
                         break;
 
                     case Tokens.CastToken.FloatToBool:
-                        tokenitem = new FloatToBoolToken();
+                        token = new FloatToBoolToken();
                         break;
 
                     case Tokens.CastToken.NameToBool:
-                        tokenitem = new NameToBoolToken();
+                        token = new NameToBoolToken();
                         break;
 
                     case Tokens.CastToken.ObjectToBool:
-                        tokenitem = new ObjectToBoolToken();
+                        token = new ObjectToBoolToken();
                         break;
 
                     case Tokens.CastToken.IntToBool:
-                        tokenitem = new IntToBoolToken();
+                        token = new IntToBoolToken();
                         break;
 
                     case Tokens.CastToken.StringToByte:
-                        tokenitem = new StringToByteToken();
+                        token = new StringToByteToken();
                         break;
 
                     case Tokens.CastToken.FloatToByte:
-                        tokenitem = new FloatToByteToken();
+                        token = new FloatToByteToken();
                         break;
 
                     case Tokens.CastToken.BoolToByte:
-                        tokenitem = new BoolToByteToken();
+                        token = new BoolToByteToken();
                         break;
 
                     case Tokens.CastToken.ByteToString:
-                        tokenitem = new ByteToStringToken();
+                        token = new ByteToStringToken();
                         break;
 
                     case Tokens.CastToken.IntToString:
-                        tokenitem = new IntToStringToken();
+                        token = new IntToStringToken();
                         break;
 
                     case Tokens.CastToken.BoolToString:
-                        tokenitem = new BoolToStringToken();
+                        token = new BoolToStringToken();
                         break;
 
                     case Tokens.CastToken.FloatToString:
-                        tokenitem = new FloatToStringToken();
+                        token = new FloatToStringToken();
                         break;
 
                     case Tokens.CastToken.NameToString:
-                        tokenitem = new NameToStringToken();
+                        token = new NameToStringToken();
                         break;
 
                     case Tokens.CastToken.VectorToString:
-                        tokenitem = new VectorToStringToken();
+                        token = new VectorToStringToken();
                         break;
 
                     case Tokens.CastToken.RotatorToString:
-                        tokenitem = new RotatorToStringToken();
+                        token = new RotatorToStringToken();
                         break;
 
                     case Tokens.CastToken.StringToName:
-                        tokenitem = new StringToNameToken();
+                        token = new StringToNameToken();
                         break;
 
                     case Tokens.CastToken.ByteToInt:
-                        tokenitem = new ByteToIntToken();
+                        token = new ByteToIntToken();
                         break;
 
                     case Tokens.CastToken.IntToByte:
-                        tokenitem = new IntToByteToken();
+                        token = new IntToByteToken();
                         break;
 
                     case Tokens.CastToken.ByteToFloat:
-                        tokenitem = new ByteToFloatToken();
+                        token = new ByteToFloatToken();
                         break;
 
                     case Tokens.CastToken.ObjectToString:
-                        tokenitem = new ObjectToStringToken();
+                        token = new ObjectToStringToken();
                         break;
 
                     case Tokens.CastToken.InterfaceToString:
-                        tokenitem = new InterfaceToStringToken();
+                        token = new InterfaceToStringToken();
                         break;
 
                     case Tokens.CastToken.InterfaceToBool:
-                        tokenitem = new InterfaceToBoolToken();
+                        token = new InterfaceToBoolToken();
                         break;
 
                     case Tokens.CastToken.InterfaceToObject:
-                        tokenitem = new InterfaceToObjectToken();
+                        token = new InterfaceToObjectToken();
                         break;
 
                     case Tokens.CastToken.ObjectToInterface:
-                        tokenitem = new ObjectToInterfaceToken();
+                        token = new ObjectToInterfaceToken();
                         break;
 
                     case Tokens.CastToken.DelegateToString:
-                        tokenitem = new DelegateToStringToken();
+                        token = new DelegateToStringToken();
+                        break;
+
+                    default:
+                        token = new UnresolvedCastToken();
                         break;
                 }
 
-                // Unsure what this is, found in:  ClanManager1h_6T.CMBanReplicationInfo.Timer:
-                //  xyz = UnknownCastToken(0x1b);
-                //  UnknownCastToken(0x1b)
-                //  UnknownCastToken(0x1b)
-                if (castToken == 0x1b)
-                    tokenitem = new FloatToIntToken();
-
-                return tokenitem ?? new UnknownCastToken();
+                return token;
             }
 
             #endregion
@@ -1134,14 +1239,14 @@ namespace UELib.Core
                         return string.Empty;
                     }
 
-                    public bool IsPastOffset(uint position)
+                    public bool IsPastOffset(int position)
                     {
                         return position >= Position;
                     }
 
                     public override string ToString()
                     {
-                        return $"Type:{Type} Position:0x{Position:X2}";
+                        return $"Type:{Type} Position:0x{Position:X3}";
                     }
                 }
 
@@ -1150,7 +1255,7 @@ namespace UELib.Core
                     public override string Decompile()
                     {
 #if DEBUG_NESTS
-                            return "\r\n" + UDecompilingState.Tabs + "//<" + Type + ">";
+                        return "\r\n" + UDecompilingState.Tabs + "//<" + Type + ">";
 #else
                         return Type != NestType.Case && Type != NestType.Default
                             ? UnrealConfig.PrintBeginBracket()
@@ -1166,7 +1271,7 @@ namespace UELib.Core
                     public override string Decompile()
                     {
 #if DEBUG_NESTS
-                            return "\r\n" + UDecompilingState.Tabs + "//</" + Type + ">";
+                        return "\r\n" + UDecompilingState.Tabs + "//</" + Type + ">";
 #else
                         return Type != NestType.Case && Type != NestType.Default
                             ? UnrealConfig.PrintEndBracket()
@@ -1203,10 +1308,8 @@ namespace UELib.Core
                 public bool TryAddNestEnd(Nest.NestType type, uint pos)
                 {
                     foreach (var nest in Decompiler._Nester.Nests)
-                    {
                         if (nest.Type == type && nest.Position == pos)
                             return false;
-                    }
 
                     Decompiler._Nester.AddNestEnd(type, pos);
                     return true;
@@ -1219,25 +1322,8 @@ namespace UELib.Core
             private NestManager.Nest IsWithinNest(NestManager.Nest.NestType nestType)
             {
                 for (int i = _NestChain.Count - 1; i >= 0; --i)
-                {
                     if (_NestChain[i].Type == nestType)
-                    {
                         return _NestChain[i];
-                    }
-                }
-
-                return null;
-            }
-
-            private NestManager.Nest GetMostRecentEndNest(NestManager.Nest.NestType nestType)
-            {
-                for (int i = _Nester.Nests.Count - 1; i >= 0; --i)
-                {
-                    if (_Nester.Nests[i] is NestManager.NestEnd && _Nester.Nests[i].Type == nestType)
-                    {
-                        return _Nester.Nests[i];
-                    }
-                }
 
                 return null;
             }
@@ -1250,38 +1336,7 @@ namespace UELib.Core
                 if (i == -1)
                     return null;
 
-                if (_NestChain[i].Type == nestType)
-                {
-                    return _NestChain[i];
-                }
-
-                return null;
-            }
-
-            private NestManager.Nest CurNestBegin()
-            {
-                for (int i = _Nester.Nests.Count - 1; i >= 0; --i)
-                {
-                    if (_Nester.Nests[i] is NestManager.NestBegin)
-                    {
-                        return _Nester.Nests[i];
-                    }
-                }
-
-                return null;
-            }
-
-            private NestManager.Nest CurNestEnd()
-            {
-                for (int i = _Nester.Nests.Count - 1; i >= 0; --i)
-                {
-                    if (_Nester.Nests[i] is NestManager.NestEnd)
-                    {
-                        return _Nester.Nests[i];
-                    }
-                }
-
-                return null;
+                return _NestChain[i].Type == nestType ? _NestChain[i] : null;
             }
 
             public void InitDecompile()
@@ -1300,11 +1355,9 @@ namespace UELib.Core
                 {
                     var func = _Container as UFunction;
                     if (func?.Params != null)
-                    {
                         DefaultParameterToken._NextParamIndex = func.Params.FindIndex(
                             p => p.HasPropertyFlag(Flags.PropertyFlagsLO.OptionalParm)
                         );
-                    }
                 }
 
                 // Reset these, in case of a loop in the Decompile function that did not finish due exception errors!
@@ -1320,7 +1373,6 @@ namespace UELib.Core
 
                 _TempLabels = new List<(ULabelEntry, int)>();
                 if (_Labels != null)
-                {
                     for (var i = 0; i < _Labels.Count; ++i)
                     {
                         // No duplicates, caused by having multiple goto's with the same destination
@@ -1336,7 +1388,6 @@ namespace UELib.Core
                             _TempLabels[index] = data;
                         }
                     }
-                }
             }
 
             public void JumpTo(ushort codeOffset)
@@ -1374,212 +1425,217 @@ namespace UELib.Core
             public string Decompile()
             {
                 // Make sure that everything is deserialized!
-                if (!_WasDeserialized)
-                {
-                    Deserialize();
-                }
+                if (!_WasDeserialized) Deserialize();
 
                 var output = new StringBuilder();
                 // Original indention, so that we can restore it later, necessary if decompilation fails to reduce nesting indention.
                 string initTabs = UDecompilingState.Tabs;
 
 #if DEBUG_TOKENPOSITIONS
-                UDecompilingState.AddTabs( 3 );
+                UDecompilingState.AddTabs(3);
 #endif
                 try
                 {
                     //Initialize==========
                     InitDecompile();
                     var spewOutput = false;
-                    var tokenBeginIndex = 0;
+                    var tokenEndIndex = 0;
                     Token lastStatementToken = null;
 
                     while (CurrentTokenIndex + 1 < DeserializedTokens.Count)
                     {
-                        try
+                        //Decompile chain==========
                         {
-                            //Decompile chain==========
-                            {
-                                string tokenOutput;
-                                var newToken = NextToken;
+                            string tokenOutput;
+                            var newToken = NextToken;
+                            int tokenBeginIndex = CurrentTokenIndex;
 
-                                // To ensure we print generated labels within a nesting block.
-                                string labelsOutput = DecompileLabelForToken(CurrentToken, spewOutput);
-                                if (labelsOutput != string.Empty)
-                                {
-                                    output.Append(labelsOutput);
-                                    output.Append("\r\n");
-                                }
-
-                                try
-                                {
-                                    // FIX: Formatting issue on debug-compiled packages
-                                    if (newToken is DebugInfoToken)
-                                    {
-                                        string nestsOutput = DecompileNests();
-                                        if (nestsOutput != string.Empty)
-                                        {
-                                            output.Append(nestsOutput);
-                                            spewOutput = true;
-                                        }
-
-                                        continue;
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    output.Append($"// ({e.GetType().Name})");
-                                }
-
-                                try
-                                {
-                                    tokenBeginIndex = CurrentTokenIndex;
-                                    tokenOutput = newToken.Decompile();
-                                    if (CurrentTokenIndex + 1 < DeserializedTokens.Count &&
-                                        PeekToken is EndOfScriptToken)
-                                    {
-                                        var firstToken = newToken is DebugInfoToken ? lastStatementToken : newToken;
-                                        if (firstToken is ReturnToken)
-                                        {
-                                            var lastToken = newToken is DebugInfoToken ? PreviousToken : CurrentToken;
-                                            if (lastToken is NothingToken || lastToken is ReturnNothingToken)
-                                            {
-                                                _MustCommentStatement = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    tokenOutput = $"{newToken.GetType().Name}-{CurrentToken.GetType().Name}({e})";
-                                }
-
-                                // HACK: for multiple cases for one block of code, etc!
-                                if (_PreDecrementTabs > 0)
-                                {
-                                    UDecompilingState.RemoveTabs(_PreDecrementTabs);
-                                    _PreDecrementTabs = 0;
-                                }
-
-                                if (_PreIncrementTabs > 0)
-                                {
-                                    UDecompilingState.AddTabs(_PreIncrementTabs);
-                                    _PreIncrementTabs = 0;
-                                }
-
-                                if (_MustCommentStatement && UnrealConfig.SuppressComments)
-                                    continue;
-
-                                if (!UnrealConfig.SuppressComments)
-                                {
-                                    if (PreComment != string.Empty)
-                                    {
-                                        tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput)
-                                            ? tokenOutput
-                                            : "\r\n" + UDecompilingState.Tabs + tokenOutput);
-                                        PreComment = string.Empty;
-                                    }
-
-                                    if (PostComment != string.Empty)
-                                    {
-                                        tokenOutput += PostComment;
-                                        PostComment = string.Empty;
-                                    }
-                                }
-
-                                //Preprocess output==========
-                                {
-#if DEBUG_HIDDENTOKENS
-                                    if( tokenOutput.Length == 0 )
-                                    {
-                                        tokenOutput = "<" +  newToken.GetType().Name + "/>";
-                                        _MustCommentStatement = true;
-                                    }
-#endif
-                                    // Previous did spew and this one spews? then a new line is required!
-                                    if (tokenOutput != string.Empty)
-                                    {
-                                        // Spew before?
-                                        if (spewOutput)
-                                        {
-                                            output.Append("\r\n");
-                                        }
-                                        else spewOutput = true;
-                                    }
-
-                                    if (spewOutput)
-                                    {
-                                        if (_MustCommentStatement)
-                                        {
-                                            tokenOutput = $"//{tokenOutput}";
-                                            _MustCommentStatement = false;
-                                        }
-#if DEBUG_TOKENPOSITIONS
-                                        output.Append( String.Format( initTabs + "({0:X3}{1:X3})",
-                                            newToken.Position,
-                                            CurrentToken.Position + CurrentToken.Size
-                                        ) );
-
-                                        var orgTabs = UDecompilingState.Tabs;
-                                        var spaces = Math.Max( 3*UnrealConfig.Indention.Length, 8 );
-                                        UDecompilingState.RemoveSpaces( spaces );
-#endif
-                                        output.Append(UDecompilingState.Tabs + tokenOutput);
-#if DEBUG_TOKENPOSITIONS
-                                        UDecompilingState.Tabs = orgTabs;
-#endif
-                                        // One of the decompiled tokens wanted to be ended.
-                                        if (_CanAddSemicolon)
-                                        {
-                                            output.Append(";");
-                                            _CanAddSemicolon = false;
-                                        }
-                                    }
-                                }
-                                lastStatementToken = newToken;
-                            }
-
-                            //Postprocess output==========
-                            if (_PostDecrementTabs > 0)
-                            {
-                                UDecompilingState.RemoveTabs(_PostDecrementTabs);
-                                _PostDecrementTabs = 0;
-                            }
-
-                            if (_PostIncrementTabs > 0)
-                            {
-                                UDecompilingState.AddTabs(_PostIncrementTabs);
-                                _PostIncrementTabs = 0;
-                            }
+                            // To ensure we print generated labels within a nesting block.
+                            string labelsOutput = DecompileLabelForToken(CurrentToken, spewOutput);
+                            if (labelsOutput != string.Empty) output.AppendLine(labelsOutput);
 
                             try
                             {
-                                string nestsOutput = DecompileNests();
-                                if (nestsOutput != string.Empty)
+                                // FIX: Formatting issue on debug-compiled packages
+                                if (newToken is DebugInfoToken)
                                 {
-                                    output.Append(nestsOutput);
-                                    spewOutput = true;
+                                    string nestsOutput = DecompileNests();
+                                    if (nestsOutput != string.Empty)
+                                    {
+                                        output.Append(nestsOutput);
+                                        spewOutput = true;
+                                    }
+
+#if !DEBUG_HIDDENTOKENS
+                                    continue;
+#endif
                                 }
                             }
                             catch (Exception e)
                             {
-                                output.Append("\r\n" + UDecompilingState.Tabs + "// Failed to format nests!:"
-                                              + e + "\r\n"
-                                              + UDecompilingState.Tabs + "// " + _Nester.Nests.Count + " & "
-                                              + _Nester.Nests[_Nester.Nests.Count - 1]);
+                                output.Append($"// ({e.GetType().Name})");
+                            }
+
+                            try
+                            {
+                                tokenOutput = newToken.Decompile();
+                                if (CurrentTokenIndex + 1 < DeserializedTokens.Count &&
+                                    PeekToken is EndOfScriptToken)
+                                {
+                                    var firstToken = newToken is DebugInfoToken ? lastStatementToken : newToken;
+                                    if (firstToken is ReturnToken)
+                                    {
+                                        var lastToken = newToken is DebugInfoToken ? PreviousToken : CurrentToken;
+                                        if (lastToken is NothingToken || lastToken is ReturnNothingToken)
+                                            _MustCommentStatement = true;
+                                    }
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                output.AppendLine("\r\n"
+                                                  + UDecompilingState.Tabs + "/* Statement decompilation error: "
+                                                  + e.Message);
+
+                                UDecompilingState.AddTab();
+                                string tokensOutput = FormatAndDecompileTokens(tokenBeginIndex, tokenEndIndex);
+                                output.Append(UDecompilingState.Tabs);
+                                output.Append(tokensOutput);
+                                UDecompilingState.RemoveTab();
+
+                                output.AppendLine("\r\n"
+                                                  + UDecompilingState.Tabs
+                                                  + "*/");
+
+                                tokenOutput = "/*@Error*/";
+                            }
+                            finally
+                            {
+                                tokenEndIndex = CurrentTokenIndex;
+                            }
+
+                            // HACK: for multiple cases for one block of code, etc!
+                            if (_PreDecrementTabs > 0)
+                            {
+                                UDecompilingState.RemoveTabs(_PreDecrementTabs);
+                                _PreDecrementTabs = 0;
+                            }
+
+                            if (_PreIncrementTabs > 0)
+                            {
+                                UDecompilingState.AddTabs(_PreIncrementTabs);
+                                _PreIncrementTabs = 0;
+                            }
+
+                            if (_MustCommentStatement && UnrealConfig.SuppressComments)
+                                continue;
+
+                            if (!UnrealConfig.SuppressComments)
+                            {
+                                if (PreComment != string.Empty)
+                                {
+                                    tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput)
+                                        ? tokenOutput
+                                        : "\r\n" + UDecompilingState.Tabs + tokenOutput);
+
+                                    PreComment = string.Empty;
+                                }
+
+                                if (PostComment != string.Empty)
+                                {
+                                    tokenOutput += PostComment;
+                                    PostComment = string.Empty;
+                                }
+                            }
+
+                            //Preprocess output==========
+                            {
+#if DEBUG_HIDDENTOKENS
+                                if (tokenOutput.Length == 0) tokenOutput = ";";
+#endif
+#if DEBUG_TOKENPOSITIONS
+#endif
+                                // Previous did spew and this one spews? then a new line is required!
+                                if (tokenOutput != string.Empty)
+                                {
+                                    // Spew before?
+                                    if (spewOutput)
+                                        output.Append("\r\n");
+                                    else spewOutput = true;
+                                }
+
+#if DEBUG_TOKENPOSITIONS
+                                string orgTabs = UDecompilingState.Tabs;
+                                int spaces = Math.Max(3 * UnrealConfig.Indention.Length, 4);
+                                UDecompilingState.RemoveSpaces(spaces);
+
+                                var tokens = DeserializedTokens
+                                    .GetRange(tokenBeginIndex, tokenEndIndex - tokenBeginIndex + 1)
+                                    .Select(FormatTokenInfo);
+                                string tokensInfo = string.Join(", ", tokens);
+
+                                output.Append(UDecompilingState.Tabs);
+                                output.AppendLine($"  [{tokensInfo}] ");
+                                output.Append(UDecompilingState.Tabs);
+                                output.Append(
+                                    $"  (+{newToken.Position:X3}  {CurrentToken.Position + CurrentToken.Size:X3}) ");
+#endif
+                                if (spewOutput)
+                                {
+                                    if (_MustCommentStatement)
+                                    {
+                                        output.Append(UDecompilingState.Tabs);
+                                        output.Append($"//{tokenOutput}");
+                                        _MustCommentStatement = false;
+                                    }
+                                    else
+                                    {
+                                        output.Append(UDecompilingState.Tabs);
+                                        output.Append(tokenOutput);
+                                    }
+
+                                    // One of the decompiled tokens wanted to be ended.
+                                    if (_CanAddSemicolon)
+                                    {
+                                        output.Append(";");
+                                        _CanAddSemicolon = false;
+                                    }
+                                }
+#if DEBUG_TOKENPOSITIONS
+                                UDecompilingState.Tabs = orgTabs;
+#endif
+                            }
+                            lastStatementToken = newToken;
+                        }
+
+                        //Postprocess output==========
+                        if (_PostDecrementTabs > 0)
+                        {
+                            UDecompilingState.RemoveTabs(_PostDecrementTabs);
+                            _PostDecrementTabs = 0;
+                        }
+
+                        if (_PostIncrementTabs > 0)
+                        {
+                            UDecompilingState.AddTabs(_PostIncrementTabs);
+                            _PostIncrementTabs = 0;
+                        }
+
+                        try
+                        {
+                            string nestsOutput = DecompileNests();
+                            if (nestsOutput != string.Empty)
+                            {
+                                output.Append(nestsOutput);
                                 spewOutput = true;
                             }
                         }
                         catch (Exception e)
                         {
-                            output.Append("\r\n" + UDecompilingState.Tabs
-                                                 + "// Failed to decompile this line:\r\n");
-                            UDecompilingState.AddTab();
-                            output.Append(UDecompilingState.Tabs + "/* "
-                                                                 + FormatTokens(tokenBeginIndex, CurrentTokenIndex) +
-                                                                 " */\r\n");
-                            UDecompilingState.RemoveTab();
-                            output.Append($"{UDecompilingState.Tabs}// {FormatTabs(e.Message)}");
+                            output.Append("\r\n" + UDecompilingState.Tabs + "// Failed to format nests!:"
+                                          + e + "\r\n"
+                                          + UDecompilingState.Tabs + "// " + _Nester.Nests.Count + " & "
+                                          + _Nester.Nests[_Nester.Nests.Count - 1]);
                             spewOutput = true;
                         }
                     }
@@ -1599,18 +1655,12 @@ namespace UELib.Core
                 }
                 catch (Exception e)
                 {
-                    output.AppendFormat(
-                        "{0} // Failed to decompile this {1}'s code." +
-                        "\r\n {2} at position {3} " +
-                        "\r\n Message: {4} " +
-                        "\r\n\r\n StackTrace: {5}",
-                        UDecompilingState.Tabs,
-                        _Container.Class.Name,
-                        UDecompilingState.Tabs,
-                        CodePosition,
-                        FormatTabs(e.Message),
-                        FormatTabs(e.StackTrace)
-                    );
+                    output.Append(UDecompilingState.Tabs);
+                    output.AppendLine("// Cannot recover from this decompilation error.");
+                    output.Append(UDecompilingState.Tabs);
+                    output.AppendLine($"// Error: {FormatTabs(e.Message)}");
+                    output.Append(UDecompilingState.Tabs);
+                    output.AppendLine($"// Token Index: {CurrentTokenIndex} / {DeserializedTokens.Count}");
                 }
                 finally
                 {
@@ -1627,13 +1677,42 @@ namespace UELib.Core
                 return nonTabbedText.Replace("\n", "\n" + UDecompilingState.Tabs);
             }
 
-            private string FormatTokens(int beginIndex, int endIndex)
+            public static string FormatTokenInfo(Token token)
+            {
+                Debug.Assert(token != null);
+                return $"{token.GetType().Name} (0x{token.RepresentToken:X2})";
+            }
+
+            private string FormatAndDecompileTokens(int beginIndex, int endIndex)
             {
                 var output = string.Empty;
-                for (int i = beginIndex; i < endIndex; ++i)
+                for (int i = beginIndex; i < endIndex && i < DeserializedTokens.Count; ++i)
                 {
-                    output += DeserializedTokens[i].GetType().Name
-                              + (i % 4 == 0 ? "\r\n" + UDecompilingState.Tabs : " ");
+                    var t = DeserializedTokens[i];
+                    try
+                    {
+                        output += "\r\n" + UDecompilingState.Tabs +
+                                  $"{FormatTokenInfo(t)} << {t.Decompile()}";
+                    }
+                    catch (Exception e)
+                    {
+                        output += "\r\n" + UDecompilingState.Tabs +
+                                  $"{FormatTokenInfo(t)} << {e.GetType().FullName}";
+                        try
+                        {
+                            output += "\r\n" + UDecompilingState.Tabs + "(";
+                            UDecompilingState.AddTab();
+                            string inlinedTokens = FormatAndDecompileTokens(i + 1, CurrentTokenIndex);
+                            UDecompilingState.RemoveTab();
+                            output += inlinedTokens
+                                      + "\r\n" + UDecompilingState.Tabs
+                                      + ")";
+                        }
+                        finally
+                        {
+                            i += CurrentTokenIndex - beginIndex;
+                        }
+                    }
                 }
 
                 return output;
@@ -1643,20 +1722,14 @@ namespace UELib.Core
             {
                 var output = new StringBuilder();
                 int labelIndex = _TempLabels.FindIndex((l) => l.entry.Position == token.Position);
-                if (labelIndex == -1)
-                {
-                    return string.Empty;
-                }
+                if (labelIndex == -1) return string.Empty;
 
                 var labelEntry = _TempLabels[labelIndex].entry;
                 bool isStateLabel = !labelEntry.Name.StartsWith("J0x", StringComparison.Ordinal);
                 string statementOutput = isStateLabel
                     ? $"{labelEntry.Name}:\r\n"
                     : $"{UDecompilingState.Tabs}{labelEntry.Name}:";
-                if (appendNewline)
-                {
-                    output.Append("\r\n");
-                }
+                if (appendNewline) output.Append("\r\n");
 
                 output.Append(statementOutput);
 
@@ -1674,7 +1747,7 @@ namespace UELib.Core
                     if (!(_Nester.Nests[i] is NestManager.NestBegin))
                         continue;
 
-                    if (_Nester.Nests[i].IsPastOffset(CurrentToken.Position) || outputAllRemainingNests)
+                    if (_Nester.Nests[i].IsPastOffset((int)CurrentToken.Position) || outputAllRemainingNests)
                     {
                         output += _Nester.Nests[i].Decompile();
                         UDecompilingState.AddTab();
@@ -1685,9 +1758,9 @@ namespace UELib.Core
                 }
 
                 for (int i = _Nester.Nests.Count - 1; i >= 0; i--)
-                {
                     if (_Nester.Nests[i] is NestManager.NestEnd nestEnd
-                        && (outputAllRemainingNests || nestEnd.IsPastOffset(CurrentToken.Position + CurrentToken.Size)))
+                        && (outputAllRemainingNests ||
+                            nestEnd.IsPastOffset((int)CurrentToken.Position + CurrentToken.Size)))
                     {
                         var topOfStack = _NestChain[_NestChain.Count - 1];
                         if (topOfStack.Type == NestManager.Nest.NestType.Default &&
@@ -1744,7 +1817,6 @@ namespace UELib.Core
                             _NestChain.Add(begin);
                         }
                     }
-                }
 
                 return output;
             }

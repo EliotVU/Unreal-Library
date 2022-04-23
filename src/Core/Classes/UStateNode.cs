@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿#if Forms
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
@@ -25,3 +26,4 @@ namespace UELib.Core
         }
     }
 }
+#endif

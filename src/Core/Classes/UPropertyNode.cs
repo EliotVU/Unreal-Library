@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿#if Forms
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
@@ -31,16 +32,16 @@ namespace UELib.Core
             }
 
             string which = base.GetImageName();
+            if (IsProtected())
+            {
+                return $"{which}-Protected";
+            }
             if (IsPrivate())
             {
                 return $"{which}-Private";
             }
-            else if (IsProtected())
-            {
-                return $"{which}-Protected";
-            }
-
             return which;
         }
     }
 }
+#endif

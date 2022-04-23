@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 
@@ -101,6 +102,21 @@ namespace UELib
 
         public void Deserialize(IUnrealStream stream)
         {
+#if AA2
+            // Not attested in packages of LicenseeVersion 32
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2
+                && stream.Package.LicenseeVersion >= 33)
+            {
+                SuperIndex = stream.ReadObjectIndex();
+                int unkInt = stream.ReadInt32();
+                Debug.WriteLine(unkInt, "unkInt");
+                ClassIndex = stream.ReadObjectIndex();
+                OuterIndex = stream.ReadInt32();
+                ObjectFlags = ~stream.ReadUInt32();
+                ObjectName = stream.ReadNameReference();
+                goto serializeSerialSize;
+            }
+#endif
             ClassIndex = stream.ReadObjectIndex();
             SuperIndex = stream.ReadObjectIndex();
             OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
@@ -111,7 +127,6 @@ namespace UELib
             }
 #endif
             ObjectName = stream.ReadNameReference();
-
             if (stream.Version >= VArchetype)
             {
                 ArchetypeIndex = stream.ReadInt32();
@@ -129,6 +144,7 @@ namespace UELib
                 ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
             }
 
+        serializeSerialSize:
             SerialSize = stream.ReadIndex();
             if (SerialSize > 0 || stream.Version >= VSerialSizeConditionless)
             {

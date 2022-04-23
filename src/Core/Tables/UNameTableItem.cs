@@ -1,3 +1,7 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using UELib.Decoding;
+
 namespace UELib
 {
     /// <summary>
@@ -27,38 +31,57 @@ namespace UELib
 
         public void Deserialize(IUnrealStream stream)
         {
+            Name = DeserializeName(stream);
+            Debug.Assert(Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
+            Flags = stream.Version >= QWORDVersion
+                ? stream.ReadUInt64()
+                : stream.ReadUInt32();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private string DeserializeName(IUnrealStream stream)
+        {
+#if UE1
+            // Very old packages use a simple Ansi encoding.
+            if (stream.Version < UnrealPackage.VSIZEPREFIXDEPRECATED) return stream.ReadASCIIString();
+#endif
 #if DCUO
-            if( stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO )
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO)
             {
-                //DCUO doesn't null terminate name table entries
-                int size = stream.ReadInt32();
-                var strBytes = new byte[size];
-                stream.Read( strBytes, 0, size );
-                if( stream.BigEndianCode )
+                // FIXME: DCUO doesn't null terminate name entry strings
+            }
+#endif
+#if AA2
+            // Names are not encrypted in AAA/AAO 2.6 (LicenseeVersion 32)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2
+                && stream.Package.LicenseeVersion >= 33
+                && stream.Package.Decoder is CryptoDecoderAA2)
+            {
+                // Thanks to @gildor2, decryption code transpiled from https://github.com/gildor2/UEViewer, 
+                int length = stream.ReadIndex();
+                Debug.Assert(length < 0);
+                int size = -length;
+
+                const byte n = 5;
+                byte shift = n;
+                var buffer = new char[size];
+                for (var i = 0; i < size; i++)
                 {
-                    Array.Reverse( strBytes );
+                    ushort c = stream.ReadUInt16();
+                    ushort c2 = CryptoCore.RotateRight(c, shift);
+                    Debug.Assert(c2 < byte.MaxValue);
+                    buffer[i] = (char)(byte)c2;
+                    shift = (byte)((c - n) & 0x0F);
                 }
-                Name = System.Text.Encoding.ASCII.GetString( strBytes );
-            }
-            else
-            {
-#endif
-            Name = stream.ReadText();
-#if DCUO
-            }
-#endif
-            Flags = stream.Version >= QWORDVersion ? stream.ReadUInt64() : stream.ReadUInt32();
-#if DEOBFUSCATE
-    // De-obfuscate names that contain unprintable characters!
-            foreach( char c in Name )
-            {
-                if( !char.IsLetterOrDigit( c ) )
-                {
-                    Name = "N" + TableIndex + "_OBF";
-                    break;
-                }
+
+                var str = new string(buffer, 0, buffer.Length - 1);
+                // Part of name ?
+                int number = stream.ReadIndex();
+                //Debug.Assert(number == 0, "Unknown value");
+                return str;
             }
 #endif
+            return stream.ReadText();
         }
 
         public void Serialize(IUnrealStream stream)
@@ -66,15 +89,11 @@ namespace UELib
             stream.WriteString(Name);
 
             if (stream.Version < QWORDVersion)
-            {
                 // Writing UINT
                 stream.UW.Write((uint)Flags);
-            }
             else
-            {
                 // Writing ULONG
                 stream.UW.Write(Flags);
-            }
         }
 
         public override string ToString()
