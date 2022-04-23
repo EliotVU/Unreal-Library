@@ -182,7 +182,7 @@ namespace UELib.Core
                     if (Package.Version >= 220)
                     {
                         // TODO: Corrigate Version
-                        if ((isHideCategoriesOldOrder && !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed)
+                        if ((isHideCategoriesOldOrder && !Package.IsConsoleCooked() && !Package.Build.HasFlags(BuildFlags.XenonCooked))
 #if TRANSFORMERS
                             || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
 #endif
@@ -201,7 +201,7 @@ namespace UELib.Core
                         }
                     }
 
-                    if (!Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed)
+                    if (!Package.IsConsoleCooked() && !Package.Build.HasFlags(BuildFlags.XenonCooked))
                     {
                         if (Package.Version >= 603
 #if TERA

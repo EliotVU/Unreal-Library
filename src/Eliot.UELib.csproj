@@ -211,6 +211,7 @@
     <Compile Include="NativesTablePackage.cs" />
     <Compile Include="UDecompilingState.cs" />
     <Compile Include="Core\Types\UName.cs" />
+    <Compile Include="UnrealBuild.cs" />
     <Compile Include="UnrealCache.cs" />
     <Compile Include="UnrealConfig.cs" />
     <Compile Include="UnrealFlags.cs" />
