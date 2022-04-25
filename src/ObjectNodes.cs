@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Windows.Forms;
 
 namespace UELib.Core
@@ -67,13 +68,13 @@ namespace UELib.Core
 
         public string Decompile()
         {
-            var fullView = string.Empty;
+            var output = new StringBuilder();
             foreach (var node in Nodes.OfType<IUnrealDecompilable>())
             {
-                fullView += node.Decompile() + UnrealSyntax.NewLine;
+                output.AppendLine(node.Decompile());
             }
 
-            return fullView;
+            return output.ToString();
         }
     }
 }

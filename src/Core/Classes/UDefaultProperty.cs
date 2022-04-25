@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using UELib.Annotations;
 using UELib.Types;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -121,7 +121,7 @@ namespace UELib.Core
             }
         }
 
-        const byte ArrayIndexMask = 0x80;
+        private const byte ArrayIndexMask = 0x80;
 
         private int DeserializeArrayIndex()
         {
@@ -131,20 +131,14 @@ namespace UELib.Core
 #endif
             byte b = _Buffer.ReadByte();
             if ((b & ArrayIndexMask) == 0)
-            {
                 arrayIndex = b;
-            }
             else if ((b & 0xC0) == ArrayIndexMask)
-            {
                 arrayIndex = ((b & 0x7F) << 8) + _Buffer.ReadByte();
-            }
             else
-            {
                 arrayIndex = ((b & 0x3F) << 24)
                              + (_Buffer.ReadByte() << 16)
                              + (_Buffer.ReadByte() << 8)
                              + _Buffer.ReadByte();
-            }
 #if BINARYMETADATA
             _Buffer.LastPosition = startPos;
 #endif
@@ -157,10 +151,7 @@ namespace UELib.Core
 
             Name = _Buffer.ReadNameReference();
             _Container.Record("Name", Name);
-            if (Name.IsNone())
-            {
-                return false;
-            }
+            if (Name.IsNone()) return false;
 
             // Unreal Engine 1 and 2
             if (_Buffer.Version < V3)
@@ -174,7 +165,7 @@ namespace UELib.Core
                         "Info(Type={0},SizeMask=0x{1:X2},ArrayIndexMask=0x{2:X2})",
                         (PropertyType)(byte)(info & typeMask),
                         (byte)(info & sizeMask),
-                        (info & ArrayIndexMask)
+                        info & ArrayIndexMask
                     ), info
                 );
 
@@ -186,10 +177,7 @@ namespace UELib.Core
                 }
 
                 Size = DeserializeSize((byte)(info & sizeMask));
-                if (Size >= 0x50)
-                {
-                    _Container.Record("Size", Size);
-                }
+                if (Size >= 0x50) _Container.Record("Size", Size);
 
                 switch (Type)
                 {
@@ -270,7 +258,8 @@ namespace UELib.Core
         {
             if (_Buffer == null)
             {
-                return "_Buffer is not initialized!";
+                _Container.EnsureBuffer();
+                if (_Buffer == null) throw new DeserializationException("_Buffer is not initialized!");
             }
 
             _Buffer.Seek(_ValueOffset, System.IO.SeekOrigin.Begin);
@@ -292,9 +281,7 @@ namespace UELib.Core
         private string DeserializeDefaultPropertyValue(PropertyType type, ref DeserializeFlags deserializeFlags)
         {
             if (_Buffer.Position - _ValueOffset > Size)
-            {
-                throw new DeserializationException("End of defaultproperties stream reached...");
-            }
+                throw new DeserializationException("End of DefaultProperties stream reached...");
 
             var orgOuter = _Outer;
             var propertyValue = string.Empty;
@@ -306,17 +293,14 @@ namespace UELib.Core
                     case PropertyType.BoolProperty:
                     {
                         bool value = _BoolValue;
-                        if (Size == 1 && _Buffer.Version < V3)
-                        {
-                            value = _Buffer.ReadByte() > 0;
-                        }
+                        if (Size == 1 && _Buffer.Version < V3) value = _Buffer.ReadByte() > 0;
 
                         propertyValue = value ? "true" : "false";
                         break;
                     }
 
                     case PropertyType.StrProperty:
-                        propertyValue = "\"" + _Buffer.ReadText().Escape() + "\"";
+                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadText());
                         break;
 
                     case PropertyType.NameProperty:
@@ -324,12 +308,12 @@ namespace UELib.Core
                         break;
 
                     case PropertyType.IntProperty:
-                        propertyValue = _Buffer.ReadInt32().ToString(CultureInfo.InvariantCulture);
+                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadInt32());
                         break;
 
 #if BIOSHOCK
                     case PropertyType.QwordProperty:
-                        propertyValue = _Buffer.ReadInt64().ToString(CultureInfo.InvariantCulture);
+                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadInt64());
                         break;
 
                     case PropertyType.XWeakReferenceProperty:
@@ -339,7 +323,7 @@ namespace UELib.Core
 #endif
 
                     case PropertyType.FloatProperty:
-                        propertyValue = _Buffer.ReadFloat().ToUFloat();
+                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadFloat());
                         break;
 
                     case PropertyType.ByteProperty:
@@ -347,14 +331,11 @@ namespace UELib.Core
                         {
                             string enumValue = _Buffer.ReadName();
                             propertyValue = enumValue;
-                            if (_Buffer.Version >= VEnumName)
-                            {
-                                propertyValue = $"{EnumName}.{propertyValue}";
-                            }
+                            if (_Buffer.Version >= VEnumName) propertyValue = $"{EnumName}.{propertyValue}";
                         }
                         else
                         {
-                            propertyValue = _Buffer.ReadByte().ToString(CultureInfo.InvariantCulture);
+                            propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadByte());
                         }
 
                         break;
@@ -392,10 +373,8 @@ namespace UELib.Core
                             }
 
                             if (!inline)
-                            {
                                 // =CLASS'Package.Group(s)+.Name'
                                 propertyValue = $"{obj.GetClassName()}\'{obj.GetOuterGroup()}\'";
-                            }
                         }
                         else
                         {
@@ -410,7 +389,7 @@ namespace UELib.Core
                     {
                         var obj = _Buffer.ReadObject();
                         _Container.Record("object", obj);
-                        propertyValue = (obj != null ? "class\'" + obj.Name + "\'" : "none");
+                        propertyValue = obj != null ? "class\'" + obj.Name + "\'" : "none";
                         break;
                     }
 
@@ -419,7 +398,7 @@ namespace UELib.Core
                         _TempFlags |= DoNotAppendName;
                         int outerIndex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
                         string delegateValue = _Buffer.ReadName();
-                        string delegateName = ((string)(Name)).Substring(2, Name.Length - 12);
+                        string delegateName = ((string)Name).Substring(2, Name.Length - 12);
                         propertyValue = $"{delegateName}={delegateValue}";
                         break;
                     }
@@ -433,10 +412,7 @@ namespace UELib.Core
                         string r = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
                         string a = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
 
-                        propertyValue += "R=" + r +
-                                         ",G=" + g +
-                                         ",B=" + b +
-                                         ",A=" + a;
+                        propertyValue += $"R={r},G={g},B={b},A={a}";
                         break;
                     }
 
@@ -447,10 +423,7 @@ namespace UELib.Core
                         string r = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
                         string a = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
 
-                        propertyValue += "R=" + r +
-                                         ",G=" + g +
-                                         ",B=" + b +
-                                         ",A=" + a;
+                        propertyValue += $"R={r},G={g},B={b},A={a}";
                         break;
                     }
 
@@ -460,9 +433,7 @@ namespace UELib.Core
                         string y = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
                         string z = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
 
-                        propertyValue += "X=" + x +
-                                         ",Y=" + y +
-                                         ",Z=" + z;
+                        propertyValue += $"X={x},Y={y},Z={z}";
                         break;
                     }
 
@@ -470,15 +441,13 @@ namespace UELib.Core
                     {
                         string v1 = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         string v2 = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
-
-                        propertyValue += "v1=(" + v1 + "),v2=(" + v2 + ")";
+                        propertyValue += $"v1=({v1}),v2=({v2})";
                         break;
                     }
 
                     case PropertyType.Vector4:
                     {
                         string plane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
-
                         propertyValue += plane;
                         break;
                     }
@@ -487,9 +456,7 @@ namespace UELib.Core
                     {
                         string x = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
                         string y = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-
-                        propertyValue += "X=" + x +
-                                         ",Y=" + y;
+                        propertyValue += $"X={x},Y={y}";
                         break;
                     }
 
@@ -498,10 +465,7 @@ namespace UELib.Core
                         string pitch = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
                         string yaw = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
                         string roll = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-
-                        propertyValue += "Pitch=" + pitch +
-                                         ",Yaw=" + yaw +
-                                         ",Roll=" + roll;
+                        propertyValue += $"Pitch={pitch},Yaw={yaw},Roll={roll}";
                         break;
                     }
 
@@ -511,11 +475,7 @@ namespace UELib.Core
                         string b = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
                         string c = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
                         string d = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-
-                        propertyValue += "A=" + a +
-                                         ",B=" + b +
-                                         ",C=" + c +
-                                         ",D=" + d;
+                        propertyValue += $"A={a},B={b},C={c},D={d}";
                         break;
                     }
 
@@ -524,8 +484,7 @@ namespace UELib.Core
                     {
                         string v = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         string w = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-
-                        propertyValue += v + ",W=" + w;
+                        propertyValue += $"{v},W={w}";
                         break;
                     }
 
@@ -536,10 +495,7 @@ namespace UELib.Core
                             DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
                         string sheerAxis =
                             DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-
-                        propertyValue += "Scale=(" + scale + ")" +
-                                         ",SheerRate=" + sheerRate +
-                                         ",SheerAxis=" + sheerAxis;
+                        propertyValue += $"Scale=({scale}),SheerRate={sheerRate},SheerAxis={sheerAxis}";
                         break;
                     }
 
@@ -549,10 +505,7 @@ namespace UELib.Core
                         string max = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         string isValid =
                             DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-
-                        propertyValue += "Min=(" + min + ")" +
-                                         ",Max=(" + max + ")" +
-                                         ",IsValid=" + isValid;
+                        propertyValue += $"Min=({min}),Max=({max}),IsValid={isValid}";
                         break;
                     }
 
@@ -603,10 +556,7 @@ namespace UELib.Core
                         string yPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                         string zPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                         string wPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
-                        propertyValue += "XPlane=(" + xPlane + ")" +
-                                         ",YPlane=(" + yPlane + ")" +
-                                         ",ZPlane=(" + zPlane + ")" +
-                                         ",WPlane=(" + wPlane + ")";
+                        propertyValue += $"XPlane=({xPlane}),YPlane=({yPlane}),ZPlane=({zPlane}),WPlane=({wPlane})";
                         break;
                     }
 
@@ -614,8 +564,7 @@ namespace UELib.Core
                     {
                         string x = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
                         string y = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-
-                        propertyValue += "X=" + x + ",Y=" + y;
+                        propertyValue += $"X={x},Y={y}";
                         break;
                     }
 
@@ -657,9 +606,7 @@ namespace UELib.Core
                                 else
                                 {
                                     if (propertyValue.EndsWith(","))
-                                    {
                                         propertyValue = propertyValue.Remove(propertyValue.Length - 1, 1);
-                                    }
 
                                     break;
                                 }
@@ -694,10 +641,7 @@ namespace UELib.Core
                         else if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey(Name))
                         {
                             var varTuple = UnrealConfig.VariableTypes[Name];
-                            if (varTuple != null)
-                            {
-                                arrayType = varTuple.Item2;
-                            }
+                            if (varTuple != null) arrayType = varTuple.Item2;
                         }
 
                         if (arrayType == PropertyType.None)
@@ -711,15 +655,11 @@ namespace UELib.Core
                         {
                             // Hardcoded fix for InterpCurve and InterpCurvePoint.
                             if (string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
-                            {
                                 arrayType = PropertyType.StructProperty;
-                            }
 
                             for (var i = 0; i < arraySize; ++i)
-                            {
                                 propertyValue += DeserializeDefaultPropertyValue(arrayType, ref deserializeFlags)
                                                  + (i != arraySize - 1 ? "," : string.Empty);
-                            }
 
                             propertyValue = $"({propertyValue})";
                         }
@@ -738,10 +678,7 @@ namespace UELib.Core
                                     propertyValue += $"{Name}({i})={elementValue}";
                                 }
 
-                                if (i != arraySize - 1)
-                                {
-                                    propertyValue += "\r\n" + UDecompilingState.Tabs;
-                                }
+                                if (i != arraySize - 1) propertyValue += "\r\n" + UDecompilingState.Tabs;
                             }
                         }
 
@@ -790,10 +727,8 @@ namespace UELib.Core
 
             // Array or Inlined object
             if ((_TempFlags & DoNotAppendName) != 0)
-            {
                 // The tag handles the name etc on its own.
                 return value;
-            }
 
             var arrayIndex = string.Empty;
             if (ArrayIndex > 0 && Type != PropertyType.BoolProperty)
@@ -832,9 +767,7 @@ namespace UELib.Core
                         Debug.Assert(arrayField != null, "arrayField != null");
                         var arrayInnerField = arrayField.InnerProperty;
                         if (arrayInnerField.Type == PropertyType.StructProperty)
-                        {
                             _Outer = ((UStructProperty)arrayInnerField).StructObject;
-                        }
 
                         break;
 

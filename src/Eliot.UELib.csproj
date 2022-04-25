@@ -221,6 +221,7 @@
     <Compile Include="Core\Classes\UStruct.cs" />
     <Compile Include="Engine\Classes\UFont.cs" />
     <Compile Include="NativesTablePackage.cs" />
+    <Compile Include="UnrealScript\PropertyDisplay.cs" />
     <Compile Include="UDecompilingState.cs" />
     <Compile Include="Core\Types\UName.cs" />
     <Compile Include="UnrealBuild.cs" />
@@ -235,7 +236,7 @@
     <Compile Include="UnrealPackage.cs" />
     <Compile Include="UnrealPackageCompression.cs" />
     <Compile Include="UnrealStream.cs" />
-    <Compile Include="UnrealSyntax.cs" />
+    <Compile Include="UnrealScript\ScriptConstants.cs" />
     <Compile Include="Core\Tables\UTableItem.cs" />
     <Compile Include="UnrealTokens.cs" />
     <Compile Include="UnrealTypes.cs" />
@@ -262,6 +263,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>

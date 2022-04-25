@@ -2,6 +2,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -50,7 +51,7 @@ namespace UELib.Core
                 return string.Empty;
 
             string[] options = EditorDataText.TrimEnd('\n').Split('\n');
-            string decodedOptions = string.Join(" ", options.Select(s => $"\"{s}\""));
+            string decodedOptions = string.Join(" ", options.Select(PropertyDisplay.FormatLiteral));
             return " " + decodedOptions;
         }
 

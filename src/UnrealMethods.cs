@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace UELib
 {
@@ -25,7 +28,7 @@ namespace UELib
     [Serializable]
     public class DeserializationException : UnrealException
     {
-        [NonSerializedAttribute] private readonly string _Output;
+        [NonSerialized] private readonly string _Output;
 
         public DeserializationException()
         {
@@ -51,7 +54,7 @@ namespace UELib
     [Serializable]
     public class DecompilingHeaderException : UnrealException
     {
-        [NonSerializedAttribute] private readonly string _Output;
+        [NonSerialized] private readonly string _Output;
 
         public DecompilingHeaderException()
         {
@@ -150,7 +153,7 @@ namespace UELib
                 if (flagsList.Contains(eName))
                     continue;
 
-                flagsList.Add("0x" + flag.ToString("X8") + ":" + eName);
+                flagsList.Add($"0x{flag:X8}:{eName}");
             }
 
             return flagsList;
@@ -169,7 +172,7 @@ namespace UELib
                 if (flagsList.Contains(eName))
                     continue;
 
-                flagsList.Add("0x" + flag.ToString("X8") + ":" + eName);
+                flagsList.Add($"0x{flag:X8}:{eName}");
             }
 
             return flagsList;
@@ -184,22 +187,12 @@ namespace UELib
 
         public static string FlagToString(uint flags)
         {
-            return "0x" + string.Format("{0:X4}", flags).PadLeft(8, '0');
+            return $"0x{$"{flags:X4}".PadLeft(8, '0')}";
         }
 
         public static string FlagToString(ulong flags)
         {
-            return FlagToString((uint)(flags >> 32)) + "-" + FlagToString((uint)(flags));
-        }
-
-        public static string Escape(this string s)
-        {
-            return s
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\t", "\\t")
-                .Replace("\\", "\\\\");
+            return $"{FlagToString((uint)(flags >> 32))}-{FlagToString((uint)flags)}";
         }
     }
 

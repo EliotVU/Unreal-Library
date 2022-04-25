@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -57,7 +58,7 @@ namespace UELib.Core
 
             public class IntConstToken : Token
             {
-                public int Value { get; private set; }
+                public int Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -67,13 +68,13 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return Value.ToString();
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
             public class ByteConstToken : Token
             {
-                public byte Value { get; private set; }
+                public byte Value;
 
                 private enum ENetRole
                 {
@@ -111,7 +112,6 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     if (FieldToken.LastField != null)
-                    {
                         switch (FieldToken.LastField.Outer.Name + FieldToken.LastField.Name)
                         {
                             case "ActorRemoteRole":
@@ -123,15 +123,14 @@ namespace UELib.Core
                             case "WorldInfoNetMode":
                                 return Enum.GetName(typeof(ENetMode), Value);
                         }
-                    }
 
-                    return Value.ToString(CultureInfo.InvariantCulture);
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
             public class IntConstByteToken : Token
             {
-                public byte Value { get; private set; }
+                public byte Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -141,13 +140,13 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return $"{Value:d}";
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
             public class FloatConstToken : Token
             {
-                public float Value { get; private set; }
+                public float Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -157,58 +156,51 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return Value.ToUFloat();
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
             public class ObjectConstToken : Token
             {
-                public int ObjectIndex { get; private set; }
+                public UObject ObjectRef;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    ObjectIndex = stream.ReadObjectIndex();
+                    ObjectRef = stream.ReadObject();
                     Decompiler.AlignObjectSize();
                 }
 
+                // Produces: ClassName'ObjectName'
                 public override string Decompile()
                 {
-                    var obj = Decompiler._Container.GetIndexObject(ObjectIndex);
-                    if (obj != null)
-                    {
-                        // class'objectclasshere'
-                        string Class = obj.GetClassName();
-                        if (string.IsNullOrEmpty(Class))
-                        {
-                            Class = "class";
-                        }
+                    if (ObjectRef == null) return "none";
 
-                        return $"{Class}'{obj.Name}'";
-                    }
+                    string className = ObjectRef.GetClassName();
+                    if (string.IsNullOrEmpty(className)) className = "class";
 
-                    return "none";
+                    return $"{className}'{ObjectRef.Name}'";
                 }
             }
 
             public class NameConstToken : Token
             {
-                public int NameIndex { get; private set; }
+                public UName Name;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    NameIndex = stream.ReadNameIndex();
+                    Name = stream.ReadNameReference();
                     Decompiler.AlignNameSize();
                 }
 
                 public override string Decompile()
                 {
-                    return $"'{Decompiler._Container.Package.GetIndexName(NameIndex)}'";
+                    return PropertyDisplay.FormatLiteral(Name);
                 }
             }
 
             public class StringConstToken : Token
             {
-                public string Value { get; private set; }
+                public string Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -218,23 +210,23 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return $"\"{Value.Escape()}\"";
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
             public class UniStringConstToken : Token
             {
-                public string Value { get; private set; }
+                public string Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.UR.ReadUnicode();
-                    Decompiler.AlignSize((Value.Length * 2) + 2); // inc null char
+                    Decompiler.AlignSize(Value.Length * 2 + 2); // inc null char
                 }
 
                 public override string Decompile()
                 {
-                    return $"\"{Value.Escape()}\"";
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
@@ -259,7 +251,8 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return $"rot({Value.Pitch}, {Value.Yaw}, {Value.Roll})";
+                    return
+                        $"rot({PropertyDisplay.FormatLiteral(Value.Pitch)}, {PropertyDisplay.FormatLiteral(Value.Yaw)}, {PropertyDisplay.FormatLiteral(Value.Roll)})";
                 }
             }
 
@@ -279,7 +272,8 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return $"vect({X.ToUFloat()}, {Y.ToUFloat()}, {Z.ToUFloat()})";
+                    return
+                        $"vect({PropertyDisplay.FormatLiteral(X)}, {PropertyDisplay.FormatLiteral(Y)}, {PropertyDisplay.FormatLiteral(Z)})";
                 }
             }
         }

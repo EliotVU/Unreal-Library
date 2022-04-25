@@ -1466,8 +1466,6 @@ namespace UELib
         /// if index is negative an imported Object will be returned.
         /// if index is zero null will be returned.
         /// </summary>
-        /// <param name="objectIndex">The index of the Object in a tablelist.</param>
-        /// <returns>The found UELib.Core.UObject if any.</returns>
         [PublicAPI]
         public UObject GetIndexObject(int objectIndex)
         {
@@ -1487,8 +1485,6 @@ namespace UELib
         /// <summary>
         /// Returns a name that resides at the specified NameIndex.
         /// </summary>
-        /// <param name="nameIndex">A NameIndex into the NameTableList.</param>
-        /// <returns>The name at specified NameIndex.</returns>
         [PublicAPI]
         public string GetIndexName(int nameIndex)
         {
@@ -1502,8 +1498,6 @@ namespace UELib
         /// if index is negative an ImportTable will be returned.
         /// if index is zero null will be returned.
         /// </summary>
-        /// <param name="tableIndex">The index of the Table.</param>
-        /// <returns>The found UELib.Core.UnrealTable if any.</returns>
         [PublicAPI]
         public UObjectTableItem GetIndexTable(int tableIndex)
         {
@@ -1514,14 +1508,8 @@ namespace UELib
                     : null;
         }
 
-        /// <summary>
-        /// Tries to find an UELib.Core.UObject with a specified name and type.
-        /// </summary>
-        /// <param name="objectName">The name of the object to find.</param>
-        /// <param name="classType">The type of the object to find.</param>
-        /// <param name="checkForSubclass">Whether to test for subclasses of type as well.</param>
-        /// <returns>The found UELib.Core.UObject if any.</returns>
         [PublicAPI]
+        [Obsolete("See below")]
         public UObject FindObject(string objectName, Type classType, bool checkForSubclass = false)
         {
             var obj = Objects?.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
@@ -1529,6 +1517,16 @@ namespace UELib
                                              ? o.GetType().IsSubclassOf(classType)
                                              : o.GetType() == classType));
             return obj;
+        }
+
+        [PublicAPI]
+        public T FindObject<T>(string objectName, bool checkForSubclass = false) where T : UObject
+        {
+            var obj = Objects?.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+                                         (checkForSubclass
+                                             ? o.GetType().IsSubclassOf(typeof(T))
+                                             : o.GetType() == typeof(T)));
+            return obj as T;
         }
 
         [PublicAPI]
