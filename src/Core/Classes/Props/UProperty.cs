@@ -128,12 +128,37 @@ namespace UELib.Core
 
             if (HasPropertyFlag(PropertyFlagsLO.EditorData)
                 // FIXME: At which version was this feature removed?
-            if (HasPropertyFlag(Flags.PropertyFlagsLO.EditorData) && Package.Version <= 128)
+                && Package.Version <= 160)
             {
+                // May represent a tooltip/comment in some games.
                 EditorDataText = _Buffer.ReadText();
                 Record(nameof(EditorDataText), EditorDataText);
             }
-
+#if SPELLBORN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+            {
+                if (_Buffer.Version < 157)
+                {
+                    throw new NotSupportedException("< 157 Spellborn packages are not supported");
+                    
+                    if (133 < _Buffer.Version)
+                    {
+                        // idk
+                    }
+                    
+                    if (134 < _Buffer.Version)
+                    {
+                        int unk32 = _Buffer.ReadInt32();
+                        Record("Unknown", unk32);
+                    }
+                }
+                else
+                {
+                    uint replicationFlags = _Buffer.ReadUInt32();
+                    Record(nameof(replicationFlags), replicationFlags);
+                }
+            }
+#endif
 #if SWAT4
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
             {

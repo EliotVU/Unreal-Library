@@ -99,6 +99,18 @@ namespace UELib.Core
                 Record("RepOffset", RepOffset);
             }
 
+#if SPELLBORN
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn
+                && 133 < _Buffer.Version)
+            {
+                // Always 0xAC6975C
+                uint unknownFlags1 = _Buffer.ReadUInt32();
+                Record(nameof(unknownFlags1), unknownFlags1);
+                uint replicationFlags = _Buffer.ReadUInt32();
+                Record(nameof(replicationFlags), replicationFlags);
+            }
+#endif
+
             // TODO: Data-strip version?
             if (Package.Version >= VFriendlyName && !Package.IsConsoleCooked()
 #if TRANSFORMERS

@@ -126,6 +126,7 @@ namespace UELib.Flags
     public enum ObjectFlagsLO : ulong   // 32bit aligned, see ObjectFlags64
     {
         Transactional       = 0x00000001U,
+        InSingularFunc      = 0x00000002U,
         Public              = 0x00000004U,
 
         Private             = 0x00000080U,

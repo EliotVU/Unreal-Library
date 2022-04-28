@@ -279,9 +279,9 @@ namespace UELib
                 /// </summary>
                 [Build(118, 128, 25u, 29u)] UT2004,
 
-                // Built on UT2004
-                // Represents both AAO and AAA
                 /// <summary>
+                /// Built on UT2004
+                /// Represents both AAO and AAA
                 /// 128/032:033
                 /// </summary>
                 [Build(128, 128, 32u, 33u)] AA2,
@@ -302,6 +302,14 @@ namespace UELib
                 [Build(130, 143, 56u, 59u, 0, 0)] Bioshock,
 
                 // IrrationalGames - 129:143/027:059
+
+                /// <summary>
+                /// Built on UT2004
+                /// 159/029
+                ///
+                /// Comes with several new non-standard UnrealScript features, these are however not supported.
+                /// </summary>
+                [Build(159, 29u)] Spellborn,
 
                 /// <summary>
                 /// 369/006
@@ -952,8 +960,14 @@ namespace UELib
 #if MKKE
                 if (Build == GameBuild.BuildName.MKKE) stream.Skip(4);
 #endif
+                if (Build == GameBuild.BuildName.Spellborn
+                    && stream.Version >= 148)
+                {
+                    goto skipGuid;
+                }
                 GUID = stream.ReadGuid().ToString();
                 Console.WriteLine("GUID:" + GUID);
+                skipGuid:
 #if TERA
                 if (Build == GameBuild.BuildName.Tera) stream.Position -= 4;
 #endif
@@ -1085,6 +1099,16 @@ namespace UELib
                     nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                     Names.Add(nameEntry);
                 }
+#if SPELLBORN
+                // WTF were they thinking? Change DRFORTHEWIN to None
+                if (Build == GameBuild.BuildName.Spellborn 
+                    && Names[0].Name == "DRFORTHEWIN")
+                {
+                    Names[0].Name = "None";
+                    // False??
+                    //Debug.Assert(stream.Position == _TablesData.ImportsOffset);
+                }
+#endif
             }
 
             // Read Import Table

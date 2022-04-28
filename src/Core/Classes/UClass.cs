@@ -131,7 +131,15 @@ namespace UELib.Core
 #endif
             ClassFlags = _Buffer.ReadUInt32();
             Record("ClassFlags", (ClassFlags)ClassFlags);
-
+#if SPELLBORN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+            {
+                _Buffer.ReadArray(out ClassDependencies);
+                Record(nameof(ClassDependencies), ClassDependencies);
+                PackageImports = DeserializeGroup(nameof(PackageImports));
+                goto skipTo61Stuff;
+            }
+#endif
             // FIXME: Both were deprecated since then
             if (Package.Version < 140)
             {
@@ -151,6 +159,7 @@ namespace UELib.Core
                 Record("???", unknown);
             }
 
+            skipTo61Stuff:
             if (Package.Version > 61)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
@@ -202,6 +211,13 @@ namespace UELib.Core
                         if (Package.Version < 220 || !isHideCategoriesOldOrder)
                         {
                             DeserializeHideCategories();
+#if SPELLBORN
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+                            {
+                                uint replicationFlags = _Buffer.ReadUInt32();
+                                Record(nameof(replicationFlags), replicationFlags);
+                            }
+#endif
                         }
 
                         // +AutoExpandCategories

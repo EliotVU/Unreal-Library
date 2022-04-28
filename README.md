@@ -46,13 +46,14 @@ Below is a table of games that are known to be compatible with the UELib.
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Unreal II | 829-2001 | 126/2609 | |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
-| America's Army 2 | 3369 | 128/032:033 | | 2.5, 2.6, 2.8
-| America's Army (Arcade) | 3369 | 128/032 | | 2.6
+| America's Army 2 | 3369 | 128/032:033 | 2.5, 2.6, 2.8 |
+| America's Army (Arcade) | 3369 | 128/032 | 2.6 |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory Battery | Unknown | Unknown |     |
 | Swat 4 | Unknown | 129/027 |     |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | (Third-party) <https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/> |
+| The Chronicles of Spellborn | Unknown | 159/029 | |
 |     |     |     |     |
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |
@@ -72,7 +73,7 @@ Below is a table of games that are known to be compatible with the UELib.
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
 | Monday Night Combat | 5697 | 638/000 |     |
 | Unreal Development Kit | 6094-10246 | 664-860 | |
-| Dungeon Defenders | 6262 | 678/002 |     | Earlier releases only
+| Dungeon Defenders | 6262 | 678/002 | Earlier releases only |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |

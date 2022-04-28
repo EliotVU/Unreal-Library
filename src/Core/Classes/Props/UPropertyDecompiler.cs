@@ -196,7 +196,8 @@ namespace UELib.Core
                 output += FormatAccess();
 
                 // UE3 flags
-                if (Package.Version > 129)
+                // FIXME: Correct version
+                if (Package.Version > 160)
                 {
                     if (HasPropertyFlag(Flags.PropertyFlagsHO.PrivateWrite))
                     {

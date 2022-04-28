@@ -27,10 +27,10 @@ namespace UELib.Core
         private const uint VProcessedText = 129;
 
         // TODO: Corrigate version
-        private const uint VFriendlyNameMoved = 154;
+        private const uint VFriendlyNameMoved = 160;
 
         // TODO: Corrigate version
-        private const uint VStructFlagsMoved = 154;
+        private const uint VStructFlagsMoved = 160;
 
         #region Serialized Members
 
@@ -107,6 +107,9 @@ namespace UELib.Core
 #if VANGUARD
                                                 && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
 #endif
+#if SPELLBORN
+                                                && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
+#endif
                    )
                 {
                     CppText = _Buffer.ReadObject() as UTextBuffer;
@@ -131,6 +134,9 @@ namespace UELib.Core
                     if (Package.Version >= VProcessedText
 #if VANGUARD
                         && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
+#endif
+#if SPELLBORN
+                        && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
 #endif
                        )
                     {

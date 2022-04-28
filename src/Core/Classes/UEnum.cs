@@ -29,7 +29,15 @@ namespace UELib.Core
             {
                 Names.Add(_Buffer.ReadNameReference());
             }
+#if SPELLBORN
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn
+                && 145 < _Buffer.Version)
+            {
+                uint unknownEnumFlags = _Buffer.ReadUInt32();
+                Record(nameof(unknownEnumFlags), unknownEnumFlags);
+            }
         }
+#endif
 
         #endregion
     }
