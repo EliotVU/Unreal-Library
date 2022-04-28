@@ -40,7 +40,7 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
-            _Characters = new UArray<FontCharacter>(_Buffer);
+			_Buffer.ReadArray(out _Characters);
 
             // Textures
 

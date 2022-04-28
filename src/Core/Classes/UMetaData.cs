@@ -72,6 +72,7 @@ namespace UELib.Core
             }
         }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         public UArray<UFieldData> MetaObjects;
 
         #endregion
@@ -81,8 +82,7 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-            MetaObjects = new UArray<UFieldData>();
-            MetaObjects.Deserialize(_Buffer);
+            _Buffer.ReadArray(out MetaObjects);
         }
 
         #endregion

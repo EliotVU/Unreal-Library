@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using UELib.Annotations;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -71,13 +72,13 @@ namespace UELib.Core
         /// </summary>
         public UObjectStream Buffer => _Buffer;
 
+        [CanBeNull]
         public UObject Default { get; protected set; }
-        private DefaultPropertiesCollection _Properties;
 
         /// <summary>
         /// Object Properties e.g. SubObjects or/and DefaultProperties
         /// </summary>
-        public DefaultPropertiesCollection Properties => Default != null ? Default._Properties : _Properties;
+        public DefaultPropertiesCollection Properties { get; private set; }
 
         #endregion
 
@@ -188,7 +189,7 @@ namespace UELib.Core
 
         protected virtual bool CanDisposeBuffer()
         {
-            return _Properties == null;
+            return Properties.Count == 0;
         }
 
         /// <summary>
@@ -196,13 +197,6 @@ namespace UELib.Core
         /// </summary>
         protected virtual void Deserialize()
         {
-#if DEBUG
-#if LOG_RECORDS
-                Console.WriteLine( "" );
-#endif
-            Record(Name, this);
-            Record("ExportSize", ExportTable.SerialSize);
-#endif
             // TODO: Corrigate version
             if (Package.Version >= 322
 #if MKKE
@@ -272,18 +266,13 @@ namespace UELib.Core
             if (!IsClassType("Class"))
             {
 #if SWAT4
-                if (Package.Build != UnrealPackage.GameBuild.BuildName.Swat4)
-                {
-#endif
-                    // REMINDER:Ends with a NameIndex referencing to "None"; 1/4/8 bytes
-                    DeserializeProperties();
-#if SWAT4
-                }
-                else
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
                 {
                     _Buffer.Skip(1);
+                    return;
                 }
 #endif
+                DeserializeProperties();
             }
 #if UNREAL2
             else if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
@@ -303,7 +292,7 @@ namespace UELib.Core
         protected void DeserializeProperties()
         {
             Default = this;
-            _Properties = new DefaultPropertiesCollection();
+            Properties = new DefaultPropertiesCollection();
             while (true)
             {
                 var tag = new UDefaultProperty(Default);
@@ -311,15 +300,7 @@ namespace UELib.Core
                 {
                     break;
                 }
-
-                _Properties.Add(tag);
-            }
-
-            // We need to keep the MemoryStream alive,
-            // because we first deserialize the defaultproperties but we skip the values, which we'll deserialize later on by demand.
-            if (Properties.Count == 0)
-            {
-                _Properties = null;
+                Properties.Add(tag);
             }
         }
 
@@ -334,7 +315,7 @@ namespace UELib.Core
         {
         }
 
-        #endregion
+#endregion
 
         #region Methods
 
@@ -370,9 +351,9 @@ namespace UELib.Core
         public bool IsProtected()
         {
             // Protected was shifted to the higher order in later UE3 builds
-            return HasObjectFlag(ObjectFlagsHO.Protected) 
+            return HasObjectFlag(ObjectFlagsHO.Protected)
                    || (_ObjectFlags & (
-                       (ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected)) 
+                       (ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected))
                    == ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected);
         }
 
@@ -625,8 +606,7 @@ namespace UELib.Core
         /// </summary>
         /// <param name="varName">The struct that was read from the previous buffer position.</param>
         /// <param name="varObject">The struct's value that was read.</param>
-        [System.Diagnostics.DebuggerHidden]
-        [System.Diagnostics.Conditional("DEBUG"), System.Diagnostics.Conditional("BINARYMETADATA")]
+        [System.Diagnostics.Conditional("BINARYMETADATA")]
         internal void Record(string varName, object varObject = null)
         {
             long size = _Buffer.Position - _Buffer.LastPosition;

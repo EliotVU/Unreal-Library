@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
@@ -89,7 +90,9 @@ namespace UELib
                 ArchetypeIndex = stream.ReadInt32();
             }
 
-            stream.UW.Write(stream.Version >= VObjectFlagsToULONG ? ObjectFlags : (uint)ObjectFlags);
+            stream.Write(stream.Version >= VObjectFlagsToULONG 
+                ? ObjectFlags 
+                : (uint)ObjectFlags);
             stream.WriteIndex(SerialSize); // Assumes SerialSize has been updated to @Object's buffer size.
             if (SerialSize > 0 || stream.Version >= VSerialSizeConditionless)
             {
@@ -98,6 +101,10 @@ namespace UELib
             }
 
             // TODO: Continue.
+            if (stream.Version >= 220)
+            {
+                throw new NotSupportedException();
+            }
         }
 
         public void Deserialize(IUnrealStream stream)

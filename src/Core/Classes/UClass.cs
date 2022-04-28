@@ -35,7 +35,7 @@ namespace UELib.Core
 
         private ulong ClassFlags { get; set; }
 
-        public string ClassGuid { get; private set; }
+        public Guid ClassGuid;
         public UClass Within { get; private set; }
         public UName ConfigName { get; private set; }
         public UName DLLBindName { get; private set; }
@@ -104,6 +104,7 @@ namespace UELib.Core
 
         #region Constructors
 
+        // TODO: Clean this mess up...
         protected override void Deserialize()
         {
             base.Deserialize();
@@ -113,7 +114,6 @@ namespace UELib.Core
                 int oldClassRecordSize = _Buffer.ReadInt32();
                 Record("oldClassRecordSize", oldClassRecordSize);
             }
-
 #if AA2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
             {
@@ -122,7 +122,6 @@ namespace UELib.Core
                 Record("Unknown:AA2", unknown);
             }
 #endif
-
 #if BIOSHOCK
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
             {
@@ -130,40 +129,33 @@ namespace UELib.Core
                 Record("???Bioshock_Int32", unknown);
             }
 #endif
-
             ClassFlags = _Buffer.ReadUInt32();
             Record("ClassFlags", (ClassFlags)ClassFlags);
 
             // FIXME: Both were deprecated since then
             if (Package.Version < 140)
             {
-                ClassGuid = _Buffer.ReadGuid().ToString();
-                Record("ClassGuid", ClassGuid);
+                ClassGuid = _Buffer.ReadGuid();
+                Record(nameof(ClassGuid), ClassGuid);
 
-                // Use ReadCount because Vanguard does no longer uses indexes but an int32 for arrays.
                 int depSize = ReadCount();
-                Record("DepSize", depSize);
-                if (depSize > 0)
-                {
-                    ClassDependencies = new UArray<Dependency>(_Buffer, depSize);
-                    Record("ClassDependencies", ClassDependencies);
-                }
+                _Buffer.ReadArray(out ClassDependencies, depSize);
+                Record(nameof(ClassDependencies), ClassDependencies);
+                PackageImports = DeserializeGroup(nameof(PackageImports));
+            }
 
-                PackageImports = DeserializeGroup("PackageImports");
+            // FIXME: At least since Bioshock(140) - 547(APB)
+            if (Package.Version >= 140 && Package.Version < 547)
+            {
+                byte unknown = _Buffer.ReadByte();
+                Record("???", unknown);
             }
 
             if (Package.Version > 61)
             {
-                // FIXME: At least since Bioshock(140) - 547(APB)
-                if (Package.Version >= 140 && Package.Version < 547)
-                {
-                    byte unknown = _Buffer.ReadByte();
-                    Record("???", unknown);
-                }
-
                 // Class Name Extends Super.Name Within _WithinIndex
                 //      Config(_ConfigIndex);
-                Within = _Buffer.ReadObject() as UClass;
+                Within = _Buffer.ReadObject<UClass>();
                 Record("Within", Within);
                 ConfigName = _Buffer.ReadNameReference();
                 Record("ConfigName", ConfigName);
@@ -182,23 +174,19 @@ namespace UELib.Core
                     if (Package.Version >= 220)
                     {
                         // TODO: Corrigate Version
-                        if ((isHideCategoriesOldOrder && !Package.IsConsoleCooked() && !Package.Build.HasFlags(BuildFlags.XenonCooked))
+                        if ((isHideCategoriesOldOrder && !Package.IsConsoleCooked() &&
+                             !Package.Build.HasFlags(BuildFlags.XenonCooked))
 #if TRANSFORMERS
                             || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
 #endif
                            )
-                        {
                             DeserializeHideCategories();
-                        }
 
                         DeserializeComponentsMap();
 
                         // RoboBlitz(369)
                         // TODO: Corrigate Version
-                        if (Package.Version >= 369)
-                        {
-                            DeserializeInterfaces();
-                        }
+                        if (Package.Version >= 369) DeserializeInterfaces();
                     }
 
                     if (!Package.IsConsoleCooked() && !Package.Build.HasFlags(BuildFlags.XenonCooked))
@@ -208,9 +196,7 @@ namespace UELib.Core
                             && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
                            )
-                        {
                             DontSortCategories = DeserializeGroup("DontSortCategories");
-                        }
 
                         // FIXME: Added in v99, removed in ~220?
                         if (Package.Version < 220 || !isHideCategoriesOldOrder)
@@ -222,11 +208,9 @@ namespace UELib.Core
                         if (Package.Version >= 185)
                         {
                             // 490:GoW1, 576:CrimeCraft
-                            if ((!HasClassFlag(Flags.ClassFlags.CollapseCategories))
+                            if (!HasClassFlag(Flags.ClassFlags.CollapseCategories)
                                 || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576)
-                            {
                                 AutoExpandCategories = DeserializeGroup("AutoExpandCategories");
-                            }
 
                             if (Package.Version > 670)
                             {
@@ -268,7 +252,7 @@ namespace UELib.Core
                                         }
                                     }
 #if DISHONORED
-                                skipClassGroups:;
+                                    skipClassGroups: ;
 #endif
                                 }
                             }
@@ -285,10 +269,7 @@ namespace UELib.Core
                                 Record("??Int32", unk2);
 
 #if SINGULARITY
-                                if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity)
-                                {
-                                    _Buffer.Skip(8);
-                                }
+                                if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity) _Buffer.Skip(8);
 #endif
                             }
                         }
@@ -307,9 +288,7 @@ namespace UELib.Core
 #endif
 #if DISHONORED
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
-                        {
                             ClassGroups = DeserializeGroup("ClassGroups");
-                        }
 #endif
 #if BORDERLANDS2
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
@@ -333,10 +312,8 @@ namespace UELib.Core
             {
 #if SWAT4
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
-                {
                     // We are done here!
                     return;
-                }
 #endif
                 DeserializeProperties();
             }
@@ -385,12 +362,8 @@ namespace UELib.Core
             base.FindChildren();
             States = new List<UState>();
             for (var child = Children; child != null; child = child.NextField)
-            {
                 if (child.IsClassType("State"))
-                {
                     States.Insert(0, (UState)child);
-                }
-            }
         }
 
         #endregion
@@ -399,10 +372,7 @@ namespace UELib.Core
 
         private IList<int> DeserializeGroup(string groupName = "List", int count = -1)
         {
-            if (count == -1)
-            {
-                count = ReadCount();
-            }
+            if (count == -1) count = ReadCount();
 
             Record($"{groupName}.Count", count);
             if (count <= 0)

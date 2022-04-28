@@ -1,36 +1,40 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using UELib.Core;
 
 namespace UELib
 {
+    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+    [SuppressMessage("ReSharper", "NotAccessedField.Global")]
     public class UnrealMod : IUnrealDeserializableClass
     {
         public const uint Signature = 0x9FE3C5A3;
 
         public struct FileSummary : IUnrealDeserializableClass
         {
-            public uint FileTableOffset;
-            public uint FileSize;
-            public uint Version;
-            public uint CRC32;
+            public int FileTableOffset;
+            public int FileSize;
+            public int Version;
+            public int CRC32;
 
             public void Deserialize(IUnrealStream stream)
             {
-                FileTableOffset = stream.ReadUInt32();
-                FileSize = stream.ReadUInt32();
-                Version = stream.ReadUInt32();
-                CRC32 = stream.ReadUInt32();
+                FileTableOffset = stream.ReadInt32();
+                FileSize = stream.ReadInt32();
+                Version = stream.ReadInt32();
+                CRC32 = stream.ReadInt32();
             }
         }
 
         public FileSummary Summary;
 
         // Table values are not initialized!
-        public class FileTable : UTableItem, IUnrealSerializableClass
+
+        public struct ModFile : IUnrealSerializableClass
         {
             public string FileName;
-            public uint SerialOffset;
-            public uint SerialSize;
+            public int SerialOffset;
+            public int SerialSize;
             public uint FileFlags;
 
             /*[Flags]
@@ -47,13 +51,13 @@ namespace UELib
             public void Deserialize(IUnrealStream stream)
             {
                 FileName = stream.ReadText();
-                SerialOffset = (uint)stream.ReadIndex();
-                SerialSize = (uint)stream.ReadIndex();
+                SerialOffset = stream.ReadIndex();
+                SerialSize = stream.ReadIndex();
                 FileFlags = stream.ReadUInt32();
             }
         }
 
-        public UArray<FileTable> FileTableList;
+        public UArray<ModFile> FileMap;
 
         public void Deserialize(IUnrealStream stream)
         {
@@ -66,7 +70,7 @@ namespace UELib
             Summary.Deserialize(stream);
 
             stream.Seek(Summary.FileTableOffset, System.IO.SeekOrigin.Begin);
-            FileTableList = new UArray<FileTable>(stream);
+            stream.ReadArray(out FileMap);
         }
     }
 }

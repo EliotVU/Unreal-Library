@@ -1,17 +1,20 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace UELib
 {
     using Core;
 
+    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+    [SuppressMessage("ReSharper", "NotAccessedField.Global")]
     public class CompressedChunk : IUnrealSerializableClass
     {
         public int UncompressedOffset;
         public int UncompressedSize;
         public int CompressedOffset;
         public int CompressedSize;
-        private CompressedChunkHeader _Header;
+        public CompressedChunkHeader Header;
 
         public void Serialize(IUnrealStream stream)
         {
@@ -33,10 +36,10 @@ namespace UELib
         public void Decompress(UPackageStream inStream, UPackageStream outStream)
         {
             inStream.Seek(CompressedOffset, System.IO.SeekOrigin.Begin);
-            _Header.Deserialize(inStream);
+            Header.Deserialize(inStream);
 
             outStream.Seek(UncompressedOffset, System.IO.SeekOrigin.Begin);
-            foreach (byte[] buffer in _Header.Blocks.Select(block => block.Decompress()))
+            foreach (byte[] buffer in Header.Blocks.Select(block => block.Decompress()))
             {
                 outStream.Write(buffer, 0, buffer.Length);
             }
@@ -44,10 +47,10 @@ namespace UELib
 
         public struct CompressedChunkHeader : IUnrealSerializableClass
         {
-            private uint _Signature;
-            private int _BlockSize;
-            private int _CompressedSize;
-            private int _UncompressedSize;
+            public uint Signature;
+            public int BlockSize;
+            public int CompressedSize;
+            public int UncompressedSize;
 
             public UArray<CompressedChunkBlock> Blocks;
 
@@ -58,25 +61,25 @@ namespace UELib
 
             public void Deserialize(IUnrealStream stream)
             {
-                _Signature = stream.ReadUInt32();
-                if (_Signature != UnrealPackage.Signature)
+                Signature = stream.ReadUInt32();
+                if (Signature != UnrealPackage.Signature)
                 {
                     throw new System.IO.FileLoadException("Unrecognized signature!");
                 }
 
-                _BlockSize = stream.ReadInt32();
-                _CompressedSize = stream.ReadInt32();
-                _UncompressedSize = stream.ReadInt32();
+                BlockSize = stream.ReadInt32();
+                CompressedSize = stream.ReadInt32();
+                UncompressedSize = stream.ReadInt32();
 
-                var blockCount = (int)Math.Ceiling(_UncompressedSize / (float)_BlockSize);
-                Blocks = new UArray<CompressedChunkBlock>(stream, blockCount);
+                var blockCount = (int)Math.Ceiling(UncompressedSize / (float)BlockSize);
+                stream.ReadArray(out Blocks, blockCount);
             }
 
             public struct CompressedChunkBlock : IUnrealSerializableClass
             {
-                private int _CompressedSize;
-                private int _UncompressedSize;
-                private byte[] _CompressedData;
+                public int CompressedSize;
+                public int UncompressedSize;
+                public byte[] CompressedData;
 
                 public void Serialize(IUnrealStream stream)
                 {
@@ -85,16 +88,16 @@ namespace UELib
 
                 public void Deserialize(IUnrealStream stream)
                 {
-                    _CompressedSize = stream.ReadInt32();
-                    _UncompressedSize = stream.ReadInt32();
+                    CompressedSize = stream.ReadInt32();
+                    UncompressedSize = stream.ReadInt32();
 
-                    _CompressedData = new byte[_CompressedSize];
-                    stream.Read(_CompressedData, 0, _CompressedSize);
+                    CompressedData = new byte[CompressedSize];
+                    stream.Read(CompressedData, 0, CompressedSize);
                 }
 
                 public byte[] Decompress()
                 {
-                    var decompressedData = new byte[_UncompressedSize];
+                    var decompressedData = new byte[UncompressedSize];
                     //ManagedLZO.MiniLZO.Decompress( CompressedData, DecompressedData );
                     return decompressedData;
                 }

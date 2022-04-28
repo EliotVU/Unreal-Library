@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Flags;
+using UELib.Types;
 
 namespace UELib.Core
 {
-    using Types;
-
     /// <summary>
     /// Represents a unreal property.
     /// </summary>
@@ -29,7 +30,7 @@ namespace UELib.Core
 #endif
 
         [CanBeNull] public UName CategoryName;
-        
+
         [Obsolete("See CategoryName")]
         public int CategoryIndex { get; }
 
@@ -37,7 +38,7 @@ namespace UELib.Core
 
         public ushort RepOffset { get; private set; }
 
-        public bool RepReliable => HasPropertyFlag(Flags.PropertyFlagsLO.Net);
+        public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
 
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
@@ -89,12 +90,13 @@ namespace UELib.Core
             int info = _Buffer.ReadInt32();
             ArrayDim = (ushort)(info & 0x0000FFFFU);
             Record("ArrayDim", ArrayDim);
+            Debug.Assert(ArrayDim <= 2048);
             ElementSize = (ushort)(info >> 16);
             Record("ElementSize", ElementSize);
-            skipInfo:
+        skipInfo:
 
-            PropertyFlags = Package.Version >= 220 
-                ? _Buffer.ReadUInt64() 
+            PropertyFlags = Package.Version >= 220
+                ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
             Record("PropertyFlags", PropertyFlags);
 
@@ -117,13 +119,15 @@ namespace UELib.Core
                 }
             }
 
-            if (HasPropertyFlag(Flags.PropertyFlagsLO.Net))
+            if (HasPropertyFlag(PropertyFlagsLO.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
                 Record("RepOffset", RepOffset);
             }
 
-            // FIXME: At which version was this feature removed?
+
+            if (HasPropertyFlag(PropertyFlagsLO.EditorData)
+                // FIXME: At which version was this feature removed?
             if (HasPropertyFlag(Flags.PropertyFlagsLO.EditorData) && Package.Version <= 128)
             {
                 EditorDataText = _Buffer.ReadText();
@@ -148,19 +152,19 @@ namespace UELib.Core
 
         #region Methods
 
-        public bool HasPropertyFlag(Flags.PropertyFlagsLO flag)
+        public bool HasPropertyFlag(PropertyFlagsLO flag)
         {
             return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;
         }
 
-        public bool HasPropertyFlag(Flags.PropertyFlagsHO flag)
+        public bool HasPropertyFlag(PropertyFlagsHO flag)
         {
             return ((PropertyFlags >> 32) & (uint)flag) != 0;
         }
 
         public bool IsParm()
         {
-            return HasPropertyFlag(Flags.PropertyFlagsLO.Parm);
+            return HasPropertyFlag(PropertyFlagsLO.Parm);
         }
 
         public virtual string GetFriendlyInnerType()

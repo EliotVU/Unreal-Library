@@ -668,7 +668,9 @@ namespace UELib
         /// List of package generations.
         /// </summary>
         [PublicAPI]
-        public UArray<UGenerationTableItem> Generations { get; private set; }
+        public UArray<UGenerationTableItem> Generations => _Generations;
+
+        private UArray<UGenerationTableItem> _Generations;
 
         /// <summary>
         /// The Engine version the package was created with.
@@ -693,7 +695,9 @@ namespace UELib
         /// List of compressed chunks throughout the package.
         /// </summary>
         [PublicAPI]
-        public UArray<CompressedChunk> CompressedChunks { get; private set; }
+        public UArray<CompressedChunk> CompressedChunks => _CompressedChunks;
+
+        private UArray<CompressedChunk> _CompressedChunks;
 
         /// <summary>
         /// List of unique unreal names.
@@ -752,8 +756,7 @@ namespace UELib
         {
             Construct = 0x0001,
             Deserialize = 0x0002,
-            [Obsolete]
-            Import = 0x0004,
+            [Obsolete] Import = 0x0004,
             Link = 0x0008,
             All = RegisterClasses | Construct | Deserialize | Link,
             RegisterClasses = 0x0010
@@ -794,13 +797,9 @@ namespace UELib
             foreach (var import in Imports) import.Serialize(importsBuffer);
 
             var exportsBuffer = new UObjectStream(stream);
-            foreach (var export in Exports)
-            {
-                //export.Serialize( exportsBuffer );
-            }
+            foreach (var export in Exports) export.Serialize(exportsBuffer);
 
             stream.Seek(0, SeekOrigin.Begin);
-
             stream.Write(Signature);
 
             // Serialize header
@@ -811,7 +810,7 @@ namespace UELib
             if (Version >= VHeaderSize)
             {
                 stream.Write((int)HeaderSize);
-                if (Version >= VGroup) stream.WriteString(Group);
+                if (Version >= VGroup) stream.Write(Group);
             }
 
             stream.Write(PackageFlags);
@@ -826,7 +825,7 @@ namespace UELib
             // TODO: Serialize Heritages
 
             stream.Write(Guid.NewGuid().ToByteArray(), 0, 16);
-            Generations.Serialize(stream);
+            //Generations.Serialize(stream);
 
             if (Version >= VEngineVersion)
             {
@@ -839,7 +838,7 @@ namespace UELib
                         if (IsCooked())
                         {
                             stream.Write(CompressionFlags);
-                            CompressedChunks.Serialize(stream);
+                            //CompressedChunks.Serialize(stream);
                         }
                 }
             }
@@ -964,7 +963,7 @@ namespace UELib
 #endif
                     int generationCount = stream.ReadInt32();
                     Console.WriteLine("Generations Count:" + generationCount);
-                    Generations = new UArray<UGenerationTableItem>(stream, generationCount);
+                    stream.ReadArray(out _Generations, generationCount);
 #if MKKE
                 }
 #endif
@@ -988,38 +987,7 @@ namespace UELib
                             {
                                 CompressionFlags = stream.ReadUInt32();
                                 Console.WriteLine("CompressionFlags:" + CompressionFlags);
-                                CompressedChunks = new UArray<CompressedChunk> { Capacity = stream.ReadInt32() };
-                                //long uncookedSize = stream.Position;
-                                if (CompressedChunks.Capacity > 0)
-                                {
-                                    CompressedChunks.Deserialize(stream, CompressedChunks.Capacity);
-                                    return;
-
-                                    //try
-                                    //{
-                                    //    UPackageStream outStream = new UPackageStream( packagePath + ".dec", System.IO.FileMode.Create, FileAccess.ReadWrite );
-                                    //    //File.SetAttributes( packagePath + ".dec", FileAttributes.Temporary );
-                                    //    outStream.Package = pkg;
-                                    //    outStream._BigEndianCode = stream._BigEndianCode;
-
-                                    //    var headerBytes = new byte[uncookedSize];
-                                    //    stream.Seek( 0, SeekOrigin.Begin );
-                                    //    stream.Read( headerBytes, 0, (int)uncookedSize );
-                                    //    outStream.Write( headerBytes, 0, (int)uncookedSize );
-                                    //    foreach( var chunk in pkg.CompressedChunks )
-                                    //    {
-                                    //        chunk.Decompress( stream, outStream );
-                                    //    }
-                                    //    outStream.Flush();
-                                    //    pkg.Stream = outStream;
-                                    //    stream = outStream;
-                                    //    return pkg;
-                                    //}
-                                    //catch( Exception e )
-                                    //{
-                                    //    throw new DecompressPackageException();
-                                    //}
-                                }
+                                stream.ReadArray(out _CompressedChunks);
                             }
                     }
                 }
@@ -1268,8 +1236,7 @@ namespace UELib
                 /// <summary>
                 /// Importing objects from linked packages.
                 /// </summary>
-                [Obsolete]
-                Import = 2,
+                [Obsolete] Import = 2,
 
                 /// <summary>
                 /// Connecting deserialized object indexes.

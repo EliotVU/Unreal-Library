@@ -26,48 +26,14 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            int enumIndex = _Buffer.ReadObjectIndex();
-            EnumObject = (UEnum)GetIndexObject(enumIndex);
+            EnumObject = _Buffer.ReadObject<UEnum>();
         }
 
-        /// <inheritdoc/>
-        public override void InitializeImports()
-        {
-            base.InitializeImports();
-            ImportObject();
-        }
-
-        // Import the enum of e.g. Actor.Role and LevelInfo.NetMode.
-        private void ImportObject()
-        {
-            // Already imported...
-            if (EnumObject != null)
-            {
-                return;
-            }
-
-            var pkg = LoadImportPackage();
-            if (pkg != null)
-            {
-                if (pkg.Objects == null)
-                {
-                    pkg.AddClassType("ByteProperty", typeof(UByteProperty));
-                    pkg.AddClassType("Enum", typeof(UEnum));
-                    pkg.InitializeExportObjects();
-                }
-
-                var b = (UByteProperty)pkg.FindObject(Name, typeof(UByteProperty));
-                if (b != null)
-                {
-                    EnumObject = b.EnumObject;
-                }
-            }
-        }
-
-        /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return EnumObject != null ? EnumObject.GetOuterGroup() : "byte";
+            return EnumObject != null
+                ? EnumObject.GetOuterGroup()
+                : "byte";
         }
     }
 }

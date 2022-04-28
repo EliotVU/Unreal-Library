@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UELib.Annotations;
+using UELib.Core.Types;
 using UELib.Types;
 using UELib.UnrealScript;
 
@@ -45,23 +46,26 @@ namespace UELib.Core
 
         /// <summary>
         /// Name of the UProperty.
+        ///
+        /// get and private remain to maintain compatibility with UE Explorer
         /// </summary>
+        [PublicAPI]
         public UName Name { get; private set; }
 
         /// <summary>
         /// Name of the UStruct. If type equals StructProperty.
         /// </summary>
-        private UName ItemName { get; set; }
+        [PublicAPI] public UName ItemName;
 
         /// <summary>
         /// Name of the UEnum. If Type equals ByteProperty.
         /// </summary>
-        private UName EnumName { get; set; }
+        [PublicAPI] public UName EnumName;
 
         /// <summary>
         /// See PropertysType enum in UnrealFlags.cs
         /// </summary>
-        private PropertyType Type { get; set; }
+        [PublicAPI] public PropertyType Type;
 
         /// <summary>
         /// The stream size of this DefaultProperty.
@@ -77,6 +81,14 @@ namespace UELib.Core
         /// Value of the UBoolProperty. If Type equals BoolProperty.
         /// </summary>
         private bool _BoolValue;
+
+        /// <summary>
+        /// The deserialized and decompiled output.
+        ///
+        /// Serves as a temporary workaround, don't rely on it.
+        /// </summary>
+        [PublicAPI]
+        public string Value { get; private set; }
 
         #endregion
 
@@ -235,7 +247,7 @@ namespace UELib.Core
             _ValueOffset = _Buffer.Position;
             try
             {
-                DeserializeValue();
+                Value = DeserializeValue();
             }
             finally
             {
@@ -407,12 +419,8 @@ namespace UELib.Core
 
                     case PropertyType.Color:
                     {
-                        string b = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-                        string g = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-                        string r = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-                        string a = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-
-                        propertyValue += $"R={r},G={g},B={b},A={a}";
+                        _Buffer.ReadAtomicStruct(out UColor color);
+                        propertyValue += PropertyDisplay.FormatLiteral(color);
                         break;
                     }
 
@@ -752,7 +760,7 @@ namespace UELib.Core
                 if (structField.Variables == null || !structField.Variables.Any())
                     continue;
 
-                property = structField.Variables.Find(i => i.Name == Name);
+                property = structField.Variables.Find(i => i.Table.ObjectName == Name);
                 if (property == null)
                     continue;
 
@@ -788,12 +796,24 @@ namespace UELib.Core
     [System.Runtime.InteropServices.ComVisible(false)]
     public sealed class DefaultPropertiesCollection : List<UDefaultProperty>
     {
+        [CanBeNull]
         public UDefaultProperty Find(string name)
         {
             return Find(prop => prop.Name == name);
         }
 
+        [CanBeNull]
+        public UDefaultProperty Find(UName name)
+        {
+            return Find(prop => prop.Name == name);
+        }
+
         public bool Contains(string name)
+        {
+            return Find(name) != null;
+        }
+
+        public bool Contains(UName name)
         {
             return Find(name) != null;
         }

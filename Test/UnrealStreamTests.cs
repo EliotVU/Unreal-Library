@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using Eliot.UELib.Test;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Reflection;

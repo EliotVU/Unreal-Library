@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UELib.Core;
 
 namespace UELib
@@ -7,13 +6,13 @@ namespace UELib
     {
         #region Serialized Members
 
-        public List<int> Dependencies;
+        public UArray<UObject> Dependencies;
 
         #endregion
 
         public void Deserialize(IUnrealStream stream)
         {
-            Dependencies.Deserialize(stream);
+            stream.ReadArray(out Dependencies);
         }
     }
 }

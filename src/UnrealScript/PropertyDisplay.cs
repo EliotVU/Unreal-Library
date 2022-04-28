@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using UELib.Core.Types;
 
 namespace UELib.UnrealScript
 {
@@ -55,6 +56,19 @@ namespace UELib.UnrealScript
         public static string FormatLiteral(float input)
         {
             return input.ToString(CultureInfo.InvariantCulture);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatLiteral(UColor input)
+        {
+            // No parenthesis, may eventually change
+            return $"B={FormatLiteral(input.B)},G={FormatLiteral(input.G)},R={FormatLiteral(input.R)},A={FormatLiteral(input.A)}";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatStructLiteral(string args)
+        {
+            return $"({args})";
         }
     }
 }
