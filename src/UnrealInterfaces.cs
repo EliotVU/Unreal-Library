@@ -85,6 +85,14 @@ namespace UELib
     }
 
     /// <summary>
+    /// An atomic struct (e.g. UObject.Color, Vector, etc).
+    /// See <see cref="UnrealStreamImplementations.ReadAtomicStruct"/>
+    /// </summary>
+    public interface IUnrealAtomicStruct
+    {
+    }
+
+    /// <summary>
     /// This class is exportable into an non-unreal format
     /// </summary>
     public interface IUnrealExportable

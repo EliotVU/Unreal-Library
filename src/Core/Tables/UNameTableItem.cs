@@ -33,6 +33,14 @@ namespace UELib
         {
             Name = DeserializeName(stream);
             Debug.Assert(Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
+            
+            // Spellborn's version exceeds that of UE3
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+            {
+                Flags = stream.ReadUInt32();
+                return;
+            }
+            
             Flags = stream.Version >= QWORDVersion
                 ? stream.ReadUInt64()
                 : stream.ReadUInt32();
@@ -86,14 +94,13 @@ namespace UELib
 
         public void Serialize(IUnrealStream stream)
         {
-            stream.WriteString(Name);
-
+            stream.Write(Name);
             if (stream.Version < QWORDVersion)
                 // Writing UINT
-                stream.UW.Write((uint)Flags);
+                stream.Write((uint)Flags);
             else
                 // Writing ULONG
-                stream.UW.Write(Flags);
+                stream.Write(Flags);
         }
 
         public override string ToString()

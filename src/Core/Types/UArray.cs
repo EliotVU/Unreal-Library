@@ -3,111 +3,101 @@ using System.Collections.Generic;
 
 namespace UELib.Core
 {
-    //Mirrored docu' from List<T>
-
     /// <summary>
-    /// Represents a strongly typed array of serializable classes that can be accessed by index.
-    /// Provides methods to serialize from a specified stream.
+    /// Implements TArray.
+    /// 
+    /// A derived class of List to help with the serialization of Unreal arrays.
+    /// 
+    /// 
+    /// Typically an array is serialized with the count as a CompactInteger (<see cref="IUnrealStream.ReadIndex" />) (Or Int32 in UE3 builds)
+    /// Followed by a series of that array's element type. For example, for an array of objects, the data would be a series of CompactIntegers.
+    /// But for a struct type such as FColor, the data is not referenced, but inlined directly in an atomic order.
+    ///
+    /// To read an array of objects (referenced by index):
+    /// <example>
+    /// UArray<<see cref="UObject" />> objects;
+    /// stream.ReadArray(out objects);
+    /// </example>
+    ///
+    /// For an array of structs (inlined), you will have to declare a new struct and implement the <see cref="IUnrealSerializableClass"></see> interface
+    /// <example>
+    /// UArray<<see cref="UFont.FontCharacter" />> characters;
+    /// stream.ReadArray(out characters);
+    /// </example>
     /// </summary>
-    /// <typeparam name="T">T must have interface UELib.IUnrealSerializableClass and have default empty constructor.</typeparam>
-    public class UArray<T> : List<T> where T : IUnrealSerializableClass, new()
+    public class UArray<T> : List<T>
     {
-        /// <summary>
-        /// Initializes a new instance of the UELib.Core.UArray'T' class
-        /// that is empty and has the default initial capacity.
-        /// </summary>
         public UArray()
         {
         }
 
-        /// <summary>
-        /// Initialize a new instance based from the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to use for initializing this array.</param>
+        public UArray(int capacity) : base(capacity)
+        {
+        }
+
+        [Obsolete("Deprecated, see IUnrealStream.ReadArray")]
         public UArray(IUnrealStream stream)
         {
-            Deserialize(stream);
         }
 
-        /// <summary>
-        /// Initialize a new instance based from the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to use for initializing this array.</param>
-        /// <param name="count">The size to allocate for the list.</param>
+        [Obsolete("Deprecated, see IUnrealStream.ReadArray")]
         public UArray(IUnrealStream stream, int count)
         {
-            Deserialize(stream, count);
         }
 
-        public void Serialize(IUnrealStream stream)
+        [Obsolete]
+        public void Serialize<ST>(IUnrealStream stream) where ST : T, IUnrealSerializableClass
         {
             stream.WriteIndex(Count);
             for (var i = 0; i < Count; ++i)
             {
-                this[i].Serialize(stream);
+                ((IUnrealSerializableClass)this[i]).Serialize(stream);
             }
         }
 
-        /// <summary>
-        /// Initialize this array with items in the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to use for initializing this array.</param>
-        public void Deserialize(IUnrealStream stream)
+        [Obsolete]
+        public void Deserialize<ST>(IUnrealStream stream) where ST : T, IUnrealSerializableClass, new()
         {
             int c = stream.ReadIndex();
             Capacity = c;
             for (var i = 0; i < c; ++i)
             {
-                var item = new T();
+                var item = new ST();
                 item.Deserialize(stream);
                 Add(item);
             }
         }
 
-        /// <summary>
-        /// Initialize this array with items in the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to use for initializing this array.</param>
-        /// <param name="count">The size to allocate for the list.</param>
-        public void Deserialize(IUnrealStream stream, int count)
+        [Obsolete]
+        public void Deserialize<ST>(IUnrealStream stream, int count) where ST : T, IUnrealSerializableClass, new()
         {
             Capacity = count;
             for (var i = 0; i < count; ++i)
             {
-                var item = new T();
+                var item = new ST();
                 item.Deserialize(stream);
                 Add(item);
             }
         }
 
-        /// <summary>
-        /// Initialize this array with items in the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to use for initializing this array.</param>
-        /// <param name="action">The action to invoke before serializing a item.</param>
-        public void Deserialize(IUnrealStream stream, Action<T> action)
+        [Obsolete]
+        public void Deserialize<ST>(IUnrealStream stream, Action<ST> action) where ST : T, IUnrealSerializableClass, new()
         {
             int c = stream.ReadIndex();
             Capacity = c;
             for (var i = 0; i < c; ++i)
             {
-                var item = new T();
+                var item = new ST();
                 action.Invoke(item);
                 item.Deserialize(stream);
                 Add(item);
             }
         }
-    }
 
-    public static class UArrayList
-    {
-        public static void Deserialize(this List<int> indexes, IUnrealStream stream)
+        public override string ToString()
         {
-            indexes.Capacity = stream.ReadInt32();
-            for (var i = 0; i < indexes.Capacity; ++i)
-            {
-                indexes.Add(stream.ReadIndex());
-            }
+            return $"[{Count}]";
+            //return $"[{string.Join(",", this.Select(t => t.ToString()))}]";
         }
     }
 }
