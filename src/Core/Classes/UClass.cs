@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UELib.Annotations;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -38,7 +39,7 @@ namespace UELib.Core
         public Guid ClassGuid;
         public UClass Within { get; private set; }
         public UName ConfigName { get; private set; }
-        public UName DLLBindName { get; private set; }
+        [CanBeNull] public UName DLLBindName;
         public string NativeClassName = string.Empty;
         public bool ForceScriptOrder;
 

@@ -390,17 +390,10 @@ namespace UELib.Core
                     output += "\r\n\tforcescriptorder(false)";
             }
 
-            try
+            if (DLLBindName != null
+                && string.Compare(DLLBindName, "None", StringComparison.OrdinalIgnoreCase) != 0)
             {
-                if (Package.Version >= UnrealPackage.VDLLBIND
-                    && string.Compare(DLLBindName, "None", StringComparison.OrdinalIgnoreCase) != 0)
-                {
-                    output += $"\r\n\tdllbind({DLLBindName})";
-                }
-            }
-            catch
-            {
-                output += "\r\n\t// Failed to decompile dllbind";
+                output += $"\r\n\tdllbind({DLLBindName})";
             }
 
             if (ClassDependencies != null)
