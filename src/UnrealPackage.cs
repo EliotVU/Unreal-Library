@@ -169,8 +169,9 @@ namespace UELib
                 private readonly int _MaxVersion;
                 private readonly uint _MinLicensee;
                 private readonly uint _MaxLicensee;
-                private readonly BuildGeneration _Generation;
-                private readonly BuildFlags _Flags;
+                
+                public readonly BuildGeneration Generation;
+                public readonly BuildFlags Flags;
 
                 private readonly bool _VerifyEqual;
 
@@ -179,7 +180,7 @@ namespace UELib
                 {
                     _MinVersion = minVersion;
                     _MinLicensee = minLicensee;
-                    _Generation = gen;
+                    Generation = gen;
                     _VerifyEqual = true;
                 }
 
@@ -190,8 +191,8 @@ namespace UELib
                 {
                     _MinVersion = minVersion;
                     _MinLicensee = minLicensee;
-                    _Flags = flags;
-                    _Generation = gen;
+                    Flags = flags;
+                    Generation = gen;
                     _VerifyEqual = true;
                 }
 
@@ -202,7 +203,7 @@ namespace UELib
                     _MaxVersion = maxVersion;
                     _MinLicensee = minLicensee;
                     _MaxLicensee = maxLicensee;
-                    _Generation = gen;
+                    Generation = gen;
                 }
 
                 public BuildAttribute(int minVersion, int maxVersion, uint minLicensee, uint maxLicensee,
@@ -213,23 +214,17 @@ namespace UELib
                     _MaxVersion = maxVersion;
                     _MinLicensee = minLicensee;
                     _MaxLicensee = maxLicensee;
-                    _Flags = flags;
-                    _Generation = gen;
+                    Flags = flags;
+                    Generation = gen;
                 }
 
                 public bool Verify(GameBuild gb, UnrealPackage package)
                 {
-                    if (_VerifyEqual
-                            ? package.Version != _MinVersion || package.LicenseeVersion != _MinLicensee
-                            : package.Version < _MinVersion || package.Version > _MaxVersion ||
-                              package.LicenseeVersion < _MinLicensee || package.LicenseeVersion > _MaxLicensee)
-                        return false;
-
-                    gb.Version = package.Version;
-                    gb.LicenseeVersion = package.LicenseeVersion;
-                    gb.Flags = _Flags;
-                    gb.Generation = _Generation;
-                    return true;
+                    return _VerifyEqual 
+                        ? package.Version == _MinVersion && package.LicenseeVersion == _MinLicensee 
+                        : package.Version >= _MinVersion && package.Version <= _MaxVersion 
+                                                         && package.LicenseeVersion >= _MinLicensee 
+                                                         && package.LicenseeVersion <= _MaxLicensee;
                 }
             }
 
@@ -455,7 +450,7 @@ namespace UELib
                 [Build(511, 144)] // Transformers: War for Cybertron (PS3 and XBox 360 version)
                 [Build(537, 174)] // Transformers: Dark of the Moon
                 [Build(846, 181, 2, 1)]
-                // FIXME: No DLLBind
+                // FIXME: The serialized version is false, needs to be adjusted.
                 // Transformers: Fall of Cybertron
                 Transformers,
 
@@ -463,6 +458,12 @@ namespace UELib
                 /// 860/004
                 /// </summary>
                 [Build(860, 4)] Hawken,
+
+                /// <summary>
+                /// 867/009
+                /// Dated, 2015
+                /// </summary>
+                [Build(867, 9u)] RocketLeague,
 
                 /// <summary>
                 /// 904/009
@@ -475,24 +476,24 @@ namespace UELib
                 [Build(845, 120)] XCOM2WotC
             }
 
-            public BuildName Name { get; private set; }
+            public BuildName Name { get; }
 
-            public uint Version { get; private set; }
-            public uint LicenseeVersion { get; private set; }
+            public uint Version { get; }
+            public uint LicenseeVersion { get; }
 
             /// <summary>
             /// Is cooked for consoles.
             /// </summary>
             [Obsolete("See BuildFlags", true)]
-            public bool IsConsoleCompressed { get; private set; }
+            public bool IsConsoleCompressed { get; }
 
             /// <summary>
             /// Is cooked for Xenon(Xbox 360). Could be true on PC games.
             /// </summary>
             [Obsolete("See BuildFlags", true)]
-            public bool IsXenonCompressed { get; private set; }
+            public bool IsXenonCompressed { get; }
 
-            public BuildGeneration Generation { get; private set; }
+            public BuildGeneration Generation { get; }
 
             public readonly BuildFlags Flags;
 
@@ -511,6 +512,11 @@ namespace UELib
                     var game = attribs.OfType<BuildAttribute>().SingleOrDefault(attr => attr.Verify(this, package));
                     if (game == null)
                         continue;
+
+                    Version = package.Version;
+                    LicenseeVersion = package.LicenseeVersion;
+                    Flags = game.Flags;
+                    Generation = game.Generation;
 
                     Name = (BuildName)Enum.Parse(typeof(BuildName), Enum.GetName(typeof(BuildName), gameBuild));
                     if (package.Decoder != null) break;
@@ -844,10 +850,8 @@ namespace UELib
 
                     if (Version >= VCompression)
                         if (IsCooked())
-                        {
                             stream.Write(CompressionFlags);
-                            //CompressedChunks.Serialize(stream);
-                        }
+                        //CompressedChunks.Serialize(stream);
                 }
             }
 
@@ -962,9 +966,7 @@ namespace UELib
 #endif
                 if (Build == GameBuild.BuildName.Spellborn
                     && stream.Version >= 148)
-                {
                     goto skipGuid;
-                }
                 GUID = stream.ReadGuid().ToString();
                 Console.WriteLine("GUID:" + GUID);
                 skipGuid:
@@ -1101,13 +1103,11 @@ namespace UELib
                 }
 #if SPELLBORN
                 // WTF were they thinking? Change DRFORTHEWIN to None
-                if (Build == GameBuild.BuildName.Spellborn 
+                if (Build == GameBuild.BuildName.Spellborn
                     && Names[0].Name == "DRFORTHEWIN")
-                {
                     Names[0].Name = "None";
-                    // False??
-                    //Debug.Assert(stream.Position == _TablesData.ImportsOffset);
-                }
+                // False??
+                //Debug.Assert(stream.Position == _TablesData.ImportsOffset);
 #endif
             }
 
