@@ -13,7 +13,7 @@ namespace UELib
         public string Name;
         public byte OperPrecedence;
         public FunctionType Type;
-        public uint ByteToken;
+        public int ByteToken;
 
         public NativeTableItem()
         {
@@ -66,7 +66,7 @@ namespace UELib
         [PublicAPI]
         public List<NativeTableItem> NativeTableList;
 
-        private Dictionary<uint, NativeTableItem> _NativeFunctionMap;
+        private Dictionary<int, NativeTableItem> _NativeFunctionMap;
 
         [PublicAPI]
         public void LoadPackage(string name)
@@ -88,7 +88,7 @@ namespace UELib
                         Name = binReader.ReadString(),
                         OperPrecedence = binReader.ReadByte(),
                         Type = (FunctionType)binReader.ReadByte(),
-                        ByteToken = binReader.ReadUInt32()
+                        ByteToken = binReader.ReadInt32()
                     };
                     NativeTableList.Add(item);
                 }
@@ -100,7 +100,7 @@ namespace UELib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeTableItem FindTableItem(uint nativeIndex)
         {
-            _NativeFunctionMap.TryGetValue(nativeIndex, out var item);
+            _NativeFunctionMap.TryGetValue((int)nativeIndex, out var item);
             return item;
         }
 
