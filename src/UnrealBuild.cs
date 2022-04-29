@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UELib
 {
@@ -30,5 +26,9 @@ namespace UELib
         /// </summary>
         XenonCooked = 0x02,
 
+        /// <summary>
+        /// Some UDK games have disabled the DLLBind feature.
+        /// </summary>
+        NoDLLBind = 0x04
     }
 }

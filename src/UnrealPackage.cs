@@ -227,7 +227,7 @@ namespace UELib
 
                     gb.Version = package.Version;
                     gb.LicenseeVersion = package.LicenseeVersion;
-                    gb._Flags = _Flags;
+                    gb.Flags = _Flags;
                     gb.Generation = _Generation;
                     return true;
                 }
@@ -494,11 +494,11 @@ namespace UELib
 
             public BuildGeneration Generation { get; private set; }
 
-            private BuildFlags _Flags;
+            public readonly BuildFlags Flags;
 
             public GameBuild(UnrealPackage package)
             {
-                if (UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console) _Flags |= BuildFlags.ConsoleCooked;
+                if (UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console) Flags |= BuildFlags.ConsoleCooked;
 
                 var gameBuilds = (BuildName[])Enum.GetValues(typeof(BuildName));
                 foreach (var gameBuild in gameBuilds)
@@ -552,7 +552,7 @@ namespace UELib
 
             public bool HasFlags(BuildFlags flags)
             {
-                return (_Flags & flags) == flags;
+                return (Flags & flags) == flags;
             }
         }
 
@@ -1586,7 +1586,7 @@ namespace UELib
         [PublicAPI]
         public bool IsConsoleCooked()
         {
-            return IsCooked() && Build.HasFlags(BuildFlags.ConsoleCooked);
+            return IsCooked() && Build.Flags.HasFlag(BuildFlags.ConsoleCooked);
         }
 
         /// <summary>

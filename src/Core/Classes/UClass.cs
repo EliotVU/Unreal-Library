@@ -184,7 +184,7 @@ namespace UELib.Core
                     {
                         // TODO: Corrigate Version
                         if ((isHideCategoriesOldOrder && !Package.IsConsoleCooked() &&
-                             !Package.Build.HasFlags(BuildFlags.XenonCooked))
+                             !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
 #if TRANSFORMERS
                             || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
 #endif
@@ -198,7 +198,7 @@ namespace UELib.Core
                         if (Package.Version >= 369) DeserializeInterfaces();
                     }
 
-                    if (!Package.IsConsoleCooked() && !Package.Build.HasFlags(BuildFlags.XenonCooked))
+                    if (!Package.IsConsoleCooked() && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
                     {
                         if (Package.Version >= 603
 #if TERA
@@ -293,8 +293,11 @@ namespace UELib.Core
 
                     if (Package.Version >= UnrealPackage.VDLLBIND)
                     {
-                        DLLBindName = _Buffer.ReadNameReference();
-                        Record("DLLBindName", DLLBindName);
+                        if (!Package.Build.Flags.HasFlag(BuildFlags.NoDLLBind))
+                        {
+                            DLLBindName = _Buffer.ReadNameReference();
+                            Record("DLLBindName", DLLBindName);
+                        }
 #if REMEMBERME
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
                         {
