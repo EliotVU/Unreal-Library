@@ -15,30 +15,36 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UState : UStruct
     {
-        // TODO: Corrigate version. 61 is the lowest package version I know that supports StateFlags.
-        private const uint VStateFlags = 61;
+        // FIXME: Version 61 is the lowest package version I know that supports StateFlags.
+        private const int VStateFlags = 61;
+        // FIXME: Version
+        private const int VFuncMap = 220;
+        private const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
 
         #region Serialized Members
 
         /// <summary>
         /// Mask of current functions being probed by this class.
         /// </summary>
-        private ulong _ProbeMask;
+        public ulong ProbeMask;
 
         /// <summary>
         /// Mask of current functions being ignored by the present state node.
         /// </summary>
-        private ulong _IgnoreMask;
+        public ulong IgnoreMask;
 
         /// <summary>
         /// Offset into the ScriptStack where the FLabelEntry persist.
         /// </summary>
-        private ushort _LabelTableOffset;
+        public ushort LabelTableOffset;
 
         /// <summary>
         /// This state's flags mask e.g. Auto, Simulated.
+        /// TODO: Retype to UStateFlags and deprecate HasStateFlag, among others
         /// </summary>
         private uint _StateFlags;
+
+        public UMap<UName, UFunction> FuncMap;
 
         #endregion
 
@@ -54,16 +60,6 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            // TODO: Simplify ProbeMask deserialization.
-            // if >= 700
-            // 32b IgnoreMask
-            // if < 700
-            // 32b ProbeMask
-            // 64b IgnoreMask
-            // if < 220
-            // 64b ProbeMask
-            // 64b IgnoreMask
-
 #if TRANSFORMERS
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
             {
@@ -71,36 +67,23 @@ namespace UELib.Core
             }
 #endif
 
-            // UE3
-            if (Package.Version >= 220)
+            if (Package.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
             {
-                // TODO: Corrigate Version; Somewhere between 690 - 706
-                if (Package.Version < 700)
-                {
-                    // TODO: Unknown!
-                    uint unknown = _Buffer.ReadUInt32();
-                    Record("???", unknown);
-                }
+                ProbeMask = _Buffer.ReadUInt64();
+                Record(nameof(ProbeMask), ProbeMask);
 
-                _ProbeMask = _Buffer.ReadUInt32();
-                Record("_ProbeMask", _ProbeMask);
+                IgnoreMask = _Buffer.ReadUInt64();
+                Record(nameof(IgnoreMask), IgnoreMask);
             }
-            else // UE2 and 1
+            else
             {
-                _ProbeMask = _Buffer.ReadUInt64();
-                Record("_ProbeMask", _ProbeMask);
-            }
-
-            // TODO: Corrigate Version; Somewhere between 690 - 706
-            if (Package.Version < 700)
-            {
-                _IgnoreMask = _Buffer.ReadUInt64();
-                Record("_IgnoreMask", _IgnoreMask);
+                ProbeMask = _Buffer.ReadUInt32();
+                Record(nameof(ProbeMask), ProbeMask);
             }
 
             noMasks:
-            _LabelTableOffset = _Buffer.ReadUInt16();
-            Record("_LabelTableOffset", _LabelTableOffset);
+            LabelTableOffset = _Buffer.ReadUInt16();
+            Record(nameof(LabelTableOffset), LabelTableOffset);
 
             if (Package.Version >= VStateFlags)
             {
@@ -116,7 +99,7 @@ namespace UELib.Core
 
                 _StateFlags = _Buffer.ReadUInt32();
                 skipStateFlags:
-                Record("StateFlags", (StateFlags)_StateFlags);
+                Record(nameof(_StateFlags), (StateFlags)_StateFlags);
             }
 
 #if TRANSFORMERS
@@ -127,23 +110,9 @@ namespace UELib.Core
             }
 #endif
 
-            if (Package.Version >= 220)
-            {
-                int mapCount = _Buffer.ReadIndex();
-                Record("mapcount", mapCount);
-                if (mapCount > 0)
-                {
-                    AssertEOS(mapCount * 12, "Maps");
-                    _Buffer.Skip(mapCount * 12);
-                    // We don't have to store this.
-                    // We don't use it and all that could happen is a OutOfMemory exception!
-                    /*_FuncMap = new Dictionary<int,int>( mapCount );
-                    for( int i = 0; i < mapCount; ++ i )
-                    {
-                        _FuncMap.Add( _Buffer.ReadNameIndex(), _Buffer.ReadObjectIndex() );
-                    } */
-                }
-            }
+            if (Package.Version < VFuncMap) return;
+            _Buffer.ReadMap(out FuncMap); 
+            Record(nameof(FuncMap), FuncMap);
         }
 
         protected override void FindChildren()

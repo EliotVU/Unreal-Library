@@ -213,8 +213,8 @@ namespace UELib.Core
                 //    var componentName = _Buffer.ReadNameIndex();
                 //}
 
-                int netIndex = _Buffer.ReadObjectIndex();
-                Record("netIndex", TryGetIndexObject(netIndex));
+                int netIndex = _Buffer.ReadInt32();
+                Record("netIndex", netIndex);
             }
             else
             {
@@ -307,12 +307,15 @@ namespace UELib.Core
         /// <summary>
         /// Initializes this object instance important members.
         /// </summary>
+        [Obsolete("Pending deprecation")]
         public virtual void PostInitialize()
         {
         }
 
+        [Obsolete]
         public virtual void InitializeImports()
         {
+            throw new NotImplementedException();
         }
 
 #endregion
@@ -372,10 +375,10 @@ namespace UELib.Core
             return Name;
         }
 
-        [Pure]
+        [Obsolete]
         public bool ResistsInGroup()
         {
-            return Outer != null && Outer.GetClassName() == "Package";
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -383,16 +386,10 @@ namespace UELib.Core
         /// </summary>
         /// <param name="offset">Optional relative offset.</param>
         /// <returns>The highest outer.</returns>
-        [Pure]
-        public UObject GetHighestOuter(byte offset = (byte)0)
+        [Obsolete]
+        public UObject GetHighestOuter(byte offset = 0)
         {
-            var parents = new List<UObject>();
-            for (var outer = Outer; outer != null; outer = outer.Outer)
-            {
-                parents.Add(outer);
-            }
-
-            return parents.Count > 0 ? parents[parents.Count - offset] : Outer;
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -495,7 +492,7 @@ namespace UELib.Core
         /// </summary>
         /// <param name="index">The object's index.</param>
         /// <returns>The reference of the specified object's index. NULL if none.</returns>
-        [Pure]
+        [Obsolete]
         protected UObject TryGetIndexObject(int index)
         {
             try
@@ -513,6 +510,7 @@ namespace UELib.Core
         ///
         /// Note: The package closes when the Owner is done with importing objects data.
         /// </summary>
+        [Obsolete]
         protected UnrealPackage LoadImportPackage()
         {
             UnrealPackage pkg = null;
@@ -633,7 +631,7 @@ namespace UELib.Core
 
         protected void AssertEOS(int size, string testSubject = "")
         {
-            if (size > (_Buffer.Length - _Buffer.Position))
+            if (size > _Buffer.Length - _Buffer.Position)
             {
                 throw new DeserializationException(Name + ": Allocation past end of stream detected! Size:" + size +
                                                    " Subject:" + testSubject);
@@ -656,12 +654,12 @@ namespace UELib.Core
 
         public int CompareTo(object obj)
         {
-            return (int)Table.ObjectName - (int)(((UObject)obj).Table.ObjectName);
+            return (int)Table.ObjectName - (int)((UObject)obj).Table.ObjectName;
         }
 
         public override string ToString()
         {
-            return Name + string.Format("({0})", (int)this);
+            return $"{Name}({(int)this})";
         }
 
         public override int GetHashCode()

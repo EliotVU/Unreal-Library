@@ -159,7 +159,6 @@
     <Compile Include="Core\Classes\Props\Custom\UXWeakReferenceProperty.cs" />
     <Compile Include="Core\Classes\UPackage.cs" />
     <Compile Include="Core\Classes\UPackageNode.cs" />
-    <Compile Include="Core\Tables\UDependencyTableItem.cs" />
     <Compile Include="Core\Tables\UExportTableItem.cs" />
     <Compile Include="Core\Tables\UGenerationTableItem.cs" />
     <Compile Include="Core\Tables\UImportTableItem.cs" />

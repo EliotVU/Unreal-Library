@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices.ComTypes;
 using UELib.Annotations;
 using UELib.Flags;
 
@@ -110,28 +112,27 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            if (Package.Version <= 61)
+            if (Package.Version < 62)
             {
-                int oldClassRecordSize = _Buffer.ReadInt32();
-                Record("oldClassRecordSize", oldClassRecordSize);
+                int classRecordSize = _Buffer.ReadInt32();
+                Record(nameof(classRecordSize), classRecordSize);
             }
 #if AA2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
             {
-                // Could this be the same DWORD that bioshock has?
-                uint unknown = _Buffer.ReadUInt32();
-                Record("Unknown:AA2", unknown);
+                uint unknownUInt32 = _Buffer.ReadUInt32();
+                Record("Unknown:AA2", unknownUInt32);
             }
 #endif
 #if BIOSHOCK
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
             {
-                int unknown = _Buffer.ReadInt32();
-                Record("???Bioshock_Int32", unknown);
+                int unknownInt32 = _Buffer.ReadInt32();
+                Record("Unknown:Bioshock", unknownInt32);
             }
 #endif
             ClassFlags = _Buffer.ReadUInt32();
-            Record("ClassFlags", (ClassFlags)ClassFlags);
+            Record(nameof(ClassFlags), (ClassFlags)ClassFlags);
 #if SPELLBORN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
             {
@@ -141,34 +142,43 @@ namespace UELib.Core
                 goto skipTo61Stuff;
             }
 #endif
-            // FIXME: Both were deprecated since then
-            if (Package.Version < 140)
+            if (Package.Version >= 276
+#if BIOSHOCK
+                || Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+#endif
+                )
+            {
+                // FIXME: At least since Bioshock(140) - 547(APB)
+                // Might be something else in bioshock?
+                if (Package.Version < 547)
+                {
+                    byte unknownByte = _Buffer.ReadByte();
+                    Record("ClassGuidReplacement???", unknownByte);
+                }
+            }
+            else
             {
                 ClassGuid = _Buffer.ReadGuid();
                 Record(nameof(ClassGuid), ClassGuid);
+            }
 
+            if (Package.Version < 248)
+            {
                 int depSize = ReadCount();
                 _Buffer.ReadArray(out ClassDependencies, depSize);
                 Record(nameof(ClassDependencies), ClassDependencies);
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
 
-            // FIXME: At least since Bioshock(140) - 547(APB)
-            if (Package.Version >= 140 && Package.Version < 547)
-            {
-                byte unknown = _Buffer.ReadByte();
-                Record("???", unknown);
-            }
-
             skipTo61Stuff:
-            if (Package.Version > 61)
+            if (Package.Version >= 62)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
                 //      Config(_ConfigIndex);
                 Within = _Buffer.ReadObject<UClass>();
-                Record("Within", Within);
+                Record(nameof(Within), Within);
                 ConfigName = _Buffer.ReadNameReference();
-                Record("ConfigName", ConfigName);
+                Record(nameof(ConfigName), ConfigName);
 
                 const int vHideCategoriesOldOrder = 539;
                 bool isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
@@ -241,23 +251,21 @@ namespace UELib.Core
                                 {
                                     // bForceScriptOrder
                                     ForceScriptOrder = _Buffer.ReadInt32() > 0;
-                                    Record("ForceScriptOrder", ForceScriptOrder);
-
+                                    Record(nameof(ForceScriptOrder), ForceScriptOrder);
 #if DISHONORED
                                     if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                                     {
-                                        int unk = _Buffer.ReadNameIndex();
-                                        Record("??DISHONORED_NameIndex", Package.Names[unk]);
+                                        var unknownName = _Buffer.ReadNameReference();
+                                        Record("Unknown:Dishonored", unknownName);
                                     }
 #endif
-
                                     if (Package.Version >= UnrealPackage.VCLASSGROUP)
                                     {
 #if DISHONORED
                                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                                         {
                                             NativeClassName = _Buffer.ReadText();
-                                            Record("NativeClassName", NativeClassName);
+                                            Record(nameof(NativeClassName), NativeClassName);
                                             goto skipClassGroups;
                                         }
 #endif
@@ -265,11 +273,11 @@ namespace UELib.Core
                                         if (Package.Version >= 813)
                                         {
                                             NativeClassName = _Buffer.ReadText();
-                                            Record("NativeClassName", NativeClassName);
+                                            Record(nameof(NativeClassName), NativeClassName);
                                         }
                                     }
 #if DISHONORED
-                                    skipClassGroups: ;
+                                skipClassGroups:;
 #endif
                                 }
                             }
@@ -282,9 +290,8 @@ namespace UELib.Core
 #endif
                                )
                             {
-                                int unk2 = _Buffer.ReadInt32();
-                                Record("??Int32", unk2);
-
+                                int unknownInt32 = _Buffer.ReadInt32();
+                                Record("Unknown", unknownInt32);
 #if SINGULARITY
                                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity) _Buffer.Skip(8);
 #endif
@@ -297,13 +304,13 @@ namespace UELib.Core
                         if (!Package.Build.Flags.HasFlag(BuildFlags.NoDLLBind))
                         {
                             DLLBindName = _Buffer.ReadNameReference();
-                            Record("DLLBindName", DLLBindName);
+                            Record(nameof(DLLBindName), DLLBindName);
                         }
 #if REMEMBERME
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
                         {
                             var unknownName = _Buffer.ReadNameReference();
-                            Record("??RM_Name", unknownName);
+                            Record("Unknown:RememberMe", unknownName);
                         }
 #endif
 #if DISHONORED
@@ -313,8 +320,8 @@ namespace UELib.Core
 #if BORDERLANDS2
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
                         {
-                            byte unkval = _Buffer.ReadByte();
-                            Record("??BL2_Byte", unkval);
+                            byte unknownByte = _Buffer.ReadByte();
+                            Record("Unknown:Borderlands2", unknownByte);
                         }
 #endif
                     }
@@ -326,7 +333,7 @@ namespace UELib.Core
             if (Package.Version >= 322)
             {
                 Default = _Buffer.ReadObject();
-                Record("Default", Default);
+                Record(nameof(Default), Default);
             }
             else
             {

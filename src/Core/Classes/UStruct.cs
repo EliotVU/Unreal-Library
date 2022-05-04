@@ -17,20 +17,20 @@ namespace UELib.Core
         private const int PrimitveCastVersion = 100;
 
         // Version might actually be correct!
-        private const uint VCppText = 129;
+        private const int VCppText = 129;
 
         // TODO: Corrigate version
         // > 119?
-        private const uint VStructFlags = 102;
+        private const int VStructFlags = 102;
 
         // TODO: Corrigate version
-        private const uint VProcessedText = 129;
+        private const int VProcessedText = 129;
 
         // TODO: Corrigate version
-        private const uint VFriendlyNameMoved = 160;
+        private const int VFriendlyNameMoved = 160;
 
         // TODO: Corrigate version
-        private const uint VStructFlagsMoved = 160;
+        private const int VScriptStructAdded = 160;
 
         #region Serialized Members
 
@@ -87,18 +87,18 @@ namespace UELib.Core
             // --SuperField
             if (!Package.IsConsoleCooked())
             {
-                ScriptText = _Buffer.ReadObject() as UTextBuffer;
-                Record("ScriptText", ScriptText);
+                ScriptText = _Buffer.ReadObject<UTextBuffer>();
+                Record(nameof(ScriptText), ScriptText);
             }
 
-            Children = _Buffer.ReadObject() as UField;
-            Record("Children", Children);
+            Children = _Buffer.ReadObject<UField>();
+            Record(nameof(Children), Children);
 
             if (Package.Version < VFriendlyNameMoved)
             {
                 // Moved to UFunction in UE3
                 FriendlyName = _Buffer.ReadNameReference();
-                Record("FriendlyName", FriendlyName);
+                Record(nameof(FriendlyName), FriendlyName);
             }
 
             if (Package.Version >= VStructFlags)
@@ -112,22 +112,22 @@ namespace UELib.Core
 #endif
                    )
                 {
-                    CppText = _Buffer.ReadObject() as UTextBuffer;
-                    Record("CppText", CppText);
+                    CppText = _Buffer.ReadObject<UTextBuffer>();
+                    Record(nameof(CppText), CppText);
                 }
 
-                if (Package.Version < VStructFlagsMoved)
+                if (Package.Version < VScriptStructAdded)
                 {
                     StructFlags = _Buffer.ReadUInt32();
-                    Record("StructFlags", (StructFlags)StructFlags);
+                    Record(nameof(StructFlags), (StructFlags)StructFlags);
 
                     // Note: Bioshock inherits from the SWAT4's UE2 build.
 #if BIOSHOCK
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
                     {
                         // TODO: Unknown data, might be related to the above Swat4 data.
-                        int unknown = _Buffer.ReadObjectIndex();
-                        Record("???", TryGetIndexObject(unknown));
+                        int unknownObject = _Buffer.ReadObjectIndex();
+                        Record("Unknown:Bioshock", unknownObject);
                     }
 #endif
                     // This is high likely to be only for "Irrational Games" builds.
@@ -140,8 +140,8 @@ namespace UELib.Core
 #endif
                        )
                     {
-                        ProcessedText = _Buffer.ReadObject() as UTextBuffer;
-                        Record("ProcessedText", ProcessedText);
+                        ProcessedText = _Buffer.ReadObject<UTextBuffer>();
+                        Record(nameof(ProcessedText), ProcessedText);
                     }
                 }
             }
@@ -149,9 +149,9 @@ namespace UELib.Core
             if (!Package.IsConsoleCooked())
             {
                 Line = _Buffer.ReadInt32();
-                Record("Line", Line);
+                Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
-                Record("TextPos", TextPos);
+                Record(nameof(TextPos), TextPos);
             }
 
 #if TRANSFORMERS
@@ -163,7 +163,7 @@ namespace UELib.Core
 #endif
 
             ByteScriptSize = _Buffer.ReadInt32();
-            Record("ByteScriptSize", ByteScriptSize);
+            Record(nameof(ByteScriptSize), ByteScriptSize);
             const int vDataScriptSize = 639;
             bool hasFixedScriptSize = Package.Version >= vDataScriptSize
 #if TRANSFORMERS
@@ -173,7 +173,7 @@ namespace UELib.Core
             if (hasFixedScriptSize)
             {
                 DataScriptSize = _Buffer.ReadInt32();
-                Record("DataScriptSize", DataScriptSize);
+                Record(nameof(DataScriptSize), DataScriptSize);
             }
             else
             {
@@ -234,6 +234,7 @@ namespace UELib.Core
             }
         }
 
+        [Obsolete("Pending deprecation")]
         protected virtual void FindChildren()
         {
             Constants = new List<UConst>();

@@ -261,6 +261,7 @@ namespace UELib
         /// <summary>
         /// Updates the ObjectFlags inside the Stream to the current set ObjectFlags of this Table
         /// </summary>
+        [Obsolete]
         public void WriteObjectFlags()
         {
             Owner.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);

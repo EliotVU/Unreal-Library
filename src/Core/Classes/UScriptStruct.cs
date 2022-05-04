@@ -11,7 +11,7 @@ namespace UELib.Core
         {
             base.Deserialize();
             StructFlags = _Buffer.ReadUInt32();
-            Record("StructFlags", (StructFlags)StructFlags);
+            Record(nameof(StructFlags), (StructFlags)StructFlags);
             DeserializeProperties();
         }
 
