@@ -276,7 +276,7 @@ namespace UELib.Core
 
                             // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
-                            if (Package.Version > 575 && Package.Version < 674
+                            if (Package.Version > 575 && Package.Version < 673
 #if TERA
                                                       && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
