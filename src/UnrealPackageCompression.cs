@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+using UELib.Annotations;
+using UELib.Core.Types;
 
 namespace UELib
 {
     using Core;
 
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-    [SuppressMessage("ReSharper", "NotAccessedField.Global")]
+    [PublicAPI]
     public class CompressedChunk : IUnrealSerializableClass
     {
         public int UncompressedOffset;
@@ -18,18 +19,38 @@ namespace UELib
 
         public void Serialize(IUnrealStream stream)
         {
-            // TODO: Implement code
+#if ROCKETLEAGUE
+
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague
+                && stream.Package.LicenseeVersion >= 22)
+            {
+                stream.Write((long)UncompressedOffset);
+                stream.Write((long)CompressedOffset);
+                goto streamStandardSize;
+            }
+#endif
             stream.Write(UncompressedOffset);
             stream.Write(UncompressedSize);
+        streamStandardSize:
             stream.Write(CompressedOffset);
             stream.Write(CompressedSize);
         }
 
         public void Deserialize(IUnrealStream stream)
         {
+#if ROCKETLEAGUE
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague
+                && stream.Package.LicenseeVersion >= 22)
+            {
+                UncompressedOffset = (int)stream.ReadInt64();
+                CompressedOffset = (int)stream.ReadInt64();
+                goto streamStandardSize;
+            }
+#endif
             UncompressedOffset = stream.ReadInt32();
-            UncompressedSize = stream.ReadInt32();
             CompressedOffset = stream.ReadInt32();
+        streamStandardSize:
+            UncompressedSize = stream.ReadInt32();
             CompressedSize = stream.ReadInt32();
         }
 

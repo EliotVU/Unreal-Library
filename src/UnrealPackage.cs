@@ -460,10 +460,10 @@ namespace UELib
                 [Build(860, 4)] Hawken,
 
                 /// <summary>
-                /// 867/009
-                /// Dated, 2015
+                /// 867/009:032
+                /// Requires third-party decompression and decryption
                 /// </summary>
-                [Build(867, 9u)] RocketLeague,
+                [Build(867, 868, 9u, 32u)] RocketLeague,
 
                 /// <summary>
                 /// 904/009
@@ -1039,6 +1039,27 @@ namespace UELib
                 _TablesData.ExportsOffset -= offsetDif;
             }
 #endif
+#if ROCKETLEAGUE
+            if (Build == GameBuild.BuildName.RocketLeague
+                && IsCooked())
+            {
+                int garbageSize = stream.ReadInt32();
+                Debug.WriteLine(garbageSize, "GarbageSize");
+                int compressedChunkInfoOffset = stream.ReadInt32();
+                Debug.WriteLine(compressedChunkInfoOffset, "CompressedChunkInfoOffset");
+                int lastBlockSize = stream.ReadInt32();
+                Debug.WriteLine(lastBlockSize, "LastBlockSize");
+                Debug.Assert(stream.Position == _TablesData.NamesOffset, "There is more data before the NameTable");
+                // Data after this is encrypted
+            }
+#endif
+            // We can't continue without decompressing.
+            if (CompressionFlags != 0 || (_CompressedChunks != null && _CompressedChunks.Any()))
+            {
+                // HACK: To fool UE Explorer
+                if (_CompressedChunks.Capacity == 0) _CompressedChunks.Capacity = 1;
+                return;
+            }
 #if AA2
             if (Build == GameBuild.BuildName.AA2
                 // Note: Never true, AA2 is not a detected build for packages with LicenseeVersion 27 or less

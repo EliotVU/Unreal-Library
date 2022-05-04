@@ -90,8 +90,8 @@ namespace UELib
                 ArchetypeIndex = stream.ReadInt32();
             }
 
-            stream.Write(stream.Version >= VObjectFlagsToULONG 
-                ? ObjectFlags 
+            stream.Write(stream.Version >= VObjectFlagsToULONG
+                ? ObjectFlags
                 : (uint)ObjectFlags);
             stream.WriteIndex(SerialSize); // Assumes SerialSize has been updated to @Object's buffer size.
             if (SerialSize > 0 || stream.Version >= VSerialSizeConditionless)
@@ -111,8 +111,8 @@ namespace UELib
         {
 #if AA2
             // Not attested in packages of LicenseeVersion 32
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2
-                && stream.Package.LicenseeVersion >= 33)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2 &&
+                stream.Package.LicenseeVersion >= 33)
             {
                 SuperIndex = stream.ReadObjectIndex();
                 int unkInt = stream.ReadInt32();
@@ -121,14 +121,15 @@ namespace UELib
                 OuterIndex = stream.ReadInt32();
                 ObjectFlags = ~stream.ReadUInt32();
                 ObjectName = stream.ReadNameReference();
-                goto serializeSerialSize;
+                goto streamSerialSize;
             }
 #endif
             ClassIndex = stream.ReadObjectIndex();
             SuperIndex = stream.ReadObjectIndex();
             OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Version >= 132)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock &&
+                stream.Version >= 132)
             {
                 stream.Skip(sizeof(int));
             }
@@ -151,14 +152,25 @@ namespace UELib
                 ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
             }
 
-        serializeSerialSize:
+            streamSerialSize:
             SerialSize = stream.ReadIndex();
             if (SerialSize > 0 || stream.Version >= VSerialSizeConditionless)
             {
+#if ROCKETLEAGUE
+                // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
+
+                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                    stream.Package.LicenseeVersion >= 22)
+                {
+                    SerialOffset = stream.ReadIndex();
+                    goto streamExportFlags;
+                }
+#endif
                 SerialOffset = stream.ReadIndex();
             }
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock && stream.Version >= 130)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock &&
+                stream.Version >= 130)
             {
                 stream.Skip(sizeof(int));
             }
@@ -176,21 +188,15 @@ namespace UELib
 #endif
                )
             {
+                // NameToObject
                 int componentMapCount = stream.ReadInt32();
                 stream.Skip(componentMapCount * 12);
-                //if( componentMapCount > 0 )
-                //{
-                //    Components = new Dictionary<int, int>( componentMapCount );
-                //    for( int i = 0; i < componentMapCount; ++ i )
-                //    {
-                //        Components.Add( stream.ReadNameIndex(), stream.ReadObjectIndex() );
-                //    }
-                //}
             }
 
             if (stream.Version < 247)
                 return;
 
+            streamExportFlags:
             ExportFlags = stream.ReadUInt32();
             if (stream.Version < 322)
                 return;
