@@ -407,12 +407,14 @@ namespace UELib
                 /// <summary>
                 /// 828/000
                 /// </summary>
-                [Build(828, 0)] InfinityBlade,
+                [Build(788, 1, BuildFlags.ConsoleCooked)]
+                [Build(828, 0, BuildFlags.ConsoleCooked)]
+                InfinityBlade,
 
                 /// <summary>
                 /// 828/000
                 /// </summary>
-                [Build(828, 0)] GoW3,
+                [Build(828, 0, BuildFlags.ConsoleCooked)] GoW3,
 
                 /// <summary>
                 /// 832/021
