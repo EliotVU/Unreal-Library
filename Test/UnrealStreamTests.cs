@@ -3,24 +3,31 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using UELib.Core.Types;
 
 namespace UELib.Test
 {
     [TestClass]
     public class UnrealStreamTests
     {
-        [TestMethod]
-        public void ReadString()
+        // HACK: Ugly workaround the issues with UPackageStream
+        private static UPackageStream CreateTempStream()
         {
             string tempFilePath = Path.Join(Assembly.GetExecutingAssembly().Location, "../test.u");
             File.WriteAllBytes(tempFilePath, BitConverter.GetBytes(UnrealPackage.Signature));
 
-            using var stream = new UPackageStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
+            var stream = new UPackageStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
             var linker = new UnrealPackage(stream);
             // The easiest version to test against.
             linker.Version = 300;
-            
-            var writer = new BinaryWriter(stream);
+            return stream;
+        }
+        
+        [TestMethod]
+        public void ReadString()
+        {
+            using var stream = CreateTempStream();
+            using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
 
@@ -39,12 +46,32 @@ namespace UELib.Test
             // Test our stream implementation
             // Skip past the signature
             stream.Seek(sizeof(int), SeekOrigin.Begin);
-            
+
             string readString = stream.ReadText();
             Assert.AreEqual(rawUtf8String, readString);
 
             readString = stream.ReadText();
             Assert.AreEqual(rawUnicodeString, readString);
+        }
+
+        [TestMethod]
+        public void ReadAtomicStruct()
+        {
+            using var stream = CreateTempStream();
+            using var writer = new BinaryWriter(stream);
+            // Skip past the signature
+            writer.Seek(sizeof(int), SeekOrigin.Begin);
+            
+            // B, G, R, A;
+            var structBuffer = new byte[] { 255, 128, 64, 80 };
+            writer.Write(structBuffer);
+
+            stream.Seek(sizeof(int), SeekOrigin.Begin);
+            stream.ReadAtomicStruct<UColor>(out var color);
+            Assert.AreEqual(255, color.B);
+            Assert.AreEqual(128, color.G);
+            Assert.AreEqual(64, color.R);
+            Assert.AreEqual(80, color.A);
         }
     }
 }

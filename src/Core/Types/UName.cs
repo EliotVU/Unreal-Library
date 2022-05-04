@@ -1,11 +1,12 @@
 ﻿using System;
 
+// FIXME: Namespace correction is blocked by (UE Explorer)
 namespace UELib
 {
     /// <summary>
     /// Implements FName. A data type that represents a string, usually acquired from a names table.
     /// </summary>
-    public sealed class UName
+    public class UName
     {
         private const string    None = "None";
         public const int        Numeric = 0;
@@ -56,7 +57,7 @@ namespace UELib
         {
             if (b is null)
             {
-                return object.Equals(a, null);
+                return Equals(a, null);
             }
 
             if (a is null)

@@ -179,6 +179,7 @@
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
     <Compile Include="Core\Types\UColor.cs" />
+    <Compile Include="Core\Types\UMap.cs" />
     <Compile Include="Decoding\CryptoDecoder.AA2.cs" />
     <Compile Include="Decoding\CryptoCore.cs" />
     <Compile Include="Engine\Classes\UBitmapMaterial.cs" />

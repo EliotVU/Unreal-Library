@@ -1,9 +1,7 @@
-using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib.Core;
-using UELib.Types;
 
 namespace UELib.Test
 {
@@ -74,7 +72,8 @@ namespace UELib.Test
 
             Assert.IsNotNull(testClass.Properties);
             string floatValue = testClass.Properties.Find("Float").DeserializeValue();
-            Assert.AreEqual("0.01234568", floatValue);
+            // 0.0123456789 in its compiled form
+            Assert.AreEqual("0.012345679", floatValue);
         }
     }
 }

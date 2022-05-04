@@ -96,7 +96,7 @@ namespace UELib.Core
 
         public override string ToString()
         {
-            return $"[{Count}]";
+            return $"<{typeof(T).Name}>[{Count}]";
             //return $"[{string.Join(",", this.Select(t => t.ToString()))}]";
         }
     }
