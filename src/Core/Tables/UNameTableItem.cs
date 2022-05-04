@@ -53,12 +53,6 @@ namespace UELib
             // Very old packages use a simple Ansi encoding.
             if (stream.Version < UnrealPackage.VSIZEPREFIXDEPRECATED) return stream.ReadASCIIString();
 #endif
-#if DCUO
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DCUO)
-            {
-                // FIXME: DCUO doesn't null terminate name entry strings
-            }
-#endif
 #if AA2
             // Names are not encrypted in AAA/AAO 2.6 (LicenseeVersion 32)
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2

@@ -72,6 +72,7 @@ Below is a table of games that are known to be compatible with the UELib.
 | Saw | Unknown | 584/003 | |
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
 | Monday Night Combat | 5697 | 638/000 |     |
+| DC Universe Online | 5859 | 638/6405 |     |
 | Unreal Development Kit | 6094-10246 | 664-860 | |
 | Dungeon Defenders | 6262 | 678/002 | Earlier releases only |
 | Alice Madness Returns | 6760 | 690/000 |     |
