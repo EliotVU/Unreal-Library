@@ -34,11 +34,10 @@ namespace UELib.Core
 
         private readonly UObject _Container;
         private UStruct _Outer;
+        private bool _RecordingEnabled = true;
 
         internal long _BeginOffset { get; set; }
         private long _ValueOffset { get; set; }
-
-        private long _EndOffset => _ValueOffset + Size;
 
         private byte _TempFlags { get; set; }
 
@@ -157,6 +156,7 @@ namespace UELib.Core
             return arrayIndex;
         }
 
+        /// <returns>True if there are more property tags.</returns>
         public bool Deserialize()
         {
             _BeginOffset = _Buffer.Position;
@@ -169,11 +169,13 @@ namespace UELib.Core
             try
             {
                 DeserializeValue();
+                _RecordingEnabled = false;
             }
             finally
             {
                 // Even if something goes wrong, we can still skip everything and safely deserialize the next property if any!
-                _Buffer.Position = _EndOffset;
+                // Note: In some builds @Size is not serialized
+                _Buffer.Position = _ValueOffset + Size;
             }
 
             return true;
@@ -259,7 +261,6 @@ namespace UELib.Core
             DeserializeTypeDataUE3();
             return false;
         }
-
 #if BATMAN
         /// <returns>True if this is the last tag.</returns>
         private bool DeserializeTagByOffset()
@@ -273,14 +274,50 @@ namespace UELib.Core
                 ushort offset = _Buffer.ReadUInt16();
                 Record(nameof(offset), offset);
 
-                // This may actually be determined by the property's flags, but we cannot bind to properties by offset :/
+                // TODO: Incomplete, PropertyTypes' have shifted.
+                if ((int)Type == 11)
+                {
+                    Type = PropertyType.Vector;
+                }
+
+                // This may actually be determined by the property's flags, but we don't calculate the offset of properties :/
+                // TODO: Incomplete
                 if (Type == PropertyType.StrProperty ||
+                    Type == PropertyType.NameProperty ||
                     Type == PropertyType.IntProperty ||
                     Type == PropertyType.FloatProperty ||
+                    Type == PropertyType.StructProperty ||
+                    Type == PropertyType.Vector ||
+                    Type == PropertyType.Rotator ||
                     (Type == PropertyType.BoolProperty && _Buffer.Package.Build.Generation == BuildGeneration.Batman4))
                 {
+                    switch(Type)
+                    {
+                        case PropertyType.Vector:
+                        case PropertyType.Rotator:
+                            Size = 12;
+                            break;
+
+                        case PropertyType.IntProperty:
+                        case PropertyType.FloatProperty:
+                        case PropertyType.StructProperty:
+                            //case PropertyType.ObjectProperty:
+                            //case PropertyType.InterfaceProperty:
+                            //case PropertyType.ComponentProperty:
+                            //case PropertyType.ClassProperty:
+                            Size = 4;
+                            break;
+
+                        case PropertyType.NameProperty:
+                            Size = 8;
+                            break;
+
+                        case PropertyType.BoolProperty:
+                            Size = sizeof(byte);
+                            break;
+                    }
                     Name = new UName($"self[0x{offset:X3}]");
-                    DeserializeTypeOffsetData();
+                    DeserializeTypeDataUE3();
                     return false;
                 }
             }
@@ -298,33 +335,6 @@ namespace UELib.Core
             return false;
         }
 #endif
-        private void DeserializeTypeOffsetData()
-        {
-            switch (Type)
-            {
-                case PropertyType.StructProperty:
-                    ItemName = _Buffer.ReadNameReference();
-                    Record(nameof(ItemName), ItemName);
-                    break;
-
-                case PropertyType.ByteProperty:
-                    if (_Buffer.Version >= VEnumName)
-                    {
-                        EnumName = _Buffer.ReadNameReference();
-                        Record(nameof(EnumName), EnumName);
-                    }
-
-                    break;
-
-                case PropertyType.BoolProperty:
-                    BoolValue = _Buffer.Version >= VBoolSizeToOne
-                        ? _Buffer.ReadByte() > 0
-                        : _Buffer.ReadInt32() > 0;
-                    Record(nameof(BoolValue), BoolValue);
-                    break;
-            }
-        }
-        
         private void DeserializeTypeDataUE3()
         {
             switch (Type)
@@ -386,9 +396,6 @@ namespace UELib.Core
         /// <returns>The deserialized value if any.</returns>
         private string DeserializeDefaultPropertyValue(PropertyType type, ref DeserializeFlags deserializeFlags)
         {
-            if (_Buffer.Position - _ValueOffset > Size)
-                throw new DeserializationException("End of DefaultProperties stream reached...");
-
             var orgOuter = _Outer;
             var propertyValue = string.Empty;
             try
@@ -400,33 +407,48 @@ namespace UELib.Core
                     {
                         Debug.Assert(BoolValue != null, nameof(BoolValue) + " != null");
                         bool value = BoolValue.Value;
-                        if (Size == 1 && _Buffer.Version < V3) value = _Buffer.ReadByte() > 0;
+                        if (Size == 1 && _Buffer.Version < V3)
+                        {
+                            value = _Buffer.ReadByte() > 0;
+                            Record(nameof(value), value);
+                        }
 
                         propertyValue = value ? "true" : "false";
-                            Record(nameof(propertyValue), propertyValue);
                         break;
                     }
 
                     case PropertyType.StrProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadText());
-                        Record(nameof(propertyValue), propertyValue);
+                    {
+                        string value = _Buffer.ReadText();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
+                    }
 
                     case PropertyType.NameProperty:
-                        propertyValue = _Buffer.ReadName();
-                        Record(nameof(propertyValue), propertyValue);
+                    {
+                        var value = _Buffer.ReadNameReference();
+                        Record(nameof(value), value);
+                        propertyValue = value;
                         break;
+                    }
 
                     case PropertyType.IntProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadInt32());
-                        Record(nameof(propertyValue), propertyValue);
+                    {
+                        int value = _Buffer.ReadInt32();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
+                    }
 
 #if BIOSHOCK
                     case PropertyType.QwordProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadInt64());
-                        Record(nameof(propertyValue), propertyValue);
+                    {
+                        long value = _Buffer.ReadInt64();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
+                    }
 
                     case PropertyType.XWeakReferenceProperty:
                         propertyValue = "/* XWeakReference: (?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadName() +
@@ -435,25 +457,31 @@ namespace UELib.Core
 #endif
 
                     case PropertyType.FloatProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadFloat());
-                        Record(nameof(propertyValue), propertyValue);
+                    {
+                        float value = _Buffer.ReadFloat();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
-
+                    }
+                    
                     case PropertyType.ByteProperty:
+                    {
                         if (_Buffer.Version >= V3 && Size == 8)
                         {
-                            string enumValue = _Buffer.ReadName();
-                            Record(nameof(enumValue), enumValue);
-                            propertyValue = enumValue;
+                            string value = _Buffer.ReadName();
+                            Record(nameof(value), value);
+                            propertyValue = value;
                             if (_Buffer.Version >= VEnumName) propertyValue = $"{EnumName}.{propertyValue}";
                         }
                         else
                         {
-                            propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadByte());
-                            Record(nameof(propertyValue), propertyValue);
+                            byte value = _Buffer.ReadByte();
+                            Record(nameof(value), value);
+                            propertyValue = PropertyDisplay.FormatLiteral(value);
                         }
 
                         break;
+                    }
 
                     case PropertyType.InterfaceProperty:
                     case PropertyType.ComponentProperty:
@@ -869,7 +897,10 @@ namespace UELib.Core
         #endregion
 
         [Conditional("BINARYMETADATA")]
-        private void Record(string varName, object varObject = null) => _Container.Record(varName, varObject);
+        private void Record(string varName, object varObject = null)
+        {
+            if (_RecordingEnabled) _Container.Record(varName, varObject);
+        }
     }
 
     [System.Runtime.InteropServices.ComVisible(false)]

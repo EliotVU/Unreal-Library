@@ -598,6 +598,7 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
+        /// TODO: Move this feature into a stream.
         /// Outputs the present position and the value of the parsed object.
         ///
         /// Only called in the DEBUGBUILD!
@@ -608,9 +609,6 @@ namespace UELib.Core
         internal void Record(string varName, object varObject = null)
         {
             long size = _Buffer.Position - _Buffer.LastPosition;
-            if (size <= 0)
-                return;
-
             BinaryMetaData.AddField(varName, varObject, _Buffer.LastPosition, size);
 #if LOG_RECORDS
             if( varObject == null )
