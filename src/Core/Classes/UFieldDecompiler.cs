@@ -10,6 +10,7 @@ namespace UELib.Core
 
         // Introduction of the change from intrinsic to native.
         private const uint NativeVersion = 69;
+
         // Introduction of the change from expands to extends.
         private const uint ExtendsVersion = 69;
         protected const uint PlaceableVersion = 69;

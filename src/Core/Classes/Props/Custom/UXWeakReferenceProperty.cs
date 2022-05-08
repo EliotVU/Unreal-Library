@@ -1,17 +1,17 @@
 ﻿#if BIOSHOCK
-    namespace UELib.Core
+namespace UELib.Core
+{
+    /// <summary>
+    /// WeakReference Property
+    /// </summary>
+    [UnrealRegisterClass]
+    public class UXWeakReferenceProperty : UObjectProperty
     {
-        /// <summary>
-        /// WeakReference Property
-        /// </summary>
-        [UnrealRegisterClass]
-        public class UXWeakReferenceProperty : UObjectProperty
+        /// <inheritdoc/>
+        public override string GetFriendlyType()
         {
-            /// <inheritdoc/>
-            public override string GetFriendlyType()
-            {
-                return base.GetFriendlyType() + "&";
-            }
+            return $"{base.GetFriendlyType()}&";
         }
     }
+}
 #endif

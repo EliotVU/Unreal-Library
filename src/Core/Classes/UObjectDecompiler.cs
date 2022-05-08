@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace UELib.Core
+﻿namespace UELib.Core
 {
     public partial class UObject : IUnrealDecompilable
     {
@@ -9,22 +7,23 @@ namespace UELib.Core
         /// </summary>
         public virtual string Decompile()
         {
-            if( ShouldDeserializeOnDemand )
+            if (ShouldDeserializeOnDemand)
             {
                 BeginDeserializing();
             }
 
-            string output = String.Format( "begin object name={0} class={1}\r\n", Name, Class.Name );
-            UDecompilingState.AddTabs( 1 );
+            var output = $"begin object name={Name} class={Class.Name}\r\n";
+            UDecompilingState.AddTabs(1);
             try
             {
                 output += DecompileProperties();
             }
             finally
             {
-                UDecompilingState.RemoveTabs( 1 );
+                UDecompilingState.RemoveTabs(1);
             }
-            return output + String.Format( "{0}object end\r\n{0}// Reference: {1}'{2}'", UDecompilingState.Tabs, Class.Name, GetOuterGroup() );
+
+            return $"{output}{UDecompilingState.Tabs}object end\r\n{UDecompilingState.Tabs}// Reference: {Class.Name}'{GetOuterGroup()}'";
         }
 
         // Ment to be overriden!
@@ -36,26 +35,27 @@ namespace UELib.Core
 
         protected string DecompileProperties()
         {
-            if( Properties == null || Properties.Count == 0 )
+            if (Properties == null || Properties.Count == 0)
                 return UDecompilingState.Tabs + "// This object has no properties!\r\n";
 
-            string output = String.Empty;
+            var output = string.Empty;
 
-            #if DEBUG
-            output += UDecompilingState.Tabs + "// Object Offset:" + UnrealMethods.FlagToString( (uint)ExportTable.SerialOffset ) + "\r\n";
-            #endif
+#if DEBUG
+            output += UDecompilingState.Tabs + "// Object Offset:" +
+                      UnrealMethods.FlagToString((uint)ExportTable.SerialOffset) + "\r\n";
+#endif
 
-            for( int i = 0; i < Properties.Count; ++ i )
+            for (var i = 0; i < Properties.Count; ++i)
             {
                 string propOutput = Properties[i].Decompile();
 
                 // This is the first element of a static array
-                if( i+1 < Properties.Count
-                    && Properties[i+1].Name == Properties[i].Name
+                if (i + 1 < Properties.Count
+                    && Properties[i + 1].Name == Properties[i].Name
                     && Properties[i].ArrayIndex <= 0
-                    && Properties[i+1].ArrayIndex > 0 )
+                    && Properties[i + 1].ArrayIndex > 0)
                 {
-                    propOutput = propOutput.Insert( Properties[i].Name.Length, "[0]" );
+                    propOutput = propOutput.Insert(Properties[i].Name.Length, "[0]");
                 }
 
                 // FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
@@ -63,8 +63,9 @@ namespace UELib.Core
 #if DEBUG_POSITIONS
             "/*" + UnrealMethods.FlagToString( (uint)Properties[i]._BeginOffset ) + "*/\t" +
 #endif
-                            propOutput + "\r\n";
+                          propOutput + "\r\n";
             }
+
             return output;
         }
     }

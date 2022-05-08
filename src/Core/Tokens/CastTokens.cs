@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using System.Diagnostics;
+
+namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -6,20 +8,20 @@
         {
             public class CastToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                    return "(" + DecompileNext() + ")";
+                    return $"({DecompileNext()})";
                 }
             }
 
             public class PrimitiveCastToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     DeserializeNext();
                 }
@@ -34,12 +36,12 @@
             {
                 public UObject CastedObject;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     CastedObject = stream.ReadObject();
                     Decompiler.AlignObjectSize();
 
-                    base.Deserialize( stream );
+                    base.Deserialize(stream);
                 }
             }
 
@@ -55,17 +57,19 @@
             {
                 public override string Decompile()
                 {
-                    return "class<" + CastedObject.Name + ">" + base.Decompile();
+                    return $"class<{CastedObject.Name}>{base.Decompile()}";
                 }
             }
 
-            public class InterfaceCastToken : ObjectCastToken{}
+            public class InterfaceCastToken : ObjectCastToken
+            {
+            }
 
             public class RotatorToVectorToken : CastToken
             {
                 public override string Decompile()
                 {
-                    return "vector" + base.Decompile();
+                    return $"vector{base.Decompile()}";
                 }
             }
 
@@ -82,7 +86,7 @@
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile();
+                    return $"float{base.Decompile()}";
                 }
             }
 
@@ -90,7 +94,7 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
@@ -98,7 +102,7 @@
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile();
+                    return $"byte{base.Decompile()}";
                 }
             }
 
@@ -107,7 +111,7 @@
 #if !SUPPRESS_BOOLINTEXPLOIT
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
 #endif
             }
@@ -116,7 +120,7 @@
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile();
+                    return $"float{base.Decompile()}";
                 }
             }
 
@@ -124,7 +128,7 @@
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile();
+                    return $"byte{base.Decompile()}";
                 }
             }
 
@@ -133,7 +137,7 @@
 #if !SUPPRESS_BOOLINTEXPLOIT
                 public override string Decompile()
                 {
-                    return "int" + base.Decompile();
+                    return $"int{base.Decompile()}";
                 }
 #endif
             }
@@ -142,7 +146,7 @@
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile();
+                    return $"float{base.Decompile()}";
                 }
             }
 
@@ -150,7 +154,7 @@
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile();
+                    return $"byte{base.Decompile()}";
                 }
             }
 
@@ -158,7 +162,7 @@
             {
                 public override string Decompile()
                 {
-                    return "int" + base.Decompile();
+                    return $"int{base.Decompile()}";
                 }
             }
 
@@ -166,7 +170,7 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
@@ -174,7 +178,7 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
@@ -182,7 +186,7 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
@@ -190,7 +194,7 @@
             {
                 public override string Decompile()
                 {
-                    return "byte" + base.Decompile();
+                    return $"byte{base.Decompile()}";
                 }
             }
 
@@ -198,7 +202,7 @@
             {
                 public override string Decompile()
                 {
-                    return "int" + base.Decompile();
+                    return $"int{base.Decompile()}";
                 }
             }
 
@@ -206,7 +210,7 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
@@ -214,7 +218,7 @@
             {
                 public override string Decompile()
                 {
-                    return "float" + base.Decompile();
+                    return $"float{base.Decompile()}";
                 }
             }
 
@@ -222,7 +226,7 @@
             {
                 public override string Decompile()
                 {
-                    return "vector" + base.Decompile();
+                    return $"vector{base.Decompile()}";
                 }
             }
 
@@ -230,7 +234,7 @@
             {
                 public override string Decompile()
                 {
-                    return "rotator" + base.Decompile();
+                    return $"rotator{base.Decompile()}";
                 }
             }
 
@@ -238,7 +242,7 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
@@ -246,7 +250,7 @@
             {
                 public override string Decompile()
                 {
-                    return "rotator" + base.Decompile();
+                    return $"rotator{base.Decompile()}";
                 }
             }
 
@@ -254,7 +258,7 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
@@ -262,7 +266,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -270,7 +274,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -278,7 +282,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -286,7 +290,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -294,7 +298,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -302,7 +306,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -310,7 +314,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -318,7 +322,7 @@
             {
                 public override string Decompile()
                 {
-                    return "name" + base.Decompile();
+                    return $"name{base.Decompile()}";
                 }
             }
 
@@ -326,7 +330,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -334,7 +338,7 @@
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
                 }
             }
 
@@ -342,18 +346,39 @@
             {
                 public override string Decompile()
                 {
-                    return "bool" + base.Decompile();
+                    return $"bool{base.Decompile()}";
                 }
             }
 
-            public class InterfaceToObjectToken : CastToken{}
-            public class ObjectToInterfaceToken : CastToken{}
+            public class InterfaceToObjectToken : CastToken
+            {
+            }
+
+            public class ObjectToInterfaceToken : CastToken
+            {
+            }
 
             public class DelegateToStringToken : CastToken
             {
                 public override string Decompile()
                 {
-                    return "string" + base.Decompile();
+                    return $"string{base.Decompile()}";
+                }
+            }
+
+            public sealed class UnresolvedCastToken : CastToken
+            {
+                public override void Deserialize(IUnrealStream stream)
+                {
+#if DEBUG_HIDDENTOKENS
+                    Debug.WriteLine("Detected an unresolved token.");
+#endif
+                }
+                
+                public override string Decompile()
+                {
+                    Decompiler.PreComment = $"// {FormatTokenInfo(this)}";
+                    return base.Decompile();
                 }
             }
         }

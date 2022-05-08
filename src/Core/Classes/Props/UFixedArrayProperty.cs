@@ -9,13 +9,10 @@ namespace UELib.Core
     public class UFixedArrayProperty : UProperty
     {
         #region Serialized Members
+
         public UProperty InnerObject;
 
-        public int Count
-        {
-            get;
-            private set;
-        }
+        public int Count { get; private set; }
 
         #endregion
 
@@ -33,7 +30,7 @@ namespace UELib.Core
             base.Deserialize();
 
             int innerIndex = _Buffer.ReadObjectIndex();
-            InnerObject = (UProperty)GetIndexObject( innerIndex );
+            InnerObject = (UProperty)GetIndexObject(innerIndex);
             Count = _Buffer.ReadIndex();
         }
 
@@ -41,7 +38,7 @@ namespace UELib.Core
         public override string GetFriendlyType()
         {
             // Just move to decompiling?
-            return base.GetFriendlyType() + "[" + Count + "]";
+            return $"{base.GetFriendlyType()}[{Count}]";
         }
     }
 }

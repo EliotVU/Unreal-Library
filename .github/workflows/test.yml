@@ -14,9 +14,9 @@ jobs:
       working-directory: ./src
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v2
       with:
       # Legacy versions not supported? :(
       # 5.0 will likely not work yet due legacy dependencies...

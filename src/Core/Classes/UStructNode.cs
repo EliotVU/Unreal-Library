@@ -1,52 +1,61 @@
-﻿using System.Windows.Forms;
+﻿#if Forms
+using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
     public partial class UStruct
     {
-        protected override void InitNodes( TreeNode node )
+        protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode( node, typeof(UStruct).Name );
-            if( IsPureStruct() )
+            _ParentNode = AddSectionNode(node, nameof(UStruct));
+            if (IsPureStruct())
             {
-                var sFlagsNode = AddTextNode( _ParentNode, "Struct Flags:" + UnrealMethods.FlagToString( StructFlags ) );
-                sFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.StructFlags), StructFlags ) );
+                var sFlagsNode = AddTextNode(_ParentNode, $"Struct Flags:{UnrealMethods.FlagToString(StructFlags)}");
+                sFlagsNode.ToolTipText =
+                    UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.StructFlags), StructFlags));
             }
 
-            AddTextNode( _ParentNode, "Script Size:" + DataScriptSize );
-            base.InitNodes( _ParentNode );
+            AddTextNode(_ParentNode, $"Script Size:{DataScriptSize}");
+            base.InitNodes(_ParentNode);
         }
 
-        protected override void AddChildren( TreeNode node )
+        protected override void AddChildren(TreeNode node)
         {
-            if( ScriptText != null )
+            if (ScriptText != null)
             {
-                AddObjectNode( node, ScriptText, "UObject" );
+                AddObjectNode(node, ScriptText, nameof(UObject));
             }
 
-            if( CppText != null )
+            if (CppText != null)
             {
-                AddObjectNode( node, CppText, "UObject" );
+                AddObjectNode(node, CppText, nameof(UObject));
             }
 
-            if( ProcessedText != null )
+            if (ProcessedText != null)
             {
-                AddObjectNode( node, ProcessedText, "UObject" );
+                AddObjectNode(node, ProcessedText, nameof(UObject));
             }
 
-            AddObjectListNode( node, "Constants", Constants, "UConst" );
-            AddObjectListNode( node, "Enumerations", Enums, "UEnum" );
-            AddObjectListNode( node, "Structures", Structs, "UStruct" );
+            var children = new List<UObject>();
+            for (var child = Children; child != null; child = child.NextField)
+            {
+                children.Insert(0, child);
+            }
+            AddObjectListNode(node, "Children", children, nameof(UObject));
+            AddObjectListNode(node, "Constants", Constants, nameof(UConst));
+            AddObjectListNode(node, "Enumerations", Enums, nameof(UEnum));
+            AddObjectListNode(node, "Structures", Structs, nameof(UStruct));
             // Not if the upper class is a function; UFunction adds locals and parameters instead
-            if( GetType() != typeof(UFunction) )
+            if (GetType() != typeof(UFunction))
             {
-                AddObjectListNode( node, "Variables", Variables, "UProperty" );
+                AddObjectListNode(node, "Variables", Variables, nameof(UProperty));
             }
         }
 
-        protected override void PostAddChildren( TreeNode node )
+        protected override void PostAddChildren(TreeNode node)
         {
-            if( Properties == null || Properties.Count <= 0 )
+            if (Properties == null || Properties.Count <= 0)
                 return;
 
             var defNode = new ObjectListNode
@@ -55,12 +64,13 @@ namespace UELib.Core
                 ImageKey = "UDefaultProperty",
                 SelectedImageKey = "UDefaultProperty"
             };
-            node.Nodes.Add( defNode );
-            foreach( var def in Properties )
+            node.Nodes.Add(defNode);
+            foreach (var def in Properties)
             {
-                var objN = new DefaultObjectNode( def ){Text = def.Name};
-                defNode.Nodes.Add( objN );
+                var objN = new DefaultObjectNode(def) { Text = def.Name };
+                defNode.Nodes.Add(objN);
             }
         }
     }
 }
+#endif

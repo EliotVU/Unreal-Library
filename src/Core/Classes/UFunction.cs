@@ -10,108 +10,127 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UFunction : UStruct, IUnrealNetObject
     {
-        // TODO: Corrigate version. Attested in version 61, but deprecated since at least version 68.
-        private const uint VDeprecatedData = 68;
         private const uint VFriendlyName = 189;
 
         #region Serialized Members
-        public ushort   NativeToken
-        {
-            get;
-            private set;
-        }
 
-        public byte     OperPrecedence
-        {
-            get;
-            private set;
-        }
+        public ushort NativeToken { get; private set; }
+
+        public byte OperPrecedence { get; private set; }
 
         /// <value>
         /// 32bit in UE2
         /// 64bit in UE3
         /// </value>
-        private ulong   FunctionFlags
-        {
-            get; set;
-        }
+        private ulong FunctionFlags { get; set; }
 
-        public ushort   RepOffset
-        {
-            get;
-            private set;
-        }
+        public ushort RepOffset { get; private set; }
 
-        public bool     RepReliable
-        {
-            get{ return HasFunctionFlag( Flags.FunctionFlags.NetReliable ); }
-        }
+        public bool RepReliable => HasFunctionFlag(Flags.FunctionFlags.NetReliable);
 
-        public uint     RepKey
-        {
-            get{ return RepOffset | ((uint)Convert.ToByte( RepReliable ) << 16); }
-        }
+        public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
+
         #endregion
 
         #region Script Members
-        public List<UProperty>  Params{ get; private set; }
-        public UProperty        ReturnProperty{ get; private set; }
+
+        public List<UProperty> Params { get; private set; }
+        public UProperty ReturnProperty { get; private set; }
+
         #endregion
 
         #region Constructors
+
         protected override void Deserialize()
         {
 #if BORDERLANDS2
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
             {
-                var size = _Buffer.ReadUShort();
-                Record( "??size_BL2", size );
-                _Buffer.Skip( size * 2 );
+                ushort size = _Buffer.ReadUShort();
+                Record("??size_BL2", size);
+                _Buffer.Skip(size * 2);
             }
 #endif
 
             base.Deserialize();
 
-            NativeToken = _Buffer.ReadUShort();
-            Record( "NativeToken", NativeToken );
-            OperPrecedence = _Buffer.ReadByte();
-            Record( "OperPrecedence", OperPrecedence );
-            if( Package.Version < VDeprecatedData )
+            if (Package.Version <= 63)
             {
-                // ParmsSize, NumParms, and ReturnValueOffset
-                _Buffer.Skip( 5 );
+                ushort parmsSize = _Buffer.ReadUShort();
+                Record("Unknown", parmsSize);
+            }
+
+            NativeToken = _Buffer.ReadUShort();
+            Record("NativeToken", NativeToken);
+
+            if (Package.Version <= 63)
+            {
+                byte numParms = _Buffer.ReadByte();
+                Record("Unknown", numParms);
+            }
+
+            OperPrecedence = _Buffer.ReadByte();
+            Record("OperPrecedence", OperPrecedence);
+
+            if (Package.Version <= 63)
+            {
+                ushort returnValueOffset = _Buffer.ReadUShort();
+                Record("Unknown", returnValueOffset);
+            }
+
+            if (Package.Version <= 63)
+            {
+                ushort unknown = _Buffer.ReadUShort();
+                Record("Unknown", unknown);
             }
 
 #if TRANSFORMERS
-            FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers 
-                ? _Buffer.ReadUInt64() 
+            // TODO: Version?
+            FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
+                ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
 #else
             FunctionFlags = _Buffer.ReadUInt32();
 #endif
-            Record( "FunctionFlags", (FunctionFlags)FunctionFlags );
-            if( HasFunctionFlag( Flags.FunctionFlags.Net ) )
+            Record("FunctionFlags", (FunctionFlags)FunctionFlags);
+            if (HasFunctionFlag(Flags.FunctionFlags.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
-                Record( "RepOffset", RepOffset );
+                Record("RepOffset", RepOffset);
             }
 
-#if TRANSFORMERS
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+#if SPELLBORN
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn
+                && 133 < _Buffer.Version)
             {
-                FriendlyName = Table.ObjectName;
-                return;
+                // Always 0xAC6975C
+                uint unknownFlags1 = _Buffer.ReadUInt32();
+                Record(nameof(unknownFlags1), unknownFlags1);
+                uint replicationFlags = _Buffer.ReadUInt32();
+                Record(nameof(replicationFlags), replicationFlags);
             }
 #endif
 
-            if( (Package.Version >= VFriendlyName && !Package.IsConsoleCooked())
+            // TODO: Data-strip version?
+            if (Package.Version >= VFriendlyName && !Package.IsConsoleCooked()
+#if TRANSFORMERS
+                // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
+                && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+#endif
 #if MKKE
+                // Cooked and stripped, but FriendlyName still remains
                 || Package.Build == UnrealPackage.GameBuild.BuildName.MKKE
 #endif
-                )
+               )
             {
                 FriendlyName = _Buffer.ReadNameReference();
-                Record( "FriendlyName", FriendlyName );
+                Record("FriendlyName", FriendlyName);
+            }
+            else
+            {
+                // HACK: Workaround for packages that have stripped FriendlyName data.
+                // FIXME: Operator names need to be translated.
+                FriendlyName = Table.ObjectName;
             }
         }
 
@@ -119,30 +138,26 @@ namespace UELib.Core
         {
             base.FindChildren();
             Params = new List<UProperty>();
-            foreach( var property in Variables )
+            foreach (var property in Variables)
             {
-                if( property.HasPropertyFlag( PropertyFlagsLO.ReturnParm ) )
-                {
-                    ReturnProperty = property;
-                }
+                if (property.HasPropertyFlag(PropertyFlagsLO.ReturnParm)) ReturnProperty = property;
 
-                if( property.IsParm() )
-                {
-                    Params.Add( property );
-                }
+                if (property.IsParm()) Params.Add(property);
             }
         }
+
         #endregion
 
         #region Methods
-        public bool HasFunctionFlag( FunctionFlags flag )
+
+        public bool HasFunctionFlag(FunctionFlags flag)
         {
             return ((uint)FunctionFlags & (uint)flag) != 0;
         }
 
         public bool IsOperator()
         {
-            return HasFunctionFlag( Flags.FunctionFlags.Operator );
+            return HasFunctionFlag(Flags.FunctionFlags.Operator);
         }
 
         public bool IsPost()
@@ -152,8 +167,9 @@ namespace UELib.Core
 
         public bool IsPre()
         {
-            return IsOperator() && HasFunctionFlag( Flags.FunctionFlags.PreOperator );
+            return IsOperator() && HasFunctionFlag(Flags.FunctionFlags.PreOperator);
         }
+
         #endregion
     }
 }

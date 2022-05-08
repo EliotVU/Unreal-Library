@@ -123,13 +123,15 @@ namespace UELib.Flags
     ///     The flag is removed in (Version)
     /// </summary>
     [Flags]
-    public enum ObjectFlagsLO : ulong   // 32bit aligned, see ObjectFlags64
+    public enum ObjectFlagsLO : ulong
     {
         Transactional       = 0x00000001U,
+        InSingularFunc      = 0x00000002U,
         Public              = 0x00000004U,
 
         Private             = 0x00000080U,
         Automated           = 0x00000100U,
+        Protected           = 0x00000800U,
 
         Transient           = 0x00004000U,
 
@@ -159,12 +161,14 @@ namespace UELib.Flags
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
+    // FIXME: Merge with ObjectFlagsLO
     [Flags]
-    public enum ObjectFlagsHO : ulong   // 32bit aligned, see ObjectFlags
+    public enum ObjectFlagsHO : ulong
     {
         Obsolete                = 0x00000020U,
         Final                   = 0x00000080U,
         PerObjectLocalized      = 0x00000100U,
+        Protected               = 0x00000100U,
         PropertiesObject        = 0x00000200U,
         ArchetypeObject         = 0x00000400U,
         RemappedName            = 0x00000800U,
@@ -290,7 +294,6 @@ namespace UELib.Flags
         DataBinding         = 0x40000000U,
 
         SerializeText       = 0x80000000U,
-
         #region UT2004 Flags
         Cache               = 0x01000000U,      // @Removed(UE3) Generate cache file: .ucl
         NoImport            = 0x01000000U,

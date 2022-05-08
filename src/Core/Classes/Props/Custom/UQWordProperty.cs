@@ -1,17 +1,17 @@
 #if BIOSHOCK
-    namespace UELib.Core
+namespace UELib.Core
+{
+    /// <summary>
+    /// QWord Property
+    /// </summary>
+    [UnrealRegisterClass]
+    public class UQWordProperty : UIntProperty
     {
-        /// <summary>
-        /// QWord Property
-        /// </summary>
-        [UnrealRegisterClass]
-        public class UQWordProperty : UIntProperty
+        /// <inheritdoc/>
+        public override string GetFriendlyType()
         {
-            /// <inheritdoc/>
-            public override string GetFriendlyType()
-            {
-                return "Qword";
-            }
+            return "Qword";
         }
     }
+}
 #endif

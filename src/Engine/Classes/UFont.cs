@@ -17,12 +17,12 @@ namespace UELib.Engine
             private int _VSize;
             byte _TextureIndex;
 
-            public void Serialize( IUnrealStream stream )
+            public void Serialize(IUnrealStream stream)
             {
                 throw new NotImplementedException();
             }
 
-            public void Deserialize( IUnrealStream stream )
+            public void Deserialize(IUnrealStream stream)
             {
                 _StartU = stream.ReadInt32();
                 _StartV = stream.ReadInt32();
@@ -40,7 +40,7 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
-            _Characters = new UArray<FontCharacter>( _Buffer );
+			_Buffer.ReadArray(out _Characters);
 
             // Textures
 

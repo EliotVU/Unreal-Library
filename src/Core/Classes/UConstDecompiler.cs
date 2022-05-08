@@ -11,7 +11,7 @@ namespace UELib.Core
         /// <returns></returns>
         public override string Decompile()
         {
-            return "const " + Name + " = " + Value.Trim() + ";";
+            return $"const {Name} = {Value.Trim()};";
         }
     }
 }

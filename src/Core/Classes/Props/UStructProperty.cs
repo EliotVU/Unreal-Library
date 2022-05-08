@@ -9,7 +9,9 @@ namespace UELib.Core
     public class UStructProperty : UProperty
     {
         #region Serialized Members
+
         public UStruct StructObject;
+
         #endregion
 
         /// <summary>
@@ -24,7 +26,7 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            StructObject = (UStruct)GetIndexObject( _Buffer.ReadObjectIndex() );
+            StructObject = (UStruct)GetIndexObject(_Buffer.ReadObjectIndex());
         }
 
         /// <inheritdoc/>

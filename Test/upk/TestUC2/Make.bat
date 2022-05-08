@@ -1,26 +1,26 @@
 @echo off
 
-set projn=TestUC2
+set projn=__TestUC2__Temp
 set workDir=%cd%
-set UCCDir="C:\UT2004\System"
+set RootDir="C:\UT2004"
+set UCCDir="%RootDir%\System"
+set ScriptDir="%RootDir%\"
+set DestDir="%RootDir%\System"
 
 title %projn%
 color 0F
 
 echo %cd%
 cd /d C:
-cd %UCCDir%
+cd "%UCCDir%"
 
-cd ..
-xcopy %workDir% %projn% /y /s /i
-cd %UCCDir%
+xcopy "%workDir%\Classes\" "%ScriptDir%\%projn%\Classes\" /f /r /y /s /i
 
-del %projn%.u
+del "%DestDir%\%projn%.u"
+
+cd "%UCCDir%"
 ucc.exe MakeCommandletUtils.EditPackagesCommandlet 1 %projn%
 ucc.exe editor.MakeCommandlet -EXPORTCACHE -SHOWDEP
 ucc.exe MakeCommandletUtils.EditPackagesCommandlet 0 %projn%
-xcopy %projn%.u %workDir% /y
-del %projn%.u
 
-cd ..
-del %projn%
+xcopy "%DestDir%\%projn%.u" "%workDir%\TestUC2.u" /f /y /r

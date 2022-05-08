@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using UELib.Annotations;
+
+namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -10,26 +12,26 @@
                 // Greater or Equal than
                 private const ushort VSizeByteMoved = 588;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    var propertyAdded = stream.Version >= VSizeByteMoved
+                    bool propertyAdded = stream.Version >= VSizeByteMoved
 #if TERA
-                        && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
 #if TRANSFORMERS
-                        && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
 #endif
-                        ; 
+                        ;
 
                     // A.?
                     DeserializeNext();
 
                     // SkipSize
                     stream.ReadUInt16();
-                    Decompiler.AlignSize( sizeof(ushort) );
+                    Decompiler.AlignSize(sizeof(ushort));
 
                     // Doesn't seem to exist in APB
-                    if( propertyAdded )
+                    if (propertyAdded)
                     {
                         // Property
                         stream.ReadObjectIndex();
@@ -38,13 +40,13 @@
 
                     // PropertyType
                     stream.ReadByte();
-                    Decompiler.AlignSize( sizeof(byte) );
+                    Decompiler.AlignSize(sizeof(byte));
 
                     // Additional byte in APB?
-                    if( stream.Version > 512 && !propertyAdded )
+                    if (stream.Version > 512 && !propertyAdded)
                     {
                         stream.ReadByte();
-                        Decompiler.AlignSize( sizeof(byte) );
+                        Decompiler.AlignSize(sizeof(byte));
                     }
 
                     // ?.B
@@ -53,7 +55,7 @@
 
                 public override string Decompile()
                 {
-                    return DecompileNext() + "." + DecompileNext();
+                    return $"{DecompileNext()}.{DecompileNext()}";
                 }
             }
 
@@ -70,7 +72,7 @@
 
             public class InterfaceContextToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     DeserializeNext();
                 }
@@ -84,43 +86,51 @@
             public class StructMemberToken : Token
             {
                 public UField MemberProperty;
+                [CanBeNull] public UStruct Struct;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Property index
-                    MemberProperty = Decompiler._Container.TryGetIndexObject( stream.ReadObjectIndex() ) as UField;
+                    MemberProperty = stream.ReadObject() as UField;
                     Decompiler.AlignObjectSize();
 
                     // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
-                    if( stream.Version > 369 )
+                    if (stream.Version > 369)
                     {
                         // Struct index
-                        stream.ReadObjectIndex();
+                        Struct = stream.ReadObject() as UStruct;
                         Decompiler.AlignObjectSize();
 #if MKKE
-                        if( Package.Build != UnrealPackage.GameBuild.BuildName.MKKE )
+                        if (Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
                         {
 #endif
-                            stream.Position ++;
-                            Decompiler.AlignSize( sizeof(byte) );
+                            stream.Position++;
+                            Decompiler.AlignSize(sizeof(byte));
 #if MKKE
                         }
 #endif
 
                         // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in SWG(486).
-                        if( stream.Version > 472 )
+                        if (stream.Version > 472)
                         {
-                            stream.Position ++;
-                            Decompiler.AlignSize( sizeof(byte) );
+                            stream.Position++;
+                            Decompiler.AlignSize(sizeof(byte));
                         }
                     }
+
                     // Pre-Context
                     DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileNext() + "." + MemberProperty.Name;
+#if DEBUG_HIDDENTOKENS
+                    if (Struct != null)
+                    {
+                        Decompiler.PreComment = $"Struct:{Struct.GetOuterGroup()}";
+                    }
+#endif
+                    return $"{DecompileNext()}.{MemberProperty.Name}";
                 }
             }
         }

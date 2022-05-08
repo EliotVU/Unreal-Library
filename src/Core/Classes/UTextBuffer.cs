@@ -1,17 +1,18 @@
-using System;
-
 namespace UELib.Core
 {
     [UnrealRegisterClass]
     public partial class UTextBuffer : UObject
     {
         #region Serialized Members
+
         protected uint _Top;
         protected uint _Pos;
-        public string ScriptText = String.Empty;
+        public string ScriptText = string.Empty;
+
         #endregion
 
         #region Constructors
+
         public UTextBuffer()
         {
             ShouldDeserializeOnDemand = true;
@@ -32,15 +33,16 @@ namespace UELib.Core
 #endif
 
 #if THIEFDEADLYSHADOWS
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
             {
                 // TODO: Unknown
-                _Buffer.Skip( 4 );
+                _Buffer.Skip(4);
             }
 #endif
 
             ScriptText = _Buffer.ReadText();
         }
+
         #endregion
     }
 }

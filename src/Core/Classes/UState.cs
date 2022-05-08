@@ -15,155 +15,133 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UState : UStruct
     {
-        // TODO: Corrigate version. 61 is the lowest package version I know that supports StateFlags.
-        private const uint VStateFlags = 61;
+        // FIXME: Version 61 is the lowest package version I know that supports StateFlags.
+        private const int VStateFlags = 61;
+        // FIXME: Version
+        private const int VFuncMap = 220;
+        private const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
 
         #region Serialized Members
+
         /// <summary>
         /// Mask of current functions being probed by this class.
         /// </summary>
-        private long _ProbeMask;
+        public ulong ProbeMask;
 
         /// <summary>
         /// Mask of current functions being ignored by the present state node.
         /// </summary>
-        private long _IgnoreMask;
+        public ulong IgnoreMask;
 
         /// <summary>
         /// Offset into the ScriptStack where the FLabelEntry persist.
         /// </summary>
-        private short _LabelTableOffset;
+        public ushort LabelTableOffset;
 
         /// <summary>
         /// This state's flags mask e.g. Auto, Simulated.
+        /// TODO: Retype to UStateFlags and deprecate HasStateFlag, among others
         /// </summary>
         private uint _StateFlags;
+
+        public UMap<UName, UFunction> FuncMap;
+
         #endregion
 
         #region Script Members
-        public IList<UFunction> Functions{ get; private set; }
+
+        public IList<UFunction> Functions { get; private set; }
+
         #endregion
 
         #region Constructors
+
         protected override void Deserialize()
         {
             base.Deserialize();
 
-            // TODO: Simplify ProbeMask deserialization.
-            // if >= 700
-            // 32b IgnoreMask
-            // if < 700
-            // 32b ProbeMask
-            // 64b IgnoreMask
-            // if < 220
-            // 64b ProbeMask
-            // 64b IgnoreMask
-
 #if TRANSFORMERS
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
             {
                 goto noMasks;
             }
 #endif
 
-            // UE3
-            if( Package.Version >= 220 )
+            if (Package.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
             {
-                // TODO: Corrigate Version; Somewhere between 690 - 706
-                if( Package.Version < 700 )
+                ProbeMask = _Buffer.ReadUInt64();
+                Record(nameof(ProbeMask), ProbeMask);
+
+                IgnoreMask = _Buffer.ReadUInt64();
+                Record(nameof(IgnoreMask), IgnoreMask);
+            }
+            else
+            {
+                ProbeMask = _Buffer.ReadUInt32();
+                Record(nameof(ProbeMask), ProbeMask);
+            }
+
+            noMasks:
+            LabelTableOffset = _Buffer.ReadUInt16();
+            Record(nameof(LabelTableOffset), LabelTableOffset);
+
+            if (Package.Version >= VStateFlags)
+            {
+#if BORDERLANDS2 || TRANSFORMERS
+                // FIXME:Temp fix
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
                 {
-                    // TODO: Unknown!
-                    int unknown = _Buffer.ReadInt32();
-                    Record( "???", unknown );
+                    _StateFlags = _Buffer.ReadUShort();
+                    goto skipStateFlags;
                 }
-
-                _ProbeMask = _Buffer.ReadInt32();
-                Record( "_ProbeMask", _ProbeMask );
-            }
-            else  // UE2 and 1
-            {
-                _ProbeMask = _Buffer.ReadInt64();
-                Record( "_ProbeMask", _ProbeMask );
-            }
-
-            // TODO: Corrigate Version; Somewhere between 690 - 706
-            if( Package.Version < 700 )
-            {
-                _IgnoreMask = _Buffer.ReadInt64();
-                Record( "_IgnoreMask", _IgnoreMask );
-            }
-
-        noMasks:
-            _LabelTableOffset = _Buffer.ReadInt16();
-            Record( "_LabelTableOffset", _LabelTableOffset );
-
-            if( Package.Version >= VStateFlags )
-            {
-                #if BORDERLANDS2 || TRANSFORMERS
-                    // FIXME:Temp fix
-                    if( Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
-                    {
-                        _StateFlags = _Buffer.ReadUShort();
-                        goto skipStateFlags;
-                    }
-                #endif
+#endif
 
                 _StateFlags = _Buffer.ReadUInt32();
                 skipStateFlags:
-                Record( "StateFlags", (StateFlags)_StateFlags );
+                Record(nameof(_StateFlags), (StateFlags)_StateFlags);
             }
 
 #if TRANSFORMERS
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
             {
-                _Buffer.Skip( 4 );
+                _Buffer.Skip(4);
                 return;
             }
 #endif
 
-            if( Package.Version >= 220 )
-            {
-                int mapCount = _Buffer.ReadIndex();
-                Record( "mapcount", mapCount );
-                if( mapCount > 0 )
-                {
-                    AssertEOS( mapCount * 12, "Maps" );
-                    _Buffer.Skip( mapCount * 12 );
-                    // We don't have to store this.
-                    // We don't use it and all that could happen is a OutOfMemory exception!
-                    /*_FuncMap = new Dictionary<int,int>( mapCount );
-                    for( int i = 0; i < mapCount; ++ i )
-                    {
-                        _FuncMap.Add( _Buffer.ReadNameIndex(), _Buffer.ReadObjectIndex() );
-                    } */
-                }
-            }
+            if (Package.Version < VFuncMap) return;
+            _Buffer.ReadMap(out FuncMap); 
+            Record(nameof(FuncMap), FuncMap);
         }
 
         protected override void FindChildren()
         {
             base.FindChildren();
             Functions = new List<UFunction>();
-            for( var child = Children; child != null; child = child.NextField )
+            for (var child = Children; child != null; child = child.NextField)
             {
-                if( child.IsClassType( "Function" ) )
+                if (child.IsClassType("Function"))
                 {
-                    Functions.Insert( 0, (UFunction)child );
+                    Functions.Insert(0, (UFunction)child);
                 }
             }
         }
+
         #endregion
 
         #region Methods
-        public bool HasStateFlag( StateFlags flag )
+
+        public bool HasStateFlag(StateFlags flag)
         {
             return (_StateFlags & (uint)flag) != 0;
         }
 
-        public bool HasStateFlag( uint flag )
+        public bool HasStateFlag(uint flag)
         {
             return (_StateFlags & flag) != 0;
         }
+
         #endregion
     }
 }

@@ -20,11 +20,11 @@ namespace UELib
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
+        public static UnrealPackage LoadPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
         {
-            var stream = new UPackageStream( packagePath, FileMode.Open, fileAccess );
-            var package = new UnrealPackage( stream );
-            package.Deserialize( stream );
+            var stream = new UPackageStream(packagePath, FileMode.Open, fileAccess);
+            var package = new UnrealPackage(stream);
+            package.Deserialize(stream);
             return package;
         }
 
@@ -32,11 +32,12 @@ namespace UELib
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadPackage( string packagePath, IBufferDecoder decoder, FileAccess fileAccess = FileAccess.Read )
+        public static UnrealPackage LoadPackage(string packagePath, IBufferDecoder decoder,
+            FileAccess fileAccess = FileAccess.Read)
         {
-            var stream = new UPackageStream( packagePath, FileMode.Open, fileAccess );
-            var package = new UnrealPackage( stream ) {Decoder = decoder};
-            package.Deserialize( stream );
+            var stream = new UPackageStream(packagePath, FileMode.Open, fileAccess);
+            var package = new UnrealPackage(stream) { Decoder = decoder };
+            package.Deserialize(stream);
             return package;
         }
 
@@ -44,17 +45,18 @@ namespace UELib
         /// Looks if the package is already loaded before by looking into the CachedPackages list first.
         /// If it is not found then it loads the given file specified by PackagePath and returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadCachedPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
+        public static UnrealPackage LoadCachedPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
         {
-            var package = _CachedPackages.Find( pkg => pkg.PackageName == Path.GetFileNameWithoutExtension( packagePath ) );
-            if( package != null )
+            var package = _CachedPackages.Find(pkg => pkg.PackageName == Path.GetFileNameWithoutExtension(packagePath));
+            if (package != null)
                 return package;
 
-            package = LoadPackage( packagePath, fileAccess);
-            if( package != null )
+            package = LoadPackage(packagePath, fileAccess);
+            if (package != null)
             {
-                _CachedPackages.Add( package );
+                _CachedPackages.Add(package);
             }
+
             return package;
         }
 
@@ -62,13 +64,11 @@ namespace UELib
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage with deserialized objects.
         /// </summary>
-        public static UnrealPackage LoadFullPackage( string packagePath, FileAccess fileAccess = FileAccess.Read )
+        public static UnrealPackage LoadFullPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
         {
-            var package = LoadPackage( packagePath, fileAccess );
-            if( package != null )
-            {
-                package.InitializePackage();
-            }
+            var package = LoadPackage(packagePath, fileAccess);
+            package?.InitializePackage();
+
             return package;
         }
     }

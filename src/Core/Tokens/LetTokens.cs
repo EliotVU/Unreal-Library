@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace UELib.Core
+﻿namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -8,7 +6,7 @@ namespace UELib.Core
         {
             public class LetToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // A = B
                     DeserializeNext();
@@ -18,7 +16,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileNext() + " = " + DecompileNext();
+                    return $"{DecompileNext()} = {DecompileNext()}";
                 }
             }
 
@@ -34,27 +32,27 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return String.Empty;
+                    return string.Empty;
                 }
             }
 
             public class ConditionalToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Condition
                     DeserializeNext();
 
                     // Size. Used to skip ? if Condition is False.
                     stream.ReadUInt16();
-                    Decompiler.AlignSize( sizeof(ushort) );
+                    Decompiler.AlignSize(sizeof(ushort));
 
                     // If TRUE expression
                     DeserializeNext();
 
                     // Size. Used to skip : if Condition is True.
                     stream.ReadUInt16();
-                    Decompiler.AlignSize( sizeof(ushort) );
+                    Decompiler.AlignSize(sizeof(ushort));
 
                     // If FALSE expression
                     DeserializeNext();
@@ -62,7 +60,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    return "((" + DecompileNext() + ") ? " + DecompileNext() + " : " + DecompileNext() + ")";
+                    return $"(({DecompileNext()}) ? {DecompileNext()} : {DecompileNext()})";
                 }
             }
         }

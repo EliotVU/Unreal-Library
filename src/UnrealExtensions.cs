@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace UELib
@@ -30,16 +29,17 @@ namespace UELib
 
         public static string FormatUnrealExtensionsAsFilter()
         {
-            string extensions = String.Empty;
+            var extensions = string.Empty;
             var exts = FormatUnrealExtensionsAsList();
-            foreach( string ext in exts )
+            foreach (string ext in exts)
             {
                 extensions += "*" + ext;
-                if( ext != exts.Last() )
+                if (ext != exts.Last())
                 {
                     extensions += ";";
                 }
             }
+
             return "All Unreal Files(" + extensions + ")|" + extensions;
         }
 
@@ -58,15 +58,15 @@ namespace UELib
                 PackageExt.Length
             );
 
-            exts.AddRange( ScriptExt );
-            exts.AddRange( TextureExt );
-            exts.AddRange( SoundExt );
-            exts.AddRange( MeshExt );
-            exts.AddRange( AnimExt );
-            exts.AddRange( CacheExt );
-            exts.AddRange( MapExt );
-            exts.AddRange( SaveExt );
-            exts.AddRange( PackageExt );
+            exts.AddRange(ScriptExt);
+            exts.AddRange(TextureExt);
+            exts.AddRange(SoundExt);
+            exts.AddRange(MeshExt);
+            exts.AddRange(AnimExt);
+            exts.AddRange(CacheExt);
+            exts.AddRange(MapExt);
+            exts.AddRange(SaveExt);
+            exts.AddRange(PackageExt);
             return exts;
         }
     }

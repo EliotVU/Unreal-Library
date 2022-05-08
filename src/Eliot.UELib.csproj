@@ -43,11 +43,12 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 BATMAN</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN ROCKETLEAGUE BATMAN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>bin\Debug\Eliot.UELib.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <NoWarn>
     </NoWarn>
@@ -60,7 +61,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE HAWKEN UT DISHONORED REMEMBERME BIOSHOCK DEUSEXINVISIBLEWAR XCOM2</DefineConstants>
+    <DefineConstants>TRACE;Forms DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE HAWKEN UT DISHONORED REMEMBERME BIOSHOCK DEUSEXINVISIBLEWAR XCOM2 DCUO AA2 SPELLBORN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -72,10 +73,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Publish\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE XCOM2</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms DEBUG_TEST DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN</DefineConstants>
     <DocumentationFile>
     </DocumentationFile>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <WarningLevel>0</WarningLevel>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -94,7 +95,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
     <OutputPath>bin\Publish\</OutputPath>
-    <DefineConstants>DECOMPILE BINARYMETADATA SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2</DefineConstants>
+    <DefineConstants>Forms DECOMPILE BINARYMETADATA SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN</DefineConstants>
     <Optimize>true</Optimize>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisLogFile>..\..\..\..\..\..\..\Program Files (x86)\UE Explorer\Eliot.UELib.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -111,6 +112,18 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTest|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Test\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE UE1 UE2 UE3 SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEFDEADLYSHADOWS BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>0</WarningLevel>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>GlobalizationRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -146,7 +159,6 @@
     <Compile Include="Core\Classes\Props\Custom\UXWeakReferenceProperty.cs" />
     <Compile Include="Core\Classes\UPackage.cs" />
     <Compile Include="Core\Classes\UPackageNode.cs" />
-    <Compile Include="Core\Tables\UDependencyTableItem.cs" />
     <Compile Include="Core\Tables\UExportTableItem.cs" />
     <Compile Include="Core\Tables\UGenerationTableItem.cs" />
     <Compile Include="Core\Tables\UImportTableItem.cs" />
@@ -165,6 +177,11 @@
     <Compile Include="Core\Classes\UClassDecompiler.cs" />
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
+    <Compile Include="Core\Types\UColor.cs" />
+    <Compile Include="Core\Types\UMap.cs" />
+    <Compile Include="Decoding\CryptoDecoder.AA2.cs" />
+    <Compile Include="Decoding\CryptoCore.cs" />
+    <Compile Include="Engine\Classes\UBitmapMaterial.cs" />
     <Compile Include="Engine\Classes\UPalette.cs" />
     <Compile Include="Decoding\IBufferDecoder.cs" />
     <Compile Include="ObjectNodes.cs" />
@@ -206,6 +223,7 @@
     <Compile Include="Core\Classes\UStruct.cs" />
     <Compile Include="Engine\Classes\UFont.cs" />
     <Compile Include="NativesTablePackage.cs" />
+    <Compile Include="UnrealScript\PropertyDisplay.cs" />
     <Compile Include="UDecompilingState.cs" />
     <Compile Include="Core\Types\UName.cs" />
     <Compile Include="UnrealBuild.cs" />
@@ -220,7 +238,7 @@
     <Compile Include="UnrealPackage.cs" />
     <Compile Include="UnrealPackageCompression.cs" />
     <Compile Include="UnrealStream.cs" />
-    <Compile Include="UnrealSyntax.cs" />
+    <Compile Include="UnrealScript\ScriptConstants.cs" />
     <Compile Include="Core\Tables\UTableItem.cs" />
     <Compile Include="UnrealTokens.cs" />
     <Compile Include="UnrealTypes.cs" />

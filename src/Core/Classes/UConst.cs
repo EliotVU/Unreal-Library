@@ -7,22 +7,23 @@
     public partial class UConst : UField
     {
         #region Serialized Members
+
         /// <summary>
         /// Constant Value
         /// </summary>
-        public string Value
-        {
-            get;
-            private set;
-        }
+        public string Value { get; private set; }
+
         #endregion
 
         #region Constructors
+
         protected override void Deserialize()
         {
             base.Deserialize();
             Value = _Buffer.ReadText();
+            Record(nameof(Value), Value);
         }
+
         #endregion
     }
 }

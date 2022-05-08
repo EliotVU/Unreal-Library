@@ -1,4 +1,5 @@
-﻿namespace UELib.Core
+﻿#if Forms
+namespace UELib.Core
 {
     public partial class UPackage
     {
@@ -8,3 +9,4 @@
         }
     }
 }
+#endif

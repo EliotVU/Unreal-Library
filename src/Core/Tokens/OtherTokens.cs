@@ -1,5 +1,5 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -9,21 +9,27 @@ namespace UELib.Core
         {
             public class NothingToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    if( stream.Version == 421 )
-                        Decompiler.AlignSize( sizeof(int ) );
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
+                        Decompiler.AlignSize(sizeof(int));
                 }
 
                 public override string Decompile()
                 {
                     // Empty default option parameter!
-                    ++ DefaultParameterToken._NextParamIndex;
-                    return String.Empty;
+                    ++DefaultParameterToken._NextParamIndex;
+                    return string.Empty;
                 }
             }
-            public class NoDelegateToken : NoneToken{}
-            public class NoObjectToken : NoneToken{}
+
+            public class NoDelegateToken : NoneToken
+            {
+            }
+
+            public class NoObjectToken : NoneToken
+            {
+            }
 
             // A skipped parameter when calling a function
             public class NoParmToken : Token
@@ -33,41 +39,46 @@ namespace UELib.Core
                     return ",";
                 }
             }
-            public class EndOfScriptToken : Token{}
+
+            public class EndOfScriptToken : Token
+            {
+            }
 
             public class AssertToken : Token
             {
                 public bool DebugMode;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadUInt16();    // Line
-                    Decompiler.AlignSize( sizeof(short) );
+                    stream.ReadUInt16(); // Line
+                    Decompiler.AlignSize(sizeof(short));
 
                     // TODO: Corrigate version, at least known since Mirrors Edge(536)
-                    if( stream.Version >= 536 )
+                    if (stream.Version >= 536)
                     {
                         DebugMode = stream.ReadByte() > 0;
-                        Decompiler.AlignSize( sizeof(byte) );
+                        Decompiler.AlignSize(sizeof(byte));
                     }
+
                     DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                    if( Package.Version >= 536 )
+                    if (Package.Version >= 536)
                     {
                         Decompiler.PreComment = "// DebugMode:" + DebugMode;
                     }
+
                     string condition = DecompileNext();
                     Decompiler._CanAddSemicolon = true;
-                    return "assert(" + condition + ")";
+                    return $"assert({condition})";
                 }
             }
 
             public abstract class ComparisonToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     stream.ReadObjectIndex();
                     Decompiler.AlignObjectSize();
@@ -82,7 +93,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                     return DecompileNext() + " == " + DecompileNext();
+                    return $"{DecompileNext()} == {DecompileNext()}";
                 }
             }
 
@@ -90,17 +101,17 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                     return DecompileNext() + " != " + DecompileNext();
+                    return $"{DecompileNext()} != {DecompileNext()}";
                 }
             }
 
             public class DelegateComparisonToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeNext();  // Left
+                    DeserializeNext(); // Left
                     // ==
-                    DeserializeNext();  // Right
+                    DeserializeNext(); // Right
 
                     // End
                     DeserializeNext();
@@ -111,7 +122,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " == " + DecompileNext();
+                    var output = $"{DecompileNext()} == {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -121,7 +132,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " == " + DecompileNext();
+                    var output = $"{DecompileNext()} == {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -131,7 +142,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " != " + DecompileNext();
+                    var output = $"{DecompileNext()} != {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
@@ -141,73 +152,68 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    string output = DecompileNext() + " != " + DecompileNext();
+                    var output = $"{DecompileNext()} != {DecompileNext()}";
                     DecompileNext();
                     return output;
                 }
             }
 
-            public class EatStringToken : Token
+            public class EatReturnValueToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                // Null if version < 200
+                [CanBeNull] public UProperty ReturnValueProperty;
+                
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    // TODO: Corrigate Version(Lowest known version 369(Roboblitz))
-                    if( stream.Version > 300 )
-                    {
-                        stream.ReadObjectIndex();
-                        Decompiler.AlignObjectSize();
-                    }
-
-                    // The Field
-                    DeserializeNext();
-                }
-
-                public override string Decompile()
-                {
-                    // The Field
-                    return DecompileNext();
+                    // TODO: Correct version, confirmed to at least exist as of the earliest UE3-game v369(Roboblitz).
+                    // -- definitely not in the older UE3 builds v186
+                    if (stream.Version < 200) return;
+                    
+                    ReturnValueProperty = stream.ReadObject() as UProperty;
+                    Decompiler.AlignObjectSize();
                 }
             }
 
             // TODO: Implement
             public class ResizeStringToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadByte();  // Size
-                    Decompiler.AlignSize( sizeof(byte) );
+                    stream.ReadByte(); // Size
+                    Decompiler.AlignSize(sizeof(byte));
                 }
             }
 
             // TODO: Implement
             public class BeginFunctionToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     var topFunc = Decompiler._Container as UFunction;
-                    Debug.Assert( topFunc != null, "topf != null" );
-                    foreach( var property in topFunc.Variables )
+                    Debug.Assert(topFunc != null, "topf != null");
+                    foreach (var property in topFunc.Variables)
                     {
-                        if( !property.HasPropertyFlag( Flags.PropertyFlagsLO.Parm | Flags.PropertyFlagsLO.ReturnParm ) )
+                        if (!property.HasPropertyFlag(Flags.PropertyFlagsLO.Parm | Flags.PropertyFlagsLO.ReturnParm))
                             continue;
 
                         stream.ReadByte(); // Size
-                        Decompiler.AlignSize( sizeof(byte) );
+                        Decompiler.AlignSize(sizeof(byte));
 
                         stream.ReadByte(); // bOutParam
-                        Decompiler.AlignSize( sizeof(byte) );
+                        Decompiler.AlignSize(sizeof(byte));
                     }
-                    stream.ReadByte();  // End
-                    Decompiler.AlignSize( sizeof(byte) );
+
+                    stream.ReadByte(); // End
+                    Decompiler.AlignSize(sizeof(byte));
                 }
             }
 
             public class NewToken : Token
             {
                 // Greater Than!
-                private const uint TemplateVersion = 300;   // TODO: Corrigate Version
+                private const uint TemplateVersion = 300; // TODO: Corrigate Version
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Outer
                     DeserializeNext();
@@ -220,7 +226,7 @@ namespace UELib.Core
                     DeserializeNext();
 
                     // TODO: Corrigate Version
-                    if( stream.Version > TemplateVersion )
+                    if (stream.Version > TemplateVersion)
                     {
                         // Template?
                         DeserializeNext();
@@ -235,64 +241,64 @@ namespace UELib.Core
                     string flagsStr = DecompileNext();
                     string classStr = DecompileNext();
 
-                    string templateStr = String.Empty;
+                    var templateStr = string.Empty;
                     // TODO: Corrigate Version
-                    if( Package.Version > TemplateVersion )
+                    if (Package.Version > TemplateVersion)
                     {
                         templateStr = DecompileNext();
                     }
 
                     // Handles: new [( [outer [, name [, flags]]] )] class [( template )]
-                    string output = String.Empty;
-                    bool addComma = false;
+                    var output = string.Empty;
+                    var addComma = false;
 
-                    if( outerStr.Length != 0 )
+                    if (outerStr.Length != 0)
                     {
                         output += outerStr;
                         addComma = true;
                     }
 
-                    if( nameStr.Length != 0 )
+                    if (nameStr.Length != 0)
                     {
-                        if( addComma )
+                        if (addComma)
                             output += ", ";
 
                         output += nameStr;
                         addComma = true;
                     }
 
-                    if( flagsStr.Length != 0 )
+                    if (flagsStr.Length != 0)
                     {
-                        if( addComma )
+                        if (addComma)
                             output += ", ";
 
                         output += flagsStr;
                         addComma = true;
                     }
 
-                    if( addComma )
+                    if (addComma)
                     {
-                        output = " (" + output + ")";
+                        output = $" ({output})";
                     }
 
-                    if( classStr.Length != 0 )
+                    if (classStr.Length != 0)
                     {
-                        output += " " + classStr;
+                        output += $" {classStr}";
                     }
 
-                    if( templateStr.Length != 0 )
+                    if (templateStr.Length != 0)
                     {
-                        output += " (" + templateStr + ")";
+                        output += $" ({templateStr})";
                     }
 
                     Decompiler._CanAddSemicolon = true;
-                    return "new" + output;
+                    return $"new{output}";
                 }
             }
 
             public class DebugInfoToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Version
                     stream.ReadInt32();
@@ -302,7 +308,7 @@ namespace UELib.Core
                     stream.ReadInt32();
                     // Code
                     stream.ReadByte();
-                    Decompiler.AlignSize( 13 );
+                    Decompiler.AlignSize(13);
                 }
             }
         }

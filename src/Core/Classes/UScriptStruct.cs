@@ -6,13 +6,15 @@ namespace UELib.Core
     public class UScriptStruct : UStruct
     {
         #region Constructors
+
         protected override void Deserialize()
         {
             base.Deserialize();
             StructFlags = _Buffer.ReadUInt32();
-            Record( "StructFlags", (StructFlags)StructFlags );
+            Record(nameof(StructFlags), (StructFlags)StructFlags);
             DeserializeProperties();
         }
+
         #endregion
     }
 }

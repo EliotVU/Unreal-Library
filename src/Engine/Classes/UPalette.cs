@@ -1,12 +1,14 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
 using UELib.Core;
+using UELib.Core.Types;
 
 namespace UELib.Engine
 {
     [UnrealRegisterClass]
     public class UPalette : UObject, IUnrealViewable
     {
-        private Color[] _ColorPalette;
+        // This could be a lot faster with a fixed array, but it's not a significant class of interest.
+        public UArray<UColor> Colors;
 
         public UPalette()
         {
@@ -18,14 +20,8 @@ namespace UELib.Engine
             base.Deserialize();
 
             int count = _Buffer.ReadIndex();
-            if( count > 0 )
-            {
-                _ColorPalette = new Color[count];
-                for( int i = 0; i < count; ++ i )
-                {
-                    _ColorPalette[i] = Color.FromArgb( _Buffer.ReadInt32() );
-                }
-            }
+            Debug.Assert(count == 256);
+            _Buffer.ReadMarshalArray(out Colors, count);
         }
     }
 }

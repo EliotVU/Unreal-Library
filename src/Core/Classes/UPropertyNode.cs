@@ -1,44 +1,47 @@
-﻿using System.Windows.Forms;
+﻿#if Forms
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
     public partial class UProperty
     {
-        protected override void InitNodes( TreeNode node )
+        protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode( node, typeof(UProperty).Name );
-            var propertyFlagsNode = AddTextNode( _ParentNode,
-                "Property Flags:" + UnrealMethods.FlagToString( PropertyFlags )
+            _ParentNode = AddSectionNode(node, nameof(UProperty));
+            var propertyFlagsNode = AddTextNode(_ParentNode,
+                $"Property Flags:{UnrealMethods.FlagToString(PropertyFlags)}"
             );
-            propertyFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList(
+            propertyFlagsNode.ToolTipText = UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(
                 typeof(Flags.PropertyFlagsLO),
-                typeof(Flags.PropertyFlagsHO), PropertyFlags )
+                typeof(Flags.PropertyFlagsHO), PropertyFlags)
             );
 
-            if( RepOffset > 0 )
+            if (RepOffset > 0)
             {
-                AddTextNode( _ParentNode, "Replication Offset:" + RepOffset );
+                AddTextNode(_ParentNode, $"Replication Offset:{RepOffset}");
             }
-            base.InitNodes( _ParentNode );
+
+            base.InitNodes(_ParentNode);
         }
 
         public override string GetImageName()
         {
-            if( HasPropertyFlag( Flags.PropertyFlagsLO.ReturnParm ) )
+            if (HasPropertyFlag(Flags.PropertyFlagsLO.ReturnParm))
             {
                 return "ReturnValue";
             }
 
-            var which = base.GetImageName();
-            if( IsPrivate() )
+            string which = base.GetImageName();
+            if (IsProtected())
             {
-                return which + "-Private";
+                return $"{which}-Protected";
             }
-            else if( IsProtected() )
+            if (IsPrivate())
             {
-                return which + "-Protected";
+                return $"{which}-Private";
             }
             return which;
         }
     }
 }
+#endif

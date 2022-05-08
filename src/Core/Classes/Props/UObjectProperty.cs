@@ -9,11 +9,9 @@ namespace UELib.Core
     public class UObjectProperty : UProperty
     {
         #region Serialized Members
-        public UObject Object
-        {
-            get;
-            private set;
-        }
+
+        public UObject Object { get; private set; }
+
         #endregion
 
         /// <summary>
@@ -29,7 +27,8 @@ namespace UELib.Core
             base.Deserialize();
 
             int objectIndex = _Buffer.ReadObjectIndex();
-            Object = GetIndexObject( objectIndex );
+            Object = GetIndexObject(objectIndex);
+            Record(nameof(Object), Object);
         }
 
         /// <inheritdoc/>

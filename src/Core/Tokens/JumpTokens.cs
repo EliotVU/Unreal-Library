@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -9,7 +10,7 @@ namespace UELib.Core
         {
             public class ReturnToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Expression
                     DeserializeNext();
@@ -18,49 +19,42 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     #region CaseToken Support
+
                     // HACK: for case's that end with a return instead of a break.
-                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+                    if (Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null)
                     {
-                        Decompiler._Nester.TryAddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
+                        Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, Position + Size);
                     }
+
                     #endregion
 
                     string returnValue = DecompileNext();
                     Decompiler._CanAddSemicolon = true;
-                    return "return" + (returnValue.Length != 0 ? " " + returnValue : String.Empty);
+                    return "return" + (returnValue.Length != 0 ? " " + returnValue : string.Empty);
                 }
             }
 
-            public class ReturnNothingToken : Token
+            public class ReturnNothingToken : EatReturnValueToken
             {
-                private UObject _ReturnObject;
-
-                public override void Deserialize( IUnrealStream stream )
-                {
-                    // TODO: Corrigate version.
-                    if( stream.Version <= 300 )
-                        return;
-
-                    _ReturnObject = Decompiler._Container.TryGetIndexObject( stream.ReadObjectIndex() );
-                    Decompiler.AlignObjectSize();
-                }
-
                 public override string Decompile()
                 {
                     #region CaseToken Support
+
                     // HACK: for case's that end with a return instead of a break.
-                    if( Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null )
+                    if (Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null)
                     {
-                        Decompiler._Nester.TryAddNestEnd( NestManager.Nest.NestType.Switch, Position + Size );
+                        Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, Position + Size);
                     }
+
                     #endregion
-                    return _ReturnObject != null ? _ReturnObject.Name : String.Empty;
+
+                    return ReturnValueProperty != null ? ReturnValueProperty.Name : string.Empty;
                 }
             }
 
             public class GoToLabelToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Expression
                     DeserializeNext();
@@ -69,7 +63,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return "goto " + DecompileNext();
+                    return $"goto {DecompileNext()}";
                 }
             }
 
@@ -77,17 +71,17 @@ namespace UELib.Core
             {
                 public bool MarkedAsSwitchBreak;
                 public NestManager.NestEnd LinkedIfNest;
-                public ushort CodeOffset{ get; private set; }
+                public ushort CodeOffset { get; private set; }
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     CodeOffset = stream.ReadUInt16();
-                    Decompiler.AlignSize( sizeof(ushort) );
+                    Decompiler.AlignSize(sizeof(ushort));
                 }
 
                 public override void PostDeserialized()
                 {
-                    if( GetType() == typeof(JumpToken) )
+                    if (GetType() == typeof(JumpToken))
                         Decompiler._Labels.Add
                         (
                             new ULabelEntry
@@ -100,17 +94,17 @@ namespace UELib.Core
 
                 protected void Commentize()
                 {
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2}", CodeOffset );
+                    Decompiler.PreComment = $"// End:0x{CodeOffset:X2}";
                 }
 
-                protected void Commentize( string statement )
+                protected void Commentize(string statement)
                 {
-                    Decompiler.PreComment = String.Format( "// End:0x{0:X2} [{1}]", CodeOffset, statement );
+                    Decompiler.PreComment = $"// End:0x{CodeOffset:X2} [{statement}]";
                 }
 
-                protected void CommentStatement( string statement )
+                protected void CommentStatement(string statement)
                 {
-                    Decompiler.PreComment = String.Format( "// [{0}]", statement );
+                    Decompiler.PreComment = $"// [{statement}]";
                 }
 
                 /// <summary>
@@ -149,35 +143,38 @@ namespace UELib.Core
                     {
                         LinkedIfNest.HasElseNest = null;
                     }
-                    
+
                     // Break offset!
-                    if( CodeOffset >= Position )
+                    if (CodeOffset >= Position)
                     {
-                        if( MarkedAsSwitchBreak
+                        if (MarkedAsSwitchBreak
                             //==================We're inside a Case and at the end of it!
-                            || JumpsOutOfSwitch() && Decompiler.IsInNest( NestManager.Nest.NestType.Case ) != null
+                            || JumpsOutOfSwitch() && Decompiler.IsInNest(NestManager.Nest.NestType.Case) != null
                             //==================We're inside a Default and at the end of it!
-                            || Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null)
+                            || Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null)
                         {
                             NoJumpLabel();
                             Commentize();
                             // 'break' CodeOffset sits at the end of the switch,
                             // check that it doesn't exist already and add it
-                            var switchEnd = Decompiler.IsInNest( NestManager.Nest.NestType.Default ) != null ? Position + Size : CodeOffset;
+                            uint switchEnd = Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null
+                                ? Position + Size
+                                : CodeOffset;
                             Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, switchEnd);
                             Decompiler._CanAddSemicolon = true;
                             return "break";
                         }
 
-                        if( Decompiler.IsWithinNest( NestManager.Nest.NestType.ForEach )?.Creator is IteratorToken iteratorToken )
+                        if (Decompiler.IsWithinNest(NestManager.Nest.NestType.ForEach)?.Creator is IteratorToken
+                            iteratorToken)
                         {
                             // Jumps to the end of the foreach ?
-                            if( CodeOffset == iteratorToken.CodeOffset )
+                            if (CodeOffset == iteratorToken.CodeOffset)
                             {
-                                if( Decompiler.PreviousToken is IteratorNextToken )
+                                if (Decompiler.PreviousToken is IteratorNextToken)
                                 {
                                     NoJumpLabel();
-                                    return String.Empty;
+                                    return string.Empty;
                                 }
 
                                 NoJumpLabel();
@@ -185,7 +182,8 @@ namespace UELib.Core
                                 Decompiler._CanAddSemicolon = true;
                                 return "break";
                             }
-                            if( Decompiler.TokenAt( CodeOffset ) is IteratorNextToken )
+
+                            if (Decompiler.TokenAt(CodeOffset) is IteratorNextToken)
                             {
                                 NoJumpLabel();
                                 Commentize();
@@ -194,37 +192,37 @@ namespace UELib.Core
                             }
                         }
 
-                        if( Decompiler.IsWithinNest( NestManager.Nest.NestType.Loop )?.Creator is JumpToken destJump )
+                        if (Decompiler.IsWithinNest(NestManager.Nest.NestType.Loop)?.Creator is JumpToken destJump)
                         {
-                            if( CodeOffset + 10 == destJump.CodeOffset )
+                            if (CodeOffset + 10 == destJump.CodeOffset)
                             {
-                                CommentStatement( "Explicit Continue" );
+                                CommentStatement("Explicit Continue");
                                 goto gotoJump;
                             }
 
-                            if( CodeOffset == destJump.CodeOffset )
+                            if (CodeOffset == destJump.CodeOffset)
                             {
-                                CommentStatement( "Explicit Break" );
+                                CommentStatement("Explicit Break");
                                 goto gotoJump;
                             }
                         }
-                        
-                        if( tempLinkedIf != null )
+
+                        if (tempLinkedIf != null)
                         {
                             // Would this potential else scope break out of one of its parent scope
                             foreach (var nest in Decompiler._Nester.Nests)
                             {
-                                if (nest is NestManager.NestEnd outerNestEnd 
+                                if (nest is NestManager.NestEnd outerNestEnd
                                     && CodeOffset > outerNestEnd.Position
                                     // It's not this if-else scope
                                     && LinkedIfNest.Creator != outerNestEnd.Creator)
                                 {
                                     // this is more likely a continue within a for(;;) loop
-                                    CommentStatement( "Explicit Continue" );
+                                    CommentStatement("Explicit Continue");
                                     goto gotoJump;
                                 }
                             }
-                            
+
                             // this is indeed the else part of an if-else, re-instate the link
                             // and let nest decompilation handle the rest
                             LinkedIfNest.HasElseNest = tempLinkedIf;
@@ -248,12 +246,12 @@ namespace UELib.Core
                         }
                     }
 
-                    if( CodeOffset < Position )
+                    if (CodeOffset < Position)
                     {
-                        CommentStatement( "Loop Continue" );
+                        CommentStatement("Loop Continue");
                     }
 
-                gotoJump:
+                    gotoJump:
                     if (Position + Size == CodeOffset)
                     {
                         // Remove jump to next token
@@ -269,17 +267,19 @@ namespace UELib.Core
                 public bool JumpsOutOfSwitch()
                 {
                     Token t;
-                    for (int i = Decompiler.DeserializedTokens.IndexOf(this)+1; 
-                        i < Decompiler.DeserializedTokens.Count && (t = Decompiler.DeserializedTokens[i]).Position <= CodeOffset; 
-                        i++)
+                    for (int i = Decompiler.DeserializedTokens.IndexOf(this) + 1;
+                         i < Decompiler.DeserializedTokens.Count &&
+                         (t = Decompiler.DeserializedTokens[i]).Position <= CodeOffset;
+                         i++)
                     {
                         // Skip switch nests
                         if (t is SwitchToken)
                         {
                             var switchBalance = 1;
-                            for (i += 1; 
-                                i < Decompiler.DeserializedTokens.Count && switchBalance > 0 && (t = Decompiler.DeserializedTokens[i]).Position <= CodeOffset; 
-                                i++)
+                            for (i += 1;
+                                 i < Decompiler.DeserializedTokens.Count && switchBalance > 0 &&
+                                 (t = Decompiler.DeserializedTokens[i]).Position <= CodeOffset;
+                                 i++)
                             {
                                 if (t is CaseToken ct && ct.IsDefault)
                                     switchBalance -= 1;
@@ -298,13 +298,13 @@ namespace UELib.Core
 
                 private void NoJumpLabel()
                 {
-                    int i = Decompiler._TempLabels.FindIndex( p => p.entry.Position == CodeOffset );
-                    if( i != -1 )
+                    int i = Decompiler._TempLabels.FindIndex(p => p.entry.Position == CodeOffset);
+                    if (i != -1)
                     {
                         var data = Decompiler._TempLabels[i];
                         if (data.refs == 1)
                         {
-                            Decompiler._TempLabels.RemoveAt( i );
+                            Decompiler._TempLabels.RemoveAt(i);
                         }
                         else
                         {
@@ -318,12 +318,12 @@ namespace UELib.Core
             public class JumpIfNotToken : JumpToken
             {
                 public bool IsLoop;
-                
+
                 public override void PostDeserialized()
                 {
                     base.PostDeserialized();
                     // Add jump label for 'do until' jump pattern
-                    if ((CodeOffset & UInt16.MaxValue) < Position)
+                    if ((CodeOffset & ushort.MaxValue) < Position)
                     {
                         Decompiler._Labels.Add
                         (
@@ -336,10 +336,10 @@ namespace UELib.Core
                     }
                 }
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // CodeOffset
-                    base.Deserialize( stream );
+                    base.Deserialize(stream);
 
                     // Condition
                     DeserializeNext();
@@ -352,9 +352,9 @@ namespace UELib.Core
                     // Check if we are jumping to the start of a JumpIfNot token.
                     // if true, we can assume that this (If) statement is contained within a loop.
                     IsLoop = false;
-                    for( int i = Decompiler.CurrentTokenIndex + 1; i < Decompiler.DeserializedTokens.Count; ++ i )
+                    for (int i = Decompiler.CurrentTokenIndex + 1; i < Decompiler.DeserializedTokens.Count; ++i)
                     {
-                        if( Decompiler.DeserializedTokens[i] is JumpToken jt && jt.CodeOffset == Position )
+                        if (Decompiler.DeserializedTokens[i] is JumpToken jt && jt.CodeOffset == Position)
                         {
                             IsLoop = true;
                             break;
@@ -362,16 +362,16 @@ namespace UELib.Core
                     }
 
                     Commentize();
-                    if( IsLoop )
+                    if (IsLoop)
                     {
                         Decompiler.PreComment += " [Loop If]";
                     }
 
                     string output;
-                    if( (CodeOffset & UInt16.MaxValue) < Position )
+                    if ((CodeOffset & ushort.MaxValue) < Position)
                     {
                         string labelName = UDecompilingState.OffsetLabelName(CodeOffset);
-                        string gotoStatement = $"{UDecompilingState.Tabs}{UnrealConfig.Indention}goto {labelName}";
+                        var gotoStatement = $"{UDecompilingState.Tabs}{UnrealConfig.Indention}goto {labelName}";
                         // Inverse condition only here as we're explicitly jumping while other cases create proper scopes 
                         output = $"if(!({condition}))\r\n{gotoStatement}";
                         Decompiler._CanAddSemicolon = true;
@@ -384,9 +384,10 @@ namespace UELib.Core
                     if (IsLoop == false)
                     {
                         int i;
-                        for (i = Decompiler.DeserializedTokens.IndexOf(this); 
-                            i < Decompiler.DeserializedTokens.Count && (Decompiler.DeserializedTokens[i]).Position < CodeOffset; 
-                            i++)
+                        for (i = Decompiler.DeserializedTokens.IndexOf(this);
+                             i < Decompiler.DeserializedTokens.Count &&
+                             (Decompiler.DeserializedTokens[i]).Position < CodeOffset;
+                             i++)
                         {
                             // Seek to jump destination
                         }
@@ -402,12 +403,14 @@ namespace UELib.Core
                                 // It's an if containing a break. When the if is *not* taken, execution continues inside of a case below
                                 ifEndJump.MarkedAsSwitchBreak = true;
                             }
-                            else if (elseStartToken.Position == CodeOffset && ifEndJump.CodeOffset != elseStartToken.Position)
+                            else if (elseStartToken.Position == CodeOffset &&
+                                     ifEndJump.CodeOffset != elseStartToken.Position)
                             {
                                 // Most likely an if-else, mark it as such and let the rest of the logic figure it out further
-                                var begin = Position;
+                                uint begin = Position;
                                 var type = NestManager.Nest.NestType.If;
-                                Decompiler._Nester.Nests.Add( new NestManager.NestBegin{Position = begin, Type = type, Creator = this} );
+                                Decompiler._Nester.Nests.Add(new NestManager.NestBegin
+                                    { Position = begin, Type = type, Creator = this });
                                 var nestEnd = new NestManager.NestEnd
                                 {
                                     Position = CodeOffset,
@@ -415,7 +418,7 @@ namespace UELib.Core
                                     Creator = this,
                                     HasElseNest = ifEndJump,
                                 };
-                                Decompiler._Nester.Nests.Add( nestEnd );
+                                Decompiler._Nester.Nests.Add(nestEnd);
 
                                 var outdatedLink = ifEndJump.LinkedIfNest;
                                 // This will hint to the jump token that it is likely an else scope
@@ -428,10 +431,10 @@ namespace UELib.Core
                             }
                         }
                     }
-                    
-                    Decompiler._Nester.AddNest( IsLoop
-                        ? NestManager.Nest.NestType.Loop
-                        : NestManager.Nest.NestType.If,
+
+                    Decompiler._Nester.AddNest(IsLoop
+                            ? NestManager.Nest.NestType.Loop
+                            : NestManager.Nest.NestType.If,
                         Position, CodeOffset, this
                     );
                     return output;
@@ -442,7 +445,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.Scope, Position, CodeOffset );
+                    Decompiler._Nester.AddNest(NestManager.Nest.NestType.Scope, Position, CodeOffset);
                     Commentize();
                     return "filtereditoronly";
                 }
@@ -452,17 +455,17 @@ namespace UELib.Core
             {
                 public ushort PropertyType;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
 #if TRANSFORMERS
-                    if( Package.Build == UnrealPackage.GameBuild.BuildName.Transformers )
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
                     {
                         PropertyType = stream.ReadUInt16();
-                        Decompiler.AlignSize( sizeof(ushort) );
+                        Decompiler.AlignSize(sizeof(ushort));
                         goto deserialize;
                     }
 #endif
-                    if( stream.Version >= 600 )
+                    if (stream.Version >= 600)
                     {
                         // Points to the object that was passed to the switch,
                         // beware that the followed token chain contains it as well!
@@ -471,18 +474,18 @@ namespace UELib.Core
                     }
 
                     // TODO: Corrigate version
-                    if( stream.Version >= 536 && stream.Version <= 587 )
+                    if (stream.Version >= 536 && stream.Version <= 587)
                     {
                         PropertyType = stream.ReadUInt16();
-                        Decompiler.AlignSize( sizeof(ushort) );
+                        Decompiler.AlignSize(sizeof(ushort));
                     }
                     else
                     {
                         PropertyType = stream.ReadByte();
-                        Decompiler.AlignSize( sizeof(byte) );
+                        Decompiler.AlignSize(sizeof(byte));
                     }
 
-                deserialize:
+                    deserialize:
                     // Expression
                     DeserializeNext();
                 }
@@ -511,39 +514,39 @@ namespace UELib.Core
                 /// </summary>
                 public override string Decompile()
                 {
-                    Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Switch, Position );
+                    Decompiler._Nester.AddNestBegin(NestManager.Nest.NestType.Switch, Position);
 
                     string expr = DecompileNext();
-                    Decompiler._CanAddSemicolon = false;    // In case the decompiled token was a function call
-                    return "switch(" + expr + ")";
+                    Decompiler._CanAddSemicolon = false; // In case the decompiled token was a function call
+                    return $"switch({expr})";
                 }
             }
 
             public class CaseToken : JumpToken
             {
-                public bool IsDefault => CodeOffset == UInt16.MaxValue;
-                
-                public override void Deserialize( IUnrealStream stream )
+                public bool IsDefault => CodeOffset == ushort.MaxValue;
+
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    base.Deserialize( stream );
-                    if( CodeOffset != UInt16.MaxValue )
+                    base.Deserialize(stream);
+                    if (CodeOffset != ushort.MaxValue)
                     {
-                        DeserializeNext();  // Condition
-                    }   // Else "Default:"
+                        DeserializeNext(); // Condition
+                    } // Else "Default:"
                 }
-                
+
                 public override string Decompile()
                 {
                     Commentize();
-                    if( CodeOffset != UInt16.MaxValue )
+                    if (CodeOffset != ushort.MaxValue)
                     {
-                        Decompiler._Nester.AddNest( NestManager.Nest.NestType.Case, Position, CodeOffset );
-                        string output = "case " + DecompileNext() + ":";
+                        Decompiler._Nester.AddNest(NestManager.Nest.NestType.Case, Position, CodeOffset);
+                        var output = $"case {DecompileNext()}:";
                         Decompiler._CanAddSemicolon = false;
                         return output;
                     }
 
-                    Decompiler._Nester.AddNestBegin( NestManager.Nest.NestType.Default, Position, this );
+                    Decompiler._Nester.AddNestBegin(NestManager.Nest.NestType.Default, Position, this);
                     Decompiler._CanAddSemicolon = false;
                     return "default:";
                 }
@@ -551,21 +554,21 @@ namespace UELib.Core
 
             public class IteratorToken : JumpToken
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeNext();  // Expression
-                    base.Deserialize( stream );
+                    DeserializeNext(); // Expression
+                    base.Deserialize(stream);
                 }
 
                 public override string Decompile()
                 {
-                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.ForEach, Position, CodeOffset, this );
+                    Decompiler._Nester.AddNest(NestManager.Nest.NestType.ForEach, Position, CodeOffset, this);
                     Commentize();
 
                     // foreach FunctionCall
                     string expression = DecompileNext();
-                    Decompiler._CanAddSemicolon = false;    // Undo
-                    return "foreach " + expression;
+                    Decompiler._CanAddSemicolon = false; // Undo
+                    return $"foreach {expression}";
                 }
             }
 
@@ -573,7 +576,7 @@ namespace UELib.Core
             {
                 protected bool HasSecondParm;
 
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
                     // Expression
                     DeserializeNext();
@@ -582,23 +585,23 @@ namespace UELib.Core
                     DeserializeNext();
 
                     HasSecondParm = stream.ReadByte() > 0;
-                    Decompiler.AlignSize( sizeof(byte) );
+                    Decompiler.AlignSize(sizeof(byte));
                     DeserializeNext();
 
-                    base.Deserialize( stream );
+                    base.Deserialize(stream);
                 }
 
                 public override string Decompile()
                 {
-                    Decompiler._Nester.AddNest( NestManager.Nest.NestType.ForEach, Position, CodeOffset, this );
+                    Decompiler._Nester.AddNest(NestManager.Nest.NestType.ForEach, Position, CodeOffset, this);
 
                     Commentize();
 
                     // foreach ArrayVariable( Parameters )
-                    string output = "foreach " + DecompileNext() + "(" + DecompileNext();
-                    output += (HasSecondParm ? ", " : String.Empty) + DecompileNext();
+                    var output = $"foreach {DecompileNext()}({DecompileNext()}";
+                    output += (HasSecondParm ? ", " : string.Empty) + DecompileNext();
                     Decompiler._CanAddSemicolon = false;
-                    return output + ")";
+                    return $"{output})";
                 }
             }
 
@@ -606,10 +609,11 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    if( Decompiler.PeekToken is IteratorPopToken )
+                    if (Decompiler.PeekToken is IteratorPopToken)
                     {
-                        return String.Empty;
+                        return string.Empty;
                     }
+
                     Decompiler._CanAddSemicolon = true;
                     return "continue";
                 }
@@ -619,11 +623,12 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    if( Decompiler.PreviousToken is IteratorNextToken
-                        || Decompiler.PeekToken is ReturnToken )
+                    if (Decompiler.PreviousToken is IteratorNextToken
+                        || Decompiler.PeekToken is ReturnToken)
                     {
-                        return String.Empty;
+                        return string.Empty;
                     }
+
                     Decompiler._CanAddSemicolon = true;
                     return "break";
                 }
@@ -631,15 +636,16 @@ namespace UELib.Core
 
             private List<ULabelEntry> _Labels;
             private List<(ULabelEntry entry, int refs)> _TempLabels;
+
             public class LabelTableToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    var label = String.Empty;
+                    var label = string.Empty;
                     int labelPos = -1;
                     do
                     {
-                        if( label != String.Empty )
+                        if (label != string.Empty)
                         {
                             Decompiler._Labels.Add
                             (
@@ -650,27 +656,28 @@ namespace UELib.Core
                                 }
                             );
                         }
+
                         label = stream.ReadName();
                         Decompiler.AlignNameSize();
                         labelPos = stream.ReadInt32();
-                        Decompiler.AlignSize( sizeof(int) );
-                    } while( String.Compare( label, "None", StringComparison.OrdinalIgnoreCase ) != 0 );
+                        Decompiler.AlignSize(sizeof(int));
+                    } while (string.Compare(label, "None", StringComparison.OrdinalIgnoreCase) != 0);
                 }
             }
 
             public class SkipToken : Token
             {
-                public override void Deserialize( IUnrealStream stream )
+                public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadUInt16();    // Size
-                    Decompiler.AlignSize( sizeof(ushort) );
+                    stream.ReadUInt16(); // Size
+                    Decompiler.AlignSize(sizeof(ushort));
 
                     DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                     return DecompileNext();
+                    return DecompileNext();
                 }
             }
 

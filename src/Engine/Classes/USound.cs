@@ -6,16 +6,21 @@ namespace UELib.Engine
     [UnrealRegisterClass]
     public class USound : UObject, IUnrealViewable, IUnrealExportable
     {
+        #region Serialized Members
+
+        public UName FileType;
+        /// <summary>
+        /// The likely hood that this sound will be selected from an array of sounds, see "USoundGroup".
+        /// Null if not serialized.
+        /// </summary>
+        public float? Likelihood;
+        public byte[] Data;
+
+        #endregion
+
         private const string WAVExtension = "wav";
 
-        public IEnumerable<string> ExportableExtensions
-        {
-            get{ return new[]{WAVExtension}; }
-        }
-
-        private string SoundFormat{ get; set; }
-
-        private byte[] _SoundBuffer;
+        public IEnumerable<string> ExportableExtensions => new[] { WAVExtension };
 
         public USound()
         {
@@ -25,15 +30,16 @@ namespace UELib.Engine
         public bool CompatableExport()
         {
             return Package.Version >= 61 && Package.Version <= 129
-                && SoundFormat != null && SoundFormat.ToLower() == WAVExtension && _SoundBuffer != null;
+                                         && FileType != null && FileType.ToString().ToLower() == WAVExtension &&
+                                         Data != null;
         }
 
-        public void SerializeExport( string desiredExportExtension, System.IO.Stream exportStream )
+        public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
         {
-            switch( desiredExportExtension )
+            switch (desiredExportExtension)
             {
                 case WAVExtension:
-                    exportStream.Write( _SoundBuffer, 0, _SoundBuffer.Length );
+                    exportStream.Write(Data, 0, Data.Length);
                     break;
             }
         }
@@ -42,28 +48,27 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
-            // Format
-            SoundFormat = Package.GetIndexName( _Buffer.ReadNameIndex() );
-            Record( "SoundFormat", SoundFormat );
+            FileType = _Buffer.ReadNameReference();
+            Record(nameof(FileType), FileType);
 #if UT
-            if( (Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
-                || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/ )
+            if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
+                 || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/)
             {
-                var unknownFloat = _Buffer.ReadFloat();
-                Record( "???", unknownFloat );
+                Likelihood = _Buffer.ReadFloat();
+                Record(nameof(Likelihood), Likelihood);
             }
 #endif
-            if( Package.Version >= 63 )
+            if (Package.Version >= 63)
             {
-                // OffsetNext
-                _Buffer.Skip( 4 );
-                Record( "OffsetNext" );
+                // Offset in package to the next object, wth is this for?
+                int nextSerialOffset = _Buffer.ReadInt32();
+                Record(nameof(nextSerialOffset), nextSerialOffset);
             }
 
-            var size = _Buffer.ReadIndex();
-            Record( "soundSize", size );
             // Resource Interchange File Format
-            _Buffer.Read( _SoundBuffer = new byte[size], 0, size );
+            Data = new byte[_Buffer.ReadIndex()];
+            _Buffer.Read(Data, 0, Data.Length);
+            Record(nameof(Data), Data);
         }
     }
 }

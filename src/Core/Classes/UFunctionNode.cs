@@ -1,60 +1,65 @@
-﻿using System.Windows.Forms;
+﻿#if Forms
+using System.Windows.Forms;
 
 namespace UELib.Core
 {
     public partial class UFunction
     {
-        protected override void InitNodes( TreeNode node )
+        protected override void InitNodes(TreeNode node)
         {
             node.ToolTipText = FormatHeader();
-            _ParentNode = AddSectionNode( node, typeof(UFunction).Name );
+            _ParentNode = AddSectionNode(node, nameof(UFunction));
 
-            var funcFlagsNode = AddTextNode( _ParentNode, "FunctionFlags:" + UnrealMethods.FlagToString( FunctionFlags ) );
-            funcFlagsNode.ToolTipText = UnrealMethods.FlagsListToString( UnrealMethods.FlagsToList( typeof(Flags.FunctionFlags), FunctionFlags ) );
+            var funcFlagsNode = AddTextNode(_ParentNode, $"FunctionFlags:{UnrealMethods.FlagToString(FunctionFlags)}");
+            funcFlagsNode.ToolTipText =
+                UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.FunctionFlags), FunctionFlags));
 
-            if( RepOffset > 0 )
+            if (RepOffset > 0)
             {
-                AddTextNode( _ParentNode, "Replication Offset:" + RepOffset );
+                AddTextNode(_ParentNode, $"Replication Offset:{RepOffset}");
             }
-            base.InitNodes( _ParentNode );
+
+            base.InitNodes(_ParentNode);
         }
 
-        protected override void AddChildren( TreeNode node )
+        protected override void AddChildren(TreeNode node)
         {
-            base.AddChildren( node );
-            AddObjectListNode( node, "Parameters", Params, "UProperty" );
-            AddObjectListNode( node, "Locals", Locals, "UProperty" );
+            base.AddChildren(node);
+            AddObjectListNode(node, "Parameters", Params, nameof(UProperty));
+            AddObjectListNode(node, "Locals", Locals, nameof(UProperty));
         }
 
         public override string GetImageName()
         {
             var name = string.Empty;
-            if( HasFunctionFlag( Flags.FunctionFlags.Event ) )
+            if (HasFunctionFlag(Flags.FunctionFlags.Event))
             {
                 name = "Event";
             }
-            else if( HasFunctionFlag( Flags.FunctionFlags.Delegate ) )
+            else if (HasFunctionFlag(Flags.FunctionFlags.Delegate))
             {
                 name = "Delegate";
             }
-            else if( HasFunctionFlag( Flags.FunctionFlags.Operator ) )
+            else if (HasFunctionFlag(Flags.FunctionFlags.Operator))
             {
                 name = "Operator";
             }
 
-            if( name != string.Empty )
+            if (name != string.Empty)
             {
-                if( IsPrivate() )
+                if (IsProtected())
                 {
-                    return name + "-Private";
+                    return $"{name}-Protected";
                 }
-                else if( IsProtected() )
+                if (IsPrivate())
                 {
-                    return name + "-Protected";
+                    return $"{name}-Private";
                 }
                 return name;
             }
+
             return base.GetImageName();
         }
     }
 }
+#endif

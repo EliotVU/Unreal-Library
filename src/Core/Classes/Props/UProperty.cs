@@ -1,87 +1,65 @@
 ﻿using System;
+using System.Diagnostics;
+using UELib.Annotations;
+using UELib.Flags;
+using UELib.Types;
 
 namespace UELib.Core
 {
-    using Types;
-
     /// <summary>
     /// Represents a unreal property.
     /// </summary>
     public partial class UProperty : UField, IUnrealNetObject
     {
         #region PreInitialized Members
-        public PropertyType Type
-        {
-            get;
-            protected set;
-        }
+
+        public PropertyType Type { get; protected set; }
+
         #endregion
 
         #region Serialized Members
-        public ushort 	ArrayDim
-        {
-            get;
-            private set;
-        }
 
-        public ushort 	ElementSize
-        {
-            get;
-            private set;
-        }
+        public ushort ArrayDim { get; private set; }
 
-        public ulong 	PropertyFlags
-        {
-            get;
-            private set;
-        }
+        public ushort ElementSize { get; private set; }
+
+        public ulong PropertyFlags { get; private set; }
 
 #if XCOM2
-        public UName    ConfigName
-        {
-            get;
-            private set;
-        }
+        [CanBeNull] public UName ConfigName;
 #endif
 
-        public int 		CategoryIndex
-        {
-            get;
-            private set;
-        }
+        [CanBeNull] public UName CategoryName;
 
-        public UEnum	ArrayEnum{ get; private set; }
+        [Obsolete("See CategoryName")]
+        public int CategoryIndex { get; }
 
-        public ushort 	RepOffset
-        {
-            get;
-            private set;
-        }
+        [CanBeNull] public UEnum ArrayEnum { get; private set; }
 
-        public bool		RepReliable
-        {
-            get{ return HasPropertyFlag( Flags.PropertyFlagsLO.Net ); }
-        }
+        public ushort RepOffset { get; private set; }
 
-        public uint		RepKey
-        {
-            get{ return RepOffset | ((uint)Convert.ToByte( RepReliable ) << 16); }
-        }
+        public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
+
+        public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
+
+        /// <summary>
+        /// Stored meta-data in the "option" format (i.e. WebAdmin, and commandline options), used to assist developers in the editor.
+        /// e.g. <code>var int MyVariable "PI:Property Two:Game:1:60:Check" ...["SecondOption"]</code>
+        /// 
+        /// An original terminating \" character is serialized as a \n character, the string will also end with a newline character.
+        /// </summary>
+        [CanBeNull] public string EditorDataText;
+
         #endregion
 
         #region General Members
-        private bool _IsArray
-        {
-            get{ return ArrayDim > 1; }
-        }
 
-        public string CategoryName
-        {
-            get{ return CategoryIndex != -1 ? Package.Names[CategoryIndex].Name : "@Null"; }
-        }
+        private bool _IsArray => ArrayDim > 1;
+
         #endregion
 
         #region Constructors
+
         /// <summary>
         /// Creates a new instance of the UELib.Core.UProperty class.
         /// </summary>
@@ -93,63 +71,99 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
 #if XIII
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.XIII )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII)
             {
                 ArrayDim = _Buffer.ReadUShort();
-                Record( "ArrayDim", ArrayDim );
+                Record("ArrayDim", ArrayDim);
                 goto skipInfo;
             }
 #endif
-
-            var info = _Buffer.ReadUInt32();
-            ArrayDim = (ushort)(info & 0x0000FFFFU);
-            Record( "ArrayDim", ArrayDim );
-            ElementSize = (ushort)(info >> 16);
-            Record( "ElementSize", ElementSize );
-            skipInfo:
-
-            PropertyFlags = Package.Version >= 220 ? _Buffer.ReadUInt64() : _Buffer.ReadUInt32();
-            Record( "PropertyFlags", PropertyFlags );
-
-#if XCOM2
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC )
+#if AA2
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2 && Package.LicenseeVersion > 7)
             {
-                ConfigName = _Buffer.ReadNameReference();
-                Record( "ConfigName", ConfigName );
+                // Always 26125 (hardcoded in the assembly) 
+                uint unknown = _Buffer.ReadUInt32();
+                Record("Unknown:AA2", unknown);
             }
 #endif
-            if( !Package.IsConsoleCooked() )
-            {
-                CategoryIndex = _Buffer.ReadNameIndex();
-                Record( "CategoryIndex", CategoryIndex );
+            int info = _Buffer.ReadInt32();
+            ArrayDim = (ushort)(info & 0x0000FFFFU);
+            Record("ArrayDim", ArrayDim);
+            Debug.Assert(ArrayDim <= 2048);
+            ElementSize = (ushort)(info >> 16);
+            Record("ElementSize", ElementSize);
+        skipInfo:
 
-                if( Package.Version > 400 )
+            PropertyFlags = Package.Version >= 220
+                ? _Buffer.ReadUInt64()
+                : _Buffer.ReadUInt32();
+            Record("PropertyFlags", PropertyFlags);
+
+#if XCOM2
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
+            {
+                ConfigName = _Buffer.ReadNameReference();
+                Record("ConfigName", ConfigName);
+            }
+#endif
+            if (!Package.IsConsoleCooked())
+            {
+                CategoryName = _Buffer.ReadNameReference();
+                Record(nameof(CategoryName), CategoryName);
+
+                if (Package.Version > 400)
                 {
-                    ArrayEnum = GetIndexObject( _Buffer.ReadObjectIndex() ) as UEnum;
-                    Record( "ArrayEnum", ArrayEnum );
+                    ArrayEnum = GetIndexObject(_Buffer.ReadObjectIndex()) as UEnum;
+                    Record("ArrayEnum", ArrayEnum);
                 }
             }
-            else CategoryIndex = -1;
 
-            if( HasPropertyFlag( Flags.PropertyFlagsLO.Net ) )
+            if (HasPropertyFlag(PropertyFlagsLO.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
-                Record( "RepOffset", RepOffset );
+                Record("RepOffset", RepOffset);
             }
 
-            if( HasPropertyFlag( Flags.PropertyFlagsLO.New ) && Package.Version <= 128 )
+
+            if (HasPropertyFlag(PropertyFlagsLO.EditorData)
+                // FIXME: At which version was this feature removed?
+                && Package.Version <= 160)
             {
-                string unknown = _Buffer.ReadText();
-                Console.WriteLine( "Found a property flagged with New:" + unknown );
+                // May represent a tooltip/comment in some games.
+                EditorDataText = _Buffer.ReadText();
+                Record(nameof(EditorDataText), EditorDataText);
             }
-
+#if SPELLBORN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+            {
+                if (_Buffer.Version < 157)
+                {
+                    throw new NotSupportedException("< 157 Spellborn packages are not supported");
+                    
+                    if (133 < _Buffer.Version)
+                    {
+                        // idk
+                    }
+                    
+                    if (134 < _Buffer.Version)
+                    {
+                        int unk32 = _Buffer.ReadInt32();
+                        Record("Unknown", unk32);
+                    }
+                }
+                else
+                {
+                    uint replicationFlags = _Buffer.ReadUInt32();
+                    Record(nameof(replicationFlags), replicationFlags);
+                }
+            }
+#endif
 #if SWAT4
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.Swat4 )
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
             {
                 // Contains meta data such as a ToolTip.
-                _Buffer.Skip( 3 );
+                _Buffer.Skip(3);
             }
 #endif
         }
@@ -158,28 +172,31 @@ namespace UELib.Core
         {
             return true;
         }
+
         #endregion
 
         #region Methods
-        public bool HasPropertyFlag( Flags.PropertyFlagsLO flag )
+
+        public bool HasPropertyFlag(PropertyFlagsLO flag)
         {
             return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;
         }
 
-        public bool HasPropertyFlag( Flags.PropertyFlagsHO flag )
+        public bool HasPropertyFlag(PropertyFlagsHO flag)
         {
             return ((PropertyFlags >> 32) & (uint)flag) != 0;
         }
 
         public bool IsParm()
         {
-            return HasPropertyFlag( Flags.PropertyFlagsLO.Parm );
+            return HasPropertyFlag(PropertyFlagsLO.Parm);
         }
 
         public virtual string GetFriendlyInnerType()
         {
-            return String.Empty;
+            return string.Empty;
         }
+
         #endregion
     }
 }

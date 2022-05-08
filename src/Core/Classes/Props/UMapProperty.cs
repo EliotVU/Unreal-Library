@@ -11,8 +11,10 @@ namespace UELib.Core
     public class UMapProperty : UProperty
     {
         #region Serialized Members
+
         private int _Key;
         private int _Value;
+
         #endregion
 
         /// <summary>
@@ -34,7 +36,7 @@ namespace UELib.Core
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return "map<" + _Key + ", " + _Value + ">";
+            return $"map<{_Key}, {_Value}>";
         }
     }
 }
