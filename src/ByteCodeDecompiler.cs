@@ -304,6 +304,12 @@ namespace UELib.Core
                 { (byte)ExprToken.Nothing, (byte)ExprToken.Case }
             };
 #endif
+#if BIOSHOCK
+            private static readonly Dictionary<byte, byte> ByteCodeMap_BuildBs = new Dictionary<byte, byte>
+            {
+                //{ (byte)ExprToken.OutVariable, (byte)ExprToken.LogFunction }
+            };
+#endif
             private void SetupByteCodeMap()
             {
 #if AA2
@@ -349,6 +355,12 @@ namespace UELib.Core
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.APB &&
                     Package.LicenseeVersion >= 32)
                     _ByteCodeMap = ByteCodeMap_BuildApb;
+#endif
+#if BIOSHOCK
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+                {
+                    _ByteCodeMap = ByteCodeMap_BuildBs;
+                }
 #endif
             }
 

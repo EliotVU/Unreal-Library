@@ -143,13 +143,17 @@ namespace UELib
             }
 
             _ObjectFlagsOffset = stream.Position;
-            ObjectFlags = stream.ReadUInt32();
-            if (stream.Version >= VObjectFlagsToULONG
 #if BIOSHOCK
-                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock &&
-                    stream.Package.LicenseeVersion >= 40)
+            // Like UE3 but without the shifting of flags
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock &&
+                stream.Package.LicenseeVersion >= 40)
+            {
+                ObjectFlags = stream.ReadUInt64();
+                goto streamSerialSize;
+            }
 #endif
-               )
+            ObjectFlags = stream.ReadUInt32();
+            if (stream.Version >= VObjectFlagsToULONG)
             {
                 ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
             }

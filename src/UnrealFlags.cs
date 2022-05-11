@@ -146,7 +146,10 @@ namespace UELib.Flags
         HasStack            = 0x02000000U,
         Native              = 0x04000000U,
         Marked              = 0x08000000U,
-        //SWAT4_Unnamed         = 0x08000000U,
+
+        // Used in Swat4 and Bioshock constructor functions
+        // const RF_Unnamed		= 0x08000000;
+        VENGEANCE_Unnamed   = 0x08000000U,
     }
 
     /// <summary>

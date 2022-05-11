@@ -316,8 +316,7 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.Skip(2);
-                    Decompiler.AlignSize(sizeof(ushort));
+                    // NothingToken(0x0B) twice
                     DeserializeCall();
                 }
 
