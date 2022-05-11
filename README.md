@@ -73,7 +73,8 @@ Below is a table of games that are known to be compatible with the UELib.
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
 | Monday Night Combat | 5697 | 638/000 |     |
 | DC Universe Online | 5859 | 638/6405 |     |
-| Unreal Development Kit | 6094-10246 | 664-860 | |
+| Unreal Development Kit | 6094-12791 | 664-868 | |
+| Blacklight: Tango Down | 6165 | 673:002 | |
 | Dungeon Defenders | 6262 | 678/002 | Earlier releases only |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
@@ -94,7 +95,7 @@ Below is a table of games that are known to be compatible with the UELib.
 | Borderlands 2 | 8623/023 | 832/056 | |
 | Remember Me | 8623 | 832/021 |     |
 | The Haunted: Hells Reach | 8788 | 841/000 |     |
-| Blacklight Retribution | 8788 | 841/Unknown |     |
+| Blacklight Retribution | 8788-10499 | 841-864/002 |     |
 | Infinity Blade 2 | 9059 | 842/001 |     |
 | Q.U.B.E | 8916 | 845/000 |     |
 | XCOM: Enemy Unknown | 8916 | 845/059 | |
