@@ -87,7 +87,16 @@ namespace UELib.Core
             {
                 output += "final ";
             }
-
+#if BIOSHOCK || SWAT4
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
+            {
+                if (HasFunctionFlag(Flags.FunctionFlags.Vengeance_Overloaded))
+                {
+                    output += "overloaded ";
+                }
+            }
+#endif
             // NoExport is no longer available in UE3+ builds,
             // - instead it is replaced with (FunctionFlags.OptionalParameters)
             // - as an indicator that the function has optional parameters.

@@ -205,6 +205,9 @@ namespace UELib.Flags
         Protected           = 0x00080000U,
         Delegate            = 0x00100000U,
         NetServer           = 0x00200000U,
+        // Generated/Constructor?
+        Vengeance_Unk1      = 0x00200000U,
+        Vengeance_Overloaded = 0x00800000U,
 
         NetClient           = 0x01000000U,
         DLLImport           = 0x02000000U,      // Also available in UE2(unknown meaning there)
