@@ -19,9 +19,8 @@ namespace UELib.Core
         // Version might actually be correct!
         private const int VCppText = 129;
 
-        // TODO: Corrigate version
-        // > 119?
-        private const int VStructFlags = 102;
+        // FIXME: Correct version; not found in Unreal2 (110)
+        private const int VStructFlags = 119;
 
         // TODO: Corrigate version
         private const int VProcessedText = 129;
@@ -94,66 +93,72 @@ namespace UELib.Core
             Children = _Buffer.ReadObject<UField>();
             Record(nameof(Children), Children);
 
+            // Moved to UFunction in UE3
             if (Package.Version < VFriendlyNameMoved)
             {
-                // Moved to UFunction in UE3
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
             }
 
-            if (Package.Version >= VStructFlags)
-            {
-                if (Package.Version >= VCppText && !Package.IsConsoleCooked()
+            if (Package.Version >= VCppText && !Package.IsConsoleCooked()
 #if VANGUARD
-                                                && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
+                                            && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
 #endif
 #if SPELLBORN
-                                                && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
+                                            && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
+#endif
+               )
+            {
+                CppText = _Buffer.ReadObject<UTextBuffer>();
+                Record(nameof(CppText), CppText);
+            }
+
+            if (Package.Version >= VStructFlags && Package.Version < VScriptStructAdded)
+            {
+                StructFlags = _Buffer.ReadUInt32();
+                Record(nameof(StructFlags), (StructFlags)StructFlags);
+
+                // Note: Bioshock inherits from the SWAT4's UE2 build.
+#if BIOSHOCK
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+                {
+                    // TODO: Unknown data, might be related to the above Swat4 data.
+                    int unknownObject = _Buffer.ReadObjectIndex();
+                    Record("Unknown:Bioshock", unknownObject);
+                }
+#endif
+                // This is high likely to be only for "Irrational Games" builds.
+                if (Package.Version >= VProcessedText
+#if VANGUARD
+                    && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
+#endif
+#if SPELLBORN
+                    && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
 #endif
                    )
                 {
-                    CppText = _Buffer.ReadObject<UTextBuffer>();
-                    Record(nameof(CppText), CppText);
-                }
-
-                if (Package.Version < VScriptStructAdded)
-                {
-                    StructFlags = _Buffer.ReadUInt32();
-                    Record(nameof(StructFlags), (StructFlags)StructFlags);
-
-                    // Note: Bioshock inherits from the SWAT4's UE2 build.
-#if BIOSHOCK
-                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-                    {
-                        // TODO: Unknown data, might be related to the above Swat4 data.
-                        int unknownObject = _Buffer.ReadObjectIndex();
-                        Record("Unknown:Bioshock", unknownObject);
-                    }
-#endif
-                    // This is high likely to be only for "Irrational Games" builds.
-                    if (Package.Version >= VProcessedText
-#if VANGUARD
-                        && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
-#endif
-#if SPELLBORN
-                        && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
-#endif
-                       )
-                    {
-                        ProcessedText = _Buffer.ReadObject<UTextBuffer>();
-                        Record(nameof(ProcessedText), ProcessedText);
-                    }
+                    ProcessedText = _Buffer.ReadObject<UTextBuffer>();
+                    Record(nameof(ProcessedText), ProcessedText);
                 }
             }
-
+            
             if (!Package.IsConsoleCooked())
             {
                 Line = _Buffer.ReadInt32();
                 Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
                 Record(nameof(TextPos), TextPos);
+                //var MinAlignment = _Buffer.ReadInt32();
+                //Record(nameof(MinAlignment), MinAlignment);
             }
-
+#if UNREAL2
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+            {
+                // Always zero in all of the Core.u structs
+                int unknownInt32 = _Buffer.ReadInt32();
+                Record("Unknown:Unreal2", unknownInt32);
+            }
+#endif
 #if TRANSFORMERS
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
             {
@@ -161,7 +166,6 @@ namespace UELib.Core
                 _Buffer.Skip(4);
             }
 #endif
-
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
             const int vDataScriptSize = 639;
