@@ -10,9 +10,11 @@ namespace UELib
     /// </summary>
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
-        private const uint VArchetype = 220;
-        private const uint VObjectFlagsToULONG = 195;
-        private const uint VSerialSizeConditionless = 249;
+        private const int VArchetype = 220;
+        private const int VObjectFlagsToULONG = 195;
+        private const int VSerialSizeConditionless = 249;
+        // FIXME: Version?
+        public const int VNetObjects = 322;
 
         #region Serialized Members
 
@@ -198,7 +200,7 @@ namespace UELib
 
             streamExportFlags:
             ExportFlags = stream.ReadUInt32();
-            if (stream.Version < 322)
+            if (stream.Version < VNetObjects)
                 return;
 #if TRANSFORMERS
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
@@ -234,16 +236,9 @@ namespace UELib
             if (stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
             {
 #endif
+                // Array of objects
                 int netObjectCount = stream.ReadInt32();
                 stream.Skip(netObjectCount * 4);
-                //if( netObjectCount > 0 )
-                //{
-                //    NetObjects = new List<int>( netObjectCount );
-                //    for( int i = 0; i < netObjectCount; ++ i )
-                //    {
-                //        NetObjects.Add( stream.ReadObjectIndex() );
-                //    }
-                //}
 #if MKKE
             }
 #endif

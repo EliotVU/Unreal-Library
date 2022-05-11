@@ -1064,6 +1064,7 @@ namespace UELib
             where T : IUnrealSerializableClass
         {
             Debug.Assert(array != null);
+            WriteIndex(stream, array.Count);
             foreach (var element in array)
             {
                 element.Serialize(stream);

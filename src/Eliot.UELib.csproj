@@ -160,6 +160,7 @@
     <Compile Include="ByteCodeDecompiler.cs" />
     <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
+    <Compile Include="Core\UStateFrame.cs" />
     <Compile Include="Decoding\CryptoDecoder.AA2.cs" />
     <Compile Include="Decoding\CryptoCore.cs" />
     <Compile Include="Engine\Classes\UBitmapMaterial.cs" />
@@ -250,7 +251,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

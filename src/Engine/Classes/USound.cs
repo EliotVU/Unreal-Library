@@ -60,7 +60,7 @@ namespace UELib.Engine
 #endif
             if (Package.Version >= 63)
             {
-                // Offset in package to the next object, wth is this for?
+                // LazyArray skip-offset
                 int nextSerialOffset = _Buffer.ReadInt32();
                 Record(nameof(nextSerialOffset), nextSerialOffset);
             }

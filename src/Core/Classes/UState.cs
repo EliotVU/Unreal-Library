@@ -19,7 +19,7 @@ namespace UELib.Core
         private const int VStateFlags = 61;
         // FIXME: Version
         private const int VFuncMap = 220;
-        private const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
+        public const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
 
         #region Serialized Members
 

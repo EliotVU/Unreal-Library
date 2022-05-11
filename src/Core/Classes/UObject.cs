@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using UELib.Annotations;
@@ -79,6 +78,11 @@ namespace UELib.Core
         /// Object Properties e.g. SubObjects or/and DefaultProperties
         /// </summary>
         public DefaultPropertiesCollection Properties { get; private set; }
+
+        /// <summary>
+        /// Serialized if object is marked with <see cref="ObjectFlagsLO.HasStack" />.
+        /// </summary>
+        [CanBeNull] public UStateFrame StateFrame;
 
         #endregion
 
@@ -197,72 +201,62 @@ namespace UELib.Core
         /// </summary>
         protected virtual void Deserialize()
         {
-            // TODO: Corrigate version
-            if (Package.Version >= 322
+#if SWAT4
+            // Vengeance Engine
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
+            {
+                // 8 bytes: Value: 3
+                // 4 bytes: Value: 1
+                _Buffer.Skip(12);
+            }
+#endif
+#if BIOSHOCK
+            // Vengeance Engine
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+            {
+                _Buffer.Skip(8);
+            }
+#endif
+            // This appears to be serialized for templates of classes like AmbientSoundNonLoop
+            if (HasObjectFlag(ObjectFlagsLO.HasStack))
+            {
+                StateFrame = new UStateFrame();
+                StateFrame.Deserialize(_Buffer);
+            }
+
+            if (_Buffer.Version >= UExportTableItem.VNetObjects
 #if MKKE
                 && Package.Build != UnrealPackage.GameBuild.BuildName.MKKE
 #endif
                )
             {
-                // TODO: Corrigate version. Fix component detection!
-                //if( _Buffer.Version > 400
-                //    && HasObjectFlag( Flags.ObjectFlagsHO.PropertiesObject )
-                //    && HasObjectFlag( Flags.ObjectFlagsHO.ArchetypeObject ) )
-                //{
-                //    var componentClass = _Buffer.ReadObjectIndex();
-                //    var componentName = _Buffer.ReadNameIndex();
-                //}
-
                 int netIndex = _Buffer.ReadInt32();
                 Record("netIndex", netIndex);
             }
-            else
-            {
-                if (HasObjectFlag(ObjectFlagsLO.HasStack))
-                {
-                    int node = _Buffer.ReadIndex();
-                    Record("node", GetIndexObject(node));
-                    _Buffer.ReadIndex(); // stateNode
-                    _Buffer.ReadUInt64(); // probeMask
-                    _Buffer.ReadUInt32(); // latentAction
-                    if (node != 0)
-                    {
-                        _Buffer.ReadIndex(); // Offset
-                    }
-                }
-#if SWAT4
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
-                {
-                    // 8 bytes: Value: 3
-                    // 4 bytes: Value: 1
-                    _Buffer.Skip(12);
-                }
-#endif
-
-#if BIOSHOCK
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-                {
-                    _Buffer.Skip(8);
-                }
-#endif
+            
+            // TODO: Serialize component data here
+            //if( _Buffer.Version > 400
+            //    && HasObjectFlag( Flags.ObjectFlagsHO.PropertiesObject )
+            //    && HasObjectFlag( Flags.ObjectFlagsHO.ArchetypeObject ) )
+            //{
+            //    var componentClass = _Buffer.ReadObjectIndex();
+            //    var componentName = _Buffer.ReadNameIndex();
+            //}
 
 #if DEUSEXINVISIBLEWAR
-                if( Package.Build == UnrealPackage.GameBuild.BuildName.DeusEx_IW )
-                {
-                    // var native private const int ObjectInternalPropertyHash[1]
-                    _Buffer.Skip( 4 );
-                }
-#endif
-
-#if THIEFDEADLYSHADOWS
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
-                {
-                    // var native private const int ObjectInternalPropertyHash[1]
-                    _Buffer.Skip(4);
-                }
-#endif
+            if( Package.Build == UnrealPackage.GameBuild.BuildName.DeusEx_IW )
+            {
+                // var native private const int ObjectInternalPropertyHash[1]
+                _Buffer.Skip( 4 );
             }
-
+#endif
+#if THIEFDEADLYSHADOWS
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
+            {
+                // var native private const int ObjectInternalPropertyHash[1]
+                _Buffer.Skip(4);
+            }
+#endif
             if (!IsClassType("Class"))
             {
 #if SWAT4
