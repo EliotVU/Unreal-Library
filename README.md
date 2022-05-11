@@ -51,7 +51,9 @@ Below is a table of games that are known to be compatible with the UELib.
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory Battery | Unknown | Unknown |     |
-| Swat 4 | Unknown | 129/027 |     |
+| Swat 4 | Vengeance-Unknown | 129/027 | |
+| Bioshock | Vengeance-Unknown | 141/056 | Incomplete but usable |
+| Bioshock 2 | Vengeance-Unknown | 143/059 | Incomplete but usable |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | (Third-party) <https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/> |
 | The Chronicles of Spellborn | Unknown | 159/029 | |
 |     |     |     |     |
