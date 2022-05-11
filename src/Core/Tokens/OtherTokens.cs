@@ -311,6 +311,23 @@ namespace UELib.Core
                     Decompiler.AlignSize(13);
                 }
             }
+#if BIOSHOCK
+            public class LogFunctionToken : FunctionToken
+            {
+                public override void Deserialize(IUnrealStream stream)
+                {
+                    stream.Skip(2);
+                    Decompiler.AlignSize(sizeof(ushort));
+                    DeserializeCall();
+                }
+
+                public override string Decompile()
+                {
+                    Decompiler._CanAddSemicolon = true;
+                    return DecompileCall("log");
+                }
+            }
+#endif
         }
     }
 }

@@ -683,6 +683,13 @@ namespace UELib.Core
 
                         // UE3+
                         case (byte)ExprToken.OutVariable:
+#if BIOSHOCK
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+                            {
+                                token = new LogFunctionToken();
+                                break;
+                            }
+#endif
                             token = new OutVariableToken();
                             break;
 

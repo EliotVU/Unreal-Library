@@ -159,11 +159,27 @@ namespace UELib.Core
                 }
             }
 #endif
+#if SWAT4 || BIOSHOCK
+            if (
 #if SWAT4
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
+                Package.Build == UnrealPackage.GameBuild.BuildName.Swat4
+#endif
+#if BIOSHOCK
+                || Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+#endif
+            )
             {
                 // Contains meta data such as a ToolTip.
-                _Buffer.Skip(3);
+                var data = new byte[3];
+                _Buffer.Read(data, 0, 3);
+                Record("???Vengeance_3Bytes", data);
+            }
+#endif
+
+#if BIOSHOCK
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+            {
+                _Buffer.Skip(8);
             }
 #endif
         }
