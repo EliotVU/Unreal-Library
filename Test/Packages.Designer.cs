@@ -61,6 +61,15 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to D:\Projecten\UE Explorer Tests\Supported.
+        /// </summary>
+        public static string Packages_Path {
+            get {
+                return ResourceManager.GetString("Packages_Path", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to D:\Downloads\AAA-2.6-Linux-All\System.
         /// </summary>
         public static string Packages_Path_AAA_2_6 {
