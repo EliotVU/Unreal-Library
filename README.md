@@ -44,7 +44,8 @@ Below is a table of games that are known to be compatible with the UELib.
 |     |     |     |     |
 | XIII | Unknown | 100/058 |     |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
-| Unreal II | 829-2001 | 126/2609 | |
+| Unreal II: The Awakening | 829-2001 | 126/2609 | |
+| Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | UStruct is incomplete and custom features are not decompiled |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
 | America's Army 2 | 3369 | 128/032:033 | 2.5, 2.6, 2.8 |
 | America's Army (Arcade) | 3369 | 128/032 | 2.6 |
@@ -110,6 +111,7 @@ Below is a table of games that are known to be compatible with the UELib.
 | Painkiller HD | 9953 | 860/000 |     |
 | Hawken | 10681 | 860/004 |     |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
+| Gal*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) 
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | Unknown | Unknown |     |
