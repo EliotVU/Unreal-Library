@@ -110,6 +110,7 @@ Below is a table of games that are known to be compatible with the UELib.
 | Painkiller HD | 9953 | 860/000 |     |
 | Hawken | 10681 | 860/004 |     |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
+| Gal*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) 
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | Unknown | Unknown |     |
