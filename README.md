@@ -44,7 +44,8 @@ Below is a table of games that are known to be compatible with the UELib.
 |     |     |     |     |
 | XIII | Unknown | 100/058 |     |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
-| Unreal II | 829-2001 | 126/2609 | |
+| Unreal II: The Awakening | 829-2001 | 126/2609 | |
+| Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | UStruct is incomplete and custom features are not decompiled |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
 | America's Army 2 | 3369 | 128/032:033 | 2.5, 2.6, 2.8 |
 | America's Army (Arcade) | 3369 | 128/032 | 2.6 |
