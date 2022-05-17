@@ -47,41 +47,35 @@ namespace UELib.Core
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
             {
                 ushort size = _Buffer.ReadUShort();
-                Record("??size_BL2", size);
+                Record("Unknown:Borderlands2", size);
                 _Buffer.Skip(size * 2);
             }
 #endif
 
             base.Deserialize();
 
-            if (Package.Version <= 63)
+            if (_Buffer.Version < 64)
             {
-                ushort parmsSize = _Buffer.ReadUShort();
-                Record("Unknown", parmsSize);
+                ushort paramsSize = _Buffer.ReadUShort();
+                Record(nameof(paramsSize), paramsSize);
             }
 
             NativeToken = _Buffer.ReadUShort();
-            Record("NativeToken", NativeToken);
+            Record(nameof(NativeToken), NativeToken);
 
-            if (Package.Version <= 63)
+            if (_Buffer.Version < 64)
             {
-                byte numParms = _Buffer.ReadByte();
-                Record("Unknown", numParms);
+                byte paramsCount = _Buffer.ReadByte();
+                Record(nameof(paramsCount), paramsCount);
             }
 
             OperPrecedence = _Buffer.ReadByte();
-            Record("OperPrecedence", OperPrecedence);
+            Record(nameof(OperPrecedence), OperPrecedence);
 
-            if (Package.Version <= 63)
+            if (_Buffer.Version < 64)
             {
                 ushort returnValueOffset = _Buffer.ReadUShort();
-                Record("Unknown", returnValueOffset);
-            }
-
-            if (Package.Version <= 63)
-            {
-                ushort unknown = _Buffer.ReadUShort();
-                Record("Unknown", unknown);
+                Record(nameof(returnValueOffset), returnValueOffset);
             }
 
 #if TRANSFORMERS
@@ -92,11 +86,11 @@ namespace UELib.Core
 #else
             FunctionFlags = _Buffer.ReadUInt32();
 #endif
-            Record("FunctionFlags", (FunctionFlags)FunctionFlags);
+            Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
             if (HasFunctionFlag(Flags.FunctionFlags.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
-                Record("RepOffset", RepOffset);
+                Record(nameof(RepOffset), RepOffset);
             }
 
 #if SPELLBORN
@@ -112,7 +106,7 @@ namespace UELib.Core
 #endif
 
             // TODO: Data-strip version?
-            if (Package.Version >= VFriendlyName && !Package.IsConsoleCooked()
+            if (_Buffer.Version >= VFriendlyName && !Package.IsConsoleCooked()
 #if TRANSFORMERS
                 // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
                 && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
@@ -124,7 +118,7 @@ namespace UELib.Core
                )
             {
                 FriendlyName = _Buffer.ReadNameReference();
-                Record("FriendlyName", FriendlyName);
+                Record(nameof(FriendlyName), FriendlyName);
             }
             else
             {
