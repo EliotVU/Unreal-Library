@@ -444,6 +444,13 @@ namespace UELib.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void DeserializeDebugToken()
             {
+                // Sometimes we may end up at the end of a script
+                // -- and by coincidence pickup a DebugInfo byte-code outside of the script-boundary.
+                if (CodePosition == _Container.ByteScriptSize)
+                {
+                    return;
+                }
+                
                 Buffer.StartPeek();
                 byte tokenCode = FixToken(Buffer.ReadByte());
                 Buffer.EndPeek();
