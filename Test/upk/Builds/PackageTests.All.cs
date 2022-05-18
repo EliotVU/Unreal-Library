@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
+using UELib.Core;
 
 namespace Eliot.UELib.Test.upk.Builds
 {
@@ -25,7 +26,7 @@ namespace Eliot.UELib.Test.upk.Builds
 
             UnrealConfig.SuppressSignature = true;
             var files = Enumerable.Concat(
-                Directory.GetFiles(PackagesPath, "*.u"), 
+                Directory.GetFiles(PackagesPath, "*.u"),
                 Directory.GetFiles(PackagesPath, "*.upk")
             );
             var exceptions = new List<Exception>();
@@ -34,14 +35,25 @@ namespace Eliot.UELib.Test.upk.Builds
                 Debug.WriteLine(file);
                 try
                 {
-                    var linker = UnrealLoader.LoadPackage(file);
-                    Assert.IsNotNull(linker);
+                    using var linker = UnrealLoader.LoadPackage(file);
+                    switch (linker.Build.Name)
+                    {
+                        // Not yet error free
+                        case UnrealPackage.GameBuild.BuildName.Bioshock:
+                            continue;
+                    }
+                    
+                    linker.InitializePackage();
+                    var objWithError = linker.Objects.Find(obj =>
+                        (obj.DeserializationState & UObject.ObjectState.Errorlized) != 0);
+                    Assert.IsNull(objWithError, objWithError?.ThrownException.Message);
                 }
                 catch (Exception ex)
                 {
                     exceptions.Add(new NotSupportedException(file, ex));
                 }
             }
+
             Assert.IsTrue(exceptions.Count == 0, string.Join('\n', exceptions));
             Debug.WriteLine($"Successfully tested {files.Count()} packages");
         }

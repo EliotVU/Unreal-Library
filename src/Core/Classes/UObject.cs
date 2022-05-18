@@ -141,7 +141,7 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                ThrownException = e;
+                ThrownException = new UnrealException($"Couldn't deserialize object {GetClassName()}'{GetOuterGroup()}'", e);
                 ExceptionPosition = _Buffer?.Position ?? -1;
                 DeserializationState |= ObjectState.Errorlized;
 

@@ -26,7 +26,7 @@ namespace Eliot.UELib.Test.upk.Builds
                 return;
             }
 
-            var linker = UnrealLoader.LoadPackage(NoEncryptionCorePackagePath);
+            using var linker = UnrealLoader.LoadPackage(NoEncryptionCorePackagePath);
             Assert.IsNotNull(linker);
             Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2, linker.Build.Name, "Incorrect package's build");
 
@@ -49,7 +49,7 @@ namespace Eliot.UELib.Test.upk.Builds
                 return;
             }
 
-            var linker = UnrealLoader.LoadPackage(EncryptedCorePackagePath);
+            using var linker = UnrealLoader.LoadPackage(EncryptedCorePackagePath);
             Assert.IsNotNull(linker);
             Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2, linker.Build.Name, "Incorrect package's build");
         }

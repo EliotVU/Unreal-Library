@@ -9,6 +9,11 @@ namespace UELib.Engine
     [UnrealRegisterClass]
     public class UFont : UObject, IUnrealViewable
     {
+        public UFont()
+        {
+            ShouldDeserializeOnDemand = true;
+        }
+        
         private struct FontCharacter : IUnrealSerializableClass
         {
             private int _StartU;
