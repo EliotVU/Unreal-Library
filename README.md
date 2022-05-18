@@ -1,7 +1,7 @@
 [![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 
-The Unreal library provides you an API to read (parse/deserialize) the contents of Unreal Engine game package files such as .UDK, .UPK.
+The Unreal library (UELib) provides you an API to read (parse/deserialize) the contents of Unreal Engine game package files such as .UDK, .UPK.
 Its main purpose is to decompile the UnrealScript byte-code to its original source-code.
 
 It accomplishes this by reading the necessary Unreal data classes such as:
@@ -11,27 +11,33 @@ It accomplishes this by reading the necessary Unreal data classes such as:
 
 Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
 
-Installation
+How to use
+==============
+To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) (The library will move to .NET 6 or higher at version 2.0)
+
+Install using either:
+* Package Manager:
+```
+    Install-Package Eliot.UELib.dll
+```
+* NuGet: <https://www.nuget.org/packages/Eliot.UELib.dll>
+
+See [usage](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for further instructions on how to use the library in your project.
+
+If you're looking to modify the library for the sole purpose of modding [UE Explorer](https://eliotvu.com/portfolio/view/21/ue-explorer), I recommend you to clone or fork this repository and install UE Explorer within your ```UELib/src/bin/Debug/``` folder, or change the project's configuration to build inside of the UE Explorer's folder.
+
+Want to try out the [latest library release](https://github.com/EliotVU/Unreal-Library/releases)? Then you can simply save ```Eliot.UELib.dll``` to the folder where you have installed UE Explorer at. Note that the current release of UE Explorer is using version [1.2.7.1](https://github.com/EliotVU/Unreal-Library/releases/tag/release-1.2.7.1).
+
+How to contribute
 ==============
 
-Either use NuGet's package manager console or download from: <https://www.nuget.org/packages/Eliot.UELib.dll/>
-
-    PM> Install-Package Eliot.UELib.dll
-
-Instructions
-==============
-
-See <https://github.com/EliotVU/Unreal-Library/wiki/Usage>
-
-User Interface
-==============
-
-The latest build is always compatible with the [latest UE Explorer](https://eliotvu.com/portfolio/view/21/ue-explorer)'s release, and because of that, you can replace the Eliot.UELib.dll in the installation folder with yours.
+* Open an issue
+* Or make a pull-request by creating a [fork](https://help.github.com/articles/fork-a-repo/) of this repository, create a new branch and commit your changes to that particular branch, so that I can easily merge your changes.
 
 Compatible Games
 ==============
 
-Below is a table of games that are known to be compatible with the UELib.
+This is a table of games that are confirmed to be compatible with the current state of UELib, the table is sorted by Package-Version.
 
 | Name    | Engine    | Package/Licensee    | Support State     |
 | ------- | --------- | ------------------- | -----------------
@@ -126,23 +132,4 @@ saved everything before opening any file!**
 
 Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes)
 
-Contribute
-==============
-
-To contribute click the [fork button at the top right](https://help.github.com/articles/fork-a-repo/) and follow it by cloning your fork of this repository.
-
-This project uses Visual Studio for development, while it is not restricted to Visual Studio it is recommended to use VS because it has the best support for C#, you can get Visual Studio from <http://www.visualstudio.com/> for free, if you already have Visual Studio, it should be atleast Visual Studio 2010+.
-
-The following kind of contributions are welcome:
-
-* Any bug fix or issue as reported under "issues" on this github repository.
-* Support for a new game.
-* Support for decompression, and/or decryption.
-* Documentation on how to use this library.
-* General improvements in the decompilation output.
-* Mono compatibility.
-
-Code style
-==============
-
-Any contribution should try to follow the already existing neighbouring code.
+Do you know a game that is compatible but is not listed here? Click on the top right to edit this file!
