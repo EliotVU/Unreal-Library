@@ -20,12 +20,6 @@ namespace UELib
 
         public void Deserialize(IUnrealStream stream)
         {
-#if APB
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.APB && stream.Package.LicenseeVersion >= 32)
-            {
-                stream.Skip(16);
-            }
-#endif
             ExportsCount = stream.ReadInt32();
             NamesCount = stream.ReadInt32();
             if (stream.Version >= VNetObjectsCount)

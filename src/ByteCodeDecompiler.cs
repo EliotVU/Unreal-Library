@@ -301,8 +301,10 @@ namespace UELib.Core
                 { (byte)ExprToken.Jump, (byte)ExprToken.JumpIfNot },
                 { (byte)ExprToken.JumpIfNot, (byte)ExprToken.Jump },
                 { (byte)ExprToken.Case, (byte)ExprToken.Nothing },
-                { (byte)ExprToken.Nothing, (byte)ExprToken.Case }
-            };
+                { (byte)ExprToken.Nothing, (byte)ExprToken.Case },
+                //{ 0x48, (byte)ExprToken.OutVariable },
+                //{ 0x53, (byte)ExprToken.EndOfScript }
+        };
 #endif
 #if BIOSHOCK
             private static readonly Dictionary<byte, byte> ByteCodeMap_BuildBs = new Dictionary<byte, byte>
@@ -370,12 +372,6 @@ namespace UELib.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private byte FixToken(byte tokenCode)
             {
-                // TODO: Map directly to a Token type instead of a byte-code.
-                if (_ByteCodeMap != null)
-                    return _ByteCodeMap.TryGetValue(tokenCode, out byte newTokenCode)
-                        ? newTokenCode
-                        : tokenCode;
-
 #if UE3
                 // Adjust UE2 tokens to UE3
                 // TODO: Use ByteCodeMap
@@ -385,9 +381,13 @@ namespace UELib.Core
                         tokenCode >= (byte)ExprToken.Unused35 && tokenCode < (byte)ExprToken.ReturnNothing
                         ||
                         tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative)
-                   )
-                    return ++tokenCode;
+                   ) ++tokenCode;
 #endif
+                // TODO: Map directly to a Token type instead of a byte-code.
+                if (_ByteCodeMap != null)
+                    return _ByteCodeMap.TryGetValue(tokenCode, out byte newTokenCode)
+                        ? newTokenCode
+                        : tokenCode;
 #if UE1
                 if (Package.Version < 62)
                 {
