@@ -7,7 +7,6 @@
     {
         // ValidateObject
         // ResizeString
-        // BeginFunction
         LocalVariable           = 0x00,
         InstanceVariable        = 0x01,
         DefaultVariable         = 0x02,     // default.Property
@@ -34,7 +33,14 @@
         New                     = 0x11,     // new(OUTER) CLASS...
         ClassContext            = 0x12,     // Class'Path'.static.Function()
         MetaCast                = 0x13,     // <CLASS>(CLASS)
+
+        /// <summary>
+        /// UE1: BeginFunction
+        /// UE2: LetBool
+        /// </summary>
+        BeginFunction           = 0x14,
         LetBool                 = 0x14,
+        
         /// <summary>
         /// UE1: ???
         /// UE2: Skip-like (early UE2)?
@@ -65,7 +71,7 @@
         NativeParm              = 0x29,     // A            (Native)
         NoObject                = 0x2A,     // None
         /// <summary>
-        /// UE1: ???
+        /// UE1: A string size cast
         /// UE2: Deprecated (Bad Expr Token)
         /// </summary>
         CastStringSize          = 0x2B,
@@ -274,5 +280,11 @@
         ContinueLoop        = 0x70,
         ContinueForeach     = 0x71,
         ContinueFor         = 0x72,
+        
+        Unset               = 0xFF,
+        
+        // Older names, we need these to help with the conversion of a string to OpCode.
+        OperEFP             = EFPOper,
+        IterEFP             = EFPIter,
     }
 }

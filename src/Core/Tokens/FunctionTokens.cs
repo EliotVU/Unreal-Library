@@ -313,78 +313,34 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (NativeItem != null)
+                    if (NativeItem == null)
                     {
-                        switch (NativeItem.Type)
+                        NativeItem = new NativeTableItem
                         {
-                            case FunctionType.Function:
-                                DeserializeCall();
-                                break;
-
-                            case FunctionType.PreOperator:
-                            case FunctionType.PostOperator:
-                                DeserializeUnaryOperator();
-                                break;
-
-                            case FunctionType.Operator:
-                                DeserializeBinaryOperator();
-                                break;
-
-                            default:
-                                DeserializeCall();
-                                break;
-                        }
-
-                        return;
+                            Type = FunctionType.Function,
+                            Name = "UnresolvedNativeFunction_" + RepresentToken,
+                            ByteToken = RepresentToken
+                        };
                     }
 
-                    NativeItem = new NativeTableItem
+                    switch (NativeItem.Type)
                     {
-                        Type = FunctionType.Function,
-                        Name = "UnresolvedNativeFunction_" + RepresentToken,
-                        ByteToken = RepresentToken
-                    };
+                        case FunctionType.Function:
+                            DeserializeCall();
+                            break;
 
-                tryAgain:
-                    int position = Decompiler.CodePosition;
-                    int tokensCount = Decompiler.DeserializedTokens.Count;
-                    try
-                    {
-                        switch (NativeItem.Type)
-                        {
-                            case FunctionType.Function:
-                                DeserializeCall();
-                                break;
+                        case FunctionType.PreOperator:
+                        case FunctionType.PostOperator:
+                            DeserializeUnaryOperator();
+                            break;
 
-                            case FunctionType.PreOperator:
-                            case FunctionType.PostOperator:
-                                DeserializeUnaryOperator();
-                                break;
+                        case FunctionType.Operator:
+                            DeserializeBinaryOperator();
+                            break;
 
-                            case FunctionType.Operator:
-                                DeserializeBinaryOperator();
-                                break;
-
-                            default:
-                                DeserializeCall();
-                                break;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        throw new UnrealException($"Bad NativeCall({NativeItem.ByteToken}) deserialization", e);
-                        //if (++NativeTable.Type > FunctionType.Max)
-                        //{
-                        //    throw new UnrealException($"Bad NativeCall({NativeTable.ByteToken}) deserialization", e);
-                        //}
-                        //// Try to recover, this however does not recover the decompiled state!
-                        //Position = position;
-                        //if (Decompiler.DeserializedTokens.Count - tokensCount > 0)
-                        //{
-                        //    Decompiler.DeserializedTokens.RemoveRange(tokensCount - 1,
-                        //        Decompiler.DeserializedTokens.Count - tokensCount);
-                        //}
-                        //goto tryAgain;
+                        default:
+                            DeserializeCall();
+                            break;
                     }
                 }
 

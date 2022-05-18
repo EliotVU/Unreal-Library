@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -174,28 +176,33 @@ namespace UELib.Core
                 }
             }
 
-            // TODO: Implement
-            public class ResizeStringToken : Token
+            public class CastStringSizeToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
                     stream.ReadByte(); // Size
                     Decompiler.AlignSize(sizeof(byte));
                 }
+                
+                // TODO: Decompile format?
             }
 
-            // TODO: Implement
             public class BeginFunctionToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    var topFunc = Decompiler._Container as UFunction;
-                    Debug.Assert(topFunc != null, "topf != null");
-                    foreach (var property in topFunc.Variables)
+                    var structContainer = Decompiler._Container;
+                    for (var field = structContainer.Children; field != null; field = field.NextField)
                     {
+                        var property = field as UProperty;
+                        if (property == null)
+                        {
+                            continue;
+                        }
+
                         if (!property.HasPropertyFlag(Flags.PropertyFlagsLO.Parm | Flags.PropertyFlagsLO.ReturnParm))
                             continue;
-
+                        
                         stream.ReadByte(); // Size
                         Decompiler.AlignSize(sizeof(byte));
 

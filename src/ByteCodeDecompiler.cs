@@ -376,6 +376,7 @@ namespace UELib.Core
                         ? newTokenCode
                         : tokenCode;
 
+#if UE3
                 // Adjust UE2 tokens to UE3
                 // TODO: Use ByteCodeMap
                 if (Package.Version >= 184
@@ -386,6 +387,20 @@ namespace UELib.Core
                         tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative)
                    )
                     return ++tokenCode;
+#endif
+#if UE1
+                if (Package.Version < 62)
+                {
+                    switch (tokenCode)
+                    {
+                        //case (byte)ExprToken.LetBool:
+                        //    return (byte)ExprToken.BeginFunction;
+                        
+                        case (byte)ExprToken.EndParmValue:
+                            return (byte)ExprToken.EatReturnValue;
+                    }
+                }
+#endif
                 return tokenCode;
             }
 
@@ -413,14 +428,7 @@ namespace UELib.Core
                     while (CodePosition < codeSize)
                         try
                         {
-                            var token = DeserializeNext();
-                            if (!(token is EndOfScriptToken))
-                                continue;
-
-                            if (CodePosition < codeSize)
-                                Console.WriteLine("End of script detected, but the loop condition is still true.");
-
-                            break;
+                            DeserializeNext();
                         }
                         catch (EndOfStreamException error)
                         {
@@ -566,6 +574,13 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.LetBool:
+#if UE1
+                            if (Buffer.Version < 62)
+                            {
+                                token = new BeginFunctionToken();
+                                break;
+                            }
+#endif
                             token = new LetBoolToken();
                             break;
 
@@ -884,7 +899,17 @@ namespace UELib.Core
                             //case (byte)ExprToken.VarObject:   // See UndefinedVariable
                             token = new DynamicVariableToken();
                             break;
-
+#if UE1
+                        case (byte)ExprToken.CastStringSize:
+                            // FIXME: Version, just a safe guess.
+                            if (Buffer.Version >= 70)
+                            {
+                                token = new UnresolvedToken();
+                                break;
+                            }
+                            token = new CastStringSizeToken();
+                            break;
+#endif
                         #endregion
 
                         #region Constants
