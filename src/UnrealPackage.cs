@@ -416,7 +416,7 @@ namespace UELib
                 /// <summary>
                 /// 742/029
                 /// </summary>
-                [Build(742, 29)] BulletStorm,
+                [Build(742, 29, BuildFlags.ConsoleCooked)] BulletStorm,
 
                 /// <summary>
                 /// 801/030
@@ -660,31 +660,33 @@ namespace UELib
                     DependsOffset = stream.ReadInt32();
                 }
 
-                if (stream.Version >= VThumbnailTableOffset
 #if TRANSFORMERS
-                    || (stream.Package.Build == GameBuild.BuildName.Transformers
-                        && stream.Version >= 535)
+                if (stream.Package.Build == GameBuild.BuildName.Transformers
+                    && stream.Version < 535)
+                {
+                    return;
+                }
+#endif
+                if (stream.Version >= VImportExportGuidsOffset
+                    // FIXME: Correct the output version of these games instead.
+#if BIOSHOCK
+                    && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+#endif
+#if TRANSFORMERS
+                    && stream.Package.Build != GameBuild.BuildName.Transformers
 #endif
                    )
+                {
+                    ImportExportGuidsOffset = stream.ReadInt32();
+                    ImportGuidsCount = stream.ReadInt32();
+                    ExportGuidsCount = stream.ReadInt32();
+                }
+                
+                if (stream.Version >= VThumbnailTableOffset)
                 {
 #if APB
                     if (stream.Package.Build == GameBuild.BuildName.DungeonDefenders2) stream.Skip(4);
 #endif
-
-                    if (stream.Version >= VImportExportGuidsOffset
-                        // FIXME: Correct the output version of these games instead.
-#if BIOSHOCK
-                        && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
-#endif
-#if TRANSFORMERS
-                        && stream.Package.Build != GameBuild.BuildName.Transformers
-#endif
-                       )
-                    {
-                        ImportExportGuidsOffset = stream.ReadInt32();
-                        ImportGuidsCount = stream.ReadInt32();
-                        ExportGuidsCount = stream.ReadInt32();
-                    }
                     ThumbnailTableOffset = stream.ReadInt32();
                 }
 
@@ -1210,8 +1212,16 @@ namespace UELib
                 if (_TablesData.DependsOffset > 0)
                 {
                     stream.Seek(_TablesData.DependsOffset, SeekOrigin.Begin);
-                    var dependsMap = new List<int[]>(_TablesData.ExportsCount);
-                    for (var i = 0; i < _TablesData.ExportsCount; ++i)
+                    int dependsCount = _TablesData.ExportsCount;
+#if BIOSHOCK
+                    // FIXME: Version?
+                    if (Build == GameBuild.BuildName.Bioshock_Infinite)
+                    {
+                        dependsCount = stream.ReadInt32();
+                    }
+#endif
+                    var dependsMap = new List<int[]>(dependsCount);
+                    for (var i = 0; i < dependsCount; ++i)
                     {
                         // DependencyList, index to import table
                         int count = stream.ReadInt32(); // -1 in DCUO?
