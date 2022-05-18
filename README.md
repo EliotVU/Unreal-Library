@@ -49,9 +49,10 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 |     |     |     |     |
 | XIII | Unknown | 100/058 |     |
+| Tom Clancy's Rainbow Six 3: Raven Shield | 600-? | 118/012:014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
-| Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | UStruct is incomplete and custom features are not decompiled |
+| Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
 | America's Army 2 | 3369 | 128/032:033 | 2.5, 2.6, 2.8 |
 | America's Army (Arcade) | 3369 | 128/032 | 2.6 |
@@ -73,7 +74,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Unreal Tournament 3 | 3809 | 512/000 | |
 | Mirrors Edge | 3716 | 536/043 |     |
 | Alpha Protocol | 3857 | 539/091 |     |
-| APB: All Points Bulletin | 3908 | 547/032 |     |
+| APB: All Points Bulletin | 3908 | 547/028:032 |     |
 | Gears of War 2 | 4638 | 575/000 | |
 | CrimeCraft | 4701 | 576/005 | |
 | Singularity | 4869 | 584/126 | |
