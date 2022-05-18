@@ -298,18 +298,49 @@ namespace UELib.Core
 
             public class DebugInfoToken : Token
             {
+                // Version, usually 100
+                public int Version;
+                public int Line;
+                public int TextPos;
+                public DebugInfo OpCode = DebugInfo.Unset;
+                
+                [CanBeNull] public string OpCodeText;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // Version
-                    stream.ReadInt32();
-                    // Line
-                    stream.ReadInt32();
-                    // Pos
-                    stream.ReadInt32();
-                    // Code
-                    stream.ReadByte();
-                    Decompiler.AlignSize(13);
+                    Version = stream.ReadInt32();
+                    Decompiler.AlignSize(4);
+                    Line = stream.ReadInt32();
+                    Decompiler.AlignSize(4);
+                    TextPos = stream.ReadInt32();
+                    Decompiler.AlignSize(4);
+#if UNREAL2
+                    // FIXME: Is this a legacy feature or U2 specific?
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP)
+                    {
+                        OpCodeText = stream.ReadASCIIString();
+                        Decompiler.AlignSize(OpCodeText.Length + 1);
+                        Decompiler._Container.Record(nameof(OpCodeText), OpCodeText);
+                        if (!Enum.TryParse(OpCodeText, true, out OpCode))
+                        {
+                            Debug.WriteLine($"Couldn't parse OpCode '{OpCodeText}'");
+                        }
+
+                        return;
+                    }
+#endif                    
+                    // At least since UT2004+
+                    OpCode = (DebugInfo)stream.ReadByte();
+                    Decompiler.AlignSize(1);
+                    Decompiler._Container.Record(nameof(OpCode), OpCode);
                 }
+#if DEBUG_HIDDENTOKENS
+                public override string Decompile()
+                {
+                    Decompiler._MustCommentStatement = true;
+                    return Enum.GetName(typeof(DebugInfo), OpCode);
+                }
+#endif
             }
 #if BIOSHOCK
             public class LogFunctionToken : FunctionToken

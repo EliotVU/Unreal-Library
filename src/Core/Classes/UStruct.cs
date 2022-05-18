@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UELib.Annotations;
 using UELib.Flags;
 
@@ -13,23 +14,16 @@ namespace UELib.Core
     {
         // Greater or equal than:
         // Definitely not after 110
-        // TODO: Corrigate version
+        // FIXME: Version
         private const int PrimitveCastVersion = 100;
 
-        // Version might actually be correct!
-        private const int VCppText = 129;
+        private const int VCppText = 120;
 
-        // FIXME: Correct version; not found in Unreal2 (110)
-        private const int VStructFlags = 119;
-
-        // TODO: Corrigate version
+        // FIXME: Version
         private const int VProcessedText = 129;
 
-        // TODO: Corrigate version
+        // FIXME: Version
         private const int VFriendlyNameMoved = 160;
-
-        // TODO: Corrigate version
-        private const int VScriptStructAdded = 160;
 
         #region Serialized Members
 
@@ -99,49 +93,42 @@ namespace UELib.Core
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
             }
-
-            if (Package.Version >= VCppText && !Package.IsConsoleCooked()
-#if VANGUARD
-                                            && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
-#endif
-#if SPELLBORN
-                                            && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
-#endif
-               )
+            
+            // Standard, but UT2004' derived games do not include this despite reporting version 128+
+            if (Package.Version >= VCppText 
+                && !Package.IsConsoleCooked()
+                && Package.Build.Generation != BuildGeneration.UE2_5)
             {
                 CppText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(CppText), CppText);
             }
-
-            if (Package.Version >= VStructFlags && Package.Version < VScriptStructAdded)
+            
+            // UE3 or UE2.5 build, it appears that StructFlags may have been merged from an early UE3 build.
+            if (Package.LicenseeVersion >= 26 && 
+                Package.Build.Generation == BuildGeneration.UE2_5 || 
+                Package.Build.Generation == BuildGeneration.Vengeance)
             {
                 StructFlags = _Buffer.ReadUInt32();
                 Record(nameof(StructFlags), (StructFlags)StructFlags);
-
-                // Note: Bioshock inherits from the SWAT4's UE2 build.
-#if BIOSHOCK
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-                {
-                    // TODO: Unknown data, might be related to the above Swat4 data.
-                    int unknownObject = _Buffer.ReadObjectIndex();
-                    Record("Unknown:Bioshock", unknownObject);
-                }
-#endif
-                // This is high likely to be only for "Irrational Games" builds.
-                if (Package.Version >= VProcessedText
-#if VANGUARD
-                    && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
-#endif
-#if SPELLBORN
-                    && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Spellborn
-#endif
-                   )
-                {
-                    ProcessedText = _Buffer.ReadObject<UTextBuffer>();
-                    Record(nameof(ProcessedText), ProcessedText);
-                }
             }
-            
+#if BIOSHOCK
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+            {
+                int unknownObject = _Buffer.ReadObjectIndex();
+                Record("Unknown:Bioshock", unknownObject);
+            }
+#endif
+            if (Package.Version >= VProcessedText
+                && Package.Build.Generation == BuildGeneration.Vengeance
+#if VANGUARD
+                && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
+#endif
+               )
+            {
+                ProcessedText = _Buffer.ReadObject<UTextBuffer>();
+                Record(nameof(ProcessedText), ProcessedText);
+            }
+
             if (!Package.IsConsoleCooked())
             {
                 Line = _Buffer.ReadInt32();

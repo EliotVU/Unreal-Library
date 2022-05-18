@@ -27,21 +27,18 @@ namespace UELib
 
         #endregion
 
-        private const int QWORDVersion = 141;
-
         public void Deserialize(IUnrealStream stream)
         {
             Name = DeserializeName(stream);
             Debug.Assert(Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
-            
-            // Spellborn's version exceeds that of UE3
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+#if BIOSHOCK
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
             {
-                Flags = stream.ReadUInt32();
+                Flags = stream.ReadUInt64();
                 return;
             }
-            
-            Flags = stream.Version >= QWORDVersion
+#endif
+            Flags = stream.Version >= UExportTableItem.VObjectFlagsToULONG
                 ? stream.ReadUInt64()
                 : stream.ReadUInt32();
         }
@@ -89,7 +86,7 @@ namespace UELib
         public void Serialize(IUnrealStream stream)
         {
             stream.Write(Name);
-            if (stream.Version < QWORDVersion)
+            if (stream.Version < UExportTableItem.VObjectFlagsToULONG)
                 // Writing UINT
                 stream.Write((uint)Flags);
             else

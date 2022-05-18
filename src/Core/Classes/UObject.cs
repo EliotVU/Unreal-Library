@@ -201,22 +201,31 @@ namespace UELib.Core
         /// </summary>
         protected virtual void Deserialize()
         {
-#if SWAT4
-            // Vengeance Engine
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
+            if (Package.Build.Generation == BuildGeneration.Vengeance)
             {
-                // 8 bytes: Value: 3
-                // 4 bytes: Value: 1
-                _Buffer.Skip(12);
-            }
+#if SWAT4
+                // Vengeance Engine
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
+                {
+                    // 8 bytes: Value: 3
+                    // 4 bytes: Value: 1
+                    _Buffer.Skip(12);
+                }
 #endif
 #if BIOSHOCK
-            // Vengeance Engine
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-            {
-                _Buffer.Skip(8);
-            }
+                // Vengeance Engine
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+                {
+                    var a = _Buffer.ReadInt32();
+                    var b = _Buffer.ReadInt32();
+                    if (a == 6)
+                    {
+                        _Buffer.ReadUShort();
+                    }
+                }
 #endif
+            }
+            
             // This appears to be serialized for templates of classes like AmbientSoundNonLoop
             if (HasObjectFlag(ObjectFlagsLO.HasStack))
             {
@@ -271,11 +280,9 @@ namespace UELib.Core
 #if UNREAL2
             else if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
             {
-                int count = _Buffer.ReadIndex();
-                for (var i = 0; i < count; ++i)
-                {
-                    _Buffer.ReadObjectIndex();
-                }
+                UArray<UObject> objs;
+                _Buffer.ReadArray(out objs);
+                Record("Unknown:Unreal2", objs);
             }
 #endif
         }
@@ -314,7 +321,7 @@ namespace UELib.Core
 
 #endregion
 
-        #region Methods
+#region Methods
 
         /// <summary>
         /// Checks if the object contains the specified @flag or one of the specified flags.
@@ -533,7 +540,7 @@ namespace UELib.Core
             return pkg;
         }
 
-        #region IBuffered
+#region IBuffered
 
         public virtual byte[] CopyBuffer()
         {
@@ -589,7 +596,7 @@ namespace UELib.Core
                 : GetOuterGroup() + "." + GetClassName();
         }
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Outputs the present position and the value of the parsed object.
@@ -679,7 +686,7 @@ namespace UELib.Core
             Dispose(false);
         }
 
-        #endregion
+#endregion
 
         public static explicit operator int(UObject obj)
         {

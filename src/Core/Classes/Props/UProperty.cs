@@ -125,10 +125,9 @@ namespace UELib.Core
                 Record("RepOffset", RepOffset);
             }
 
-
+            // Appears to be a UE2X feature, it is not present in UE2 builds with no custom LicenseeVersion
             if (HasPropertyFlag(PropertyFlagsLO.EditorData)
-                // FIXME: At which version was this feature removed?
-                && Package.Version <= 160)
+                && Package.Build.Generation == BuildGeneration.UE2_5)
             {
                 // May represent a tooltip/comment in some games.
                 EditorDataText = _Buffer.ReadText();

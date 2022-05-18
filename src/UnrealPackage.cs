@@ -247,6 +247,8 @@ namespace UELib
 
                 /// <summary>
                 /// 99:117/005:008
+                /// Latest patch? Same structure as UT2004's UE2.5
+                /// 121/029 (Overlapped with UT2004)
                 /// </summary>
                 [Build(99, 117, 5u, 8u)] UT2003,
 
@@ -258,44 +260,61 @@ namespace UELib
                 /// <summary>
                 /// 110/2609
                 /// </summary>
-                [Build(110, 2609)] Unreal2,
+                [Build(110, 2609)] 
+                Unreal2,
 
                 /// <summary>
-                /// 118/025:029
+                /// Tom Clancy's Rainbow Six 3: Raven Shield
+                /// 118/011:014
                 /// </summary>
-                [Build(118, 128, 25u, 29u)] UT2004,
+                [Build(118, 118, 11u, 14u)]
+                R6RS,
+
+                /// <summary>
+                /// Unreal II: eXpanded MultiPlayer
+                /// 126/000
+                /// </summary>
+                [Build(126, 0)]
+                Unreal2XMP,
+
+                /// <summary>
+                /// 118:128/025:029
+                /// (Overlaps latest UT2003)
+                /// </summary>
+                [Build(118, 128, 25u, 29u, BuildGeneration.UE2_5)] UT2004,
 
                 /// <summary>
                 /// Built on UT2004
                 /// Represents both AAO and AAA
                 /// 128/032:033
                 /// </summary>
-                [Build(128, 128, 32u, 33u)] AA2,
+                [Build(128, 128, 32u, 33u, BuildGeneration.UE2_5)] AA2,
 
+                // IrrationalGames/Vengeance - 129:143/027:059
+                
                 /// <summary>
                 /// 129/027
                 /// </summary>
-                [Build(129, 27)] Swat4,
+                [Build(129, 27, BuildGeneration.Vengeance)] Swat4,
 
                 /// <summary>
                 /// 129/035
                 /// </summary>
-                [Build(129, 35)] Vanguard,
+                [Build(129, 35, BuildGeneration.Vengeance)] Vanguard,
 
                 /// <summary>
                 /// 130:143/056:059
                 /// </summary>
-                [Build(130, 143, 56u, 59u, 0, 0)] Bioshock,
-
-                // IrrationalGames - 129:143/027:059
+                [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)] Bioshock,
 
                 /// <summary>
+                /// The Chronicles of Spellborn
+                /// 
                 /// Built on UT2004
                 /// 159/029
-                ///
                 /// Comes with several new non-standard UnrealScript features, these are however not supported.
                 /// </summary>
-                [Build(159, 29u)] Spellborn,
+                [Build(159, 29u, BuildGeneration.UE2_5)] Spellborn,
 
                 /// <summary>
                 /// 369/006
@@ -1771,6 +1790,6 @@ namespace UELib
             Stream.Dispose();
         }
 
-        #endregion
+#endregion
     }
 }

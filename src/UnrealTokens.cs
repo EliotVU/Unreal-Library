@@ -37,7 +37,8 @@
         LetBool                 = 0x14,
         /// <summary>
         /// UE1: ???
-        /// UE2: Deprecated (Bad Expr Token)
+        /// UE2: Skip-like (early UE2)?
+        /// UE2X: Deprecated (Bad Expr Token)
         /// UE3: As described
         /// </summary>
         EndParmValue            = 0x15,

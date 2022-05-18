@@ -570,6 +570,15 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.EndParmValue:
+#if UNREAL2
+                            // FIXME: Not per se Unreal 2 specific, might be an old UE2 relict, however I cannot attest this token in UT99, RS3, nor UT2004.
+                            if (Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2 ||
+                                Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP)
+                            {
+                                token = new SkipToken();
+                                break;
+                            }
+#endif
                             token = new EndParmValueToken();
                             break;
 

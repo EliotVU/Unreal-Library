@@ -11,7 +11,7 @@ namespace UELib
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
         private const int VArchetype = 220;
-        private const int VObjectFlagsToULONG = 195;
+        public const int VObjectFlagsToULONG = 195;
         private const int VSerialSizeConditionless = 249;
         // FIXME: Version?
         public const int VNetObjects = 322;
