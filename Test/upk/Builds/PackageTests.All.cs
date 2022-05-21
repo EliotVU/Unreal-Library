@@ -39,7 +39,7 @@ namespace Eliot.UELib.Test.upk.Builds
                     switch (linker.Build.Name)
                     {
                         // Not yet error free
-                        case UnrealPackage.GameBuild.BuildName.Bioshock:
+                        case UnrealPackage.GameBuild.BuildName.BioShock:
                             continue;
                     }
                     

@@ -1,4 +1,5 @@
-﻿using UELib.Annotations;
+﻿using System.Diagnostics;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -85,37 +86,46 @@ namespace UELib.Core
 
             public class StructMemberToken : Token
             {
-                public UField MemberProperty;
+                public UField Property;
                 [CanBeNull] public UStruct Struct;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // Property index
-                    MemberProperty = stream.ReadObject() as UField;
+                    Property = stream.ReadObject<UField>();
                     Decompiler.AlignObjectSize();
-
+                    Debug.Assert(Property != null);
+#if BIOSHOCK
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
+                    {
+                        Struct = stream.ReadObject<UStruct>();
+                        Decompiler.AlignObjectSize();
+                        Debug.Assert(Struct != null);
+                    }
+#endif
                     // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
                     if (stream.Version > 369)
                     {
-                        // Struct index
-                        Struct = stream.ReadObject() as UStruct;
+                        Struct = stream.ReadObject<UStruct>();
                         Decompiler.AlignObjectSize();
+                        Debug.Assert(Struct != null);
 #if MKKE
                         if (Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
                         {
 #endif
-                            stream.Position++;
+                            // Copy?
+                            stream.ReadByte();
                             Decompiler.AlignSize(sizeof(byte));
 #if MKKE
                         }
 #endif
-
-                        // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in SWG(486).
-                        if (stream.Version > 472)
-                        {
-                            stream.Position++;
-                            Decompiler.AlignSize(sizeof(byte));
-                        }
+                    }
+                    
+                    // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in SWG(486).
+                    if (stream.Version > 472)
+                    {
+                        // Modification?
+                        stream.ReadByte();
+                        Decompiler.AlignSize(sizeof(byte));
                     }
 
                     // Pre-Context
@@ -130,7 +140,7 @@ namespace UELib.Core
                         Decompiler.PreComment = $"Struct:{Struct.GetOuterGroup()}";
                     }
 #endif
-                    return $"{DecompileNext()}.{MemberProperty.Name}";
+                    return $"{DecompileNext()}.{Property.Name}";
                 }
             }
         }

@@ -146,10 +146,11 @@ namespace UELib.Flags
         HasStack            = 0x02000000U,
         Native              = 0x04000000U,
         Marked              = 0x08000000U,
-
-        // Used in Swat4 and Bioshock constructor functions
+#if VENGEANCE
+        // Used in Swat4 and BioShock constructor functions
         // const RF_Unnamed		= 0x08000000;
-        VENGEANCE_Unnamed   = 0x08000000U,
+        VG_Unnamed          = 0x08000000U,
+#endif
     }
 
     /// <summary>
@@ -205,10 +206,11 @@ namespace UELib.Flags
         Protected           = 0x00080000U,
         Delegate            = 0x00100000U,
         NetServer           = 0x00200000U,
+#if VENGEANCE
         // Generated/Constructor?
-        Vengeance_Unk1      = 0x00200000U,
-        Vengeance_Overloaded = 0x00800000U,
-
+        VG_Unk1             = 0x00200000U,
+        VG_Overloaded       = 0x00800000U,
+#endif
         NetClient           = 0x01000000U,
         DLLImport           = 0x02000000U,      // Also available in UE2(unknown meaning there)
         K2Call              = 0x04000000U,
@@ -286,7 +288,9 @@ namespace UELib.Flags
 
         NeedCtorLink        = 0x00400000U,
         NoExport            = 0x00800000U,      // Don't export properties to clipboard
-
+#if VENGEANCE
+        VG_NoCheckPoint     = 0x01000000U,
+#endif
         EditorData          = 0x02000000U,      // @Redefined(UE3, NoClear)
         NoClear             = 0x02000000U,      // Don't permit reference clearing.
 
@@ -401,7 +405,9 @@ namespace UELib.Flags
         Instanced           = 0x00200000U,      // @Removed(UE3)
         HideDropDown        = 0x00400000U,      // @Redefined(UE3, HasComponents), @Moved(UE3, HideDropDown2)
         ParseConfig         = 0x01000000U,      // @Redefined(UE3, Deprecated)
-
+#if VENGEANCE
+        VG_Interface        = 0x01000000U,
+#endif
         #region Unique UT2004 Flags
         CacheExempt         = 0x00800000U,      // @Redefined(UE3, Hidden)
         #endregion

@@ -47,7 +47,7 @@ namespace UELib.Core
         // FIXME: Rewrite without performing this many string copies, however this part of the decompilation process is not crucial.
         private string DecompileEditorData()
         {
-            if (EditorDataText == null)
+            if (string.IsNullOrEmpty(EditorDataText))
                 return string.Empty;
 
             string[] options = EditorDataText.TrimEnd('\n').Split('\n');

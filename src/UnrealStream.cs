@@ -127,7 +127,7 @@ namespace UELib
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security",
             "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
-        private IUnrealArchive _Archive;
+        protected IUnrealArchive _Archive;
 
         // Dirty hack to implement crypto-reading, pending overhaul ;)
         public UnrealReader(IUnrealArchive archive, Stream baseStream) : base(baseStream)
@@ -146,15 +146,15 @@ namespace UELib
 #if BINARYMETADATA
             long lastPosition = BaseStream.Position;
 #endif
-            int unfixedSize;
-            int size = (unfixedSize =
+            int unfixedSize = ReadIndex();
 #if BIOSHOCK
-                // In Bioshock packages always give a positive Size despite being Unicode, so we reverse this.
-                _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
-                    ? -ReadIndex()
-                    :
+            if (_Archive.Package.Build.Generation == BuildGeneration.Vengeance &&
+                _Archive.Version >= 135)
+            {
+                unfixedSize = -unfixedSize;
+            }
 #endif
-                    ReadIndex()) < 0
+            int size = unfixedSize < 0
                 ? -unfixedSize
                 : unfixedSize;
             if (unfixedSize > 0) // ANSI
@@ -298,7 +298,7 @@ namespace UELib
             int index = ReadIndex();
             if (_Archive.Version >= UName.VNameNumbered
 #if BIOSHOCK
-                || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+                || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
 #endif
                )
             {
@@ -320,7 +320,7 @@ namespace UELib
             int index = ReadIndex();
             if (_Archive.Version >= UName.VNameNumbered
 #if BIOSHOCK
-                || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
+                || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
 #endif
                )
             {
@@ -833,13 +833,23 @@ namespace UELib
             return new UName(entry, number);
         }
 
+        /// <summary>
+        /// Use this to read a compact integer for Arrays/Maps.
+        /// TODO: Use a custom PackageStream and override ReadLength.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int ReadLength(this IUnrealStream stream)
+        {
+            return stream.UR.ReadIndex();
+        }
+
         public static void ReadArray<T>(this IUnrealStream stream, out UArray<T> array)
             where T : IUnrealSerializableClass, new()
         {
 #if BINARYMETADATA
             long position = stream.Position;
 #endif
-            int c = stream.ReadIndex();
+            int c = stream.ReadLength();
             array = new UArray<T>(c);
             for (var i = 0; i < c; ++i)
             {
@@ -911,11 +921,28 @@ namespace UELib
 #if BINARYMETADATA
             long position = stream.Position;
 #endif
-            int c = stream.ReadIndex();
+            int c = stream.ReadLength();
             array = new UArray<string>(c);
             for (var i = 0; i < c; ++i)
             {
                 string element = stream.ReadText();
+                array.Add(element);
+            }
+#if BINARYMETADATA
+            stream.LastPosition = position;
+#endif
+        }
+
+        public static void ReadArray(this IUnrealStream stream, out UArray<UName> array)
+        {
+#if BINARYMETADATA
+            long position = stream.Position;
+#endif
+            int c = stream.ReadLength();
+            array = new UArray<UName>(c);
+            for (var i = 0; i < c; ++i)
+            {
+                UName element = stream.ReadNameReference();
                 array.Add(element);
             }
 #if BINARYMETADATA
@@ -928,7 +955,7 @@ namespace UELib
 #if BINARYMETADATA
             long position = stream.Position;
 #endif
-            int c = stream.ReadIndex();
+            int c = stream.ReadLength();
             array = new UArray<UObject>(c);
             for (var i = 0; i < c; ++i)
             {
@@ -963,7 +990,7 @@ namespace UELib
 #if BINARYMETADATA
             long position = stream.Position;
 #endif
-            int c = stream.ReadIndex();
+            int c = stream.ReadLength();
             map = new UMap<TKey, TValue>(c);
             for (var i = 0; i < c; ++i)
             {

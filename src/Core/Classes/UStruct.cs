@@ -102,33 +102,31 @@ namespace UELib.Core
                 CppText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(CppText), CppText);
             }
-            
+#if VENGEANCE
+            // Introduced with BioShock
+            if (Package.Build.Generation == BuildGeneration.Vengeance &&
+                Package.LicenseeVersion >= 29)
+            {
+                int vengeanceUnknownObject = _Buffer.ReadObjectIndex();
+                Record(nameof(vengeanceUnknownObject), vengeanceUnknownObject);
+            }
+#endif
             // UE3 or UE2.5 build, it appears that StructFlags may have been merged from an early UE3 build.
-            if (Package.LicenseeVersion >= 26 && 
-                Package.Build.Generation == BuildGeneration.UE2_5 || 
-                Package.Build.Generation == BuildGeneration.Vengeance)
+            // UT2004 reports version 26, and BioShock version 2
+            if ((Package.Build.Generation == BuildGeneration.UE2_5 && Package.LicenseeVersion >= 26) ||
+                (Package.Build.Generation == BuildGeneration.Vengeance && Package.LicenseeVersion >= 2))
             {
                 StructFlags = _Buffer.ReadUInt32();
                 Record(nameof(StructFlags), (StructFlags)StructFlags);
             }
-#if BIOSHOCK
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-            {
-                int unknownObject = _Buffer.ReadObjectIndex();
-                Record("Unknown:Bioshock", unknownObject);
-            }
-#endif
-            if (Package.Version >= VProcessedText
-                && Package.Build.Generation == BuildGeneration.Vengeance
-#if VANGUARD
-                && Package.Build.Name != UnrealPackage.GameBuild.BuildName.Vanguard
-#endif
-               )
+#if VENGEANCE
+            if (Package.Build.Generation == BuildGeneration.Vengeance &&
+                Package.LicenseeVersion >= 14)
             {
                 ProcessedText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ProcessedText), ProcessedText);
             }
-
+#endif
             if (!Package.IsConsoleCooked())
             {
                 Line = _Buffer.ReadInt32();
@@ -267,9 +265,9 @@ namespace UELib.Core
             }
         }
 
-        #endregion
+#endregion
 
-        #region Methods
+#region Methods
 
         public bool HasStructFlag(StructFlags flag)
         {
@@ -281,6 +279,6 @@ namespace UELib.Core
             return IsClassType("Struct") || IsClassType("ScriptStruct");
         }
 
-        #endregion
+#endregion
     }
 }

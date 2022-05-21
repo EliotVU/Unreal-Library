@@ -51,7 +51,8 @@ namespace UELib.Core
             public UByteCodeDecompiler(UStruct container)
             {
                 _Container = container;
-                AlignMemorySizes();
+                SetupMemorySizes();
+                SetupByteCodeMap();
             }
 
             #region Deserialize
@@ -61,22 +62,34 @@ namespace UELib.Core
             /// </summary>
             private int CodePosition { get; set; }
 
-            private const byte IndexMemorySize = 4;
-            private byte _NameMemorySize = IndexMemorySize;
-            private byte _ObjectMemorySize = IndexMemorySize;
+            /// <summary>
+            /// Size of FName in memory (int Index, (> 500) int Number).
+            /// </summary>
+            private byte _NameMemorySize = sizeof(int);
+            
+            /// <summary>
+            /// Size of a pointer to an UObject in memory.
+            /// 32bit, 64bit as of version 587 (even on 32bit platforms)
+            /// </summary>
+            private byte _ObjectMemorySize = sizeof(int);
 
-            private void AlignMemorySizes()
+            private void SetupMemorySizes()
             {
-                const short vNameSizeTo8 = 500;
-                if (Buffer.Version >= vNameSizeTo8) _NameMemorySize = 8;
-
-                const short vObjectSizeTo8 = 587;
-                if (Buffer.Version >= vObjectSizeTo8
-#if TERA
-                    && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#if BIOSHOCK
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
+                {
+                    _NameMemorySize = sizeof(int) + sizeof(int);
+                    return;
+                }
 #endif
-                   )
-                    _ObjectMemorySize = 8;
+                const short vNameSizeTo8 = 500;
+                if (Buffer.Version >= vNameSizeTo8) _NameMemorySize = sizeof(int) + sizeof(int);
+#if TERA
+                // Tera's reported version is false (partial upgrade?)
+                if (Package.Build != UnrealPackage.GameBuild.BuildName.Tera) return;
+#endif
+                const short vObjectSizeTo8 = 587;
+                if (Buffer.Version >= vObjectSizeTo8) _ObjectMemorySize = sizeof(long);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -359,7 +372,7 @@ namespace UELib.Core
                     _ByteCodeMap = ByteCodeMap_BuildApb;
 #endif
 #if BIOSHOCK
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
                 {
                     _ByteCodeMap = ByteCodeMap_BuildBs;
                 }
@@ -422,9 +435,7 @@ namespace UELib.Core
                     CurrentTokenIndex = -1;
                     DeserializedTokens = new List<Token>();
                     _Labels = new List<ULabelEntry>();
-
-                    SetupByteCodeMap();
-
+                    
                     while (CodePosition < codeSize)
                         try
                         {
@@ -727,7 +738,7 @@ namespace UELib.Core
                         // UE3+
                         case (byte)ExprToken.OutVariable:
 #if BIOSHOCK
-                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
                             {
                                 token = new LogFunctionToken();
                                 break;

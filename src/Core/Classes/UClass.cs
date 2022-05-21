@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices.ComTypes;
 using UELib.Annotations;
@@ -97,6 +98,8 @@ namespace UELib.Core
         /// </summary>
         public IList<int> ImplementedInterfaces;
 
+        [CanBeNull] public UArray<UObject> Vengeance_Implements;
+
         #endregion
 
         #region Script Members
@@ -111,7 +114,14 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
+#if VENGEANCE
+            if (Package.Build.Generation == BuildGeneration.Vengeance &&
+                Package.LicenseeVersion >= 36)
+            {
+                var header = (2, 0);
+                VengeanceDeserializeHeader(_Buffer, ref header);
+            }
+#endif
             if (Package.Version < 62)
             {
                 int classRecordSize = _Buffer.ReadInt32();
@@ -122,13 +132,6 @@ namespace UELib.Core
             {
                 uint unknownUInt32 = _Buffer.ReadUInt32();
                 Record("Unknown:AA2", unknownUInt32);
-            }
-#endif
-#if BIOSHOCK
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-            {
-                int unknownInt32 = _Buffer.ReadInt32();
-                Record("Unknown:Bioshock", unknownInt32);
             }
 #endif
             ClassFlags = _Buffer.ReadUInt32();
@@ -142,14 +145,8 @@ namespace UELib.Core
                 goto skipTo61Stuff;
             }
 #endif
-            if (Package.Version >= 276
-#if BIOSHOCK
-                || Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
-#endif
-                )
+            if (Package.Version >= 276)
             {
-                // FIXME: At least since Bioshock(140) - 547(APB)
-                // Might be something else in bioshock?
                 if (Package.Version < 547)
                 {
                     byte unknownByte = _Buffer.ReadByte();
@@ -164,8 +161,7 @@ namespace UELib.Core
 
             if (Package.Version < 248)
             {
-                int depSize = ReadCount();
-                _Buffer.ReadArray(out ClassDependencies, depSize);
+                _Buffer.ReadArray(out ClassDependencies);
                 Record(nameof(ClassDependencies), ClassDependencies);
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
@@ -327,7 +323,84 @@ namespace UELib.Core
                     }
                 }
             }
+#if VENGEANCE
+            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            {
+                if (Package.LicenseeVersion >= 2)
+                {
+                    ulong unkInt64 = _Buffer.ReadUInt64();
+                    Record("Unknown:Vengeance", unkInt64);
+                }
 
+                if (Package.LicenseeVersion >= 3)
+                {
+                    ulong unkInt64 = _Buffer.ReadUInt64();
+                    Record("Unknown:Vengeance", unkInt64);
+                }
+
+                if (Package.LicenseeVersion >= 2)
+                {
+                    string vengeanceDefaultPropertiesText = _Buffer.ReadText();
+                    Record(nameof(vengeanceDefaultPropertiesText), vengeanceDefaultPropertiesText);
+                }
+                
+                if (Package.LicenseeVersion >= 6)
+                {
+                    string vengeanceClassFilePath = _Buffer.ReadText();
+                    Record(nameof(vengeanceClassFilePath), vengeanceClassFilePath);
+                }
+
+                if (Package.LicenseeVersion >= 12)
+                {
+                    UArray<UName> names;
+                    _Buffer.ReadArray(out names);
+                    Record("Unknown:Vengeance", names);
+                }
+
+                if (Package.LicenseeVersion >= 15)
+                {
+                    _Buffer.ReadArray(out Vengeance_Implements);
+                    Record(nameof(Vengeance_Implements), Vengeance_Implements);
+                }
+                
+                if (Package.LicenseeVersion >= 20)
+                {
+                    UArray<UObject> unk;
+                    _Buffer.ReadArray(out unk);
+                    Record("Unknown:Vengeance", unk);
+                }
+
+                if (Package.LicenseeVersion >= 32)
+                {
+                    UArray<UObject> unk;
+                    _Buffer.ReadArray(out unk);
+                    Record("Unknown:Vengeance", unk);
+                }
+
+                if (Package.LicenseeVersion >= 28)
+                {
+                    UArray<UName> unk;
+                    _Buffer.ReadArray(out unk);
+                    Record("Unknown:Vengeance", unk);
+                }
+
+                if (Package.LicenseeVersion >= 30)
+                {
+                    int unkInt32A = _Buffer.ReadInt32();
+                    Record("Unknown:Vengeance", unkInt32A);
+                    int unkInt32B = _Buffer.ReadInt32();
+                    Record("Unknown:Vengeance", unkInt32B);
+
+                    // Lazy array?
+                    int skipSize = _Buffer.ReadInt32();
+                    Record("Unknown:Vengeance", skipSize);
+                    // FIXME: Couldn't RE this code
+                    int b = _Buffer.ReadLength();
+                    Debug.Assert(b == 0, "Unknown data was not zero!");
+                    Record("Unknown:Vengeance", b);
+                }
+            }
+#endif
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
             // TODO: Corrigate Version
             if (Package.Version >= 322)
@@ -337,11 +410,6 @@ namespace UELib.Core
             }
             else
             {
-#if SWAT4
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
-                    // We are done here!
-                    return;
-#endif
                 DeserializeProperties();
             }
         }
@@ -399,7 +467,7 @@ namespace UELib.Core
 
         private IList<int> DeserializeGroup(string groupName = "List", int count = -1)
         {
-            if (count == -1) count = ReadCount();
+            if (count == -1) count = _Buffer.ReadLength();
 
             Record($"{groupName}.Count", count);
             if (count <= 0)
@@ -429,6 +497,12 @@ namespace UELib.Core
 
         public bool IsClassInterface()
         {
+#if VENGEANCE
+            if (HasClassFlag(Flags.ClassFlags.VG_Interface))
+            {
+                return true;
+            }
+#endif
             return (Super != null && string.Compare(Super.Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0)
                    || string.Compare(Name, "Interface", StringComparison.OrdinalIgnoreCase) == 0;
         }

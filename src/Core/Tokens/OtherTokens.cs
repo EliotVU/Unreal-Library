@@ -361,6 +361,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._CanAddSemicolon = true;
+                    // FIXME: Reverse-order of params?
                     return DecompileCall("log");
                 }
             }

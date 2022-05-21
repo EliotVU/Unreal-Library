@@ -23,7 +23,7 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            int count = ReadCount();
+            int count = _Buffer.ReadLength();
             Names = new List<UName>(count);
             for (var i = 0; i < count; ++i)
             {

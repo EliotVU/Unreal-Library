@@ -32,7 +32,7 @@ namespace UELib
             Name = DeserializeName(stream);
             Debug.Assert(Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
             {
                 Flags = stream.ReadUInt64();
                 return;

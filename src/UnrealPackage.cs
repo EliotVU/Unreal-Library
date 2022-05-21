@@ -293,19 +293,20 @@ namespace UELib
                 // IrrationalGames/Vengeance - 129:143/027:059
                 
                 /// <summary>
+                /// Tribes: Vengeance
+                /// </summary>
+                [Build(130, 27, BuildGeneration.Vengeance)] Tribes_VG,
+
+                /// <summary>
                 /// 129/027
                 /// </summary>
                 [Build(129, 27, BuildGeneration.Vengeance)] Swat4,
 
                 /// <summary>
-                /// 129/035
-                /// </summary>
-                [Build(129, 35, BuildGeneration.Vengeance)] Vanguard,
-
-                /// <summary>
+                /// BioShock 1 & 2
                 /// 130:143/056:059
                 /// </summary>
-                [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)] Bioshock,
+                [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)] BioShock,
 
                 /// <summary>
                 /// The Chronicles of Spellborn

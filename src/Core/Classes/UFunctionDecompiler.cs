@@ -87,11 +87,10 @@ namespace UELib.Core
             {
                 output += "final ";
             }
-#if BIOSHOCK || SWAT4
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
+#if VENGEANCE
+            if (Package.Build.Generation == BuildGeneration.Vengeance)
             {
-                if (HasFunctionFlag(Flags.FunctionFlags.Vengeance_Overloaded))
+                if (HasFunctionFlag(Flags.FunctionFlags.VG_Overloaded))
                 {
                     output += "overloaded ";
                 }

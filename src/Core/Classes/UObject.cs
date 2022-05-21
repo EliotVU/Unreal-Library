@@ -195,37 +195,49 @@ namespace UELib.Core
         {
             return Properties.Count == 0;
         }
+#if VENGEANCE
+        // FIXME: Incomplete
+        // Some classes like Core.Object read A as 0x06, but I can't make any sense of the data that comes after it.
+        // Also the data of classes like ShockGame.Item, and ShockGame.Holdable etc do not seem to contain familiar data.
+        protected void VengeanceDeserializeHeader(IUnrealStream stream, ref (int a, int b) header)
+        {
+            header.a = stream.ReadInt32();
+            Record("A:Vengeance", header.a);
+            header.b = stream.ReadInt32();
+            Record("B:Vengeance", header.b);
+            switch (header.a)
+            {
+                case 2:
+                    header.a = stream.ReadInt32();
+                    Record("C:Vengeance", header.a);
+                    break;
 
+                case 3:
+                    int c = stream.ReadInt32();
+                    Record("C:Vengeance", c);
+                    break;
+            }
+        }
+#endif
         /// <summary>
         /// Deserialize this object's structure from the _Buffer stream.
         /// </summary>
         protected virtual void Deserialize()
         {
+#if VENGEANCE
             if (Package.Build.Generation == BuildGeneration.Vengeance)
             {
-#if SWAT4
-                // Vengeance Engine
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
+                if (Package.LicenseeVersion >= 25)
                 {
-                    // 8 bytes: Value: 3
-                    // 4 bytes: Value: 1
-                    _Buffer.Skip(12);
-                }
-#endif
-#if BIOSHOCK
-                // Vengeance Engine
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-                {
-                    var a = _Buffer.ReadInt32();
-                    var b = _Buffer.ReadInt32();
-                    if (a == 6)
+                    var header = (3, 0);
+                    VengeanceDeserializeHeader(_Buffer, ref header);
+                    if (header.Item2 == 2)
                     {
-                        _Buffer.ReadUShort();
+                        _Buffer.ReadInt32();
                     }
                 }
-#endif
             }
-            
+#endif
             // This appears to be serialized for templates of classes like AmbientSoundNonLoop
             if (HasObjectFlag(ObjectFlagsLO.HasStack))
             {
@@ -268,13 +280,6 @@ namespace UELib.Core
 #endif
             if (!IsClassType("Class"))
             {
-#if SWAT4
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Swat4)
-                {
-                    _Buffer.Skip(1);
-                    return;
-                }
-#endif
                 DeserializeProperties();
             }
 #if UNREAL2
@@ -638,19 +643,6 @@ namespace UELib.Core
                                                    " Subject:" + testSubject);
             }
             //System.Diagnostics.Debug.Assert( size <= (_Buffer.Length - _Buffer.Position), Name + ": Allocation past end of stream detected! " + size );
-        }
-
-        // FIXME: Implement within IUnrealStream.
-        protected int ReadCount()
-        {
-            //int count;
-#if VANGUARD
-            if (Package.Build.Name == UnrealPackage.GameBuild.BuildName.Vanguard)
-            {
-                return _Buffer.ReadInt32();
-            }
-#endif
-            return _Buffer.ReadIndex();
         }
 
         public int CompareTo(object obj)

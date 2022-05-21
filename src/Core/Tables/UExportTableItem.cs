@@ -130,7 +130,7 @@ namespace UELib
             SuperIndex = stream.ReadObjectIndex();
             OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock &&
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.Version >= 132)
             {
                 stream.Skip(sizeof(int));
@@ -145,7 +145,7 @@ namespace UELib
             _ObjectFlagsOffset = stream.Position;
 #if BIOSHOCK
             // Like UE3 but without the shifting of flags
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock &&
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.Package.LicenseeVersion >= 40)
             {
                 ObjectFlags = stream.ReadUInt64();
@@ -175,7 +175,8 @@ namespace UELib
                 SerialOffset = stream.ReadIndex();
             }
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock &&
+            // Overlaps with Tribes: Vengeance (130)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.Version >= 130)
             {
                 stream.Skip(sizeof(int));

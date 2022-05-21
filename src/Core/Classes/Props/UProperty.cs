@@ -124,10 +124,18 @@ namespace UELib.Core
                 RepOffset = _Buffer.ReadUShort();
                 Record("RepOffset", RepOffset);
             }
-
+#if VENGEANCE
+            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            {
+                var vengeanceEditComboType = _Buffer.ReadNameReference();
+                Record(nameof(vengeanceEditComboType), vengeanceEditComboType);
+                var vengeanceEditDisplay = _Buffer.ReadNameReference();
+                Record(nameof(vengeanceEditDisplay), vengeanceEditDisplay);
+            }
+#endif
             // Appears to be a UE2X feature, it is not present in UE2 builds with no custom LicenseeVersion
-            if (HasPropertyFlag(PropertyFlagsLO.EditorData)
-                && Package.Build.Generation == BuildGeneration.UE2_5)
+            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) && Package.Build.Generation == BuildGeneration.UE2_5)
+                || Package.Build.Generation == BuildGeneration.Vengeance)
             {
                 // May represent a tooltip/comment in some games.
                 EditorDataText = _Buffer.ReadText();
@@ -148,7 +156,7 @@ namespace UELib.Core
                     if (134 < _Buffer.Version)
                     {
                         int unk32 = _Buffer.ReadInt32();
-                        Record("Unknown", unk32);
+                        Record("Unknown:Spellborn", unk32);
                     }
                 }
                 else
@@ -156,29 +164,6 @@ namespace UELib.Core
                     uint replicationFlags = _Buffer.ReadUInt32();
                     Record(nameof(replicationFlags), replicationFlags);
                 }
-            }
-#endif
-#if SWAT4 || BIOSHOCK
-            if (
-#if SWAT4
-                Package.Build == UnrealPackage.GameBuild.BuildName.Swat4
-#endif
-#if BIOSHOCK
-                || Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock
-#endif
-            )
-            {
-                // Contains meta data such as a ToolTip.
-                var data = new byte[3];
-                _Buffer.Read(data, 0, 3);
-                Record("???Vengeance_3Bytes", data);
-            }
-#endif
-
-#if BIOSHOCK
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock)
-            {
-                _Buffer.Skip(8);
             }
 #endif
         }
