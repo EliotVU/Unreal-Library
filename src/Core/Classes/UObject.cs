@@ -265,12 +265,23 @@ namespace UELib.Core
             //}
 
 #if THIEF_DS || DEUSEX_IW
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.DeusEx_IW)
+            // FIXME: Not present in all objects, even some classes?
+            if (Package.Build.Generation == BuildGeneration.Thief && GetType() != typeof(UnknownObject))
             {
-                // var native private const int ObjectInternalPropertyHash[1]
-                int thiefObjectInternalPropertyHash = _Buffer.ReadInt32();
-                Record(nameof(thiefObjectInternalPropertyHash), thiefObjectInternalPropertyHash);
+                // var native private const int ObjectInternalPropertyHash[1];
+                int thiefLinkDataObjectCount = _Buffer.ReadInt32();
+                Record(nameof(thiefLinkDataObjectCount), thiefLinkDataObjectCount);
+                for (var i = 0; i < thiefLinkDataObjectCount; i++)
+                {
+                    // These probably contain the missing UFields.
+                    var thiefLinkDataObject = _Buffer.ReadObject();
+                    Record(nameof(thiefLinkDataObject), thiefLinkDataObject);
+                }
+
+                if (!(this is UClass))
+                {
+                    _Buffer.Skip(4);
+                }
             }
 #endif
             if (!IsClassType("Class"))

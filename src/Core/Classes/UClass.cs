@@ -321,14 +321,15 @@ namespace UELib.Core
                     }
                 }
             }
-#if THIEF_DS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
+#if THIEF_DS || DeusEx_IW
+            if (Package.Build.Generation == BuildGeneration.Thief)
             {
                 string thiefFriendlyNameText = _Buffer.ReadText();
                 Record(nameof(thiefFriendlyNameText), thiefFriendlyNameText);
 
                 // Restore the human-readable name if possible
-                if (!string.IsNullOrEmpty(thiefFriendlyNameText))
+                if (!string.IsNullOrEmpty(thiefFriendlyNameText) 
+                    && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
                     var nameEntry = new UNameTableItem()
                     {

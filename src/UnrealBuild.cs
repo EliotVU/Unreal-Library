@@ -6,6 +6,7 @@ namespace UELib
     {
         Undefined,
         
+        Thief,
         UE2_5,
         UE2X,
         Vengeance,

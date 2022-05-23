@@ -239,15 +239,16 @@ namespace UELib
 
                 /// <summary>
                 /// Deus Ex: Invisible War
+                /// Missing support for custom classes such as BitfieldProperty and BitfieldEnum among others.
                 /// 95/69
                 /// </summary>
-                [Build(95, 69)] DeusEx_IW,
+                [Build(95, 69, BuildGeneration.Thief)] DeusEx_IW,
 
                 /// <summary>
                 /// Thief: Deadly Shadows
                 /// 95/133
                 /// </summary>
-                [Build(95, 133)] Thief_DS,
+                [Build(95, 133, BuildGeneration.Thief)] Thief_DS,
 
                 /// <summary>
                 /// 99:117/005:008
