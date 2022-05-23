@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Runtime.InteropServices.ComTypes;
 using UELib.Annotations;
 using UELib.Flags;
 
@@ -323,6 +321,23 @@ namespace UELib.Core
                     }
                 }
             }
+#if THIEF_DS
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
+            {
+                string thiefFriendlyNameText = _Buffer.ReadText();
+                Record(nameof(thiefFriendlyNameText), thiefFriendlyNameText);
+
+                // Restore the human-readable name if possible
+                if (!string.IsNullOrEmpty(thiefFriendlyNameText))
+                {
+                    var nameEntry = new UNameTableItem()
+                    {
+                        Name = thiefFriendlyNameText
+                    };
+                    NameTable.Name = nameEntry;
+                }
+            }
+#endif
 #if VENGEANCE
             if (Package.Build.Generation == BuildGeneration.Vengeance)
             {

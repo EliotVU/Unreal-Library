@@ -264,18 +264,13 @@ namespace UELib.Core
             //    var componentName = _Buffer.ReadNameIndex();
             //}
 
-#if DEUSEXINVISIBLEWAR
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.DeusEx_IW )
+#if THIEF_DS || DEUSEX_IW
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.DeusEx_IW)
             {
                 // var native private const int ObjectInternalPropertyHash[1]
-                _Buffer.Skip( 4 );
-            }
-#endif
-#if THIEFDEADLYSHADOWS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
-            {
-                // var native private const int ObjectInternalPropertyHash[1]
-                _Buffer.Skip(4);
+                int thiefObjectInternalPropertyHash = _Buffer.ReadInt32();
+                Record(nameof(thiefObjectInternalPropertyHash), thiefObjectInternalPropertyHash);
             }
 #endif
             if (!IsClassType("Class"))

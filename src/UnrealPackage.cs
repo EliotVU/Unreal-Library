@@ -226,21 +226,25 @@ namespace UELib
                 Unknown,
 
                 /// <summary>
+                /// Standard
                 /// 61/000
                 /// </summary>
                 [Build(61, 0)] Unreal1,
 
                 /// <summary>
+                /// Standard, Unreal Tournament & Deus Ex
                 /// 68:69/000
                 /// </summary>
                 [Build(68, 69, 0u, 0u)] UT,
 
                 /// <summary>
+                /// Deus Ex: Invisible War
                 /// 95/69
                 /// </summary>
                 [Build(95, 69)] DeusEx_IW,
 
                 /// <summary>
+                /// Thief: Deadly Shadows
                 /// 95/133
                 /// </summary>
                 [Build(95, 133)] Thief_DS,
@@ -993,16 +997,9 @@ namespace UELib
             }
             else
             {
-#if DEUSEXINVISIBLEWAR
-                if( Build == GameBuild.BuildName.DeusEx_IW )
-                {
-                    //stream.Skip( 4 );
-                    int unknown = stream.ReadInt32();
-                    Console.WriteLine( "\tUnknown:" + unknown );
-                }
-#endif
-#if THIEFDEADLYSHADOWS
-                if (Build == GameBuild.BuildName.Thief_DS)
+#if THIEF_DS || DEUSEX_IW
+                if (Build == GameBuild.BuildName.Thief_DS ||
+                    Build == GameBuild.BuildName.DeusEx_IW)
                 {
                     //stream.Skip( 4 );
                     int unknown = stream.ReadInt32();

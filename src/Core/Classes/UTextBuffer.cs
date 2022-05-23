@@ -23,23 +23,6 @@ namespace UELib.Core
             base.Deserialize();
             _Top = _Buffer.ReadUInt32();
             _Pos = _Buffer.ReadUInt32();
-
-#if DEUSEXINVISIBLEWAR
-            if( Package.Build == UnrealPackage.GameBuild.BuildName.DeusEx_IW )
-            {
-                // TODO: Unknown
-                _Buffer.Skip( 4 );
-            }
-#endif
-
-#if THIEFDEADLYSHADOWS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
-            {
-                // TODO: Unknown
-                _Buffer.Skip(4);
-            }
-#endif
-
             ScriptText = _Buffer.ReadText();
         }
 
