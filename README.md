@@ -85,7 +85,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Monday Night Combat | 5697 | 638/000 |     |
 | DC Universe Online | 5859 | 638/6405 |     |
 | Unreal Development Kit | 6094-12791 | 664-868 | |
-| Blacklight: Tango Down | 6165 | 673:002 | |
+| Blacklight: Tango Down | 6165 | 673/002 | |
+| Dungeons & Dragons: Daggerdale | 6165 | 674/000 | |
 | Dungeon Defenders | 6262 | 678/002 | Earlier releases only |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
@@ -120,7 +121,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Hawken | 10681 | 860/004 |     |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
 | Gal*Gun: Double Peace | 10897 | 871/000 | |
-| [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) 
+| [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | Unknown | Unknown |     |
 | Outlast | Unknown | Unknown |     |
