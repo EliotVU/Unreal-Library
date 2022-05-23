@@ -376,9 +376,13 @@ namespace UELib
                 [Build(576, 100)] Homefront,
 
                 /// <summary>
+                /// Medal of Honor (2010)
+                /// Windows, PS3, Xbox 360
+                /// Defaulting to ConsoleCooked.
+                /// XenonCooked is required to read the Xbox 360 packages.
                 /// 581/058
                 /// </summary>
-                [Build(581, 58, BuildFlags.XenonCooked)]
+                [Build(581, 58, BuildFlags.ConsoleCooked)]
                 MOH,
 
                 /// <summary>

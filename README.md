@@ -78,6 +78,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | APB: All Points Bulletin | 3908 | 547/028:032 |     |
 | Gears of War 2 | 4638 | 575/000 | |
 | CrimeCraft | 4701 | 576/005 | |
+| Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes |
 | Singularity | 4869 | 584/126 | |
 | MoonBase Alpha | 4947 | 587/000 | |
 | Saw | Unknown | 584/003 | |

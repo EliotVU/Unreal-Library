@@ -377,6 +377,31 @@ namespace UELib.Core
                     _ByteCodeMap = ByteCodeMap_BuildBs;
                 }
 #endif
+#if MOH
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.MOH)
+                {
+                    // TODO: Incomplete byte-code map
+                    _ByteCodeMap = new Dictionary<byte, byte>
+                    {
+                        { 0x0C, (byte)ExprToken.EmptyParmValue },
+                        { 0x1D, (byte)ExprToken.FinalFunction },
+                        { 0x16, (byte)ExprToken.EndOfScript },
+                        { 0x18, (byte)ExprToken.StringConst },
+                        { 0x23, (byte)ExprToken.EndFunctionParms },
+                        { 0x28, (byte)ExprToken.Nothing },
+                        { 0x2C, (byte)ExprToken.Let },
+                        { 0x31, (byte)ExprToken.LocalVariable },
+                        { 0x34, (byte)ExprToken.JumpIfNot },
+                        // Incremented by 1 to adjust to the UE3 shift
+                        { 0x36, (byte)ExprToken.Return },
+                        { 0x38, (byte)ExprToken.ReturnNothing },
+                        { 0x40, (byte)ExprToken.PrimitiveCast },
+                        { 0x47, (byte)ExprToken.StructMember },
+                        { 0x4B, (byte)ExprToken.NativeParm },
+                        //{ 0x4F, (byte)ExprToken.BoolVariable }
+                    };
+                }
+#endif
             }
 
             /// <summary>
