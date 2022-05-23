@@ -10,6 +10,8 @@ namespace UELib.UnrealScript
         /// <summary>
         /// Recodes escaped characters
         /// https://stackoverflow.com/a/14087738/617087
+        ///
+        /// FIXME: Escape \n in UE3
         /// </summary>
         public static string FormatLiteral(string input)
         {

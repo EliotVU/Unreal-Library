@@ -17,9 +17,6 @@ namespace UELib.Test
             File.WriteAllBytes(tempFilePath, BitConverter.GetBytes(UnrealPackage.Signature));
 
             var stream = new UPackageStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
-            var linker = new UnrealPackage(stream);
-            // The easiest version to test against.
-            linker.Version = 300;
             return stream;
         }
         
@@ -27,6 +24,9 @@ namespace UELib.Test
         public void ReadString()
         {
             using var stream = CreateTempStream();
+            using var linker = new UnrealPackage(stream);
+            // The easiest version to test against.
+            linker.Version = 300;
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
@@ -58,6 +58,9 @@ namespace UELib.Test
         public void ReadAtomicStruct()
         {
             using var stream = CreateTempStream();
+            using var linker = new UnrealPackage(stream);
+            // The easiest version to test against.
+            linker.Version = 300;
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);

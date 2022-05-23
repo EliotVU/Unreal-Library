@@ -6,7 +6,8 @@ namespace Eliot.UELib.Benchmark
     {
         public static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<UnrealPackageBenchmark>();
+            var packagePerf = BenchmarkRunner.Run<UnrealPackageBenchmark>();
+            var streamPerf = BenchmarkRunner.Run<UnrealStreamBenchmark>();
         }
     }
 }

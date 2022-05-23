@@ -2,7 +2,7 @@
 
 set projn=MyMod
 set workDir=%cd%
-set RootDir="C:\UDK\Custom"
+set RootDir="D:\Games\UDK\Custom"
 set UCCDir="%RootDir%\Binaries\Win64"
 set ScriptDir="%RootDir%\Development\Src"
 set DestDir="%RootDir%\UDKGame\Script"
@@ -11,7 +11,7 @@ title %projn%
 color 0F
 
 echo %cd%
-cd /d C:
+cd /d D:
 cd "%UCCDir%"
 
 xcopy "%workDir%\Classes\" "%ScriptDir%\%projn%\Classes\" /f /r /y /s /i

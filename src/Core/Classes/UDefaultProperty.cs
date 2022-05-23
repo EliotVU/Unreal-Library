@@ -27,6 +27,8 @@ namespace UELib.Core
         private const byte ReplaceNameMarker = 0x02;
 
         private const int V3 = 220;
+        // FIXME: Wrong version, naive approach
+        private const int VAtomicStructs = V3;
         private const int VEnumName = 633;
         private const int VBoolSizeToOne = 673;
 
@@ -426,9 +428,9 @@ namespace UELib.Core
 
                     case PropertyType.LinearColor:
                     {
-                        string b = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                        string g = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
                         string r = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+                        string g = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+                        string b = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
                         string a = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
 
                         propertyValue += $"R={r},G={g},B={b},A={a}";
@@ -455,9 +457,13 @@ namespace UELib.Core
 
                     case PropertyType.Vector4:
                     {
-                        string plane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
-                        propertyValue += plane;
-                        break;
+                        string x = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+                        string y = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+                        string z = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+                        string w = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+
+                        propertyValue += $"X={x},Y={y},Z={z},W={w}";
+                            break;
                     }
 
                     case PropertyType.Vector2D:
@@ -490,9 +496,14 @@ namespace UELib.Core
                     case PropertyType.Sphere:
                     case PropertyType.Plane:
                     {
-                        string v = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
+                        if (_Buffer.Version < VAtomicStructs)
+                        {
+                            throw new NotSupportedException("Not atomic");
+                        }
+                        
                         string w = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                        propertyValue += $"{v},W={w}";
+                        string v = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
+                        propertyValue += $"W={w},{v}";
                         break;
                     }
 
@@ -509,6 +520,11 @@ namespace UELib.Core
 
                     case PropertyType.Box:
                     {
+                        if (_Buffer.Version < VAtomicStructs)
+                        {
+                            throw new NotSupportedException("Not atomic");
+                        }
+                        
                         string min = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         string max = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         string isValid =
@@ -516,41 +532,6 @@ namespace UELib.Core
                         propertyValue += $"Min=({min}),Max=({max}),IsValid={isValid}";
                         break;
                     }
-
-                    /*case PropertyType.InterpCurve:
-                    {
-                        // HACK:
-                        UPropertyTag tag = new UPropertyTag( _Owner );
-                        tag.Serialize();
-                        buffer.Seek( tag.ValueOffset, System.IO.SeekOrigin.Begin );
-
-                        int curvescount = buffer.ReadIndex();
-                        if( curvescount <= 0 )
-                        {
-                            break;
-                        }
-                        propertyvalue += tag.Name + "=(";
-                        for( int i = 0; i < curvescount; ++ i )
-                        {
-                            propertyvalue += "(" + SerializeDefaultPropertyValue( PropertyType.InterpCurvePoint, buffer, ref serializeFlags ) + ")";
-                            if( i != curvescount - 1 )
-                            {
-                                propertyvalue += ",";
-                            }
-                        }
-                        propertyvalue += ")";
-                        break;
-                    }*/
-
-                    /*case PropertyType.InterpCurvePoint:
-                    {
-                        string InVal = SerializeDefaultPropertyValue( PropertyType.Float, buffer, ref serializeFlags );
-                        string OutVal = SerializeDefaultPropertyValue( PropertyType.Float, buffer, ref serializeFlags );
-
-                        propertyvalue += "InVal=" + InVal +
-                            ",OutVal=" + OutVal;
-                        break;
-                    }*/
 
                     case PropertyType.Quat:
                     {
@@ -560,6 +541,11 @@ namespace UELib.Core
 
                     case PropertyType.Matrix:
                     {
+                        if (_Buffer.Version < VAtomicStructs)
+                        {
+                            throw new NotSupportedException("Not atomic");
+                        }
+                        
                         string xPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                         string yPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                         string zPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
@@ -590,11 +576,22 @@ namespace UELib.Core
                             if (string.Compare(ItemName, structType, StringComparison.OrdinalIgnoreCase) != 0)
                                 continue;
 
+                            // Not atomic if <=UE2,
+                            // TODO: Figure out all non-atomic structs
+                            if (_Buffer.Version < VAtomicStructs) switch (hardcodedStructs[i])
+                            {
+                                case PropertyType.Matrix:
+                                case PropertyType.Box:
+                                case PropertyType.Plane:
+                                    goto nonAtomic;
+                            }
+                            
                             isHardCoded = true;
                             propertyValue += DeserializeDefaultPropertyValue(hardcodedStructs[i], ref deserializeFlags);
                             break;
                         }
 
+                        nonAtomic:
                         if (!isHardCoded)
                         {
                             // We have to modify the outer so that dynamic arrays within this struct

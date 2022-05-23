@@ -7,7 +7,7 @@ namespace UELib.Core.Types
     /// <summary>
     /// Implements FColor/UObject.Color
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential)]
     public struct UColor : IUnrealAtomicStruct
     {
         // The order may change based on compile-time constants.
