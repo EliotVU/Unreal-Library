@@ -626,7 +626,7 @@ namespace UELib.Core
                             if (Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2 ||
                                 Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP)
                             {
-                                token = new SkipToken();
+                                token = new LineNumberToken();
                                 break;
                             }
 #endif

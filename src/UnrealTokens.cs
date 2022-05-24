@@ -40,13 +40,14 @@
         /// </summary>
         BeginFunction           = 0x14,
         LetBool                 = 0x14,
-        
+
         /// <summary>
         /// UE1: ???
-        /// UE2: Skip-like (early UE2)?
+        /// UE2: LineNumber (early UE2)?
         /// UE2X: Deprecated (Bad Expr Token)
-        /// UE3: As described
+        /// UE3: EndParmValue
         /// </summary>
+        LineNumber              = 0x15,
         EndParmValue            = 0x15,
         EndFunctionParms        = 0x16,     // )
         Self                    = 0x17,     // Self

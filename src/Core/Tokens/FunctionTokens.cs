@@ -10,10 +10,6 @@ namespace UELib.Core
         {
             public class EndFunctionParmsToken : Token
             {
-                public override string Decompile()
-                {
-                    return ")";
-                }
             }
 
             public abstract class FunctionToken : Token
@@ -102,7 +98,8 @@ namespace UELib.Core
                         Decompiler._IsWithinClassContext = false;
                     }
 
-                    var output = $"{functionName}({DecompileParms()}";
+                    string arguments = DecompileParms();
+                    var output = $"{functionName}({arguments})";
                     return output;
                 }
 
@@ -132,7 +129,7 @@ namespace UELib.Core
 
                             // End ")"
                             case EndFunctionParmsToken _:
-                                output = new StringBuilder(output.ToString().TrimEnd(',') + v);
+                                output = new StringBuilder(output.ToString().TrimEnd(','));
                                 break;
 
                             // Any passed values

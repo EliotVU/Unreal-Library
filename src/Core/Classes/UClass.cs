@@ -111,6 +111,13 @@ namespace UELib.Core
         // TODO: Clean this mess up...
         protected override void Deserialize()
         {
+#if UNREAL2
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+            {
+                _Buffer.ReadArray(out UArray<UObject> u2NetProperties);
+                Record(nameof(u2NetProperties), u2NetProperties);
+            }
+#endif
             base.Deserialize();
 #if VENGEANCE
             if (Package.Build.Generation == BuildGeneration.Vengeance &&
@@ -182,7 +189,7 @@ namespace UELib.Core
                     ;
 
                 // +HideCategories
-                if (Package.Version > 98)
+                if (Package.Version >= 99)
                 {
                     // TODO: Corrigate Version
                     if (Package.Version >= 220)
@@ -271,7 +278,7 @@ namespace UELib.Core
                                         }
                                     }
 #if DISHONORED
-                                skipClassGroups:;
+                                    skipClassGroups: ;
 #endif
                                 }
                             }
@@ -324,16 +331,16 @@ namespace UELib.Core
 #if THIEF_DS || DeusEx_IW
             if (Package.Build.Generation == BuildGeneration.Thief)
             {
-                string thiefFriendlyNameText = _Buffer.ReadText();
-                Record(nameof(thiefFriendlyNameText), thiefFriendlyNameText);
+                string thiefClassVisibleName = _Buffer.ReadText();
+                Record(nameof(thiefClassVisibleName), thiefClassVisibleName);
 
                 // Restore the human-readable name if possible
-                if (!string.IsNullOrEmpty(thiefFriendlyNameText) 
+                if (!string.IsNullOrEmpty(thiefClassVisibleName) 
                     && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
                     var nameEntry = new UNameTableItem()
                     {
-                        Name = thiefFriendlyNameText
+                        Name = thiefClassVisibleName
                     };
                     NameTable.Name = nameEntry;
                 }
@@ -359,7 +366,7 @@ namespace UELib.Core
                     string vengeanceDefaultPropertiesText = _Buffer.ReadText();
                     Record(nameof(vengeanceDefaultPropertiesText), vengeanceDefaultPropertiesText);
                 }
-                
+
                 if (Package.LicenseeVersion >= 6)
                 {
                     string vengeanceClassFilePath = _Buffer.ReadText();
@@ -378,7 +385,7 @@ namespace UELib.Core
                     _Buffer.ReadArray(out Vengeance_Implements);
                     Record(nameof(Vengeance_Implements), Vengeance_Implements);
                 }
-                
+
                 if (Package.LicenseeVersion >= 20)
                 {
                     UArray<UObject> unk;

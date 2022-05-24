@@ -90,7 +90,7 @@ namespace UELib.Core
             int info = _Buffer.ReadInt32();
             ArrayDim = (ushort)(info & 0x0000FFFFU);
             Record("ArrayDim", ArrayDim);
-            Debug.Assert(ArrayDim <= 2048);
+            Debug.Assert(ArrayDim <= 2048, "Bad array dim");
             ElementSize = (ushort)(info >> 16);
             Record("ElementSize", ElementSize);
         skipInfo:
@@ -110,7 +110,7 @@ namespace UELib.Core
 #if THIEF_DS || DEUSEX_IW
             if (Package.Build.Generation == BuildGeneration.Thief)
             {
-                // Property flags like CustomEditor, CustomViewer, ThiefProp, DeusExProp
+                // Property flags like CustomEditor, CustomViewer, ThiefProp, DeusExProp, NoTextExport, NoTravel
                 uint deusFlags = _Buffer.ReadUInt32();
                 Record(nameof(deusFlags), deusFlags);
             }

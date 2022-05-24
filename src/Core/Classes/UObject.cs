@@ -252,9 +252,9 @@ namespace UELib.Core
                )
             {
                 int netIndex = _Buffer.ReadInt32();
-                Record("netIndex", netIndex);
+                Record(nameof(netIndex), netIndex);
             }
-            
+
             // TODO: Serialize component data here
             //if( _Buffer.Version > 400
             //    && HasObjectFlag( Flags.ObjectFlagsHO.PropertiesObject )
@@ -263,7 +263,6 @@ namespace UELib.Core
             //    var componentClass = _Buffer.ReadObjectIndex();
             //    var componentName = _Buffer.ReadNameIndex();
             //}
-
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
             if (Package.Build.Generation == BuildGeneration.Thief && GetType() != typeof(UnknownObject))
@@ -288,14 +287,6 @@ namespace UELib.Core
             {
                 DeserializeProperties();
             }
-#if UNREAL2
-            else if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
-            {
-                UArray<UObject> objs;
-                _Buffer.ReadArray(out objs);
-                Record("Unknown:Unreal2", objs);
-            }
-#endif
         }
 
         /// <summary>
@@ -312,6 +303,7 @@ namespace UELib.Core
                 {
                     break;
                 }
+
                 Properties.Add(tag);
             }
         }

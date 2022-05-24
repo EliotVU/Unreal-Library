@@ -48,11 +48,12 @@ namespace UELib.Core
 
             public class AssertToken : Token
             {
+                public ushort Line;
                 public bool DebugMode;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadUInt16(); // Line
+                    Line = stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(short));
 
                     // TODO: Corrigate version, at least known since Mirrors Edge(536)
@@ -178,9 +179,11 @@ namespace UELib.Core
 
             public class CastStringSizeToken : Token
             {
+                public byte Size;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadByte(); // Size
+                    Size = stream.ReadByte();
                     Decompiler.AlignSize(sizeof(byte));
                 }
                 
@@ -323,6 +326,7 @@ namespace UELib.Core
                     Decompiler.AlignSize(4);
 #if UNREAL2
                     // FIXME: Is this a legacy feature or U2 specific?
+                    // Also in RSRS
                     if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP)
                     {
                         OpCodeText = stream.ReadASCIIString();
@@ -348,6 +352,23 @@ namespace UELib.Core
                     return Enum.GetName(typeof(DebugInfo), OpCode);
                 }
 #endif
+            }
+
+            public class LineNumberToken : Token
+            {
+                public ushort Line;
+                
+                public override void Deserialize(IUnrealStream stream)
+                {
+                    Line = stream.ReadUInt16();
+                    Decompiler.AlignSize(sizeof(ushort));
+                    DeserializeNext();
+                }
+
+                public override string Decompile()
+                {
+                    return DecompileNext();
+                }
             }
 #if BIOSHOCK
             public class LogFunctionToken : FunctionToken

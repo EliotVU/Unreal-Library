@@ -5,9 +5,10 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        protected uint _Top;
-        protected uint _Pos;
-        public string ScriptText = string.Empty;
+        public uint Top;
+        public uint Pos;
+        
+        public string ScriptText;
 
         #endregion
 
@@ -21,9 +22,13 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-            _Top = _Buffer.ReadUInt32();
-            _Pos = _Buffer.ReadUInt32();
+            
+            Top = _Buffer.ReadUInt32();
+            Record(nameof(Top), Top);
+            Pos = _Buffer.ReadUInt32();
+            Record(nameof(Pos), Pos);
             ScriptText = _Buffer.ReadText();
+            Record(nameof(ScriptText), "...");
         }
 
         #endregion
