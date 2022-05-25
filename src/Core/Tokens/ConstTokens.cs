@@ -230,7 +230,7 @@ namespace UELib.Core
                 }
             }
 
-            public class RotatorConstToken : Token
+            public class RotationConstToken : Token
             {
                 public struct Rotator
                 {
@@ -274,6 +274,25 @@ namespace UELib.Core
                 {
                     return
                         $"vect({PropertyDisplay.FormatLiteral(X)}, {PropertyDisplay.FormatLiteral(Y)}, {PropertyDisplay.FormatLiteral(Z)})";
+                }
+            }
+
+            public class RangeConstToken : Token
+            {
+                public float A, B;
+                
+                public override void Deserialize(IUnrealStream stream)
+                {
+                    A = stream.UR.ReadSingle();
+                    Decompiler.AlignSize(sizeof(float));
+                    B = stream.UR.ReadSingle();
+                    Decompiler.AlignSize(sizeof(float));
+                }
+
+                public override string Decompile()
+                {
+                    return
+                        $"rng({PropertyDisplay.FormatLiteral(A)}, {PropertyDisplay.FormatLiteral(B)})";
                 }
             }
         }

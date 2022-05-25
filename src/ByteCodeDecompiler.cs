@@ -188,7 +188,7 @@ namespace UELib.Core
                 { 0x44, (byte)ExprToken.PrimitiveCast },
                 { 0x45, (byte)ExprToken.GlobalFunction },
                 { 0x46, (byte)ExprToken.VectorConst },
-                { 0x47, (byte)ExprToken.RotatorConst },
+                { 0x47, (byte)ExprToken.RotationConst },
                 { 0x48, (byte)ExprToken.Unused },
                 { 0x49, (byte)ExprToken.Unused },
                 { 0x4A, (byte)ExprToken.Unused },
@@ -252,7 +252,7 @@ namespace UELib.Core
                 { 0x23, (byte)ExprToken.IntZero },
                 { 0x24, (byte)ExprToken.ObjectConst },
                 { 0x25, (byte)ExprToken.ByteConst },
-                { 0x26, (byte)ExprToken.RotatorConst },
+                { 0x26, (byte)ExprToken.RotationConst },
                 { 0x27, (byte)ExprToken.False },
                 { 0x28, (byte)ExprToken.True },
                 { 0x29, (byte)ExprToken.NoObject },
@@ -416,7 +416,7 @@ namespace UELib.Core
                 if (Package.Version >= 184
                     &&
                     (
-                        tokenCode >= (byte)ExprToken.Unused35 && tokenCode < (byte)ExprToken.ReturnNothing
+                        tokenCode >= (byte)ExprToken.RangeConst && tokenCode < (byte)ExprToken.ReturnNothing
                         ||
                         tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative)
                    ) ++tokenCode;
@@ -983,12 +983,16 @@ namespace UELib.Core
                             token = new UniStringConstToken();
                             break;
 
-                        case (byte)ExprToken.RotatorConst:
-                            token = new RotatorConstToken();
+                        case (byte)ExprToken.RotationConst:
+                            token = new RotationConstToken();
                             break;
 
                         case (byte)ExprToken.VectorConst:
                             token = new VectorConstToken();
+                            break;
+
+                        case (byte)ExprToken.RangeConst:
+                            token = new RangeConstToken();
                             break;
 
                         #endregion

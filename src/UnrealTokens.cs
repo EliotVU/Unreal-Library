@@ -61,8 +61,7 @@
         StringConst             = 0x1F,     // "String"
         ObjectConst             = 0x20,
         NameConst               = 0x21,     // 'Name'
-        // RotationConst
-        RotatorConst            = 0x22,
+        RotationConst           = 0x22,
         VectorConst             = 0x23,
         ByteConst               = 0x24,
         IntZero                 = 0x25,
@@ -91,9 +90,10 @@
         #region FixedByteCodes
         /// <summary>
         /// UE1: ???
-        /// UE2: Deprecated (Bad Expr Token)
+        /// UE2: RangeConst or Deprecated (Bad Expr Token)
+        /// UE3: ???
         /// </summary>
-        Unused35                = 0x35,
+        RangeConst              = 0x35,
         StructMember            = 0x36,     // Struct.Property
         DynArrayLength          = 0x37,     // ARRAY.Length
         GlobalFunction          = 0x38,     // Global.
