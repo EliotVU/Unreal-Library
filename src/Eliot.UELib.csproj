@@ -61,7 +61,7 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;Forms DECOMPILE UE1 UE2 UE3 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 APB GOW2 SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE HAWKEN UT DISHONORED REMEMBERME BIOSHOCK XCOM2 DCUO AA2 SPELLBORN</DefineConstants>
+    <DefineConstants>TRACE;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>
@@ -251,7 +251,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

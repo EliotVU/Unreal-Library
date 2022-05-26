@@ -46,6 +46,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | |
 | Unreal Tournament | 338-436 | 68/000 | |
 | Deus Ex | Unknown | Unknown |     |
+| Thief: Deadly Shadows | Thief | 95/133 | LinkedData not supported |
+| Deus Ex: Invisible War | Thief | 95/069 | LinkedData not supported |
 |     |     |     |     |
 |     |     |     |     |
 | XIII | Unknown | 100/058 |     |
