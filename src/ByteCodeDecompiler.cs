@@ -86,7 +86,7 @@ namespace UELib.Core
                 if (Buffer.Version >= vNameSizeTo8) _NameMemorySize = sizeof(int) + sizeof(int);
 #if TERA
                 // Tera's reported version is false (partial upgrade?)
-                if (Package.Build != UnrealPackage.GameBuild.BuildName.Tera) return;
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Tera) return;
 #endif
                 const short vObjectSizeTo8 = 587;
                 if (Buffer.Version >= vObjectSizeTo8) _ObjectMemorySize = sizeof(long);

@@ -36,11 +36,10 @@ namespace UELib.Core
 
         private readonly UObject _Container;
         private UStruct _Outer;
+        private bool _RecordingEnabled = true;
 
         internal long _BeginOffset { get; set; }
         private long _ValueOffset { get; set; }
-
-        private long _EndOffset => _ValueOffset + Size;
 
         private byte _TempFlags { get; set; }
 
@@ -57,15 +56,15 @@ namespace UELib.Core
         /// <summary>
         /// Name of the UStruct. If type equals StructProperty.
         /// </summary>
-        [PublicAPI] public UName ItemName;
+        [PublicAPI] [CanBeNull] public UName ItemName;
 
         /// <summary>
         /// Name of the UEnum. If Type equals ByteProperty.
         /// </summary>
-        [PublicAPI] public UName EnumName;
+        [PublicAPI] [CanBeNull] public UName EnumName;
 
         /// <summary>
-        /// See PropertysType enum in UnrealFlags.cs
+        /// See PropertyType enum in UnrealFlags.cs
         /// </summary>
         [PublicAPI] public PropertyType Type;
 
@@ -82,7 +81,7 @@ namespace UELib.Core
         /// <summary>
         /// Value of the UBoolProperty. If Type equals BoolProperty.
         /// </summary>
-        private bool _BoolValue;
+        public bool? BoolValue;
 
         /// <summary>
         /// The deserialized and decompiled output.
@@ -102,7 +101,7 @@ namespace UELib.Core
             _Outer = (outer ?? _Container as UStruct) ?? _Container.Outer as UStruct;
         }
 
-        private int DeserializeSize(byte sizePack)
+        private int DeserializePackedSize(byte sizePack)
         {
             switch (sizePack)
             {
@@ -137,7 +136,7 @@ namespace UELib.Core
 
         private const byte ArrayIndexMask = 0x80;
 
-        private int DeserializeArrayIndex()
+        private int DeserializeTagArrayIndexUE1()
         {
             int arrayIndex;
 #if BINARYMETADATA
@@ -159,105 +158,210 @@ namespace UELib.Core
             return arrayIndex;
         }
 
+        /// <returns>True if there are more property tags.</returns>
         public bool Deserialize()
         {
             _BeginOffset = _Buffer.Position;
-
-            Name = _Buffer.ReadNameReference();
-            _Container.Record("Name", Name);
-            if (Name.IsNone()) return false;
-
-            // Unreal Engine 1 and 2
-            if (_Buffer.Version < V3)
+            if (DeserializeNextTag())
             {
-                const byte typeMask = 0x0F;
-                const byte sizeMask = 0x70;
-
-                // Packed byte
-                byte info = _Buffer.ReadByte();
-                _Container.Record(string.Format(
-                        "Info(Type={0},SizeMask=0x{1:X2},ArrayIndexMask=0x{2:X2})",
-                        (PropertyType)(byte)(info & typeMask),
-                        (byte)(info & sizeMask),
-                        info & ArrayIndexMask
-                    ), info
-                );
-
-                Type = (PropertyType)(byte)(info & typeMask);
-                if (Type == PropertyType.StructProperty)
-                {
-                    ItemName = _Buffer.ReadNameReference();
-                    _Container.Record("ItemName", ItemName);
-                }
-
-                Size = DeserializeSize((byte)(info & sizeMask));
-                if (Size >= 0x50) _Container.Record("Size", Size);
-
-                switch (Type)
-                {
-                    case PropertyType.BoolProperty:
-                        _BoolValue = (info & ArrayIndexMask) != 0;
-                        break;
-
-                    default:
-                        if ((info & ArrayIndexMask) != 0)
-                        {
-                            ArrayIndex = DeserializeArrayIndex();
-                            _Container.Record("ArrayIndex", ArrayIndex);
-                        }
-
-                        break;
-                }
-            }
-            // Unreal Engine 3
-            else
-            {
-                string typeName = _Buffer.ReadName();
-                _Container.Record("typeName", typeName);
-                Type = (PropertyType)Enum.Parse(typeof(PropertyType), typeName);
-
-                Size = _Buffer.ReadInt32();
-                _Container.Record("Size", Size);
-                ArrayIndex = _Buffer.ReadInt32();
-                _Container.Record("ArrayIndex", ArrayIndex);
-
-                switch (Type)
-                {
-                    case PropertyType.StructProperty:
-                        ItemName = _Buffer.ReadNameReference();
-                        _Container.Record("ItemName", ItemName);
-                        break;
-
-                    case PropertyType.ByteProperty:
-                        if (_Buffer.Version >= VEnumName)
-                        {
-                            EnumName = _Buffer.ReadNameReference();
-                            _Container.Record("EnumName", EnumName);
-                        }
-
-                        break;
-
-                    case PropertyType.BoolProperty:
-                        _BoolValue = _Buffer.Version >= VBoolSizeToOne
-                            ? _Buffer.ReadByte() > 0
-                            : _Buffer.ReadInt32() > 0;
-                        _Container.Record("_BoolValue", _BoolValue);
-                        break;
-                }
+                return false;
             }
 
             _ValueOffset = _Buffer.Position;
             try
             {
-                Value = DeserializeValue();
+                DeserializeValue();
+                _RecordingEnabled = false;
             }
             finally
             {
                 // Even if something goes wrong, we can still skip everything and safely deserialize the next property if any!
-                _Buffer.Position = _EndOffset;
+                // Note: In some builds @Size is not serialized
+                _Buffer.Position = _ValueOffset + Size;
             }
 
             return true;
+        }
+
+        /// <returns>True if this is the last tag.</returns>
+        private bool DeserializeNextTag()
+        {
+            if (_Buffer.Version < V3) return DeserializeTagUE1();
+#if BATMAN
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
+                return DeserializeTagByOffset();
+#endif
+            return DeserializeTagUE3();
+        }
+
+        /// <returns>True if this is the last tag.</returns>
+        private bool DeserializeTagUE1()
+        {
+            Name = _Buffer.ReadNameReference();
+            Record(nameof(Name), Name);
+            if (Name.IsNone()) return true;
+
+            const byte typeMask = 0x0F;
+            const byte sizeMask = 0x70;
+
+            // Packed byte
+            byte info = _Buffer.ReadByte();
+            Record(
+                $"Info(Type={(PropertyType)(byte)(info & typeMask)}," +
+                $"SizeMask=0x{(byte)(info & sizeMask):X2}," +
+                $"ArrayIndexMask=0x{info & ArrayIndexMask:X2})",
+                info
+            );
+
+            Type = (PropertyType)(byte)(info & typeMask);
+            if (Type == PropertyType.StructProperty)
+            {
+                ItemName = _Buffer.ReadNameReference();
+                Record(nameof(ItemName), ItemName);
+            }
+
+            Size = DeserializePackedSize((byte)(info & sizeMask));
+            Record(nameof(Size), Size);
+
+            // TypeData
+            switch (Type)
+            {
+                case PropertyType.BoolProperty:
+                    BoolValue = (info & ArrayIndexMask) != 0;
+                    break;
+
+                default:
+                    if ((info & ArrayIndexMask) != 0)
+                    {
+                        ArrayIndex = DeserializeTagArrayIndexUE1();
+                        Record(nameof(ArrayIndex), ArrayIndex);
+                    }
+
+                    break;
+            }
+
+            return false;
+        }
+
+        /// <returns>True if this is the last tag.</returns>
+        private bool DeserializeTagUE3()
+        {
+            Name = _Buffer.ReadNameReference();
+            Record(nameof(Name), Name);
+            if (Name.IsNone()) return true;
+
+            string typeName = _Buffer.ReadName();
+            Record(nameof(typeName), typeName);
+            Type = (PropertyType)Enum.Parse(typeof(PropertyType), typeName);
+
+            Size = _Buffer.ReadInt32();
+            Record(nameof(Size), Size);
+
+            ArrayIndex = _Buffer.ReadInt32();
+            Record(nameof(ArrayIndex), ArrayIndex);
+
+            DeserializeTypeDataUE3();
+            return false;
+        }
+#if BATMAN
+        /// <returns>True if this is the last tag.</returns>
+        private bool DeserializeTagByOffset()
+        {
+            Type = (PropertyType)_Buffer.ReadInt16();
+            Record(nameof(Type), Type.ToString());
+            if (Type == PropertyType.None) return true;
+
+            if (_Buffer.Package.Build.Generation != BuildGeneration.Batman3MP)
+            {
+                ushort offset = _Buffer.ReadUInt16();
+                Record(nameof(offset), offset);
+
+                // TODO: Incomplete, PropertyTypes' have shifted.
+                if ((int)Type == 11)
+                {
+                    Type = PropertyType.Vector;
+                }
+
+                // This may actually be determined by the property's flags, but we don't calculate the offset of properties :/
+                // TODO: Incomplete
+                if (Type == PropertyType.StrProperty ||
+                    Type == PropertyType.NameProperty ||
+                    Type == PropertyType.IntProperty ||
+                    Type == PropertyType.FloatProperty ||
+                    Type == PropertyType.StructProperty ||
+                    Type == PropertyType.Vector ||
+                    Type == PropertyType.Rotator ||
+                    (Type == PropertyType.BoolProperty && _Buffer.Package.Build.Generation == BuildGeneration.Batman4))
+                {
+                    switch(Type)
+                    {
+                        case PropertyType.Vector:
+                        case PropertyType.Rotator:
+                            Size = 12;
+                            break;
+
+                        case PropertyType.IntProperty:
+                        case PropertyType.FloatProperty:
+                        case PropertyType.StructProperty:
+                            //case PropertyType.ObjectProperty:
+                            //case PropertyType.InterfaceProperty:
+                            //case PropertyType.ComponentProperty:
+                            //case PropertyType.ClassProperty:
+                            Size = 4;
+                            break;
+
+                        case PropertyType.NameProperty:
+                            Size = 8;
+                            break;
+
+                        case PropertyType.BoolProperty:
+                            Size = sizeof(byte);
+                            break;
+                    }
+                    Name = new UName($"self[0x{offset:X3}]");
+                    DeserializeTypeDataUE3();
+                    return false;
+                }
+            }
+
+            Name = _Buffer.ReadNameReference();
+            Record(nameof(Name), Name);
+
+            Size = _Buffer.ReadInt32();
+            Record(nameof(Size), Size);
+
+            ArrayIndex = _Buffer.ReadInt32();
+            Record(nameof(ArrayIndex), ArrayIndex);
+
+            DeserializeTypeDataUE3();
+            return false;
+        }
+#endif
+        private void DeserializeTypeDataUE3()
+        {
+            switch (Type)
+            {
+                case PropertyType.StructProperty:
+                    ItemName = _Buffer.ReadNameReference();
+                    Record(nameof(ItemName), ItemName);
+                    break;
+
+                case PropertyType.ByteProperty:
+                    if (_Buffer.Version >= VEnumName)
+                    {
+                        EnumName = _Buffer.ReadNameReference();
+                        Record(nameof(EnumName), EnumName);
+                    }
+
+                    break;
+
+                case PropertyType.BoolProperty:
+                    BoolValue = _Buffer.Version >= VBoolSizeToOne
+                        ? _Buffer.ReadByte() > 0
+                        : _Buffer.ReadInt32() > 0;
+                    Record(nameof(BoolValue), BoolValue);
+                    break;
+            }
         }
 
         /// <summary>
@@ -294,9 +398,6 @@ namespace UELib.Core
         /// <returns>The deserialized value if any.</returns>
         private string DeserializeDefaultPropertyValue(PropertyType type, ref DeserializeFlags deserializeFlags)
         {
-            if (_Buffer.Position - _ValueOffset > Size)
-                throw new DeserializationException("End of DefaultProperties stream reached...");
-
             var orgOuter = _Outer;
             var propertyValue = string.Empty;
             try
@@ -306,29 +407,50 @@ namespace UELib.Core
                 {
                     case PropertyType.BoolProperty:
                     {
-                        bool value = _BoolValue;
-                        if (Size == 1 && _Buffer.Version < V3) value = _Buffer.ReadByte() > 0;
+                        Debug.Assert(BoolValue != null, nameof(BoolValue) + " != null");
+                        bool value = BoolValue.Value;
+                        if (Size == 1 && _Buffer.Version < V3)
+                        {
+                            value = _Buffer.ReadByte() > 0;
+                            Record(nameof(value), value);
+                        }
 
                         propertyValue = value ? "true" : "false";
                         break;
                     }
 
                     case PropertyType.StrProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadText());
+                    {
+                        string value = _Buffer.ReadText();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
+                    }
 
                     case PropertyType.NameProperty:
-                        propertyValue = _Buffer.ReadName();
+                    {
+                        var value = _Buffer.ReadNameReference();
+                        Record(nameof(value), value);
+                        propertyValue = value;
                         break;
+                    }
 
                     case PropertyType.IntProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadInt32());
+                    {
+                        int value = _Buffer.ReadInt32();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
+                    }
 
 #if BIOSHOCK
                     case PropertyType.QwordProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadInt64());
+                    {
+                        long value = _Buffer.ReadInt64();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
+                    }
 
                     case PropertyType.XWeakReferenceProperty:
                         propertyValue = "/* XWeakReference: (?=" + _Buffer.ReadName() + ",?=" + _Buffer.ReadName() +
@@ -337,58 +459,68 @@ namespace UELib.Core
 #endif
 
                     case PropertyType.FloatProperty:
-                        propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadFloat());
+                    {
+                        float value = _Buffer.ReadFloat();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
-
+                    }
+                    
                     case PropertyType.ByteProperty:
+                    {
                         if (_Buffer.Version >= V3 && Size == 8)
                         {
-                            string enumValue = _Buffer.ReadName();
-                            propertyValue = enumValue;
+                            string value = _Buffer.ReadName();
+                            Record(nameof(value), value);
+                            propertyValue = value;
                             if (_Buffer.Version >= VEnumName) propertyValue = $"{EnumName}.{propertyValue}";
                         }
                         else
                         {
-                            propertyValue = PropertyDisplay.FormatLiteral(_Buffer.ReadByte());
+                            byte value = _Buffer.ReadByte();
+                            Record(nameof(value), value);
+                            propertyValue = PropertyDisplay.FormatLiteral(value);
                         }
 
                         break;
+                    }
 
                     case PropertyType.InterfaceProperty:
                     case PropertyType.ComponentProperty:
                     case PropertyType.ObjectProperty:
                     {
-                        var obj = _Buffer.ReadObject();
-                        _Container.Record("object", obj);
-                        if (obj != null)
+                        var constantObject = _Buffer.ReadObject();
+                        Record(nameof(constantObject), constantObject);
+                        if (constantObject != null)
                         {
                             var inline = false;
                             // If true, object is an archetype or subobject.
-                            if (obj.Outer == _Container && (deserializeFlags & DeserializeFlags.WithinStruct) == 0)
+                            if (constantObject.Outer == _Container &&
+                                (deserializeFlags & DeserializeFlags.WithinStruct) == 0)
                             {
                                 // Unknown objects are only deserialized on demand.
-                                obj.BeginDeserializing();
-                                if (obj.Properties != null && obj.Properties.Count > 0)
+                                constantObject.BeginDeserializing();
+                                if (constantObject.Properties != null && constantObject.Properties.Count > 0)
                                 {
                                     inline = true;
-                                    propertyValue = obj.Decompile() + "\r\n" + UDecompilingState.Tabs;
+                                    propertyValue = constantObject.Decompile() + "\r\n" + UDecompilingState.Tabs;
 
                                     _TempFlags |= DoNotAppendName;
                                     if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
                                     {
                                         _TempFlags |= ReplaceNameMarker;
-                                        propertyValue += $"%ARRAYNAME%={obj.Name}";
+                                        propertyValue += $"%ARRAYNAME%={constantObject.Name}";
                                     }
                                     else
                                     {
-                                        propertyValue += $"{Name}={obj.Name}";
+                                        propertyValue += $"{Name}={constantObject.Name}";
                                     }
                                 }
                             }
 
                             if (!inline)
                                 // =CLASS'Package.Group(s)+.Name'
-                                propertyValue = $"{obj.GetClassName()}\'{obj.GetOuterGroup()}\'";
+                                propertyValue = $"{constantObject.GetClassName()}\'{constantObject.GetOuterGroup()}\'";
                         }
                         else
                         {
@@ -401,19 +533,27 @@ namespace UELib.Core
 
                     case PropertyType.ClassProperty:
                     {
-                        var obj = _Buffer.ReadObject();
-                        _Container.Record("object", obj);
-                        propertyValue = obj != null ? "class\'" + obj.Name + "\'" : "none";
+                        var classObject = _Buffer.ReadObject();
+                        Record(nameof(classObject), classObject);
+                        propertyValue = classObject != null
+                            ? $"class'{classObject.Name}'"
+                            : "none";
                         break;
                     }
 
                     case PropertyType.DelegateProperty:
                     {
                         _TempFlags |= DoNotAppendName;
-                        int outerIndex = _Buffer.ReadObjectIndex(); // Where the assigned delegate property exists.
-                        string delegateValue = _Buffer.ReadName();
-                        string delegateName = ((string)Name).Substring(2, Name.Length - 12);
-                        propertyValue = $"{delegateName}={delegateValue}";
+
+                        var outerObj = _Buffer.ReadObject(); // Where the assigned delegate property exists.
+                        Record(nameof(outerObj), outerObj);
+
+                        string delegateName = _Buffer.ReadName();
+                        Record(nameof(delegateName), delegateName);
+
+                        // Strip __%delegateName%__Delegate
+                        string normalizedDelegateName = ((string)Name).Substring(2, Name.Length - 12);
+                        propertyValue = $"{normalizedDelegateName}={delegateName}";
                         break;
                     }
 
@@ -618,14 +758,16 @@ namespace UELib.Core
                             }
                         }
 
-                        propertyValue = propertyValue.Length != 0 ? $"({propertyValue})" : "none";
+                        propertyValue = propertyValue.Length != 0 
+                            ? $"({propertyValue})" 
+                            : "none";
                         break;
                     }
 
                     case PropertyType.ArrayProperty:
                     {
                         int arraySize = _Buffer.ReadIndex();
-                        _Container.Record("arraySize", arraySize);
+                        Record(nameof(arraySize), arraySize);
                         if (arraySize == 0)
                         {
                             propertyValue = "none";
@@ -642,7 +784,7 @@ namespace UELib.Core
                             arrayType = property.InnerProperty.Type;
                         }
                         // If we did not find a reference to the associated property(because of imports)
-                        // then try to determine the array's type by scanning the definined array types.
+                        // then try to determine the array's type by scanning the defined array types.
                         else if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey(Name))
                         {
                             var varTuple = UnrealConfig.VariableTypes[Name];
@@ -736,10 +878,7 @@ namespace UELib.Core
                 return value;
 
             var arrayIndex = string.Empty;
-            if (ArrayIndex > 0 && Type != PropertyType.BoolProperty)
-            {
-                arrayIndex += $"[{ArrayIndex}]";
-            }
+            if (ArrayIndex > 0 && Type != PropertyType.BoolProperty) arrayIndex += $"[{ArrayIndex}]";
 
             return $"{Name}{arrayIndex}={value}";
         }
@@ -788,6 +927,12 @@ namespace UELib.Core
         }
 
         #endregion
+
+        [Conditional("BINARYMETADATA")]
+        private void Record(string varName, object varObject = null)
+        {
+            if (_RecordingEnabled) _Container.Record(varName, varObject);
+        }
     }
 
     [System.Runtime.InteropServices.ComVisible(false)]

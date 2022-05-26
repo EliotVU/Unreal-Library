@@ -38,6 +38,17 @@ namespace UELib
             _Number = number;
         }
 
+        // FIXME: Ugly hack to create an UName from a raw string.
+        public UName(string text)
+        {
+            var nameEntry = new UNameTableItem
+            {
+                Name = text
+            };
+            _NameItem = nameEntry;
+            _Number = 0;
+        }
+
         public bool IsNone()
         {
             return _NameItem.Name.Equals(None, StringComparison.OrdinalIgnoreCase);
