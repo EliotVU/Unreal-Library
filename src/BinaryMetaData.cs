@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
 
@@ -45,14 +44,16 @@ namespace UELib
             [PublicAPI]
             public string Decompile()
             {
-                return Tag != null ? Tag.ToString() : "NULL";
+                return Tag != null 
+                    ? $"({Tag.GetType()}) : {Tag}"
+                    : "NULL";
             }
         }
 
         /// <summary>
         /// Stack of all deserialized fields.
         /// </summary>
-        [PublicAPI] public Stack<BinaryField> Fields;
+        [PublicAPI] public Stack<BinaryField> Fields = new Stack<BinaryField>(1);
 
         /// <summary>
         /// Adds a new field to the @Fields stack.
@@ -61,16 +62,10 @@ namespace UELib
         /// <param name="tag">Value of the field</param>
         /// <param name="position">Position in bytes where the field is read from</param>
         /// <param name="size">Size in bytes of the field</param>
-        [Conditional("DEBUG"), Conditional("BINARYMETADATA")]
         [PublicAPI]
         public void AddField(string name, object tag, long position, long size)
         {
-            Debug.Assert(size > 0, String.Format("Invalid {0} binary field!", name));
-            if (Fields == null)
-            {
-                Fields = new Stack<BinaryField>(1);
-            }
-
+            Debug.Assert(size > 0);
             Fields.Push
             (
                 new BinaryField

@@ -77,7 +77,7 @@ namespace UELib.Core
         /// <summary>
         /// Object Properties e.g. SubObjects or/and DefaultProperties
         /// </summary>
-        public DefaultPropertiesCollection Properties { get; private set; }
+        public DefaultPropertiesCollection Properties { get; protected set; }
 
         /// <summary>
         /// Serialized if object is marked with <see cref="ObjectFlagsLO.HasStack" />.
@@ -602,6 +602,7 @@ namespace UELib.Core
 #endregion
 
         /// <summary>
+        /// TODO: Move this feature into a stream.
         /// Outputs the present position and the value of the parsed object.
         ///
         /// Only called in the DEBUGBUILD!
@@ -612,9 +613,6 @@ namespace UELib.Core
         internal void Record(string varName, object varObject = null)
         {
             long size = _Buffer.Position - _Buffer.LastPosition;
-            if (size <= 0)
-                return;
-
             BinaryMetaData.AddField(varName, varObject, _Buffer.LastPosition, size);
 #if LOG_RECORDS
             if( varObject == null )
