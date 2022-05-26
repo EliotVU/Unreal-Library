@@ -142,6 +142,13 @@ namespace UELib
                 ArchetypeIndex = stream.ReadInt32();
             }
 
+#if BATMAN
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
+            {
+                stream.Skip( sizeof(int) );
+            }
+#endif
+
             _ObjectFlagsOffset = stream.Position;
 #if BIOSHOCK
             // Like UE3 but without the shifting of flags

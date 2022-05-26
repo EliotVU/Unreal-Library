@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -248,7 +248,8 @@ namespace UELib
                 /// Thief: Deadly Shadows
                 /// 95/133
                 /// </summary>
-                [Build(95, 133, BuildGeneration.Thief)] Thief_DS,
+                [Build(95, 133, BuildGeneration.Thief)]
+                Thief_DS,
 
                 /// <summary>
                 /// 99:117/005:008
@@ -265,53 +266,55 @@ namespace UELib
                 /// <summary>
                 /// 110/2609
                 /// </summary>
-                [Build(110, 2609)] 
-                Unreal2,
+                [Build(110, 2609)] Unreal2,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
                 /// 118/011:014
                 /// </summary>
-                [Build(118, 118, 11u, 14u)]
-                R6RS,
+                [Build(118, 118, 11u, 14u)] R6RS,
 
                 /// <summary>
                 /// Unreal II: eXpanded MultiPlayer
                 /// 126/000
                 /// </summary>
-                [Build(126, 0)]
-                Unreal2XMP,
+                [Build(126, 0)] Unreal2XMP,
 
                 /// <summary>
                 /// 118:128/025:029
                 /// (Overlaps latest UT2003)
                 /// </summary>
-                [Build(118, 128, 25u, 29u, BuildGeneration.UE2_5)] UT2004,
+                [Build(118, 128, 25u, 29u, BuildGeneration.UE2_5)]
+                UT2004,
 
                 /// <summary>
                 /// Built on UT2004
                 /// Represents both AAO and AAA
                 /// 128/032:033
                 /// </summary>
-                [Build(128, 128, 32u, 33u, BuildGeneration.UE2_5)] AA2,
+                [Build(128, 128, 32u, 33u, BuildGeneration.UE2_5)]
+                AA2,
 
                 // IrrationalGames/Vengeance - 129:143/027:059
-                
+
                 /// <summary>
                 /// Tribes: Vengeance
                 /// </summary>
-                [Build(130, 27, BuildGeneration.Vengeance)] Tribes_VG,
+                [Build(130, 27, BuildGeneration.Vengeance)]
+                Tribes_VG,
 
                 /// <summary>
                 /// 129/027
                 /// </summary>
-                [Build(129, 27, BuildGeneration.Vengeance)] Swat4,
+                [Build(129, 27, BuildGeneration.Vengeance)]
+                Swat4,
 
                 /// <summary>
                 /// BioShock 1 & 2
                 /// 130:143/056:059
                 /// </summary>
-                [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)] BioShock,
+                [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)]
+                BioShock,
 
                 /// <summary>
                 /// The Chronicles of Spellborn
@@ -320,7 +323,8 @@ namespace UELib
                 /// 159/029
                 /// Comes with several new non-standard UnrealScript features, these are however not supported.
                 /// </summary>
-                [Build(159, 29u, BuildGeneration.UE2_5)] Spellborn,
+                [Build(159, 29u, BuildGeneration.UE2_5)]
+                Spellborn,
 
                 /// <summary>
                 /// 369/006
@@ -376,6 +380,13 @@ namespace UELib
                 [Build(576, 5)] CrimeCraft,
 
                 /// <summary>
+                /// 576/021
+                /// 
+                /// No Special support, but there's no harm in recognizing this build.
+                /// </summary>
+                [Build(576, 21)] Batman1,
+
+                /// <summary>
                 /// 576/100
                 /// </summary>
                 [Build(576, 100)] Homefront,
@@ -426,7 +437,8 @@ namespace UELib
                 /// <summary>
                 /// 742/029
                 /// </summary>
-                [Build(742, 29, BuildFlags.ConsoleCooked)] BulletStorm,
+                [Build(742, 29, BuildFlags.ConsoleCooked)]
+                BulletStorm,
 
                 /// <summary>
                 /// 801/030
@@ -436,14 +448,14 @@ namespace UELib
                 /// <summary>
                 /// 828/000
                 /// </summary>
-                [Build(788, 1, BuildFlags.ConsoleCooked)]
-                [Build(828, 0, BuildFlags.ConsoleCooked)]
+                [Build(788, 1, BuildFlags.ConsoleCooked)] [Build(828, 0, BuildFlags.ConsoleCooked)]
                 InfinityBlade,
 
                 /// <summary>
                 /// 828/000
                 /// </summary>
-                [Build(828, 0, BuildFlags.ConsoleCooked)] GoW3,
+                [Build(828, 0, BuildFlags.ConsoleCooked)]
+                GoW3,
 
                 /// <summary>
                 /// 832/021
@@ -467,6 +479,11 @@ namespace UELib
                 [Build(845, 59)] XCOM_EU,
 
                 /// <summary>
+                /// 845/120
+                /// </summary>
+                [Build(845, 120)] XCOM2WotC,
+
+                /// <summary>
                 /// 846/181
                 /// </summary>
                 [Build(511, 039)] // The Bourne Conspiracy
@@ -484,6 +501,19 @@ namespace UELib
                 [Build(860, 4)] Hawken,
 
                 /// <summary>
+                /// 805-6/101-3
+                /// 807/137-8
+                /// 807/104
+                /// 863/32995
+                /// </summary>
+                [Build(805, 101, BuildGeneration.Batman2)]
+                [Build(806, 103, BuildGeneration.Batman3)]
+                [Build(807, 807, 137, 138, BuildGeneration.Batman3)]
+                [Build(807, 104, BuildGeneration.Batman3MP)]
+                [Build(863, 32995, BuildGeneration.Batman4)]
+                BatmanUDK,
+
+                /// <summary>
                 /// 867/009:032
                 /// Requires third-party decompression and decryption
                 /// </summary>
@@ -493,11 +523,6 @@ namespace UELib
                 /// 904/009
                 /// </summary>
                 [Build(904, 904, 09u, 014u)] SpecialForce2,
-
-                /// <summary>
-                /// 845/120
-                /// </summary>
-                [Build(845, 120)] XCOM2WotC
             }
 
             public BuildName Name { get; }
@@ -649,7 +674,7 @@ namespace UELib
             {
 #if HAWKEN
                 if (stream.Package.Build == GameBuild.BuildName.Hawken &&
-                    stream.Package.LicenseeVersion >= 2) 
+                    stream.Package.LicenseeVersion >= 2)
                     stream.Skip(4);
 #endif
                 NamesCount = stream.ReadInt32();
@@ -664,6 +689,7 @@ namespace UELib
                     {
                         stream.Skip(4);
                     }
+
                     stream.Skip(20);
                 }
 #endif
@@ -701,7 +727,7 @@ namespace UELib
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();
                 }
-                
+
                 if (stream.Version >= VThumbnailTableOffset)
                 {
 #if APB
@@ -761,7 +787,9 @@ namespace UELib
         /// Null if package version less is than <see cref="VCompression" />
         /// </summary>
         [PublicAPI("UE Explorer requires 'get'")]
-        [CanBeNull] public UArray<CompressedChunk> CompressedChunks => _CompressedChunks;
+        [CanBeNull]
+        public UArray<CompressedChunk> CompressedChunks => _CompressedChunks;
+
         [CanBeNull] private UArray<CompressedChunk> _CompressedChunks;
 
         /// <summary>
@@ -1018,7 +1046,7 @@ namespace UELib
                     goto skipGuid;
                 GUID = stream.ReadGuid().ToString();
                 Console.WriteLine("GUID:" + GUID);
-            skipGuid:
+                skipGuid:
 #if TERA
                 if (Build == GameBuild.BuildName.Tera) stream.Position -= 4;
 #endif
@@ -1251,6 +1279,7 @@ namespace UELib
                         {
                             imports[j] = stream.ReadInt32();
                         }
+
                         dependsMap.Add(imports);
                     }
                 }
@@ -1821,6 +1850,6 @@ namespace UELib
             Stream.Dispose();
         }
 
-#endregion
+        #endregion
     }
 }

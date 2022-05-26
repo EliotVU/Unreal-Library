@@ -123,7 +123,7 @@ namespace UELib.Flags
     ///     The flag is removed in (Version)
     /// </summary>
     [Flags]
-    public enum ObjectFlagsLO : ulong   // 32bit aligned, see ObjectFlags64
+    public enum ObjectFlagsLO : ulong
     {
         Transactional       = 0x00000001U,
         InSingularFunc      = 0x00000002U,
@@ -165,8 +165,9 @@ namespace UELib.Flags
     /// @Removed( Version )
     ///     The flag is removed in (Version)
     /// </summary>
+    // FIXME: Merge with ObjectFlagsLO
     [Flags]
-    public enum ObjectFlagsHO : ulong   // 32bit aligned, see ObjectFlags
+    public enum ObjectFlagsHO : ulong
     {
         Obsolete                = 0x00000020U,
         Final                   = 0x00000080U,
