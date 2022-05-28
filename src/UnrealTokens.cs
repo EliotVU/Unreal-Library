@@ -207,9 +207,9 @@
         None                    = 0x00,
         
         #region UE3
-        InterfaceToBool         = 0x36,
+        InterfaceToObject       = 0x36,
         InterfaceToString       = 0x37,
-        InterfaceToObject       = 0x38,
+        InterfaceToBool         = 0x38,
         #endregion
 
         RotatorToVector         = 0x39,     // Redefined
