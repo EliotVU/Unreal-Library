@@ -12,10 +12,8 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UStruct : UField
     {
-        // Greater or equal than:
-        // Definitely not after 110
-        // FIXME: Version
-        private const int PrimitveCastVersion = 100;
+        // FIXME: Version, set 95 (Deus Ex: IW)
+        private const int VPrimitiveCastToken = 95;
 
         private const int VCppText = 120;
 
@@ -24,6 +22,14 @@ namespace UELib.Core
 
         // FIXME: Version
         private const int VFriendlyNameMoved = 160;
+
+        /// <summary>
+        /// Used to determine if UClass has an interfaces UArray, and the ObjectToInterface CastToken (among others). 
+        /// FIXME: Version
+        /// </summary>
+        public const int VInterfaceClass = 220;
+
+        private const int VStorageScriptSize = 639;
 
         #region Serialized Members
 
@@ -153,8 +159,7 @@ namespace UELib.Core
 #endif
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
-            const int vDataScriptSize = 639;
-            bool hasFixedScriptSize = Package.Version >= vDataScriptSize
+            bool hasFixedScriptSize = Package.Version >= VStorageScriptSize
 #if TRANSFORMERS
                                       && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
 #endif

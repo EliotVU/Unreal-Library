@@ -6,7 +6,6 @@
     public enum ExprToken : ushort
     {
         // ValidateObject
-        // ResizeString
         LocalVariable           = 0x00,
         InstanceVariable        = 0x01,
         DefaultVariable         = 0x02,     // default.Property
@@ -202,6 +201,10 @@
         Unused                  = InternalUnresolved,
     }
 
+    /// <summary>
+    /// These tokens begin at-non-zero because they were once part of <see cref="ExprToken"/> &lt; <see cref="UStruct.PrimitiveCastVersion"/>.
+    /// Handled by token: <see cref="UStruct.UByteCodeDecompiler.PrimitiveCastToken"/>
+    /// </summary>
     public enum CastToken : byte
     {
         None                    = 0x00,
@@ -212,22 +215,26 @@
         InterfaceToBool         = 0x38,
         #endregion
 
-        RotatorToVector         = 0x39,     // Redefined
-        ByteToInt               = 0x3A,     // Redefined(ReturnNothing)
+        RotatorToVector         = 0x39,
+        ByteToInt               = 0x3A,
         ByteToBool              = 0x3B,
         ByteToFloat             = 0x3C,
         IntToByte               = 0x3D,
         IntToBool               = 0x3E,
         IntToFloat              = 0x3F,
-        BoolToByte              = 0x40,     // Redefined
-        BoolToInt               = 0x41,     // Redefined
-        BoolToFloat             = 0x42,     // Redefined
-        FloatToByte             = 0x43,     // Redefined
-        FloatToInt              = 0x44,     // Redefined
-        FloatToBool             = 0x45,     // Redefined
+        BoolToByte              = 0x40,
+        BoolToInt               = 0x41,
+        BoolToFloat             = 0x42,
+        FloatToByte             = 0x43,
+        FloatToInt              = 0x44,
+        FloatToBool             = 0x45,
+        /// <summary>
+        /// UE1: StringToName
+        /// UE2: Deprecated?
+        /// </summary>
         ObjectToInterface       = 0x46,
-        ObjectToBool            = 0x47,     // Redefined
-        NameToBool              = 0x48,     // Redefined
+        ObjectToBool            = 0x47,
+        NameToBool              = 0x48,
         StringToByte            = 0x49,
         StringToInt             = 0x4A,
         StringToBool            = 0x4B,

@@ -207,7 +207,7 @@ namespace UELib.Core
 
                         // RoboBlitz(369)
                         // TODO: Corrigate Version
-                        if (Package.Version >= 369) DeserializeInterfaces();
+                        if (Package.Version >= VInterfaceClass) DeserializeInterfaces();
                     }
 
                     if (!Package.IsConsoleCooked() && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))

@@ -12,6 +12,7 @@ namespace UELib.Core
 {
     using System.Linq;
     using System.Text;
+    using static UStruct.UByteCodeDecompiler;
 
     public partial class UStruct
     {
@@ -66,7 +67,7 @@ namespace UELib.Core
             /// Size of FName in memory (int Index, (> 500) int Number).
             /// </summary>
             private byte _NameMemorySize = sizeof(int);
-            
+
             /// <summary>
             /// Size of a pointer to an UObject in memory.
             /// 32bit, 64bit as of version 587 (even on 32bit platforms)
@@ -314,10 +315,10 @@ namespace UELib.Core
                 { (byte)ExprToken.Jump, (byte)ExprToken.JumpIfNot },
                 { (byte)ExprToken.JumpIfNot, (byte)ExprToken.Jump },
                 { (byte)ExprToken.Case, (byte)ExprToken.Nothing },
-                { (byte)ExprToken.Nothing, (byte)ExprToken.Case },
+                { (byte)ExprToken.Nothing, (byte)ExprToken.Case }
                 //{ 0x48, (byte)ExprToken.OutVariable },
                 //{ 0x53, (byte)ExprToken.EndOfScript }
-        };
+            };
 #endif
 #if BIOSHOCK
             private static readonly Dictionary<byte, byte> ByteCodeMap_BuildBs = new Dictionary<byte, byte>
@@ -327,6 +328,49 @@ namespace UELib.Core
 #endif
             private void SetupByteCodeMap()
             {
+#if UE1
+                if (Package.Version < VPrimitiveCastToken)
+                {
+                    // Map all old CastTokens that were expressed as an ExprToken
+                    _ByteCodeMap = new Dictionary<byte, byte>
+                    {
+                        { (byte)CastToken.RotatorToVector, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ObjectToInterface, (byte)ExprToken.PrimitiveCast }, // Actually StringToName
+                        { (byte)CastToken.ObjectToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.NameToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToVector, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToRotator, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.VectorToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.VectorToRotator, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.RotatorToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ObjectToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.NameToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.VectorToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.RotatorToString, (byte)ExprToken.PrimitiveCast }
+                    };
+                    return;
+                }
+#endif
 #if AA2
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
                 {
@@ -372,14 +416,10 @@ namespace UELib.Core
                     _ByteCodeMap = ByteCodeMap_BuildApb;
 #endif
 #if BIOSHOCK
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
-                {
-                    _ByteCodeMap = ByteCodeMap_BuildBs;
-                }
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock) _ByteCodeMap = ByteCodeMap_BuildBs;
 #endif
 #if MOH
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.MOH)
-                {
                     // TODO: Incomplete byte-code map
                     _ByteCodeMap = new Dictionary<byte, byte>
                     {
@@ -397,10 +437,9 @@ namespace UELib.Core
                         { 0x38, (byte)ExprToken.ReturnNothing },
                         { 0x40, (byte)ExprToken.PrimitiveCast },
                         { 0x47, (byte)ExprToken.StructMember },
-                        { 0x4B, (byte)ExprToken.NativeParm },
+                        { 0x4B, (byte)ExprToken.NativeParm }
                         //{ 0x4F, (byte)ExprToken.BoolVariable }
                     };
-                }
 #endif
             }
 
@@ -416,9 +455,9 @@ namespace UELib.Core
                 if (Package.Version >= 184
                     &&
                     (
-                        tokenCode >= (byte)ExprToken.RangeConst && tokenCode < (byte)ExprToken.ReturnNothing
+                        (tokenCode >= (byte)ExprToken.RangeConst && tokenCode < (byte)ExprToken.ReturnNothing)
                         ||
-                        tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative)
+                        (tokenCode > (byte)ExprToken.NoDelegate && tokenCode < (byte)ExprToken.ExtendedNative))
                    ) ++tokenCode;
 #endif
                 // TODO: Map directly to a Token type instead of a byte-code.
@@ -428,16 +467,14 @@ namespace UELib.Core
                         : tokenCode;
 #if UE1
                 if (Package.Version < 62)
-                {
                     switch (tokenCode)
                     {
                         //case (byte)ExprToken.LetBool:
                         //    return (byte)ExprToken.BeginFunction;
-                        
+
                         case (byte)ExprToken.EndParmValue:
                             return (byte)ExprToken.EatReturnValue;
                     }
-                }
 #endif
                 return tokenCode;
             }
@@ -460,7 +497,7 @@ namespace UELib.Core
                     CurrentTokenIndex = -1;
                     DeserializedTokens = new List<Token>();
                     _Labels = new List<ULabelEntry>();
-                    
+
                     while (CodePosition < codeSize)
                         try
                         {
@@ -490,11 +527,8 @@ namespace UELib.Core
             {
                 // Sometimes we may end up at the end of a script
                 // -- and by coincidence pickup a DebugInfo byte-code outside of the script-boundary.
-                if (CodePosition == _Container.ByteScriptSize)
-                {
-                    return;
-                }
-                
+                if (CodePosition == _Container.ByteScriptSize) return;
+
                 Buffer.StartPeek();
                 byte tokenCode = FixToken(Buffer.ReadByte());
                 Buffer.EndPeek();
@@ -521,7 +555,7 @@ namespace UELib.Core
                 }
 
                 byte serializedByte = tokenCode;
-                Token token = null;
+                Token token;
                 if (tokenCode >= (byte)ExprToken.ExtendedNative)
                 {
                     if (tokenCode >= (byte)ExprToken.FirstNative)
@@ -550,31 +584,15 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.MetaCast:
-                            token = new MetaCastToken();
+                            token = new MetaClassCastToken();
                             break;
 
                         case (byte)ExprToken.InterfaceCast:
-                            if (Buffer.Version < PrimitveCastVersion) // UE1
-                                token = new IntToStringToken();
-                            else
-                                token = new InterfaceCastToken();
-
+                            token = new InterfaceCastToken();
                             break;
 
-                        // Redefined, can be RotatorToVector!(UE1)
                         case (byte)ExprToken.PrimitiveCast:
-                            if (Buffer.Version < PrimitveCastVersion) // UE1
-                            {
-                                token = new RotatorToVectorToken();
-                            }
-                            else // UE2+
-                            {
-                                // Next byte represents the CastToken!
-                                tokenCode = Buffer.ReadByte();
-                                AlignSize(sizeof(byte));
-                                token = DeserializeCastToken(tokenCode);
-                            }
-
+                            token = new PrimitiveCastToken();
                             break;
 
                         #endregion
@@ -586,11 +604,7 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.InterfaceContext:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new ByteToStringToken();
-                            else
-                                token = new InterfaceContextToken();
-
+                            token = new InterfaceContextToken();
                             break;
 
                         case (byte)ExprToken.Context:
@@ -633,25 +647,16 @@ namespace UELib.Core
                             token = new EndParmValueToken();
                             break;
 
-                        // Redefined, can be FloatToBool!(UE1)
                         case (byte)ExprToken.LetDelegate:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new FloatToBoolToken();
-                            else
-                                token = new LetDelegateToken();
-
+                            token = new LetDelegateToken();
                             break;
 
-                        // Redefined, can be NameToBool!(UE1)
                         case (byte)ExprToken.Conditional:
                             token = new ConditionalToken();
                             break;
 
-                        case (byte)ExprToken.Eval
-                            : // case (byte)ExprToken.DynArrayFindStruct: case (byte)ExprToken.Conditional:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new NameToBoolToken();
-                            else if (Buffer.Version >= 300)
+                        case (byte)ExprToken.Eval:
+                            if (Buffer.Version >= 300)
                                 token = new DynamicArrayFindStructToken();
                             else
                                 token = new ConditionalToken();
@@ -667,12 +672,10 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.ReturnNothing:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new ByteToIntToken();
-                            // Definitely existed since GoW(490)
-                            else if (Buffer.Version > 420 && DeserializedTokens.Count > 0 &&
-                                     !(DeserializedTokens[DeserializedTokens.Count - 1] is
-                                         ReturnToken)) // Should only be done if the last token wasn't Return
+                            // definitely existed since GoW(490)
+                            if (Buffer.Version > 420 && DeserializedTokens.Count > 0 &&
+                                !(DeserializedTokens[DeserializedTokens.Count - 1] is
+                                    ReturnToken)) // Should only be done if the last token wasn't Return
                                 token = new DynamicArrayInsertToken();
                             else
                                 token = new ReturnNothingToken();
@@ -700,11 +703,7 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.DynArrayIterator:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new RotatorToStringToken();
-                            else
-                                token = new ArrayIteratorToken();
-
+                            token = new ArrayIteratorToken();
                             break;
 
                         case (byte)ExprToken.Iterator:
@@ -760,7 +759,6 @@ namespace UELib.Core
                             token = new DefaultVariableToken();
                             break;
 
-                        // UE3+
                         case (byte)ExprToken.OutVariable:
 #if BIOSHOCK
                             if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
@@ -776,34 +774,20 @@ namespace UELib.Core
                             token = new BoolVariableToken();
                             break;
 
-                        // Redefined, can be FloatToInt!(UE1)
                         case (byte)ExprToken.DelegateProperty:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new FloatToIntToken();
-                            else
-                                token = new DelegatePropertyToken();
-
+                            token = new DelegatePropertyToken();
                             break;
 
                         case (byte)ExprToken.DefaultParmValue:
-                            if (Buffer.Version < PrimitveCastVersion) // StringToInt
-                                token = new StringToIntToken();
-                            else
-                                token = new DefaultParameterToken();
-
+                            token = new DefaultParameterToken();
                             break;
 
                         #endregion
 
                         #region Misc
 
-                        // Redefined, can be BoolToFloat!(UE1)
                         case (byte)ExprToken.DebugInfo:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new BoolToFloatToken();
-                            else
-                                token = new DebugInfoToken();
-
+                            token = new DebugInfoToken();
                             break;
 
                         case (byte)ExprToken.Nothing:
@@ -831,14 +815,9 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.NoDelegate:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new IntToFloatToken();
-                            else
-                                token = new NoDelegateToken();
-
+                            token = new NoDelegateToken();
                             break;
 
-                        // No value passed to an optional parameter.
                         case (byte)ExprToken.EmptyParmValue:
                             token = new NoParmToken();
                             break;
@@ -851,7 +830,6 @@ namespace UELib.Core
                             token = new SelfToken();
                             break;
 
-                        // End of state code.
                         case (byte)ExprToken.Stop:
                             token = new StopToken();
                             break;
@@ -864,12 +842,8 @@ namespace UELib.Core
                             token = new LabelTableToken();
                             break;
 
-                        case (byte)ExprToken.EndOfScript: //CastToken.BoolToString:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new BoolToStringToken();
-                            else
-                                token = new EndOfScriptToken();
-
+                        case (byte)ExprToken.EndOfScript:
+                            token = new EndOfScriptToken();
                             break;
 
                         case (byte)ExprToken.Skip:
@@ -889,11 +863,7 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.DelegateFunctionCmpEq:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new IntToBoolToken();
-                            else
-                                token = new DelegateFunctionCmpEqToken();
-
+                            token = new DelegateFunctionCmpEqToken();
                             break;
 
                         case (byte)ExprToken.DelegateCmpNE:
@@ -901,11 +871,7 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.DelegateFunctionCmpNE:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new IntToBoolToken();
-                            else
-                                token = new DelegateFunctionCmpNEToken();
-
+                            token = new DelegateFunctionCmpNEToken();
                             break;
 
                         case (byte)ExprToken.InstanceDelegate:
@@ -943,9 +909,11 @@ namespace UELib.Core
                                 token = new UnresolvedToken();
                                 break;
                             }
+
                             token = new CastStringSizeToken();
                             break;
 #endif
+
                         #endregion
 
                         #region Constants
@@ -966,7 +934,6 @@ namespace UELib.Core
                             token = new FloatConstToken();
                             break;
 
-                        // ClassConst?
                         case (byte)ExprToken.ObjectConst:
                             token = new ObjectConstToken();
                             break;
@@ -1011,13 +978,8 @@ namespace UELib.Core
                             token = new GlobalFunctionToken();
                             break;
 
-                        // Redefined, can be FloatToByte!(UE1)
                         case (byte)ExprToken.DelegateFunction:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new FloatToByteToken();
-                            else
-                                token = new DelegateFunctionToken();
-
+                            token = new DelegateFunctionToken();
                             break;
 
                         #endregion
@@ -1037,84 +999,42 @@ namespace UELib.Core
                             break;
 
                         case (byte)ExprToken.DynArrayInsert:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new BoolToByteToken();
-                            else
-                                token = new DynamicArrayInsertToken();
-
+                            token = new DynamicArrayInsertToken();
                             break;
 
                         case (byte)ExprToken.DynArrayInsertItem:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new VectorToStringToken();
-                            else
-                                token = new DynamicArrayInsertItemToken();
-
+                            token = new DynamicArrayInsertItemToken();
                             break;
 
-                        // Redefined, can be BoolToInt!(UE1)
                         case (byte)ExprToken.DynArrayRemove:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new BoolToIntToken();
-                            else
-                                token = new DynamicArrayRemoveToken();
-
+                            token = new DynamicArrayRemoveToken();
                             break;
 
                         case (byte)ExprToken.DynArrayRemoveItem:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new NameToStringToken();
-                            else
-                                token = new DynamicArrayRemoveItemToken();
-
+                            token = new DynamicArrayRemoveItemToken();
                             break;
 
                         case (byte)ExprToken.DynArrayAdd:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new FloatToStringToken();
-                            else
-                                token = new DynamicArrayAddToken();
-
+                            token = new DynamicArrayAddToken();
                             break;
 
                         case (byte)ExprToken.DynArrayAddItem:
-                            if (Buffer.Version < PrimitveCastVersion)
-                                token = new ObjectToStringToken();
-                            else
-                                token = new DynamicArrayAddItemToken();
-
+                            token = new DynamicArrayAddItemToken();
                             break;
 
                         case (byte)ExprToken.DynArraySort:
                             token = new DynamicArraySortToken();
                             break;
 
-                        // See FunctionEnd and Eval
-                        /*case (byte)ExprToken.DynArrayFind:
-                            break;
-    
-                        case (byte)ExprToken.DynArrayFindStruct:
-                            break;*/
-
                         #endregion
 
                         default:
-                        {
-                            #region Casts
-
-                            if (Buffer.Version < PrimitveCastVersion)
-                                // No other token was matched. Check if it matches any of the CastTokens
-                                // We don't just use PrimitiveCast detection due compatible with UE1 games
-                                token = DeserializeCastToken(tokenCode);
-
+                            token = new UnresolvedToken();
                             break;
-
-                            #endregion
-                        }
                     }
                 }
 
-                if (token == null) token = new UnresolvedToken();
+                Debug.Assert(token != null);
                 AddToken(token, serializedByte, tokenPosition);
                 return token;
             }
@@ -1132,172 +1052,6 @@ namespace UELib.Core
                 token.StorageSize =
                     (ushort)(Buffer.Position - _Container.ScriptOffset - token.StoragePosition);
                 token.PostDeserialized();
-            }
-
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
-            private Token DeserializeCastToken(byte castToken)
-            {
-                Token token;
-                switch ((Tokens.CastToken)castToken)
-                {
-                    case Tokens.CastToken.StringToRotator:
-                        token = new StringToRotatorToken();
-                        break;
-
-                    case Tokens.CastToken.VectorToRotator:
-                        token = new VectorToRotatorToken();
-                        break;
-
-                    case Tokens.CastToken.StringToVector:
-                        token = new StringToVectorToken();
-                        break;
-
-                    case Tokens.CastToken.RotatorToVector:
-                        token = new RotatorToVectorToken();
-                        break;
-
-                    case Tokens.CastToken.IntToFloat:
-                        token = new IntToFloatToken();
-                        break;
-
-                    case Tokens.CastToken.StringToFloat:
-                        token = new StringToFloatToken();
-                        break;
-
-                    case Tokens.CastToken.BoolToFloat:
-                        token = new BoolToFloatToken();
-                        break;
-
-                    case Tokens.CastToken.StringToInt:
-                        token = new StringToIntToken();
-                        break;
-
-                    case Tokens.CastToken.FloatToInt:
-                        token = new FloatToIntToken();
-                        break;
-
-                    case Tokens.CastToken.BoolToInt:
-                        token = new BoolToIntToken();
-                        break;
-
-                    case Tokens.CastToken.RotatorToBool:
-                        token = new RotatorToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.VectorToBool:
-                        token = new VectorToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.StringToBool:
-                        token = new StringToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.ByteToBool:
-                        token = new ByteToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.FloatToBool:
-                        token = new FloatToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.NameToBool:
-                        token = new NameToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.ObjectToBool:
-                        token = new ObjectToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.IntToBool:
-                        token = new IntToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.StringToByte:
-                        token = new StringToByteToken();
-                        break;
-
-                    case Tokens.CastToken.FloatToByte:
-                        token = new FloatToByteToken();
-                        break;
-
-                    case Tokens.CastToken.BoolToByte:
-                        token = new BoolToByteToken();
-                        break;
-
-                    case Tokens.CastToken.ByteToString:
-                        token = new ByteToStringToken();
-                        break;
-
-                    case Tokens.CastToken.IntToString:
-                        token = new IntToStringToken();
-                        break;
-
-                    case Tokens.CastToken.BoolToString:
-                        token = new BoolToStringToken();
-                        break;
-
-                    case Tokens.CastToken.FloatToString:
-                        token = new FloatToStringToken();
-                        break;
-
-                    case Tokens.CastToken.NameToString:
-                        token = new NameToStringToken();
-                        break;
-
-                    case Tokens.CastToken.VectorToString:
-                        token = new VectorToStringToken();
-                        break;
-
-                    case Tokens.CastToken.RotatorToString:
-                        token = new RotatorToStringToken();
-                        break;
-
-                    case Tokens.CastToken.StringToName:
-                        token = new StringToNameToken();
-                        break;
-
-                    case Tokens.CastToken.ByteToInt:
-                        token = new ByteToIntToken();
-                        break;
-
-                    case Tokens.CastToken.IntToByte:
-                        token = new IntToByteToken();
-                        break;
-
-                    case Tokens.CastToken.ByteToFloat:
-                        token = new ByteToFloatToken();
-                        break;
-
-                    case Tokens.CastToken.ObjectToString:
-                        token = new ObjectToStringToken();
-                        break;
-
-                    case Tokens.CastToken.InterfaceToString:
-                        token = new InterfaceToStringToken();
-                        break;
-
-                    case Tokens.CastToken.InterfaceToBool:
-                        token = new InterfaceToBoolToken();
-                        break;
-
-                    case Tokens.CastToken.InterfaceToObject:
-                        token = new InterfaceToObjectToken();
-                        break;
-
-                    case Tokens.CastToken.ObjectToInterface:
-                        token = new ObjectToInterfaceToken();
-                        break;
-
-                    case Tokens.CastToken.DelegateToString:
-                        token = new DelegateToStringToken();
-                        break;
-
-                    default:
-                        token = new UnresolvedCastToken();
-                        break;
-                }
-
-                return token;
             }
 
             #endregion
