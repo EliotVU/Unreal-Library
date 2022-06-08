@@ -88,7 +88,7 @@ namespace UELib.Core
                 output += "final ";
             }
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 if (HasFunctionFlag(Flags.FunctionFlags.VG_Overloaded))
                 {

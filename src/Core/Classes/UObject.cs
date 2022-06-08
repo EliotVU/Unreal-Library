@@ -225,7 +225,7 @@ namespace UELib.Core
         protected virtual void Deserialize()
         {
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 if (Package.LicenseeVersion >= 25)
                 {
@@ -268,7 +268,7 @@ namespace UELib.Core
             //}
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
-            if (Package.Build.Generation == BuildGeneration.Thief && GetType() != typeof(UnknownObject))
+            if (Package.Build == BuildGeneration.Thief && GetType() != typeof(UnknownObject))
             {
                 // var native private const int ObjectInternalPropertyHash[1];
                 int thiefLinkDataObjectCount = _Buffer.ReadInt32();

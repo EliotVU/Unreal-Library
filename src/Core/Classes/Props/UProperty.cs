@@ -114,7 +114,7 @@ namespace UELib.Core
             }
 #endif
 #if THIEF_DS || DEUSEX_IW
-            if (Package.Build.Generation == BuildGeneration.Thief)
+            if (Package.Build == BuildGeneration.Thief)
             {
                 // Property flags like CustomEditor, CustomViewer, ThiefProp, DeusExProp, NoTextExport, NoTravel
                 uint deusFlags = _Buffer.ReadUInt32();
@@ -134,7 +134,7 @@ namespace UELib.Core
                 else
                 {
 #if THIEF_DS || DEUSEX_IW
-                    if (Package.Build.Generation == BuildGeneration.Thief)
+                    if (Package.Build == BuildGeneration.Thief)
                     {
                         short deusInheritedOrRuntimeInstiantiated = _Buffer.ReadInt16();
                         Record(nameof(deusInheritedOrRuntimeInstiantiated), deusInheritedOrRuntimeInstiantiated);
@@ -151,7 +151,7 @@ namespace UELib.Core
                 Record("RepOffset", RepOffset);
             }
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 var vengeanceEditComboType = _Buffer.ReadNameReference();
                 Record(nameof(vengeanceEditComboType), vengeanceEditComboType);
@@ -161,9 +161,9 @@ namespace UELib.Core
 #endif
             // Appears to be a UE2X feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
-            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) && (Package.Build.Generation == BuildGeneration.UE2_5 || Package.Build.Generation == BuildGeneration.Thief))
+            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) && (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Thief))
                 // No property flag
-                || Package.Build.Generation == BuildGeneration.Vengeance)
+                || Package.Build == BuildGeneration.Vengeance)
             {
                 // May represent a tooltip/comment in some games.
                 EditorDataText = _Buffer.ReadText();
