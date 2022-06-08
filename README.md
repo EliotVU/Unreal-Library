@@ -39,34 +39,36 @@ Compatible Games
 
 This is a table of games that are confirmed to be compatible with the current state of UELib, the table is sorted by Package-Version.
 
-| Name    | Engine    | Package/Licensee    | Support State     |
-| ------- | --------- | ------------------- | -----------------
+| Name                  | Engine:Branch    | Package/Licensee    | Support State     |
+| --------------------- | ---------------- | ------------------- | -----------------
 | Unreal | 100-226 | 61/000 | |
-| [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | Unknown | 61/000 | |
+| [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | 219 | 61/000 | |
 | Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | |
 | Unreal Tournament | 338-436 | 68/000 | |
-| Deus Ex | Unknown | Unknown |     |
-| Thief: Deadly Shadows | Thief | 95/133 | LinkedData not supported |
-| Deus Ex: Invisible War | Thief | 95/069 | LinkedData not supported |
+| Deus Ex | 400-436 | 68/000 |     |
+| Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
+| Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
+| Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
+| Thief: Deadly Shadows | 777:Flesh | 95/133 | LinkedData not supported |
 |     |     |     |     |
 |     |     |     |     |
-| XIII | Unknown | 100/058 |     |
-| Tom Clancy's Rainbow Six 3: Raven Shield | 600-? | 118/012:014 | |
+| XIII | 829 | 100/058 |     |
+| Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012:014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
-| America's Army 2 | 3369 | 128/032:033 | 2.5, 2.6, 2.8 |
-| America's Army (Arcade) | 3369 | 128/032 | 2.6 |
+| America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 |
+| America's Army (Arcade) | 3339 | 128/032 | 2.6 |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
-| Battle Territory Battery | Unknown | Unknown |     |
-| Swat 4 | Vengeance | 129/027 | |
-| Tribes: Vengeance | Vengeance | 130/027 | |
-| Bioshock | Vengeance | 130-141/056 | |
-| Bioshock 2 | Vengeance | 143/059 | |
-| Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | (Third-party) <https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/> |
-| The Chronicles of Spellborn | Unknown | 159/029 | |
+| Battle Territory: Battery | 3369 | 128/029? |     |
+| Swat 4 | 2226:Vengeance | 129/027 | |
+| Tribes: Vengeance | 2226:Vengeance | 130/027 | |
+| Bioshock | 2226:Vengeance | 130-141/056 | |
+| Bioshock 2 | 2226:Vengeance | 143/059 | |
+| Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) |
+| The Chronicles of Spellborn | 3323 | 159/029 | |
 |     |     |     |     |
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |
@@ -87,7 +89,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
 | Monday Night Combat | 5697 | 638/000 |     |
 | DC Universe Online | 5859 | 638/6405 |     |
-| Unreal Development Kit | 6094-12791 | 664-868 | |
+| Unreal Development Kit | 5860-12791 | 664-868 | |
 | Blacklight: Tango Down | 6165 | 673/002 | |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | |
 | Dungeon Defenders | 6262 | 678/002 | Earlier releases only |
@@ -123,7 +125,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Painkiller HD | 9953 | 860/000 |     |
 | Hawken | 10681 | 860/004 |     |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
-| Gal*Gun: Double Peace | 10897 | 871/000 | |
+| Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | Unknown | Unknown |     |
