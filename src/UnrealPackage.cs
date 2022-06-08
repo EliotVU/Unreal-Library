@@ -80,13 +80,7 @@ namespace UELib
 
         #region Serialized Members
 
-        private uint _Version;
-
-        public uint Version
-        {
-            get => OverrideVersion > 0 ? OverrideVersion : _Version;
-            set => _Version = value;
-        }
+        public uint Version { get; set; }
 
         /// <summary>
         /// For debugging purposes. Change this to override the present Version deserialized from the package.
@@ -119,13 +113,7 @@ namespace UELib
 
         #endregion
 
-        private ushort _LicenseeVersion;
-
-        public ushort LicenseeVersion
-        {
-            get => OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion;
-            private set => _LicenseeVersion = value;
-        }
+        public ushort LicenseeVersion { get; set; }
 
         /// <summary>
         /// For debugging purposes. Change this to override the present Version deserialized from the package.
@@ -528,7 +516,9 @@ namespace UELib
             public BuildName Name { get; }
 
             public uint Version { get; }
+            public uint? OverrideVersion { get; }
             public uint LicenseeVersion { get; }
+            public ushort? OverrideLicenseeVersion { get; }
 
             /// <summary>
             /// Is cooked for consoles.
@@ -550,32 +540,34 @@ namespace UELib
             {
                 if (UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console) Flags |= BuildFlags.ConsoleCooked;
 
-                var gameBuilds = (BuildName[])Enum.GetValues(typeof(BuildName));
-                foreach (var gameBuild in gameBuilds)
+                var builds = typeof(BuildName).GetFields();
+                foreach (var build in builds)
                 {
-                    var gameBuildMember = typeof(BuildName).GetMember(gameBuild.ToString());
-                    if (gameBuildMember.Length == 0)
-                        continue;
-
-                    object[] attribs = gameBuildMember[0].GetCustomAttributes(false);
-                    var game = attribs.OfType<BuildAttribute>().SingleOrDefault(attr => attr.Verify(this, package));
-                    if (game == null)
+                    var buildAttributes = build.GetCustomAttributes<BuildAttribute>(false);
+                    var buildAttribute = buildAttributes.FirstOrDefault(attr => attr.Verify(this, package));
+                    if (buildAttribute == null)
                         continue;
 
                     Version = package.Version;
                     LicenseeVersion = package.LicenseeVersion;
-                    Flags = game.Flags;
-                    Generation = game.Generation;
+                    Flags = buildAttribute.Flags;
+                    Generation = buildAttribute.Generation;
+                    
+                    var overrideAttribute = build.GetCustomAttribute<OverridePackageVersionAttribute>(false);
+                    if (overrideAttribute != null)
+                    {
+                        OverrideVersion = overrideAttribute.FixedVersion;
+                        OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                    }
 
-                    Name = (BuildName)Enum.Parse(typeof(BuildName), Enum.GetName(typeof(BuildName), gameBuild));
+                    Name = (BuildName)Enum.Parse(typeof(BuildName), build.Name);
                     if (package.Decoder != null) break;
 
-                    var buildDecoderAttr =
-                        attribs.SingleOrDefault(attr => attr is BuildDecoderAttribute) as BuildDecoderAttribute;
-                    if (buildDecoderAttr == null)
+                    var buildDecoderAttribute = build.GetCustomAttribute<BuildDecoderAttribute>(false);
+                    if (buildDecoderAttribute == null)
                         break;
 
-                    package.Decoder = buildDecoderAttr.CreateDecoder();
+                    package.Decoder = buildDecoderAttribute.CreateDecoder();
                     break;
                 }
 
@@ -981,11 +973,9 @@ namespace UELib
             LicenseeVersion = (ushort)(Version >> 16);
             Version &= 0xFFFFU;
             Console.WriteLine("Package Version:" + Version + "/" + LicenseeVersion);
-
-            Build = new GameBuild(this);
-            Console.WriteLine("Build:" + Build.Name);
-
+            SetupBuild(stream);
             stream.BuildDetected(Build);
+            Console.WriteLine("Build:" + Build.Name);
 
             if (Version >= VHeaderSize)
             {
@@ -1319,6 +1309,17 @@ namespace UELib
 
             Debug.Assert(stream.Position <= int.MaxValue);
             HeaderSize = (int)stream.Position;
+        }
+
+        private void SetupBuild(UPackageStream stream)
+        {
+            Build = new GameBuild(this);
+            
+            if (Build.OverrideVersion.HasValue) Version = Build.OverrideVersion.Value;
+            if (Build.OverrideLicenseeVersion.HasValue) LicenseeVersion = Build.OverrideLicenseeVersion.Value;
+
+            if (OverrideVersion != 0) Version = OverrideVersion;
+            if (OverrideLicenseeVersion != 0) LicenseeVersion = OverrideLicenseeVersion;
         }
 
         /// <summary>

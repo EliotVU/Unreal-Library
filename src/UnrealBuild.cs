@@ -37,4 +37,22 @@ namespace UELib
         /// </summary>
         NoDLLBind = 0x04
     }
+
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class OverridePackageVersionAttribute : Attribute
+    {
+        public readonly uint FixedVersion;
+        public readonly ushort? FixedLicenseeVersion;
+        
+        public OverridePackageVersionAttribute(uint fixedVersion)
+        {
+            FixedVersion = fixedVersion;
+        }
+        
+        public OverridePackageVersionAttribute(uint fixedVersion, ushort? fixedLicenseeVersion)
+        {
+            FixedVersion = fixedVersion;
+            FixedLicenseeVersion = fixedLicenseeVersion;
+        }
+    }
 }
