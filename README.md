@@ -24,7 +24,7 @@ Install using either:
 
 See [usage](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for further instructions on how to use the library in your project.
 
-If you're looking to modify the library for the sole purpose of modding [UE Explorer](https://eliotvu.com/portfolio/view/21/ue-explorer), I recommend you to clone or fork this repository and install UE Explorer within your ```UELib/src/bin/Debug/``` folder, or change the project's configuration to build inside of the UE Explorer's folder.
+If you're looking to modify the library for the sole purpose of modding [UE Explorer](https://github.com/UE-Explorer/UE-Explorer), I recommend you to clone or fork this repository and install UE Explorer within your ```UELib/src/bin/Debug/``` folder, or change the project's configuration to build inside of the UE Explorer's folder.
 
 Want to try out the [latest library release](https://github.com/EliotVU/Unreal-Library/releases)? Then you can simply save ```Eliot.UELib.dll``` to the folder where you have installed UE Explorer at. Note that the current release of UE Explorer is using version [1.2.7.1](https://github.com/EliotVU/Unreal-Library/releases/tag/release-1.2.7.1).
 
