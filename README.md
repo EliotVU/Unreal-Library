@@ -53,7 +53,8 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 |     |     |     |     |
 | XIII | 829 | 100/058 |     |
-| Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012:014 | |
+| Postal 2: Paradise Lost | 1417 | 118/002 | |
+| Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
@@ -79,7 +80,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Unreal Tournament 3 | 3809 | 512/000 | |
 | Mirrors Edge | 3716 | 536/043 |     |
 | Alpha Protocol | 3857 | 539/091 |     |
-| APB: All Points Bulletin | 3908 | 547/028:032 |     |
+| APB: All Points Bulletin | 3908 | 547/028-032 |     |
 | Gears of War 2 | 4638 | 575/000 | |
 | CrimeCraft | 4701 | 576/005 | |
 | Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes |
