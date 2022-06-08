@@ -203,6 +203,7 @@ namespace UELib.Core
                            )
                             DeserializeHideCategories();
 
+                        // Seems to have been removed in transformer packages
                         DeserializeComponentsMap();
 
                         // RoboBlitz(369)
@@ -239,6 +240,20 @@ namespace UELib.Core
                             if (!HasClassFlag(Flags.ClassFlags.CollapseCategories)
                                 || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576)
                                 AutoExpandCategories = DeserializeGroup("AutoExpandCategories");
+
+#if TRANSFORMERS
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                            {
+                                var constructorsCount = _Buffer.ReadInt32();
+                                Record("Constructors.Count", constructorsCount);
+                                if (constructorsCount >= 0)
+                                {
+                                    int numBytes = constructorsCount * 4;
+                                    AssertEOS(numBytes, "Constructors");
+                                    _Buffer.Skip(numBytes);
+                                }
+                            }
+#endif
 
                             if (Package.Version > 670)
                             {
@@ -283,7 +298,7 @@ namespace UELib.Core
                                 }
                             }
 
-                            // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
+                            // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
                             if (Package.Version > 575 && Package.Version < 673
 #if TERA
