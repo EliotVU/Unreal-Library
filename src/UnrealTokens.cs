@@ -41,9 +41,8 @@
         LetBool                 = 0x14,
 
         /// <summary>
-        /// UE1: ???
-        /// UE2: LineNumber (early UE2)?
-        /// UE2X: Deprecated (Bad Expr Token)
+        /// UE1: >68? LineNumber
+        /// UE2: LineNumber (early UE2)?, else (Bad Expr Token)
         /// UE3: EndParmValue
         /// </summary>
         LineNumber              = 0x15,

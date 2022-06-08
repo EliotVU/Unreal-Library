@@ -334,6 +334,7 @@ namespace UELib.Core
                     // Map all old CastTokens that were expressed as an ExprToken
                     _ByteCodeMap = new Dictionary<byte, byte>
                     {
+                        // TODO: Confirm if these are correct for UE1
                         { (byte)CastToken.RotatorToVector, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.ByteToInt, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.ByteToBool, (byte)ExprToken.PrimitiveCast },
@@ -347,7 +348,9 @@ namespace UELib.Core
                         { (byte)CastToken.FloatToByte, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.FloatToInt, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.FloatToBool, (byte)ExprToken.PrimitiveCast },
+                        
                         { (byte)CastToken.ObjectToInterface, (byte)ExprToken.PrimitiveCast }, // Actually StringToName
+                        
                         { (byte)CastToken.ObjectToBool, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.NameToBool, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.StringToByte, (byte)ExprToken.PrimitiveCast },
@@ -366,7 +369,9 @@ namespace UELib.Core
                         { (byte)CastToken.ObjectToString, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.NameToString, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.VectorToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.RotatorToString, (byte)ExprToken.PrimitiveCast }
+                        { (byte)CastToken.RotatorToString, (byte)ExprToken.PrimitiveCast },
+                        
+                        { (byte)CastToken.DelegateToString, (byte)ExprToken.PrimitiveCast } // StringToName in HP2?
                     };
                     return;
                 }
