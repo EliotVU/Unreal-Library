@@ -141,3 +141,12 @@ saved everything before opening any file!**
 Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes)
 
 Do you know a game that is compatible but is not listed here? Click on the top right to edit this file!
+
+Special thanks to
+==============
+
+  * Epic Games for [UDN: Packages](http://www.hypercoop.tk/infobase/archive/unrealtech/Packages.htm) (general package format)
+  * [Antonio Cordero Balcazar](https://github.com/acorderob) for [UTPT](https://www.acordero.org/projects/unreal-tournament-package-tool) (game support) and documentation (format)
+  * [Dmitry Jemerov](https://github.com/yole) for [unhood](https://github.com/yole/unhood) (early UE3 format)
+  * [Konstantin Nosov](https://github.com/gildor2) for providing help and [UE Viewer](http://www.gildor.org/en/projects/umodel) (game support)
+  * [Contributors](https://github.com/EliotVU/Unreal-Library/graphs/contributors)
