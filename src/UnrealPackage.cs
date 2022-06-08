@@ -583,14 +583,24 @@ namespace UELib
                     Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;
             }
 
-            public static bool operator ==(GameBuild b, BuildName i)
+            public static bool operator ==(GameBuild b, BuildGeneration gen)
             {
-                return b != null && b.Name == i;
+                return b?.Generation == gen;
             }
 
-            public static bool operator !=(GameBuild b, BuildName i)
+            public static bool operator !=(GameBuild b, BuildGeneration gen)
             {
-                return b != null && b.Name != i;
+                return b?.Generation != gen;
+            }
+
+            public static bool operator ==(GameBuild b, BuildName name)
+            {
+                return b?.Name == name;
+            }
+
+            public static bool operator !=(GameBuild b, BuildName name)
+            {
+                return b?.Name != name;
             }
 
             /// <inheritdoc/>

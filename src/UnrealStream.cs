@@ -148,7 +148,7 @@ namespace UELib
 #endif
             int unfixedSize = ReadIndex();
 #if BIOSHOCK
-            if (_Archive.Package.Build.Generation == BuildGeneration.Vengeance &&
+            if (_Archive.Package.Build == BuildGeneration.Vengeance &&
                 _Archive.Version >= 135)
             {
                 unfixedSize = -unfixedSize;

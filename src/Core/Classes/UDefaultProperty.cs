@@ -271,7 +271,7 @@ namespace UELib.Core
             Record(nameof(Type), Type.ToString());
             if (Type == PropertyType.None) return true;
 
-            if (_Buffer.Package.Build.Generation != BuildGeneration.Batman3MP)
+            if (_Buffer.Package.Build != BuildGeneration.Batman3MP)
             {
                 ushort offset = _Buffer.ReadUInt16();
                 Record(nameof(offset), offset);
@@ -291,7 +291,7 @@ namespace UELib.Core
                     Type == PropertyType.StructProperty ||
                     Type == PropertyType.Vector ||
                     Type == PropertyType.Rotator ||
-                    (Type == PropertyType.BoolProperty && _Buffer.Package.Build.Generation == BuildGeneration.Batman4))
+                    (Type == PropertyType.BoolProperty && _Buffer.Package.Build == BuildGeneration.Batman4))
                 {
                     switch(Type)
                     {

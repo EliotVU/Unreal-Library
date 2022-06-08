@@ -120,7 +120,7 @@ namespace UELib.Core
 #endif
             base.Deserialize();
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance &&
+            if (Package.Build == BuildGeneration.Vengeance &&
                 Package.LicenseeVersion >= 36)
             {
                 var header = (2, 0);
@@ -349,7 +349,7 @@ namespace UELib.Core
                 }
             }
 #if THIEF_DS || DeusEx_IW
-            if (Package.Build.Generation == BuildGeneration.Thief)
+            if (Package.Build == BuildGeneration.Thief)
             {
                 string thiefClassVisibleName = _Buffer.ReadText();
                 Record(nameof(thiefClassVisibleName), thiefClassVisibleName);
@@ -367,7 +367,7 @@ namespace UELib.Core
             }
 #endif
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 if (Package.LicenseeVersion >= 2)
                 {
