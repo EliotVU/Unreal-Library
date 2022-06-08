@@ -80,7 +80,7 @@ namespace UELib.Core
 
 #if TRANSFORMERS
             // TODO: Version?
-            FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
+            FunctionFlags = Package.Build == BuildGeneration.HMS
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
 #else
@@ -109,7 +109,7 @@ namespace UELib.Core
             if (_Buffer.Version >= VFriendlyName && !Package.IsConsoleCooked()
 #if TRANSFORMERS
                 // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
-                && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+                && Package.Build != BuildGeneration.HMS
 #endif
 #if MKKE
                 // Cooked and stripped, but FriendlyName still remains

@@ -186,6 +186,9 @@ namespace UELib.Core
 #if TERA
                                                 || Package.Build == UnrealPackage.GameBuild.BuildName.Tera
 #endif
+#if TRANSFORMERS
+                                                || Package.Build == BuildGeneration.HMS
+#endif
                     ;
 
                 // +HideCategories
@@ -195,12 +198,8 @@ namespace UELib.Core
                     if (Package.Version >= 220)
                     {
                         // TODO: Corrigate Version
-                        if ((isHideCategoriesOldOrder && !Package.IsConsoleCooked() &&
-                             !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
-#if TRANSFORMERS
-                            || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
-#endif
-                           )
+                        if (isHideCategoriesOldOrder && !Package.IsConsoleCooked() &&
+                            !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
                             DeserializeHideCategories();
 
                         // Seems to have been removed in transformer packages
@@ -240,78 +239,74 @@ namespace UELib.Core
                             if (!HasClassFlag(Flags.ClassFlags.CollapseCategories)
                                 || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576)
                                 AutoExpandCategories = DeserializeGroup("AutoExpandCategories");
-
 #if TRANSFORMERS
-                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                            if (Package.Build == BuildGeneration.HMS)
                             {
-                                var constructorsCount = _Buffer.ReadInt32();
-                                Record("Constructors.Count", constructorsCount);
-                                if (constructorsCount >= 0)
-                                {
-                                    int numBytes = constructorsCount * 4;
-                                    AssertEOS(numBytes, "Constructors");
-                                    _Buffer.Skip(numBytes);
-                                }
+                                _Buffer.ReadArray(out UArray<UObject> hmsConstructors);
+                                Record(nameof(hmsConstructors), hmsConstructors);
                             }
 #endif
-
-                            if (Package.Version > 670)
-                            {
-                                AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
-
-                                if (Package.Version >= 749
+                        }
+                        
+                        if (Package.Version > 670)
+                        {
+                            AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
+                        }
+                        
+                        if (Package.Version >= 749
 #if SPECIALFORCE2
-                                    && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
+                            && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
 #endif
-                                   )
-                                {
-                                    // bForceScriptOrder
-                                    ForceScriptOrder = _Buffer.ReadInt32() > 0;
-                                    Record(nameof(ForceScriptOrder), ForceScriptOrder);
+                           )
+                        {
+                            // bForceScriptOrder
+                            ForceScriptOrder = _Buffer.ReadInt32() > 0;
+                            Record(nameof(ForceScriptOrder), ForceScriptOrder);
+                        }
 #if DISHONORED
-                                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
-                                    {
-                                        var unknownName = _Buffer.ReadNameReference();
-                                        Record("Unknown:Dishonored", unknownName);
-                                    }
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
+                        {
+                            var unknownName = _Buffer.ReadNameReference();
+                            Record("Unknown:Dishonored", unknownName);
+                        }
 #endif
-                                    if (Package.Version >= UnrealPackage.VCLASSGROUP)
-                                    {
+                        if (Package.Version >= UnrealPackage.VCLASSGROUP)
+                        {
 #if DISHONORED
-                                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
-                                        {
-                                            NativeClassName = _Buffer.ReadText();
-                                            Record(nameof(NativeClassName), NativeClassName);
-                                            goto skipClassGroups;
-                                        }
-#endif
-                                        ClassGroups = DeserializeGroup("ClassGroups");
-                                        if (Package.Version >= 813)
-                                        {
-                                            NativeClassName = _Buffer.ReadText();
-                                            Record(nameof(NativeClassName), NativeClassName);
-                                        }
-                                    }
-#if DISHONORED
-                                    skipClassGroups: ;
-#endif
-                                }
-                            }
-
-                            // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
-                            // TODO: Corrigate Version
-                            if (Package.Version > 575 && Package.Version < 673
-#if TERA
-                                                      && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
-#endif
-                               )
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                             {
-                                int unknownInt32 = _Buffer.ReadInt32();
-                                Record("Unknown", unknownInt32);
-#if SINGULARITY
-                                if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity) _Buffer.Skip(8);
-#endif
+                                NativeClassName = _Buffer.ReadText();
+                                Record(nameof(NativeClassName), NativeClassName);
+                                goto skipClassGroups;
                             }
+#endif
+                            ClassGroups = DeserializeGroup("ClassGroups");
+                            if (Package.Version >= 813)
+                            {
+                                NativeClassName = _Buffer.ReadText();
+                                Record(nameof(NativeClassName), NativeClassName);
+                            }
+                        }
+#if DISHONORED
+                        skipClassGroups: ;
+#endif
+
+                        // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
+                        // TODO: Corrigate Version
+                        if (Package.Version > 575 && Package.Version < 673
+#if TERA
+                                                  && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+#if TRANSFORMERS
+                                                  && Package.Build != BuildGeneration.HMS
+#endif
+                           )
+                        {
+                            int unknownInt32 = _Buffer.ReadInt32();
+                            Record("Unknown", unknownInt32);
+#if SINGULARITY
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity) _Buffer.Skip(8);
+#endif
                         }
                     }
 #if BATMAN

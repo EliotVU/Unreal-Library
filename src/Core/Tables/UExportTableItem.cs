@@ -194,10 +194,10 @@ namespace UELib
 
             if (stream.Version < 543
 #if ALPHAPROTOCOL
-                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtcol
+                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
 #endif
 #if TRANSFORMERS
-                && (stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers ||
+                && (stream.Package.Build != BuildGeneration.HMS ||
                     stream.Package.LicenseeVersion < 37)
 #endif
                )
@@ -215,7 +215,7 @@ namespace UELib
             if (stream.Version < VNetObjects)
                 return;
 #if TRANSFORMERS
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Transformers &&
+            if (stream.Package.Build == BuildGeneration.HMS &&
                 stream.Package.LicenseeVersion >= 116)
             {
                 byte flag = stream.ReadByte();

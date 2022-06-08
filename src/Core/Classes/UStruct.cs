@@ -151,19 +151,16 @@ namespace UELib.Core
             }
 #endif
 #if TRANSFORMERS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+            if (Package.Build == BuildGeneration.HMS)
             {
+                int transformersEndLine = _Buffer.ReadInt32();
                 // The line where the struct's code body ends.
-                _Buffer.Skip(4);
+                Record(nameof(transformersEndLine), transformersEndLine);
             }
 #endif
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
-            bool hasFixedScriptSize = Package.Version >= VStorageScriptSize
-#if TRANSFORMERS
-                                      && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
-#endif
-                ;
+            bool hasFixedScriptSize = Package.Version >= VStorageScriptSize;
             if (hasFixedScriptSize)
             {
                 DataScriptSize = _Buffer.ReadInt32();

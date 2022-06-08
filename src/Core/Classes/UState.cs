@@ -61,7 +61,7 @@ namespace UELib.Core
             base.Deserialize();
 
 #if TRANSFORMERS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+            if (Package.Build == BuildGeneration.HMS)
             {
                 goto noMasks;
             }
@@ -90,7 +90,7 @@ namespace UELib.Core
 #if BORDERLANDS2 || TRANSFORMERS
                 // FIXME:Temp fix
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                    Package.Build == BuildGeneration.HMS)
                 {
                     _StateFlags = _Buffer.ReadUShort();
                     goto skipStateFlags;
@@ -103,7 +103,7 @@ namespace UELib.Core
             }
 
 #if TRANSFORMERS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+            if (Package.Build == BuildGeneration.HMS)
             {
                 _Buffer.Skip(4);
                 return;

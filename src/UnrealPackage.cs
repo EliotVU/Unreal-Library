@@ -334,7 +334,12 @@ namespace UELib
                 /// 490/009
                 /// </summary>
                 [Build(490, 9)] GoW1,
-
+                
+                [Build(511, 039, BuildGeneration.HMS)] // The Bourne Conspiracy
+                [Build(511, 145, BuildGeneration.HMS)] // Transformers: War for Cybertron (PC version)
+                [Build(511, 144, BuildGeneration.HMS)] // Transformers: War for Cybertron (PS3 and XBox 360 version)
+                Transformers,
+                
                 /// <summary>
                 /// 512/000
                 /// </summary>
@@ -346,9 +351,15 @@ namespace UELib
                 [Build(536, 43)] MirrorsEdge,
 
                 /// <summary>
+                /// Transformers: Dark of the Moon
+                /// </summary>
+                [Build(537, 174, BuildGeneration.HMS)]
+                Transformers2,
+                
+                /// <summary>
                 /// 539/091
                 /// </summary>
-                [Build(539, 91)] AlphaProtcol,
+                [Build(539, 91)] AlphaProtocol,
 
                 /// <summary>
                 /// 547/028:032
@@ -472,16 +483,12 @@ namespace UELib
                 [Build(845, 120)] XCOM2WotC,
 
                 /// <summary>
+                /// Transformers: Fall of Cybertron
                 /// 846/181
                 /// </summary>
-                [Build(511, 039)] // The Bourne Conspiracy
-                [Build(511, 145)] // Transformers: War for Cybertron (PC version)
-                [Build(511, 144)] // Transformers: War for Cybertron (PS3 and XBox 360 version)
-                [Build(537, 174)] // Transformers: Dark of the Moon
-                [Build(846, 181, 2, 1)]
-                // FIXME: The serialized version is false, needs to be adjusted.
-                // Transformers: Fall of Cybertron
-                Transformers,
+                [Build(846, 181, BuildGeneration.HMS)]
+                [OverridePackageVersion(587)]
+                Transformers3,
 
                 /// <summary>
                 /// 860/004
@@ -708,20 +715,10 @@ namespace UELib
                     DependsOffset = stream.ReadInt32();
                 }
 
-#if TRANSFORMERS
-                if (stream.Package.Build == GameBuild.BuildName.Transformers
-                    && stream.Version < 535)
-                {
-                    return;
-                }
-#endif
                 if (stream.Version >= VImportExportGuidsOffset
                     // FIXME: Correct the output version of these games instead.
 #if BIOSHOCK
                     && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
-#endif
-#if TRANSFORMERS
-                    && stream.Package.Build != GameBuild.BuildName.Transformers
 #endif
                    )
                 {
@@ -729,7 +726,15 @@ namespace UELib
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();
                 }
-
+#if TRANSFORMERS
+                if (stream.Package.Build == BuildGeneration.HMS && 
+                    stream.Version >= 535)
+                {
+                    // ThumbnailTableOffset? But if so, the partial-upgrade must have skipped @AdditionalPackagesToCook
+                    stream.Skip(4);
+                    return;
+                }
+#endif
                 if (stream.Version >= VThumbnailTableOffset)
                 {
 #if APB
@@ -989,8 +994,8 @@ namespace UELib
                 if (Build == GameBuild.BuildName.MKKE) stream.Skip(8);
 #endif
 #if TRANSFORMERS
-                if (Build == GameBuild.BuildName.Transformers
-                    && LicenseeVersion >= 55)
+                if (Build == BuildGeneration.HMS && 
+                    LicenseeVersion >= 55)
                 {
                     if (LicenseeVersion >= 181) stream.Skip(16);
 
@@ -1098,6 +1103,12 @@ namespace UELib
 
                 if (Version >= VAdditionalPackagesToCook)
                 {
+#if TRANSFORMERS
+                    if (Build == BuildGeneration.HMS)
+                    {
+                        goto endOfSummary;
+                    }
+#endif
                     UArray<string> additionalPackagesToCook;
                     stream.ReadArray(out additionalPackagesToCook);
 #if DCUO
@@ -1150,6 +1161,7 @@ namespace UELib
                 // Data after this is encrypted
             }
 #endif
+            endOfSummary:
             // We can't continue without decompressing.
             if (CompressionFlags != 0 || (_CompressedChunks != null && _CompressedChunks.Any()))
             {

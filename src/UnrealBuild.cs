@@ -5,18 +5,21 @@ namespace UELib
     public enum BuildGeneration
     {
         Undefined,
-        
+
         Thief,
         UE2_5,
         UE2X,
         Vengeance,
         Lead,
-        
+
         // Batman2+ use the same Engine spinoff, but it's still necessary to distinguish the builds by name.
         Batman2,
         Batman3,
         Batman3MP,
-        Batman4
+        Batman4,
+        
+        /// High Moon Studios
+        HMS
     }
 
     [Flags]

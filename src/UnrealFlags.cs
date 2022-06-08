@@ -94,6 +94,9 @@ namespace UELib.Flags
         Stripped            = 0x40000000U,
 
         Protected           = 0x80000000U,
+#if TRANSFORMERS
+        HMS_XmlFormat       = 0x80000000U,
+#endif
     }
 
     [Flags]
