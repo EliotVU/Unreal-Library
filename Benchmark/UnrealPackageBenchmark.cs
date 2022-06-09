@@ -34,8 +34,8 @@ namespace Eliot.UELib.Benchmark
         public void NamesDeserialization()
         {
             _Linker.Stream.Position = 4;
-            _Linker.Stream.Seek(_Linker.Summary.NamesOffset, SeekOrigin.Begin);
-            for (var i = 0; i < _Linker.Summary.NamesCount; ++i)
+            _Linker.Stream.Seek(_Linker.Summary.NameOffset, SeekOrigin.Begin);
+            for (var i = 0; i < _Linker.Summary.NameCount; ++i)
             {
                 var nameEntry = new UNameTableItem();
                 nameEntry.Deserialize(_Linker.Stream);

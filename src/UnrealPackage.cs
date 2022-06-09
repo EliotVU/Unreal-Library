@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -254,7 +255,8 @@ namespace UELib
                 /// <summary>
                 /// 110/2609
                 /// </summary>
-                [Build(110, 2609)] Unreal2,
+                [Build(110, 110, 2481u, 2609u)] 
+                Unreal2,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
@@ -642,17 +644,18 @@ namespace UELib
         /// </summary>
         public string Group;
 
-        public struct TablesData : IUnrealSerializableClass
+        public struct PackageFileSummary : IUnrealSerializableClass
         {
-            public int NamesCount;
-            public int NamesOffset { get; internal set; }
-
-            public int ExportsCount { get; internal set; }
-            public int ExportsOffset { get; internal set; }
-
-            public int ImportsCount { get; internal set; }
-            public int ImportsOffset { get; internal set; }
-
+            public int NameCount, NameOffset;
+            public int ExportCount, ExportOffset;
+            public int ImportCount, ImportOffset;
+            public int HeritageCount, HeritageOffset;
+            
+            /// <summary>
+            /// List of heritages. UE1 way of defining generations.
+            /// </summary>
+            public UArray<Guid> Heritages;
+            
             private const int VDependsOffset = 415;
             public int DependsOffset;
 
@@ -666,14 +669,14 @@ namespace UELib
 
             public void Serialize(IUnrealStream stream)
             {
-                stream.Write(NamesCount);
-                stream.Write(NamesOffset);
+                stream.Write(NameCount);
+                stream.Write(NameOffset);
 
-                stream.Write(ExportsCount);
-                stream.Write(ExportsOffset);
+                stream.Write(ExportCount);
+                stream.Write(ExportOffset);
 
-                stream.Write(ImportsCount);
-                stream.Write(ImportsOffset);
+                stream.Write(ImportCount);
+                stream.Write(ImportOffset);
 
                 if (stream.Version >= 414)
                     stream.Write(DependsOffset);
@@ -686,10 +689,10 @@ namespace UELib
                     stream.Package.LicenseeVersion >= 2)
                     stream.Skip(4);
 #endif
-                NamesCount = stream.ReadInt32();
-                NamesOffset = stream.ReadInt32();
-                ExportsCount = stream.ReadInt32();
-                ExportsOffset = stream.ReadInt32();
+                NameCount = stream.ReadInt32();
+                NameOffset = stream.ReadInt32();
+                ExportCount = stream.ReadInt32();
+                ExportOffset = stream.ReadInt32();
 #if APB
                 if (stream.Package.Build == GameBuild.BuildName.APB &&
                     stream.Package.LicenseeVersion >= 28)
@@ -702,12 +705,12 @@ namespace UELib
                     stream.Skip(20);
                 }
 #endif
-                ImportsCount = stream.ReadInt32();
-                ImportsOffset = stream.ReadInt32();
+                ImportCount = stream.ReadInt32();
+                ImportOffset = stream.ReadInt32();
 
-                Console.WriteLine("Names Count:" + NamesCount + " Names Offset:" + NamesOffset
-                                  + " Exports Count:" + ExportsCount + " Exports Offset:" + ExportsOffset
-                                  + " Imports Count:" + ImportsCount + " Imports Offset:" + ImportsOffset
+                Console.WriteLine("Names Count:" + NameCount + " Names Offset:" + NameOffset
+                                  + " Exports Count:" + ExportCount + " Exports Offset:" + ExportOffset
+                                  + " Imports Count:" + ImportCount + " Imports Offset:" + ImportOffset
                 );
 
                 if (stream.Version >= VDependsOffset)
@@ -748,19 +751,13 @@ namespace UELib
             }
         }
 
-        private TablesData _TablesData;
-        public TablesData Summary => _TablesData;
+        public PackageFileSummary Summary;
 
         /// <summary>
         /// The guid of this package. Used to test if the package on a client is equal to the one on a server.
         /// </summary>
         [PublicAPI]
         public string GUID { get; private set; }
-
-        /// <summary>
-        /// List of heritages. UE1 way of defining generations.
-        /// </summary>
-        private IList<ushort> _Heritages;
 
         /// <summary>
         /// List of package generations.
@@ -915,12 +912,12 @@ namespace UELib
 
             stream.Write(PackageFlags);
 
-            _TablesData.NamesCount = Names.Count;
-            _TablesData.ExportsCount = Exports.Count;
-            _TablesData.ImportsCount = Imports.Count;
+            Summary.NameCount = Names.Count;
+            Summary.ExportCount = Exports.Count;
+            Summary.ImportCount = Imports.Count;
 
             long tablesDataPosition = stream.Position;
-            _TablesData.Serialize(stream);
+            Summary.Serialize(stream);
 
             // TODO: Serialize Heritages
 
@@ -950,13 +947,13 @@ namespace UELib
 
             // names
             Console.WriteLine("Writing names at position " + stream.Position);
-            _TablesData.NamesOffset = (int)stream.Position;
+            Summary.NameOffset = (int)stream.Position;
             byte[] namesBytes = namesBuffer.GetBuffer();
             stream.Write(namesBytes, 0, (int)namesBuffer.Length);
 
             // imports
             Console.WriteLine("Writing imports at position " + stream.Position);
-            _TablesData.ImportsOffset = (int)stream.Position;
+            Summary.ImportOffset = (int)stream.Position;
             byte[] importsBytes = importsBuffer.GetBuffer();
             stream.Write(importsBytes, 0, (int)importsBuffer.Length);
 
@@ -966,7 +963,7 @@ namespace UELib
             // Serialize tables data again now that offsets are known.
             long currentPosition = stream.Position;
             stream.Seek(tablesDataPosition, SeekOrigin.Begin);
-            _TablesData.Serialize(stream);
+            Summary.Serialize(stream);
             stream.Seek(currentPosition, SeekOrigin.Begin);
         }
 
@@ -1018,16 +1015,13 @@ namespace UELib
             Console.WriteLine("Package Flags:" + PackageFlags);
 
             // Summary data such as ObjectCount.
-            _TablesData = new TablesData();
-            _TablesData.Deserialize(stream);
+            Summary = new PackageFileSummary();
+            Summary.Deserialize(stream);
             if (Version < 68)
             {
-                int heritageCount = stream.ReadInt32();
-                int heritageOffset = stream.ReadInt32();
-
-                stream.Seek(heritageOffset, SeekOrigin.Begin);
-                _Heritages = new List<ushort>(heritageCount);
-                for (var i = 0; i < heritageCount; ++i) _Heritages.Add(stream.ReadUShort());
+                Summary.HeritageCount = stream.ReadInt32();
+                Contract.Assert(Summary.HeritageCount > 0);
+                Summary.HeritageOffset = stream.ReadInt32();
             }
             else
             {
@@ -1060,6 +1054,7 @@ namespace UELib
                 {
 #endif
                     int generationCount = stream.ReadInt32();
+                    Contract.Assert(generationCount > 0);
                     Console.WriteLine("Generations Count:" + generationCount);
 #if APB
                     // Guid, however only serialized for the first generation item.
@@ -1116,17 +1111,17 @@ namespace UELib
                     {
                         var realNameOffset = (int)stream.Position;
                         Debug.Assert(
-                            realNameOffset <= _TablesData.NamesOffset,
+                            realNameOffset <= Summary.NameOffset,
                             "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!"
                         );
 
-                        int offsetDif = _TablesData.NamesOffset - realNameOffset;
-                        _TablesData.NamesOffset -= offsetDif;
-                        _TablesData.ImportsOffset -= offsetDif;
-                        _TablesData.ExportsOffset -= offsetDif;
-                        _TablesData.DependsOffset = 0; // not working
-                        _TablesData.ImportExportGuidsOffset -= offsetDif;
-                        _TablesData.ThumbnailTableOffset -= offsetDif;
+                        int offsetDif = Summary.NameOffset - realNameOffset;
+                        Summary.NameOffset -= offsetDif;
+                        Summary.ImportOffset -= offsetDif;
+                        Summary.ExportOffset -= offsetDif;
+                        Summary.DependsOffset = 0; // not working
+                        Summary.ImportExportGuidsOffset -= offsetDif;
+                        Summary.ThumbnailTableOffset -= offsetDif;
                     }
 #endif
                 }
@@ -1157,7 +1152,7 @@ namespace UELib
                 Debug.WriteLine(compressedChunkInfoOffset, "CompressedChunkInfoOffset");
                 int lastBlockSize = stream.ReadInt32();
                 Debug.WriteLine(lastBlockSize, "LastBlockSize");
-                Debug.Assert(stream.Position == _TablesData.NamesOffset, "There is more data before the NameTable");
+                Debug.Assert(stream.Position == Summary.NameOffset, "There is more data before the NameTable");
                 // Data after this is encrypted
             }
 #endif
@@ -1189,7 +1184,7 @@ namespace UELib
                         var decoder = new CryptoDecoderWithKeyAA2();
                         Decoder = decoder;
 
-                        long nonePosition = _TablesData.NamesOffset;
+                        long nonePosition = Summary.NameOffset;
                         stream.Seek(nonePosition, SeekOrigin.Begin);
                         byte scrambledNoneLength = stream.ReadByte();
                         decoder.Key = scrambledNoneLength;
@@ -1220,13 +1215,13 @@ namespace UELib
 #endif
             // Read the name table
 #if TERA
-            if (Build == GameBuild.BuildName.Tera) _TablesData.NamesCount = Generations.Last().NamesCount;
+            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NamesCount;
 #endif
-            if (_TablesData.NamesCount > 0)
+            if (Summary.NameCount > 0)
             {
-                stream.Seek(_TablesData.NamesOffset, SeekOrigin.Begin);
-                Names = new List<UNameTableItem>(_TablesData.NamesCount);
-                for (var i = 0; i < _TablesData.NamesCount; ++i)
+                stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
+                Names = new List<UNameTableItem>(Summary.NameCount);
+                for (var i = 0; i < Summary.NameCount; ++i)
                 {
                     var nameEntry = new UNameTableItem { Offset = (int)stream.Position, Index = i };
                     nameEntry.Deserialize(stream);
@@ -1239,16 +1234,25 @@ namespace UELib
                     && Names[0].Name == "DRFORTHEWIN")
                     Names[0].Name = "None";
                 // False??
-                //Debug.Assert(stream.Position == _TablesData.ImportsOffset);
+                //Debug.Assert(stream.Position == Summary.ImportsOffset);
 #endif
             }
 
-            // Read Import Table
-            if (_TablesData.ImportsCount > 0)
+            // Read Heritages
+            if (Summary.HeritageCount > 0)
             {
-                stream.Seek(_TablesData.ImportsOffset, SeekOrigin.Begin);
-                Imports = new List<UImportTableItem>(_TablesData.ImportsCount);
-                for (var i = 0; i < _TablesData.ImportsCount; ++i)
+                stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
+                Summary.Heritages = new UArray<Guid>(Summary.HeritageCount);
+                for (var i = 0; i < Summary.HeritageCount; ++i) 
+                    Summary.Heritages.Add(stream.ReadGuid());
+            }
+
+            // Read Import Table
+            if (Summary.ImportCount > 0)
+            {
+                stream.Seek(Summary.ImportOffset, SeekOrigin.Begin);
+                Imports = new List<UImportTableItem>(Summary.ImportCount);
+                for (var i = 0; i < Summary.ImportCount; ++i)
                 {
                     var imp = new UImportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
                     imp.Deserialize(stream);
@@ -1258,11 +1262,11 @@ namespace UELib
             }
 
             // Read Export Table
-            if (_TablesData.ExportsCount > 0)
+            if (Summary.ExportCount > 0)
             {
-                stream.Seek(_TablesData.ExportsOffset, SeekOrigin.Begin);
-                Exports = new List<UExportTableItem>(_TablesData.ExportsCount);
-                for (var i = 0; i < _TablesData.ExportsCount; ++i)
+                stream.Seek(Summary.ExportOffset, SeekOrigin.Begin);
+                Exports = new List<UExportTableItem>(Summary.ExportCount);
+                for (var i = 0; i < Summary.ExportCount; ++i)
                 {
                     var exp = new UExportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
                     exp.Deserialize(stream);
@@ -1270,10 +1274,10 @@ namespace UELib
                     Exports.Add(exp);
                 }
 
-                if (_TablesData.DependsOffset > 0)
+                if (Summary.DependsOffset > 0)
                 {
-                    stream.Seek(_TablesData.DependsOffset, SeekOrigin.Begin);
-                    int dependsCount = _TablesData.ExportsCount;
+                    stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
+                    int dependsCount = Summary.ExportCount;
 #if BIOSHOCK
                     // FIXME: Version?
                     if (Build == GameBuild.BuildName.Bioshock_Infinite)
@@ -1297,23 +1301,23 @@ namespace UELib
                 }
             }
 
-            if (_TablesData.ImportExportGuidsOffset > 0)
+            if (Summary.ImportExportGuidsOffset > 0)
             {
-                for (var i = 0; i < _TablesData.ImportGuidsCount; ++i)
+                for (var i = 0; i < Summary.ImportGuidsCount; ++i)
                 {
                     string levelName = stream.ReadText();
                     int guidCount = stream.ReadInt32();
                     stream.Skip(guidCount * 16);
                 }
 
-                for (var i = 0; i < _TablesData.ExportGuidsCount; ++i)
+                for (var i = 0; i < Summary.ExportGuidsCount; ++i)
                 {
                     var objectGuid = stream.ReadGuid();
                     int exportIndex = stream.ReadInt32();
                 }
             }
 
-            if (_TablesData.ThumbnailTableOffset != 0)
+            if (Summary.ThumbnailTableOffset != 0)
             {
                 int thumbnailCount = stream.ReadInt32();
                 // TODO: Serialize

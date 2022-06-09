@@ -52,6 +52,7 @@ namespace UELib.Flags
         /// <summary>
         /// The package is encrypted.
         /// <= UT
+        /// Also attested in file UT2004/Packages.MD5 but it is not encrypted.
         /// </summary>
         Encrypted           = 0x00000020U,
 
