@@ -116,6 +116,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Blacklight Retribution | 8788-10499 | 841-864/002 |     |
 | Infinity Blade 2 | 9059 | 842/001 |     |
 | Q.U.B.E | 8916 | 845/000 |     |
+| DmC: Devil May Cry | 8916 | 845/004 | |
 | XCOM: Enemy Unknown | 8916 | 845/059 | |
 | Gears of War: Judgement | 10566 | 846/000 |     |
 | InMomentum | 8980 | 848/000 |     |
