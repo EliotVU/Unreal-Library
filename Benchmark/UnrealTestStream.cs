@@ -8,15 +8,19 @@ namespace Eliot.UELib.Benchmark
     /// Hackish workaround for the issue with UPackageStream requiring a file and path, so that we can perform stream tests without a package.
     public class UnrealTestStream : UnrealReader, IUnrealStream
     {
+        public uint Version => _Archive.Version;
+        public uint LicenseeVersion { get; }
+        public uint UE4Version { get; }
+        public bool BigEndianCode { get; }
+        
+        public UnrealPackage Package => _Archive.Package;
+        public UnrealReader UR => this;
+        public UnrealWriter UW { get; }
+
         public UnrealTestStream(IUnrealArchive archive, Stream baseStream) : base(archive, baseStream)
         {
             _Archive = archive;
         }
-
-        public UnrealPackage Package => _Archive.Package;
-        public UnrealReader UR => this;
-        public UnrealWriter UW { get; }
-        public uint Version => _Archive.Version;
 
         public string ReadASCIIString()
         {

@@ -27,6 +27,7 @@ namespace UELib.Core
         private const byte ReplaceNameMarker = 0x02;
 
         private const int V3 = 220;
+
         // FIXME: Wrong version, naive approach
         private const int VAtomicStructs = V3;
         private const int VEnumName = 633;
@@ -67,6 +68,8 @@ namespace UELib.Core
         /// See PropertyType enum in UnrealFlags.cs
         /// </summary>
         [PublicAPI] public PropertyType Type;
+
+        [PublicAPI] public PropertyType InnerType;
 
         /// <summary>
         /// The stream size of this DefaultProperty.
@@ -293,7 +296,7 @@ namespace UELib.Core
                     Type == PropertyType.Rotator ||
                     (Type == PropertyType.BoolProperty && _Buffer.Package.Build == BuildGeneration.Batman4))
                 {
-                    switch(Type)
+                    switch (Type)
                     {
                         case PropertyType.Vector:
                         case PropertyType.Rotator:
@@ -318,6 +321,7 @@ namespace UELib.Core
                             Size = sizeof(byte);
                             break;
                     }
+
                     Name = new UName($"self[0x{offset:X3}]");
                     DeserializeTypeDataUE3();
                     return false;
@@ -344,6 +348,12 @@ namespace UELib.Core
                 case PropertyType.StructProperty:
                     ItemName = _Buffer.ReadNameReference();
                     Record(nameof(ItemName), ItemName);
+#if UE4
+                    if (_Buffer.UE4Version >= 441)
+                    {
+                        _Buffer.Skip(16);
+                    }
+#endif
                     break;
 
                 case PropertyType.ByteProperty:
@@ -361,6 +371,18 @@ namespace UELib.Core
                         : _Buffer.ReadInt32() > 0;
                     Record(nameof(BoolValue), BoolValue);
                     break;
+#if UE4
+                case PropertyType.ArrayProperty:
+                    // FIXME: UE4 version
+                    if (_Buffer.UE4Version > 220)
+                    {
+                        var innerTypeName = _Buffer.ReadName();
+                        _Container.Record("InnerType", innerTypeName);
+                        InnerType = (PropertyType)Enum.Parse(typeof(PropertyType), innerTypeName);
+                    }
+
+                    break;
+#endif
             }
         }
 
@@ -465,7 +487,7 @@ namespace UELib.Core
                         propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
                     }
-                    
+
                     case PropertyType.ByteProperty:
                     {
                         if (_Buffer.Version >= V3 && Size == 8)
@@ -603,7 +625,7 @@ namespace UELib.Core
                         string w = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
 
                         propertyValue += $"X={x},Y={y},Z={z},W={w}";
-                            break;
+                        break;
                     }
 
                     case PropertyType.Vector2D:
@@ -640,7 +662,7 @@ namespace UELib.Core
                         {
                             throw new NotSupportedException("Not atomic");
                         }
-                        
+
                         string w = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
                         string v = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         propertyValue += $"W={w},{v}";
@@ -664,7 +686,7 @@ namespace UELib.Core
                         {
                             throw new NotSupportedException("Not atomic");
                         }
-                        
+
                         string min = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         string max = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                         string isValid =
@@ -685,7 +707,7 @@ namespace UELib.Core
                         {
                             throw new NotSupportedException("Not atomic");
                         }
-                        
+
                         string xPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                         string yPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                         string zPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
@@ -718,20 +740,21 @@ namespace UELib.Core
 
                             // Not atomic if <=UE2,
                             // TODO: Figure out all non-atomic structs
-                            if (_Buffer.Version < VAtomicStructs) switch (hardcodedStructs[i])
-                            {
-                                case PropertyType.Matrix:
-                                case PropertyType.Box:
-                                case PropertyType.Plane:
-                                    goto nonAtomic;
-                            }
-                            
+                            if (_Buffer.Version < VAtomicStructs)
+                                switch (hardcodedStructs[i])
+                                {
+                                    case PropertyType.Matrix:
+                                    case PropertyType.Box:
+                                    case PropertyType.Plane:
+                                        goto nonAtomic;
+                                }
+
                             isHardCoded = true;
                             propertyValue += DeserializeDefaultPropertyValue(hardcodedStructs[i], ref deserializeFlags);
                             break;
                         }
 
-                        nonAtomic:
+                    nonAtomic:
                         if (!isHardCoded)
                         {
                             // We have to modify the outer so that dynamic arrays within this struct
@@ -758,8 +781,8 @@ namespace UELib.Core
                             }
                         }
 
-                        propertyValue = propertyValue.Length != 0 
-                            ? $"({propertyValue})" 
+                        propertyValue = propertyValue.Length != 0
+                            ? $"({propertyValue})"
                             : "none";
                         break;
                     }
@@ -778,17 +801,24 @@ namespace UELib.Core
                         // If found it has to modify the outer so structs within this array can find their array variables.
                         // Additionally we need to know the property to determine the array's type.
                         var arrayType = PropertyType.None;
-                        var property = FindProperty(out _Outer) as UArrayProperty;
-                        if (property?.InnerProperty != null)
+                        if (InnerType != PropertyType.None)
                         {
-                            arrayType = property.InnerProperty.Type;
+                            arrayType = InnerType;
                         }
-                        // If we did not find a reference to the associated property(because of imports)
-                        // then try to determine the array's type by scanning the defined array types.
-                        else if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey(Name))
+                        else
                         {
-                            var varTuple = UnrealConfig.VariableTypes[Name];
-                            if (varTuple != null) arrayType = varTuple.Item2;
+                            var property = FindProperty(out _Outer) as UArrayProperty;
+                            if (property?.InnerProperty != null)
+                            {
+                                arrayType = property.InnerProperty.Type;
+                            }
+                            // If we did not find a reference to the associated property(because of imports)
+                            // then try to determine the array's type by scanning the defined array types.
+                            else if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey(Name))
+                            {
+                                var varTuple = UnrealConfig.VariableTypes[Name];
+                                if (varTuple != null) arrayType = varTuple.Item2;
+                            }
                         }
 
                         if (arrayType == PropertyType.None)

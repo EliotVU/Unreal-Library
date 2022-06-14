@@ -31,6 +31,15 @@ namespace UELib
         {
             Name = DeserializeName(stream);
             Debug.Assert(Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
+#if UE4
+            if (stream.UE4Version >= 504)
+            {
+                stream.Skip(4);
+//                ushort nonCasePreservingHash = stream.ReadUInt16();
+//                ushort casePreservingHash = stream.ReadUInt16();
+                return;
+            }
+#endif
 #if BIOSHOCK
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
             {
@@ -53,7 +62,7 @@ namespace UELib
 #if AA2
             // Names are not encrypted in AAA/AAO 2.6 (LicenseeVersion 32)
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2
-                && stream.Package.LicenseeVersion >= 33
+                && stream.LicenseeVersion >= 33
                 && stream.Package.Decoder is CryptoDecoderAA2)
             {
                 // Thanks to @gildor2, decryption code transpiled from https://github.com/gildor2/UEViewer, 

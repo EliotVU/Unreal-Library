@@ -14,8 +14,7 @@ namespace UELib
         public UName PackageName;
         private UName _ClassName;
 
-        [Pure]
-        public override string ClassName => _ClassName;
+        [Pure] public override string ClassName => _ClassName;
 
         #endregion
 
@@ -32,7 +31,7 @@ namespace UELib
 #if AA2
             // Not attested in packages of LicenseeVersion 32
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2
-                && stream.Package.LicenseeVersion >= 33)
+                && stream.LicenseeVersion >= 33)
             {
                 PackageName = stream.ReadNameReference();
                 _ClassName = stream.ReadNameReference();

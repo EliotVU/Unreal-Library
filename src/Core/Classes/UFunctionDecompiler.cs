@@ -14,7 +14,7 @@ namespace UELib.Core
         ///     [LOCALS]
         ///
         ///     [CODE]
-        /// }
+        /// } [META DATA]
         /// </summary>
         /// <returns></returns>
         public override string Decompile()
@@ -28,8 +28,7 @@ namespace UELib.Core
             {
                 code = e.Message;
             }
-
-            return FormatHeader() + (string.IsNullOrEmpty(code) ? ";" : code);
+            return FormatHeader() + (string.IsNullOrEmpty(code) ? DecompileMeta() + ";" : code + DecompileMeta());
         }
 
         private string FormatFlags()
@@ -198,10 +197,10 @@ namespace UELib.Core
                 output = $"// Export U{Outer.Name}::exec{Name}(FFrame&, void* const)\r\n{UDecompilingState.Tabs}";
             }
 
-            string metaData = DecompileMeta();
-            if (metaData != string.Empty)
+            var comment = FormatTooltipMetaData();
+            if(comment != string.Empty)
             {
-                output = metaData + "\r\n" + output;
+                output = comment + output;
             }
 
             output += FormatFlags()

@@ -43,7 +43,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN BATMAN MOH ROCKETLEAGUE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 UE4 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN BATMAN MOH ROCKETLEAGUE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -97,7 +97,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTest|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Test\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE UE1 UE2 UE3 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN BATMAN</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DECOMPILE UE1 UE2 UE3 UE4 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DCUO AA2 SPELLBORN BATMAN</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <WarningLevel>0</WarningLevel>
     <DebugType>full</DebugType>
@@ -146,6 +146,7 @@
     <Compile Include="Core\Tables\UNameTableItem.cs" />
     <Compile Include="Core\Tables\UObjectTableItem.cs" />
     <Compile Include="Core\Tokens\ArrayTokens.cs" />
+    <Compile Include="Core\Tokens\BluePrintTokens.cs" />
     <Compile Include="Core\Tokens\CastTokens.cs" />
     <Compile Include="Core\Tokens\ConstTokens.cs" />
     <Compile Include="Core\Tokens\ContextTokens.cs" />
@@ -251,7 +252,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

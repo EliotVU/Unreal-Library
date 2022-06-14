@@ -17,6 +17,7 @@ namespace UELib.Core
     {
         // FIXME: Version 61 is the lowest package version I know that supports StateFlags.
         private const int VStateFlags = 61;
+
         // FIXME: Version
         private const int VFuncMap = 220;
         public const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
@@ -59,7 +60,12 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                return;
+            }
+#endif
 #if TRANSFORMERS
             if (Package.Build == BuildGeneration.HMS)
             {
@@ -67,7 +73,7 @@ namespace UELib.Core
             }
 #endif
 
-            if (Package.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
+            if (_Buffer.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
             {
                 ProbeMask = _Buffer.ReadUInt64();
                 Record(nameof(ProbeMask), ProbeMask);
@@ -81,11 +87,11 @@ namespace UELib.Core
                 Record(nameof(ProbeMask), ProbeMask);
             }
 
-            noMasks:
+        noMasks:
             LabelTableOffset = _Buffer.ReadUInt16();
             Record(nameof(LabelTableOffset), LabelTableOffset);
 
-            if (Package.Version >= VStateFlags)
+            if (_Buffer.Version >= VStateFlags)
             {
 #if BORDERLANDS2 || TRANSFORMERS
                 // FIXME:Temp fix
@@ -98,7 +104,7 @@ namespace UELib.Core
 #endif
 
                 _StateFlags = _Buffer.ReadUInt32();
-                skipStateFlags:
+            skipStateFlags:
                 Record(nameof(_StateFlags), (StateFlags)_StateFlags);
             }
 
@@ -110,8 +116,8 @@ namespace UELib.Core
             }
 #endif
 
-            if (Package.Version < VFuncMap) return;
-            _Buffer.ReadMap(out FuncMap); 
+            if (_Buffer.Version < VFuncMap) return;
+            _Buffer.ReadMap(out FuncMap);
             Record(nameof(FuncMap), FuncMap);
         }
 

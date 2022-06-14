@@ -44,8 +44,7 @@ namespace UELib
         /// </summary>
         public int ClassIndex { get; protected set; }
 
-        [Pure]
-        public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
+        [Pure] public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
 
         [Pure]
         public virtual string ClassName => ClassIndex != 0 ? Owner.GetIndexTable(ClassIndex).ObjectName : "Class";
@@ -56,8 +55,7 @@ namespace UELib
         /// </summary>
         public int OuterIndex { get; protected set; }
 
-        [Pure]
-        public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
+        [Pure] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
 
         [Pure]
         public string OuterName

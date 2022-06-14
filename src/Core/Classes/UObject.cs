@@ -71,8 +71,7 @@ namespace UELib.Core
         /// </summary>
         public UObjectStream Buffer => _Buffer;
 
-        [CanBeNull]
-        public UObject Default { get; protected set; }
+        [CanBeNull] public UObject Default { get; protected set; }
 
         /// <summary>
         /// Object Properties e.g. SubObjects or/and DefaultProperties
@@ -141,7 +140,8 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                ThrownException = new UnrealException($"Couldn't deserialize object {GetClassName()}'{GetOuterGroup()}'", e);
+                ThrownException =
+                    new UnrealException($"Couldn't deserialize object {GetClassName()}'{GetOuterGroup()}'", e);
                 ExceptionPosition = _Buffer?.Position ?? -1;
                 DeserializationState |= ObjectState.Errorlized;
 
@@ -227,7 +227,7 @@ namespace UELib.Core
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance)
             {
-                if (Package.LicenseeVersion >= 25)
+                if (_Buffer.LicenseeVersion >= 25)
                 {
                     var header = (3, 0);
                     VengeanceDeserializeHeader(_Buffer, ref header);
@@ -306,6 +306,14 @@ namespace UELib.Core
 
                 Properties.Add(tag);
             }
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                // Archetype?
+                var archetype = _Buffer.ReadObject();
+                Record(nameof(archetype), archetype);
+            }
+#endif
         }
 
         /// <summary>
@@ -322,9 +330,9 @@ namespace UELib.Core
             throw new NotImplementedException();
         }
 
-#endregion
+        #endregion
 
-#region Methods
+        #region Methods
 
         /// <summary>
         /// Checks if the object contains the specified @flag or one of the specified flags.
@@ -366,7 +374,8 @@ namespace UELib.Core
 
         public bool IsPrivate()
         {
-            return (_ObjectFlags & ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Private)) != (ulong)ObjectFlagsLO.Public;
+            return (_ObjectFlags & ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Private)) !=
+                   (ulong)ObjectFlagsLO.Public;
         }
 
         /// <summary>
@@ -543,7 +552,7 @@ namespace UELib.Core
             return pkg;
         }
 
-#region IBuffered
+        #region IBuffered
 
         public virtual byte[] CopyBuffer()
         {
@@ -599,7 +608,7 @@ namespace UELib.Core
                 : GetOuterGroup() + "." + GetClassName();
         }
 
-#endregion
+        #endregion
 
         /// <summary>
         /// TODO: Move this feature into a stream.
@@ -674,7 +683,7 @@ namespace UELib.Core
             Dispose(false);
         }
 
-#endregion
+        #endregion
 
         public static explicit operator int(UObject obj)
         {

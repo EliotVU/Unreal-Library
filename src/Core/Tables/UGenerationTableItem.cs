@@ -22,7 +22,7 @@ namespace UELib
         {
             ExportsCount = stream.ReadInt32();
             NamesCount = stream.ReadInt32();
-            if (stream.Version >= VNetObjectsCount)
+            if (stream.Version >= VNetObjectsCount && stream.UE4Version < 186)
             {
                 NetObjectsCount = stream.ReadInt32();
             }
