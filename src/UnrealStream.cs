@@ -11,13 +11,22 @@ using UELib.Core;
 
 namespace UELib
 {
-    public interface IUnrealStream : IDisposable
+    public interface IUnrealArchive
+    {
+        UnrealPackage Package { get; }
+        uint Version { get; }
+        uint LicenseeVersion { get; }
+        uint UE4Version { get; }
+
+        bool BigEndianCode { get; }
+        long LastPosition { get; set; }
+    }
+    
+    public interface IUnrealStream : IUnrealArchive, IDisposable
     {
         UnrealPackage Package { get; }
         UnrealReader UR { get; }
         UnrealWriter UW { get; }
-
-        uint Version { get; }
 
         string ReadText();
         string ReadASCIIString();
@@ -109,15 +118,6 @@ namespace UELib
 
             _UnrealStream = null;
         }
-    }
-
-    public interface IUnrealArchive
-    {
-        UnrealPackage Package { get; }
-        uint Version { get; }
-
-        bool BigEndianCode { get; }
-        long LastPosition { get; set; }
     }
 
     /// <summary>
@@ -371,15 +371,6 @@ namespace UELib
                 : (index << 6) + (b0 & 0x3F);
         }
 
-        public Guid ReadGuid()
-        {
-            // A, B, C, D
-            var guidBuffer = new byte[16];
-            Read(guidBuffer, 0, 16);
-            var g = new Guid(guidBuffer);
-            return g;
-        }
-
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
@@ -424,12 +415,15 @@ namespace UELib
 
     public class UPackageStream : UPackageFileStream, IUnrealStream, IUnrealArchive
     {
-        public uint Version => Package?.Version ?? 0;
+        public uint Version => Package.Version;
+        public uint LicenseeVersion => Package.LicenseeVersion;
+        public uint UE4Version => Package.Summary.UE4Version;
 
         public UnrealReader UR { get; private set; }
         public UnrealWriter UW { get; private set; }
 
         public long LastPosition { get; set; }
+
 
         public bool BigEndianCode { get; private set; }
 
@@ -474,15 +468,6 @@ namespace UELib
                 throw new FileLoadException(package.PackageName + " isn't an UnrealPackage!");
 
             Position = 4;
-        }
-
-        /// <summary>
-        /// Called as soon the build for @Package is detected.
-        /// </summary>
-        /// <param name="build"></param>
-        public void BuildDetected(UnrealPackage.GameBuild build)
-        {
-            Package.Decoder?.DecodeBuild(this, build);
         }
 
         public override int Read(byte[] buffer, int index, int count)
@@ -590,11 +575,6 @@ namespace UELib
             return UR.ReadNameIndex(out num);
         }
 
-        public Guid ReadGuid()
-        {
-            return UR.ReadGuid();
-        }
-
         #endregion
 
         public void Skip(int bytes)
@@ -614,11 +594,13 @@ namespace UELib
 
     public class UObjectStream : MemoryStream, IUnrealStream, IUnrealArchive
     {
+        public uint Version => Package.Version;
+        public uint LicenseeVersion => Package.LicenseeVersion;
+        public uint UE4Version => Package.Summary.UE4Version;
+        
         public string Name => Package.Stream.Name;
 
         public UnrealPackage Package { get; }
-
-        public uint Version => Package?.Version ?? 0;
 
         public UnrealReader UR { get; private set; }
         public UnrealWriter UW { get; private set; }
@@ -756,12 +738,7 @@ namespace UELib
         {
             return UR.ReadNameIndex(out num);
         }
-
-        public Guid ReadGuid()
-        {
-            return UR.ReadGuid();
-        }
-
+        
         #endregion
 
         public void Skip(int bytes)
@@ -1002,7 +979,17 @@ namespace UELib
             stream.LastPosition = position;
 #endif
         }
-
+        
+        // TODO: Implement FGuid
+        public static Guid ReadGuid(this IUnrealStream stream)
+        {
+            // A, B, C, D
+            var guidBuffer = new byte[16];
+            stream.Read(guidBuffer, 0, 16);
+            var guid = new Guid(guidBuffer);
+            return guid;
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<T>(this IUnrealStream stream, out UObject value)
             where T : UObject

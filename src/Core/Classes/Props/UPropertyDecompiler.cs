@@ -11,28 +11,7 @@ namespace UELib.Core
         // Called before the var () is printed.
         public virtual string PreDecompile()
         {
-            string tooltipValue = null;
-            MetaData?.Tags.TryGetValue("ToolTip", out tooltipValue);
-            if (tooltipValue == null)
-            {
-                return string.Empty;
-            }
-
-            var comment = $"{UDecompilingState.Tabs}/** ";
-            // Multiline comment?
-            if (tooltipValue.IndexOf('\n') != -1)
-            {
-                comment +=
-                    " \r\n" +
-                    $"{UDecompilingState.Tabs} *{tooltipValue.Replace("\n", "\n" + UDecompilingState.Tabs + " *")}" +
-                    $"\r\n{UDecompilingState.Tabs}";
-            }
-            else
-            {
-                comment += tooltipValue;
-            }
-
-            return $"{comment} */\r\n";
+            return FormatTooltipMetaData();
         }
 
         public override string Decompile()

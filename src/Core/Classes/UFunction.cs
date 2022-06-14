@@ -51,9 +51,21 @@ namespace UELib.Core
                 _Buffer.Skip(size * 2);
             }
 #endif
-
             base.Deserialize();
-
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                FunctionFlags = _Buffer.ReadUInt32();
+                Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+                if (HasFunctionFlag(Flags.FunctionFlags.Net))
+                {
+                    RepOffset = _Buffer.ReadUShort();
+                    Record(nameof(RepOffset), RepOffset);
+                }
+                FriendlyName = ExportTable.ObjectName;
+                return;
+            }
+#endif
             if (_Buffer.Version < 64)
             {
                 ushort paramsSize = _Buffer.ReadUShort();
@@ -108,8 +120,8 @@ namespace UELib.Core
             // TODO: Data-strip version?
             if (_Buffer.Version >= VFriendlyName && !Package.IsConsoleCooked()
 #if TRANSFORMERS
-                // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
-                && Package.Build != BuildGeneration.HMS
+                                                 // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
+                                                 && Package.Build != BuildGeneration.HMS
 #endif
 #if MKKE
                 // Cooked and stripped, but FriendlyName still remains

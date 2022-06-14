@@ -12,7 +12,9 @@ namespace UELib
     {
         private const int VArchetype = 220;
         public const int VObjectFlagsToULONG = 195;
+
         private const int VSerialSizeConditionless = 249;
+
         // FIXME: Version?
         public const int VNetObjects = 322;
 
@@ -24,8 +26,7 @@ namespace UELib
         /// </summary>
         public int SuperIndex { get; private set; }
 
-        [Pure]
-        public UObjectTableItem SuperTable => Owner.GetIndexTable(SuperIndex);
+        [Pure] public UObjectTableItem SuperTable => Owner.GetIndexTable(SuperIndex);
 
         [Pure]
         public string SuperName
@@ -43,8 +44,7 @@ namespace UELib
         /// </summary>
         public int ArchetypeIndex { get; private set; }
 
-        [Pure]
-        public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(ArchetypeIndex);
+        [Pure] public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(ArchetypeIndex);
 
         [Pure]
         public string ArchetypeName
@@ -111,10 +111,39 @@ namespace UELib
 
         public void Deserialize(IUnrealStream stream)
         {
+#if UE4
+            if (stream.UE4Version > 0)
+            {
+                ClassIndex = stream.ReadInt32();
+                SuperIndex = stream.ReadInt32();
+                OuterIndex = stream.ReadInt32();
+                ObjectName = stream.ReadNameReference();
+
+                if (stream.UE4Version < 142)
+                {
+                    ArchetypeIndex = stream.ReadInt32();
+                }
+
+                ObjectFlags = stream.ReadUInt32();
+
+                SerialSize = stream.ReadInt32();
+                SerialOffset = stream.ReadInt32();
+                stream.Skip(12); // bForcedExport, bNotForClient, bNotForServer
+                if (stream.UE4Version < 186)
+                {
+                    // GenerationNetObjectCount
+                    stream.Skip(4 * stream.ReadInt32());
+                }
+
+                stream.Skip(16); // PackageGuid
+                stream.Skip(4); // PackageFlags
+                return;
+            }
+#endif
 #if AA2
             // Not attested in packages of LicenseeVersion 32
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2 &&
-                stream.Package.LicenseeVersion >= 33)
+                stream.LicenseeVersion >= 33)
             {
                 SuperIndex = stream.ReadObjectIndex();
                 int unkInt = stream.ReadInt32();
@@ -145,7 +174,7 @@ namespace UELib
 #if BATMAN
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
             {
-                stream.Skip( sizeof(int) );
+                stream.Skip(sizeof(int));
             }
 #endif
 
@@ -153,7 +182,7 @@ namespace UELib
 #if BIOSHOCK
             // Like UE3 but without the shifting of flags
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
-                stream.Package.LicenseeVersion >= 40)
+                stream.LicenseeVersion >= 40)
             {
                 ObjectFlags = stream.ReadUInt64();
                 goto streamSerialSize;
@@ -165,7 +194,7 @@ namespace UELib
                 ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
             }
 
-            streamSerialSize:
+        streamSerialSize:
             SerialSize = stream.ReadIndex();
             if (SerialSize > 0 || stream.Version >= VSerialSizeConditionless)
             {
@@ -173,7 +202,7 @@ namespace UELib
                 // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
 
                 if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
-                    stream.Package.LicenseeVersion >= 22)
+                    stream.LicenseeVersion >= 22)
                 {
                     SerialOffset = stream.ReadIndex();
                     goto streamExportFlags;
@@ -198,7 +227,7 @@ namespace UELib
 #endif
 #if TRANSFORMERS
                 && (stream.Package.Build != BuildGeneration.HMS ||
-                    stream.Package.LicenseeVersion < 37)
+                    stream.LicenseeVersion < 37)
 #endif
                )
             {
@@ -210,13 +239,13 @@ namespace UELib
             if (stream.Version < 247)
                 return;
 
-            streamExportFlags:
+        streamExportFlags:
             ExportFlags = stream.ReadUInt32();
             if (stream.Version < VNetObjects)
                 return;
 #if TRANSFORMERS
             if (stream.Package.Build == BuildGeneration.HMS &&
-                stream.Package.LicenseeVersion >= 116)
+                stream.LicenseeVersion >= 116)
             {
                 byte flag = stream.ReadByte();
                 if (flag == 0)

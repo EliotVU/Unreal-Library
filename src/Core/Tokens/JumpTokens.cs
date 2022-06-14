@@ -75,6 +75,14 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
+#if UE4
+                    if (stream.UE4Version > 0)
+                    {
+                        CodeOffset = (ushort)stream.ReadInt32();
+                        Decompiler.AlignSize(sizeof(int));
+                        return;
+                    }
+#endif
                     CodeOffset = stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(ushort));
                 }
@@ -251,7 +259,7 @@ namespace UELib.Core
                         CommentStatement("Loop Continue");
                     }
 
-                    gotoJump:
+                gotoJump:
                     if (Position + Size == CodeOffset)
                     {
                         // Remove jump to next token
@@ -477,7 +485,7 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
-                    deserialize:
+                deserialize:
                     // Expression
                     DeserializeNext();
                 }

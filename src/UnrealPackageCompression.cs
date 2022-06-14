@@ -20,7 +20,7 @@ namespace UELib
 #if ROCKETLEAGUE
 
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague
-                && stream.Package.LicenseeVersion >= 22)
+                && stream.LicenseeVersion >= 22)
             {
                 stream.Write((long)UncompressedOffset);
                 stream.Write((long)CompressedOffset);
@@ -38,7 +38,7 @@ namespace UELib
         {
 #if ROCKETLEAGUE
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague
-                && stream.Package.LicenseeVersion >= 22)
+                && stream.LicenseeVersion >= 22)
             {
                 UncompressedOffset = (int)stream.ReadInt64();
                 CompressedOffset = (int)stream.ReadInt64();

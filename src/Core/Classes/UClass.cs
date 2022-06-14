@@ -121,13 +121,13 @@ namespace UELib.Core
             base.Deserialize();
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance &&
-                Package.LicenseeVersion >= 36)
+                _Buffer.LicenseeVersion >= 36)
             {
                 var header = (2, 0);
                 VengeanceDeserializeHeader(_Buffer, ref header);
             }
 #endif
-            if (Package.Version < 62)
+            if (_Buffer.Version < 62)
             {
                 int classRecordSize = _Buffer.ReadInt32();
                 Record(nameof(classRecordSize), classRecordSize);
@@ -137,6 +137,13 @@ namespace UELib.Core
             {
                 uint unknownUInt32 = _Buffer.ReadUInt32();
                 Record("Unknown:AA2", unknownUInt32);
+            }
+#endif
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                _Buffer.ReadMap(out FuncMap);
+                Record(nameof(FuncMap), FuncMap);
             }
 #endif
             ClassFlags = _Buffer.ReadUInt32();
@@ -150,9 +157,9 @@ namespace UELib.Core
                 goto skipTo61Stuff;
             }
 #endif
-            if (Package.Version >= 276)
+            if (_Buffer.Version >= 276)
             {
-                if (Package.Version < 547)
+                if (_Buffer.Version < 547)
                 {
                     byte unknownByte = _Buffer.ReadByte();
                     Record("ClassGuidReplacement???", unknownByte);
@@ -164,15 +171,15 @@ namespace UELib.Core
                 Record(nameof(ClassGuid), ClassGuid);
             }
 
-            if (Package.Version < 248)
+            if (_Buffer.Version < 248)
             {
                 _Buffer.ReadArray(out ClassDependencies);
                 Record(nameof(ClassDependencies), ClassDependencies);
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
 
-            skipTo61Stuff:
-            if (Package.Version >= 62)
+        skipTo61Stuff:
+            if (_Buffer.Version >= 62)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
                 //      Config(_ConfigIndex);
@@ -182,7 +189,7 @@ namespace UELib.Core
                 Record(nameof(ConfigName), ConfigName);
 
                 const int vHideCategoriesOldOrder = 539;
-                bool isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
+                bool isHideCategoriesOldOrder = _Buffer.Version <= vHideCategoriesOldOrder
 #if TERA
                                                 || Package.Build == UnrealPackage.GameBuild.BuildName.Tera
 #endif
@@ -192,35 +199,42 @@ namespace UELib.Core
                     ;
 
                 // +HideCategories
-                if (Package.Version >= 99)
+                if (_Buffer.Version >= 99)
                 {
                     // TODO: Corrigate Version
-                    if (Package.Version >= 220)
+                    if (_Buffer.Version >= 220)
                     {
                         // TODO: Corrigate Version
                         if (isHideCategoriesOldOrder && !Package.IsConsoleCooked() &&
-                            !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
+                            !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked) &&
+                            _Buffer.UE4Version < 117)
                             DeserializeHideCategories();
 
                         // Seems to have been removed in transformer packages
-                        DeserializeComponentsMap();
-
-                        // RoboBlitz(369)
-                        // TODO: Corrigate Version
-                        if (Package.Version >= VInterfaceClass) DeserializeInterfaces();
+                        if (_Buffer.UE4Version < 118) DeserializeComponentsMap();
                     }
 
+                    // RoboBlitz(369)
+                    // TODO: Corrigate Version
+                    if (_Buffer.Version >= VInterfaceClass) DeserializeInterfaces();
+#if UE4
+                    if (_Buffer.UE4Version > 0)
+                    {
+                        var classGeneratedBy = _Buffer.ReadObject();
+                        Record(nameof(classGeneratedBy), classGeneratedBy);
+                    }
+#endif
                     if (!Package.IsConsoleCooked() && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
                     {
-                        if (Package.Version >= 603
+                        if (_Buffer.Version >= 603 && _Buffer.UE4Version < 113
 #if TERA
-                            && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+                                                   && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
                            )
                             DontSortCategories = DeserializeGroup("DontSortCategories");
 
                         // FIXME: Added in v99, removed in ~220?
-                        if (Package.Version < 220 || !isHideCategoriesOldOrder)
+                        if (_Buffer.Version < 220 || !isHideCategoriesOldOrder)
                         {
                             DeserializeHideCategories();
 #if SPELLBORN
@@ -233,11 +247,11 @@ namespace UELib.Core
                         }
 
                         // +AutoExpandCategories
-                        if (Package.Version >= 185)
+                        if (_Buffer.Version >= 185)
                         {
                             // 490:GoW1, 576:CrimeCraft
                             if (!HasClassFlag(Flags.ClassFlags.CollapseCategories)
-                                || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576)
+                                || _Buffer.Version <= vHideCategoriesOldOrder || _Buffer.Version >= 576)
                                 AutoExpandCategories = DeserializeGroup("AutoExpandCategories");
 #if TRANSFORMERS
                             if (Package.Build == BuildGeneration.HMS)
@@ -247,13 +261,13 @@ namespace UELib.Core
                             }
 #endif
                         }
-                        
-                        if (Package.Version > 670)
+
+                        if (_Buffer.Version > 670)
                         {
                             AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
                         }
-                        
-                        if (Package.Version >= 749
+
+                        if (_Buffer.Version >= 749
 #if SPECIALFORCE2
                             && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
 #endif
@@ -270,7 +284,7 @@ namespace UELib.Core
                             Record("Unknown:Dishonored", unknownName);
                         }
 #endif
-                        if (Package.Version >= UnrealPackage.VCLASSGROUP)
+                        if (_Buffer.Version >= UnrealPackage.VCLASSGROUP)
                         {
 #if DISHONORED
                             if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
@@ -281,19 +295,19 @@ namespace UELib.Core
                             }
 #endif
                             ClassGroups = DeserializeGroup("ClassGroups");
-                            if (Package.Version >= 813)
+                            if (_Buffer.Version >= 813)
                             {
                                 NativeClassName = _Buffer.ReadText();
                                 Record(nameof(NativeClassName), NativeClassName);
                             }
                         }
 #if DISHONORED
-                        skipClassGroups: ;
+                    skipClassGroups: ;
 #endif
 
                         // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
                         // TODO: Corrigate Version
-                        if (Package.Version > 575 && Package.Version < 673
+                        if (_Buffer.Version > 575 && _Buffer.Version < 673
 #if TERA
                                                   && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
@@ -315,7 +329,7 @@ namespace UELib.Core
                         _Buffer.Skip(sizeof(int));
                     }
 #endif
-                    if (Package.Version >= UnrealPackage.VDLLBIND)
+                    if (_Buffer.Version >= UnrealPackage.VDLLBIND && _Buffer.UE4Version < 117)
                     {
                         if (!Package.Build.Flags.HasFlag(BuildFlags.NoDLLBind))
                         {
@@ -343,6 +357,15 @@ namespace UELib.Core
                     }
                 }
             }
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                string dummy = _Buffer.ReadName();
+                Record("dummy", dummy);
+                bool isCooked = _Buffer.ReadInt32() > 0;
+                Record("isCooked", isCooked);
+            }
+#endif
 #if THIEF_DS || DeusEx_IW
             if (Package.Build == BuildGeneration.Thief)
             {
@@ -350,7 +373,7 @@ namespace UELib.Core
                 Record(nameof(thiefClassVisibleName), thiefClassVisibleName);
 
                 // Restore the human-readable name if possible
-                if (!string.IsNullOrEmpty(thiefClassVisibleName) 
+                if (!string.IsNullOrEmpty(thiefClassVisibleName)
                     && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
                     var nameEntry = new UNameTableItem()
@@ -364,65 +387,65 @@ namespace UELib.Core
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance)
             {
-                if (Package.LicenseeVersion >= 2)
+                if (_Buffer.LicenseeVersion >= 2)
                 {
                     ulong unkInt64 = _Buffer.ReadUInt64();
                     Record("Unknown:Vengeance", unkInt64);
                 }
 
-                if (Package.LicenseeVersion >= 3)
+                if (_Buffer.LicenseeVersion >= 3)
                 {
                     ulong unkInt64 = _Buffer.ReadUInt64();
                     Record("Unknown:Vengeance", unkInt64);
                 }
 
-                if (Package.LicenseeVersion >= 2)
+                if (_Buffer.LicenseeVersion >= 2)
                 {
                     string vengeanceDefaultPropertiesText = _Buffer.ReadText();
                     Record(nameof(vengeanceDefaultPropertiesText), vengeanceDefaultPropertiesText);
                 }
 
-                if (Package.LicenseeVersion >= 6)
+                if (_Buffer.LicenseeVersion >= 6)
                 {
                     string vengeanceClassFilePath = _Buffer.ReadText();
                     Record(nameof(vengeanceClassFilePath), vengeanceClassFilePath);
                 }
 
-                if (Package.LicenseeVersion >= 12)
+                if (_Buffer.LicenseeVersion >= 12)
                 {
                     UArray<UName> names;
                     _Buffer.ReadArray(out names);
                     Record("Unknown:Vengeance", names);
                 }
 
-                if (Package.LicenseeVersion >= 15)
+                if (_Buffer.LicenseeVersion >= 15)
                 {
                     _Buffer.ReadArray(out Vengeance_Implements);
                     Record(nameof(Vengeance_Implements), Vengeance_Implements);
                 }
 
-                if (Package.LicenseeVersion >= 20)
+                if (_Buffer.LicenseeVersion >= 20)
                 {
                     UArray<UObject> unk;
                     _Buffer.ReadArray(out unk);
                     Record("Unknown:Vengeance", unk);
                 }
 
-                if (Package.LicenseeVersion >= 32)
+                if (_Buffer.LicenseeVersion >= 32)
                 {
                     UArray<UObject> unk;
                     _Buffer.ReadArray(out unk);
                     Record("Unknown:Vengeance", unk);
                 }
 
-                if (Package.LicenseeVersion >= 28)
+                if (_Buffer.LicenseeVersion >= 28)
                 {
                     UArray<UName> unk;
                     _Buffer.ReadArray(out unk);
                     Record("Unknown:Vengeance", unk);
                 }
 
-                if (Package.LicenseeVersion >= 30)
+                if (_Buffer.LicenseeVersion >= 30)
                 {
                     int unkInt32A = _Buffer.ReadInt32();
                     Record("Unknown:Vengeance", unkInt32A);
@@ -441,7 +464,7 @@ namespace UELib.Core
 #endif
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
             // TODO: Corrigate Version
-            if (Package.Version >= 322)
+            if (_Buffer.Version >= 322)
             {
                 Default = _Buffer.ReadObject();
                 Record(nameof(Default), Default);
@@ -469,6 +492,13 @@ namespace UELib.Core
                 int typeIndex = _Buffer.ReadInt32();
                 Record("Implemented.TypeIndex", typeIndex);
                 ImplementedInterfaces.Add(interfaceIndex);
+#if UE4
+                if (_Buffer.UE4Version > 0)
+                {
+                    var isImplementedByK2 = _Buffer.ReadInt32() > 0;
+                    Record("Implemented.isImplementedByK2", isImplementedByK2);
+                }
+#endif
             }
         }
 
@@ -551,5 +581,15 @@ namespace UELib.Core
         }
 
         #endregion
+    }
+
+    [UnrealRegisterClass]
+    public class UBlueprint : UField
+    {
+    }
+
+    [UnrealRegisterClass]
+    public class UBlueprintGeneratedClass : UClass
+    {
     }
 }

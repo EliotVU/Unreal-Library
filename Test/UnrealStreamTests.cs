@@ -25,8 +25,11 @@ namespace UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
-            // The easiest version to test against.
-            linker.Version = 300;
+            linker.Summary = new UnrealPackage.PackageFileSummary()
+            {
+                // The easiest version to test against.
+                Version = 300
+            };
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
@@ -59,8 +62,11 @@ namespace UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
-            // The easiest version to test against.
-            linker.Version = 300;
+            linker.Summary = new UnrealPackage.PackageFileSummary()
+            {
+                // The easiest version to test against.
+                Version = 300
+            };
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);

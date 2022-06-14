@@ -31,8 +31,7 @@ namespace UELib.Core
 
         [CanBeNull] public UName CategoryName;
 
-        [Obsolete("See CategoryName")]
-        public int CategoryIndex { get; }
+        [Obsolete("See CategoryName")] public int CategoryIndex { get; }
 
         [CanBeNull] public UEnum ArrayEnum { get; private set; }
 
@@ -115,30 +114,36 @@ namespace UELib.Core
                 Record(nameof(deusFlags), deusFlags);
             }
 #endif
-            if (!Package.IsConsoleCooked())
+            // FIXME: UE4 version
+            if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 160)
             {
                 CategoryName = _Buffer.ReadNameReference();
                 Record(nameof(CategoryName), CategoryName);
-
-                if (Package.Version > 400)
-                {
-                    ArrayEnum = GetIndexObject(_Buffer.ReadObjectIndex()) as UEnum;
-                    Record("ArrayEnum", ArrayEnum);
-                }
-                else
-                {
-#if THIEF_DS || DEUSEX_IW
-                    if (Package.Build == BuildGeneration.Thief)
-                    {
-                        short deusInheritedOrRuntimeInstiantiated = _Buffer.ReadInt16();
-                        Record(nameof(deusInheritedOrRuntimeInstiantiated), deusInheritedOrRuntimeInstiantiated);
-                        short deusUnkInt16= _Buffer.ReadInt16();
-                        Record(nameof(deusUnkInt16), deusUnkInt16);
-                    }
-#endif
-                }
             }
 
+            if (Package.Version > 400)
+            {
+                ArrayEnum = GetIndexObject(_Buffer.ReadObjectIndex()) as UEnum;
+                Record("ArrayEnum", ArrayEnum);
+            }
+#if THIEF_DS || DEUSEX_IW
+            if (Package.Build == BuildGeneration.Thief)
+            {
+                short deusInheritedOrRuntimeInstiantiated = _Buffer.ReadInt16();
+                Record(nameof(deusInheritedOrRuntimeInstiantiated), deusInheritedOrRuntimeInstiantiated);
+                short deusUnkInt16 = _Buffer.ReadInt16();
+                Record(nameof(deusUnkInt16), deusUnkInt16);
+            }
+#endif
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                // RepNotify function name
+                var repnotifyFunc = _Buffer.ReadNameReference();
+                Record("RepNotifyFunc", repnotifyFunc);
+                return;
+            }
+#endif
             if (HasPropertyFlag(PropertyFlagsLO.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
@@ -155,7 +160,8 @@ namespace UELib.Core
 #endif
             // Appears to be a UE2X feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
-            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) && (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Thief))
+            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) &&
+                 (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Thief))
                 // No property flag
                 || Package.Build == BuildGeneration.Vengeance)
             {
@@ -169,12 +175,12 @@ namespace UELib.Core
                 if (_Buffer.Version < 157)
                 {
                     throw new NotSupportedException("< 157 Spellborn packages are not supported");
-                    
+
                     if (133 < _Buffer.Version)
                     {
                         // idk
                     }
-                    
+
                     if (134 < _Buffer.Version)
                     {
                         int unk32 = _Buffer.ReadInt32();
