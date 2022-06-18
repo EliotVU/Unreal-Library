@@ -892,7 +892,24 @@ namespace UELib
             stream.LastPosition = position;
 #endif
         }
-
+        
+        public static void ReadArray(this IUnrealStream stream, out UArray<int> array)
+        {
+#if BINARYMETADATA
+            long position = stream.Position;
+#endif
+            int c = stream.ReadLength();
+            array = new UArray<int>(c);
+            for (var i = 0; i < c; ++i)
+            {
+                stream.Read(out int element);
+                array.Add(element);
+            }
+#if BINARYMETADATA
+            stream.LastPosition = position;
+#endif
+        }
+        
         public static void ReadArray(this IUnrealStream stream, out UArray<string> array)
         {
 #if BINARYMETADATA

@@ -42,7 +42,7 @@ namespace UELib
         /// Export:Object index to the class of this object
         /// -- Not Fixed
         /// </summary>
-        public int ClassIndex { get; protected set; }
+        public int ClassIndex { get; set; }
 
         [Pure] public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
 
@@ -53,7 +53,7 @@ namespace UELib
         /// Object index to the outer of this object
         /// -- Not Fixed
         /// </summary>
-        public int OuterIndex { get; protected set; }
+        public int OuterIndex { get; set; }
 
         [Pure] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
 

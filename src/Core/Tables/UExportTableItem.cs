@@ -2,6 +2,8 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
+using UELib.Core;
+using UELib.Flags;
 
 namespace UELib
 {
@@ -24,7 +26,7 @@ namespace UELib
         /// Object index to the Super(parent) object of structs.
         /// -- Not Fixed
         /// </summary>
-        public int SuperIndex { get; private set; }
+        public int SuperIndex { get; set; }
 
         [Pure] public UObjectTableItem SuperTable => Owner.GetIndexTable(SuperIndex);
 
@@ -37,6 +39,8 @@ namespace UELib
                 return table != null ? table.ObjectName : string.Empty;
             }
         }
+
+        public int TemplateIndex;
 
         /// <summary>
         /// Object index.
@@ -75,6 +79,15 @@ namespace UELib
         public uint ExportFlags;
         //public Dictionary<int, int> Components;
         //public List<int> NetObjects;
+
+        public Guid PackageGuid;
+        public uint PackageFlags;
+
+        public bool IsNotForServer;
+        public bool IsNotForClient;
+        public bool IsForcedExport;
+        public bool IsNotForEditorGame;
+        public bool IsAsset;
 
         #endregion
 
@@ -116,27 +129,46 @@ namespace UELib
             {
                 ClassIndex = stream.ReadInt32();
                 SuperIndex = stream.ReadInt32();
+                if (stream.UE4Version >= 508) TemplateIndex = stream.ReadInt32();
                 OuterIndex = stream.ReadInt32();
                 ObjectName = stream.ReadNameReference();
 
-                if (stream.UE4Version < 142)
-                {
-                    ArchetypeIndex = stream.ReadInt32();
-                }
+                if (stream.UE4Version < 142) ArchetypeIndex = stream.ReadInt32();
 
                 ObjectFlags = stream.ReadUInt32();
 
-                SerialSize = stream.ReadInt32();
-                SerialOffset = stream.ReadInt32();
-                stream.Skip(12); // bForcedExport, bNotForClient, bNotForServer
-                if (stream.UE4Version < 186)
+                if (stream.UE4Version >= 511)
                 {
-                    // GenerationNetObjectCount
-                    stream.Skip(4 * stream.ReadInt32());
+                    SerialSize = (int)stream.ReadInt64();
+                    SerialOffset = (int)stream.ReadInt64();
+                }
+                else
+                {
+                    SerialSize = stream.ReadInt32();
+                    SerialOffset = stream.ReadInt32();
                 }
 
-                stream.Skip(16); // PackageGuid
-                stream.Skip(4); // PackageFlags
+                IsForcedExport = stream.ReadInt32() > 0;
+                IsNotForServer = stream.ReadInt32() > 0;
+                IsNotForClient = stream.ReadInt32() > 0;
+                if (stream.UE4Version < 196)
+                {
+                    stream.ReadArray(out UArray<int> generationNetObjectCount);
+                }
+
+                PackageGuid = stream.ReadGuid();
+                PackageFlags = stream.ReadUInt32();
+                if (stream.UE4Version >= 365) IsNotForEditorGame = stream.ReadInt32() > 0;
+                if (stream.UE4Version >= 485) IsAsset = stream.ReadInt32() > 0;
+                if (stream.UE4Version >= 507)
+                {
+                    int firstExportDependency = stream.ReadInt32();
+                    int serializationBeforeSerializationDependencies = stream.ReadInt32();
+                    int createBeforeSerializationDependencies = stream.ReadInt32();
+                    int serializationBeforeCreateDependencies = stream.ReadInt32();
+                    int createBeforeCreateDependencies = stream.ReadInt32();
+                }
+
                 return;
             }
 #endif

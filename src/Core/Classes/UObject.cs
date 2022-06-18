@@ -98,6 +98,7 @@ namespace UELib.Core
         public ObjectState DeserializationState;
         public Exception ThrownException;
         public long ExceptionPosition;
+        public Guid ObjectGuid;
 
         /// <summary>
         /// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
@@ -245,7 +246,8 @@ namespace UELib.Core
                 StateFrame.Deserialize(_Buffer);
             }
 
-            if (_Buffer.Version >= UExportTableItem.VNetObjects
+            if (_Buffer.Version >= UExportTableItem.VNetObjects &&
+                _Buffer.UE4Version < 196
 #if MKKE
                 && Package.Build != UnrealPackage.GameBuild.BuildName.MKKE
 #endif
@@ -283,10 +285,25 @@ namespace UELib.Core
                 }
             }
 #endif
-            if (!IsClassType("Class"))
+            if (IsClassType("Class"))
             {
-                DeserializeProperties();
+                return;
             }
+
+            DeserializeProperties();
+
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                bool shouldSerializeGuid = _Buffer.ReadInt32() > 0;
+                Record(nameof(shouldSerializeGuid), shouldSerializeGuid);
+                if (shouldSerializeGuid)
+                {
+                    ObjectGuid = _Buffer.ReadGuid();
+                    Record(nameof(ObjectGuid), ObjectGuid);
+                }
+            }
+#endif
         }
 
         /// <summary>
@@ -306,14 +323,6 @@ namespace UELib.Core
 
                 Properties.Add(tag);
             }
-#if UE4
-            if (_Buffer.UE4Version > 0)
-            {
-                // Archetype?
-                var archetype = _Buffer.ReadObject();
-                Record(nameof(archetype), archetype);
-            }
-#endif
         }
 
         /// <summary>

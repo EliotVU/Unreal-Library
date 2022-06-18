@@ -25,6 +25,9 @@ namespace UELib
         /// </value>
         public ulong Flags;
 
+        public ushort NonCasePreservingHash;
+        public ushort CasePreservingHash;
+
         #endregion
 
         public void Deserialize(IUnrealStream stream)
@@ -34,9 +37,8 @@ namespace UELib
 #if UE4
             if (stream.UE4Version >= 504)
             {
-                stream.Skip(4);
-//                ushort nonCasePreservingHash = stream.ReadUInt16();
-//                ushort casePreservingHash = stream.ReadUInt16();
+                NonCasePreservingHash = stream.ReadUInt16();
+                CasePreservingHash = stream.ReadUInt16();
                 return;
             }
 #endif

@@ -63,6 +63,7 @@ namespace UELib.Core
         /// Name of the UEnum. If Type equals ByteProperty.
         /// </summary>
         [PublicAPI] [CanBeNull] public UName EnumName;
+        [PublicAPI] [CanBeNull] public UName InnerTypeName;
 
         /// <summary>
         /// See PropertyType enum in UnrealFlags.cs
@@ -376,9 +377,9 @@ namespace UELib.Core
                     // FIXME: UE4 version
                     if (_Buffer.UE4Version > 220)
                     {
-                        var innerTypeName = _Buffer.ReadName();
-                        _Container.Record("InnerType", innerTypeName);
-                        InnerType = (PropertyType)Enum.Parse(typeof(PropertyType), innerTypeName);
+                        InnerTypeName = _Buffer.ReadNameReference();
+                        _Container.Record(nameof(InnerTypeName), InnerTypeName);
+                        InnerType = (PropertyType)Enum.Parse(typeof(PropertyType), InnerTypeName);
                     }
 
                     break;

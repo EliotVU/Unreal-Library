@@ -22,44 +22,50 @@ namespace UELib.Flags
         // 00020001 : A ordinary package
 
         /// <summary>
-        /// Whether clients are allowed to download the package from the server.
+        /// UEX: Whether clients are allowed to download the package from the server.
+        /// UE4: Displaced by "NewlyCreated"
         /// </summary>
-        AllowDownload       = 0x00000001U,
+        AllowDownload         = 0x00000001U,
 
         /// <summary>
         /// Whether clients can skip downloading the package but still able to join the server.
         /// </summary>
-        ClientOptional      = 0x00000002U,
+        ClientOptional        = 0x00000002U,
 
         /// <summary>
         /// Only necessary to load on the server.
         /// </summary>
-        ServerSideOnly      = 0x00000004U,
+        ServerSideOnly        = 0x00000004U,
 
-        BrokenLinks         = 0x00000008U,      // @Redefined(UE3, Cooked)
+        BrokenLinks           = 0x00000008U,      // @Redefined(UE3, Cooked)
 
         /// <summary>
         /// The package is cooked.
         /// </summary>
-        Cooked              = 0x00000008U,      // @Redefined
+        Cooked                = 0x00000008U,      // @Redefined
 
         /// <summary>
         /// ???
         /// <= UT
         /// </summary>
-        Unsecure            = 0x00000010U,
+        Unsecure              = 0x00000010U,
 
         /// <summary>
         /// The package is encrypted.
         /// <= UT
         /// Also attested in file UT2004/Packages.MD5 but it is not encrypted.
         /// </summary>
-        Encrypted           = 0x00000020U,
+        Encrypted             = 0x00000020U,
 
+#if UE4
+        EditorOnly            = 0x00000040U,
+        UnversionedProperties = 0x00002000U,
+#endif
+        
         /// <summary>
         /// Clients must download the package.
         /// </summary>
-        Need                = 0x00008000U,
+        Need                  = 0x00008000U,
 
         /// <summary>
         /// Unknown flags
@@ -68,35 +74,39 @@ namespace UELib.Flags
         ///
 
         /// Package holds map data.
-        Map                 = 0x00020000U,
+        ContainsMap           = 0x00020000U,
 
         /// <summary>
         /// Package contains classes.
         /// </summary>
-        Script              = 0x00200000U,
+        ContainsScript        = 0x00200000U,
 
         /// <summary>
         /// The package was build with -Debug
         /// </summary>
-        Debug               = 0x00400000U,
-        Imports             = 0x00800000U,
+        ContainsDebugData     = 0x00400000U,
+        
+        Imports               = 0x00800000U,
 
-        Compressed          = 0x02000000U,
-        FullyCompressed     = 0x04000000U,
+        Compressed            = 0x02000000U,
+        FullyCompressed       = 0x04000000U,
 
         /// <summary>
         /// Whether package has metadata exported(anything related to the editor).
         /// </summary>
-        NoExportsData       = 0x20000000U,
+        NoExportsData         = 0x20000000U,
 
         /// <summary>
         /// Package's source is stripped.
+        /// UE4: Same as ReloadingForCooker?
         /// </summary>
-        Stripped            = 0x40000000U,
-
-        Protected           = 0x80000000U,
+        Stripped              = 0x40000000U,
+#if UE4
+        FilterEditorOnly      = 0x80000000U,
+#endif
+        Protected             = 0x80000000U,
 #if TRANSFORMERS
-        HMS_XmlFormat       = 0x80000000U,
+        HMS_XmlFormat         = 0x80000000U,
 #endif
     }
 

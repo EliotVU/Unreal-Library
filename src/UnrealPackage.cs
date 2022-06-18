@@ -624,6 +624,8 @@ namespace UELib
             /// UPK content category e.g. Weapons, Sounds or Meshes.
             /// </summary>
             public string FolderName;
+            
+            public string LocalizationId;
 
             public int NameCount, NameOffset;
             public int ExportCount, ExportOffset;
@@ -676,6 +678,9 @@ namespace UELib
             public int StringAssetReferencesOffset;
 
             public int SearchableNamesOffset;
+
+            public Guid PersistentGuid;
+            public Guid OwnerPersistentGuid;
 
             // In UELib 2.0 we pass the version to the Archives instead.
             private void SetupBuild(UnrealPackage package)
@@ -812,6 +817,11 @@ namespace UELib
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
 #if UE4
+                if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
+                {
+                    LocalizationId = stream.ReadText();
+                }
+                
                 if (stream.UE4Version >= 459)
                 {
                     GatherableTextDataCount = stream.ReadInt32();
@@ -944,6 +954,18 @@ namespace UELib
                     Console.WriteLine("\tEngineVersion:" + EngineVersion);
                 }
 #if UE4
+                if (stream.Package.ContainsEditorData())
+                {
+                    if (stream.UE4Version >= 518)
+                    {
+                        PersistentGuid = stream.ReadGuid();
+                        if (stream.UE4Version < 520)
+                        {
+                            OwnerPersistentGuid = stream.ReadGuid();
+                        }
+                    }
+                }
+                
                 if (stream.UE4Version >= 336)
                 {
                     // EngineVersion
@@ -1829,7 +1851,7 @@ namespace UELib
         [PublicAPI]
         public bool IsMap()
         {
-            return HasPackageFlag(Flags.PackageFlags.Map);
+            return HasPackageFlag(Flags.PackageFlags.ContainsMap);
         }
 
         /// <summary>
@@ -1839,7 +1861,7 @@ namespace UELib
         [PublicAPI]
         public bool IsScript()
         {
-            return HasPackageFlag(Flags.PackageFlags.Script);
+            return HasPackageFlag(Flags.PackageFlags.ContainsScript);
         }
 
         /// <summary>
@@ -1849,7 +1871,7 @@ namespace UELib
         [PublicAPI]
         public bool IsDebug()
         {
-            return HasPackageFlag(Flags.PackageFlags.Debug);
+            return HasPackageFlag(Flags.PackageFlags.ContainsDebugData);
         }
 
         /// <summary>
@@ -1872,13 +1894,18 @@ namespace UELib
             return HasPackageFlag(Flags.PackageFlags.Encrypted);
         }
 
+        public bool ContainsEditorData()
+        {
+            return Summary.UE4Version > 0 && !HasPackageFlag(Flags.PackageFlags.FilterEditorOnly);
+        }
+        
         #region IBuffered
 
         public byte[] CopyBuffer()
         {
             var buff = new byte[HeaderSize];
             Stream.Seek(0, SeekOrigin.Begin);
-            Stream.Read(buff, 0, (int)HeaderSize);
+            Stream.Read(buff, 0, HeaderSize);
             if (Stream.BigEndianCode) Array.Reverse(buff);
 
             return buff;
@@ -1899,7 +1926,7 @@ namespace UELib
 
         public int GetBufferSize()
         {
-            return (int)HeaderSize;
+            return HeaderSize;
         }
 
 
