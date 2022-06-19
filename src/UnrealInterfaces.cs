@@ -71,6 +71,16 @@ namespace UELib
     {
     }
 
+    public interface IVisitor
+    {
+        void Visit(IAcceptable visitor);
+    }
+    
+    public interface IAcceptable
+    {
+        void Accept(IVisitor visitor);
+    }
+
     /// <summary>
     /// This class can be deserialized from a specified stream.
     /// </summary>

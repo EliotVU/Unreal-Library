@@ -114,6 +114,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMetaData.cs" />
+    <Compile Include="Branch\BuildAttribute.cs" />
+    <Compile Include="Branch\DefaultEngineBranch.cs" />
+    <Compile Include="Branch\DefaultPackageSerializer.cs" />
+    <Compile Include="Branch\EngineBranch.cs" />
+    <Compile Include="Branch\BuildEngineBranchAttribute.cs" />
+    <Compile Include="Branch\PackageSerializerBase.cs" />
+    <Compile Include="Branch\UE4\EngineBranch.UE4.cs" />
+    <Compile Include="Branch\PackageSerializer.cs" />
+    <Compile Include="Branch\UE4\PackageSerializer.UE4.cs" />
     <Compile Include="Core\Classes\Props\Custom\UScriptMapProperty.cs" />
     <Compile Include="Core\Classes\Props\UArrayProperty.cs" />
     <Compile Include="Core\Classes\Props\UBoolProperty.cs" />
@@ -162,11 +171,13 @@
     <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
     <Compile Include="Core\UStateFrame.cs" />
-    <Compile Include="Decoding\CryptoDecoder.AA2.cs" />
+    <Compile Include="Branch\UE2\AA2\CryptoDecoder.AA2.cs" />
     <Compile Include="Decoding\CryptoCore.cs" />
     <Compile Include="Engine\Classes\UBitmapMaterial.cs" />
     <Compile Include="Engine\Classes\UPalette.cs" />
     <Compile Include="Decoding\IBufferDecoder.cs" />
+    <Compile Include="Branch\UE2\AA2\EngineBranch.AA2.cs" />
+    <Compile Include="Branch\UE2\AA2\PackageSerializer.AA2.cs" />
     <Compile Include="ObjectNodes.cs" />
     <Compile Include="Core\Types\UArray.cs" />
     <Compile Include="Core\Classes\UScriptStruct.cs" />
@@ -248,11 +259,13 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Branch\UE3\HMS\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

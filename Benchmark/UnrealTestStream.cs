@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
 using UELib;
+using UELib.Branch;
 using UELib.Core;
+using UELib.Decoding;
 
 namespace Eliot.UELib.Benchmark
 {
@@ -16,6 +18,13 @@ namespace Eliot.UELib.Benchmark
         public UnrealPackage Package => _Archive.Package;
         public UnrealReader UR => this;
         public UnrealWriter UW { get; }
+        
+        public IBufferDecoder Decoder { get; }
+
+        public void SetBranch(EngineBranch packageEngineBranch)
+        {
+            throw new NotImplementedException();
+        }
 
         public UnrealTestStream(IUnrealArchive archive, Stream baseStream) : base(archive, baseStream)
         {
@@ -79,10 +88,15 @@ namespace Eliot.UELib.Benchmark
             get => _Archive.LastPosition;
             set => _Archive.LastPosition = value;
         }
-
+        
         public long Seek(long offset, SeekOrigin origin)
         {
             return BaseStream.Seek(offset, origin);
+        }
+
+        public void SetBranch(IPackageSerializer packageSerializer)
+        {
+            throw new NotImplementedException();
         }
     }
 }

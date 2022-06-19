@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
-using UELib.Decoding;
+using UELib.Branch.UE2.AA2;
 
 namespace Eliot.UELib.Test.upk.Builds
 {

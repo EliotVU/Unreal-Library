@@ -1,113 +1,95 @@
 using System;
+using System.Text;
 
 namespace UELib.Flags
 {
-    /// <summary>
-    /// Flags describing an package instance.
-    ///
-    /// Note:
-    ///     This is valid for UE3 as well unless otherwise noted.
-    ///
-    /// @Redefined( Version, Clone )
-    ///     The flag is redefined in (Version) as (Clone)
-    ///
-    /// @Removed( Version )
-    ///     The flag is removed in (Version)
-    /// </summary>
-    [Flags]
-    public enum PackageFlags : uint
+    public class UnrealFlags<TEnum>
+        where TEnum : Enum
     {
-        // 028A0009 : A cooked and compressed package
-        // 00280009 : A cooked package
-        // 00020001 : A ordinary package
-
-        /// <summary>
-        /// UEX: Whether clients are allowed to download the package from the server.
-        /// UE4: Displaced by "NewlyCreated"
-        /// </summary>
-        AllowDownload         = 0x00000001U,
-
-        /// <summary>
-        /// Whether clients can skip downloading the package but still able to join the server.
-        /// </summary>
-        ClientOptional        = 0x00000002U,
-
-        /// <summary>
-        /// Only necessary to load on the server.
-        /// </summary>
-        ServerSideOnly        = 0x00000004U,
-
-        BrokenLinks           = 0x00000008U,      // @Redefined(UE3, Cooked)
-
-        /// <summary>
-        /// The package is cooked.
-        /// </summary>
-        Cooked                = 0x00000008U,      // @Redefined
-
-        /// <summary>
-        /// ???
-        /// <= UT
-        /// </summary>
-        Unsecure              = 0x00000010U,
-
-        /// <summary>
-        /// The package is encrypted.
-        /// <= UT
-        /// Also attested in file UT2004/Packages.MD5 but it is not encrypted.
-        /// </summary>
-        Encrypted             = 0x00000020U,
-
-#if UE4
-        EditorOnly            = 0x00000040U,
-        UnversionedProperties = 0x00002000U,
-#endif
+        private ulong _Flags;
+        private readonly ulong[] _FlagsMap;
         
-        /// <summary>
-        /// Clients must download the package.
-        /// </summary>
-        Need                  = 0x00008000U,
+        public ulong Flags
+        {
+            get => _Flags;
+            set => _Flags = value;
+        }
 
-        /// <summary>
-        /// Unknown flags
-        /// -   0x20000000  -- Probably means the package contains Content(Meshes, Textures)
-        /// </summary>
-        ///
+        public UnrealFlags(ulong flags, ulong[] flagsMap)
+        {
+            _Flags = flags;
+            _FlagsMap = flagsMap;
+        }
 
-        /// Package holds map data.
-        ContainsMap           = 0x00020000U,
+        private bool HasFlag(int flagIndex)
+        {
+            ulong flag = _FlagsMap[flagIndex];
+            return flag != 0 && (_Flags & flag) != 0;
+        }
 
-        /// <summary>
-        /// Package contains classes.
-        /// </summary>
-        ContainsScript        = 0x00200000U,
-
-        /// <summary>
-        /// The package was build with -Debug
-        /// </summary>
-        ContainsDebugData     = 0x00400000U,
+        public bool HasFlag(TEnum flagIndex)
+        {
+            ulong flag = _FlagsMap[(int)(object)flagIndex];
+            return flag != 0 && (_Flags & _FlagsMap[(int)(object)flagIndex]) != 0;
+        }
         
-        Imports               = 0x00800000U,
+        public static explicit operator uint(UnrealFlags<TEnum> flags)
+        {
+            return (uint)flags._Flags;
+        }
 
-        Compressed            = 0x02000000U,
-        FullyCompressed       = 0x04000000U,
+        public static explicit operator ulong(UnrealFlags<TEnum> flags)
+        {
+            return flags._Flags;
+        }
+
+        public override string ToString()
+        {
+            var stringBuilder = new StringBuilder();
+            var values = Enum.GetValues(typeof(TEnum));
+            for (var i = 0; i < values.Length - 1 /* Max */; i++)
+            {
+                if (!HasFlag(i)) continue;
+                string n = Enum.GetName(typeof(TEnum), i);
+                stringBuilder.Append($"{n};");
+            }
+            return stringBuilder.ToString();
+        }
+    }
+
+    /// <summary>
+    /// <see cref="Branch.DefaultEngineBranch.PackageFlagsDefault"/>
+    /// 
+    /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE1"/>
+    /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE2"/>
+    /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE3"/>
+    /// <seealso cref="UELib.Branch.UE4.EngineBranchUE4.PackageFlagsUE4"/>
+    /// </summary>
+    public enum PackageFlags
+    {
+        AllowDownload,
+        ClientOptional,
+        ServerSideOnly,
 
         /// <summary>
-        /// Whether package has metadata exported(anything related to the editor).
+        /// UE1???
         /// </summary>
-        NoExportsData         = 0x20000000U,
-
-        /// <summary>
-        /// Package's source is stripped.
-        /// UE4: Same as ReloadingForCooker?
-        /// </summary>
-        Stripped              = 0x40000000U,
+        Encrypted,
+        
+        Cooked,
+#if UE3
+        ContainsMap,
+        ContainsDebugData,
+        ContainsScript,
+        StrippedSource,
+#endif
 #if UE4
-        FilterEditorOnly      = 0x80000000U,
+        EditorOnly,
+        UnversionedProperties,
+        ReloadingForCooker,
+        FilterEditorOnly,
 #endif
-        Protected             = 0x80000000U,
-#if TRANSFORMERS
-        HMS_XmlFormat         = 0x80000000U,
-#endif
+        Max,
     }
 
     [Flags]

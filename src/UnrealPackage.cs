@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Branch;
+using UELib.Branch.UE2.AA2;
+using UELib.Branch.UE4;
 using UELib.Flags;
 
 namespace UELib
@@ -82,23 +85,6 @@ namespace UELib
         // TODO: Move to UnrealBuild.cs
         public sealed class GameBuild : object
         {
-            [UsedImplicitly]
-            [AttributeUsage(AttributeTargets.Field)]
-            private sealed class BuildDecoderAttribute : Attribute
-            {
-                private readonly Type _BuildDecoder;
-
-                public BuildDecoderAttribute(Type buildDecoder)
-                {
-                    _BuildDecoder = buildDecoder;
-                }
-
-                public IBufferDecoder CreateDecoder()
-                {
-                    return (IBufferDecoder)Activator.CreateInstance(_BuildDecoder);
-                }
-            }
-
             [AttributeUsage(AttributeTargets.Field, AllowMultiple = true)]
             private sealed class BuildAttribute : Attribute
             {
@@ -239,7 +225,7 @@ namespace UELib
                 /// Represents both AAO and AAA
                 /// 128/032:033
                 /// </summary>
-                [Build(128, 128, 32u, 33u, BuildGeneration.UE2_5)]
+                [Build(128, 128, 32u, 33u, BuildGeneration.UE2_5)] [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2,
 
                 // IrrationalGames/Vengeance - 129:143/027:059
@@ -498,6 +484,7 @@ namespace UELib
             public bool IsXenonCompressed { get; }
 
             public BuildGeneration Generation { get; }
+            [CanBeNull] public readonly Type EngineBranchType;
 
             public readonly BuildFlags Flags;
 
@@ -513,6 +500,8 @@ namespace UELib
                     if (buildAttribute == null)
                         continue;
 
+                    Name = (BuildName)Enum.Parse(typeof(BuildName), build.Name);
+                    
                     Version = package.Summary.Version;
                     LicenseeVersion = package.Summary.LicenseeVersion;
                     Flags = buildAttribute.Flags;
@@ -525,14 +514,13 @@ namespace UELib
                         OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
                     }
 
-                    Name = (BuildName)Enum.Parse(typeof(BuildName), build.Name);
-                    if (package.Decoder != null) break;
+                    var engineBranchAttribute = build.GetCustomAttribute<BuildEngineBranchAttribute>(false);
+                    if (engineBranchAttribute != null)
+                    {
+                        // We cannot create the instance here, because the instance itself may be dependent on GameBuild.
+                        EngineBranchType = engineBranchAttribute.EngineBranchType;
+                    }
 
-                    var buildDecoderAttribute = build.GetCustomAttribute<BuildDecoderAttribute>(false);
-                    if (buildDecoderAttribute == null)
-                        break;
-
-                    package.Decoder = buildDecoderAttribute.CreateDecoder();
                     break;
                 }
 
@@ -542,22 +530,22 @@ namespace UELib
 
             public static bool operator ==(GameBuild b, BuildGeneration gen)
             {
-                return b?.Generation == gen;
+                return b.Generation == gen;
             }
 
             public static bool operator !=(GameBuild b, BuildGeneration gen)
             {
-                return b?.Generation != gen;
+                return b.Generation != gen;
             }
 
             public static bool operator ==(GameBuild b, BuildName name)
             {
-                return b?.Name == name;
+                return b.Name == name;
             }
 
             public static bool operator !=(GameBuild b, BuildName name)
             {
-                return b?.Name != name;
+                return b.Name != name;
             }
 
             /// <inheritdoc/>
@@ -576,9 +564,15 @@ namespace UELib
             {
                 return (Flags & flags) == flags;
             }
+
+            public override string ToString()
+            {
+                return Name.ToString();
+            }
         }
 
         public GameBuild Build => Summary.Build;
+        public EngineBranch Branch => Summary.Branch;
 
         public struct PackageFileEngineVersion : IUnrealDeserializableClass
         {
@@ -604,6 +598,7 @@ namespace UELib
         public struct PackageFileSummary : IUnrealSerializableClass
         {
             public GameBuild Build;
+            public EngineBranch Branch;
 
             public uint Version;
             public ushort LicenseeVersion;
@@ -611,20 +606,18 @@ namespace UELib
             public uint UE4Version;
             public uint UE4LicenseeVersion;
 
-            /// <summary>
-            /// See <seealso cref="Flags.PackageFlags"/>
-            /// </summary>
-            public uint PackageFlags;
-            
+            public UnrealFlags<PackageFlags> PackageFlags;
+
             private const int VHeaderSize = 249;
             public int HeaderSize;
 
             private const int VFolderName = 269;
+
             /// <summary>
             /// UPK content category e.g. Weapons, Sounds or Meshes.
             /// </summary>
             public string FolderName;
-            
+
             public string LocalizationId;
 
             public int NameCount, NameOffset;
@@ -642,10 +635,10 @@ namespace UELib
 
             public Guid Guid;
             public UArray<UGenerationTableItem> Generations;
-            
+
             private PackageFileEngineVersion PackageEngineVersion;
             private PackageFileEngineVersion PackageCompatibleEngineVersion;
-            
+
             private const int VEngineVersion = 245;
             public int EngineVersion;
             public const int VCookerVersion = 277;
@@ -657,7 +650,7 @@ namespace UELib
 
             private const int VPackageSource = 482;
             public uint PackageSource;
-            
+
             private const int VAdditionalPackagesToCook = 516;
             public UArray<string> AdditionalPackagesToCook;
 
@@ -668,7 +661,7 @@ namespace UELib
 
             private const int VThumbnailTableOffset = 584;
             public int ThumbnailTableOffset;
-            
+
             private const int VTextureAllocations = 767;
 
             public int GatherableTextDataCount;
@@ -694,6 +687,24 @@ namespace UELib
                 if (OverrideLicenseeVersion != 0) LicenseeVersion = OverrideLicenseeVersion;
             }
 
+            private void SetupBranch(UnrealPackage package)
+            {
+                if (package.Build.EngineBranchType != null)
+                {
+                    Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType, package);
+                }
+                else if (package.Summary.UE4Version > 0)
+                {
+                    Branch = new EngineBranchUE4(package);
+                }
+                else
+                {
+                    Branch = new DefaultEngineBranch(package);
+                }
+
+                Debug.Assert(Branch.Serializer != null, "Branch.Serializer cannot be null");
+            }
+
             public void Serialize(IUnrealStream stream)
             {
                 throw new NotImplementedException();
@@ -705,14 +716,10 @@ namespace UELib
 
                 // Read as one variable due Big Endian Encoding.       
                 int legacyVersion = stream.ReadInt32();
-                if (legacyVersion < 0)
+                // FIXME: >= -7 is true for the game Quantum
+                if (legacyVersion < 0 && legacyVersion >= maxLegacyVersion)
                 {
 #if UE4
-                    if (legacyVersion < maxLegacyVersion)
-                    {
-                        throw new NotSupportedException("This version of the Unreal Engine 4 is not supported!");
-                    }
-
                     uint ue3Version = 0;
                     if (legacyVersion != -4)
                     {
@@ -775,8 +782,12 @@ namespace UELib
                 Console.WriteLine("Package Version:" + Version + "/" + LicenseeVersion);
 
                 SetupBuild(stream.Package);
-                Console.WriteLine("Build:" + Build.Name);
-                stream.Package.Decoder?.DecodeBuild(stream, Build);
+                Debug.Assert(Build != null);
+                Console.WriteLine("Build:" + Build);
+                SetupBranch(stream.Package);
+                Debug.Assert(Branch != null);
+                Console.WriteLine("Branch:" + Branch);
+                stream.SetBranch(Branch);
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -807,7 +818,7 @@ namespace UELib
                     FolderName = stream.ReadText();
                 }
 
-                PackageFlags = stream.ReadUInt32();
+                PackageFlags = stream.ReadFlags32<PackageFlags>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
 #if HAWKEN
                 if (stream.Package.Build == GameBuild.BuildName.Hawken &&
@@ -821,7 +832,7 @@ namespace UELib
                 {
                     LocalizationId = stream.ReadText();
                 }
-                
+
                 if (stream.UE4Version >= 459)
                 {
                     GatherableTextDataCount = stream.ReadInt32();
@@ -965,7 +976,7 @@ namespace UELib
                         }
                     }
                 }
-                
+
                 if (stream.UE4Version >= 336)
                 {
                     // EngineVersion
@@ -1067,12 +1078,12 @@ namespace UELib
         }
 
         public PackageFileSummary Summary;
-        
+
         /// <summary>
         /// Whether the package was serialized in BigEndian encoding.
         /// </summary>
         public bool IsBigEndianEncoded { get; }
-        
+
         public const int VSIZEPREFIXDEPRECATED = 64;
         public const int VINDEXDEPRECATED = 178;
 
@@ -1085,14 +1096,14 @@ namespace UELib
         /// New class modifier "ClassGroup(Name[,Name])"
         /// </summary>
         public const int VCLASSGROUP = 789;
-        
+
         public uint Version => Summary.Version;
 
         /// <summary>
         /// For debugging purposes. Change this to override the present Version deserialized from the package.
         /// </summary>
         public static ushort OverrideVersion;
-        
+
         public ushort LicenseeVersion => Summary.LicenseeVersion;
 
         /// <summary>
@@ -1103,54 +1114,54 @@ namespace UELib
         /// <summary>
         /// The bitflags of this package.
         /// </summary>
-        [Obsolete] public uint PackageFlags;
+        [Obsolete("See Summary.PackageFlags")] public uint PackageFlags;
 
         /// <summary>
         /// Size of the Header. Basically points to the first Object in the package.
         /// </summary>
-        [Obsolete]
+        [Obsolete("See Summary.HeaderSize")]
         public int HeaderSize => Summary.HeaderSize;
 
         /// <summary>
         /// The group the package is associated with in the Content Browser.
         /// </summary>
-        [Obsolete] public string Group;
+        [Obsolete("See Summary.FolderName")] public string Group;
 
         /// <summary>
         /// The guid of this package. Used to test if the package on a client is equal to the one on a server.
         /// </summary>
-        [Obsolete]
+        [Obsolete("See Summary.Guid")]
         public string GUID => Summary.Guid.ToString();
 
         /// <summary>
         /// List of package generations.
         /// </summary>
-        [Obsolete]
+        [Obsolete("See Summary.Generations")]
         public UArray<UGenerationTableItem> Generations => Summary.Generations;
 
         /// <summary>
         /// The Engine version the package was created with.
         /// </summary>
-        [Obsolete]
+        [Obsolete("See Summary.EngineVersion")]
         public int EngineVersion => Summary.EngineVersion;
 
         /// <summary>
         /// The Cooker version the package was cooked with.
         /// </summary>
-        [Obsolete]
+        [Obsolete("See Summary.CookerVersion")]
         public int CookerVersion => Summary.CookerVersion;
 
         /// <summary>
         /// The type of compression the package is compressed with.
         /// </summary>
-        [Obsolete]
+        [Obsolete("See Summary.CompressionFlags")]
         public uint CompressionFlags => Summary.CompressionFlags;
 
         /// <summary>
         /// List of compressed chunks throughout the package.
         /// Null if package version less is than <see cref="VCompression" />
         /// </summary>
-        [Obsolete]
+        [Obsolete("See Summary.CompressedChunks")]
         public UArray<CompressedChunk> CompressedChunks => Summary.CompressedChunks;
 
         /// <summary>
@@ -1193,7 +1204,8 @@ namespace UELib
 
         [PublicAPI] public NativesTablePackage NTLPackage;
 
-        [PublicAPI] public IBufferDecoder Decoder;
+        [Obsolete("See UPackageStream.Decoder")]
+        public IBufferDecoder Decoder;
 
         #endregion
 
@@ -1250,7 +1262,7 @@ namespace UELib
             Summary.Deserialize(stream);
 
             // FIXME: For backwards compatibility.
-            PackageFlags = Summary.PackageFlags;
+            PackageFlags = (uint)Summary.PackageFlags;
             Group = Summary.FolderName;
 
             // We can't continue without decompressing.
@@ -1273,12 +1285,12 @@ namespace UELib
                     if (LicenseeVersion >= 33)
                     {
                         var decoder = new CryptoDecoderAA2();
-                        Decoder = decoder;
+                        stream.Decoder = decoder;
                     }
                     else
                     {
                         var decoder = new CryptoDecoderWithKeyAA2();
-                        Decoder = decoder;
+                        stream.Decoder = decoder;
 
                         long nonePosition = Summary.NameOffset;
                         stream.Seek(nonePosition, SeekOrigin.Begin);
@@ -1320,7 +1332,7 @@ namespace UELib
                 for (var i = 0; i < Summary.NameCount; ++i)
                 {
                     var nameEntry = new UNameTableItem { Offset = (int)stream.Position, Index = i };
-                    nameEntry.Deserialize(stream);
+                    stream.Serializer.Deserialize(stream, nameEntry);
                     nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                     Names.Add(nameEntry);
                 }
@@ -1351,7 +1363,7 @@ namespace UELib
                 for (var i = 0; i < Summary.ImportCount; ++i)
                 {
                     var imp = new UImportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
-                    imp.Deserialize(stream);
+                    stream.Serializer.Deserialize(stream, imp);
                     imp.Size = (int)(stream.Position - imp.Offset);
                     Imports.Add(imp);
                 }
@@ -1365,7 +1377,7 @@ namespace UELib
                 for (var i = 0; i < Summary.ExportCount; ++i)
                 {
                     var exp = new UExportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
-                    exp.Deserialize(stream);
+                    stream.Serializer.Deserialize(stream, exp);
                     exp.Size = (int)(stream.Position - exp.Offset);
                     Exports.Add(exp);
                 }
@@ -1420,7 +1432,7 @@ namespace UELib
             }
 
             Debug.Assert(stream.Position <= int.MaxValue);
-            Summary.HeaderSize = (int)stream.Position;
+            if (Summary.HeaderSize == 0) Summary.HeaderSize = (int)stream.Position;
         }
 
         /// <summary>
@@ -1804,10 +1816,10 @@ namespace UELib
         /// </summary>
         /// <param name="flag">The enum @flag to test.</param>
         /// <returns>Whether this package is marked with @flag.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool HasPackageFlag(PackageFlags flag)
         {
-            return (Summary.PackageFlags & (uint)flag) != 0;
+            return (PackageFlags & (uint)flag) != 0;
         }
 
         /// <summary>
@@ -1815,10 +1827,10 @@ namespace UELib
         /// </summary>
         /// <param name="flag">The uint @flag to test</param>
         /// <returns>Whether this package is marked with @flag.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool HasPackageFlag(uint flag)
         {
-            return (Summary.PackageFlags & flag) != 0;
+            return (PackageFlags & flag) != 0;
         }
 
         /// <summary>
@@ -1828,7 +1840,7 @@ namespace UELib
         [PublicAPI]
         public bool IsCooked()
         {
-            return HasPackageFlag(Flags.PackageFlags.Cooked) && Version >= PackageFileSummary.VCookerVersion;
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked);
         }
 
         /// <summary>
@@ -1841,64 +1853,66 @@ namespace UELib
         [PublicAPI]
         public bool IsConsoleCooked()
         {
-            return IsCooked() && Build.Flags.HasFlag(BuildFlags.ConsoleCooked);
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked) &&
+                   Build.Flags.HasFlag(BuildFlags.ConsoleCooked);
         }
 
         /// <summary>
         /// Checks for the Map flag in PackageFlags.
         /// </summary>
         /// <returns>Whether if this package is a map.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool IsMap()
         {
-            return HasPackageFlag(Flags.PackageFlags.ContainsMap);
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.ContainsMap);
         }
 
         /// <summary>
         /// Checks if this package contains code classes.
         /// </summary>
         /// <returns>Whether if this package contains code classes.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool IsScript()
         {
-            return HasPackageFlag(Flags.PackageFlags.ContainsScript);
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.ContainsScript);
         }
 
         /// <summary>
         /// Checks if this package was built using the debug configuration.
         /// </summary>
         /// <returns>Whether if this package was built in debug configuration.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool IsDebug()
         {
-            return HasPackageFlag(Flags.PackageFlags.ContainsDebugData);
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.ContainsDebugData);
         }
 
         /// <summary>
         /// Checks for the Stripped flag in PackageFlags.
         /// </summary>
         /// <returns>Whether if this package is stripped.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool IsStripped()
         {
-            return HasPackageFlag(Flags.PackageFlags.Stripped);
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.StrippedSource);
         }
 
         /// <summary>
         /// Tests the packageflags of this UELib.UnrealPackage instance whether it is encrypted.
         /// </summary>
         /// <returns>True if encrypted or False if not.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool IsEncrypted()
         {
-            return HasPackageFlag(Flags.PackageFlags.Encrypted);
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Encrypted);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsEditorData()
         {
-            return Summary.UE4Version > 0 && !HasPackageFlag(Flags.PackageFlags.FilterEditorOnly);
+            return Summary.UE4Version > 0 && !Summary.PackageFlags.HasFlag(Flags.PackageFlags.FilterEditorOnly);
         }
-        
+
         #region IBuffered
 
         public byte[] CopyBuffer()

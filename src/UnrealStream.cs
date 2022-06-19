@@ -7,7 +7,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Core;
+using UELib.Decoding;
+using UELib.Flags;
 
 namespace UELib
 {
@@ -21,12 +24,16 @@ namespace UELib
         bool BigEndianCode { get; }
         long LastPosition { get; set; }
     }
-    
+
     public interface IUnrealStream : IUnrealArchive, IDisposable
     {
         UnrealPackage Package { get; }
         UnrealReader UR { get; }
         UnrealWriter UW { get; }
+        
+        [CanBeNull] IBufferDecoder Decoder { get; }
+
+        void SetBranch(EngineBranch packageEngineBranch);
 
         string ReadText();
         string ReadASCIIString();
@@ -202,7 +209,7 @@ namespace UELib
             long lastPosition = BaseStream.Position;
 #endif
             var strBytes = new List<byte>();
-            nextChar:
+        nextChar:
             byte c = ReadByte();
             if (c != '\0')
             {
@@ -222,7 +229,7 @@ namespace UELib
             long lastPosition = BaseStream.Position;
 #endif
             var strBytes = new List<byte>();
-            nextWord:
+        nextWord:
             short w = ReadInt16();
             if (w != 0)
             {
@@ -383,7 +390,7 @@ namespace UELib
 
     public class UPackageFileStream : FileStream
     {
-        public UnrealPackage Package { get; protected set; }
+        [CanBeNull] public IBufferDecoder Decoder { get; set; }
 
         protected UPackageFileStream(string path, FileMode mode, FileAccess access, FileShare share) : base(path, mode,
             access, share)
@@ -394,20 +401,20 @@ namespace UELib
         {
             long p = Position;
             int length = base.Read(buffer, index, count);
-            Package.Decoder?.DecodeRead(p, buffer, index, count);
+            Decoder?.DecodeRead(p, buffer, index, count);
             return length;
         }
 
         public override int ReadByte()
         {
-            if (Package.Decoder == null)
+            if (Decoder == null)
                 return base.ReadByte();
 
             unsafe
             {
                 long p = Position;
                 var b = (byte)base.ReadByte();
-                Package.Decoder?.DecodeByte(p, &b);
+                Decoder?.DecodeByte(p, &b);
                 return b;
             }
         }
@@ -415,6 +422,8 @@ namespace UELib
 
     public class UPackageStream : UPackageFileStream, IUnrealStream, IUnrealArchive
     {
+        public UnrealPackage Package { get; protected set; }
+        
         public uint Version => Package.Version;
         public uint LicenseeVersion => Package.LicenseeVersion;
         public uint UE4Version => Package.Summary.UE4Version;
@@ -423,8 +432,7 @@ namespace UELib
         public UnrealWriter UW { get; private set; }
 
         public long LastPosition { get; set; }
-
-
+        
         public bool BigEndianCode { get; private set; }
 
         public bool IsChunked => Package.CompressedChunks != null && Package.CompressedChunks.Any();
@@ -436,7 +444,15 @@ namespace UELib
             UW = null;
             InitBuffer();
         }
+        
+        public IPackageSerializer Serializer { get; set; }
 
+        public void SetBranch(EngineBranch packageEngineBranch)
+        {
+            Decoder = packageEngineBranch.Decoder;
+            Serializer = packageEngineBranch.Serializer;
+        }
+        
         private void InitBuffer()
         {
             if (CanRead && UR == null) UR = new UnrealReader(this, this);
@@ -451,7 +467,7 @@ namespace UELib
             if (!CanRead)
                 return;
 
-            package.Decoder?.PreDecode(this);
+            Decoder?.PreDecode(this);
 
             var bytes = new byte[4];
             base.Read(bytes, 0, 4);
@@ -594,13 +610,15 @@ namespace UELib
 
     public class UObjectStream : MemoryStream, IUnrealStream, IUnrealArchive
     {
+        public UnrealPackage Package { get; }
+        
         public uint Version => Package.Version;
         public uint LicenseeVersion => Package.LicenseeVersion;
         public uint UE4Version => Package.Summary.UE4Version;
         
-        public string Name => Package.Stream.Name;
+        [CanBeNull] public IBufferDecoder Decoder { get; }
 
-        public UnrealPackage Package { get; }
+        public string Name => Package.Stream.Name;
 
         public UnrealReader UR { get; private set; }
         public UnrealWriter UW { get; private set; }
@@ -624,6 +642,11 @@ namespace UELib
             UR = null;
             Package = str.Package;
             InitBuffer();
+        }
+        
+        public void SetBranch(EngineBranch packageEngineBranch)
+        {
+            throw new NotImplementedException();
         }
 
         private void InitBuffer()
@@ -738,7 +761,7 @@ namespace UELib
         {
             return UR.ReadNameIndex(out num);
         }
-        
+
         #endregion
 
         public void Skip(int bytes)
@@ -892,7 +915,7 @@ namespace UELib
             stream.LastPosition = position;
 #endif
         }
-        
+
         public static void ReadArray(this IUnrealStream stream, out UArray<int> array)
         {
 #if BINARYMETADATA
@@ -909,7 +932,7 @@ namespace UELib
             stream.LastPosition = position;
 #endif
         }
-        
+
         public static void ReadArray(this IUnrealStream stream, out UArray<string> array)
         {
 #if BINARYMETADATA
@@ -978,7 +1001,7 @@ namespace UELib
         }
 
         public static void ReadMap<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
-            where TKey : UName 
+            where TKey : UName
             where TValue : UObject
         {
 #if BINARYMETADATA
@@ -996,7 +1019,7 @@ namespace UELib
             stream.LastPosition = position;
 #endif
         }
-        
+
         // TODO: Implement FGuid
         public static Guid ReadGuid(this IUnrealStream stream)
         {
@@ -1006,7 +1029,34 @@ namespace UELib
             var guid = new Guid(guidBuffer);
             return guid;
         }
-        
+
+        public static UnrealFlags<TEnum> ReadFlags32<TEnum>(this IUnrealStream stream)
+            where TEnum : Enum
+        {
+            stream.Package.Summary.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
+            Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
+
+            ulong flags = stream.ReadUInt32();
+            return new UnrealFlags<TEnum>(flags, enumMap);
+        }
+
+        public static UnrealFlags<TEnum> ReadFlags64<TEnum>(this IUnrealStream stream)
+            where TEnum : Enum
+        {
+            stream.Package.Summary.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
+            Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
+
+            ulong flags = stream.ReadUInt64();
+            return new UnrealFlags<TEnum>(flags, enumMap);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void VersionedDeserialize(this IUnrealStream stream, IUnrealDeserializableClass obj)
+        {
+            Debug.Assert(stream.Package.Branch.Serializer != null, "stream.Package.Branch.Serializer != null");
+            stream.Package.Branch.Serializer.Deserialize(stream, obj);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<T>(this IUnrealStream stream, out UObject value)
             where T : UObject

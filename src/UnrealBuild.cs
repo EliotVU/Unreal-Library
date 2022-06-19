@@ -2,6 +2,10 @@
 
 namespace UELib
 {
+    /// <summary>
+    /// TODO: Re-purpose.
+    /// <seealso cref="Branch.EngineBranch"/>
+    /// </summary>
     public enum BuildGeneration
     {
         Undefined,
@@ -19,7 +23,9 @@ namespace UELib
         Batman4,
         
         /// High Moon Studios
-        HMS
+        HMS,
+        
+        UE4
     }
 
     [Flags]
@@ -34,11 +40,6 @@ namespace UELib
         /// Is cooked for Xenon(Xbox 360). Could be true on PC games.
         /// </summary>
         XenonCooked = 0x02,
-
-        /// <summary>
-        /// Some UDK games have disabled the DLLBind feature.
-        /// </summary>
-        NoDLLBind = 0x04
     }
 
     [AttributeUsage(AttributeTargets.Field)]

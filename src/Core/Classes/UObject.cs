@@ -21,7 +21,7 @@ namespace UELib.Core
     /// Instances of this class are deserialized from the exports table entries.
     /// </summary>
     [UnrealRegisterClass]
-    public partial class UObject : object, IContainsTable, IBinaryData, IDisposable, IComparable
+    public partial class UObject : object, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
         #region PreInitialized Members
 
@@ -693,7 +693,12 @@ namespace UELib.Core
         }
 
         #endregion
-
+        
+        public void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+        
         public static explicit operator int(UObject obj)
         {
             return obj?._ObjectIndex ?? 0;

@@ -26,8 +26,14 @@ namespace UELib
         /// Object index to the Super(parent) object of structs.
         /// -- Not Fixed
         /// </summary>
-        public int SuperIndex { get; set; }
-
+        public int SuperIndex;
+        
+        [Obsolete("Still in use by UE Explorer")]
+        public int get_SuperIndex()
+        {
+            return SuperIndex;
+        }
+        
         [Pure] public UObjectTableItem SuperTable => Owner.GetIndexTable(SuperIndex);
 
         [Pure]
@@ -46,7 +52,13 @@ namespace UELib
         /// Object index.
         /// -- Not Fixed
         /// </summary>
-        public int ArchetypeIndex { get; private set; }
+        public int ArchetypeIndex;
+
+        [Obsolete("Still in use by UE Explorer")]
+        public int get_ArchetypeIndex()
+        {
+            return ArchetypeIndex;
+        }
 
         [Pure] public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(ArchetypeIndex);
 
@@ -124,69 +136,6 @@ namespace UELib
 
         public void Deserialize(IUnrealStream stream)
         {
-#if UE4
-            if (stream.UE4Version > 0)
-            {
-                ClassIndex = stream.ReadInt32();
-                SuperIndex = stream.ReadInt32();
-                if (stream.UE4Version >= 508) TemplateIndex = stream.ReadInt32();
-                OuterIndex = stream.ReadInt32();
-                ObjectName = stream.ReadNameReference();
-
-                if (stream.UE4Version < 142) ArchetypeIndex = stream.ReadInt32();
-
-                ObjectFlags = stream.ReadUInt32();
-
-                if (stream.UE4Version >= 511)
-                {
-                    SerialSize = (int)stream.ReadInt64();
-                    SerialOffset = (int)stream.ReadInt64();
-                }
-                else
-                {
-                    SerialSize = stream.ReadInt32();
-                    SerialOffset = stream.ReadInt32();
-                }
-
-                IsForcedExport = stream.ReadInt32() > 0;
-                IsNotForServer = stream.ReadInt32() > 0;
-                IsNotForClient = stream.ReadInt32() > 0;
-                if (stream.UE4Version < 196)
-                {
-                    stream.ReadArray(out UArray<int> generationNetObjectCount);
-                }
-
-                PackageGuid = stream.ReadGuid();
-                PackageFlags = stream.ReadUInt32();
-                if (stream.UE4Version >= 365) IsNotForEditorGame = stream.ReadInt32() > 0;
-                if (stream.UE4Version >= 485) IsAsset = stream.ReadInt32() > 0;
-                if (stream.UE4Version >= 507)
-                {
-                    int firstExportDependency = stream.ReadInt32();
-                    int serializationBeforeSerializationDependencies = stream.ReadInt32();
-                    int createBeforeSerializationDependencies = stream.ReadInt32();
-                    int serializationBeforeCreateDependencies = stream.ReadInt32();
-                    int createBeforeCreateDependencies = stream.ReadInt32();
-                }
-
-                return;
-            }
-#endif
-#if AA2
-            // Not attested in packages of LicenseeVersion 32
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2 &&
-                stream.LicenseeVersion >= 33)
-            {
-                SuperIndex = stream.ReadObjectIndex();
-                int unkInt = stream.ReadInt32();
-                Debug.WriteLine(unkInt, "unkInt");
-                ClassIndex = stream.ReadObjectIndex();
-                OuterIndex = stream.ReadInt32();
-                ObjectFlags = ~stream.ReadUInt32();
-                ObjectName = stream.ReadNameReference();
-                goto streamSerialSize;
-            }
-#endif
             ClassIndex = stream.ReadObjectIndex();
             SuperIndex = stream.ReadObjectIndex();
             OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.

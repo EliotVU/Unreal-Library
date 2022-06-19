@@ -331,11 +331,8 @@ namespace UELib.Core
 #endif
                     if (_Buffer.Version >= UnrealPackage.VDLLBIND && _Buffer.UE4Version < 117)
                     {
-                        if (!Package.Build.Flags.HasFlag(BuildFlags.NoDLLBind))
-                        {
-                            DLLBindName = _Buffer.ReadNameReference();
-                            Record(nameof(DLLBindName), DLLBindName);
-                        }
+                        DLLBindName = _Buffer.ReadNameReference();
+                        Record(nameof(DLLBindName), DLLBindName);
 #if REMEMBERME
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
                         {
