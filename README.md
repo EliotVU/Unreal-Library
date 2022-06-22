@@ -85,6 +85,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | X-Men Origins: Wolverine | 4206 | 568/101 | Overall quality has not been verified |
 | Gears of War 2 | 4638 | 575/000 | |
 | CrimeCraft | 4701 | 576/005 | |
+| Batman: Arkham Asylum | 4701 | 576/21 | |
 | Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes |
 | Singularity | 4869 | 584/126 | |
 | MoonBase Alpha | 4947 | 587/000 | |
@@ -105,6 +106,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
 | Tribes: Ascend | 7748 | 805/Unknown |     |
 | Rock of Ages | 7748 | 805/000 |     |
+| Batman: Arkham City | 7748 | 805/101 | | 
+| Batman: Arkham Origins | | 807/138 | Not verified |
 | Sanctum | 7876 | 810/000 |     |
 | AntiChamber | 7977 | 812/000 |     |
 | Waves | 8171 | 813/000 |     |
@@ -129,6 +132,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
 | Hawken | 10681 | 860/004 |     |
+| Batman: Arkham Knight | | 863/32995 | Not verified  |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
