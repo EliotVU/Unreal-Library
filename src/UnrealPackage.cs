@@ -160,18 +160,21 @@ namespace UELib
 
                 /// <summary>
                 /// Standard
+                /// 
                 /// 61/000
                 /// </summary>
                 [Build(61, 0)] Unreal1,
 
                 /// <summary>
                 /// Standard, Unreal Tournament & Deus Ex
+                /// 
                 /// 68:69/000
                 /// </summary>
                 [Build(68, 69, 0u, 0u)] UT,
 
                 /// <summary>
                 /// Deus Ex: Invisible War
+                /// 
                 /// Missing support for custom classes such as BitfieldProperty and BitfieldEnum among others.
                 /// 95/69
                 /// </summary>
@@ -179,6 +182,7 @@ namespace UELib
 
                 /// <summary>
                 /// Thief: Deadly Shadows
+                /// 
                 /// 95/133
                 /// </summary>
                 [Build(95, 133, BuildGeneration.Thief)]
@@ -203,15 +207,17 @@ namespace UELib
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
+                /// 
                 /// 118/011:014
                 /// </summary>
                 [Build(118, 118, 11u, 14u)] R6RS,
 
                 /// <summary>
                 /// Unreal II: eXpanded MultiPlayer
+                /// 
                 /// 126/000
                 /// </summary>
-                [Build(126, 0)] Unreal2XMP,
+                [Build(123, 126, 0u, 0u)] Unreal2XMP,
 
                 /// <summary>
                 /// 118:128/025:029
@@ -221,17 +227,29 @@ namespace UELib
                 UT2004,
 
                 /// <summary>
-                /// Built on UT2004
+                /// America's Army 2.X
                 /// Represents both AAO and AAA
+                /// 
+                /// Built on UT2004
                 /// 128/032:033
                 /// </summary>
                 [Build(128, 128, 32u, 33u, BuildGeneration.UE2_5)] [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2,
 
+                /// <summary>
+                /// Vanguard: Saga of Heroes
+                /// 
+                /// 129/035
+                /// Some packages have 128/025 but those are in conflict with UT2004.
+                /// </summary>
+                [Build(128, 129, 34u, 35u, BuildGeneration.UE2_5)] Vanguard_SOH,
+
                 // IrrationalGames/Vengeance - 129:143/027:059
 
                 /// <summary>
                 /// Tribes: Vengeance
+                ///
+                /// 130/027
                 /// </summary>
                 [Build(130, 27, BuildGeneration.Vengeance)]
                 Tribes_VG,
@@ -244,6 +262,7 @@ namespace UELib
 
                 /// <summary>
                 /// BioShock 1 & 2
+                /// 
                 /// 130:143/056:059
                 /// </summary>
                 [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)]
@@ -260,11 +279,15 @@ namespace UELib
                 Spellborn,
 
                 /// <summary>
+                /// Standard
+                /// 
                 /// 369/006
                 /// </summary>
                 [Build(369, 6)] RoboBlitz,
 
                 /// <summary>
+                /// Medal of Honor: Airborne
+                /// 
                 /// 421/011
                 /// </summary>
                 [Build(421, 11)] MOHA,
@@ -276,6 +299,8 @@ namespace UELib
                 MKKE,
 
                 /// <summary>
+                /// Gears of War
+                /// 
                 /// 490/009
                 /// </summary>
                 [Build(490, 9)] GoW1,
@@ -307,11 +332,15 @@ namespace UELib
                 [Build(539, 91)] AlphaProtocol,
 
                 /// <summary>
+                /// APB: All Points Bulletin & APB: Reloaded
+                /// 
                 /// 547/028:032
                 /// </summary>
                 [Build(547, 547, 28u, 32u)] APB,
 
                 /// <summary>
+                /// Standard, Gears of War 2
+                /// 
                 /// 575/000
                 /// Xenon is enabled here, because the package is missing editor data, the editor data of UStruct is however still serialized.
                 /// </summary>
@@ -324,8 +353,9 @@ namespace UELib
                 [Build(576, 5)] CrimeCraft,
 
                 /// <summary>
-                /// 576/021
+                /// Batman: Arkham Asylum
                 /// 
+                /// 576/021
                 /// No Special support, but there's no harm in recognizing this build.
                 /// </summary>
                 [Build(576, 21)] Batman1,
@@ -367,6 +397,8 @@ namespace UELib
                 [Build(610, 14)] Tera,
 
                 /// <summary>
+                /// DC Universe Online
+                /// 
                 /// 648/6405
                 /// </summary>
                 [Build(648, 6405)] DCUO,
@@ -396,6 +428,8 @@ namespace UELib
                 InfinityBlade,
 
                 /// <summary>
+                /// Standard, Gears of War 3
+                /// 
                 /// 828/000
                 /// </summary>
                 [Build(828, 0, BuildFlags.ConsoleCooked)]
@@ -418,11 +452,15 @@ namespace UELib
                 InfinityBlade2,
 
                 /// <summary>
+                /// XCom
+                /// 
                 /// 845/059
                 /// </summary>
                 [Build(845, 59)] XCOM_EU,
 
                 /// <summary>
+                /// XCom 2: War of The Chosen
+                /// 
                 /// 845/120
                 /// </summary>
                 [Build(845, 120)] XCOM2WotC,
@@ -445,11 +483,11 @@ namespace UELib
                 /// 807/104
                 /// 863/32995
                 /// </summary>
-                [Build(805, 101, BuildGeneration.Batman2)]
+                [Build(805, 101, BuildGeneration.Batman2)] // Batman: Arkham City
                 [Build(806, 103, BuildGeneration.Batman3)]
-                [Build(807, 807, 137, 138, BuildGeneration.Batman3)]
+                [Build(807, 807, 137, 138, BuildGeneration.Batman3)] // Batman: Arkham Origins
                 [Build(807, 104, BuildGeneration.Batman3MP)]
-                [Build(863, 32995, BuildGeneration.Batman4)]
+                [Build(863, 32995, BuildGeneration.Batman4)] // Batman: Arkham Knight
                 BatmanUDK,
 
                 /// <summary>

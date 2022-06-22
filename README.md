@@ -61,6 +61,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory Battery | Unknown | Unknown |     |
+| Vanguard: Saga of Heroes | Unknown | 129/035 | |
 | Swat 4 | Vengeance | 129/027 | |
 | Tribes: Vengeance | Vengeance | 130/027 | |
 | Bioshock | Vengeance | 130-141/056 | |

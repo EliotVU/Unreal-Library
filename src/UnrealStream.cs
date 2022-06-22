@@ -840,6 +840,12 @@ namespace UELib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ReadLength(this IUnrealStream stream)
         {
+#if VANGUARD
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Vanguard_SOH)
+            {
+                return stream.UR.ReadInt32();
+            }
+#endif
             return stream.UR.ReadIndex();
         }
 
