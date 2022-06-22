@@ -501,7 +501,7 @@ namespace UELib
                         continue;
 
                     Name = (BuildName)Enum.Parse(typeof(BuildName), build.Name);
-                    
+
                     Version = package.Summary.Version;
                     LicenseeVersion = package.Summary.LicenseeVersion;
                     Flags = buildAttribute.Flags;
@@ -1384,51 +1384,87 @@ namespace UELib
 
                 if (Summary.DependsOffset > 0)
                 {
-                    stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
-                    int dependsCount = Summary.ExportCount;
+                    try
+                    {
+                        stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
+                        int dependsCount = Summary.ExportCount;
 #if BIOSHOCK
-                    // FIXME: Version?
-                    if (Build == GameBuild.BuildName.Bioshock_Infinite)
-                    {
-                        dependsCount = stream.ReadInt32();
-                    }
-#endif
-                    var dependsMap = new List<int[]>(dependsCount);
-                    for (var i = 0; i < dependsCount; ++i)
-                    {
-                        // DependencyList, index to import table
-                        int count = stream.ReadInt32(); // -1 in DCUO?
-                        var imports = new int[count];
-                        for (var j = 0; j < count; ++j)
+                        // FIXME: Version?
+                        if (Build == GameBuild.BuildName.Bioshock_Infinite)
                         {
-                            imports[j] = stream.ReadInt32();
+                            dependsCount = stream.ReadInt32();
                         }
+#endif
+                        var dependsMap = new List<int[]>(dependsCount);
+                        for (var i = 0; i < dependsCount; ++i)
+                        {
+                            // DependencyList, index to import table
+                            int count = stream.ReadInt32(); // -1 in DCUO?
+                            var imports = new int[count];
+                            for (var j = 0; j < count; ++j)
+                            {
+                                imports[j] = stream.ReadInt32();
+                            }
 
-                        dependsMap.Add(imports);
+                            dependsMap.Add(imports);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                        Console.Error.WriteLine("Couldn't parse DependenciesTable");
+                        Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                        throw new UnrealException("Couldn't parse DependenciesTable", ex);
+#endif
                     }
                 }
             }
 
             if (Summary.ImportExportGuidsOffset > 0)
             {
-                for (var i = 0; i < Summary.ImportGuidsCount; ++i)
+                try
                 {
-                    string levelName = stream.ReadText();
-                    int guidCount = stream.ReadInt32();
-                    stream.Skip(guidCount * 16);
-                }
+                    for (var i = 0; i < Summary.ImportGuidsCount; ++i)
+                    {
+                        string levelName = stream.ReadText();
+                        int guidCount = stream.ReadInt32();
+                        stream.Skip(guidCount * 16);
+                    }
 
-                for (var i = 0; i < Summary.ExportGuidsCount; ++i)
+                    for (var i = 0; i < Summary.ExportGuidsCount; ++i)
+                    {
+                        var objectGuid = stream.ReadGuid();
+                        int exportIndex = stream.ReadInt32();
+                    }
+                }
+                catch (Exception ex)
                 {
-                    var objectGuid = stream.ReadGuid();
-                    int exportIndex = stream.ReadInt32();
+                    // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                    Console.Error.WriteLine("Couldn't parse ImportExportGuidsTable");
+                    Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                    throw new UnrealException("Couldn't parse ImportExportGuidsTable", ex);
+#endif
                 }
             }
 
             if (Summary.ThumbnailTableOffset != 0)
             {
-                int thumbnailCount = stream.ReadInt32();
-                // TODO: Serialize
+                try
+                {
+                    int thumbnailCount = stream.ReadInt32();
+                    // TODO: Serialize
+                }
+                catch (Exception ex)
+                {
+                    // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                    Console.Error.WriteLine("Couldn't parse ThumbnailTable");
+                    Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                    throw new UnrealException("Couldn't parse ThumbnailTable", ex);
+#endif
+                }
             }
 
             Debug.Assert(stream.Position <= int.MaxValue);
@@ -1981,6 +2017,6 @@ namespace UELib
             Stream.Dispose();
         }
 
-        #endregion
+#endregion
     }
 }

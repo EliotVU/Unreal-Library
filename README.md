@@ -122,6 +122,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
 | Hawken | 10681 | 860/004 |     |
+| Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
 | Gal*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
