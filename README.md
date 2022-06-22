@@ -81,6 +81,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Mirrors Edge | 3716 | 536/043 |     |
 | Alpha Protocol | 3857 | 539/091 |     |
 | APB: All Points Bulletin | 3908 | 547/028-032 |     |
+| X-Men Origins: Wolverine | 4206 | 568/101 | Overall quality has not been verified |
 | Gears of War 2 | 4638 | 575/000 | |
 | CrimeCraft | 4701 | 576/005 | |
 | Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes |
