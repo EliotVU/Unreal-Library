@@ -124,6 +124,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | InMomentum | 8980 | 848/000 |     |
 | [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
 | Deadlight | 9375 | 854/000 |     |
+| Land of the Dead | 9375 | 854/000 |     |
 | Ravaged | 9641 | 859/000 |     |
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
