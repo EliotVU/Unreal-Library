@@ -44,8 +44,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Unreal | 100-226 | 61/000 | |
 | [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | 219 | 61/000 | |
 | Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | |
-| Unreal Tournament | 338-436 | 68/000 | |
-| Deus Ex | 400-436 | 68/000 |     |
+| Unreal Tournament | 338-436 | 68-69/000 | |
+| Deus Ex | 400-436 | 68/000 | |
+| Rune | 436 | 69/000 | |
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
 | Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
