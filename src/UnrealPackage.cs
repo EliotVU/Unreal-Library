@@ -1827,6 +1827,11 @@ namespace UELib
         [PublicAPI]
         public UObject FindObjectByGroup(string objectGroup)
         {
+            if (Objects == null)
+            {
+                return null;
+            }
+            
             string[] groups = objectGroup.Split('.');
             UObject lastObj = null;
             for (var i = 0; i < groups.Length; ++i)
