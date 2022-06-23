@@ -132,6 +132,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Ravaged | 9641 | 859/000 |     |
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
+| Chivalry: Medieval Warfare | 10246 | 860/000 | |
 | Hawken | 10681 | 860/004 |     |
 | Batman: Arkham Knight | | 863/32995 | Not verified  |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
