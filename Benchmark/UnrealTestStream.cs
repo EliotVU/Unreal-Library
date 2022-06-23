@@ -19,7 +19,7 @@ namespace Eliot.UELib.Benchmark
         public UnrealReader UR => this;
         public UnrealWriter UW { get; }
         
-        public IBufferDecoder Decoder { get; }
+        public IBufferDecoder Decoder { get; set; }
 
         public void SetBranch(EngineBranch packageEngineBranch)
         {

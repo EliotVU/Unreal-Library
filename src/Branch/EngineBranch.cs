@@ -31,6 +31,9 @@ namespace UELib.Branch
             Generation = package.Build.Generation;
         }
 
+        public abstract void PostDeserializeSummary(IUnrealStream stream, ref UnrealPackage.PackageFileSummary summary);
+        public abstract void PostDeserializePackage(IUnrealStream stream, UnrealPackage package);
+
         public override string ToString()
         {
             return base.ToString();

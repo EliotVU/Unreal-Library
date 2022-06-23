@@ -31,7 +31,7 @@ namespace UELib
         UnrealReader UR { get; }
         UnrealWriter UW { get; }
         
-        [CanBeNull] IBufferDecoder Decoder { get; }
+        [CanBeNull] IBufferDecoder Decoder { get; set; }
 
         void SetBranch(EngineBranch packageEngineBranch);
 
@@ -616,7 +616,7 @@ namespace UELib
         public uint LicenseeVersion => Package.LicenseeVersion;
         public uint UE4Version => Package.Summary.UE4Version;
         
-        [CanBeNull] public IBufferDecoder Decoder { get; }
+        [CanBeNull] public IBufferDecoder Decoder { get; set; }
 
         public string Name => Package.Stream.Name;
 

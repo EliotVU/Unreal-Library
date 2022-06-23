@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
+using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE4;
 using UELib.Flags;
 
@@ -403,9 +404,16 @@ namespace UELib
                 /// </summary>
                 [Build(648, 6405)] DCUO,
 
-                [Build(687, 111)] DungeonDefenders2,
+                /// <summary>
+                /// Dungeon Defenders 2
+                ///
+                /// 687-688/111-117
+                /// </summary>
+                [Build(687, 688, 111, 117)] [BuildEngineBranch(typeof(EngineBranchDD2))]
+                DD2,
 
                 /// <summary>
+                /// BioShock Infinite
                 /// 727/075
                 /// </summary>
                 [Build(727, 75)] Bioshock_Infinite,
@@ -955,11 +963,13 @@ namespace UELib
                     return;
                 }
 #endif
+#if DD2
+                // No version check found in the .exe
+                if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(Flags.PackageFlags.Cooked))
+                    stream.Skip(4);
+#endif
                 if (stream.Version >= VThumbnailTableOffset)
                 {
-#if APB
-                    if (stream.Package.Build == GameBuild.BuildName.DungeonDefenders2) stream.Skip(4);
-#endif
                     ThumbnailTableOffset = stream.ReadInt32();
                 }
 #if MKKE
@@ -1100,7 +1110,7 @@ namespace UELib
                 }
 #if ROCKETLEAGUE
                 if (stream.Package.Build == GameBuild.BuildName.RocketLeague
-                    && stream.Package.IsCooked())
+                    && PackageFlags.HasFlag(Flags.PackageFlags.Cooked))
                 {
                     int garbageSize = stream.ReadInt32();
                     Debug.WriteLine(garbageSize, "GarbageSize");
@@ -1298,10 +1308,10 @@ namespace UELib
         {
             Summary = new PackageFileSummary();
             Summary.Deserialize(stream);
-
             // FIXME: For backwards compatibility.
             PackageFlags = (uint)Summary.PackageFlags;
             Group = Summary.FolderName;
+            Branch.PostDeserializeSummary(stream, ref Summary);
 
             // We can't continue without decompressing.
             if (CompressionFlags != 0 || (CompressedChunks != null && CompressedChunks.Any()))
@@ -1310,59 +1320,10 @@ namespace UELib
                 if (CompressedChunks.Capacity == 0) CompressedChunks.Capacity = 1;
                 return;
             }
-#if AA2
-            if (Build == GameBuild.BuildName.AA2
-                // Note: Never true, AA2 is not a detected build for packages with LicenseeVersion 27 or less
-                // But we'll preserve this nonetheless
-                && LicenseeVersion >= 19)
-            {
-                bool isEncrypted = stream.ReadInt32() > 0;
-                if (isEncrypted)
-                {
-                    // TODO: Use a stream wrapper instead; but this is blocked by an overly intertwined use of PackageStream.
-                    if (LicenseeVersion >= 33)
-                    {
-                        var decoder = new CryptoDecoderAA2();
-                        stream.Decoder = decoder;
-                    }
-                    else
-                    {
-                        var decoder = new CryptoDecoderWithKeyAA2();
-                        stream.Decoder = decoder;
-
-                        long nonePosition = Summary.NameOffset;
-                        stream.Seek(nonePosition, SeekOrigin.Begin);
-                        byte scrambledNoneLength = stream.ReadByte();
-                        decoder.Key = scrambledNoneLength;
-                        stream.Seek(nonePosition, SeekOrigin.Begin);
-                        byte unscrambledNoneLength = stream.ReadByte();
-                        Debug.Assert((unscrambledNoneLength & 0x3F) == 5);
-                    }
-                }
-
-                // Always one
-                //int unkCount = stream.ReadInt32();
-                //for (var i = 0; i < unkCount; i++)
-                //{
-                //    // All zero
-                //    stream.Skip(24);
-                //    // Always identical to the package's GUID
-                //    var guid = stream.ReadGuid();
-                //}
-
-                //// Always one
-                //int unk2Count = stream.ReadInt32();
-                //for (var i = 0; i < unk2Count; i++)
-                //{
-                //    // All zero
-                //    stream.Skip(12);
-                //}
-            }
-#endif
-            // Read the name table
 #if TERA
             if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NamesCount;
 #endif
+            // Read the name table
             if (Summary.NameCount > 0)
             {
                 stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
@@ -1507,6 +1468,8 @@ namespace UELib
 
             Debug.Assert(stream.Position <= int.MaxValue);
             if (Summary.HeaderSize == 0) Summary.HeaderSize = (int)stream.Position;
+
+            Branch.PostDeserializePackage(stream, stream.Package);
         }
 
         /// <summary>
@@ -1886,6 +1849,20 @@ namespace UELib
         }
 
         /// <summary>
+        /// If true, the package won't have any editor data such as HideCategories, ScriptText etc.
+        /// 
+        /// However this condition is not only determined by the package flags property.
+        /// Thus it is necessary to explicitly indicate this state.
+        /// </summary>
+        /// <returns>Whether package is cooked for consoles.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsConsoleCooked()
+        {
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked) &&
+                   Build.Flags.HasFlag(BuildFlags.ConsoleCooked);
+        }
+
+        /// <summary>
         /// Checks whether this package is marked with @flag.
         /// </summary>
         /// <param name="flag">The enum @flag to test.</param>
@@ -1911,24 +1888,10 @@ namespace UELib
         /// Tests the packageflags of this UELib.UnrealPackage instance whether it is cooked.
         /// </summary>
         /// <returns>True if cooked or False if not.</returns>
-        [PublicAPI]
+        [Obsolete]
         public bool IsCooked()
         {
             return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked);
-        }
-
-        /// <summary>
-        /// If true, the package won't have any editor data such as HideCategories, ScriptText etc.
-        /// 
-        /// However this condition is not only determined by the package flags property.
-        /// Thus it is necessary to explicitly indicate this state.
-        /// </summary>
-        /// <returns>Whether package is cooked for consoles.</returns>
-        [PublicAPI]
-        public bool IsConsoleCooked()
-        {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked) &&
-                   Build.Flags.HasFlag(BuildFlags.ConsoleCooked);
         }
 
         /// <summary>
@@ -1999,24 +1962,20 @@ namespace UELib
             return buff;
         }
 
-
         public IUnrealStream GetBuffer()
         {
             return Stream;
         }
-
 
         public int GetBufferPosition()
         {
             return 0;
         }
 
-
         public int GetBufferSize()
         {
             return HeaderSize;
         }
-
 
         public string GetBufferId(bool fullName = false)
         {

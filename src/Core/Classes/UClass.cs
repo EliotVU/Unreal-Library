@@ -277,6 +277,14 @@ namespace UELib.Core
                             ForceScriptOrder = _Buffer.ReadInt32() > 0;
                             Record(nameof(ForceScriptOrder), ForceScriptOrder);
                         }
+#if DD2
+                        // DD2 doesn't use a LicenseeVersion, maybe a merged standard feature (bForceScriptOrder?).
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.DD2 && _Buffer.Version >= 688)
+                        {
+                            int dd2UnkInt32 = _Buffer.ReadInt32();
+                            Record(nameof(dd2UnkInt32), dd2UnkInt32);
+                        }
+#endif
 #if DISHONORED
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                         {
@@ -324,7 +332,7 @@ namespace UELib.Core
                         }
                     }
 #if BATMAN
-                    if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
                     {
                         _Buffer.Skip(sizeof(int));
                     }
@@ -333,25 +341,25 @@ namespace UELib.Core
                     {
                         DLLBindName = _Buffer.ReadNameReference();
                         Record(nameof(DLLBindName), DLLBindName);
+                    }
 #if REMEMBERME
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
-                        {
-                            var unknownName = _Buffer.ReadNameReference();
-                            Record("Unknown:RememberMe", unknownName);
-                        }
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
+                    {
+                        var unknownName = _Buffer.ReadNameReference();
+                        Record("Unknown:RememberMe", unknownName);
+                    }
 #endif
 #if DISHONORED
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
-                            ClassGroups = DeserializeGroup("ClassGroups");
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
+                        ClassGroups = DeserializeGroup("ClassGroups");
 #endif
 #if BORDERLANDS2
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
-                        {
-                            byte unknownByte = _Buffer.ReadByte();
-                            Record("Unknown:Borderlands2", unknownByte);
-                        }
-#endif
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
+                    {
+                        byte unknownByte = _Buffer.ReadByte();
+                        Record("Unknown:Borderlands2", unknownByte);
                     }
+#endif
                 }
             }
 #if UE4

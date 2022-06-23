@@ -160,5 +160,13 @@ namespace UELib.Branch
             }
 #endif
         }
+
+        public override void PostDeserializeSummary(IUnrealStream stream, ref UnrealPackage.PackageFileSummary summary)
+        {
+        }
+
+        public override void PostDeserializePackage(IUnrealStream stream, UnrealPackage package)
+        {
+        }
     }
 }
