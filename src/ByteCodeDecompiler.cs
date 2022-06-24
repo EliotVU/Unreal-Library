@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Flags;
 using UELib.Tokens;
 
 namespace UELib.Core
@@ -1208,17 +1209,6 @@ namespace UELib.Core
 
                 FieldToken.LastField = null;
 
-                // TODO: Corrigate detection and version.
-                DefaultParameterToken._NextParamIndex = 0;
-                if (Package.Version > 300)
-                {
-                    var func = _Container as UFunction;
-                    if (func?.Params != null)
-                        DefaultParameterToken._NextParamIndex = func.Params.FindIndex(
-                            p => p.HasPropertyFlag(Flags.PropertyFlagsLO.OptionalParm)
-                        );
-                }
-
                 // Reset these, in case of a loop in the Decompile function that did not finish due exception errors!
                 _IsWithinClassContext = false;
                 _CanAddSemicolon = false;
@@ -1300,7 +1290,42 @@ namespace UELib.Core
                     var spewOutput = false;
                     var tokenEndIndex = 0;
                     Token lastStatementToken = null;
+#if !DEBUG_HIDDENTOKENS
+                    if (_Container is UFunction func 
+                        && func.HasOptionalParamData() 
+                        && DeserializedTokens.Count > 0)
+                    {
+                        CurrentTokenIndex = 0;
+                        foreach (var parm in func.Params)
+                        {
+                            if (!parm.HasPropertyFlag(PropertyFlagsLO.OptionalParm)) 
+                                continue;
 
+                            switch (CurrentToken)
+                            {
+                                // Skip NothingToken and DefaultParameterToken (up to EndParmValueToken)
+                                case NothingToken _:
+                                    ++CurrentTokenIndex;
+                                    continue;
+                                
+                                case DefaultParameterToken _:
+                                {
+                                    Token token;
+                                    do
+                                    {
+                                        token = NextToken;
+                                    } while (!(token is EndParmValueToken));
+
+                                    break;
+                                }
+                                
+                                default:
+                                    Debug.Fail($"Unexpected token for optional parameter {parm.GetOuterGroup()}");
+                                    break;
+                            }
+                        }
+                    }
+#endif
                     while (CurrentTokenIndex + 1 < DeserializedTokens.Count)
                     {
                         //Decompile chain==========
@@ -1680,9 +1705,9 @@ namespace UELib.Core
                 return output;
             }
 
-            #endregion
+#endregion
 
-            #region Disassemble
+                    #region Disassemble
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
             public string Disassemble()
@@ -1690,9 +1715,9 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-            #endregion
+                    #endregion
 
 #endif
-        }
+                }
     }
 }

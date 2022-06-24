@@ -113,23 +113,6 @@
 
             public class DefaultParameterToken : Token
             {
-                internal static int _NextParamIndex;
-
-                private UField _NextParam
-                {
-                    get
-                    {
-                        try
-                        {
-                            return ((UFunction)Decompiler._Container).Params[_NextParamIndex++];
-                        }
-                        catch
-                        {
-                            return null;
-                        }
-                    }
-                }
-
                 public override void Deserialize(IUnrealStream stream)
                 {
                     stream.ReadUInt16(); // Size
@@ -148,10 +131,7 @@
                 {
                     string expression = DecompileNext();
                     DecompileNext(); // EndParmValue
-                    Decompiler._CanAddSemicolon = true;
-                    var param = _NextParam;
-                    string paramName = param != null ? param.Name : $"@UnknownOptionalParam_{_NextParamIndex - 1}";
-                    return $"{paramName} = {expression}";
+                    return expression;
                 }
             }
 

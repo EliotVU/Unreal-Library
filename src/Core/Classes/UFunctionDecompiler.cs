@@ -1,6 +1,7 @@
 ﻿#if DECOMPILE
 using System;
 using System.Linq;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -9,7 +10,7 @@ namespace UELib.Core
         /// <summary>
         /// Decompiles this object into a text format of:
         ///
-        /// [FLAGS] function NAME([VARIABLES]) [const]
+        /// [FLAGS] function NAME([VARIABLES])[;] [const]
         /// {
         ///     [LOCALS]
         ///
@@ -19,16 +20,12 @@ namespace UELib.Core
         /// <returns></returns>
         public override string Decompile()
         {
-            string code;
-            try
-            {
-                code = FormatCode();
-            }
-            catch (Exception e)
-            {
-                code = e.Message;
-            }
-            return FormatHeader() + (string.IsNullOrEmpty(code) ? DecompileMeta() + ";" : code + DecompileMeta());
+            string code = FormatCode();
+            var body = $"{FormatHeader()}{code}{DecompileMeta()}";
+            // Write a declaration only if code is empty.
+            return string.IsNullOrEmpty(code)
+                ? $"{body};"
+                : body;
         }
 
         private string FormatFlags()
@@ -197,17 +194,13 @@ namespace UELib.Core
                 output = $"// Export U{Outer.Name}::exec{Name}(FFrame&, void* const)\r\n{UDecompilingState.Tabs}";
             }
 
-            var comment = FormatTooltipMetaData();
-            if(comment != string.Empty)
-            {
-                output = comment + output;
-            }
+            string comment = FormatTooltipMetaData();
+            string returnCode = ReturnProperty != null
+                ? ReturnProperty.GetFriendlyType() + " "
+                : string.Empty;
 
-            output += FormatFlags()
-                      + (ReturnProperty != null
-                          ? ReturnProperty.GetFriendlyType() + " "
-                          : string.Empty)
-                      + FriendlyName + FormatParms();
+            output += comment +
+                      FormatFlags() + returnCode + FriendlyName + FormatParms();
             if (HasFunctionFlag(Flags.FunctionFlags.Const))
             {
                 output += " const";
@@ -218,14 +211,41 @@ namespace UELib.Core
 
         private string FormatParms()
         {
-            var output = string.Empty;
-            if (Params != null && Params.Any())
+            if (Params == null || !Params.Any())
+                return "()";
+
+            bool hasOptionalData = HasOptionalParamData();
+            if (hasOptionalData)
             {
-                var parameters = Params.Where((p) => p != ReturnProperty);
-                foreach (var parm in parameters)
+                // Ensure a sound ByteCodeManager
+                ByteCodeManager.Deserialize();
+                ByteCodeManager.JumpTo(0);
+                ByteCodeManager.CurrentTokenIndex = -1;
+            }
+
+            var output = string.Empty;
+            var parameters = Params.Where(parm => parm != ReturnProperty).ToList();
+            foreach (var parm in parameters)
+            {
+                string parmCode = parm.Decompile();
+                if (hasOptionalData && parm.HasPropertyFlag(PropertyFlagsLO.OptionalParm))
                 {
-                    output += parm.Decompile() + (parm != parameters.Last() ? ", " : string.Empty);
+                    // Look for an assignment.
+                    var defaultToken = ByteCodeManager.NextToken;
+                    if (defaultToken is UByteCodeDecompiler.DefaultParameterToken)
+                    {
+                        string defaultExpr = defaultToken.Decompile();
+                        parmCode += $" = {defaultExpr}";
+                    }
                 }
+
+                if (parm != parameters.Last())
+                {
+                    output += $"{parmCode}, ";
+                    continue;
+                }
+
+                output += parmCode;
             }
 
             return $"({output})";

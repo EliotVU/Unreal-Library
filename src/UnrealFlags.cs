@@ -175,10 +175,10 @@ namespace UELib.Flags
     }
 
     /// <summary>
-    /// Flags describing an function instance.
+    /// Flags describing a function instance.
     /// </summary>
     [Flags]
-    public enum FunctionFlags : ulong // actually uint but were using ulong for UE2 and UE3 Compatably
+    public enum FunctionFlags : ulong
     {
         Final               = 0x00000001U,
         Defined             = 0x00000002U,
@@ -194,24 +194,47 @@ namespace UELib.Flags
         Event               = 0x00000800U,
         Operator            = 0x00001000U,
         Static              = 0x00002000U,
-        NoExport            = 0x00004000U,      // Can also be an identifier for functions with Optional parameters.
+        
+        /// <summary>
+        /// NoExport
+        /// UE3 (~V300): Indicates whether we have optional parameters, including optional expression data.
+        /// </summary>
         OptionalParameters  = 0x00004000U,
+        NoExport            = 0x00004000U,
+
         Const               = 0x00008000U,
         Invariant           = 0x00010000U,
+        
+        // UE2 additions
+        // =============
+        
         Public              = 0x00020000U,
         Private             = 0x00040000U,
         Protected           = 0x00080000U,
         Delegate            = 0x00100000U,
-        NetServer           = 0x00200000U,
 #if VENGEANCE
         // Generated/Constructor?
         VG_Unk1             = 0x00200000U,
         VG_Overloaded       = 0x00800000U,
-#endif
+#endif      
+        /// <summary>
+        /// UE2: Multicast (Replicated to all relevant clients)
+        /// UE3: Function is replicated to relevant client.
+        /// </summary>
+        NetServer           = 0x00200000U,
+        
+        Interface           = 0x00400000U,
         NetClient           = 0x01000000U,
-        DLLImport           = 0x02000000U,      // Also available in UE2(unknown meaning there)
+        
+        /// <summary>
+        /// UE2: Unknown
+        /// UE3 (V655)
+        /// </summary>
+        DLLImport           = 0x02000000U,
+        
+        // K2 Additions, late UDK, early implementation of Blueprints that were soon deprecated.
         K2Call              = 0x04000000U,
-        K2Override          = 0x08000000U,      // K2Call?
+        K2Override          = 0x08000000U,
         K2Pure              = 0x10000000U,
     }
 

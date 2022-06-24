@@ -16,13 +16,6 @@ namespace UELib.Core
                     if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
                         Decompiler.AlignSize(sizeof(int));
                 }
-
-                public override string Decompile()
-                {
-                    // Empty default option parameter!
-                    ++DefaultParameterToken._NextParamIndex;
-                    return string.Empty;
-                }
             }
 
             public class NoDelegateToken : NoneToken
