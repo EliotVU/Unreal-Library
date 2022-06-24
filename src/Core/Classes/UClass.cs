@@ -332,7 +332,7 @@ namespace UELib.Core
                         }
                     }
 #if BATMAN
-                    if (Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
+                    if (Package.Build == BuildGeneration.RSS)
                     {
                         _Buffer.Skip(sizeof(int));
                     }
@@ -372,7 +372,7 @@ namespace UELib.Core
             }
 #endif
 #if THIEF_DS || DeusEx_IW
-            if (Package.Build == BuildGeneration.Thief)
+            if (Package.Build == BuildGeneration.Flesh)
             {
                 string thiefClassVisibleName = _Buffer.ReadText();
                 Record(nameof(thiefClassVisibleName), thiefClassVisibleName);

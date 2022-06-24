@@ -179,14 +179,14 @@ namespace UELib
                 /// Missing support for custom classes such as BitfieldProperty and BitfieldEnum among others.
                 /// 95/69
                 /// </summary>
-                [Build(95, 69, BuildGeneration.Thief)] DeusEx_IW,
+                [Build(95, 69, BuildGeneration.Flesh)] DeusEx_IW,
 
                 /// <summary>
                 /// Thief: Deadly Shadows
                 /// 
                 /// 95/133
                 /// </summary>
-                [Build(95, 133, BuildGeneration.Thief)]
+                [Build(95, 133, BuildGeneration.Flesh)]
                 Thief_DS,
 
                 /// <summary>
@@ -486,17 +486,36 @@ namespace UELib
                 [Build(860, 4)] Hawken,
 
                 /// <summary>
-                /// 805-6/101-3
-                /// 807/137-8
+                /// Batman: Arkham City
+                /// 
+                /// 805/101
+                /// </summary>
+                [Build(805, 101, BuildGeneration.RSS)]
+                Batman2,
+
+                /// <summary>
+                /// Batman: Arkham Origins
+                ///
+                /// 806/103
+                /// 807/807
+                /// </summary>
+                [Build(806, 103, BuildGeneration.RSS)]
+                [Build(807, 807, 137, 138, BuildGeneration.RSS)]
+                Batman3,
+                
+                /// <summary>
                 /// 807/104
+                /// </summary>
+                [Build(807, 104, BuildGeneration.RSS)]
+                Batman3MP,
+
+                /// <summary>
+                /// Batman: Arkham Knight
+                ///
                 /// 863/32995
                 /// </summary>
-                [Build(805, 101, BuildGeneration.Batman2)] // Batman: Arkham City
-                [Build(806, 103, BuildGeneration.Batman3)]
-                [Build(807, 807, 137, 138, BuildGeneration.Batman3)] // Batman: Arkham Origins
-                [Build(807, 104, BuildGeneration.Batman3MP)]
-                [Build(863, 32995, BuildGeneration.Batman4)] // Batman: Arkham Knight
-                BatmanUDK,
+                [Build(863, 32995, BuildGeneration.RSS)]
+                Batman4,
 
                 /// <summary>
                 /// 867/009:032

@@ -107,27 +107,31 @@ namespace UELib.Core
             }
 #endif
 #if THIEF_DS || DEUSEX_IW
-            if (Package.Build == BuildGeneration.Thief)
+            if (Package.Build == BuildGeneration.Flesh)
             {
                 // Property flags like CustomEditor, CustomViewer, ThiefProp, DeusExProp, NoTextExport, NoTravel
                 uint deusFlags = _Buffer.ReadUInt32();
                 Record(nameof(deusFlags), deusFlags);
             }
 #endif
-            // FIXME: UE4 version
-            if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 160)
+            if (!Package.IsConsoleCooked())
             {
-                CategoryName = _Buffer.ReadNameReference();
-                Record(nameof(CategoryName), CategoryName);
+                // FIXME: UE4 version
+                if (_Buffer.UE4Version < 160)
+                {
+                    CategoryName = _Buffer.ReadNameReference();
+                    Record(nameof(CategoryName), CategoryName);
+                }
+
+                if (_Buffer.Version > 400)
+                {
+                    ArrayEnum = _Buffer.ReadObject<UEnum>();
+                    Record(nameof(ArrayEnum), ArrayEnum);
+                }
             }
 
-            if (Package.Version > 400)
-            {
-                ArrayEnum = GetIndexObject(_Buffer.ReadObjectIndex()) as UEnum;
-                Record("ArrayEnum", ArrayEnum);
-            }
 #if THIEF_DS || DEUSEX_IW
-            if (Package.Build == BuildGeneration.Thief)
+            if (Package.Build == BuildGeneration.Flesh)
             {
                 short deusInheritedOrRuntimeInstiantiated = _Buffer.ReadInt16();
                 Record(nameof(deusInheritedOrRuntimeInstiantiated), deusInheritedOrRuntimeInstiantiated);
@@ -158,10 +162,10 @@ namespace UELib.Core
                 Record(nameof(vengeanceEditDisplay), vengeanceEditDisplay);
             }
 #endif
-            // Appears to be a UE2X feature, it is not present in UE2 builds with no custom LicenseeVersion
+            // Appears to be a UE2.5 feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
             if ((HasPropertyFlag(PropertyFlagsLO.EditorData) &&
-                 (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Thief))
+                 (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Flesh))
                 // No property flag
                 || Package.Build == BuildGeneration.Vengeance)
             {

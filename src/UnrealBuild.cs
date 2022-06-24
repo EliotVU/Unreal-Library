@@ -10,21 +10,73 @@ namespace UELib
     {
         Undefined,
 
-        Thief,
+        /// <summary>
+        /// Unreal Engine 1
+        ///
+        /// Not in use yet.
+        /// </summary>
+        UE1,
+
+        /// <summary>
+        /// Unreal Engine 2
+        /// 
+        /// Not in use yet.
+        /// </summary>
+        UE2,
+
+        /// <summary>
+        /// Heavily modified Unreal Engine 2 by Ion Storm for Thief: Deadly Shadows
+        /// </summary>
+        Flesh,
+
+        /// <summary>
+        /// Unreal Engine 2 with some early UE3 upgrades.
+        /// </summary>
         UE2_5,
-        UE2X,
+        
+        /// <summary>
+        /// Heavily modified Unreal Engine 2.5 for Vengeance: Tribes; also used by Swat4 and BioShock.
+        /// </summary>
         Vengeance,
+        
+        /// <summary>
+        /// Heavily modified Unreal Engine 2.5 for Splinter Cell
+        ///
+        /// Not yet supported.
+        /// </summary>
         Lead,
 
-        // Batman2+ use the same Engine spinoff, but it's still necessary to distinguish the builds by name.
-        Batman2,
-        Batman3,
-        Batman3MP,
-        Batman4,
+        /// <summary>
+        /// Modified Unreal Engine 2 for Xbox e.g. Unreal Championship 2: The Liandri Conflict
+        /// </summary>
+        UE2X,
+
+        /// <summary>
+        /// Unreal Engine 3
+        ///
+        /// Not in use yet.
+        /// </summary>
+        UE3,
         
+        /// <summary>
+        /// Rocksteady Studios
+        ///
+        /// Heavily modified Unreal Engine 3 for the Arkham series
+        /// </summary>
+        RSS,
+
+        /// <summary>
         /// High Moon Studios
+        ///
+        /// Heavily modified Unreal Engine 3 for Transformers and Deadpool etc
+        /// </summary>
         HMS,
-        
+
+        /// <summary>
+        /// Unreal Engine 4
+        /// 
+        /// Not in use yet.
+        /// </summary>
         UE4
     }
 

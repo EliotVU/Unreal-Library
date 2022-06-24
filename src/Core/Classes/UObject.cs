@@ -267,7 +267,7 @@ namespace UELib.Core
             //}
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
-            if (Package.Build == BuildGeneration.Thief && GetType() != typeof(UnknownObject))
+            if (Package.Build == BuildGeneration.Flesh && GetType() != typeof(UnknownObject))
             {
                 // var native private const int ObjectInternalPropertyHash[1];
                 int thiefLinkDataObjectCount = _Buffer.ReadInt32();
