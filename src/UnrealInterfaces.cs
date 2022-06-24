@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.IO;
 
@@ -71,14 +72,14 @@ namespace UELib
     {
     }
 
-    public interface IVisitor
+    public interface IVisitor<TResult>
     {
-        void Visit(IAcceptable visitor);
+        TResult Visit(IAcceptable visitable);
     }
     
     public interface IAcceptable
     {
-        void Accept(IVisitor visitor);
+        TResult Accept<TResult>(IVisitor<TResult> visitor);
     }
 
     /// <summary>
