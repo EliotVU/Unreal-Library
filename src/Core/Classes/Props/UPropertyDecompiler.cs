@@ -465,9 +465,7 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-            // alright...
-            //return "/*" + UnrealMethods.FlagToString( PropertyFlags ) + "*/ " + output;
-            return copyFlags != 0 ? "/*" + UnrealMethods.FlagToString(copyFlags) + "*/ " + output : output;
+            return output;
         }
     }
 }
