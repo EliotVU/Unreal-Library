@@ -144,6 +144,12 @@ namespace UELib.Branch
             PackageFlags[(int)Flags.PackageFlags.AllowDownload] = (uint)PackageFlagsDefault.AllowDownload;
             PackageFlags[(int)Flags.PackageFlags.ClientOptional] = (uint)PackageFlagsDefault.ClientOptional;
             PackageFlags[(int)Flags.PackageFlags.ServerSideOnly] = (uint)PackageFlagsDefault.ServerSideOnly;
+#if UE1
+            // FIXME: Version
+            if (package.Version > 61 && package.Version <= 69) // <= UT99
+                PackageFlags[(int)Flags.PackageFlags.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
+#endif
+
 #if UE3
             // Map the new PackageFlags, but the version is nothing but a guess!
             if (package.Version >= 180)
