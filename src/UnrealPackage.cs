@@ -1333,10 +1333,8 @@ namespace UELib
             Branch.PostDeserializeSummary(stream, ref Summary);
 
             // We can't continue without decompressing.
-            if (CompressionFlags != 0 || (CompressedChunks != null && CompressedChunks.Any()))
+            if (CompressedChunks != null && CompressedChunks.Any())
             {
-                // HACK: To fool UE Explorer
-                if (CompressedChunks.Capacity == 0) CompressedChunks.Capacity = 1;
                 return;
             }
 #if TERA
