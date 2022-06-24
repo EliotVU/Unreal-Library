@@ -1338,7 +1338,7 @@ namespace UELib
                 return;
             }
 #if TERA
-            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NamesCount;
+            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
 #endif
             // Read the name table
             if (Summary.NameCount > 0)
