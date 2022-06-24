@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics.Contracts;
 using System.IO;
+using UELib.Annotations;
 
 namespace UELib
 {
@@ -39,16 +38,12 @@ namespace UELib
         /// <returns>The copied buffer.</returns>
         byte[] CopyBuffer();
 
-        [Pure]
         IUnrealStream GetBuffer();
 
-        [Pure]
         int GetBufferPosition();
 
-        [Pure]
         int GetBufferSize();
 
-        [Pure]
         string GetBufferId(bool fullName = false);
     }
 
@@ -57,7 +52,7 @@ namespace UELib
     /// </summary>
     public interface IBinaryData : IBuffered
     {
-        BinaryMetaData BinaryMetaData { get; }
+        [CanBeNull] BinaryMetaData BinaryMetaData { get; }
     }
 
     public interface IContainsTable
@@ -72,7 +67,7 @@ namespace UELib
     {
     }
 
-    public interface IVisitor<TResult>
+    public interface IVisitor<out TResult>
     {
         TResult Visit(IAcceptable visitable);
     }
@@ -104,13 +99,18 @@ namespace UELib
     }
 
     /// <summary>
-    /// This class is exportable into an non-unreal format
+    /// This class is capable of exporting data to a non-unreal format.
+    /// e.g. <see cref="UELib.Engine.USound.Data" /> can be serialized to a stream and in turn be flushed to a .wav file.
     /// </summary>
     public interface IUnrealExportable
     {
         IEnumerable<string> ExportableExtensions { get; }
 
-        bool CompatableExport();
+        /// <summary>
+        /// Whether this object is exportable, usually called before any deserialization has occurred.
+        /// </summary>
+        bool CanExport();
+
         void SerializeExport(string desiredExportExtension, Stream exportStream);
     }
 

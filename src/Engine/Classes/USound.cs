@@ -9,39 +9,32 @@ namespace UELib.Engine
         #region Serialized Members
 
         public UName FileType;
+
         /// <summary>
         /// The likely hood that this sound will be selected from an array of sounds, see "USoundGroup".
         /// Null if not serialized.
         /// </summary>
         public float? Likelihood;
+
         public byte[] Data;
 
         #endregion
 
-        private const string WAVExtension = "wav";
-
-        public IEnumerable<string> ExportableExtensions => new[] { WAVExtension };
+        public IEnumerable<string> ExportableExtensions => new List<string> { FileType };
 
         public USound()
         {
             ShouldDeserializeOnDemand = true;
         }
 
-        public bool CompatableExport()
+        public bool CanExport()
         {
-            return Package.Version >= 61 && Package.Version <= 129
-                                         && FileType != null && FileType.ToString().ToLower() == WAVExtension &&
-                                         Data != null;
+            return Package.Version >= 61 && Package.Version <= 129;
         }
 
         public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
         {
-            switch (desiredExportExtension)
-            {
-                case WAVExtension:
-                    exportStream.Write(Data, 0, Data.Length);
-                    break;
-            }
+            exportStream.Write(Data, 0, Data.Length);
         }
 
         protected override void Deserialize()
@@ -51,8 +44,9 @@ namespace UELib.Engine
             FileType = _Buffer.ReadNameReference();
             Record(nameof(FileType), FileType);
 #if UT
-            if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004
-                 || Package.Build == UnrealPackage.GameBuild.BuildName.UT2003) /*&& Package.LicenseeVersion >= 2*/)
+            if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
+                 Package.Build == UnrealPackage.GameBuild.BuildName.UT2003)
+                && Package.LicenseeVersion >= 2)
             {
                 Likelihood = _Buffer.ReadFloat();
                 Record(nameof(Likelihood), Likelihood);
