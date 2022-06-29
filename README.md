@@ -143,6 +143,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Outlast | Unknown | Unknown |     |
 | Sherlock Holmes: Crimes and Punishments | Unknown | Unknown | |
 | Alien Rage | Unknown | Unknown |     |
+| Rising Storm 2: Vietnam | Unknown | Unknown | |
 
 **Beware, opening an unsupported package could crash your system! Make sure you have
 saved everything before opening any file!**
