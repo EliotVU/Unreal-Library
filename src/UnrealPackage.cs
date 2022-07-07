@@ -1333,14 +1333,12 @@ namespace UELib
             Branch.PostDeserializeSummary(stream, ref Summary);
 
             // We can't continue without decompressing.
-            if (CompressionFlags != 0 || (CompressedChunks != null && CompressedChunks.Any()))
+            if (CompressedChunks != null && CompressedChunks.Any())
             {
-                // HACK: To fool UE Explorer
-                if (CompressedChunks.Capacity == 0) CompressedChunks.Capacity = 1;
                 return;
             }
 #if TERA
-            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NamesCount;
+            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
 #endif
             // Read the name table
             if (Summary.NameCount > 0)

@@ -76,7 +76,7 @@ namespace UELib
             {
                 if (binReader.ReadUInt32() != Signature)
                 {
-                    throw new UnrealException($"File {stream.Name} is not a NTL file!");
+                    throw new FileLoadException($"File {stream.Name} is not a NTL file!");
                 }
 
                 int count = binReader.ReadInt32();
@@ -90,6 +90,11 @@ namespace UELib
                         Type = (FunctionType)binReader.ReadByte(),
                         ByteToken = binReader.ReadInt32()
                     };
+                    // Avoid duplicates to prevent ToDictionary from throwing an exception.
+                    if (NativeTableList.Find(it => it.ByteToken == item.ByteToken) != null)
+                    {
+                        continue;
+                    }
                     NativeTableList.Add(item);
                 }
             }

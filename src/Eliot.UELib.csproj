@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UELib</RootNamespace>
     <AssemblyName>Eliot.UELib</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>
     </SccProjectName>
@@ -149,7 +149,6 @@
     <Compile Include="Core\Classes\Props\Custom\UResourceProperty.cs" />
     <Compile Include="Core\Classes\Props\Custom\UXWeakReferenceProperty.cs" />
     <Compile Include="Core\Classes\UPackage.cs" />
-    <Compile Include="Core\Classes\UPackageNode.cs" />
     <Compile Include="Core\Tables\UExportTableItem.cs" />
     <Compile Include="Core\Tables\UGenerationTableItem.cs" />
     <Compile Include="Core\Tables\UImportTableItem.cs" />
@@ -179,7 +178,6 @@
     <Compile Include="Decoding\IBufferDecoder.cs" />
     <Compile Include="Branch\UE2\AA2\EngineBranch.AA2.cs" />
     <Compile Include="Branch\UE2\AA2\PackageSerializer.AA2.cs" />
-    <Compile Include="ObjectNodes.cs" />
     <Compile Include="Core\Types\UArray.cs" />
     <Compile Include="Core\Classes\UScriptStruct.cs" />
     <Compile Include="Core\Classes\UTextBuffer.cs" />
@@ -198,13 +196,6 @@
     <Compile Include="Core\Classes\UStateDecompiler.cs" />
     <Compile Include="Core\Classes\UStructDecompiler.cs" />
     <Compile Include="Core\Classes\UTextBufferDecompiler.cs" />
-    <Compile Include="Core\Classes\UClassNode.cs" />
-    <Compile Include="Core\Classes\UFieldNode.cs" />
-    <Compile Include="Core\Classes\UFunctionNode.cs" />
-    <Compile Include="Core\Classes\UObjectNode.cs" />
-    <Compile Include="Core\Classes\UPropertyNode.cs" />
-    <Compile Include="Core\Classes\UStateNode.cs" />
-    <Compile Include="Core\Classes\UStructNode.cs" />
     <Compile Include="Core\Classes\UClass.cs" />
     <Compile Include="Core\Classes\UConst.cs" />
     <Compile Include="Core\Classes\UDefaultProperty.cs" />
@@ -266,7 +257,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

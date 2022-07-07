@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
+using UELib.Annotations;
 
 namespace UELib
 {
@@ -17,17 +17,6 @@ namespace UELib
     }
 
     /// <summary>
-    /// This class has a reference to an object and are both decompilable.
-    /// </summary>
-    public interface IDecompilableObject : IUnrealDecompilable
-    {
-        /// <summary>
-        /// The decompileable object that will be decompiled when this object's Decompile() function is called.
-        /// </summary>
-        IUnrealDecompilable Object { get; }
-    }
-
-    /// <summary>
     /// This class has a stream reference.
     /// </summary>
     public interface IBuffered
@@ -38,16 +27,12 @@ namespace UELib
         /// <returns>The copied buffer.</returns>
         byte[] CopyBuffer();
 
-        [Pure]
         IUnrealStream GetBuffer();
 
-        [Pure]
         int GetBufferPosition();
 
-        [Pure]
         int GetBufferSize();
 
-        [Pure]
         string GetBufferId(bool fullName = false);
     }
 
@@ -56,7 +41,7 @@ namespace UELib
     /// </summary>
     public interface IBinaryData : IBuffered
     {
-        BinaryMetaData BinaryMetaData { get; }
+        [CanBeNull] BinaryMetaData BinaryMetaData { get; }
     }
 
     public interface IContainsTable
@@ -71,14 +56,14 @@ namespace UELib
     {
     }
 
-    public interface IVisitor
+    public interface IVisitor<out TResult>
     {
-        void Visit(IAcceptable visitor);
+        TResult Visit(IAcceptable visitable);
     }
     
     public interface IAcceptable
     {
-        void Accept(IVisitor visitor);
+        TResult Accept<TResult>(IVisitor<TResult> visitor);
     }
 
     /// <summary>
@@ -103,13 +88,18 @@ namespace UELib
     }
 
     /// <summary>
-    /// This class is exportable into an non-unreal format
+    /// This class is capable of exporting data to a non-unreal format.
+    /// e.g. <see cref="UELib.Engine.USound.Data" /> can be serialized to a stream and in turn be flushed to a .wav file.
     /// </summary>
     public interface IUnrealExportable
     {
         IEnumerable<string> ExportableExtensions { get; }
 
-        bool CompatableExport();
+        /// <summary>
+        /// Whether this object is exportable, usually called before any deserialization has occurred.
+        /// </summary>
+        bool CanExport();
+
         void SerializeExport(string desiredExportExtension, Stream exportStream);
     }
 

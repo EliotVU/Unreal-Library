@@ -26,7 +26,6 @@
             return $"{output}{UDecompilingState.Tabs}object end\r\n{UDecompilingState.Tabs}// Reference: {Class.Name}'{GetOuterGroup()}'";
         }
 
-        // Ment to be overriden!
         protected virtual string FormatHeader()
         {
             // Note:Dangerous recursive call!
@@ -39,12 +38,6 @@
                 return UDecompilingState.Tabs + "// This object has no properties!\r\n";
 
             var output = string.Empty;
-
-#if DEBUG
-            output += UDecompilingState.Tabs + "// Object Offset:" +
-                      UnrealMethods.FlagToString((uint)ExportTable.SerialOffset) + "\r\n";
-#endif
-
             for (var i = 0; i < Properties.Count; ++i)
             {
                 string propOutput = Properties[i].Decompile();
@@ -59,11 +52,7 @@
                 }
 
                 // FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
-                output += UDecompilingState.Tabs +
-#if DEBUG_POSITIONS
-            "/*" + UnrealMethods.FlagToString( (uint)Properties[i]._BeginOffset ) + "*/\t" +
-#endif
-                          propOutput + "\r\n";
+                output += UDecompilingState.Tabs + propOutput + "\r\n";
             }
 
             return output;

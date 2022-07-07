@@ -694,9 +694,9 @@ namespace UELib.Core
 
         #endregion
         
-        public void Accept(IVisitor visitor)
+        public TResult Accept<TResult>(IVisitor<TResult> visitor)
         {
-            visitor.Visit(this);
+            return visitor.Visit(this);
         }
         
         public static explicit operator int(UObject obj)
