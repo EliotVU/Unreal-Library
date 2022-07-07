@@ -1306,7 +1306,6 @@ namespace UELib.Core
                             {
                                 case NothingToken _:
                                     ++CurrentTokenIndex; // NothingToken
-                                    ++CurrentTokenIndex; // EndParmValueToken
                                     break;
 
                                 case DefaultParameterToken _:
