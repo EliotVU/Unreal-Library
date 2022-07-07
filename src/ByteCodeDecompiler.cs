@@ -1301,26 +1301,27 @@ namespace UELib.Core
                             if (!parm.HasPropertyFlag(PropertyFlagsLO.OptionalParm)) 
                                 continue;
 
+                            // Skip NothingToken (No default value) and DefaultParameterToken (up to EndParmValueToken)
                             switch (CurrentToken)
                             {
-                                // Skip NothingToken and DefaultParameterToken (up to EndParmValueToken)
                                 case NothingToken _:
-                                    ++CurrentTokenIndex;
-                                    continue;
-                                
+                                    ++CurrentTokenIndex; // NothingToken
+                                    ++CurrentTokenIndex; // EndParmValueToken
+                                    break;
+
                                 case DefaultParameterToken _:
                                 {
-                                    Token token;
                                     do
                                     {
-                                        token = NextToken;
-                                    } while (!(token is EndParmValueToken));
-
+                                        ++CurrentTokenIndex;
+                                    } while (!(CurrentToken is EndParmValueToken));
+                                    ++CurrentTokenIndex; // EndParmValueToken
                                     break;
-                                }
+                                    }
                                 
                                 default:
-                                    Debug.Fail($"Unexpected token for optional parameter {parm.GetOuterGroup()}");
+                                    // Can be true e.g a function with optionals but no default values
+                                    //Debug.Fail($"Unexpected token for optional parameter {parm.GetOuterGroup()}");
                                     break;
                             }
                         }
