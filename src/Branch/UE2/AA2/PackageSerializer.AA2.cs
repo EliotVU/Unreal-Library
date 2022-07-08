@@ -4,6 +4,7 @@ using UELib.Decoding;
 
 namespace UELib.Branch.UE2.AA2
 {
+    // Only initialized for packages with LicenseeVersion >= 33
     public class PackageSerializerAA2 : PackageSerializerBase
     {
         private const int MaxNameLengthUE2 = 64;
@@ -60,7 +61,12 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Deserialize(IUnrealStream stream, UImportTableItem item)
         {
-            item.Deserialize(stream);
+            item.PackageName = stream.ReadNameReference();
+            item.ClassName = stream.ReadNameReference();
+            byte unkByte = stream.ReadByte();
+            Debug.WriteLine(unkByte, "unkByte");
+            item.ObjectName = stream.ReadNameReference();
+            item.OuterIndex = stream.ReadInt32();
         }
 
         public override void Serialize(IUnrealStream stream, UExportTableItem item)

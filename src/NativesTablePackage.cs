@@ -67,11 +67,18 @@ namespace UELib
         public List<NativeTableItem> NativeTableList;
 
         private Dictionary<int, NativeTableItem> _NativeFunctionMap;
-
-        [PublicAPI]
-        public void LoadPackage(string name)
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeTableItem FindTableItem(uint nativeIndex)
         {
-            var stream = new FileStream(name + Extension, FileMode.Open, FileAccess.Read);
+            _NativeFunctionMap.TryGetValue((int)nativeIndex, out var item);
+            return item;
+        }
+        
+        [PublicAPI]
+        public void LoadPackage(string filePath)
+        {
+            var stream = new FileStream(filePath + Extension, FileMode.Open, FileAccess.Read);
             using (var binReader = new BinaryReader(stream))
             {
                 if (binReader.ReadUInt32() != Signature)
@@ -80,7 +87,7 @@ namespace UELib
                 }
 
                 int count = binReader.ReadInt32();
-                NativeTableList = new List<NativeTableItem>();
+                NativeTableList = new List<NativeTableItem>(count);
                 for (var i = 0; i < count; ++i)
                 {
                     var item = new NativeTableItem
@@ -102,17 +109,10 @@ namespace UELib
             _NativeFunctionMap = NativeTableList.ToDictionary(item => item.ByteToken);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeTableItem FindTableItem(uint nativeIndex)
-        {
-            _NativeFunctionMap.TryGetValue((int)nativeIndex, out var item);
-            return item;
-        }
-
         [PublicAPI]
-        public void CreatePackage(string name)
+        public void CreatePackage(string filePath)
         {
-            var stream = new FileStream(name + Extension, FileMode.Create, FileAccess.Write);
+            var stream = new FileStream(filePath + Extension, FileMode.Create, FileAccess.Write);
             using (var binWriter = new BinaryWriter(stream))
             {
                 binWriter.Write(Signature);

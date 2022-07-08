@@ -1,17 +1,15 @@
 using System;
-using System.Diagnostics.Contracts;
+using System.ComponentModel;
 using System.IO;
 using UELib.Core;
 
 namespace UELib
 {
     /// <summary>
-    /// An abstract implementation of the export and import table entries.
+    /// An internal implementation for the Export and Import table classes.
     /// </summary>
     public abstract class UObjectTableItem : UTableItem, IBuffered
     {
-        #region PreInitialized Members
-
         /// <summary>
         /// Reference to the UnrealPackage this object resists in
         /// </summary>
@@ -24,46 +22,35 @@ namespace UELib
         /// </summary>
         public UObject Object;
 
-        #endregion
-
         #region Serialized Members
 
-        /// <summary>
-        /// Name index to the name of this object
-        /// -- Fixed
-        /// </summary>
-        [Pure]
-        public UNameTableItem ObjectTable => Owner.Names[(int)ObjectName];
+        protected UName _ObjectName;
+        public UName ObjectName
+        {
+            get => _ObjectName;
+            set => _ObjectName = value;
+        }
 
-        public UName ObjectName;
+        protected int _OuterIndex;
+        public int OuterIndex
+        {
+            get => _OuterIndex;
+            set => _OuterIndex = value;
+        }
 
-        /// <summary>
-        /// Import:Name index to the class of this object
-        /// Export:Object index to the class of this object
-        /// -- Not Fixed
-        /// </summary>
-        public int ClassIndex { get; set; }
 
-        [Pure] public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
+        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
+        [Obsolete, Browsable(false)] public UObjectTableItem ClassTable => null;
+        [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
+        public UObjectTableItem Outer => Owner.GetIndexTable(_OuterIndex);
 
-        [Pure]
-        public virtual string ClassName => ClassIndex != 0 ? Owner.GetIndexTable(ClassIndex).ObjectName : "Class";
-
-        /// <summary>
-        /// Object index to the outer of this object
-        /// -- Not Fixed
-        /// </summary>
-        public int OuterIndex { get; set; }
-
-        [Pure] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
-
-        [Pure]
+        [Obsolete, Browsable(false)]
         public string OuterName
         {
             get
             {
                 var table = OuterTable;
-                return table != null ? table.ObjectName : string.Empty;
+                return table != null ? table._ObjectName : string.Empty;
             }
         }
 
@@ -84,30 +71,31 @@ namespace UELib
             return buff;
         }
 
-        [Pure]
         public IUnrealStream GetBuffer()
         {
             return Owner.Stream;
         }
 
-        [Pure]
         public int GetBufferPosition()
         {
             return Offset;
         }
 
-        [Pure]
         public int GetBufferSize()
         {
             return Size;
         }
 
-        [Pure]
         public string GetBufferId(bool fullName = false)
         {
-            return fullName ? Owner.PackageName + "." + ObjectName + ".table" : ObjectName + ".table";
+            return fullName ? Owner.PackageName + "." + _ObjectName + ".table" : _ObjectName + ".table";
         }
 
         #endregion
+
+        public static explicit operator int(UObjectTableItem item)
+        {
+            return item.Index;
+        }
     }
 }

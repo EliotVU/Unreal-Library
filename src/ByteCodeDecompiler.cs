@@ -349,9 +349,9 @@ namespace UELib.Core
                         { (byte)CastToken.FloatToByte, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.FloatToInt, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.FloatToBool, (byte)ExprToken.PrimitiveCast },
-                        
+
                         { (byte)CastToken.ObjectToInterface, (byte)ExprToken.PrimitiveCast }, // Actually StringToName
-                        
+
                         { (byte)CastToken.ObjectToBool, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.NameToBool, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.StringToByte, (byte)ExprToken.PrimitiveCast },
@@ -371,7 +371,7 @@ namespace UELib.Core
                         { (byte)CastToken.NameToString, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.VectorToString, (byte)ExprToken.PrimitiveCast },
                         { (byte)CastToken.RotatorToString, (byte)ExprToken.PrimitiveCast },
-                        
+
                         { (byte)CastToken.DelegateToString, (byte)ExprToken.PrimitiveCast } // StringToName in HP2?
                     };
                     return;
@@ -1291,14 +1291,14 @@ namespace UELib.Core
                     var tokenEndIndex = 0;
                     Token lastStatementToken = null;
 #if !DEBUG_HIDDENTOKENS
-                    if (_Container is UFunction func 
-                        && func.HasOptionalParamData() 
+                    if (_Container is UFunction func
+                        && func.HasOptionalParamData()
                         && DeserializedTokens.Count > 0)
                     {
                         CurrentTokenIndex = 0;
                         foreach (var parm in func.Params)
                         {
-                            if (!parm.HasPropertyFlag(PropertyFlagsLO.OptionalParm)) 
+                            if (!parm.HasPropertyFlag(PropertyFlagsLO.OptionalParm))
                                 continue;
 
                             // Skip NothingToken (No default value) and DefaultParameterToken (up to EndParmValueToken)
@@ -1314,10 +1314,11 @@ namespace UELib.Core
                                     {
                                         ++CurrentTokenIndex;
                                     } while (!(CurrentToken is EndParmValueToken));
+
                                     ++CurrentTokenIndex; // EndParmValueToken
                                     break;
-                                    }
-                                
+                                }
+
                                 default:
                                     // Can be true e.g a function with optionals but no default values
                                     //Debug.Fail($"Unexpected token for optional parameter {parm.GetOuterGroup()}");
@@ -1705,9 +1706,9 @@ namespace UELib.Core
                 return output;
             }
 
-#endregion
+            #endregion
 
-                    #region Disassemble
+            #region Disassemble
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
             public string Disassemble()
@@ -1715,9 +1716,9 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-                    #endregion
+            #endregion
 
 #endif
-                }
+        }
     }
 }

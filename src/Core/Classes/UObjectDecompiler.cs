@@ -12,7 +12,8 @@
                 BeginDeserializing();
             }
 
-            var output = $"begin object name={Name} class={Class.Name}\r\n";
+            string output = $"begin object name={Name} class={Class.Name}" +
+                            $"\r\n";
             UDecompilingState.AddTabs(1);
             try
             {
@@ -23,7 +24,9 @@
                 UDecompilingState.RemoveTabs(1);
             }
 
-            return $"{output}{UDecompilingState.Tabs}object end\r\n{UDecompilingState.Tabs}// Reference: {Class.Name}'{GetOuterGroup()}'";
+            return $"{output}{UDecompilingState.Tabs}object end" +
+                   $"\r\n{UDecompilingState.Tabs}" +
+                   $"// Reference: {Class.Name}'{GetOuterGroup()}'";
         }
 
         protected virtual string FormatHeader()

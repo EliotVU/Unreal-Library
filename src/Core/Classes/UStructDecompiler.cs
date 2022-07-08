@@ -233,7 +233,7 @@ namespace UELib.Core
             var output = string.Empty;
             string innerOutput;
 
-            if (IsClassType("Class"))
+            if (ExportTable.ClassIndex == 0)
             {
                 output += "\r\n" +
                           "defaultproperties" +

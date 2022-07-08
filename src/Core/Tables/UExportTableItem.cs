@@ -1,9 +1,6 @@
 using System;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
+using System.ComponentModel;
 using System.IO;
-using UELib.Core;
-using UELib.Flags;
 
 namespace UELib
 {
@@ -21,22 +18,41 @@ namespace UELib
         public const int VNetObjects = 322;
 
         #region Serialized Members
-
-        /// <summary>
-        /// Object index to the Super(parent) object of structs.
-        /// -- Not Fixed
-        /// </summary>
-        public int SuperIndex;
         
-        [Obsolete("Still in use by UE Explorer")]
-        public int get_SuperIndex()
+        private int _ClassIndex;
+        public int ClassIndex
         {
-            return SuperIndex;
+            get => _ClassIndex;
+            set => _ClassIndex = value;
         }
-        
-        [Pure] public UObjectTableItem SuperTable => Owner.GetIndexTable(SuperIndex);
+        public UObjectTableItem Class => Owner.GetIndexTable(ClassIndex);
 
-        [Pure]
+        public int _SuperIndex;
+        public int SuperIndex
+        {
+            get => _SuperIndex;
+            set => _SuperIndex = value;
+        }
+        public UObjectTableItem Super => Owner.GetIndexTable(_SuperIndex);
+
+        public int _TemplateIndex;
+        public int TemplateIndex
+        {
+            get => _TemplateIndex;
+            set => _TemplateIndex = value;
+        }
+        public UObjectTableItem Template => Owner.GetIndexTable(_TemplateIndex);
+
+        public int _ArchetypeIndex;
+        public int ArchetypeIndex
+        {
+            get => _ArchetypeIndex;
+            set => _ArchetypeIndex = value;
+        }
+        public UObjectTableItem Archetype => Owner.GetIndexTable(_ArchetypeIndex);
+
+        [Obsolete, Browsable(false)] public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
+        [Obsolete, Browsable(false)]
         public string SuperName
         {
             get
@@ -46,23 +62,8 @@ namespace UELib
             }
         }
 
-        public int TemplateIndex;
-
-        /// <summary>
-        /// Object index.
-        /// -- Not Fixed
-        /// </summary>
-        public int ArchetypeIndex;
-
-        [Obsolete("Still in use by UE Explorer")]
-        public int get_ArchetypeIndex()
-        {
-            return ArchetypeIndex;
-        }
-
-        [Pure] public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(ArchetypeIndex);
-
-        [Pure]
+        [Obsolete, Browsable(false)] public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(_ArchetypeIndex);
+        [Obsolete, Browsable(false)]
         public string ArchetypeName
         {
             get
@@ -106,17 +107,14 @@ namespace UELib
         // @Warning - Only supports Official builds.
         public void Serialize(IUnrealStream stream)
         {
-            stream.Write(ClassTable.Object);
-            stream.Write(SuperTable.Object);
-            stream.Write((int)OuterTable.Object);
-
+            stream.Write(_ClassIndex);
+            stream.Write(_SuperIndex);
+            stream.Write(OuterIndex);
             stream.Write(ObjectName);
-
             if (stream.Version >= VArchetype)
             {
-                ArchetypeIndex = stream.ReadInt32();
+                _ArchetypeIndex = stream.ReadInt32();
             }
-
             stream.Write(stream.Version >= VObjectFlagsToULONG
                 ? ObjectFlags
                 : (uint)ObjectFlags);
@@ -136,8 +134,8 @@ namespace UELib
 
         public void Deserialize(IUnrealStream stream)
         {
-            ClassIndex = stream.ReadObjectIndex();
-            SuperIndex = stream.ReadObjectIndex();
+            _ClassIndex = stream.ReadObjectIndex();
+            _SuperIndex = stream.ReadObjectIndex();
             OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 #if BIOSHOCK
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
@@ -149,7 +147,7 @@ namespace UELib
             ObjectName = stream.ReadNameReference();
             if (stream.Version >= VArchetype)
             {
-                ArchetypeIndex = stream.ReadInt32();
+                _ArchetypeIndex = stream.ReadInt32();
             }
 #if BATMAN
             if (stream.Package.Build == BuildGeneration.RSS)
@@ -268,9 +266,8 @@ namespace UELib
                 stream.Skip(4); // Package flags
             }
         }
-
-        #region Writing Methods
-
+        
+        [Obsolete]
         private long _ObjectFlagsOffset;
 
         /// <summary>
@@ -283,15 +280,14 @@ namespace UELib
             Owner.Stream.UW.Write((uint)ObjectFlags);
         }
 
-        #endregion
-
-        #region Methods
-
         public override string ToString()
         {
-            return ObjectName + "(" + Index + 1 + ")";
+            return $"{ObjectName}({Index}{1})";
         }
 
-        #endregion
+        public static explicit operator int(UExportTableItem item)
+        {
+            return item.Index;
+        }
     }
 }

@@ -23,8 +23,6 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UObject : object, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
-        #region PreInitialized Members
-
         /// <summary>
         /// The package this object resists in.
         /// </summary>
@@ -41,17 +39,23 @@ namespace UELib.Core
         /// <summary>
         /// The internal represented class in UnrealScript.
         /// </summary>
-        public UObject Class => Package.GetIndexObject(Table.ClassIndex);
+        [CanBeNull]
+        public UObject Class => ExportTable != null 
+            ? Package.GetIndexObject(ExportTable.ClassIndex) 
+            : null;
 
         /// <summary>
         /// [Package.Group:Outer].Object
         /// </summary>
+        [CanBeNull]
         public UObject Outer => Package.GetIndexObject(Table.OuterIndex);
 
         /// <summary>
         /// The object's index represented as a table index.
         /// </summary>
-        private int _ObjectIndex => Table is UExportTableItem ? Table.Index + 1 : -(Table.Index + 1);
+        private int _ObjectIndex => Table is UExportTableItem 
+            ? Table.Index + 1 
+            : -(Table.Index + 1);
 
         /// <summary>
         /// The object's flags.
@@ -59,8 +63,6 @@ namespace UELib.Core
         private ulong _ObjectFlags => ExportTable?.ObjectFlags ?? 0;
 
         public string Name => Table.ObjectName;
-
-        #endregion
 
         #region Serialized Members
 
@@ -279,13 +281,13 @@ namespace UELib.Core
                     Record(nameof(thiefLinkDataObject), thiefLinkDataObject);
                 }
 
-                if (!(this is UClass))
+                if (ExportTable.ClassIndex != 0)
                 {
                     _Buffer.Skip(4);
                 }
             }
 #endif
-            if (IsClassType("Class"))
+            if (ExportTable.ClassIndex == 0)
             {
                 return;
             }
@@ -391,7 +393,6 @@ namespace UELib.Core
         /// Gets a human-readable name of this object instance.
         /// </summary>
         /// <returns>The human-readable name of this object instance.</returns>
-        [Pure]
         public virtual string GetFriendlyType()
         {
             return Name;
@@ -420,7 +421,6 @@ namespace UELib.Core
         /// e.g. var Core.Object.Vector Location;
         /// </summary>
         /// <returns>The full name.</returns>
-        [Pure]
         public string GetOuterGroup()
         {
             var group = string.Empty;
@@ -437,20 +437,18 @@ namespace UELib.Core
         /// Gets the name of this object instance outer.
         /// </summary>
         /// <returns>The outer name of this object instance.</returns>
-        [Pure]
         public string GetOuterName()
         {
-            return Table.OuterName;
+            return Outer?.Name;
         }
 
         /// <summary>
         /// Gets the name of this object instance class.
         /// </summary>
         /// <returns>The class name of this object instance.</returns>
-        [Pure]
         public string GetClassName()
         {
-            return Table.ClassName;
+            return Class?.Name;
         }
 
         /// <summary>
@@ -458,7 +456,6 @@ namespace UELib.Core
         /// </summary>
         /// <param name="className">The class name to compare to.</param>
         /// <returns>TRUE if this object instance class name is equal className, FALSE otherwise.</returns>
-        [Pure]
         public bool IsClassType(string className)
         {
             return string.Compare(GetClassName(), className, StringComparison.OrdinalIgnoreCase) == 0;
@@ -469,16 +466,10 @@ namespace UELib.Core
         /// </summary>
         /// <param name="className">The name of the class to compare to.</param>
         /// <returns>Whether it extends class @className.</returns>
-        [Pure]
+        [Obsolete]
         public bool IsClass(string className)
         {
-            for (var c = Table.ClassTable; c != null; c = c.ClassTable)
-            {
-                if (string.Compare(c.ObjectName, className, StringComparison.OrdinalIgnoreCase) == 0)
-                    return true;
-            }
-
-            return false;
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -486,18 +477,10 @@ namespace UELib.Core
         /// </summary>
         /// <param name="membersClass">Field to test against.</param>
         /// <returns>Whether it is a member or not.</returns>
-        [Pure]
+        [Obsolete]
         public bool IsMember(UField membersClass)
         {
-            for (var p = membersClass; p != null; p = p.Super)
-            {
-                if (Outer == p)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            throw new NotImplementedException();
         }
 
         /// <summary>

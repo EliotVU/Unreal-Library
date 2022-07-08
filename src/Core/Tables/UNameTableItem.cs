@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using UELib.Decoding;
 
 namespace UELib
 {
@@ -11,35 +10,37 @@ namespace UELib
     {
         #region Serialized Members
 
-        /// <summary>
-        /// An unique name in a package.
-        /// </summary>
-        public string Name = string.Empty;
+        public string Name
+        {
+            get => _Name;
+            set => _Name = value;
+        }
+        private string _Name;
 
-        /// <summary>
-        /// Object Flags, such as LoadForEdit, LoadForServer, LoadForClient
-        /// 32bit in UE2
-        /// 64bit in UE3
-        /// </summary>
-        public ulong Flags;
+        public ulong Flags
+        {
+            get => _Flags;
+            set => _Flags = value;
+        }
+        private ulong _Flags;
 
         public ushort NonCasePreservingHash;
         public ushort CasePreservingHash;
-
+        
         #endregion
 
         public void Deserialize(IUnrealStream stream)
         {
-            Name = DeserializeName(stream);
-            Debug.Assert(Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
+            _Name = DeserializeName(stream);
+            Debug.Assert(_Name.Length <= 1024, "Maximum name length exceeded! Possible corrupt or unsupported package.");
 #if BIOSHOCK
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
             {
-                Flags = stream.ReadUInt64();
+                _Flags = stream.ReadUInt64();
                 return;
             }
 #endif
-            Flags = stream.Version >= UExportTableItem.VObjectFlagsToULONG
+            _Flags = stream.Version >= UExportTableItem.VObjectFlagsToULONG
                 ? stream.ReadUInt64()
                 : stream.ReadUInt32();
         }
@@ -56,23 +57,23 @@ namespace UELib
 
         public void Serialize(IUnrealStream stream)
         {
-            stream.Write(Name);
+            stream.Write(_Name);
             if (stream.Version < UExportTableItem.VObjectFlagsToULONG)
                 // Writing UINT
-                stream.Write((uint)Flags);
+                stream.Write((uint)_Flags);
             else
                 // Writing ULONG
-                stream.Write(Flags);
+                stream.Write(_Flags);
         }
 
         public override string ToString()
         {
-            return Name;
+            return _Name;
         }
 
         public static implicit operator string(UNameTableItem a)
         {
-            return a.Name;
+            return a._Name;
         }
 
         public static implicit operator int(UNameTableItem a)

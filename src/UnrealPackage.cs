@@ -1705,14 +1705,26 @@ namespace UELib
         #endregion
 
         #region Methods
-
-        private void CreateObject(UObjectTableItem table)
+        
+        // Create pseudo objects for imports so that we have non-null references to imports.
+        private void CreateObject(UImportTableItem item)
         {
-            var classType = GetClassType(table.ClassName);
-            table.Object = classType == null
+            var classType = GetClassType(item.ClassName);
+            item.Object = classType == null
                 ? new UnknownObject()
                 : (UObject)Activator.CreateInstance(classType);
-            AddObject(table.Object, table);
+            AddObject(item.Object, item);
+            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+        }
+        
+        private void CreateObject(UExportTableItem item)
+        {
+            var @class = GetIndexTable(item.ClassIndex);
+            var classType = GetClassType(@class != null ? @class.ObjectName : "Class");
+            item.Object = classType == null
+                ? new UnknownObject()
+                : (UObject)Activator.CreateInstance(classType);
+            AddObject(item.Object, item);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
         }
 
