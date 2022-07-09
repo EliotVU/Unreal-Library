@@ -18,34 +18,33 @@ namespace UELib
         public struct BinaryField : IUnrealDecompilable
         {
             /// <summary>
+            /// The offset in bytes where this field's value was read.
+            /// </summary>
+            public long Offset { get; set; }
+            
+            /// <summary>
             /// Name of this field.
             /// </summary>
-            [PublicAPI] public string Name;
+            public string Field { get; set; }
 
             /// <summary>
             /// Value of this field.
             /// </summary>
-            [PublicAPI] public object Tag;
-
-            /// <summary>
-            /// The position in bytes where this field's value was read from.
-            /// </summary>
-            [PublicAPI] public long Position;
+            public object Value { get; set; }
 
             /// <summary>
             /// The size in bytes of this field's value.
             /// </summary>
-            [PublicAPI] public long Size;
+            public long Size { get; set; }
 
             /// <summary>
             /// Decompiles and returns the output of @Tag.
             /// </summary>
             /// <returns>Output of @Tag or "NULL" if @Tag is null</returns>
-            [PublicAPI]
             public string Decompile()
             {
-                return Tag != null 
-                    ? $"({Tag.GetType()}) : {Tag}"
+                return Value != null 
+                    ? $"({Value.GetType()}) : {Value}"
                     : "NULL";
             }
         }
@@ -53,7 +52,7 @@ namespace UELib
         /// <summary>
         /// Stack of all deserialized fields.
         /// </summary>
-        [PublicAPI] public Stack<BinaryField> Fields = new Stack<BinaryField>(1);
+        public Stack<BinaryField> Fields = new Stack<BinaryField>(1);
 
         /// <summary>
         /// Adds a new field to the @Fields stack.
@@ -62,7 +61,6 @@ namespace UELib
         /// <param name="tag">Value of the field</param>
         /// <param name="position">Position in bytes where the field is read from</param>
         /// <param name="size">Size in bytes of the field</param>
-        [PublicAPI]
         public void AddField(string name, object tag, long position, long size)
         {
             Debug.Assert(size > 0);
@@ -70,9 +68,9 @@ namespace UELib
             (
                 new BinaryField
                 {
-                    Name = name,
-                    Tag = tag,
-                    Position = position,
+                    Field = name,
+                    Value = tag,
+                    Offset = position,
                     Size = size
                 }
             );
