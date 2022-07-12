@@ -56,9 +56,11 @@ namespace UELib
     /// <summary>
     /// Represents data of a loaded unreal package.
     /// </summary>
-    public sealed class UnrealPackage : IDisposable, IBuffered
+    public sealed class UnrealPackage : IDisposable, IBinaryData
     {
         #region General Members
+
+        public BinaryMetaData BinaryMetaData { get; } = new BinaryMetaData();
 
         // Reference to the stream used when reading this package
         public readonly UPackageStream Stream;
@@ -1327,6 +1329,8 @@ namespace UELib
         {
             Summary = new PackageFileSummary();
             Summary.Deserialize(stream);
+            BinaryMetaData.AddField(nameof(Summary), Summary, 0, stream.Position);
+            
             // FIXME: For backwards compatibility.
             PackageFlags = (uint)Summary.PackageFlags;
             Group = Summary.FolderName;
@@ -1352,6 +1356,8 @@ namespace UELib
                     nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                     Names.Add(nameEntry);
                 }
+                BinaryMetaData.AddField(nameof(Names), Names, Summary.NameOffset, stream.Position - Summary.NameOffset);
+
 #if SPELLBORN
                 // WTF were they thinking? Change DRFORTHEWIN to None
                 if (Build == GameBuild.BuildName.Spellborn
@@ -1369,6 +1375,7 @@ namespace UELib
                 Summary.Heritages = new UArray<Guid>(Summary.HeritageCount);
                 for (var i = 0; i < Summary.HeritageCount; ++i)
                     Summary.Heritages.Add(stream.ReadGuid());
+                BinaryMetaData.AddField(nameof(Summary.Heritages), Summary.Heritages, Summary.HeritageOffset, stream.Position - Summary.HeritageOffset);
             }
 
             // Read Import Table
@@ -1383,6 +1390,7 @@ namespace UELib
                     imp.Size = (int)(stream.Position - imp.Offset);
                     Imports.Add(imp);
                 }
+                BinaryMetaData.AddField(nameof(Imports), Imports, Summary.ImportOffset, stream.Position - Summary.ImportOffset);
             }
 
             // Read Export Table
@@ -1397,6 +1405,7 @@ namespace UELib
                     exp.Size = (int)(stream.Position - exp.Offset);
                     Exports.Add(exp);
                 }
+                BinaryMetaData.AddField(nameof(Exports), Exports, Summary.ExportOffset, stream.Position - Summary.ExportOffset);
 
                 if (Summary.DependsOffset > 0)
                 {
@@ -1424,6 +1433,7 @@ namespace UELib
 
                             dependsMap.Add(imports);
                         }
+                        BinaryMetaData.AddField(nameof(dependsMap), dependsMap, Summary.DependsOffset, stream.Position - Summary.DependsOffset);
                     }
                     catch (Exception ex)
                     {
@@ -1453,6 +1463,11 @@ namespace UELib
                         var objectGuid = stream.ReadGuid();
                         int exportIndex = stream.ReadInt32();
                     }
+
+                    if (stream.Position != Summary.ImportExportGuidsOffset)
+                    {
+                        BinaryMetaData.AddField("ImportExportGuids", null, Summary.ImportExportGuidsOffset, stream.Position - Summary.ImportExportGuidsOffset);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1471,6 +1486,8 @@ namespace UELib
                 {
                     int thumbnailCount = stream.ReadInt32();
                     // TODO: Serialize
+                    BinaryMetaData.AddField("Thumbnails", null, Summary.ThumbnailTableOffset, stream.Position - Summary.ThumbnailTableOffset);
+
                 }
                 catch (Exception ex)
                 {
@@ -2049,5 +2066,6 @@ namespace UELib
         }
 
 #endregion
+
     }
 }

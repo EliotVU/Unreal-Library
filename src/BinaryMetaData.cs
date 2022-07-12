@@ -63,7 +63,7 @@ namespace UELib
         /// <param name="size">Size in bytes of the field</param>
         public void AddField(string name, object tag, long position, long size)
         {
-            Debug.Assert(size > 0);
+            Debug.Assert(size > 0, $"Size of field {name} at {position} cannot be less than 1");
             Fields.Push
             (
                 new BinaryField
