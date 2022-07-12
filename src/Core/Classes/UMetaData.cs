@@ -71,8 +71,13 @@ namespace UELib.Core
 
         #region Serialized Members
         
-        // ReSharper disable once MemberCanBePrivate.Global
-        public UArray<UFieldData> MetaObjects;
+        private UArray<UFieldData> _Fields;
+
+        public UArray<UFieldData> Fields
+        {
+            get => _Fields;
+            set => _Fields = value;
+        }
 
         #endregion
 
@@ -81,8 +86,8 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-            _Buffer.ReadArray(out MetaObjects);
-            Record(nameof(MetaObjects), MetaObjects);
+            _Buffer.ReadArray(out _Fields);
+            Record(nameof(_Fields), _Fields);
         }
 
         #endregion
@@ -103,12 +108,12 @@ namespace UELib.Core
         {
             // UE3 Debug
             BeginDeserializing();
-            if (MetaObjects == null)
+            if (_Fields == null)
             {
                 return "";
             }
 
-            return string.Join("\r\n", MetaObjects.ConvertAll(data => data + data.Decompile()));
+            return string.Join("\r\n", _Fields.ConvertAll(data => data + data.Decompile()));
         }
 
         #endregion

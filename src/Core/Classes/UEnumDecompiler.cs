@@ -20,7 +20,7 @@ namespace UELib.Core
                    UnrealConfig.PrintEndBracket() + ";";
         }
 
-        protected override string FormatHeader()
+        protected virtual string FormatHeader()
         {
             return $"enum {Name}{DecompileMeta()}";
         }

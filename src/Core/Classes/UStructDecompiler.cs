@@ -49,7 +49,7 @@ namespace UELib.Core
             return content + UnrealConfig.PrintEndBracket() + ";";
         }
 
-        protected override string FormatHeader()
+        protected virtual string FormatHeader()
         {
             var output = $"struct {FormatFlags()}{Name}{(Super != null ? $" {FormatExtends()} {Super.Name}" : string.Empty)}";
             string metaData = DecompileMeta();

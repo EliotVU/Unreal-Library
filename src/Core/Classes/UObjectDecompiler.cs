@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using System.Diagnostics;
+
+namespace UELib.Core
 {
     public partial class UObject : IUnrealDecompilable
     {
@@ -12,8 +14,14 @@
                 BeginDeserializing();
             }
 
+            if (ImportTable != null)
+            {
+                return $"// Cannot decompile import {Name}";
+            }
+
+            Debug.Assert(Class != null);
             string output = $"begin object name={Name} class={Class.Name}" +
-                            $"\r\n";
+                            "\r\n";
             UDecompilingState.AddTabs(1);
             try
             {
@@ -27,12 +35,6 @@
             return $"{output}{UDecompilingState.Tabs}object end" +
                    $"\r\n{UDecompilingState.Tabs}" +
                    $"// Reference: {Class.Name}'{GetOuterGroup()}'";
-        }
-
-        protected virtual string FormatHeader()
-        {
-            // Note:Dangerous recursive call!
-            return Decompile();
         }
 
         protected string DecompileProperties()
