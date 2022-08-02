@@ -86,6 +86,16 @@ namespace UELib.Core
                 Record("Unknown:AA2", unknown);
             }
 #endif
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                ArrayDim = _Buffer.ReadUInt16();
+                Record("ArrayDim", ArrayDim);
+                Debug.Assert(ArrayDim <= 2048, "Bad array dim");
+                // No serialized element size?
+                goto skipInfo;
+            }
+#endif
             int info = _Buffer.ReadInt32();
             ArrayDim = (ushort)(info & 0x0000FFFFU);
             Record("ArrayDim", ArrayDim);
@@ -160,6 +170,26 @@ namespace UELib.Core
                 Record(nameof(vengeanceEditComboType), vengeanceEditComboType);
                 var vengeanceEditDisplay = _Buffer.ReadNameReference();
                 Record(nameof(vengeanceEditDisplay), vengeanceEditDisplay);
+            }
+#endif
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                if ((PropertyFlags & 0x800000) != 0)
+                {
+                    EditorDataText = _Buffer.ReadText();
+                    Record(nameof(EditorDataText), EditorDataText);
+                }
+
+                // Same flag as EditorData, but this may merely be a coincidence, see above
+                if (_Buffer.Version >= 118 && (PropertyFlags & 0x2000000) != 0)
+                {
+                    // NU_NAME???
+                    var dnfNuPropertyName = _Buffer.ReadNameReference();
+                    Record(nameof(dnfNuPropertyName), dnfNuPropertyName);
+                }
+
+                return;
             }
 #endif
             // Appears to be a UE2.5 feature, it is not present in UE2 builds with no custom LicenseeVersion

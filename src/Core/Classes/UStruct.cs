@@ -99,7 +99,33 @@ namespace UELib.Core
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
             }
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                if (_Buffer.LicenseeVersion >= 17)
+                {
+                    // Back-ported CppText
+                    CppText = _Buffer.ReadObject<UTextBuffer>();
+                    Record(nameof(CppText), CppText);
+                    
+                    var dnfTextObj2 = _Buffer.ReadObject();
+                    Record(nameof(dnfTextObj2), dnfTextObj2);
+                    
+                    _Buffer.ReadArray(out UArray<UObject> dnfIncludeTexts);
+                    Record(nameof(dnfIncludeTexts), dnfIncludeTexts);
+                }
 
+                if (_Buffer.LicenseeVersion >= 2)
+                {
+                    // Bool?
+                    _Buffer.ReadByte();
+                    var dnfName = _Buffer.ReadNameReference();
+                    Record(nameof(dnfName), dnfName);
+                }
+                
+                goto lineData;
+            }
+#endif
             // Standard, but UT2004' derived games do not include this despite reporting version 128+
             if (Package.Version >= VCppText && _Buffer.UE4Version < 117
                 && !Package.IsConsoleCooked() &&
@@ -133,6 +159,7 @@ namespace UELib.Core
                 Record(nameof(ProcessedText), ProcessedText);
             }
 #endif
+            lineData:
             if (!Package.IsConsoleCooked() &&
                 _Buffer.UE4Version < 117)
             {
@@ -203,6 +230,12 @@ namespace UELib.Core
                     ByteCodeManager.Deserialize();
                 }
             }
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                //_Buffer.ReadByte();
+            }
+#endif
         }
 
         protected override bool CanDisposeBuffer()
