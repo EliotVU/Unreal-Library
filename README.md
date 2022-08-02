@@ -46,6 +46,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | |
 | Unreal Tournament | 338-436 | 68-69/000 | |
 | Deus Ex | 400-436 | 68/000 | |
+| Duke Nukem Forever (2001) | 613 | 68/002 | UStruct offsets are off leading to bad output code |
 | Rune | 436 | 69/000 | |
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
