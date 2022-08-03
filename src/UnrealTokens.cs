@@ -191,8 +191,8 @@
         Unused5F                = 0x5F,
         #endregion
 
-        ExtendedNative          = 0x60,
-        FirstNative             = 0x70,
+        ExtendedNative          = 0x72,
+        FirstNative             = 0x90,
         MaxNative               = 0x1000,
         
         MaxNonNative            = ExtendedNative - 1,

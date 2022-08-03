@@ -327,10 +327,102 @@ namespace UELib.Core
                 //{ (byte)ExprToken.OutVariable, (byte)ExprToken.LogFunction }
             };
 #endif
+#if DNF
+            private static readonly Dictionary<byte, byte> ByteCodeMap_BuildDnf = new Dictionary<byte, byte>
+            {
+                //{ (byte)ExprToken.LocalVariable, (byte)ExprToken.LocalVariable },
+                //{ (byte)ExprToken.InstanceVariable, (byte)ExprToken.InstanceVariable },
+                //{ (byte)ExprToken.DefaultVariable, (byte)ExprToken.DefaultVariable },
+                { 0x03, (byte)ExprToken.Unused },
+                //{ 0x04, (byte)ExprToken.Unused },
+                //{ 0x0C, (byte)ExprToken.LabelTable },
+                //{ 0x0D, (byte)ExprToken.Unused },
+                //{ 0x0E, (byte)ExprToken.Unused },
+                //{ 0x12, (byte)ExprToken.ClassContext },
+                //{ 0x13, (byte)ExprToken.MetaCast },
+                { 0x15, (byte)ExprToken.Unused },
+                //{ 0x16, (byte)ExprToken.EndFunctionParms },
+                //{ 0x18, (byte)ExprToken.Skip },
+                //{ 0x19, (byte)ExprToken.Context },
+                //{ 0x1B, (byte)ExprToken.VirtualFunction },
+                //{ 0x1C, (byte)ExprToken.FinalFunction },
+                { 0x2B, (byte)ExprToken.Unused },
+                //{ 0x2E, (byte)ExprToken.DynamicCast },
+                { 0x35, (byte)ExprToken.Unused },
+                //{ 0x36, (byte)ExprToken.StructMember },
+                { 0x37/*DynArrayLength*/, (byte)ExprToken.DebugInfo },
+                //{ 0x38, (byte)ExprToken.GlobalFunction },
+                { 0x39/*PrimitiveCast*/, (byte)ExprToken.Unused },
+                { 0x3A, (byte)ExprToken.Unused },
+                { 0x3B, (byte)ExprToken.Unused },
+                { 0x3C, (byte)ExprToken.Unused },
+                { 0x3D, (byte)ExprToken.Unused },
+                { 0x3E, (byte)ExprToken.Unused },
+                { 0x3F, (byte)ExprToken.Unused },
+                { 0x40, (byte)ExprToken.Unused },
+                { 0x41, (byte)ExprToken.Unused },
+                { 0x42, (byte)ExprToken.Unused },
+                { 0x43, (byte)ExprToken.Unused },
+                { 0x44, (byte)ExprToken.Unused },
+                { 0x45, (byte)ExprToken.Unused },
+                { 0x46, (byte)ExprToken.Unused },
+                { 0x47, (byte)ExprToken.Unused },
+                { 0x48, (byte)ExprToken.Unused },
+                { 0x49, (byte)ExprToken.Unused },
+                { 0x4A, (byte)ExprToken.Unused },
+                { 0x4B, (byte)ExprToken.Unused },
+                { 0x4C, (byte)ExprToken.Unused },
+                { 0x4D, (byte)ExprToken.Unused },
+                { 0x4E, (byte)ExprToken.Unused },
+                { 0x4F, (byte)ExprToken.Unused },
+                { 0x50, (byte)ExprToken.Unused },
+                { 0x51, (byte)ExprToken.Unused },
+                { 0x52, (byte)ExprToken.Unused },
+                { 0x53, (byte)ExprToken.Unused },
+                { 0x54, (byte)ExprToken.Unused },
+                { 0x55, (byte)ExprToken.Unused },
+                { 0x56, (byte)ExprToken.Unused },
+                { 0x57, (byte)ExprToken.Unused },
+                { 0x58, (byte)ExprToken.Unused },
+                { 0x59, (byte)ExprToken.Unused },
+                { 0x5A, (byte)ExprToken.DynArrayLength }, // keyword > expr
+                { 0x5B, (byte)ExprToken.DynArrayInsert }, // expr > expr
+                { 0x5C, (byte)ExprToken.DynArrayAdd }, // expr > expr
+                { 0x5D, (byte)ExprToken.DynArrayRemove }, // expr > expr
+                { 0x5E, (byte)ExprToken.DelegateFunction }, // object > name
+                { 0x5F, (byte)ExprToken.DelegateProperty }, // name
+                { 0x60, (byte)ExprToken.LetDelegate }, // expr > expr
+                { 0x61, (byte)ExprToken.InternalUnresolved }, // void (VectorConstZero)
+                { 0x62, (byte)ExprToken.InternalUnresolved }, // void (VectorConstUnitZ)
+                { 0x63, (byte)ExprToken.InternalUnresolved }, // void (RotConstZero)
+                { 0x64, (byte)ExprToken.InternalUnresolved }, // ushort (IntConstWord)
+                { 0x65, (byte)ExprToken.InternalUnresolved }, // byte > byte > byte (RotConstBytes)
+                { 0x66, (byte)ExprToken.InternalUnresolved }, // keyword > expr (DynArrayEmpty)
+                { 0x67, (byte)ExprToken.InternalUnresolved }, // void (Breakpoint)
+                { 0x68, (byte)ExprToken.Unused },
+                { 0x69, (byte)ExprToken.InternalUnresolved }, // int (RotConstPitch)
+                { 0x6A, (byte)ExprToken.InternalUnresolved }, // int (RotConstYaw)
+                { 0x6B, (byte)ExprToken.InternalUnresolved }, // int (RotConstRoll)
+                { 0x6C, (byte)ExprToken.InternalUnresolved }, // int (VectorX)
+                { 0x6D, (byte)ExprToken.InternalUnresolved }, // int (VectorY)
+                { 0x6E, (byte)ExprToken.InternalUnresolved }, // int (VectorZ)
+                { 0x6F, (byte)ExprToken.InternalUnresolved }, // int > int (VectorXY)
+                { 0x70, (byte)ExprToken.InternalUnresolved }, // int > int (VectorXZ)
+                { 0x71, (byte)ExprToken.InternalUnresolved }, // int > int (VectorYZ)
+            };
+#endif
+            internal bool IsUsingInlinedPrimitiveCasting()
+            {
+#if DNF
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF) return true;
+#endif
+                return Package.Version < VPrimitiveCastToken;
+            }
+
             private void SetupByteCodeMap()
             {
-#if UE1
-                if (Package.Version < VPrimitiveCastToken)
+#if UE1 || DNF
+                if (IsUsingInlinedPrimitiveCasting())
                 {
                     // Map all old CastTokens that were expressed as an ExprToken
                     _ByteCodeMap = new Dictionary<byte, byte>
@@ -423,6 +515,9 @@ namespace UELib.Core
 #endif
 #if BIOSHOCK
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock) _ByteCodeMap = ByteCodeMap_BuildBs;
+#endif
+#if DNF
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF) _ByteCodeMap = ByteCodeMap_BuildDnf;
 #endif
 #if MOH
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.MOH)

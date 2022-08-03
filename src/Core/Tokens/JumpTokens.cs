@@ -474,7 +474,11 @@ namespace UELib.Core
                     }
 
                     // TODO: Corrigate version
-                    if (stream.Version >= 536 && stream.Version <= 587)
+                    if ((stream.Version >= 536 && stream.Version <= 587)
+#if DNF
+                        || stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                        )
                     {
                         PropertyType = stream.ReadUInt16();
                         Decompiler.AlignSize(sizeof(ushort));

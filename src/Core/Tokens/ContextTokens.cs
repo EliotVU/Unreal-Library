@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Types;
 
 namespace UELib.Core
 {
@@ -9,26 +10,25 @@ namespace UELib.Core
         {
             public class ContextToken : Token
             {
-                // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
-                // Greater or Equal than
-                private const ushort VSizeByteMoved = 588;
-
+                public ushort PropertyType;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    bool propertyAdded = stream.Version >= VSizeByteMoved
-#if TERA
-                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
-#endif
-                        ;
-
                     // A.?
                     DeserializeNext();
 
                     // SkipSize
                     stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(ushort));
+                    
 
                     // Doesn't seem to exist in APB
+                    // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
+                    bool propertyAdded = stream.Version >= 588
+#if TERA
+                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                        ;
                     if (propertyAdded)
                     {
                         // Property
@@ -36,14 +36,19 @@ namespace UELib.Core
                         Decompiler.AlignObjectSize();
                     }
 
-                    // PropertyType
-                    stream.ReadByte();
-                    Decompiler.AlignSize(sizeof(byte));
-
-                    // Additional byte in APB?
-                    if (stream.Version > 512 && !propertyAdded)
+                    // FIXME: Thinking of it... this appears to be identical to the changes found in SwitchToken, but the existing versions are different?.
+                    if ((stream.Version >= 512 && !propertyAdded)
+#if DNF
+                        || stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                       )
                     {
-                        stream.ReadByte();
+                        PropertyType = stream.ReadUInt16();
+                        Decompiler.AlignSize(sizeof(ushort));
+                    }
+                    else
+                    {
+                        PropertyType = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
