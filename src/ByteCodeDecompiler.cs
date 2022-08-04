@@ -59,6 +59,9 @@ namespace UELib.Core
 
             #region Deserialize
 
+            private byte _ExtendedNative = (byte)ExprToken.ExtendedNative;
+            private byte _FirstNative = (byte)ExprToken.FirstNative;
+
             /// <summary>
             /// The current simulated-memory-aligned position in @Buffer.
             /// </summary>
@@ -662,9 +665,9 @@ namespace UELib.Core
 
                 byte serializedByte = tokenCode;
                 Token token;
-                if (tokenCode >= (byte)ExprToken.ExtendedNative)
+                if (tokenCode >= _ExtendedNative)
                 {
-                    if (tokenCode >= (byte)ExprToken.FirstNative)
+                    if (tokenCode >= _FirstNative)
                     {
                         token = CreateNativeToken(tokenCode);
                     }
@@ -673,7 +676,7 @@ namespace UELib.Core
                         byte extendedByte = Buffer.ReadByte();
                         AlignSize(sizeof(byte));
 
-                        var nativeIndex = (ushort)(((tokenCode - (byte)ExprToken.ExtendedNative) << 8) | extendedByte);
+                        var nativeIndex = (ushort)(((tokenCode - _ExtendedNative) << 8) | extendedByte);
                         Debug.Assert(nativeIndex < (ushort)ExprToken.MaxNative);
                         token = CreateNativeToken(nativeIndex);
                     }

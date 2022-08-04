@@ -191,12 +191,11 @@
         Unused5F                = 0x5F,
         #endregion
 
-        ExtendedNative          = 0x72,
-        FirstNative             = 0x90,
+        ExtendedNative          = 0x60,
+        FirstNative             = 0x70,
         MaxNative               = 0x1000,
         
-        MaxNonNative            = ExtendedNative - 1,
-        InternalUnresolved      = MaxNonNative,
+        InternalUnresolved      = 0xFF,
         Unused                  = InternalUnresolved,
     }
 
