@@ -639,10 +639,15 @@ namespace UELib.Core
 
             private NativeFunctionToken CreateNativeToken(ushort nativeIndex)
             {
-                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex);
+                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex) ?? new NativeTableItem
+                {
+                    Type = FunctionType.Function,
+                    Name = $"__NFUN_{nativeIndex}__",
+                    ByteToken = nativeIndex
+                };
                 return new NativeFunctionToken
                 {
-                    NativeItem = nativeTableItem
+                    NativeItem = nativeTableItem,
                 };
             }
 
