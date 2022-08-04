@@ -22,17 +22,17 @@ namespace UELib
         [PublicAPI]
         public NativeTableItem(UFunction function)
         {
-            if (function.IsOperator())
-            {
-                Type = FunctionType.Operator;
-            }
-            else if (function.IsPost())
+            if (function.IsPost())
             {
                 Type = FunctionType.PostOperator;
             }
             else if (function.IsPre())
             {
                 Type = FunctionType.PreOperator;
+            }
+            else if (function.IsOperator())
+            {
+                Type = FunctionType.Operator;
             }
             else
             {
@@ -41,9 +41,7 @@ namespace UELib
 
             OperPrecedence = function.OperPrecedence;
             ByteToken = function.NativeToken;
-            Name = Type == FunctionType.Function
-                ? function.Name
-                : function.FriendlyName;
+            Name = function.FriendlyName;
         }
     }
 

@@ -136,7 +136,7 @@ namespace UELib.Core
             {
                 // HACK: Workaround for packages that have stripped FriendlyName data.
                 // FIXME: Operator names need to be translated.
-                FriendlyName = Table.ObjectName;
+                if (FriendlyName == null) FriendlyName = Table.ObjectName;
             }
         }
 
