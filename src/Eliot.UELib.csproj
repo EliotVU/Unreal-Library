@@ -124,6 +124,7 @@
     <Compile Include="Branch\UE4\EngineBranch.UE4.cs" />
     <Compile Include="Branch\PackageSerializer.cs" />
     <Compile Include="Branch\UE4\PackageSerializer.UE4.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\BreakpointToken.cs" />
     <Compile Include="Core\Classes\Props\Custom\UScriptMapProperty.cs" />
     <Compile Include="Core\Classes\Props\UArrayProperty.cs" />
     <Compile Include="Core\Classes\Props\UBoolProperty.cs" />
@@ -173,6 +174,7 @@
     <Compile Include="Core\UStateFrame.cs" />
     <Compile Include="Branch\UE2\AA2\CryptoDecoder.AA2.cs" />
     <Compile Include="Decoding\CryptoCore.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\DynamicArrayEmptyToken.cs" />
     <Compile Include="Engine\Classes\UBitmapMaterial.cs" />
     <Compile Include="Engine\Classes\UPalette.cs" />
     <Compile Include="Decoding\IBufferDecoder.cs" />
@@ -185,6 +187,7 @@
     <Compile Include="Engine\Classes\UTexture.cs" />
     <Compile Include="Engine\Classes\USound.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\IntConstWordToken.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Classes\UConstDecompiler.cs" />
@@ -209,6 +212,11 @@
     <Compile Include="Core\Classes\UStruct.cs" />
     <Compile Include="Engine\Classes\UFont.cs" />
     <Compile Include="NativesTablePackage.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\RotConstBytesToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\RotConstPitchToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\RotConstRollToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\RotConstYawToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\RotConstZeroToken.cs" />
     <Compile Include="UnrealScript\PropertyDisplay.cs" />
     <Compile Include="UDecompilingState.cs" />
     <Compile Include="Core\Types\UName.cs" />
@@ -228,6 +236,14 @@
     <Compile Include="Core\Tables\UTableItem.cs" />
     <Compile Include="UnrealTokens.cs" />
     <Compile Include="UnrealTypes.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorConstUnitZToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorConstZeroToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorXToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorXYToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorXZToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorYToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorYZToken.cs" />
+    <Compile Include="Branch\UE2\DNF\Tokens\VectorZToken.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
@@ -257,7 +273,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
