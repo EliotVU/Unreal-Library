@@ -17,12 +17,29 @@ To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.
 
 Install using either:
 * Package Manager:
+
 ```
     Install-Package Eliot.UELib.dll
 ```
 * NuGet: <https://www.nuget.org/packages/Eliot.UELib.dll>
 
-See [usage](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for further instructions on how to use the library in your project.
+* Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
+
+```csharp
+    var package = UnrealLoader.LoadPackage(@"C:\Path\Package.upk", System.IO.FileAccess.Read);
+    Console.WriteLine($"Version: {package.Summary.Version}");
+    
+    // Initializes the registered classes, constructs and deserializes(loads) the package objects.
+    package.InitializePackage();
+
+    // Now we can iterate all loaded objects, but beware! This includes fake-import objects.
+    foreach (var obj in package.Objects)
+    {
+        Console.WriteLine($"Name: {obj.Name}");
+        Console.WriteLine($"Class: {obj.Class?.Name}");
+        Console.WriteLine($"Outer: {obj.Outer}");
+    }
+```
 
 If you're looking to modify the library for the sole purpose of modding [UE Explorer](https://github.com/UE-Explorer/UE-Explorer), I recommend you to clone or fork this repository and install UE Explorer within your ```UELib/src/bin/Debug/``` folder, or change the project's configuration to build inside of the UE Explorer's folder.
 
