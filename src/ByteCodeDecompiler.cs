@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Branch.UE2.DNF.Tokens;
 using UELib.Flags;
 using UELib.Tokens;
 
@@ -13,7 +14,6 @@ namespace UELib.Core
 {
     using System.Linq;
     using System.Text;
-    using static UStruct.UByteCodeDecompiler;
 
     public partial class UStruct
     {
@@ -59,6 +59,9 @@ namespace UELib.Core
 
             #region Deserialize
 
+            private byte _ExtendedNative = (byte)ExprToken.ExtendedNative;
+            private byte _FirstNative = (byte)ExprToken.FirstNative;
+
             /// <summary>
             /// The current simulated-memory-aligned position in @Buffer.
             /// </summary>
@@ -95,19 +98,19 @@ namespace UELib.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void AlignSize(int size)
+            internal void AlignSize(int size)
             {
                 CodePosition += size;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void AlignNameSize()
+            internal void AlignNameSize()
             {
                 CodePosition += _NameMemorySize;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void AlignObjectSize()
+            internal void AlignObjectSize()
             {
                 CodePosition += _ObjectMemorySize;
             }
@@ -327,56 +330,100 @@ namespace UELib.Core
                 //{ (byte)ExprToken.OutVariable, (byte)ExprToken.LogFunction }
             };
 #endif
+#if DNF
+            private static readonly Dictionary<byte, byte> ByteCodeMap_BuildDnf = new Dictionary<byte, byte>
+            {
+                //{ (byte)ExprToken.LocalVariable, (byte)ExprToken.LocalVariable },
+                //{ (byte)ExprToken.InstanceVariable, (byte)ExprToken.InstanceVariable },
+                //{ (byte)ExprToken.DefaultVariable, (byte)ExprToken.DefaultVariable },
+                { 0x03, (byte)ExprToken.Unused },
+                //{ 0x04, (byte)ExprToken.Unused },
+                //{ 0x0C, (byte)ExprToken.LabelTable },
+                //{ 0x0D, (byte)ExprToken.Unused },
+                //{ 0x0E, (byte)ExprToken.Unused },
+                //{ 0x12, (byte)ExprToken.ClassContext },
+                //{ 0x13, (byte)ExprToken.MetaCast },
+                { 0x15, (byte)ExprToken.Unused },
+                //{ 0x16, (byte)ExprToken.EndFunctionParms },
+                //{ 0x18, (byte)ExprToken.Skip },
+                //{ 0x19, (byte)ExprToken.Context },
+                //{ 0x1B, (byte)ExprToken.VirtualFunction },
+                //{ 0x1C, (byte)ExprToken.FinalFunction },
+                { 0x2B, (byte)ExprToken.Unused },
+                //{ 0x2E, (byte)ExprToken.DynamicCast },
+                { 0x35, (byte)ExprToken.Unused },
+                //{ 0x36, (byte)ExprToken.StructMember },
+                { 0x37/*DynArrayLength*/, (byte)ExprToken.DebugInfo },
+                //{ 0x38, (byte)ExprToken.GlobalFunction },
+                { 0x39/*PrimitiveCast*/, (byte)ExprToken.Unused },
+                { 0x3A, (byte)ExprToken.Unused },
+                { 0x3B, (byte)ExprToken.Unused },
+                { 0x3C, (byte)ExprToken.Unused },
+                { 0x3D, (byte)ExprToken.Unused },
+                { 0x3E, (byte)ExprToken.Unused },
+                { 0x3F, (byte)ExprToken.Unused },
+                { 0x40, (byte)ExprToken.Unused },
+                { 0x41, (byte)ExprToken.Unused },
+                { 0x42, (byte)ExprToken.Unused },
+                { 0x43, (byte)ExprToken.Unused },
+                { 0x44, (byte)ExprToken.Unused },
+                { 0x45, (byte)ExprToken.Unused },
+                { 0x46, (byte)ExprToken.Unused },
+                { 0x47, (byte)ExprToken.Unused },
+                { 0x48, (byte)ExprToken.Unused },
+                { 0x49, (byte)ExprToken.Unused },
+                { 0x4A, (byte)ExprToken.Unused },
+                { 0x4B, (byte)ExprToken.Unused },
+                { 0x4C, (byte)ExprToken.Unused },
+                { 0x4D, (byte)ExprToken.Unused },
+                { 0x4E, (byte)ExprToken.Unused },
+                { 0x4F, (byte)ExprToken.Unused },
+                { 0x50, (byte)ExprToken.Unused },
+                { 0x51, (byte)ExprToken.Unused },
+                { 0x52, (byte)ExprToken.Unused },
+                { 0x53, (byte)ExprToken.Unused },
+                { 0x54, (byte)ExprToken.Unused },
+                { 0x55, (byte)ExprToken.Unused },
+                { 0x56, (byte)ExprToken.Unused },
+                { 0x57, (byte)ExprToken.Unused },
+                { 0x58, (byte)ExprToken.Unused },
+                { 0x59, (byte)ExprToken.Unused },
+                { 0x5A, (byte)ExprToken.DynArrayLength }, // keyword > expr
+                { 0x5B, (byte)ExprToken.DynArrayInsert }, // expr > expr
+                { 0x5C, (byte)ExprToken.DynArrayAdd }, // expr > expr
+                { 0x5D, (byte)ExprToken.DynArrayRemove }, // expr > expr
+                { 0x5E, (byte)ExprToken.DelegateFunction }, // object > name
+                { 0x5F, (byte)ExprToken.DelegateProperty }, // name
+                { 0x60, (byte)ExprToken.LetDelegate }, // expr > expr
+                //{ 0x61, (byte)ExprToken.InternalUnresolved }, // void (VectorConstZero)
+                //{ 0x62, (byte)ExprToken.InternalUnresolved }, // void (VectorConstUnitZ)
+                //{ 0x63, (byte)ExprToken.InternalUnresolved }, // void (RotConstZero)
+                //{ 0x64, (byte)ExprToken.InternalUnresolved }, // ushort (IntConstWord)
+                //{ 0x65, (byte)ExprToken.InternalUnresolved }, // byte > byte > byte (RotConstBytes)
+                //{ 0x66, (byte)ExprToken.InternalUnresolved }, // keyword > expr (DynArrayEmpty)
+                //{ 0x67, (byte)ExprToken.InternalUnresolved }, // void (Breakpoint)
+                { 0x68, (byte)ExprToken.Unused },
+                //{ 0x69, (byte)ExprToken.InternalUnresolved }, // int (RotConstPitch)
+                //{ 0x6A, (byte)ExprToken.InternalUnresolved }, // int (RotConstYaw)
+                //{ 0x6B, (byte)ExprToken.InternalUnresolved }, // int (RotConstRoll)
+                //{ 0x6C, (byte)ExprToken.InternalUnresolved }, // int (VectorX)
+                //{ 0x6D, (byte)ExprToken.InternalUnresolved }, // int (VectorY)
+                //{ 0x6E, (byte)ExprToken.InternalUnresolved }, // int (VectorZ)
+                //{ 0x6F, (byte)ExprToken.InternalUnresolved }, // int > int (VectorXY)
+                //{ 0x70, (byte)ExprToken.InternalUnresolved }, // int > int (VectorXZ)
+                //{ 0x71, (byte)ExprToken.InternalUnresolved }, // int > int (VectorYZ)
+            };
+#endif
+            private bool IsUsingInlinedPrimitiveCasting()
+            {
+#if DNF
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF) return true;
+#endif
+                return Package.Version < VPrimitiveCastToken;
+            }
+
             private void SetupByteCodeMap()
             {
-#if UE1
-                if (Package.Version < VPrimitiveCastToken)
-                {
-                    // Map all old CastTokens that were expressed as an ExprToken
-                    _ByteCodeMap = new Dictionary<byte, byte>
-                    {
-                        // TODO: Confirm if these are correct for UE1
-                        { (byte)CastToken.RotatorToVector, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.ByteToInt, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.ByteToBool, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.ByteToFloat, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.IntToByte, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.IntToBool, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.IntToFloat, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.BoolToByte, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.BoolToInt, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.BoolToFloat, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.FloatToByte, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.FloatToInt, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.FloatToBool, (byte)ExprToken.PrimitiveCast },
-
-                        { (byte)CastToken.ObjectToInterface, (byte)ExprToken.PrimitiveCast }, // Actually StringToName
-
-                        { (byte)CastToken.ObjectToBool, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.NameToBool, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.StringToByte, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.StringToInt, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.StringToBool, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.StringToFloat, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.StringToVector, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.StringToRotator, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.VectorToBool, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.VectorToRotator, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.RotatorToBool, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.ByteToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.IntToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.BoolToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.FloatToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.ObjectToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.NameToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.VectorToString, (byte)ExprToken.PrimitiveCast },
-                        { (byte)CastToken.RotatorToString, (byte)ExprToken.PrimitiveCast },
-
-                        { (byte)CastToken.DelegateToString, (byte)ExprToken.PrimitiveCast } // StringToName in HP2?
-                    };
-                    return;
-                }
-#endif
 #if AA2
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
                 {
@@ -419,13 +466,21 @@ namespace UELib.Core
 #if APB
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.APB &&
                     Package.LicenseeVersion >= 32)
+                {
                     _ByteCodeMap = ByteCodeMap_BuildApb;
+                    return;
+                }
 #endif
 #if BIOSHOCK
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock) _ByteCodeMap = ByteCodeMap_BuildBs;
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
+                {
+                    _ByteCodeMap = ByteCodeMap_BuildBs;
+                    return;
+                }
 #endif
 #if MOH
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.MOH)
+                {
                     // TODO: Incomplete byte-code map
                     _ByteCodeMap = new Dictionary<byte, byte>
                     {
@@ -446,6 +501,75 @@ namespace UELib.Core
                         { 0x4B, (byte)ExprToken.NativeParm }
                         //{ 0x4F, (byte)ExprToken.BoolVariable }
                     };
+                    return;
+                }
+#endif
+#if DNF
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                {
+                    _ExtendedNative = 0x80;
+                    _FirstNative = 0x90;
+                    _ByteCodeMap = ByteCodeMap_BuildDnf;
+                }
+#endif
+#if UE1 || DNF
+                if (IsUsingInlinedPrimitiveCasting())
+                {
+                    // Map all old CastTokens that were expressed as an ExprToken
+                    var castBytesMap = new Dictionary<byte, byte>
+                    {
+                        // TODO: Confirm if these are correct for UE1
+                        { (byte)CastToken.RotatorToVector, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToBool, (byte)ExprToken.PrimitiveCast },
+
+                        { (byte)CastToken.ObjectToInterface, (byte)ExprToken.PrimitiveCast }, // Actually StringToName
+
+                        { (byte)CastToken.ObjectToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.NameToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToByte, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToInt, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToFloat, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToVector, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.StringToRotator, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.VectorToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.VectorToRotator, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.RotatorToBool, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ByteToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.IntToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.BoolToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.FloatToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.ObjectToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.NameToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.VectorToString, (byte)ExprToken.PrimitiveCast },
+                        { (byte)CastToken.RotatorToString, (byte)ExprToken.PrimitiveCast },
+
+                        { (byte)CastToken.DelegateToString, (byte)ExprToken.PrimitiveCast } // StringToName in HP2?
+                    };
+
+                    if (_ByteCodeMap == null)
+                    {
+                        _ByteCodeMap = castBytesMap;
+                    }
+                    else
+                    {
+                        foreach (var pair in castBytesMap)
+                        {
+                            _ByteCodeMap[pair.Key] = pair.Value;
+                        }
+                    }
+                }
 #endif
             }
 
@@ -544,10 +668,15 @@ namespace UELib.Core
 
             private NativeFunctionToken CreateNativeToken(ushort nativeIndex)
             {
-                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex);
+                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex) ?? new NativeTableItem
+                {
+                    Type = FunctionType.Function,
+                    Name = $"__NFUN_{nativeIndex}__",
+                    ByteToken = nativeIndex
+                };
                 return new NativeFunctionToken
                 {
-                    NativeItem = nativeTableItem
+                    NativeItem = nativeTableItem,
                 };
             }
 
@@ -562,9 +691,9 @@ namespace UELib.Core
 
                 byte serializedByte = tokenCode;
                 Token token;
-                if (tokenCode >= (byte)ExprToken.ExtendedNative)
+                if (tokenCode >= _ExtendedNative)
                 {
-                    if (tokenCode >= (byte)ExprToken.FirstNative)
+                    if (tokenCode >= _FirstNative)
                     {
                         token = CreateNativeToken(tokenCode);
                     }
@@ -573,7 +702,7 @@ namespace UELib.Core
                         byte extendedByte = Buffer.ReadByte();
                         AlignSize(sizeof(byte));
 
-                        var nativeIndex = (ushort)(((tokenCode - (byte)ExprToken.ExtendedNative) << 8) | extendedByte);
+                        var nativeIndex = (ushort)(((tokenCode - _ExtendedNative) << 8) | extendedByte);
                         Debug.Assert(nativeIndex < (ushort)ExprToken.MaxNative);
                         token = CreateNativeToken(nativeIndex);
                     }
@@ -1035,11 +1164,91 @@ namespace UELib.Core
                         #endregion
 
                         default:
+#if DNF
+                            // DNF has extended the ExtendNative tokens set.
+                            // FIXME: Re-factor once we have a better ByteCodeToToken factory.
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                            {
+                                switch (tokenCode)
+                                {
+                                    case 0x61:
+                                        token = new VectorConstZeroToken();
+                                        break;
+                                    
+                                    case 0x62:
+                                        token = new VectorConstUnitZToken();
+                                        break;
+                                    
+                                    case 0x63:
+                                        token = new RotConstZeroToken();
+                                        break;
+                                    
+                                    case 0x64:
+                                        token = new IntConstWordToken();
+                                        break;
+                                    
+                                    case 0x65:
+                                        token = new RotConstBytesToken();
+                                        break;
+                                    
+                                    case 0x66:
+                                        token = new DynamicArrayEmptyToken();
+                                        break;
+                                    
+                                    case 0x67:
+                                        token = new BreakpointToken();
+                                        break;
+                                    
+                                    case 0x69:
+                                        token = new RotConstPitchToken();
+                                        break;
+                                    
+                                    case 0x6A:
+                                        token = new RotConstYawToken();
+                                        break;
+                                    
+                                    case 0x6B:
+                                        token = new RotConstRollToken();
+                                        break;
+
+                                    case 0x6C:
+                                        token = new VectorXToken();
+                                        break;
+                                    
+                                    case 0x6D:
+                                        token = new VectorYToken();
+                                        break;
+                                    
+                                    case 0x6E:
+                                        token = new VectorZToken();
+                                        break;
+
+                                    case 0x6F:
+                                        token = new VectorXYToken();
+                                        break;
+
+                                    case 0x70:
+                                        token = new VectorXZToken();
+                                        break;
+
+                                    case 0x71:
+                                        token = new VectorYZToken();
+                                        break;
+                                    
+                                    default:
+                                        token = new UnresolvedToken();
+                                        break;
+                                }
+
+                                goto assertToken;
+                            }
+#endif
                             token = new UnresolvedToken();
                             break;
                     }
                 }
 
+            assertToken:
                 Debug.Assert(token != null);
                 AddToken(token, serializedByte, tokenPosition);
                 return token;
@@ -1270,6 +1479,11 @@ namespace UELib.Core
 
             public string PreComment;
             public string PostComment;
+
+            public void MarkSemicolon()
+            {
+                _CanAddSemicolon = true;
+            }
 
             public string Decompile()
             {

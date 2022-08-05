@@ -60,7 +60,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (stream.Version >= VPrimitiveCastToken)
+                    if (!Decompiler.IsUsingInlinedPrimitiveCasting())
                     {
                         CastOpCode = (CastToken)stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));

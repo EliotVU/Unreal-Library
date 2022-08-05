@@ -810,6 +810,12 @@ namespace UELib
     public static class UnrealStreamImplementations
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool ReadBool(this IUnrealStream stream)
+        {
+            return Convert.ToBoolean(stream.ReadInt32());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T ReadObject<T>(this IUnrealStream stream) where T : UObject
         {
             return (T)stream.Package.GetIndexObject(stream.ReadIndex());
@@ -1062,7 +1068,13 @@ namespace UELib
             Debug.Assert(stream.Package.Branch.Serializer != null, "stream.Package.Branch.Serializer != null");
             stream.Package.Branch.Serializer.Deserialize(stream, obj);
         }
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out bool value)
+        {
+            value = ReadBool(stream);
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<T>(this IUnrealStream stream, out UObject value)
             where T : UObject
@@ -1209,6 +1221,12 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(this IUnrealStream stream, bool value)
+        {
+            stream.UW.Write(Convert.ToInt32(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(this IUnrealStream stream, long value)
         {
             stream.UW.Write(value);
@@ -1233,9 +1251,9 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Write(this IUnrealStream stream, string s)
+        public static void Write(this IUnrealStream stream, string value)
         {
-            stream.UW.WriteString(s);
+            stream.UW.WriteString(value);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace UELib.Core
@@ -20,6 +21,7 @@ namespace UELib.Core
                     Decompiler.DeserializeDebugToken();
                 }
 
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private void DeserializeParms()
                 {
 #pragma warning disable 642
@@ -310,35 +312,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (NativeItem == null)
-                    {
-                        NativeItem = new NativeTableItem
-                        {
-                            Type = FunctionType.Function,
-                            Name = "UnresolvedNativeFunction_" + RepresentToken,
-                            ByteToken = RepresentToken
-                        };
-                    }
-
-                    switch (NativeItem.Type)
-                    {
-                        case FunctionType.Function:
-                            DeserializeCall();
-                            break;
-
-                        case FunctionType.PreOperator:
-                        case FunctionType.PostOperator:
-                            DeserializeUnaryOperator();
-                            break;
-
-                        case FunctionType.Operator:
-                            DeserializeBinaryOperator();
-                            break;
-
-                        default:
-                            DeserializeCall();
-                            break;
-                    }
+                    DeserializeCall();
                 }
 
                 public override string Decompile()

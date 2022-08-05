@@ -68,6 +68,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Bioshock 2 | Vengeance | 143/059 | |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | (Third-party) <https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/> |
 | The Chronicles of Spellborn | Unknown | 159/029 | |
+| Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |

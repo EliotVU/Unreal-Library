@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
@@ -12,24 +13,37 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UClass : UState
     {
+        /// <summary>
+        /// Implements FDependency.
+        /// 
+        /// A legacy dependency struct that was used for incremental compilation (UnrealEd).
+        /// </summary>
         public struct Dependency : IUnrealSerializableClass
         {
-            public int Class { get; private set; }
-
+            [NotNull] public UClass Class;
+            public bool IsDeep;
+            public uint ScriptTextCRC;
+            
             public void Serialize(IUnrealStream stream)
             {
-                // TODO: Implement code
+                stream.Write(Class);
+                stream.Write(IsDeep);
+                stream.Write(ScriptTextCRC);
             }
 
             public void Deserialize(IUnrealStream stream)
             {
-                Class = stream.ReadObjectIndex();
-
-                // Deep
-                stream.ReadInt32();
-
-                // ScriptTextCRC
-                stream.ReadUInt32();
+                Class = stream.ReadObject<UClass>();
+#if DNF
+                // No specified version
+                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                {
+                    goto skipDeep;
+                }
+#endif
+                IsDeep = stream.ReadBool();
+                skipDeep:
+                ScriptTextCRC = stream.ReadUInt32();
             }
         }
 
@@ -151,10 +165,7 @@ namespace UELib.Core
 #if SPELLBORN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
             {
-                _Buffer.ReadArray(out ClassDependencies);
-                Record(nameof(ClassDependencies), ClassDependencies);
-                PackageImports = DeserializeGroup(nameof(PackageImports));
-                goto skipTo61Stuff;
+                goto skipClassGuid;
             }
 #endif
             if (_Buffer.Version >= 276)
@@ -171,6 +182,7 @@ namespace UELib.Core
                 Record(nameof(ClassGuid), ClassGuid);
             }
 
+        skipClassGuid:
             if (_Buffer.Version < 248)
             {
                 _Buffer.ReadArray(out ClassDependencies);
@@ -178,7 +190,6 @@ namespace UELib.Core
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
 
-        skipTo61Stuff:
             if (_Buffer.Version >= 62)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
@@ -187,7 +198,32 @@ namespace UELib.Core
                 Record(nameof(Within), Within);
                 ConfigName = _Buffer.ReadNameReference();
                 Record(nameof(ConfigName), ConfigName);
+#if DNF
+                if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
+                    _Buffer.Version >= 102)
+                {
+                    DeserializeHideCategories();
+                    if (_Buffer.Version >= 137)
+                    {
+                        _Buffer.ReadArray(out UArray<string> dnfStringArray);
+                        Record(nameof(dnfStringArray), dnfStringArray);
+                    }
 
+                    if (_Buffer.Version >= 113)
+                    {
+                        // Unknown purpose, used to set a global variable to 0 (GIsATablesInitialized_exref) if it reads 0.
+                        bool dnfBool = _Buffer.ReadBool();
+                        Record(nameof(dnfBool), dnfBool);
+                        
+                        // FBitArray data, not sure if this behavior is correct, always 0.
+                        int dnfBitArrayLength = _Buffer.ReadInt32();
+                        _Buffer.Skip(dnfBitArrayLength);
+                        Record(nameof(dnfBitArrayLength), dnfBitArrayLength);
+                    }
+
+                    goto scriptProperties;
+                }
+#endif
                 const int vHideCategoriesOldOrder = 539;
                 bool isHideCategoriesOldOrder = _Buffer.Version <= vHideCategoriesOldOrder
 #if TERA
@@ -274,7 +310,7 @@ namespace UELib.Core
                            )
                         {
                             // bForceScriptOrder
-                            ForceScriptOrder = _Buffer.ReadInt32() > 0;
+                            ForceScriptOrder = _Buffer.ReadBool();
                             Record(nameof(ForceScriptOrder), ForceScriptOrder);
                         }
 #if DD2
@@ -367,7 +403,7 @@ namespace UELib.Core
             {
                 string dummy = _Buffer.ReadName();
                 Record("dummy", dummy);
-                bool isCooked = _Buffer.ReadInt32() > 0;
+                bool isCooked = _Buffer.ReadBool();
                 Record("isCooked", isCooked);
             }
 #endif
@@ -467,6 +503,7 @@ namespace UELib.Core
                 }
             }
 #endif
+        scriptProperties:
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
             // TODO: Corrigate Version
             if (_Buffer.Version >= 322)

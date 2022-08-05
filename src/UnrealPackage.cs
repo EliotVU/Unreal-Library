@@ -272,6 +272,14 @@ namespace UELib
                 BioShock,
 
                 /// <summary>
+                /// Duke Nukem Forever
+                ///
+                /// 156/036
+                /// </summary>
+                [Build(156, 36u, BuildGeneration.UE2)]
+                DNF,
+
+                /// <summary>
                 /// The Chronicles of Spellborn
                 /// 
                 /// Built on UT2004
