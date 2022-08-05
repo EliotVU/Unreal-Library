@@ -118,7 +118,9 @@ namespace UELib.Core
                 if (_Buffer.LicenseeVersion >= 2)
                 {
                     // Bool?
-                    _Buffer.ReadByte();
+                    byte dnfByte = _Buffer.ReadByte();
+                    Record(nameof(dnfByte), dnfByte);
+                    
                     var dnfName = _Buffer.ReadNameReference();
                     Record(nameof(dnfName), dnfName);
                 }

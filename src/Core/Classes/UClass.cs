@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
@@ -197,7 +198,32 @@ namespace UELib.Core
                 Record(nameof(Within), Within);
                 ConfigName = _Buffer.ReadNameReference();
                 Record(nameof(ConfigName), ConfigName);
+#if DNF
+                if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
+                    _Buffer.Version >= 102)
+                {
+                    DeserializeHideCategories();
+                    if (_Buffer.Version >= 137)
+                    {
+                        _Buffer.ReadArray(out UArray<string> dnfStringArray);
+                        Record(nameof(dnfStringArray), dnfStringArray);
+                    }
 
+                    if (_Buffer.Version >= 113)
+                    {
+                        // Unknown purpose, used to set a global variable to 0 (GIsATablesInitialized_exref) if it reads 0.
+                        bool dnfBool = _Buffer.ReadBool();
+                        Record(nameof(dnfBool), dnfBool);
+                        
+                        // FBitArray data, not sure if this behavior is correct, always 0.
+                        int dnfBitArrayLength = _Buffer.ReadInt32();
+                        _Buffer.Skip(dnfBitArrayLength);
+                        Record(nameof(dnfBitArrayLength), dnfBitArrayLength);
+                    }
+
+                    goto scriptProperties;
+                }
+#endif
                 const int vHideCategoriesOldOrder = 539;
                 bool isHideCategoriesOldOrder = _Buffer.Version <= vHideCategoriesOldOrder
 #if TERA
@@ -477,6 +503,7 @@ namespace UELib.Core
                 }
             }
 #endif
+        scriptProperties:
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
             // TODO: Corrigate Version
             if (_Buffer.Version >= 322)
