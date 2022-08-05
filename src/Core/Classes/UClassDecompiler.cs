@@ -105,66 +105,22 @@ namespace UELib.Core
             return content;
         }
 
+        [Obsolete]
         public string GetDependencies()
         {
-            if (ClassDependencies == null)
-                return string.Empty;
-
-            var output = string.Empty;
-            foreach (var dep in ClassDependencies)
-            {
-                var obj = GetIndexObject(dep.Class);
-                if (obj != null)
-                {
-                    output += $" *\t{obj.GetClassName()} {obj.GetOuterGroup()}\r\n";
-                }
-            }
-
-            return output.Length != 0 ? "Class Dependencies:\r\n" + output + " *" : string.Empty;
+            throw new NotImplementedException();
         }
 
+        [Obsolete]
         private string GetImports()
         {
-            if (PackageImports == null)
-                return string.Empty;
-
-            var output = string.Empty;
-            foreach (int packageImport in PackageImports)
-            {
-                output += " *\t" + Package.Names[packageImport].Name + "\r\n";
-                /*for( int j = 1; j < (i + i) && (j + (i + i)) < PackageImportsList.Count; ++ j )
-                {
-                    Output += " *\t\t\t" + Owner.NameTableList[PackageImportsList[i + j]].Name + "\r\n";
-                }
-                i += i;*/
-            }
-
-            return output.Length != 0 ? "Package Imports:\r\n" + output + " *" : string.Empty;
+            throw new NotImplementedException();
         }
 
+        [Obsolete]
         public string GetStats()
         {
-            var output = string.Empty;
-
-            if (Constants != null && Constants.Count > 0)
-                output += " *\tConstants:" + Constants.Count + "\r\n";
-
-            if (Enums != null && Enums.Count > 0)
-                output += " *\tEnums:" + Enums.Count + "\r\n";
-
-            if (Structs != null && Structs.Count > 0)
-                output += " *\tStructs:" + Structs.Count + "\r\n";
-
-            if (Variables != null && Variables.Count > 0)
-                output += " *\tProperties:" + Variables.Count + "\r\n";
-
-            if (Functions != null && Functions.Count > 0)
-                output += " *\tFunctions:" + Functions.Count + "\r\n";
-
-            if (States != null && States.Count > 0)
-                output += " *\tStates:" + States.Count + "\r\n";
-
-            return output.Length != 0 ? "Stats:\r\n" + output + " *" : string.Empty;
+            throw new NotImplementedException();
         }
 
         protected override string FormatHeader()
@@ -402,24 +358,12 @@ namespace UELib.Core
                 output += $"\r\n\tdllbind({DLLBindName})";
             }
 
-            if (ClassDependencies != null)
+            if (ClassDependencies != null) foreach (var dependency in ClassDependencies)
             {
-                var dependsOn = new List<int>();
-                foreach (var dependency in ClassDependencies)
+                var obj = dependency.Class;
+                if (obj != null && (int)obj > (int)this && obj != Super)
                 {
-                    if (dependsOn.Exists(dep => dep == dependency.Class))
-                    {
-                        continue;
-                    }
-
-                    var obj = (UClass)GetIndexObject(dependency.Class);
-                    // Only exports and those who are further than this class
-                    if (obj != null && (int)obj > (int)this)
-                    {
-                        output += $"\r\n\tdependson({obj.Name})";
-                    }
-
-                    dependsOn.Add(dependency.Class);
+                    output += $"\r\n\tdependson({obj.Name})";
                 }
             }
 

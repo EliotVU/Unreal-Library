@@ -12,24 +12,37 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UClass : UState
     {
+        /// <summary>
+        /// Implements FDependency.
+        /// 
+        /// A legacy dependency struct that was used for incremental compilation (UnrealEd).
+        /// </summary>
         public struct Dependency : IUnrealSerializableClass
         {
-            public int Class { get; private set; }
-
+            [NotNull] public UClass Class;
+            public bool IsDeep;
+            public uint ScriptTextCRC;
+            
             public void Serialize(IUnrealStream stream)
             {
-                // TODO: Implement code
+                stream.Write(Class);
+                stream.Write(IsDeep);
+                stream.Write(ScriptTextCRC);
             }
 
             public void Deserialize(IUnrealStream stream)
             {
-                Class = stream.ReadObjectIndex();
-
-                // Deep
-                stream.ReadInt32();
-
-                // ScriptTextCRC
-                stream.ReadUInt32();
+                Class = stream.ReadObject<UClass>();
+#if DNF
+                // No specified version
+                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                {
+                    goto skipDeep;
+                }
+#endif
+                IsDeep = stream.ReadBool();
+                skipDeep:
+                ScriptTextCRC = stream.ReadUInt32();
             }
         }
 
@@ -151,10 +164,7 @@ namespace UELib.Core
 #if SPELLBORN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
             {
-                _Buffer.ReadArray(out ClassDependencies);
-                Record(nameof(ClassDependencies), ClassDependencies);
-                PackageImports = DeserializeGroup(nameof(PackageImports));
-                goto skipTo61Stuff;
+                goto skipClassGuid;
             }
 #endif
             if (_Buffer.Version >= 276)
@@ -171,6 +181,7 @@ namespace UELib.Core
                 Record(nameof(ClassGuid), ClassGuid);
             }
 
+        skipClassGuid:
             if (_Buffer.Version < 248)
             {
                 _Buffer.ReadArray(out ClassDependencies);
@@ -178,7 +189,6 @@ namespace UELib.Core
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
 
-        skipTo61Stuff:
             if (_Buffer.Version >= 62)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
@@ -274,7 +284,7 @@ namespace UELib.Core
                            )
                         {
                             // bForceScriptOrder
-                            ForceScriptOrder = _Buffer.ReadInt32() > 0;
+                            ForceScriptOrder = _Buffer.ReadBool();
                             Record(nameof(ForceScriptOrder), ForceScriptOrder);
                         }
 #if DD2
@@ -367,7 +377,7 @@ namespace UELib.Core
             {
                 string dummy = _Buffer.ReadName();
                 Record("dummy", dummy);
-                bool isCooked = _Buffer.ReadInt32() > 0;
+                bool isCooked = _Buffer.ReadBool();
                 Record("isCooked", isCooked);
             }
 #endif
