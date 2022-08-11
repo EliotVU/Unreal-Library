@@ -456,6 +456,10 @@ namespace UELib.Core
                     {
                         statementCode = ByteCodeManager.CurrentToken.Decompile();
                     }
+                    catch (EndOfStreamException)
+                    {
+                        throw;
+                    }
                     catch (Exception e)
                     {
                         statementCode = $"/* An exception occurred while decompiling condition ({e}) */";
@@ -491,6 +495,10 @@ namespace UELib.Core
                     {
                         output.Append("\r\n");
                     }
+                }
+                catch (EndOfStreamException)
+                {
+                    break;
                 }
                 catch (Exception e)
                 {

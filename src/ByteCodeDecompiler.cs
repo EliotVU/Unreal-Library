@@ -635,7 +635,7 @@ namespace UELib.Core
                         }
                         catch (EndOfStreamException error)
                         {
-                            Console.WriteLine("Couldn't backup from this error! Decompiling aborted!");
+                            Console.Error.WriteLine("Couldn't backup from this error! Decompiling aborted!");
                             break;
                         }
                         catch (SystemException e)
@@ -1570,6 +1570,10 @@ namespace UELib.Core
 #endif
                                 }
                             }
+                            catch (EndOfStreamException)
+                            {
+                                break;
+                            }
                             catch (Exception e)
                             {
                                 output.Append($"// ({e.GetType().Name})");
@@ -1589,6 +1593,10 @@ namespace UELib.Core
                                             _MustCommentStatement = true;
                                     }
                                 }
+                            }
+                            catch (EndOfStreamException)
+                            {
+                                break;
                             }
                             catch (Exception e)
                             {

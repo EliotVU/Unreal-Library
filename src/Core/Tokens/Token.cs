@@ -55,14 +55,7 @@ namespace UELib.Core
                     var t = Decompiler.NextToken;
                     if (t is DebugInfoToken) goto tryNext;
 
-                    try
-                    {
-                        return t.Decompile();
-                    }
-                    catch (Exception e)
-                    {
-                        return $"{t.GetType().Name}({e.GetType().Name})";
-                    }
+                    return t.Decompile();
                 }
 
                 protected Token GrabNextToken()

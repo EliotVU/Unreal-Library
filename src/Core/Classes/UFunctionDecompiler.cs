@@ -267,7 +267,8 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                code = e.Message;
+                Console.Error.WriteLine($"Exception thrown: {e} in {nameof(FormatCode)}");
+                code = $"/*ERROR: {e}*/";
             }
             finally
             {
