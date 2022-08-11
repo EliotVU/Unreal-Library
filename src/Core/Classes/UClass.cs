@@ -11,7 +11,7 @@ namespace UELib.Core
     /// Represents a unreal class.
     /// </summary>
     [UnrealRegisterClass]
-    public partial class UClass : UState
+    public partial class UClass : UState, IUnrealExportable
     {
         /// <summary>
         /// Implements FDependency.

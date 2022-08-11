@@ -1,7 +1,9 @@
 #if DECOMPILE
 using System.Text;
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -513,6 +515,20 @@ namespace UELib.Core
             }
 
             return output;
+        }
+
+        public IEnumerable<string> ExportableExtensions => new List<string> { "uc" };
+
+        public bool CanExport()
+        {
+            return (int)this > 0;
+        }
+
+        public void SerializeExport(string desiredExportExtension, Stream exportStream)
+        {
+            string data = Decompile();
+            var stream = new StreamWriter(exportStream);
+            stream.Write(data);
         }
     }
 }
