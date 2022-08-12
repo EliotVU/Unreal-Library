@@ -83,6 +83,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory: Battery | 3369 | 128/029? |     |
+| Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) |
 | Swat 4 | 2226:Vengeance | 129/027 | |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | |
 | Bioshock | 2226:Vengeance | 130-141/056 | |
@@ -121,19 +122,19 @@ This is a table of games that are confirmed to be compatible with the current st
 | Bioshock Infinite | 6829 | 727/075 |     |
 | Bulletstorm | 7052 | 742/029 | |
 | Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | |
-| Aliens: Colonial Marines | Unknown | 787/047 | |
+| Aliens: Colonial Marines | 4170 | 787/047 | |
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
 | Tribes: Ascend | 7748 | 805/Unknown |     |
 | Rock of Ages | 7748 | 805/000 |     |
 | Batman: Arkham City | 7748 | 805/101 | | 
-| Batman: Arkham Origins | | 807/138 | Not verified |
+| Batman: Arkham Origins | 7748 | 807/138 | Not verified |
 | Sanctum | 7876 | 810/000 |     |
 | AntiChamber | 7977 | 812/000 |     |
 | Waves | 8171 | 813/000 |     |
 | Super Monday Night Combat | 8364 | 820/000 |     |
 | Gears of War 3 | 8653 | 828/000 | |
 | Quantum Conundrum | 8623 | 832/32870 | |
-| Borderlands | Unknown | Unknown |  |
+| Borderlands | 4871 | Unknown |  |
 | Borderlands 2 | 8623/023 | 832/056 | |
 | Remember Me | 8623 | 832/021 |     |
 | The Haunted: Hells Reach | 8788 | 841/000 |     |
@@ -158,11 +159,11 @@ This is a table of games that are confirmed to be compatible with the current st
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Soldier Front 2 | 6712 | 904/009 |     |
-| Rise of the Triad | Unknown | Unknown |     |
-| Outlast | Unknown | Unknown |     |
-| Sherlock Holmes: Crimes and Punishments | Unknown | Unknown | |
-| Alien Rage | Unknown | Unknown |     |
-| Rising Storm 2: Vietnam | Unknown | Unknown | |
+| Rise of the Triad | 10508 | Unknown |     |
+| Outlast | 12046 | Unknown |     |
+| Sherlock Holmes: Crimes and Punishments | 10897 | Unknown | |
+| Alien Rage | 7255 | Unknown |     |
+| Rising Storm 2: Vietnam | 7258 | Unknown | |
 
 **Beware, opening an unsupported package could crash your system! Make sure you have
 saved everything before opening any file!**
