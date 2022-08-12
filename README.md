@@ -67,6 +67,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Rune | 436 | 69/000 | |
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
+| Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
 | Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
 | Thief: Deadly Shadows | 777:Flesh | 95/133 | LinkedData not supported |
 |     |     |     |     |
