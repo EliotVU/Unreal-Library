@@ -219,10 +219,29 @@ namespace UELib.Core
             );
 
             Type = (PropertyType)(byte)(info & typeMask);
-            if (Type == PropertyType.StructProperty)
+            switch (Type)
             {
-                ItemName = _Buffer.ReadNameReference();
-                Record(nameof(ItemName), ItemName);
+                case PropertyType.StructProperty:
+                    ItemName = _Buffer.ReadNameReference();
+                    Record(nameof(ItemName), ItemName);
+                    break;
+                
+                case PropertyType.ArrayProperty:
+                {
+#if DNF
+                    if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
+                        _Buffer.Version >= 124)
+                    {
+                        InnerTypeName = _Buffer.ReadNameReference();
+                        Record(nameof(InnerTypeName), InnerTypeName);
+                        if (!Enum.TryParse(InnerTypeName, out InnerType))
+                        {
+                            throw new Exception($"Couldn't convert InnerTypeName \"{InnerTypeName}\" to PropertyType");
+                        }
+                    }
+#endif
+                    break;
+                }
             }
 
             Size = DeserializePackedSize((byte)(info & sizeMask));
@@ -373,18 +392,18 @@ namespace UELib.Core
                         : _Buffer.ReadInt32() > 0;
                     Record(nameof(BoolValue), BoolValue);
                     break;
-#if UE4
+                
                 case PropertyType.ArrayProperty:
+#if UE4
                     // FIXME: UE4 version
                     if (_Buffer.UE4Version > 220)
                     {
                         InnerTypeName = _Buffer.ReadNameReference();
-                        _Container.Record(nameof(InnerTypeName), InnerTypeName);
+                        Record(nameof(InnerTypeName), InnerTypeName);
                         InnerType = (PropertyType)Enum.Parse(typeof(PropertyType), InnerTypeName);
                     }
-
-                    break;
 #endif
+                    break;
             }
         }
 
@@ -895,9 +914,10 @@ namespace UELib.Core
             {
                 value = DeserializeValue();
             }
-            catch (EndOfStreamException e)
+            catch (Exception e)
             {
-                throw;
+                Console.Error.WriteLine($"Exception thrown: {e} in {nameof(Decompile)}");
+                value = $"/*ERROR: {e}*/";
             }
             finally
             {
