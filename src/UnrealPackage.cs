@@ -1034,6 +1034,27 @@ namespace UELib
 #if MKKE
                 }
 #endif
+#if DNF
+                if (stream.Package.Build == GameBuild.BuildName.DNF &&
+                    stream.Version >= 151)
+                {
+                    if (PackageFlags.HasFlags(0x20U))
+                    {
+                        int buildMonth = stream.ReadInt32();
+                        int buildYear = stream.ReadInt32();
+                        int buildDay = stream.ReadInt32();
+                        int buildSeconds = stream.ReadInt32();
+                    }
+
+                    string dnfString = stream.ReadText();
+
+                    // DLC package
+                    if (PackageFlags.HasFlags(0x80U))
+                    {
+                        // No additional data, just DLC authentication.
+                    }
+                }
+#endif
                 if (stream.Version >= VEngineVersion &&
                     stream.UE4Version == 0)
                 {

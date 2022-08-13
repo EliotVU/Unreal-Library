@@ -15,12 +15,12 @@ namespace UELib.Flags
             set => _Flags = value;
         }
 
-        public UnrealFlags(ulong flags, ulong[] flagsMap)
+        public UnrealFlags(ulong flags, ref ulong[] flagsMap)
         {
             _Flags = flags;
             _FlagsMap = flagsMap;
         }
-
+        
         private bool HasFlag(int flagIndex)
         {
             ulong flag = _FlagsMap[flagIndex];
@@ -32,7 +32,17 @@ namespace UELib.Flags
             ulong flag = _FlagsMap[(int)(object)flagIndex];
             return flag != 0 && (_Flags & _FlagsMap[(int)(object)flagIndex]) != 0;
         }
-        
+
+        public bool HasFlags(uint flags)
+        {
+            return (_Flags & flags) != 0;
+        }
+
+        public bool HasFlags(ulong flags)
+        {
+            return (_Flags & flags) != 0;
+        }
+
         public static explicit operator uint(UnrealFlags<TEnum> flags)
         {
             return (uint)flags._Flags;
@@ -231,7 +241,6 @@ namespace UELib.Flags
         /// UE3 (V655)
         /// </summary>
         DLLImport           = 0x02000000U,
-        
         // K2 Additions, late UDK, early implementation of Blueprints that were soon deprecated.
         K2Call              = 0x04000000U,
         K2Override          = 0x08000000U,

@@ -238,7 +238,11 @@ namespace UELib.Core
         #endregion
 
         #region Methods
-
+        public bool HasPropertyFlag(uint flag)
+        {
+            return ((uint)PropertyFlags & flag) != 0;
+        }
+        
         public bool HasPropertyFlag(PropertyFlagsLO flag)
         {
             return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;

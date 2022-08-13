@@ -1049,7 +1049,7 @@ namespace UELib
             Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
 
             ulong flags = stream.ReadUInt32();
-            return new UnrealFlags<TEnum>(flags, enumMap);
+            return new UnrealFlags<TEnum>(flags, ref enumMap);
         }
 
         public static UnrealFlags<TEnum> ReadFlags64<TEnum>(this IUnrealStream stream)
@@ -1059,7 +1059,7 @@ namespace UELib
             Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
 
             ulong flags = stream.ReadUInt64();
-            return new UnrealFlags<TEnum>(flags, enumMap);
+            return new UnrealFlags<TEnum>(flags, ref enumMap);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

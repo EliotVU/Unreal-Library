@@ -155,7 +155,11 @@ namespace UELib.Core
         #endregion
 
         #region Methods
-
+        public bool HasFunctionFlag(uint flag)
+        {
+            return ((uint)FunctionFlags & flag) != 0;
+        }
+        
         public bool HasFunctionFlag(FunctionFlags flag)
         {
             return ((uint)FunctionFlags & (uint)flag) != 0;
