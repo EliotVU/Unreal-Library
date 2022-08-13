@@ -60,12 +60,13 @@ This is a table of games that are confirmed to be compatible with the current st
 | --------------------- | ---------------- | ------------------- | -----------------
 | Unreal | 100-226 | 61/000 | |
 | [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | 219 | 61/000 | |
+| X-COM: Alliance | 200-220 | 61/000 | Bad output at the start of functions (BeginFunctionToken) |
 | Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | |
 | Unreal Tournament | 338-436 | 68-69/000 | |
 | Deus Ex | 400-436 | 68/000 | |
 | Duke Nukem Forever (2001) | 613 | 68/002 | UStruct offsets are off leading to bad output code |
 | Rune | 400 | 69/000 | |
-| X-COM Enforcer | 420 | 69/000 | | 
+| X-COM: Enforcer | 420 | 69/000 | | 
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
