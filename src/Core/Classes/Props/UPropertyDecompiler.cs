@@ -456,6 +456,40 @@ namespace UELib.Core
                     output += "input ";
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Input;
                 }
+#if DNF
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                {
+                    if (HasPropertyFlag(0x1000000))
+                    {
+                        output += "nontrans ";
+                        copyFlags &= ~(uint)0x1000000;
+
+                    }
+                    if (HasPropertyFlag(0x8000000))
+                    {
+                        output += "nocompress ";
+                        copyFlags &= ~(uint)0x8000000;
+                    }
+                    
+                    if (HasPropertyFlag(0x2000000))
+                    {
+                        output += $"netupdate({RepNotifyFuncName}) ";
+                        copyFlags &= ~(uint)0x2000000;
+                    }
+
+                    if (HasPropertyFlag(0x4000000))
+                    {
+                        output += "state ";
+                        copyFlags &= ~(uint)0x4000000;
+                    }
+                    
+                    if (HasPropertyFlag(0x100000))
+                    {
+                        output += "anim ";
+                        copyFlags &= ~(uint)0x100000;
+                    }
+                }
+#endif
             }
 
             // Local's may never output any of their implied flags!

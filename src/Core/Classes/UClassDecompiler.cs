@@ -371,6 +371,40 @@ namespace UELib.Core
 
             output += FormatNameGroup("dontsortcategories", DontSortCategories);
             output += FormatNameGroup("hidecategories", HideCategories);
+            // TODO: Decompile ShowCategories (but this is not possible without traversing the super chain)
+
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                // FIXME: Store this data in UClass
+                //output += FormatNameGroup("tags", new List<int>());
+                // ...UnTags
+
+                // Maybe dnfBool?
+                //if (HasClassFlag(0x1000))
+                //{
+                //    output += "\r\n\tobsolete";
+                //}
+                if (HasClassFlag(0x2000000))
+                {
+                    output += "\r\n\tnativedestructor";
+                }
+
+                if (HasClassFlag(0x1000000))
+                {
+                    output += "\r\n\tnotlistable";
+                }
+                else
+                {
+                    var parentClass = (UClass)Super;
+                    if (parentClass != null && parentClass.HasClassFlag(0x1000000))
+                    {
+                        output += "\r\n\tlistable";
+                    }
+                }
+            }
+#endif
+
             output += FormatNameGroup("classgroup", ClassGroups);
             output += FormatNameGroup("autoexpandcategories", AutoExpandCategories);
             output += FormatNameGroup("autocollapsecategories", AutoCollapseCategories);

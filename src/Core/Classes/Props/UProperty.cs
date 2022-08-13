@@ -35,6 +35,8 @@ namespace UELib.Core
 
         [CanBeNull] public UEnum ArrayEnum { get; private set; }
 
+        [CanBeNull] public UName RepNotifyFuncName;
+        
         public ushort RepOffset { get; private set; }
 
         public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
@@ -152,16 +154,15 @@ namespace UELib.Core
 #if UE4
             if (_Buffer.UE4Version > 0)
             {
-                // RepNotify function name
-                var repnotifyFunc = _Buffer.ReadNameReference();
-                Record("RepNotifyFunc", repnotifyFunc);
+                RepNotifyFuncName = _Buffer.ReadNameReference();
+                Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
                 return;
             }
 #endif
             if (HasPropertyFlag(PropertyFlagsLO.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
-                Record("RepOffset", RepOffset);
+                Record(nameof(RepOffset), RepOffset);
             }
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance)
@@ -175,18 +176,18 @@ namespace UELib.Core
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                if ((PropertyFlags & 0x800000) != 0)
+                if (HasPropertyFlag(0x800000))
                 {
                     EditorDataText = _Buffer.ReadText();
                     Record(nameof(EditorDataText), EditorDataText);
                 }
 
                 // Same flag as EditorData, but this may merely be a coincidence, see above
-                if (_Buffer.Version >= 118 && (PropertyFlags & 0x2000000) != 0)
+                if (_Buffer.Version >= 118 && HasPropertyFlag(0x2000000))
                 {
-                    // NU_NAME???
-                    var dnfNuPropertyName = _Buffer.ReadNameReference();
-                    Record(nameof(dnfNuPropertyName), dnfNuPropertyName);
+                    // a.k.a NetUpdateName ;)
+                    RepNotifyFuncName = _Buffer.ReadNameReference();
+                    Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
                 }
 
                 return;

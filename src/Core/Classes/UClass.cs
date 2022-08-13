@@ -205,8 +205,8 @@ namespace UELib.Core
                     DeserializeHideCategories();
                     if (_Buffer.Version >= 137)
                     {
-                        _Buffer.ReadArray(out UArray<string> dnfStringArray);
-                        Record(nameof(dnfStringArray), dnfStringArray);
+                        _Buffer.ReadArray(out UArray<string> dnfTags);
+                        Record(nameof(dnfTags), dnfTags);
                     }
 
                     if (_Buffer.Version >= 113)

@@ -100,21 +100,52 @@ namespace UELib.Core
                 output += "noexport ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.K2Call))
+            // FIXME: Version, added with one of the later UDK builds.
+            if (Package.Version >= 500)
             {
-                output += "k2call ";
-            }
+                if (HasFunctionFlag(Flags.FunctionFlags.K2Call))
+                {
+                    output += "k2call ";
+                }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
+                if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
+                {
+                    output += "k2override ";
+                }
+
+                if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
+                {
+                    output += "k2pure ";
+                }
+            }
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                output += "k2override ";
-            }
+                // 0x20000200 unknown specifier
+                
+                if (HasFunctionFlag(0x4000000))
+                {
+                    output += "animevent ";
+                }
+                
+                if (HasFunctionFlag(0x1000000))
+                {
+                    output += "cached ";
+                }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
-            {
-                output += "k2pure ";
-            }
+                if (HasFunctionFlag(0x2000000))
+                {
+                    output += "encrypted ";
+                }
 
+                // Only if non-static?
+                if (HasFunctionFlag(0x800000))
+                {
+                    // Along with an implicit "native"
+                    output += "indexed ";
+                }
+            }
+#endif
             if (HasFunctionFlag(Flags.FunctionFlags.Invariant))
             {
                 output += "invariant ";
