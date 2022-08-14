@@ -264,6 +264,14 @@ namespace UELib
                 Swat4,
 
                 /// <summary>
+                /// Lemony Snicket's A Series of Unfortunate Events
+                /// 
+                /// 129/003
+                /// </summary>
+                [Build(129, 3, BuildGeneration.UE2)]
+                LSGame,
+
+                /// <summary>
                 /// BioShock 1 & 2
                 /// 
                 /// 130:143/056:059

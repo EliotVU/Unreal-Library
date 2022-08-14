@@ -198,9 +198,14 @@ namespace UELib.Core
             if ((HasPropertyFlag(PropertyFlagsLO.EditorData) &&
                  (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Flesh))
                 // No property flag
-                || Package.Build == BuildGeneration.Vengeance)
+                || Package.Build == BuildGeneration.Vengeance
+#if LSGAME
+                || (Package.Build == UnrealPackage.GameBuild.BuildName.LSGame && 
+                    Package.LicenseeVersion >= 3)
+#endif
+                )
             {
-                // May represent a tooltip/comment in some games.
+                // May represent a tooltip/comment in some games. Usually in the form of a quoted string, sometimes as a double-flash comment or both.
                 EditorDataText = _Buffer.ReadText();
                 Record(nameof(EditorDataText), EditorDataText);
             }

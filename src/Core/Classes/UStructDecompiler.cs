@@ -214,6 +214,11 @@ namespace UELib.Core
                         : $"({property.CategoryName})";
                 }
                 output += $" {property.Decompile()};";
+                string s = property.PostDecompile();
+                if (!string.IsNullOrEmpty(s))
+                {
+                    output += s;
+                }
             }
 
             return output + "\r\n";

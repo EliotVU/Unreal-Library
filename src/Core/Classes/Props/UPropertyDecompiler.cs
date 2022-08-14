@@ -22,7 +22,13 @@ namespace UELib.Core
                                  + DecompileEditorData()
                                  + DecompileMeta();
         }
-
+        
+        // Post semicolon ";".
+        public virtual string PostDecompile()
+        {
+            return default;
+        }
+        
         // FIXME: Rewrite without performing this many string copies, however this part of the decompilation process is not crucial.
         private string DecompileEditorData()
         {
