@@ -85,8 +85,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
-| Battle Territory: Battery | 3369 | 128/029? |     |
+| Battle Territory: Battery | 3369 | 128/029? | |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) |
+| Lemony Snicket's A Series of Unfortunate Events | 2226 | 129/003 | |
 | Swat 4 | 2226:Vengeance | 129/027 | |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | |
 | Bioshock | 2226:Vengeance | 130-141/056 | |
