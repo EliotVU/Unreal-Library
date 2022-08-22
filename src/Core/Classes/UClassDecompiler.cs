@@ -85,11 +85,7 @@ namespace UELib.Core
                 assembly.GetName().Name,
                 ((AssemblyCopyrightAttribute)assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false)[0])
                 .Copyright,
-#if Forms
-                System.Windows.Forms.Application.ProductName,
-#else
-                "UELib",
-#endif
+                AppDomain.CurrentDomain.FriendlyName,
                 GetOuterGroup()
             );
 
