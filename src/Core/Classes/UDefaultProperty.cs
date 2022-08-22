@@ -761,57 +761,56 @@ namespace UELib.Core
                 case PropertyType.StructProperty:
                 {
                     deserializeFlags |= DeserializeFlags.WithinStruct;
-                    var isHardCoded = false;
-                    var hardcodedStructs = (PropertyType[])Enum.GetValues(typeof(PropertyType));
-                    for (var i = (byte)PropertyType.StructOffset; i < hardcodedStructs.Length; ++i)
+#if DNF
+                    if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                     {
-                        string structType = Enum.GetName(typeof(PropertyType), (byte)hardcodedStructs[i]);
-                        if (string.Compare(ItemName, structType, StringComparison.OrdinalIgnoreCase) != 0)
-                            continue;
-
+                        goto nonAtomic;
+                    }
+#endif
+                    // Ugly hack, but this will do for now until this entire function gets "rewritten" :D
+                    if (Enum.TryParse(ItemName, out PropertyType structPropertyType))
+                    {
+                        
                         // Not atomic if <=UE2,
                         // TODO: Figure out all non-atomic structs
                         if (_Buffer.Version < VAtomicStructs)
-                            switch (hardcodedStructs[i])
+                            switch (structPropertyType)
                             {
                                 case PropertyType.Matrix:
                                 case PropertyType.Box:
                                 case PropertyType.Plane:
                                     goto nonAtomic;
                             }
-
-                        isHardCoded = true;
-                        propertyValue += DeserializeDefaultPropertyValue(hardcodedStructs[i], ref deserializeFlags);
-                        break;
+                        
+                        propertyValue += DeserializeDefaultPropertyValue(structPropertyType, ref deserializeFlags);
+                        goto output;
                     }
 
                 nonAtomic:
-                    if (!isHardCoded)
+                    // We have to modify the outer so that dynamic arrays within this struct
+                    // will be able to find its variables to determine the array type.
+                    FindProperty(out _Outer);
+                    while (true)
                     {
-                        // We have to modify the outer so that dynamic arrays within this struct
-                        // will be able to find its variables to determine the array type.
-                        FindProperty(out _Outer);
-                        while (true)
+                        var tag = new UDefaultProperty(_Container, _Outer);
+                        if (tag.Deserialize())
                         {
-                            var tag = new UDefaultProperty(_Container, _Outer);
-                            if (tag.Deserialize())
-                            {
-                                propertyValue += tag.Name +
-                                                 (tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty
-                                                     ? $"[{tag.ArrayIndex}]"
-                                                     : string.Empty) +
-                                                 "=" + tag.DeserializeValue(deserializeFlags) + ",";
-                            }
-                            else
-                            {
-                                if (propertyValue.EndsWith(","))
-                                    propertyValue = propertyValue.Remove(propertyValue.Length - 1, 1);
+                            propertyValue += tag.Name +
+                                             (tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty
+                                                 ? $"[{tag.ArrayIndex}]"
+                                                 : string.Empty) +
+                                             "=" + tag.DeserializeValue(deserializeFlags) + ",";
+                        }
+                        else
+                        {
+                            if (propertyValue.EndsWith(","))
+                                propertyValue = propertyValue.Remove(propertyValue.Length - 1, 1);
 
-                                break;
-                            }
+                            break;
                         }
                     }
 
+                output:
                     propertyValue = propertyValue.Length != 0
                         ? $"({propertyValue})"
                         : "none";
