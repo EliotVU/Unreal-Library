@@ -88,6 +88,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory: Battery | 3369 | 128/029? | |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) |
+| Shrek 2 | 2226 | 129 | |
+| Shark Tale | 2226 | 129/003 | |
 | Lemony Snicket's A Series of Unfortunate Events | 2226 | 129/003 | |
 | Swat 4 | 2226:Vengeance | 129/027 | |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | |
