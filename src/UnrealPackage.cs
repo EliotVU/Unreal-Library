@@ -297,6 +297,18 @@ namespace UELib
                 [Build(159, 29u, BuildGeneration.UE2_5)]
                 Spellborn,
 
+                [Build(100, 167, BuildGeneration.SCX)]
+                SC_DA_Offline,
+
+                /// <summary>
+                /// Tom Clancy's Splinter Cell: Double Agent
+                ///
+                /// 275/000
+                /// Overriden to version 120, so we can pickup the CppText property in UStruct (although this might be a ProcessedText reference)
+                /// </summary>
+                [Build(275, 0, BuildGeneration.ShadowStrike)] [OverridePackageVersion(120)]
+                SC_DA_Online,
+
                 /// <summary>
                 /// Standard
                 /// 
@@ -900,7 +912,14 @@ namespace UELib
                 {
                     FolderName = stream.ReadText();
                 }
-
+#if SHADOW_STRIKE
+                if (stream.Package.Build == BuildGeneration.SCX &&
+                    stream.LicenseeVersion >= 83)
+                {
+                    // reads 0
+                    int scInt32 = stream.ReadInt32();
+                }
+#endif
                 PackageFlags = stream.ReadFlags32<PackageFlags>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
 #if HAWKEN
@@ -943,7 +962,16 @@ namespace UELib
                                   + " Exports Count:" + ExportCount + " Exports Offset:" + ExportOffset
                                   + " Imports Count:" + ImportCount + " Imports Offset:" + ImportOffset
                 );
-
+#if SHADOW_STRIKE
+                // No version check, not serialized for DA_Online.
+                if (stream.Package.Build == BuildGeneration.SCX)
+                {
+                    int scInt32_2 = stream.ReadInt32();
+                    Debug.Assert(scInt32_2 == 0xff0adde);
+                    
+                    string scSaveInfo = stream.ReadText();
+                }
+#endif
                 if (stream.Version < 68)
                 {
                     HeritageCount = stream.ReadInt32();
@@ -1024,24 +1052,24 @@ namespace UELib
                 if (stream.Package.Build == GameBuild.BuildName.Tera) stream.Position -= 4;
 #endif
 #if MKKE
-                if (stream.Package.Build != GameBuild.BuildName.MKKE)
+                if (stream.Package.Build == GameBuild.BuildName.MKKE)
                 {
-#endif
-                    int generationCount = stream.ReadInt32();
-                    Contract.Assert(generationCount > 0);
-                    Console.WriteLine("Generations Count:" + generationCount);
-#if APB
-                    // Guid, however only serialized for the first generation item.
-                    if (stream.Package.Build == GameBuild.BuildName.APB &&
-                        stream.LicenseeVersion >= 32)
-                    {
-                        stream.Skip(16);
-                    }
-#endif
-                    stream.ReadArray(out Generations, generationCount);
-#if MKKE
+                    goto skipGenerations;
                 }
 #endif
+                int generationCount = stream.ReadInt32();
+                Contract.Assert(generationCount > 0);
+                Console.WriteLine("Generations Count:" + generationCount);
+#if APB
+                // Guid, however only serialized for the first generation item.
+                if (stream.Package.Build == GameBuild.BuildName.APB &&
+                    stream.LicenseeVersion >= 32)
+                {
+                    stream.Skip(16);
+                }
+#endif
+                stream.ReadArray(out Generations, generationCount);
+            skipGenerations:
 #if DNF
                 if (stream.Package.Build == GameBuild.BuildName.DNF &&
                     stream.Version >= 151)

@@ -414,6 +414,13 @@ namespace UELib.Core
                 //{ 0x71, (byte)ExprToken.InternalUnresolved }, // int > int (VectorYZ)
             };
 #endif
+#if SHADOW_STRIKE
+            // Incomplete, just a little quick fix
+            private static readonly Dictionary<byte, byte> ByteCodeMap_ShadowStrike = new Dictionary<byte, byte>
+            {
+                { 0x28, (byte)ExprToken.NativeParm }
+            };
+#endif
             private bool IsUsingInlinedPrimitiveCasting()
             {
 #if DNF
@@ -475,6 +482,14 @@ namespace UELib.Core
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
                 {
                     _ByteCodeMap = ByteCodeMap_BuildBs;
+                    return;
+                }
+#endif
+#if SHADOW_STRIKE
+                // Offline mode hasn't changed as far as I know.
+                if (Package.Build == BuildGeneration.ShadowStrike)
+                {
+                    _ByteCodeMap = ByteCodeMap_ShadowStrike;
                     return;
                 }
 #endif

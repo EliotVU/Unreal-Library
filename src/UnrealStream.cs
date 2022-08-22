@@ -297,12 +297,23 @@ namespace UELib
                 : (index << 6) + (b0 & value);
         }
 
+        // HACK: Specific builds logic should be displaced by a specialized stream.
         public long ReadNameIndex()
         {
 #if BINARYMETADATA
             long lastPosition = BaseStream.Position;
 #endif
             int index = ReadIndex();
+#if SHADOW_STRIKE
+            if (_Archive.Package.Build == BuildGeneration.ShadowStrike)
+            {
+                ReadIndex();
+#if BINARYMETADATA
+                _Archive.LastPosition = lastPosition;
+#endif
+                return index;
+            }
+#endif
             if (_Archive.Version >= UName.VNameNumbered
 #if BIOSHOCK
                 || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
@@ -319,12 +330,24 @@ namespace UELib
             return index;
         }
 
+        // HACK: Specific builds logic should be displaced by a specialized stream.
         public int ReadNameIndex(out int num)
         {
 #if BINARYMETADATA
             long lastPosition = BaseStream.Position;
 #endif
             int index = ReadIndex();
+#if SHADOW_STRIKE
+            if (_Archive.Package.Build == BuildGeneration.ShadowStrike)
+            {
+                ReadIndex();
+#if BINARYMETADATA
+                _Archive.LastPosition = lastPosition;
+#endif
+                num = -1;
+                return index;
+            }
+#endif
             if (_Archive.Version >= UName.VNameNumbered
 #if BIOSHOCK
                 || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
