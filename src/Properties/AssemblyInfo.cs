@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("UELib")]
-[assembly: AssemblyDescription("A library for parsing Unreal Engine packages.")]
-[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyDescription("UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.")]
+[assembly: AssemblyConfiguration("Publish")]
 [assembly: AssemblyCompany("EliotVU")]
 [assembly: AssemblyProduct("UELib")]
 [assembly: AssemblyCopyright("© 2009-2022 Eliot van Uytfanghe. All rights reserved.")]
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.3.0.0")]
-[assembly: AssemblyFileVersion("1.3.0.0")]
+[assembly: AssemblyVersion("1.3.0")]
+[assembly: AssemblyFileVersion("1.3.0")]
