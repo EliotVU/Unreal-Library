@@ -87,6 +87,13 @@ namespace UELib.Core
                     return;
                 }
 #endif
+#if FFOW
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.FFOW)
+                {
+                    _NameMemorySize = sizeof(int) + sizeof(int);
+                    return;
+                }
+#endif
                 const short vNameSizeTo8 = 500;
                 if (Buffer.Version >= vNameSizeTo8) _NameMemorySize = sizeof(int) + sizeof(int);
 #if TERA

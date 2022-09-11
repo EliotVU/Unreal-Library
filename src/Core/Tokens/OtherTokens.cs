@@ -165,7 +165,7 @@ namespace UELib.Core
                     // -- definitely not in the older UE3 builds v186
                     if (stream.Version < 200) return;
                     
-                    ReturnValueProperty = stream.ReadObject() as UProperty;
+                    ReturnValueProperty = stream.ReadObject<UProperty>();
                     Decompiler.AlignObjectSize();
                 }
             }

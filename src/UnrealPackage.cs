@@ -312,6 +312,13 @@ namespace UELib
                 [Build(421, 11)] MOHA,
 
                 /// <summary>
+                /// Frontlines: Fuel of War
+                ///
+                /// 433/052
+                /// </summary>
+                [Build(433, 52)] FFOW,
+
+                /// <summary>
                 /// 472/046
                 /// </summary>
                 [Build(472, 46, BuildFlags.ConsoleCooked)]

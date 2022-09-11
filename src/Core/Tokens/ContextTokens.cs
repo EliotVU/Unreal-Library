@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Types;
 
 namespace UELib.Core
@@ -89,7 +90,10 @@ namespace UELib.Core
             public class StructMemberToken : Token
             {
                 public UField Property;
+                
                 [CanBeNull] public UStruct Struct;
+                public byte? IsCopy;
+                public byte? IsModification;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -104,32 +108,31 @@ namespace UELib.Core
                         Debug.Assert(Struct != null);
                     }
 #endif
-                    // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
-                    if (stream.Version > 369)
+                    if (stream.Version >= (int)PackageObjectLegacyVersion.StructReferenceAddedToStructMember)
                     {
                         Struct = stream.ReadObject<UStruct>();
                         Decompiler.AlignObjectSize();
                         Debug.Assert(Struct != null);
 #if MKKE
-                        if (Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
+                        // no IsCopy nor IsModification, but games with newer and older versions do seem to have them.
+                        // so we assume MKKE's version is non-standard.
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE)
                         {
-#endif
-                            // Copy?
-                            stream.ReadByte();
-                            Decompiler.AlignSize(sizeof(byte));
-#if MKKE
+                            goto nextToken;
                         }
 #endif
-                    }
-                    
-                    // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in SWG(486).
-                    if (stream.Version > 472)
-                    {
-                        // Modification?
-                        stream.ReadByte();
+                        // Copy?
+                        IsCopy = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
+                        if (stream.Version >= (int)PackageObjectLegacyVersion.IsModificationAddedToStructMember)
+                        {
+                            // Modification?
+                            IsModification = stream.ReadByte();
+                            Decompiler.AlignSize(sizeof(byte));
+                        }
                     }
 
+                nextToken:
                     // Pre-Context
                     DeserializeNext();
                 }
