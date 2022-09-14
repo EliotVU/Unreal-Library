@@ -373,6 +373,10 @@ namespace UELib.Core
                     if (Package.Build == BuildGeneration.RSS)
                     {
                         _Buffer.Skip(sizeof(int));
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                        {
+                            _Buffer.Skip(sizeof(int));
+                        }
                     }
 #endif
                     if (_Buffer.Version >= UnrealPackage.VDLLBIND && _Buffer.UE4Version < 117)

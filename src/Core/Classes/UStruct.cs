@@ -89,16 +89,26 @@ namespace UELib.Core
                 Super = _Buffer.ReadObject<UField>();
                 Record(nameof(Super), Super);
             }
-
+#if BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                goto skipScriptText;
+            }
+#endif
             if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ScriptText), ScriptText);
             }
-
+            skipScriptText:
             Children = _Buffer.ReadObject<UField>();
             Record(nameof(Children), Children);
-
+#if BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                goto serializeByteCode;
+            }
+#endif
             // Moved to UFunction in UE3
             if (_Buffer.Version < VFriendlyNameMoved)
             {
@@ -194,6 +204,7 @@ namespace UELib.Core
                 Record(nameof(transformersEndLine), transformersEndLine);
             }
 #endif
+            serializeByteCode:
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
             bool hasFixedScriptSize = _Buffer.Version >= VStorageScriptSize;

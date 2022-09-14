@@ -99,18 +99,24 @@ namespace UELib.Core
             }
 #endif
             int info = _Buffer.ReadInt32();
+            Record("ArrayDim&ElementSize", info);
             ArrayDim = (ushort)(info & 0x0000FFFFU);
-            Record("ArrayDim", ArrayDim);
             Debug.Assert(ArrayDim <= 2048, "Bad array dim");
             ElementSize = (ushort)(info >> 16);
-            Record("ElementSize", ElementSize);
         skipInfo:
 
             PropertyFlags = Package.Version >= 220
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
             Record("PropertyFlags", PropertyFlags);
-
+#if BATMAN
+            if (Package.Build == BuildGeneration.RSS &&
+                _Buffer.LicenseeVersion >= 101)
+            {
+                PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
+                Record("PropertyFlags", (PropertyFlagsLO)PropertyFlags);
+            }
+#endif
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {

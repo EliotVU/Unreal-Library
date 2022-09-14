@@ -94,10 +94,11 @@ namespace UELib.Core
 
             if (_Buffer.Version >= VStateFlags)
             {
-#if BORDERLANDS2 || TRANSFORMERS
+#if BORDERLANDS2 || TRANSFORMERS || BATMAN
                 // FIXME:Temp fix
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    Package.Build == BuildGeneration.HMS)
+                    Package.Build == BuildGeneration.HMS ||
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
                 {
                     _StateFlags = _Buffer.ReadUShort();
                     goto skipStateFlags;
