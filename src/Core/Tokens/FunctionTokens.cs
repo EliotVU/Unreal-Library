@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -15,6 +16,24 @@ namespace UELib.Core
 
             public abstract class FunctionToken : Token
             {
+                protected UName DeserializeFunctionName(IUnrealStream stream)
+                {
+                    UName functionName;
+#if BATMAN
+                    // (Only for byte-codes) No int32 numeric followed after a name index for Batman4
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                    {
+                        var nameIndex = stream.ReadInt32();
+                        functionName = new UName(stream.Package.Names[nameIndex]);
+                        Decompiler.AlignSize(sizeof(int));
+                        return functionName;
+                    }
+#endif
+                    functionName = stream.ReadNameReference();
+                    Decompiler.AlignNameSize();
+                    return functionName;
+                }
+
                 protected void DeserializeCall()
                 {
                     DeserializeParms();
@@ -163,7 +182,7 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(int));
                     }
 
-                    Function = stream.ReadObject() as UFunction;
+                    Function = stream.ReadObject<UFunction>();
                     Decompiler.AlignObjectSize();
 
                     DeserializeCall();
@@ -244,9 +263,7 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(int));
                     }
 
-                    FunctionName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
-
+                    FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
 
@@ -263,9 +280,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    FunctionName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
-
+                    FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
 
@@ -293,9 +308,7 @@ namespace UELib.Core
                     stream.ReadObjectIndex();
                     Decompiler.AlignObjectSize();
 
-                    FunctionName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
-
+                    FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
 
