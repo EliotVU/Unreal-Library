@@ -1,5 +1,6 @@
 ﻿using System;
 using UELib.Annotations;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -10,8 +11,8 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        [CanBeNull] public UField Super { get; private set; }
-        [CanBeNull] public UField NextField { get; private set; }
+        [CanBeNull] public UField Super { get; set; }
+        [CanBeNull] public UField NextField { get; set; }
 
         #endregion
 
@@ -31,41 +32,21 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            // _SuperIndex got moved into UStruct since 700+
-            if ((Package.Version < 756
-#if SPECIALFORCE2
-                 || Package.Build == UnrealPackage.GameBuild.BuildName.SpecialForce2
-#endif
-                )
-#if BIOSHOCK
-                && Package.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
-#endif
-               )
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
-                Super = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                Record("Super", Super);
-
-                NextField = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                Record("NextField", NextField);
+                Super = _Buffer.ReadObject<UStruct>();
+                Record(nameof(Super), Super);
             }
-            else
-            {
-                NextField = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                Record("NextField", NextField);
 
-                // Should actually resist in UStruct
-                if (this is UStruct)
-                {
-                    Super = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                    Record("Super", Super);
-                }
-            }
+            NextField = _Buffer.ReadObject<UField>();
+            Record(nameof(NextField), NextField);
         }
 
         #endregion
 
         #region Methods
 
+        [Obsolete]
         public string GetSuperGroup()
         {
             var group = string.Empty;

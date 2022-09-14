@@ -432,9 +432,11 @@ namespace UELib
 
                 /// <summary>
                 /// BioShock Infinite
-                /// 727/075
+                /// 727/075 (partially upgraded to 756 or higher)
                 /// </summary>
-                [Build(727, 75)] Bioshock_Infinite,
+                [Build(727, 75)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)]
+                Bioshock_Infinite,
 
                 /// <summary>
                 /// 742/029
@@ -515,7 +517,7 @@ namespace UELib
                 /// Batman: Arkham Origins
                 ///
                 /// 806/103
-                /// 807/807
+                /// 807/137-138
                 /// </summary>
                 [Build(806, 103, BuildGeneration.RSS)]
                 [Build(807, 807, 137, 138, BuildGeneration.RSS)]
@@ -530,21 +532,28 @@ namespace UELib
                 /// <summary>
                 /// Batman: Arkham Knight
                 ///
-                /// 863/32995
+                /// 863/32995(227 & ~8000)
                 /// </summary>
                 [Build(863, 32995, BuildGeneration.RSS)]
+                [OverridePackageVersion(863, 227)]
                 Batman4,
 
                 /// <summary>
+                /// Rocket League
+                /// 
                 /// 867/009:032
                 /// Requires third-party decompression and decryption
                 /// </summary>
                 [Build(867, 868, 9u, 32u)] RocketLeague,
 
                 /// <summary>
-                /// 904/009
+                /// Special Force 2
+                /// 
+                /// 904/009 (Non-standard version, actual Epic version might be 692 or higher)
                 /// </summary>
-                [Build(904, 904, 09u, 014u)] SpecialForce2,
+                [Build(904, 904, 09u, 014u)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved)]
+                SpecialForce2,
             }
 
             public BuildName Name { get; }

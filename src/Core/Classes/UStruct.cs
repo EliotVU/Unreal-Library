@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -83,7 +84,12 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            // --SuperField
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
+            {
+                Super = _Buffer.ReadObject<UField>();
+                Record(nameof(Super), Super);
+            }
+
             if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
@@ -94,7 +100,7 @@ namespace UELib.Core
             Record(nameof(Children), Children);
 
             // Moved to UFunction in UE3
-            if (Package.Version < VFriendlyNameMoved)
+            if (_Buffer.Version < VFriendlyNameMoved)
             {
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
@@ -129,7 +135,7 @@ namespace UELib.Core
             }
 #endif
             // Standard, but UT2004' derived games do not include this despite reporting version 128+
-            if (Package.Version >= VCppText && _Buffer.UE4Version < 117
+            if (_Buffer.Version >= VCppText && _Buffer.UE4Version < 117
                 && !Package.IsConsoleCooked() &&
                 Package.Build != BuildGeneration.UE2_5)
             {
@@ -190,7 +196,7 @@ namespace UELib.Core
 #endif
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
-            bool hasFixedScriptSize = Package.Version >= VStorageScriptSize;
+            bool hasFixedScriptSize = _Buffer.Version >= VStorageScriptSize;
             if (hasFixedScriptSize)
             {
                 DataScriptSize = _Buffer.ReadInt32();
@@ -219,9 +225,9 @@ namespace UELib.Core
 
                 bool isTrueScriptSize = Package.Build == UnrealPackage.GameBuild.BuildName.MOHA ||
                                         (
-                                            Package.Version >= UnrealPackage.VINDEXDEPRECATED
-                                            && (Package.Version < moonbaseVersion &&
-                                                Package.Version > shadowcomplexVersion)
+                                            _Buffer.Version >= UnrealPackage.VINDEXDEPRECATED
+                                            && (_Buffer.Version < moonbaseVersion &&
+                                                _Buffer.Version > shadowcomplexVersion)
                                         );
                 if (isTrueScriptSize)
                 {

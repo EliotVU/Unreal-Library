@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UELib.Flags;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -73,7 +74,7 @@ namespace UELib.Core
             }
 #endif
 
-            if (_Buffer.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved)
             {
                 ProbeMask = _Buffer.ReadUInt64();
                 Record(nameof(ProbeMask), ProbeMask);
@@ -102,12 +103,10 @@ namespace UELib.Core
                     goto skipStateFlags;
                 }
 #endif
-
                 _StateFlags = _Buffer.ReadUInt32();
             skipStateFlags:
                 Record(nameof(_StateFlags), (StateFlags)_StateFlags);
             }
-
 #if TRANSFORMERS
             if (Package.Build == BuildGeneration.HMS)
             {
@@ -115,7 +114,6 @@ namespace UELib.Core
                 return;
             }
 #endif
-
             if (_Buffer.Version < VFuncMap) return;
             _Buffer.ReadMap(out FuncMap);
             Record(nameof(FuncMap), FuncMap);

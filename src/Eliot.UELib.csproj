@@ -118,6 +118,7 @@
     <Compile Include="Branch\DefaultPackageSerializer.cs" />
     <Compile Include="Branch\EngineBranch.cs" />
     <Compile Include="Branch\BuildEngineBranchAttribute.cs" />
+    <Compile Include="Branch\PackageObjectLegacyVersion.cs" />
     <Compile Include="Branch\PackageSerializerBase.cs" />
     <Compile Include="Branch\UE3\DD2\EngineBranch.DD2.cs" />
     <Compile Include="Branch\UE4\EngineBranch.UE4.cs" />
@@ -272,7 +273,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

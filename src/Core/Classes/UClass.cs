@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -303,9 +304,10 @@ namespace UELib.Core
                             AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
                         }
 
-                        if (_Buffer.Version >= 749
-#if SPECIALFORCE2
-                            && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
+                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.ForceScriptOrderAddedToUClass
+#if BIOSHOCK
+                            // Partially upgraded
+                            && Package.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
 #endif
                            )
                         {
