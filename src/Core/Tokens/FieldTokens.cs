@@ -95,8 +95,7 @@
                         Decompiler.AlignSize(sizeof(int));
                     }
 
-                    PropertyName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
+                    PropertyName = ReadName(stream);
 
                     // TODO: Corrigate version. Seen in version ~648(The Ball) may have been introduced earlier, but not prior 610.
                     if (stream.Version > 610)
@@ -150,10 +149,11 @@
 
             public class InstanceDelegateToken : Token
             {
+                public UName DelegateName;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadNameIndex();
-                    Decompiler.AlignNameSize();
+                    DelegateName = ReadName(stream);
                 }
             }
         }

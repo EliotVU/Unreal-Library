@@ -414,6 +414,12 @@ namespace UELib.Core
                 //{ 0x71, (byte)ExprToken.InternalUnresolved }, // int > int (VectorYZ)
             };
 #endif
+#if BATMAN
+            private static readonly Dictionary<byte, byte> ByteCodeMap_BuildBatman4 = new Dictionary<byte, byte>
+            {
+                { 0x2B, (byte)ExprToken.Unused }, // NameConst but without the Int32 number at the end
+            };
+#endif
             private bool IsUsingInlinedPrimitiveCasting()
             {
 #if DNF

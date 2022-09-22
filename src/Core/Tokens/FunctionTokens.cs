@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -16,22 +17,10 @@ namespace UELib.Core
 
             public abstract class FunctionToken : Token
             {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected UName DeserializeFunctionName(IUnrealStream stream)
                 {
-                    UName functionName;
-#if BATMAN
-                    // (Only for byte-codes) No int32 numeric followed after a name index for Batman4
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-                    {
-                        var nameIndex = stream.ReadInt32();
-                        functionName = new UName(stream.Package.Names[nameIndex]);
-                        Decompiler.AlignSize(sizeof(int));
-                        return functionName;
-                    }
-#endif
-                    functionName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
-                    return functionName;
+                    return ReadName(stream);
                 }
 
                 protected void DeserializeCall()
@@ -293,19 +282,20 @@ namespace UELib.Core
 
             public class DelegateFunctionToken : FunctionToken
             {
+                public byte? IsLocal;
+                public UProperty DelegateProperty;
                 public UName FunctionName;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // TODO: Corrigate Version
-                    if (stream.Version > 180)
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.IsLocalAddedToDelegateFunctionToken)
                     {
-                        ++stream.Position; // ReadByte()
+                        IsLocal = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
-                    // Delegate object index
-                    stream.ReadObjectIndex();
+                    DelegateProperty = stream.ReadObject<UProperty>();
                     Decompiler.AlignObjectSize();
 
                     FunctionName = DeserializeFunctionName(stream);
