@@ -70,7 +70,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Jazz Jackrabbit 3D | 400 | 68/000 | |
 | Duke Nukem Forever (2001) | 613 | 68/002 | UStruct offsets are off leading to bad output code |
 | Rune | 400 | 69/000 | |
+| Unrealty | 405 | 69/000 | |
 | X-COM: Enforcer | 420 | 69/000 | | 
+| Tactical Ops: Assault on Terror | 436 | 69/000 | |
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
