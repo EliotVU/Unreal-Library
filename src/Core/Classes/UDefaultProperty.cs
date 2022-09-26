@@ -754,7 +754,17 @@ namespace UELib.Core
                     propertyValue += $"X={x},Y={y}";
                     break;
                 }
+                
+                case PropertyType.PointRegion:
+                {
 
+                    string zone = DeserializeDefaultPropertyValue(PropertyType.ObjectProperty, ref deserializeFlags);
+                    string iLeaf = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
+                    string zoneNumber = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
+                    propertyValue += $"Zone={zone},iLeaf={iLeaf},ZoneNumber={zoneNumber}";
+                    break;
+                }
+                
                 #endregion
 
                 case PropertyType.PointerProperty:
@@ -770,18 +780,22 @@ namespace UELib.Core
                     // Ugly hack, but this will do for now until this entire function gets "rewritten" :D
                     if (Enum.TryParse(ItemName, out PropertyType structPropertyType))
                     {
-                        
                         // Not atomic if <=UE2,
                         // TODO: Figure out all non-atomic structs
-                        if (_Buffer.Version < VAtomicStructs)
-                            switch (structPropertyType)
-                            {
-                                case PropertyType.Matrix:
-                                case PropertyType.Box:
-                                case PropertyType.Plane:
-                                    goto nonAtomic;
-                            }
-                        
+                        if (_Buffer.Version < VAtomicStructs) switch (structPropertyType)
+                        {
+                            case PropertyType.Matrix:
+                            case PropertyType.Box:
+                            case PropertyType.Plane:
+                                goto nonAtomic;
+                        }
+                        else switch (structPropertyType)
+                        {
+                            // Deprecated in UDK
+                            case PropertyType.PointRegion:
+                                goto nonAtomic;
+                        }
+
                         propertyValue += DeserializeDefaultPropertyValue(structPropertyType, ref deserializeFlags);
                         goto output;
                     }
