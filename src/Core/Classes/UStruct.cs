@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using UELib.Branch;
+using UELib.Core.Tokens;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -13,13 +15,7 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UStruct : UField
     {
-        // FIXME: Version, set 95 (Deus Ex: IW)
-        private const int VPrimitiveCastToken = 95;
-
         private const int VCppText = 120;
-
-        // FIXME: Version
-        private const int VProcessedText = 129;
 
         // FIXME: Version
         private const int VFriendlyNameMoved = 160;
@@ -147,7 +143,8 @@ namespace UELib.Core
             // Standard, but UT2004' derived games do not include this despite reporting version 128+
             if (_Buffer.Version >= VCppText && _Buffer.UE4Version < 117
                 && !Package.IsConsoleCooked() &&
-                Package.Build != BuildGeneration.UE2_5)
+                (Package.Build != BuildGeneration.UE2_5 && 
+                 Package.Build != BuildGeneration.AGP))
             {
                 CppText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(CppText), CppText);
@@ -164,6 +161,7 @@ namespace UELib.Core
             // UE3 or UE2.5 build, it appears that StructFlags may have been merged from an early UE3 build.
             // UT2004 reports version 26, and BioShock version 2
             if ((Package.Build == BuildGeneration.UE2_5 && _Buffer.LicenseeVersion >= 26) ||
+                (Package.Build == BuildGeneration.AGP && _Buffer.LicenseeVersion >= 17) ||
                 (Package.Build == BuildGeneration.Vengeance && _Buffer.LicenseeVersion >= 2))
             {
                 StructFlags = _Buffer.ReadUInt32();
@@ -324,11 +322,19 @@ namespace UELib.Core
 
         #region Methods
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TokenFactory GetTokenFactory()
+        {
+            return Package.Branch.GetTokenFactory(Package);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasStructFlag(StructFlags flag)
         {
             return (StructFlags & (uint)flag) != 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsPureStruct()
         {
             return IsClassType("Struct") || IsClassType("ScriptStruct");

@@ -81,7 +81,7 @@ namespace UELib.Core
             }
 #endif
 #if AA2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2 && Package.LicenseeVersion > 7)
+            if (Package.Build == BuildGeneration.AGP && Package.LicenseeVersion > 7)
             {
                 // Always 26125 (hardcoded in the assembly) 
                 uint unknown = _Buffer.ReadUInt32();
@@ -202,7 +202,9 @@ namespace UELib.Core
             // Appears to be a UE2.5 feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
             if ((HasPropertyFlag(PropertyFlagsLO.EditorData) &&
-                 (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Flesh))
+                 (Package.Build == BuildGeneration.UE2_5 
+                  || Package.Build == BuildGeneration.AGP
+                  || Package.Build == BuildGeneration.Flesh))
                 // No property flag
                 || Package.Build == BuildGeneration.Vengeance
 #if LSGAME

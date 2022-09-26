@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UELib.Annotations;
@@ -64,12 +65,12 @@ namespace UELib
         [PublicAPI]
         public List<NativeTableItem> NativeTableList;
 
-        private Dictionary<int, NativeTableItem> _NativeFunctionMap;
+        public Dictionary<ushort, NativeTableItem> NativeTokenMap { get; set; }
         
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete]
         public NativeTableItem FindTableItem(uint nativeIndex)
         {
-            _NativeFunctionMap.TryGetValue((int)nativeIndex, out var item);
+            NativeTokenMap.TryGetValue((ushort)nativeIndex, out var item);
             return item;
         }
         
@@ -104,7 +105,7 @@ namespace UELib
                 }
             }
             NativeTableList.Sort((nt1, nt2) => nt1.ByteToken.CompareTo(nt2.ByteToken));
-            _NativeFunctionMap = NativeTableList.ToDictionary(item => item.ByteToken);
+            NativeTokenMap = NativeTableList.ToDictionary(item => (ushort)item.ByteToken);
         }
 
         [PublicAPI]

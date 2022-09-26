@@ -148,7 +148,7 @@ namespace UELib.Core
                 Record(nameof(classRecordSize), classRecordSize);
             }
 #if AA2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.AA2)
+            if (Package.Build == BuildGeneration.AGP)
             {
                 uint unknownUInt32 = _Buffer.ReadUInt32();
                 Record("Unknown:AA2", unknownUInt32);

@@ -30,10 +30,9 @@ namespace UELib
         UnrealPackage Package { get; }
         UnrealReader UR { get; }
         UnrealWriter UW { get; }
-        
-        [CanBeNull] IBufferDecoder Decoder { get; set; }
 
-        void SetBranch(EngineBranch packageEngineBranch);
+        [CanBeNull] IBufferDecoder Decoder { get; set; }
+        IPackageSerializer Serializer { get; set; }
 
         string ReadText();
         string ReadASCIIString();
@@ -391,6 +390,7 @@ namespace UELib
     public class UPackageFileStream : FileStream
     {
         [CanBeNull] public IBufferDecoder Decoder { get; set; }
+        [CanBeNull] public IPackageSerializer Serializer { get; set; }
 
         protected UPackageFileStream(string path, FileMode mode, FileAccess access, FileShare share) : base(path, mode,
             access, share)
@@ -423,7 +423,7 @@ namespace UELib
     public class UPackageStream : UPackageFileStream, IUnrealStream, IUnrealArchive
     {
         public UnrealPackage Package { get; protected set; }
-        
+
         public uint Version => Package.Version;
         public uint LicenseeVersion => Package.LicenseeVersion;
         public uint UE4Version => Package.Summary.UE4Version;
@@ -432,7 +432,7 @@ namespace UELib
         public UnrealWriter UW { get; private set; }
 
         public long LastPosition { get; set; }
-        
+
         public bool BigEndianCode { get; private set; }
 
         public bool IsChunked => Package.CompressedChunks != null && Package.CompressedChunks.Any();
@@ -444,15 +444,7 @@ namespace UELib
             UW = null;
             InitBuffer();
         }
-        
-        public IPackageSerializer Serializer { get; set; }
 
-        public void SetBranch(EngineBranch packageEngineBranch)
-        {
-            Decoder = packageEngineBranch.Decoder;
-            Serializer = packageEngineBranch.Serializer;
-        }
-        
         private void InitBuffer()
         {
             if (CanRead && UR == null) UR = new UnrealReader(this, this);
@@ -611,12 +603,13 @@ namespace UELib
     public class UObjectStream : MemoryStream, IUnrealStream, IUnrealArchive
     {
         public UnrealPackage Package { get; }
-        
+
         public uint Version => Package.Version;
         public uint LicenseeVersion => Package.LicenseeVersion;
         public uint UE4Version => Package.Summary.UE4Version;
-        
-        [CanBeNull] public IBufferDecoder Decoder { get; set; }
+
+        public IBufferDecoder Decoder { get; set; }
+        public IPackageSerializer Serializer { get; set; }
 
         public string Name => Package.Stream.Name;
 
@@ -642,11 +635,6 @@ namespace UELib
             UR = null;
             Package = str.Package;
             InitBuffer();
-        }
-        
-        public void SetBranch(EngineBranch packageEngineBranch)
-        {
-            throw new NotImplementedException();
         }
 
         private void InitBuffer()
@@ -674,6 +662,7 @@ namespace UELib
 
         #region Macros
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public new byte ReadByte()
         {
 #if BINARYMETADATA
@@ -1068,13 +1057,13 @@ namespace UELib
             Debug.Assert(stream.Package.Branch.Serializer != null, "stream.Package.Branch.Serializer != null");
             stream.Package.Branch.Serializer.Deserialize(stream, obj);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out bool value)
         {
             value = ReadBool(stream);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<T>(this IUnrealStream stream, out UObject value)
             where T : UObject

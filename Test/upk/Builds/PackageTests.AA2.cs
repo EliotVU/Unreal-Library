@@ -28,7 +28,7 @@ namespace Eliot.UELib.Test.upk.Builds
 
             using var linker = UnrealLoader.LoadPackage(NoEncryptionCorePackagePath);
             Assert.IsNotNull(linker);
-            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2, linker.Build.Name, "Incorrect package's build");
+            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2_2_6, linker.Build.Name, "Incorrect package's build");
 
             // Requires UELib to be built without "Forms"
             //linker.InitializePackage(UnrealPackage.InitFlags.Construct | UnrealPackage.InitFlags.RegisterClasses);
@@ -51,7 +51,7 @@ namespace Eliot.UELib.Test.upk.Builds
 
             using var linker = UnrealLoader.LoadPackage(EncryptedCorePackagePath);
             Assert.IsNotNull(linker);
-            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2, linker.Build.Name, "Incorrect package's build");
+            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2_2_6, linker.Build.Name, "Incorrect package's build");
         }
 
         [TestMethod("AA2 Decryption of string 'None'")]

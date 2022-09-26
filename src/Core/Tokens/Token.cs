@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -8,29 +9,32 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
-            public abstract class Token : IUnrealDecompilable, IUnrealDeserializableClass
+            public abstract class Token : IUnrealDecompilable, IUnrealDeserializableClass, IAcceptable
             {
                 public UByteCodeDecompiler Decompiler { get; set; }
 
-                protected UnrealPackage Package => Decompiler.Package;
+                protected UnrealPackage Package => Decompiler._Package;
 
-                public byte RepresentToken;
-
-                /// <summary>
-                /// The relative position of this token.
-                /// Storage--The actual token position within the Buffer.
-                /// </summary>
-                public uint Position;
-
-                public uint StoragePosition;
+                public ExprToken TokenKind;
 
                 /// <summary>
-                /// The size of this token and its inlined tokens.
-                /// Storage--The actual token size within the Buffer.
+                /// The raw serialized byte-code for this token.
+                ///
+                /// e.g. if this token were to represent an expression token such as <see cref="ExprToken.StructMember"/>
+                /// then the OpCode will read 0x36 for UE2, but 0x35 for UE3.
+                /// This can be useful for tracking or re-writing a token to a file.
                 /// </summary>
-                public ushort Size;
+                public byte OpCode;
 
-                public ushort StorageSize;
+                /// <summary>
+                /// The read position of this token in memory relative to <see cref="UStruct.ScriptOffset"/>.
+                /// </summary>
+                public int Position, StoragePosition;
+
+                /// <summary>
+                /// The read size of this token in memory, inclusive of child tokens.
+                /// </summary>
+                public short Size, StorageSize;
 
                 public virtual void Deserialize(IUnrealStream stream)
                 {
@@ -47,21 +51,29 @@ namespace UELib.Core
 
                 public virtual string Disassemble()
                 {
-                    return $"0x{RepresentToken:X2}";
+                    return $"0x{OpCode:X2}";
                 }
 
                 protected string DecompileNext()
                 {
-                    tryNext:
-                    var t = Decompiler.NextToken;
-                    if (t is DebugInfoToken) goto tryNext;
+                tryNext:
+                    var token = Decompiler.NextToken;
+                    if (token is DebugInfoToken) goto tryNext;
 
-                    return t.Decompile();
+                    return token.Decompile();
                 }
-
-                protected Token GrabNextToken()
+                
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected T NextToken<T>()
+                    where T : Token
                 {
-                    tryNext:
+                    return (T)NextToken();
+                }
+                
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected Token NextToken()
+                {
+                tryNext:
                     var t = Decompiler.NextToken;
                     if (t is DebugInfoToken) goto tryNext;
 
@@ -69,9 +81,39 @@ namespace UELib.Core
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected void SkipCurrentToken()
+                {
+                    ++Decompiler.CurrentTokenIndex;
+                }
+
+                /// <summary>
+                /// Asserts that the token that we want to skip is indeed of the correct type, this also skips past any <see cref="DebugInfoToken"/>.
+                /// </summary>
+                /// <typeparam name="T">The type of the token that we want to assert.</typeparam>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected void AssertSkipCurrentToken<T>()
+                    where T : Token
+                {
+                tryNext:
+                    var token = Decompiler.NextToken;
+                    if (token is DebugInfoToken) goto tryNext;
+                    // This assertion will fail in most cases if the native indexes are a mismatch.
+#if STRICT
+                    Debug.Assert(token is T, $"Expected to skip a token of type '{typeof(T)}', but got '{token.GetType()}'");
+#endif
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected Token DeserializeNext()
                 {
                     return Decompiler.DeserializeNext();
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected T DeserializeNext<T>()
+                    where T : Token
+                {
+                    return (T)Decompiler.DeserializeNext();
                 }
 
                 /// <summary>
@@ -84,36 +126,74 @@ namespace UELib.Core
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected UName ReadName(IUnrealStream stream)
                 {
-                    UName name;
 #if BATMAN
                     // (Only for byte-codes) No int32 numeric followed after a name index for Batman4
                     if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
                     {
-                        Decompiler.AlignSize(sizeof(int));
-                        int nameIndex = stream.ReadInt32();
-                        name = new UName(stream.Package.Names[nameIndex]);
-                        return name;
+                        return ReadNameNoNumber(stream);
                     }
 #endif
+                    var name = stream.ReadNameReference();
                     Decompiler.AlignNameSize();
-                    name = stream.ReadNameReference();
                     return name;
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                protected T ReadObject<T>(IUnrealStream stream) where T : UObject
+                protected UName ReadNameNoNumber(IUnrealStream stream)
                 {
+                    int nameIndex = stream.ReadInt32();
+                    Decompiler.AlignSize(sizeof(int));
+                    var name = new UName(stream.Package.Names[nameIndex], 0);
+                    return name;
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected T ReadObject<T>(IUnrealStream stream) 
+                    where T : UObject
+                {
+                    var obj = stream.ReadObject<T>();
                     Decompiler.AlignObjectSize();
-                    return stream.ReadObject<T>();
+                    return obj;
+                }
+
+                public void Accept(IVisitor visitor)
+                {
+                    visitor.Visit(this);
+                }
+
+                public TResult Accept<TResult>(IVisitor<TResult> visitor)
+                {
+                    return visitor.Visit(this);
+                }
+
+                public override int GetHashCode()
+                {
+                    return GetType().GetHashCode();
                 }
 
                 public override string ToString()
                 {
                     return
-                        $"\r\nType:{GetType().Name}\r\nToken:{RepresentToken:X2}\r\nPosition:{Position}\r\nSize:{Size}"
+                        $"\r\nType:{GetType().Name}\r\nToken:{OpCode:X2}\r\nPosition:{Position}\r\nSize:{Size}"
                             .Replace("\n", "\n"
                                            + UDecompilingState.Tabs
                             );
+                }
+            }
+
+            public class BadToken : Token
+            {
+                public override void Deserialize(IUnrealStream stream)
+                {
+#if STRICT
+                    Debug.Fail($"Bad expression token 0x{OpCode:X2}");
+#endif
+                }
+
+                public override string Decompile()
+                {
+                    Decompiler.PreComment = $"// {FormatTokenInfo(this)}";
+                    return default;
                 }
             }
 

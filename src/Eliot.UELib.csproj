@@ -120,6 +120,14 @@
     <Compile Include="Branch\BuildEngineBranchAttribute.cs" />
     <Compile Include="Branch\PackageObjectLegacyVersion.cs" />
     <Compile Include="Branch\PackageSerializerBase.cs" />
+    <Compile Include="Branch\UE2\DNF\EngineBranch.DNF.cs" />
+    <Compile Include="Branch\UE3\APB\EngineBranch.APB.cs" />
+    <Compile Include="Branch\UE3\BL2\Tokens\LocalVariableToken.cs" />
+    <Compile Include="Branch\UE3\MOH\EngineBranch.MOH.cs" />
+    <Compile Include="Branch\UE3\RSS\EngineBranch.RSS.cs" />
+    <Compile Include="Branch\UE3\RSS\Tokens\NameConstNoNumberToken.cs" />
+    <Compile Include="Core\Tokens\TokenFactory.cs" />
+    <Compile Include="Core\Tokens\TokenMap.cs" />
     <Compile Include="Branch\UE3\DD2\EngineBranch.DD2.cs" />
     <Compile Include="Branch\UE4\EngineBranch.UE4.cs" />
     <Compile Include="Branch\PackageSerializer.cs" />
@@ -169,6 +177,7 @@
     <Compile Include="Core\Classes\UClassDecompiler.cs" />
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
+    <Compile Include="Branch\UE2\VG\Tokens\LogFunctionToken.cs" />
     <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
     <Compile Include="Core\UStateFrame.cs" />
@@ -273,7 +282,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

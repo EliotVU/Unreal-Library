@@ -9,7 +9,11 @@ using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
+using UELib.Branch.UE2.DNF;
+using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
+using UELib.Branch.UE3.MOH;
+using UELib.Branch.UE3.RSS;
 using UELib.Branch.UE4;
 using UELib.Flags;
 
@@ -232,12 +236,20 @@ namespace UELib
                 /// <summary>
                 /// America's Army 2.X
                 /// Represents both AAO and AAA
-                /// 
+                ///
                 /// Built on UT2004
                 /// 128/032:033
+                /// 
+                /// For now we have three AA2 versions defined here to help us distinguish the byte-code token map.
                 /// </summary>
-                [Build(128, 128, 32u, 33u, BuildGeneration.UE2_5)] [BuildEngineBranch(typeof(EngineBranchAA2))]
-                AA2,
+                [Build(128, 32u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                AA2_2_5,
+
+                [Build(128, 32u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                AA2_2_6,
+                
+                [Build(128, 33u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                AA2_2_8,
 
                 /// <summary>
                 /// Vanguard: Saga of Heroes
@@ -284,7 +296,7 @@ namespace UELib
                 ///
                 /// 156/036
                 /// </summary>
-                [Build(156, 36u, BuildGeneration.UE2)]
+                [Build(156, 36u, BuildGeneration.UE2)] [BuildEngineBranch(typeof(EngineBranchDNF))]
                 DNF,
 
                 /// <summary>
@@ -355,7 +367,8 @@ namespace UELib
                 /// 
                 /// 547/028:032
                 /// </summary>
-                [Build(547, 547, 28u, 32u)] APB,
+                [Build(547, 547, 28u, 32u)] [BuildEngineBranch(typeof(EngineBranchAPB))] 
+                APB,
 
                 /// <summary>
                 /// Standard, Gears of War 2
@@ -392,6 +405,7 @@ namespace UELib
                 /// 581/058
                 /// </summary>
                 [Build(581, 58, BuildFlags.ConsoleCooked)]
+                [BuildEngineBranch(typeof(EngineBranchMOH))]
                 MOH,
 
                 /// <summary>
@@ -510,7 +524,8 @@ namespace UELib
                 /// 
                 /// 805/101
                 /// </summary>
-                [Build(805, 101, BuildGeneration.RSS)]
+                [Build(805, 101)] 
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman2,
 
                 /// <summary>
@@ -519,14 +534,16 @@ namespace UELib
                 /// 806/103
                 /// 807/137-138
                 /// </summary>
-                [Build(806, 103, BuildGeneration.RSS)]
-                [Build(807, 807, 137, 138, BuildGeneration.RSS)]
+                [Build(806, 103)]
+                [Build(807, 807, 137, 138)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3,
                 
                 /// <summary>
                 /// 807/104
                 /// </summary>
-                [Build(807, 104, BuildGeneration.RSS)]
+                [Build(807, 104)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3MP,
 
                 /// <summary>
@@ -534,8 +551,9 @@ namespace UELib
                 ///
                 /// 863/32995(227 & ~8000)
                 /// </summary>
-                [Build(863, 32995, BuildGeneration.RSS)]
+                [Build(863, 32995)]
                 [OverridePackageVersion(863, 227)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman4,
 
                 /// <summary>
@@ -779,22 +797,23 @@ namespace UELib
                 if (OverrideLicenseeVersion != 0) LicenseeVersion = OverrideLicenseeVersion;
             }
 
+            // TODO: Re-use an instantiated branch if available and if the package's version and licensee are an identical match.
             private void SetupBranch(UnrealPackage package)
             {
                 if (package.Build.EngineBranchType != null)
                 {
-                    Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType, package);
+                    Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType, package.Build.Generation);
                 }
                 else if (package.Summary.UE4Version > 0)
                 {
-                    Branch = new EngineBranchUE4(package);
+                    Branch = new EngineBranchUE4();
                 }
                 else
                 {
-                    Branch = new DefaultEngineBranch(package);
+                    Branch = new DefaultEngineBranch(package.Build.Generation);
                 }
 
-                Debug.Assert(Branch.Serializer != null, "Branch.Serializer cannot be null");
+                Branch.Setup(package);
             }
 
             public void Serialize(IUnrealStream stream)
@@ -879,7 +898,6 @@ namespace UELib
                 SetupBranch(stream.Package);
                 Debug.Assert(Branch != null);
                 Console.WriteLine("Branch:" + Branch);
-                stream.SetBranch(Branch);
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -1380,7 +1398,8 @@ namespace UELib
             // FIXME: For backwards compatibility.
             PackageFlags = (uint)Summary.PackageFlags;
             Group = Summary.FolderName;
-            Branch.PostDeserializeSummary(stream, ref Summary);
+            Branch.PostDeserializeSummary(this, stream, ref Summary);
+            Debug.Assert(Branch.Serializer != null, "Branch.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
 
             // We can't continue without decompressing.
             if (CompressedChunks != null && CompressedChunks.Any())
@@ -1398,7 +1417,7 @@ namespace UELib
                 for (var i = 0; i < Summary.NameCount; ++i)
                 {
                     var nameEntry = new UNameTableItem { Offset = (int)stream.Position, Index = i };
-                    stream.Serializer.Deserialize(stream, nameEntry);
+                    Branch.Serializer.Deserialize(stream, nameEntry);
                     nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                     Names.Add(nameEntry);
                 }
@@ -1432,7 +1451,7 @@ namespace UELib
                 for (var i = 0; i < Summary.ImportCount; ++i)
                 {
                     var imp = new UImportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
-                    stream.Serializer.Deserialize(stream, imp);
+                    Branch.Serializer.Deserialize(stream, imp);
                     imp.Size = (int)(stream.Position - imp.Offset);
                     Imports.Add(imp);
                 }
@@ -1447,7 +1466,7 @@ namespace UELib
                 for (var i = 0; i < Summary.ExportCount; ++i)
                 {
                     var exp = new UExportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
-                    stream.Serializer.Deserialize(stream, exp);
+                    Branch.Serializer.Deserialize(stream, exp);
                     exp.Size = (int)(stream.Position - exp.Offset);
                     Exports.Add(exp);
                 }
@@ -1549,7 +1568,7 @@ namespace UELib
             Debug.Assert(stream.Position <= int.MaxValue);
             if (Summary.HeaderSize == 0) Summary.HeaderSize = (int)stream.Position;
 
-            Branch.PostDeserializePackage(stream, stream.Package);
+            Branch.PostDeserializePackage(stream.Package, stream);
         }
 
         /// <summary>

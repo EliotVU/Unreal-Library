@@ -52,7 +52,7 @@ namespace UELib.Core
                 }
             }
 
-            public class GoToLabelToken : Token
+            public class GotoLabelToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -165,7 +165,7 @@ namespace UELib.Core
                             Commentize();
                             // 'break' CodeOffset sits at the end of the switch,
                             // check that it doesn't exist already and add it
-                            uint switchEnd = Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null
+                            int switchEnd = Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null
                                 ? Position + Size
                                 : CodeOffset;
                             Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, switchEnd);
@@ -415,8 +415,8 @@ namespace UELib.Core
                                      ifEndJump.CodeOffset != elseStartToken.Position)
                             {
                                 // Most likely an if-else, mark it as such and let the rest of the logic figure it out further
-                                uint begin = Position;
-                                var type = NestManager.Nest.NestType.If;
+                                int begin = Position;
+                                const NestManager.Nest.NestType type = NestManager.Nest.NestType.If;
                                 Decompiler._Nester.Nests.Add(new NestManager.NestBegin
                                     { Position = begin, Type = type, Creator = this });
                                 var nestEnd = new NestManager.NestEnd
@@ -576,7 +576,7 @@ namespace UELib.Core
                 }
             }
 
-            public class ArrayIteratorToken : JumpToken
+            public class DynamicArrayIteratorToken : JumpToken
             {
                 protected bool HasSecondParm;
 

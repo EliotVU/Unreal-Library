@@ -55,7 +55,12 @@ namespace UELib
     public interface IUnrealViewable
     {
     }
-
+    
+    public interface IVisitor
+    {
+        void Visit(IAcceptable visitable);
+    }
+    
     public interface IVisitor<out TResult>
     {
         TResult Visit(IAcceptable visitable);
@@ -63,6 +68,7 @@ namespace UELib
     
     public interface IAcceptable
     {
+        void Accept(IVisitor visitor);
         TResult Accept<TResult>(IVisitor<TResult> visitor);
     }
 

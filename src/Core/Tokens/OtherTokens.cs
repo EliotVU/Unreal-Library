@@ -18,7 +18,7 @@ namespace UELib.Core
                 }
             }
 
-            public class NoDelegateToken : NoneToken
+            public class EmptyDelegateToken : NoneToken
             {
             }
 
@@ -27,7 +27,7 @@ namespace UELib.Core
             }
 
             // A skipped parameter when calling a function
-            public class NoParmToken : Token
+            public class EmptyParmToken : Token
             {
                 public override string Decompile()
                 {
@@ -42,7 +42,7 @@ namespace UELib.Core
             public class AssertToken : Token
             {
                 public ushort Line;
-                public bool DebugMode;
+                public byte? DebugMode;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -52,7 +52,7 @@ namespace UELib.Core
                     // TODO: Corrigate version, at least known since Mirrors Edge(536)
                     if (stream.Version >= 536)
                     {
-                        DebugMode = stream.ReadByte() > 0;
+                        DebugMode = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
@@ -134,7 +134,7 @@ namespace UELib.Core
                 }
             }
 
-            public class DelegateCmpNEToken : DelegateComparisonToken
+            public class DelegateCmpNeToken : DelegateComparisonToken
             {
                 public override string Decompile()
                 {
@@ -144,7 +144,7 @@ namespace UELib.Core
                 }
             }
 
-            public class DelegateFunctionCmpNEToken : DelegateComparisonToken
+            public class DelegateFunctionCmpNeToken : DelegateComparisonToken
             {
                 public override string Decompile()
                 {
@@ -170,13 +170,13 @@ namespace UELib.Core
                 }
             }
 
-            public class CastStringSizeToken : Token
+            public class ResizeStringToken : Token
             {
-                public byte Size;
+                public byte Length;
                 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Size = stream.ReadByte();
+                    Length = stream.ReadByte();
                     Decompiler.AlignSize(sizeof(byte));
                 }
                 
@@ -319,7 +319,7 @@ namespace UELib.Core
                     Decompiler.AlignSize(4);
 #if UNREAL2
                     // FIXME: Is this a legacy feature or U2 specific?
-                    // Also in RSRS
+                    // Also in RSRS, and GBX engine
                     if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP)
                     {
                         OpCodeText = stream.ReadASCIIString();
@@ -363,23 +363,6 @@ namespace UELib.Core
                     return DecompileNext();
                 }
             }
-#if BIOSHOCK
-            public class LogFunctionToken : FunctionToken
-            {
-                public override void Deserialize(IUnrealStream stream)
-                {
-                    // NothingToken(0x0B) twice
-                    DeserializeCall();
-                }
-
-                public override string Decompile()
-                {
-                    Decompiler._CanAddSemicolon = true;
-                    // FIXME: Reverse-order of params?
-                    return DecompileCall("log");
-                }
-            }
-#endif
         }
     }
 }

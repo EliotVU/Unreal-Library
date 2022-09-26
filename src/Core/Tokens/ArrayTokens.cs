@@ -49,9 +49,9 @@
             }
 
             // TODO:Byte code of this has apparently changed to ReturnNothing in UE3
-            public class DynamicArrayMethodToken : Token
+            public abstract class DynamicArrayMethodToken : Token
             {
-                protected virtual void DeserializeMethodOne(IUnrealStream stream, bool skipEndParms = false)
+                protected virtual void DeserializeMethodOne(IUnrealStream stream)
                 {
                     // Array
                     DeserializeNext();
@@ -66,14 +66,14 @@
                     // Param 1
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodEndParmsVersion && !skipEndParms)
+                    if (stream.Version > ArrayMethodEndParmsVersion)
                     {
                         // EndParms
                         DeserializeNext();
                     }
                 }
 
-                protected virtual void DeserializeMethodTwo(IUnrealStream stream, bool skipEndParms = false)
+                protected virtual void DeserializeMethodTwo(IUnrealStream stream)
                 {
                     // Array
                     DeserializeNext();
@@ -91,28 +91,30 @@
                     // Param 2
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodEndParmsVersion && !skipEndParms)
+                    if (stream.Version > ArrayMethodEndParmsVersion)
                     {
                         // EndParms
                         DeserializeNext();
                     }
                 }
 
-                protected string DecompileMethodOne(string functionName, bool skipEndParms = false)
+                protected string DecompileMethodOne(string functionName)
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileNext() + "." + functionName +
-                           "(" + DecompileNext() + (Package.Version > ArrayMethodEndParmsVersion && !skipEndParms
-                               ? DecompileNext()
-                               : ")");
+                    string context = DecompileNext();
+                    string param1 = DecompileNext();
+                    if (Package.Version > ArrayMethodEndParmsVersion) DecompileNext(); // )
+                    return $"{context}.{functionName}({param1})";
                 }
 
-                protected string DecompileMethodTwo(string functionName, bool skipEndParms = false)
+                protected string DecompileMethodTwo(string functionName)
                 {
                     Decompiler._CanAddSemicolon = true;
-                    return DecompileNext() + "." + functionName +
-                           "(" + DecompileNext() + ", " + DecompileNext() +
-                           (Package.Version > ArrayMethodEndParmsVersion && !skipEndParms ? DecompileNext() : ")");
+                    string context = DecompileNext();
+                    string param1 = DecompileNext();
+                    string param2 = DecompileNext();
+                    if (Package.Version > ArrayMethodEndParmsVersion) DecompileNext(); // )
+                    return $"{context}.{functionName}({param1}, {param2})";
                 }
             }
 
@@ -190,7 +192,7 @@
 
             public class DynamicArrayInsertToken : DynamicArrayMethodToken
             {
-                protected override void DeserializeMethodTwo(IUnrealStream stream, bool skipEndParms = false)
+                protected override void DeserializeMethodTwo(IUnrealStream stream)
                 {
                     // Array
                     DeserializeNext();
@@ -201,7 +203,7 @@
                     // Param 2
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodEndParmsVersion && !skipEndParms)
+                    if (stream.Version > ArrayMethodEndParmsVersion)
                     {
                         // EndParms
                         DeserializeNext();
@@ -217,8 +219,6 @@
                 {
                     return DecompileMethodTwo("Insert");
                 }
-
-                //(0x033) DynamicArrayInsertToken -> LocalVariableToken -> EndFunctionParmsToken
             }
 
             public class DynamicArrayInsertItemToken : DynamicArrayMethodToken
@@ -236,7 +236,7 @@
 
             public class DynamicArrayRemoveToken : DynamicArrayMethodToken
             {
-                protected override void DeserializeMethodTwo(IUnrealStream stream, bool skipEndParms = false)
+                protected override void DeserializeMethodTwo(IUnrealStream stream)
                 {
                     // Array
                     DeserializeNext();
@@ -247,7 +247,7 @@
                     // Param 2
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodEndParmsVersion && !skipEndParms)
+                    if (stream.Version > ArrayMethodEndParmsVersion)
                     {
                         // EndParms
                         DeserializeNext();

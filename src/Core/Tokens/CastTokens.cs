@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using UELib.Tokens;
 
 namespace UELib.Core
@@ -58,27 +58,29 @@ namespace UELib.Core
                         { CastToken.StringToName, "name" }
                     };
 
+                protected virtual void DeserializeCastToken(IUnrealStream stream)
+                {
+                    CastOpCode = (CastToken)stream.ReadByte();
+                    Decompiler.AlignSize(sizeof(byte));
+                }
+
+                private void RemapCastToken(IUnrealArchive stream)
+                {
+                    if (stream.Version >= VInterfaceClass) return;
+                    
+                    // TODO: Could there be more?
+                    switch (CastOpCode)
+                    {
+                        case CastToken.ObjectToInterface:
+                            CastOpCode = CastToken.StringToName;
+                            break;
+                    }
+                }
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (!Decompiler.IsUsingInlinedPrimitiveCasting())
-                    {
-                        CastOpCode = (CastToken)stream.ReadByte();
-                        Decompiler.AlignSize(sizeof(byte));
-                    }
-                    else
-                        CastOpCode = (CastToken)RepresentToken;
-
-                    if (stream.Version < VInterfaceClass)
-                    {
-                        // TODO: Could there be more?
-                        switch (CastOpCode)
-                        {
-                            case CastToken.ObjectToInterface:
-                                CastOpCode = CastToken.StringToName;
-                                break;
-                        }
-                    }
-
+                    DeserializeCastToken(stream);
+                    RemapCastToken(stream);
                     DeserializeNext();
                 }
 
@@ -97,6 +99,14 @@ namespace UELib.Core
                     CastTypeNameMap.TryGetValue(CastOpCode, out string castTypeName);
                     Debug.Assert(castTypeName != default, "Detected an unresolved token.");
                     return $"{castTypeName}({DecompileNext()})";
+                }
+            }
+
+            public class PrimitiveInlineCastToken : PrimitiveCastToken
+            {
+                protected override void DeserializeCastToken(IUnrealStream stream)
+                {
+                    CastOpCode = (CastToken)OpCode;
                 }
             }
 

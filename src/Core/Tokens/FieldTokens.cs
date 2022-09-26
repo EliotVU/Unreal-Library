@@ -60,22 +60,6 @@
                 }
             }
 
-            public class DynamicVariableToken : Token
-            {
-                protected int LocalIndex;
-
-                public override void Deserialize(IUnrealStream stream)
-                {
-                    LocalIndex = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
-                }
-
-                public override string Decompile()
-                {
-                    return $"UnknownLocal_{LocalIndex}";
-                }
-            }
-
             public class UndefinedVariableToken : Token
             {
                 public override string Decompile()

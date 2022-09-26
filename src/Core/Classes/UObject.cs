@@ -679,7 +679,12 @@ namespace UELib.Core
         }
 
         #endregion
-        
+
+        public void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
         public TResult Accept<TResult>(IVisitor<TResult> visitor)
         {
             return visitor.Visit(this);

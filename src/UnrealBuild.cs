@@ -33,6 +33,11 @@ namespace UELib
         /// Unreal Engine 2 with some early UE3 upgrades.
         /// </summary>
         UE2_5,
+
+        /// <summary>
+        /// The Unreal Engine 2.5 engine used in the America's Army series.
+        /// </summary>
+        AGP,
         
         /// <summary>
         /// Heavily modified Unreal Engine 2.5 for Vengeance: Tribes; also used by Swat4 and BioShock.
