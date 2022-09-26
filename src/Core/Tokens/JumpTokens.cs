@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UELib.Annotations;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -12,25 +13,34 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
+                    if (Decompiler._Buffer.Version < (uint)PackageObjectLegacyVersion.ReturnExpressionAddedToReturnToken)
+                    {
+                        return;
+                    }
+
                     // Expression
                     DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                    #region CaseToken Support
-
                     // HACK: for case's that end with a return instead of a break.
                     if (Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null)
                     {
                         Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, Position + Size);
                     }
 
-                    #endregion
+                    Decompiler.MarkSemicolon();
+                    if (Decompiler._Buffer.Version < (uint)PackageObjectLegacyVersion.ReturnExpressionAddedToReturnToken)
+                    {
+                        // FIXME: Transport the emitted "ReturnValue = Expression" over here.
+                        return "return";
+                    }
 
                     string returnValue = DecompileNext();
-                    Decompiler._CanAddSemicolon = true;
-                    return "return" + (returnValue.Length != 0 ? " " + returnValue : string.Empty);
+                    return "return" + (returnValue.Length != 0 
+                        ? " " + returnValue 
+                        : string.Empty);
                 }
             }
 
@@ -38,17 +48,15 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    #region CaseToken Support
-
                     // HACK: for case's that end with a return instead of a break.
                     if (Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null)
                     {
                         Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, Position + Size);
                     }
 
-                    #endregion
-
-                    return ReturnValueProperty != null ? ReturnValueProperty.Name : string.Empty;
+                    return ReturnValueProperty != null 
+                        ? ReturnValueProperty.Name 
+                        : string.Empty;
                 }
             }
 
@@ -62,7 +70,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    Decompiler._CanAddSemicolon = true;
+                    Decompiler.MarkSemicolon();
                     return $"goto {DecompileNext()}";
                 }
             }

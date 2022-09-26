@@ -165,7 +165,7 @@ namespace UELib.Core
                     // -- definitely not in the older UE3 builds v186
                     if (stream.Version < 200) return;
                     
-                    ReturnValueProperty = stream.ReadObject() as UProperty;
+                    ReturnValueProperty = stream.ReadObject<UProperty>();
                     Decompiler.AlignObjectSize();
                 }
             }
@@ -187,27 +187,18 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    var structContainer = Decompiler._Container;
-                    for (var field = structContainer.Children; field != null; field = field.NextField)
+                    for (;;)
                     {
-                        var property = field as UProperty;
-                        if (property == null)
-                        {
-                            continue;
-                        }
-
-                        if (!property.HasPropertyFlag(Flags.PropertyFlagsLO.Parm | Flags.PropertyFlagsLO.ReturnParm))
-                            continue;
-                        
-                        stream.ReadByte(); // Size
+                        byte elementSize = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
+                        if (elementSize == 0x00)
+                        {
+                            break;
+                        }
 
                         stream.ReadByte(); // bOutParam
                         Decompiler.AlignSize(sizeof(byte));
                     }
-
-                    stream.ReadByte(); // End
-                    Decompiler.AlignSize(sizeof(byte));
                 }
             }
 

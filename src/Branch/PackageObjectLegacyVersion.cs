@@ -5,6 +5,11 @@ namespace UELib.Branch
     public enum PackageObjectLegacyVersion
     {
         /// <summary>
+        /// This is one particular update with A LOT of general package changes.
+        /// </summary>
+        ReturnExpressionAddedToReturnToken = 62,
+        
+        /// <summary>
         /// FIXME: Unknown version.
         /// </summary>
         CastStringSizeTokenDeprecated = 70,
