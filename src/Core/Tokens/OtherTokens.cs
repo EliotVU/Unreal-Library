@@ -178,9 +178,15 @@ namespace UELib.Core
                 {
                     Length = stream.ReadByte();
                     Decompiler.AlignSize(sizeof(byte));
+
+                    // Could there have been an explicit cast too maybe?
+                    DeserializeNext();
                 }
-                
-                // TODO: Decompile format?
+
+                public override string Decompile()
+                {
+                    return DecompileNext();
+                }
             }
 
             public class BeginFunctionToken : Token
