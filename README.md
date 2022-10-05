@@ -73,6 +73,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Unrealty | 405 | 69/000 | |
 | X-COM: Enforcer | 420 | 69/000 | | 
 | Tactical Ops: Assault on Terror | 436 | 69/000 | |
+| Star Trek: Deep Space Nine: The Fallen | 338 | 73/000 | |
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
