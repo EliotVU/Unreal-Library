@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UELib.Annotations;
 using UELib.Branch;
 
@@ -11,20 +12,16 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        [CanBeNull] public UField Super { get; set; }
+        [CanBeNull] public UStruct Super { get; set; }
         [CanBeNull] public UField NextField { get; set; }
 
         #endregion
-
-        #region Script Members
 
         /// <summary>
         /// Initialized by the UMetaData object,
         /// This Meta contains comments and other meta related info that belongs to this instance.
         /// </summary>
         [CanBeNull] public UMetaData.UFieldData MetaData;
-
-        #endregion
 
         #region Constructors
 
@@ -43,19 +40,21 @@ namespace UELib.Core
         }
 
         #endregion
-
-        #region Methods
-
-        [Obsolete]
-        public string GetSuperGroup()
+        
+        public IEnumerable<UStruct> EnumerateSuper()
         {
-            var group = string.Empty;
-            for (var field = Super; field != null; field = field.Super)
+            for (var super = Super; super != null; super = super.Super)
             {
-                group = $"{field.Name}.{@group}";
+                yield return super;
             }
-
-            return group + Name;
+        }
+        
+        public IEnumerable<UField> EnumerateNext()
+        {
+            for (var next = NextField; next != null; next = next.NextField)
+            {
+                yield return next;
+            }
         }
 
         public bool Extends(string classType)
@@ -71,6 +70,16 @@ namespace UELib.Core
             return false;
         }
 
-        #endregion
+        [Obsolete]
+        public string GetSuperGroup()
+        {
+            var group = string.Empty;
+            for (var field = Super; field != null; field = field.Super)
+            {
+                group = $"{field.Name}.{@group}";
+            }
+
+            return group + Name;
+        }
     }
 }

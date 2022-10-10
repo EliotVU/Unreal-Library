@@ -82,7 +82,7 @@ namespace UELib.Core
 
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
-                Super = _Buffer.ReadObject<UField>();
+                Super = _Buffer.ReadObject<UStruct>();
                 Record(nameof(Super), Super);
             }
 #if BATMAN
@@ -275,7 +275,7 @@ namespace UELib.Core
                 Console.WriteLine(ice.Message);
             }
         }
-
+        
         [Obsolete("Pending deprecation")]
         protected virtual void FindChildren()
         {
@@ -298,7 +298,7 @@ namespace UELib.Core
                 {
                     Enums.Insert(0, (UEnum)child);
                 }
-                else if (child is UStruct && ((UStruct)(child)).IsPureStruct())
+                else if (child is UStruct && ((UStruct)child).IsPureStruct())
                 {
                     Structs.Insert(0, (UStruct)child);
                 }
@@ -319,9 +319,16 @@ namespace UELib.Core
         }
 
         #endregion
+        
+        public IEnumerable<UField> EnumerateFields()
+        {
+            for (var field = Children; field != null; field = field.NextField)
+            {
+                yield return field;
+            }
+        }
 
-        #region Methods
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TokenFactory GetTokenFactory()
         {
@@ -339,7 +346,5 @@ namespace UELib.Core
         {
             return IsClassType("Struct") || IsClassType("ScriptStruct");
         }
-
-        #endregion
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UELib.Branch;
@@ -180,53 +179,54 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     var output = string.Empty;
-                    if (Function != null)
+                    // Support for non native operators.
+                    if (Function.IsPost())
                     {
-                        // Support for non native operators.
-                        if (Function.IsPost())
+                        output = DecompilePreOperator(Function.FriendlyName);
+                    }
+                    else if (Function.IsPre())
+                    {
+                        output = DecompilePostOperator(Function.FriendlyName);
+                    }
+                    else if (Function.IsOperator())
+                    {
+                        output = DecompileOperator(Function.FriendlyName);
+                    }
+                    else
+                    {
+                        // Calling Super??.
+                        if (Function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext)
                         {
-                            output = DecompilePreOperator(Function.FriendlyName);
-                        }
-                        else if (Function.IsPre())
-                        {
-                            output = DecompilePostOperator(Function.FriendlyName);
-                        }
-                        else if (Function.IsOperator())
-                        {
-                            output = DecompileOperator(Function.FriendlyName);
-                        }
-                        else
-                        {
-                            // Calling Super??.
-                            if (Function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext)
-                            {
-                                output = "super";
+                            output = "super";
 
-                                // Check if the super call is within the super class of this functions outer(class)
-                                var container = Decompiler._Container;
-                                var context = (UField)container.Outer;
-                                if (context?.Super == null || Function.GetOuterName() != context.Super.Name)
+                            // Check if the super call is within the super class of this functions outer(class)
+                            var container = Decompiler._Container;
+                            var context = (UField)container.Outer;
+                            // ReSharper disable once PossibleNullReferenceException
+                            var contextFuncOuterName = context.Name;
+                            // ReSharper disable once PossibleNullReferenceException
+                            var callFuncOuterName = Function.Outer.Name;
+                            if (context.Super == null || callFuncOuterName != context.Super.Name)
+                            {
+                                // If there's no super to call, then we have a recursive call.
+                                if (container.Super == null)
                                 {
-                                    // There's no super to call then do a recursive super call.
-                                    if (container.Super == null)
+                                    output += $"({contextFuncOuterName})";
+                                }
+                                else
+                                {
+                                    // Different owners, then it is a deep super call.
+                                    if (callFuncOuterName != contextFuncOuterName)
                                     {
-                                        output += $"({container.GetOuterName()})";
-                                    }
-                                    else
-                                    {
-                                        // Different owners, then it is a deep super call.
-                                        if (Function.GetOuterName() != container.GetOuterName())
-                                        {
-                                            output += $"({Function.GetOuterName()})";
-                                        }
+                                        output += $"({callFuncOuterName})";
                                     }
                                 }
-
-                                output += ".";
                             }
 
-                            output += DecompileCall(Function.Name);
+                            output += ".";
                         }
+
+                        output += DecompileCall(Function.Name);
                     }
 
                     Decompiler._CanAddSemicolon = true;

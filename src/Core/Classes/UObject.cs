@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UELib.Annotations;
 using UELib.Flags;
 
@@ -144,7 +146,7 @@ namespace UELib.Core
             catch (Exception e)
             {
                 ThrownException =
-                    new UnrealException($"Couldn't deserialize object {GetClassName()}'{GetOuterGroup()}'", e);
+                    new UnrealException($"Couldn't deserialize object {GetReferencePath()}", e);
                 ExceptionPosition = _Buffer?.Position ?? -1;
                 DeserializationState |= ObjectState.Errorlized;
 
@@ -330,23 +332,7 @@ namespace UELib.Core
             }
         }
 
-        /// <summary>
-        /// Initializes this object instance important members.
-        /// </summary>
-        [Obsolete("Pending deprecation")]
-        public virtual void PostInitialize()
-        {
-        }
-
-        [Obsolete]
-        public virtual void InitializeImports()
-        {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-
-        #region Methods
+#endregion
 
         /// <summary>
         /// Checks if the object contains the specified @flag or one of the specified flags.
@@ -401,54 +387,50 @@ namespace UELib.Core
             return Name;
         }
 
-        [Obsolete]
-        public bool ResistsInGroup()
+        public IEnumerable<UObject> EnumerateOuter()
         {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Gets the highest outer relative from the specified @offset.
-        /// </summary>
-        /// <param name="offset">Optional relative offset.</param>
-        /// <returns>The highest outer.</returns>
-        [Obsolete]
-        public UObject GetHighestOuter(byte offset = 0)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Gets a full name of this object instance i.e. including outers.
-        ///
-        /// e.g. var Core.Object.Vector Location;
-        /// </summary>
-        /// <returns>The full name.</returns>
-        public string GetOuterGroup()
-        {
-            var group = string.Empty;
-            // TODO:Should support importtable loop
             for (var outer = Outer; outer != null; outer = outer.Outer)
             {
-                group = outer.Name + "." + group;
+                yield return outer;
             }
-
-            return group + Name;
         }
 
         /// <summary>
-        /// Gets the name of this object instance outer.
+        /// Builds a full path string of the object
         /// </summary>
-        /// <returns>The outer name of this object instance.</returns>
-        public string GetOuterName()
+        /// <returns>Full path of object e.g. "Core.Object.Vector"</returns>
+        public string GetPath()
         {
-            return Outer?.Name;
+            string group = EnumerateOuter().Aggregate(string.Empty, (current, outer) => $"{outer.Name}.{current}");
+            return $"{group}{Name}";
+        }
+
+        public void GetPath(out IList<UObject> chain)
+        {
+            chain = new List<UObject>(3) { this };
+            foreach (var outer in EnumerateOuter())
+            {
+                chain.Add(outer);
+            }
+        }
+
+        public string GetReferencePath()
+        {
+            if (ImportTable != null)
+            {
+                return $"{ImportTable.ClassName}'{GetPath()}'";
+            }
+
+            return Class != null
+                ? $"{Class.Name}'{GetPath()}'"
+                : $"Class'{GetPath()}'";
         }
 
         /// <summary>
         /// Gets the name of this object instance class.
         /// </summary>
         /// <returns>The class name of this object instance.</returns>
+        [Obsolete("To be deprecated")]
         public string GetClassName()
         {
             return Class?.Name;
@@ -465,89 +447,14 @@ namespace UELib.Core
         }
 
         /// <summary>
-        /// Checks if this object's class equals @className, parents included.
-        /// </summary>
-        /// <param name="className">The name of the class to compare to.</param>
-        /// <returns>Whether it extends class @className.</returns>
-        [Obsolete]
-        public bool IsClass(string className)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Tests whether this Object(such as a property) is a member of a specific object, or that of its parent.
-        /// </summary>
-        /// <param name="membersClass">Field to test against.</param>
-        /// <returns>Whether it is a member or not.</returns>
-        [Obsolete]
-        public bool IsMember(UField membersClass)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
         /// Macro for getting a object instance by index.
         /// </summary>
-        [Pure]
         protected UObject GetIndexObject(int index)
         {
             return Package.GetIndexObject(index);
         }
 
-        /// <summary>
-        /// Try to get the object located @index.
-        /// </summary>
-        /// <param name="index">The object's index.</param>
-        /// <returns>The reference of the specified object's index. NULL if none.</returns>
-        [Obsolete]
-        protected UObject TryGetIndexObject(int index)
-        {
-            try
-            {
-                return GetIndexObject(index);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Loads the package that this object instance resides in.
-        ///
-        /// Note: The package closes when the Owner is done with importing objects data.
-        /// </summary>
-        [Obsolete]
-        protected UnrealPackage LoadImportPackage()
-        {
-            UnrealPackage pkg = null;
-            try
-            {
-                var outer = Outer;
-                while (outer != null)
-                {
-                    if (outer.Outer == null)
-                    {
-                        pkg = UnrealLoader.LoadCachedPackage(Path.GetDirectoryName(Package.FullPackageName) + "\\" +
-                                                             outer.Name + ".u");
-                        break;
-                    }
-
-                    outer = outer.Outer;
-                }
-            }
-            catch (IOException)
-            {
-                pkg?.Dispose();
-
-                return null;
-            }
-
-            return pkg;
-        }
-
-        #region IBuffered
+#region IBuffered
 
         public virtual byte[] CopyBuffer()
         {
@@ -577,25 +484,21 @@ namespace UELib.Core
             return bytes;
         }
 
-        [Pure]
         public IUnrealStream GetBuffer()
         {
-            return Package?.Stream == null ? null : Package.Stream;
+            return Package?.Stream;
         }
 
-        [Pure]
         public int GetBufferPosition()
         {
             return ExportTable?.SerialOffset ?? -1;
         }
 
-        [Pure]
         public int GetBufferSize()
         {
             return ExportTable?.SerialSize ?? 0;
         }
 
-        [Pure]
         public string GetBufferId(bool fullName = false)
         {
             return fullName
@@ -603,7 +506,7 @@ namespace UELib.Core
                 : GetOuterGroup() + "." + GetClassName();
         }
 
-        #endregion
+#endregion
 
         /// <summary>
         /// TODO: Move this feature into a stream.
@@ -613,7 +516,7 @@ namespace UELib.Core
         /// </summary>
         /// <param name="varName">The struct that was read from the previous buffer position.</param>
         /// <param name="varObject">The struct's value that was read.</param>
-        [System.Diagnostics.Conditional("BINARYMETADATA")]
+        [Conditional("BINARYMETADATA")]
         internal void Record(string varName, object varObject = null)
         {
             long size = _Buffer.Position - _Buffer.LastPosition;
@@ -678,14 +581,12 @@ namespace UELib.Core
             Dispose(false);
         }
 
-        #endregion
-
-        public void Accept(IVisitor visitor)
+        public virtual void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
         }
 
-        public TResult Accept<TResult>(IVisitor<TResult> visitor)
+        public virtual TResult Accept<TResult>(IVisitor<TResult> visitor)
         {
             return visitor.Visit(this);
         }
@@ -698,6 +599,56 @@ namespace UELib.Core
         public static explicit operator string(UObject obj)
         {
             return obj?.Name;
+        }
+
+        /// <summary>
+        /// <see cref="UObject.Outer"/>
+        /// </summary>
+        [Obsolete("Use Outer?.Name")]
+        public string GetOuterName()
+        {
+            return Outer?.Name;
+        }
+        
+        [Obsolete("Pending deprecation")]
+        public virtual void PostInitialize()
+        {
+        }
+
+        [Obsolete]
+        public virtual void InitializeImports()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Obsolete("Deprecated", true)]
+        public bool ResistsInGroup()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Obsolete("Deprecated", true)]
+        public UObject GetHighestOuter(byte offset = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// <see cref="GetPath()"/>
+        /// </summary>
+        [Obsolete("Use GetPath instead")]
+        public string GetOuterGroup() => GetPath();
+
+        [Obsolete("Deprecated", true)]
+        public bool IsClass(string className)
+        {
+            throw new NotImplementedException();
+        }
+
+        [Obsolete("Deprecated", true)]
+        public bool IsMember(UField membersClass)
+        {
+            throw new NotImplementedException();
         }
     }
 

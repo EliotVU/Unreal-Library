@@ -573,7 +573,7 @@ namespace UELib.Core
 
                         if (!inline)
                             // =CLASS'Package.Group(s)+.Name'
-                            propertyValue = $"{constantObject.GetClassName()}\'{constantObject.GetOuterGroup()}\'";
+                            propertyValue = PropertyDisplay.FormatLiteral(constantObject);
                     }
                     else
                     {

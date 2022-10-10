@@ -170,15 +170,9 @@ namespace UELib.Core
                     Decompiler.AlignObjectSize();
                 }
 
-                // Produces: ClassName'ObjectName'
                 public override string Decompile()
                 {
-                    if (ObjectRef == null) return "none";
-
-                    string className = ObjectRef.GetClassName();
-                    if (string.IsNullOrEmpty(className)) className = "class";
-
-                    return $"{className}'{ObjectRef.Name}'";
+                    return PropertyDisplay.FormatLiteral(ObjectRef);
                 }
             }
 

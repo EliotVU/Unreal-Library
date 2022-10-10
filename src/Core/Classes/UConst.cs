@@ -11,7 +11,7 @@
         /// <summary>
         /// Constant Value
         /// </summary>
-        public string Value { get; private set; }
+        public string Value { get; set; }
 
         #endregion
 
