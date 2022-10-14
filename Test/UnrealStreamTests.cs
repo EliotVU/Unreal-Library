@@ -26,8 +26,9 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
-            linker.Summary = new UnrealPackage.PackageFileSummary()
+            linker.Summary = new UnrealPackage.PackageFileSummary
             {
+                Build = new UnrealPackage.GameBuild(linker),
                 // The easiest version to test against.
                 Version = 300
             };
@@ -63,8 +64,9 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
-            linker.Summary = new UnrealPackage.PackageFileSummary()
+            linker.Summary = new UnrealPackage.PackageFileSummary
             {
+                Build = new UnrealPackage.GameBuild(linker),
                 // The easiest version to test against.
                 Version = 300
             };

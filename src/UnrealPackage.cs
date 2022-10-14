@@ -247,7 +247,7 @@ namespace UELib
 
                 [Build(128, 32u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_6,
-                
+
                 [Build(128, 33u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_8,
 
@@ -257,7 +257,8 @@ namespace UELib
                 /// 129/035
                 /// Some packages have 128/025 but those are in conflict with UT2004.
                 /// </summary>
-                [Build(128, 129, 34u, 35u, BuildGeneration.UE2_5)] Vanguard_SOH,
+                [Build(128, 129, 34u, 35u, BuildGeneration.UE2_5)]
+                Vanguard_SOH,
 
                 // IrrationalGames/Vengeance - 129:143/027:059
 
@@ -280,8 +281,7 @@ namespace UELib
                 /// 
                 /// 129/003
                 /// </summary>
-                [Build(129, 3, BuildGeneration.UE2)]
-                LSGame,
+                [Build(129, 3, BuildGeneration.UE2)] LSGame,
 
                 /// <summary>
                 /// BioShock 1 & 2
@@ -367,7 +367,7 @@ namespace UELib
                 /// 
                 /// 547/028:032
                 /// </summary>
-                [Build(547, 547, 28u, 32u)] [BuildEngineBranch(typeof(EngineBranchAPB))] 
+                [Build(547, 547, 28u, 32u)] [BuildEngineBranch(typeof(EngineBranchAPB))]
                 APB,
 
                 /// <summary>
@@ -404,8 +404,7 @@ namespace UELib
                 /// XenonCooked is required to read the Xbox 360 packages.
                 /// 581/058
                 /// </summary>
-                [Build(581, 58, BuildFlags.ConsoleCooked)]
-                [BuildEngineBranch(typeof(EngineBranchMOH))]
+                [Build(581, 58, BuildFlags.ConsoleCooked)] [BuildEngineBranch(typeof(EngineBranchMOH))]
                 MOH,
 
                 /// <summary>
@@ -448,8 +447,7 @@ namespace UELib
                 /// BioShock Infinite
                 /// 727/075 (partially upgraded to 756 or higher)
                 /// </summary>
-                [Build(727, 75)]
-                [OverridePackageVersion((uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)]
+                [Build(727, 75)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)]
                 Bioshock_Infinite,
 
                 /// <summary>
@@ -524,8 +522,7 @@ namespace UELib
                 /// 
                 /// 805/101
                 /// </summary>
-                [Build(805, 101)] 
-                [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(805, 101)] [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman2,
 
                 /// <summary>
@@ -534,16 +531,13 @@ namespace UELib
                 /// 806/103
                 /// 807/137-138
                 /// </summary>
-                [Build(806, 103)]
-                [Build(807, 807, 137, 138)]
-                [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(806, 103)] [Build(807, 807, 137, 138)] [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3,
-                
+
                 /// <summary>
                 /// 807/104
                 /// </summary>
-                [Build(807, 104)]
-                [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(807, 104)] [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3MP,
 
                 /// <summary>
@@ -551,9 +545,7 @@ namespace UELib
                 ///
                 /// 863/32995(227 & ~8000)
                 /// </summary>
-                [Build(863, 32995)]
-                [OverridePackageVersion(863, 227)]
-                [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(863, 32995)] [OverridePackageVersion(863, 227)] [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman4,
 
                 /// <summary>
@@ -581,18 +573,6 @@ namespace UELib
             public uint LicenseeVersion { get; }
             public ushort? OverrideLicenseeVersion { get; }
 
-            /// <summary>
-            /// Is cooked for consoles.
-            /// </summary>
-            [Obsolete("See BuildFlags", true)]
-            public bool IsConsoleCompressed { get; }
-
-            /// <summary>
-            /// Is cooked for Xenon(Xbox 360). Could be true on PC games.
-            /// </summary>
-            [Obsolete("See BuildFlags", true)]
-            public bool IsXenonCompressed { get; }
-
             public BuildGeneration Generation { get; }
             [CanBeNull] public readonly Type EngineBranchType;
 
@@ -602,40 +582,70 @@ namespace UELib
             {
                 if (UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console) Flags |= BuildFlags.ConsoleCooked;
 
-                var builds = typeof(BuildName).GetFields();
-                foreach (var build in builds)
+                var buildInfo = FindBuildInfo(package, out var buildAttribute);
+                if (buildInfo == null)
                 {
-                    var buildAttributes = build.GetCustomAttributes<BuildAttribute>(false);
-                    var buildAttribute = buildAttributes.FirstOrDefault(attr => attr.Verify(this, package.Summary));
-                    if (buildAttribute == null)
-                        continue;
-
-                    Name = (BuildName)Enum.Parse(typeof(BuildName), build.Name);
-
-                    Version = package.Summary.Version;
-                    LicenseeVersion = package.Summary.LicenseeVersion;
-                    Flags = buildAttribute.Flags;
-                    Generation = buildAttribute.Generation;
-
-                    var overrideAttribute = build.GetCustomAttribute<OverridePackageVersionAttribute>(false);
-                    if (overrideAttribute != null)
-                    {
-                        OverrideVersion = overrideAttribute.FixedVersion;
-                        OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
-                    }
-
-                    var engineBranchAttribute = build.GetCustomAttribute<BuildEngineBranchAttribute>(false);
-                    if (engineBranchAttribute != null)
-                    {
-                        // We cannot create the instance here, because the instance itself may be dependent on GameBuild.
-                        EngineBranchType = engineBranchAttribute.EngineBranchType;
-                    }
-
-                    break;
+                    Name = package.Summary.LicenseeVersion == 0
+                        ? BuildName.Default
+                        : BuildName.Unknown;
+                    return;
                 }
 
-                if (Name == BuildName.Unset)
-                    Name = package.Summary.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;
+                Name = (BuildName)Enum.Parse(typeof(BuildName), buildInfo.Name);
+                Version = package.Summary.Version;
+                LicenseeVersion = package.Summary.LicenseeVersion;
+
+                if (buildAttribute != null)
+                {
+                    Generation = buildAttribute.Generation;
+                    Flags = buildAttribute.Flags;
+                }
+
+                var overrideAttribute = buildInfo.GetCustomAttribute<OverridePackageVersionAttribute>(false);
+                if (overrideAttribute != null)
+                {
+                    OverrideVersion = overrideAttribute.FixedVersion;
+                    OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                }
+
+                var engineBranchAttribute = buildInfo.GetCustomAttribute<BuildEngineBranchAttribute>(false);
+                if (engineBranchAttribute != null)
+                {
+                    // We cannot create the instance here, because the instance itself may be dependent on GameBuild.
+                    EngineBranchType = engineBranchAttribute.EngineBranchType;
+                }
+            }
+
+            [CanBeNull]
+            private FieldInfo FindBuildInfo(UnrealPackage linker, [CanBeNull] out BuildAttribute buildAttribute)
+            {
+                buildAttribute = null;
+
+                // Auto-detect
+                if (linker.BuildTarget == BuildName.Unset)
+                {
+                    var builds = typeof(BuildName).GetFields();
+                    foreach (var build in builds)
+                    {
+                        var buildAttributes = build.GetCustomAttributes<BuildAttribute>(false);
+                        buildAttribute = buildAttributes.FirstOrDefault(attr => attr.Verify(this, linker.Summary));
+                        if (buildAttribute == null)
+                            continue;
+
+                        return build;
+                    }
+
+                    return null;
+                }
+
+                if (linker.BuildTarget != BuildName.Unknown)
+                {
+                    string buildName = Enum.GetName(typeof(BuildName), linker.BuildTarget);
+                    var build = typeof(BuildName).GetField(buildName);
+                    return build;
+                }
+
+                return null;
             }
 
             public static bool operator ==(GameBuild b, BuildGeneration gen)
@@ -670,17 +680,13 @@ namespace UELib
                 return (int)Name;
             }
 
-            public bool HasFlags(BuildFlags flags)
-            {
-                return (Flags & flags) == flags;
-            }
-
             public override string ToString()
             {
                 return Name.ToString();
             }
         }
 
+        public GameBuild.BuildName BuildTarget = GameBuild.BuildName.Unset;
         public GameBuild Build => Summary.Build;
         public EngineBranch Branch => Summary.Branch;
 
@@ -802,7 +808,8 @@ namespace UELib
             {
                 if (package.Build.EngineBranchType != null)
                 {
-                    Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType, package.Build.Generation);
+                    Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType,
+                        package.Build.Generation);
                 }
                 else if (package.Summary.UE4Version > 0)
                 {
@@ -1394,12 +1401,13 @@ namespace UELib
             Summary = new PackageFileSummary();
             Summary.Deserialize(stream);
             BinaryMetaData.AddField(nameof(Summary), Summary, 0, stream.Position);
-            
+
             // FIXME: For backwards compatibility.
             PackageFlags = (uint)Summary.PackageFlags;
             Group = Summary.FolderName;
             Branch.PostDeserializeSummary(this, stream, ref Summary);
-            Debug.Assert(Branch.Serializer != null, "Branch.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
+            Debug.Assert(Branch.Serializer != null,
+                "Branch.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
 
             // We can't continue without decompressing.
             if (CompressedChunks != null && CompressedChunks.Any())
@@ -1421,6 +1429,7 @@ namespace UELib
                     nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                     Names.Add(nameEntry);
                 }
+
                 BinaryMetaData.AddField(nameof(Names), Names, Summary.NameOffset, stream.Position - Summary.NameOffset);
 
 #if SPELLBORN
@@ -1440,7 +1449,8 @@ namespace UELib
                 Summary.Heritages = new UArray<Guid>(Summary.HeritageCount);
                 for (var i = 0; i < Summary.HeritageCount; ++i)
                     Summary.Heritages.Add(stream.ReadGuid());
-                BinaryMetaData.AddField(nameof(Summary.Heritages), Summary.Heritages, Summary.HeritageOffset, stream.Position - Summary.HeritageOffset);
+                BinaryMetaData.AddField(nameof(Summary.Heritages), Summary.Heritages, Summary.HeritageOffset,
+                    stream.Position - Summary.HeritageOffset);
             }
 
             // Read Import Table
@@ -1455,7 +1465,9 @@ namespace UELib
                     imp.Size = (int)(stream.Position - imp.Offset);
                     Imports.Add(imp);
                 }
-                BinaryMetaData.AddField(nameof(Imports), Imports, Summary.ImportOffset, stream.Position - Summary.ImportOffset);
+
+                BinaryMetaData.AddField(nameof(Imports), Imports, Summary.ImportOffset,
+                    stream.Position - Summary.ImportOffset);
             }
 
             // Read Export Table
@@ -1470,7 +1482,9 @@ namespace UELib
                     exp.Size = (int)(stream.Position - exp.Offset);
                     Exports.Add(exp);
                 }
-                BinaryMetaData.AddField(nameof(Exports), Exports, Summary.ExportOffset, stream.Position - Summary.ExportOffset);
+
+                BinaryMetaData.AddField(nameof(Exports), Exports, Summary.ExportOffset,
+                    stream.Position - Summary.ExportOffset);
 
                 if (Summary.DependsOffset > 0)
                 {
@@ -1498,7 +1512,9 @@ namespace UELib
 
                             dependsMap.Add(imports);
                         }
-                        BinaryMetaData.AddField(nameof(dependsMap), dependsMap, Summary.DependsOffset, stream.Position - Summary.DependsOffset);
+
+                        BinaryMetaData.AddField(nameof(dependsMap), dependsMap, Summary.DependsOffset,
+                            stream.Position - Summary.DependsOffset);
                     }
                     catch (Exception ex)
                     {
@@ -1531,7 +1547,8 @@ namespace UELib
 
                     if (stream.Position != Summary.ImportExportGuidsOffset)
                     {
-                        BinaryMetaData.AddField("ImportExportGuids", null, Summary.ImportExportGuidsOffset, stream.Position - Summary.ImportExportGuidsOffset);
+                        BinaryMetaData.AddField("ImportExportGuids", null, Summary.ImportExportGuidsOffset,
+                            stream.Position - Summary.ImportExportGuidsOffset);
                     }
                 }
                 catch (Exception ex)
@@ -1551,8 +1568,8 @@ namespace UELib
                 {
                     int thumbnailCount = stream.ReadInt32();
                     // TODO: Serialize
-                    BinaryMetaData.AddField("Thumbnails", null, Summary.ThumbnailTableOffset, stream.Position - Summary.ThumbnailTableOffset);
-
+                    BinaryMetaData.AddField("Thumbnails", null, Summary.ThumbnailTableOffset,
+                        stream.Position - Summary.ThumbnailTableOffset);
                 }
                 catch (Exception ex)
                 {
@@ -1787,7 +1804,7 @@ namespace UELib
         #endregion
 
         #region Methods
-        
+
         // Create pseudo objects for imports so that we have non-null references to imports.
         private void CreateObject(UImportTableItem item)
         {
@@ -1798,7 +1815,7 @@ namespace UELib
             AddObject(item.Object, item);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
         }
-        
+
         private void CreateObject(UExportTableItem item)
         {
             var @class = GetIndexTable(item.ClassIndex);
@@ -1942,7 +1959,7 @@ namespace UELib
             {
                 return null;
             }
-            
+
             string[] groups = objectGroup.Split('.');
             UObject lastObj = null;
             for (var i = 0; i < groups.Length; ++i)
@@ -2130,7 +2147,6 @@ namespace UELib
             Stream.Dispose();
         }
 
-#endregion
-
+        #endregion
     }
 }
