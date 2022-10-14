@@ -183,6 +183,7 @@
     <Compile Include="Core\Types\UScale.cs" />
     <Compile Include="Core\Types\USphere.cs" />
     <Compile Include="Engine\Classes\UMultiFont.cs" />
+    <Compile Include="ObjectModel\Annotations\OutputAttribute.cs" />
     <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
     <Compile Include="Core\Types\UVector.cs" />

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UELib.Annotations;
 using UELib.Flags;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Core
 {
@@ -42,6 +43,7 @@ namespace UELib.Core
         /// The internal represented class in UnrealScript.
         /// </summary>
         [CanBeNull]
+        [Output(OutputSlot.Parameter)]
         public UObject Class => ExportTable != null 
             ? Package.GetIndexObject(ExportTable.ClassIndex) 
             : null;
@@ -64,6 +66,7 @@ namespace UELib.Core
         /// </summary>
         private ulong _ObjectFlags => ExportTable?.ObjectFlags ?? 0;
 
+        [Output(OutputSlot.Parameter)]
         public string Name => Table.ObjectName;
 
         #region Serialized Members
@@ -142,6 +145,9 @@ namespace UELib.Core
                 DeserializationState |= ObjectState.Deserializing;
                 Deserialize();
                 DeserializationState |= ObjectState.Deserialied;
+#if STRICT
+                Debug.Assert(Buffer.Position == Buffer.Length);
+#endif
             }
             catch (Exception e)
             {
