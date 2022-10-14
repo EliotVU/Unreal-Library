@@ -10,6 +10,8 @@ namespace UELib.Branch
         ReturnExpressionAddedToReturnToken = 62,
         
         SphereExtendsPlane = 62,
+        
+        CharRemapAddedToUFont = 69,
 
         /// <summary>
         /// FIXME: Unknown version.
@@ -21,6 +23,10 @@ namespace UELib.Branch
         /// </summary>
         PrimitiveCastTokenAdded = 95,
         
+        
+        KerningAddedToUFont = 119,
+        FontPagesDisplaced = 122,
+        
         UE3 = 184,
         RangeConstTokenDeprecated = UE3,
 
@@ -30,6 +36,10 @@ namespace UELib.Branch
         /// FIXME: Unknown version.
         /// </summary>
         IsLocalAddedToDelegateFunctionToken = 181,
+        
+        VerticalOffsetAddedToUFont = 506,
+        CleanupFonts = 511,
+        
         ProbeMaskReducedAndIgnoreMaskRemoved = 692,
         ForceScriptOrderAddedToUClass = 749,
         SuperReferenceMovedToUStruct = 756,

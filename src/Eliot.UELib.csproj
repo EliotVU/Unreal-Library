@@ -180,7 +180,9 @@
     <Compile Include="Core\Types\UCoords.cs" />
     <Compile Include="Core\Types\UPlane.cs" />
     <Compile Include="Core\Types\UScale.cs" />
-    <Compile Include="Core\Types\USphere.cs" />    <Compile Include="Core\Types\UColor.cs" />
+    <Compile Include="Core\Types\USphere.cs" />
+    <Compile Include="Engine\Classes\UMultiFont.cs" />
+    <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
     <Compile Include="Core\Types\UVector.cs" />
     <Compile Include="Core\UStateFrame.cs" />
