@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using UELib.Core;
 
 namespace UELib
 {
@@ -93,7 +94,7 @@ namespace UELib
         //public Dictionary<int, int> Components;
         //public List<int> NetObjects;
 
-        public Guid PackageGuid;
+        public UGuid PackageGuid;
         public uint PackageFlags;
 
         public bool IsNotForServer;

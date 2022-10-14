@@ -102,7 +102,7 @@ namespace UELib.Core
         public ObjectState DeserializationState;
         public Exception ThrownException;
         public long ExceptionPosition;
-        public Guid ObjectGuid;
+        public UGuid ObjectGuid;
 
         /// <summary>
         /// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
@@ -306,7 +306,7 @@ namespace UELib.Core
                 Record(nameof(shouldSerializeGuid), shouldSerializeGuid);
                 if (shouldSerializeGuid)
                 {
-                    ObjectGuid = _Buffer.ReadGuid();
+                    _Buffer.ReadStruct(out ObjectGuid);
                     Record(nameof(ObjectGuid), ObjectGuid);
                 }
             }

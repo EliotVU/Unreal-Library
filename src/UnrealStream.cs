@@ -847,7 +847,7 @@ namespace UELib
         }
 
         public static void ReadArray<T>(this IUnrealStream stream, out UArray<T> array)
-            where T : IUnrealSerializableClass, new()
+            where T : IUnrealDeserializableClass, new()
         {
 #if BINARYMETADATA
             long position = stream.Position;
@@ -866,7 +866,7 @@ namespace UELib
         }
 
         public static void ReadArray<T>(this IUnrealStream stream, out UArray<T> array, int count)
-            where T : IUnrealSerializableClass, new()
+            where T : IUnrealDeserializableClass, new()
         {
 #if BINARYMETADATA
             long position = stream.Position;
@@ -1071,7 +1071,7 @@ namespace UELib
 #endif
         }
 
-        // TODO: Implement FGuid
+        [Obsolete("See UGuid")]
         public static Guid ReadGuid(this IUnrealStream stream)
         {
             // A, B, C, D

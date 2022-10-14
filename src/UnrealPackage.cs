@@ -744,12 +744,12 @@ namespace UELib
             /// <summary>
             /// List of heritages. UE1 way of defining generations.
             /// </summary>
-            public UArray<Guid> Heritages;
+            public UArray<UGuid> Heritages;
 
             private const int VDependsOffset = 415;
             public int DependsOffset;
 
-            public Guid Guid;
+            public UGuid Guid;
             public UArray<UGenerationTableItem> Generations;
 
             private PackageFileEngineVersion PackageEngineVersion;
@@ -788,8 +788,8 @@ namespace UELib
 
             public int SearchableNamesOffset;
 
-            public Guid PersistentGuid;
-            public Guid OwnerPersistentGuid;
+            public UGuid PersistentGuid;
+            public UGuid OwnerPersistentGuid;
 
             // In UELib 2.0 we pass the version to the Archives instead.
             private void SetupBuild(UnrealPackage package)
@@ -868,12 +868,9 @@ namespace UELib
                             int count = stream.ReadInt32();
                             for (var i = 0; i < count; ++i)
                             {
-                                // Key
-                                stream.ReadGuid();
-                                // Version
-                                stream.ReadInt32();
-                                // FriendlyName
-                                stream.ReadText();
+                                stream.ReadStruct(out UGuid key);
+                                stream.Read(out int version);
+                                stream.Read(out string friendlyName);
                             }
                         }
                         else
@@ -881,8 +878,8 @@ namespace UELib
                             int count = stream.ReadInt32();
                             for (var i = 0; i < count; ++i)
                             {
-                                stream.ReadGuid(); // Key
-                                stream.ReadInt32(); // Version
+                                stream.ReadStruct(out UGuid key);
+                                stream.Read(out int version);
                             }
                         }
                     }
@@ -1051,7 +1048,7 @@ namespace UELib
                     && stream.Version >= 148)
                     goto skipGuid;
 #endif
-                Guid = stream.ReadGuid();
+                stream.ReadStruct(out Guid);
                 Console.WriteLine("GUID:" + Guid);
             skipGuid:
 #if TERA
@@ -1109,10 +1106,10 @@ namespace UELib
                 {
                     if (stream.UE4Version >= 518)
                     {
-                        PersistentGuid = stream.ReadGuid();
+                        stream.ReadStruct(out PersistentGuid);
                         if (stream.UE4Version < 520)
                         {
-                            OwnerPersistentGuid = stream.ReadGuid();
+                            stream.ReadStruct(out OwnerPersistentGuid);
                         }
                     }
                 }
@@ -1446,9 +1443,8 @@ namespace UELib
             if (Summary.HeritageCount > 0)
             {
                 stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
-                Summary.Heritages = new UArray<Guid>(Summary.HeritageCount);
-                for (var i = 0; i < Summary.HeritageCount; ++i)
-                    Summary.Heritages.Add(stream.ReadGuid());
+                stream.ReadArray(out Summary.Heritages, Summary.HeritageCount);
+
                 BinaryMetaData.AddField(nameof(Summary.Heritages), Summary.Heritages, Summary.HeritageOffset,
                     stream.Position - Summary.HeritageOffset);
             }
@@ -1541,7 +1537,7 @@ namespace UELib
 
                     for (var i = 0; i < Summary.ExportGuidsCount; ++i)
                     {
-                        var objectGuid = stream.ReadGuid();
+                        stream.ReadStruct(out UGuid objectGuid);
                         int exportIndex = stream.ReadInt32();
                     }
 

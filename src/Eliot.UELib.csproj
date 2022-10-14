@@ -178,6 +178,7 @@
     <Compile Include="ByteCodeDecompiler.cs" />
     <Compile Include="Branch\UE2\VG\Tokens\LogFunctionToken.cs" />
     <Compile Include="Core\Types\UCoords.cs" />
+    <Compile Include="Core\Types\UGuid.cs" />
     <Compile Include="Core\Types\UPlane.cs" />
     <Compile Include="Core\Types\UScale.cs" />
     <Compile Include="Core\Types\USphere.cs" />

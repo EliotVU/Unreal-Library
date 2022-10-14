@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
@@ -52,7 +51,7 @@ namespace UELib.Core
 
         private ulong ClassFlags { get; set; }
 
-        public Guid ClassGuid;
+        public UGuid ClassGuid;
         public UClass Within { get; private set; }
         public UName ConfigName { get; private set; }
         [CanBeNull] public UName DLLBindName;
@@ -179,7 +178,7 @@ namespace UELib.Core
             }
             else
             {
-                ClassGuid = _Buffer.ReadGuid();
+                _Buffer.ReadStruct(out ClassGuid);
                 Record(nameof(ClassGuid), ClassGuid);
             }
 

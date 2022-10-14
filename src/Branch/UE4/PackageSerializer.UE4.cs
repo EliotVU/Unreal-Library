@@ -83,7 +83,7 @@ namespace UELib.Branch.UE4
                 stream.ReadArray(out UArray<int> generationNetObjectCount);
             }
 
-            item.PackageGuid = stream.ReadGuid();
+            stream.ReadStruct(out item.PackageGuid);
             item.PackageFlags = stream.ReadUInt32();
             if (stream.UE4Version >= 365) item.IsNotForEditorGame = stream.ReadInt32() > 0;
             if (stream.UE4Version >= 485) item.IsAsset = stream.ReadInt32() > 0;
