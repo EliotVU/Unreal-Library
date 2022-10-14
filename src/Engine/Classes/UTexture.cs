@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using UELib.Core;
+using UELib.Engine;
 
-namespace UELib.Engine
+namespace UELib.Core
 {
+    /// <summary>
+    /// Implements UTexture/Engine.Texture
+    /// </summary>
     [UnrealRegisterClass]
     public class UTexture : UBitmapMaterial, IUnrealViewable
     {

@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib.Core;
 
-namespace UELib.Test
+namespace Eliot.UELib.Test
 {
     /// <summary>
     /// The following tests requires UELib to be built without WinForms dependencies.

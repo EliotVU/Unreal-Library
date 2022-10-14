@@ -3,6 +3,9 @@ using UELib.Core;
 
 namespace UELib.Engine
 {
+    /// <summary>
+    /// Implements UBitmapMaterial/Engine.BitmapMaterial
+    /// </summary>
     [UnrealRegisterClass]
     public class UBitmapMaterial : UObject
     {

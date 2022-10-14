@@ -1,8 +1,10 @@
 using System.Collections.Generic;
-using UELib.Core;
 
-namespace UELib.Engine
+namespace UELib.Core
 {
+    /// <summary>
+    /// Implements USound/Engine.Sound
+    /// </summary>
     [UnrealRegisterClass]
     public class USound : UObject, IUnrealViewable, IUnrealExportable
     {

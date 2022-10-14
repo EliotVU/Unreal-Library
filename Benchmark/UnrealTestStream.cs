@@ -20,6 +20,7 @@ namespace Eliot.UELib.Benchmark
         public UnrealWriter UW { get; }
         
         public IBufferDecoder Decoder { get; set; }
+        public IPackageSerializer Serializer { get; set; }
 
         public void SetBranch(EngineBranch packageEngineBranch)
         {

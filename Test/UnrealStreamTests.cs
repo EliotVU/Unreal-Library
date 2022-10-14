@@ -1,11 +1,12 @@
 ﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using UELib.Core.Types;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using UELib;
+using UELib.Core;
 
-namespace UELib.Test
+namespace Eliot.UELib.Test
 {
     [TestClass]
     public class UnrealStreamTests
@@ -72,15 +73,18 @@ namespace UELib.Test
             writer.Seek(sizeof(int), SeekOrigin.Begin);
             
             // B, G, R, A;
-            var structBuffer = new byte[] { 255, 128, 64, 80 };
-            writer.Write(structBuffer);
+            var inColor = new UColor(255, 128, 64, 80);
+            stream.WriteAtomicStruct(ref inColor);
+            Assert.AreEqual(8, stream.Position);
 
             stream.Seek(sizeof(int), SeekOrigin.Begin);
-            stream.ReadAtomicStruct<UColor>(out var color);
-            Assert.AreEqual(255, color.B);
-            Assert.AreEqual(128, color.G);
-            Assert.AreEqual(64, color.R);
-            Assert.AreEqual(80, color.A);
+            stream.ReadAtomicStruct(out UColor outColor);
+            Assert.AreEqual(8, stream.Position);
+            
+            Assert.AreEqual(255, outColor.B);
+            Assert.AreEqual(128, outColor.G);
+            Assert.AreEqual(64, outColor.R);
+            Assert.AreEqual(80, outColor.A);
         }
     }
 }

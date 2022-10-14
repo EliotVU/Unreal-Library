@@ -1,9 +1,7 @@
-﻿using System.Diagnostics;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UELib.Core;
-using UELib.Core.Types;
 
 namespace UELib.UnrealScript
 {
@@ -106,7 +104,7 @@ namespace UELib.UnrealScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string FormatLiteral(UColor input)
+        public static string FormatLiteral(ref UColor input)
         {
             // No parenthesis, may eventually change
             return
@@ -117,9 +115,27 @@ namespace UELib.UnrealScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatLiteral(ref UVector input)
+        {
+            // No parenthesis, may eventually change
+            return
+                $"X={FormatLiteral(input.X)}," +
+                $"Y={FormatLiteral(input.Y)}," +
+                $"Z={FormatLiteral(input.Z)}";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatExport(float input)
         {
             return input.ToString("+00000.000000;-00000.000000", CultureInfo.InvariantCulture);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatExport(ref UVector input)
+        {
+            return $"{FormatExport(input.X)}," +
+                   $"{FormatExport(input.Y)}," +
+                   $"{FormatExport(input.Z)}";
         }
     }
 }

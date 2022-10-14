@@ -4,7 +4,7 @@ using UELib.Core;
 namespace UELib.Engine
 {
     /// <summary>
-    /// Unreal Font.
+    /// Implements UFont:Engine.Font
     /// </summary>
     [UnrealRegisterClass]
     public class UFont : UObject, IUnrealViewable

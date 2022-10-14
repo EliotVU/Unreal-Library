@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UELib.Annotations;
-using UELib.Core.Types;
 using UELib.Types;
 using UELib.UnrealScript;
 
@@ -64,6 +63,7 @@ namespace UELib.Core
         /// Name of the UEnum. If Type equals ByteProperty.
         /// </summary>
         [PublicAPI] [CanBeNull] public UName EnumName;
+
         [PublicAPI] [CanBeNull] public UName InnerTypeName;
 
         /// <summary>
@@ -225,7 +225,7 @@ namespace UELib.Core
                     ItemName = _Buffer.ReadNameReference();
                     Record(nameof(ItemName), ItemName);
                     break;
-                
+
                 case PropertyType.ArrayProperty:
                 {
 #if DNF
@@ -315,7 +315,8 @@ namespace UELib.Core
                     Type == PropertyType.StructProperty ||
                     Type == PropertyType.Vector ||
                     Type == PropertyType.Rotator ||
-                    (Type == PropertyType.BoolProperty && _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4))
+                    (Type == PropertyType.BoolProperty &&
+                     _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4))
                 {
                     switch (Type)
                     {
@@ -392,7 +393,7 @@ namespace UELib.Core
                         : _Buffer.ReadInt32() > 0;
                     Record(nameof(BoolValue), BoolValue);
                     break;
-                
+
                 case PropertyType.ArrayProperty:
 #if UE4
                     // FIXME: UE4 version
@@ -454,7 +455,7 @@ namespace UELib.Core
         {
             var orgOuter = _Outer;
             var propertyValue = string.Empty;
-            
+
             // Deserialize Value
             switch (type)
             {
@@ -615,7 +616,7 @@ namespace UELib.Core
                 case PropertyType.Color:
                 {
                     _Buffer.ReadAtomicStruct(out UColor color);
-                    propertyValue += PropertyDisplay.FormatLiteral(color);
+                    propertyValue += PropertyDisplay.FormatLiteral(ref color);
                     break;
                 }
 
@@ -632,11 +633,8 @@ namespace UELib.Core
 
                 case PropertyType.Vector:
                 {
-                    string x = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string y = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string z = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-
-                    propertyValue += $"X={x},Y={y},Z={z}";
+                    _Buffer.ReadAtomicStruct(out UVector vector);
+                    propertyValue += PropertyDisplay.FormatLiteral(ref vector);
                     break;
                 }
 
@@ -687,6 +685,24 @@ namespace UELib.Core
                 }
 
                 case PropertyType.Sphere:
+                {
+                    if (_Buffer.Version < VAtomicStructs)
+                    {
+                        throw new NotSupportedException("Not atomic");
+                    }
+
+                    _Buffer.ReadStruct(out USphere sphere);
+
+                    propertyValue += _Buffer.Version >= 62 
+                        ? $"W={PropertyDisplay.FormatLiteral(sphere.W)}," 
+                        : "" +
+                         $"X={PropertyDisplay.FormatLiteral(sphere.X)}," +
+                         $"Y={PropertyDisplay.FormatLiteral(sphere.Y)}," +
+                         $"Z={PropertyDisplay.FormatLiteral(sphere.Z)}";
+
+                    break;
+                }
+                
                 case PropertyType.Plane:
                 {
                     if (_Buffer.Version < VAtomicStructs)
@@ -694,9 +710,12 @@ namespace UELib.Core
                         throw new NotSupportedException("Not atomic");
                     }
 
-                    string w = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string v = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
-                    propertyValue += $"W={w},{v}";
+                    _Buffer.ReadAtomicStruct(out UPlane plane);
+                        
+                    propertyValue += $"W={PropertyDisplay.FormatLiteral(plane.W)}," +
+                                     $"X={PropertyDisplay.FormatLiteral(plane.X)}," +
+                                     $"Y={PropertyDisplay.FormatLiteral(plane.Y)}," +
+                                     $"Z={PropertyDisplay.FormatLiteral(plane.Z)}";
                     break;
                 }
 
@@ -754,17 +773,17 @@ namespace UELib.Core
                     propertyValue += $"X={x},Y={y}";
                     break;
                 }
-                
+
                 case PropertyType.PointRegion:
                 {
-
                     string zone = DeserializeDefaultPropertyValue(PropertyType.ObjectProperty, ref deserializeFlags);
                     string iLeaf = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    string zoneNumber = DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
+                    string zoneNumber =
+                        DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
                     propertyValue += $"Zone={zone},iLeaf={iLeaf},ZoneNumber={zoneNumber}";
                     break;
                 }
-                
+
                 #endregion
 
                 case PropertyType.PointerProperty:
@@ -910,6 +929,7 @@ namespace UELib.Core
                 default:
                     throw new Exception($"Unsupported property tag type {Type}");
             }
+
             _Outer = orgOuter;
             return propertyValue;
         }

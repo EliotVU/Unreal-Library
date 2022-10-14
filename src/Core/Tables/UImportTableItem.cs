@@ -1,3 +1,5 @@
+using UELib.Core;
+
 namespace UELib
 {
     /// <summary>
@@ -9,6 +11,7 @@ namespace UELib
         #region Serialized Members
 
         private UName _PackageName;
+
         public UName PackageName
         {
             get => _PackageName;
@@ -16,6 +19,7 @@ namespace UELib
         }
 
         private UName _ClassName;
+
         public UName ClassName
         {
             get => _ClassName;

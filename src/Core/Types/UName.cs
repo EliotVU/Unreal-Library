@@ -1,7 +1,6 @@
 ﻿using System;
 
-// FIXME: Namespace correction is blocked by (UE Explorer)
-namespace UELib
+namespace UELib.Core
 {
     /// <summary>
     /// Implements FName. A data type that represents a string, usually acquired from a names table.

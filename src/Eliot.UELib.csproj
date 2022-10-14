@@ -109,7 +109,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMetaData.cs" />
@@ -178,8 +177,12 @@
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
     <Compile Include="Branch\UE2\VG\Tokens\LogFunctionToken.cs" />
-    <Compile Include="Core\Types\UColor.cs" />
+    <Compile Include="Core\Types\UCoords.cs" />
+    <Compile Include="Core\Types\UPlane.cs" />
+    <Compile Include="Core\Types\UScale.cs" />
+    <Compile Include="Core\Types\USphere.cs" />    <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
+    <Compile Include="Core\Types\UVector.cs" />
     <Compile Include="Core\UStateFrame.cs" />
     <Compile Include="Branch\UE2\AA2\CryptoDecoder.AA2.cs" />
     <Compile Include="Decoding\CryptoCore.cs" />

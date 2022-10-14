@@ -9,6 +9,8 @@ namespace UELib.Branch
         /// </summary>
         ReturnExpressionAddedToReturnToken = 62,
         
+        SphereExtendsPlane = 62,
+
         /// <summary>
         /// FIXME: Unknown version.
         /// </summary>

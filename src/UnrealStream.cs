@@ -801,7 +801,9 @@ namespace UELib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool ReadBool(this IUnrealStream stream)
         {
-            return Convert.ToBoolean(stream.ReadInt32());
+            int value = stream.ReadInt32();
+            Debug.Assert(value <= 1, $"Unexpected value '{value}' for a boolean");
+            return Convert.ToBoolean(value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -881,20 +883,34 @@ namespace UELib
 #endif
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ReadStruct<T>(this IUnrealStream stream, out T item)
+            where T : struct, IUnrealDeserializableClass
+        {
+            item = new T();
+            item.Deserialize(stream);
+        }
+        
         public static void ReadAtomicStruct<T>(this IUnrealStream stream, out T item)
-            where T : IUnrealAtomicStruct
+            where T : struct, IUnrealAtomicStruct
         {
             int structSize = Marshal.SizeOf<T>();
             var data = new byte[structSize];
             stream.Read(data, 0, structSize);
             var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            item = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
-            handle.Free();
+            try
+            {
+                item = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+            }
+            finally
+            {
+                handle.Free();
+            }
         }
 
         // Can't seem to overload this :(
         public static void ReadMarshalArray<T>(this IUnrealStream stream, out UArray<T> array, int count)
-            where T : IUnrealAtomicStruct
+            where T : struct, IUnrealAtomicStruct
         {
 #if BINARYMETADATA
             long position = stream.Position;
@@ -904,7 +920,6 @@ namespace UELib
             array = new UArray<T>(count);
             for (var i = 0; i < count; ++i)
             {
-                //ReadAtomicStruct(stream, out T element);
                 var data = new byte[structSize];
                 stream.Read(data, 0, structSize);
                 var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -927,6 +942,23 @@ namespace UELib
             for (var i = 0; i < c; ++i)
             {
                 stream.Read(out int element);
+                array.Add(element);
+            }
+#if BINARYMETADATA
+            stream.LastPosition = position;
+#endif
+        }
+
+        public static void ReadArray(this IUnrealStream stream, out UArray<float> array)
+        {
+#if BINARYMETADATA
+            long position = stream.Position;
+#endif
+            int c = stream.ReadLength();
+            array = new UArray<float>(c);
+            for (var i = 0; i < c; ++i)
+            {
+                Read(stream, out float element);
                 array.Add(element);
             }
 #if BINARYMETADATA
@@ -960,7 +992,7 @@ namespace UELib
             array = new UArray<UName>(c);
             for (var i = 0; i < c; ++i)
             {
-                UName element = stream.ReadNameReference();
+                var element = stream.ReadNameReference();
                 array.Add(element);
             }
 #if BINARYMETADATA
@@ -1001,6 +1033,24 @@ namespace UELib
 #endif
         }
 
+        public static void ReadMap(this IUnrealStream stream, out UMap<ushort, ushort> map)
+        {
+#if BINARYMETADATA
+            long position = stream.Position;
+#endif
+            int c = stream.ReadLength();
+            map = new UMap<ushort, ushort>(c);
+            for (var i = 0; i < c; ++i)
+            {
+                Read(stream, out ushort key);
+                Read(stream, out ushort value);
+                map.Add(key, value);
+            }
+#if BINARYMETADATA
+            stream.LastPosition = position;
+#endif
+        }
+
         public static void ReadMap<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
             where TKey : UName
             where TValue : UObject
@@ -1012,9 +1062,9 @@ namespace UELib
             map = new UMap<TKey, TValue>(c);
             for (var i = 0; i < c; ++i)
             {
-                Read<TKey>(stream, out var key);
-                Read<TValue>(stream, out var value);
-                map.Add((TKey)key, (TValue)value);
+                Read(stream, out UName key);
+                Read(stream, out TValue value);
+                map.Add((TKey)key, value);
             }
 #if BINARYMETADATA
             stream.LastPosition = position;
@@ -1059,25 +1109,24 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out bool value)
-        {
-            value = ReadBool(stream);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read<T>(this IUnrealStream stream, out UObject value)
+        public static void Read<T>(this IUnrealStream stream, out T value)
             where T : UObject
         {
             value = ReadObject<T>(stream);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read<T>(this IUnrealStream stream, out UName value)
-            where T : UName
+        public static void Read(this IUnrealStream stream, out UObject value)
         {
-            value = ReadNameReference(stream);
+            value = ReadObject<UObject>(stream);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out string value)
+        {
+            value = stream.ReadText();
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UName value)
         {
@@ -1101,6 +1150,12 @@ namespace UELib
         public static void Read<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
             where TKey : UName
             where TValue : UObject
+        {
+            ReadMap(stream, out map);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UMap<ushort, ushort> map)
         {
             ReadMap(stream, out map);
         }
@@ -1146,6 +1201,18 @@ namespace UELib
         {
             value = stream.ReadUInt64();
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out float value)
+        {
+            value = stream.ReadFloat();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out bool value)
+        {
+            value = ReadBool(stream);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteArray<T>(this IUnrealStream stream, ref UArray<T> array)
@@ -1159,6 +1226,38 @@ namespace UELib
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteStruct<T>(this IUnrealStream stream, ref T item)
+            where T : struct, IUnrealSerializableClass
+        {
+            item.Serialize(stream);
+        }
+        
+        public static void WriteAtomicStruct<T>(this IUnrealStream stream, ref T item)
+            where T : struct, IUnrealAtomicStruct
+        {
+            int structSize = Marshal.SizeOf<T>();
+            var data = new byte[structSize];
+            
+            var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+            try
+            {
+                Marshal.StructureToPtr(item, handle.AddrOfPinnedObject(), false);
+                stream.Write(data, 0, data.Length);
+            }
+            finally
+            {
+                handle.Free();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(this IUnrealStream stream, string value)
+        {
+            stream.UW.WriteString(value);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(this IUnrealStream stream, UName name)
         {
             stream.UW.WriteIndex(name.Index);
@@ -1210,12 +1309,6 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Write(this IUnrealStream stream, bool value)
-        {
-            stream.UW.Write(Convert.ToInt32(value));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(this IUnrealStream stream, long value)
         {
             stream.UW.Write(value);
@@ -1225,6 +1318,18 @@ namespace UELib
         public static void Write(this IUnrealStream stream, ulong value)
         {
             stream.UW.Write(value);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(this IUnrealStream stream, float value)
+        {
+            stream.UW.Write(value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(this IUnrealStream stream, bool value)
+        {
+            stream.UW.Write(Convert.ToInt32(value));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1237,12 +1342,6 @@ namespace UELib
         public static void WriteIndex(this IUnrealStream stream, int index)
         {
             stream.UW.WriteIndex(index);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Write(this IUnrealStream stream, string value)
-        {
-            stream.UW.WriteString(value);
         }
     }
 }
