@@ -5,7 +5,7 @@ namespace UELib.Branch
     /// <summary>
     /// Not yet usable.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field)]
     public class BuildAttribute : Attribute
     {
         public readonly UnrealPackage.GameBuild.BuildName Build;
@@ -19,7 +19,7 @@ namespace UELib.Branch
     /// <summary>
     /// Not yet usable.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field)]
     public class BuildGenerationAttribute : Attribute
     {
         public readonly BuildGeneration Generation;
