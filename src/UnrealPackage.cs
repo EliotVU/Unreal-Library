@@ -170,14 +170,26 @@ namespace UELib
                 /// 
                 /// 61/000
                 /// </summary>
-                [Build(61, 0)] Unreal1,
+                [Build(61, 0, BuildGeneration.UE1)] Unreal1,
 
                 /// <summary>
                 /// Standard, Unreal Tournament & Deus Ex
                 /// 
                 /// 68:69/000
                 /// </summary>
-                [Build(68, 69, 0u, 0u)] UT,
+                [Build(68, 69, 0u, 0u, BuildGeneration.UE1)]
+                UT,
+
+                //[Build(80, 0, BuildGeneration.UE1)]
+                BrotherBear,
+
+                /// <summary>
+                /// Clive Barker's Undying
+                ///
+                /// 72:85/000 (Only 84 to 85 is auto detected, other versions are overlapping with older unrelated games)
+                /// </summary>
+                [Build(84, 85, 0u, 0u, BuildGeneration.UE1)]
+                Undying,
 
                 /// <summary>
                 /// Deus Ex: Invisible War

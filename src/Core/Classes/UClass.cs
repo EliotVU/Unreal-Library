@@ -403,13 +403,12 @@ namespace UELib.Core
 #endif
                 }
             }
-#if UE4
-            if (_Buffer.UE4Version > 0)
+#if UNDYING
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying &&
+                _Buffer.Version >= 70)
             {
-                string dummy = _Buffer.ReadName();
-                Record("dummy", dummy);
-                bool isCooked = _Buffer.ReadBool();
-                Record("isCooked", isCooked);
+                _Buffer.Read(out uint classCRC); // v4a8
+                Record(nameof(classCRC), classCRC);
             }
 #endif
 #if THIEF_DS || DeusEx_IW
@@ -506,6 +505,15 @@ namespace UELib.Core
                     Debug.Assert(b == 0, "Unknown data was not zero!");
                     Record("Unknown:Vengeance", b);
                 }
+            }
+#endif
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                string dummy = _Buffer.ReadName();
+                Record("dummy", dummy);
+                bool isCooked = _Buffer.ReadBool();
+                Record("isCooked", isCooked);
             }
 #endif
         scriptProperties:

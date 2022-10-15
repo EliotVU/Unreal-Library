@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib.Engine
@@ -14,6 +15,9 @@ namespace UELib.Engine
         /// </summary>
         public UArray<UColor> Colors;
 
+        [Build(UnrealPackage.GameBuild.BuildName.Undying)]
+        public bool HasAlphaChannel;
+
         public UPalette()
         {
             ShouldDeserializeOnDemand = true;
@@ -27,6 +31,13 @@ namespace UELib.Engine
             int count = _Buffer.ReadIndex();
             Debug.Assert(count == 256);
             _Buffer.ReadMarshalArray(out Colors, count);
+#if UNDYING
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying &&
+                _Buffer.Version >= 75)
+            {
+                _Buffer.Read(out HasAlphaChannel); // v28
+            }
+#endif
         }
     }
 }
