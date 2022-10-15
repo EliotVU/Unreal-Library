@@ -191,7 +191,9 @@
     <Compile Include="Branch\UE2\AA2\CryptoDecoder.AA2.cs" />
     <Compile Include="Decoding\CryptoCore.cs" />
     <Compile Include="Branch\UE2\DNF\Tokens\DynamicArrayEmptyToken.cs" />
+    <Compile Include="Engine\Classes\AActor.cs" />
     <Compile Include="Engine\Classes\UBitmapMaterial.cs" />
+    <Compile Include="Engine\Classes\ABrush.cs" />
     <Compile Include="Engine\Classes\UPalette.cs" />
     <Compile Include="Decoding\IBufferDecoder.cs" />
     <Compile Include="Branch\UE2\AA2\EngineBranch.AA2.cs" />
