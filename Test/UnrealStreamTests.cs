@@ -12,9 +12,9 @@ namespace Eliot.UELib.Test
     public class UnrealStreamTests
     {
         // HACK: Ugly workaround the issues with UPackageStream
-        private static UPackageStream CreateTempStream()
+        private static UPackageStream CreateTempStream(string name = "test.u")
         {
-            string tempFilePath = Path.Join(Assembly.GetExecutingAssembly().Location, "../test.u");
+            string tempFilePath = Path.Join(Assembly.GetExecutingAssembly().Location, "../", name);
             File.WriteAllBytes(tempFilePath, BitConverter.GetBytes(UnrealPackage.Signature));
 
             var stream = new UPackageStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
@@ -24,7 +24,7 @@ namespace Eliot.UELib.Test
         [TestMethod]
         public void ReadString()
         {
-            using var stream = CreateTempStream();
+            using var stream = CreateTempStream("string.u");
             using var linker = new UnrealPackage(stream);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
@@ -62,7 +62,7 @@ namespace Eliot.UELib.Test
         [TestMethod]
         public void ReadAtomicStruct()
         {
-            using var stream = CreateTempStream();
+            using var stream = CreateTempStream("atomicstruct.u");
             using var linker = new UnrealPackage(stream);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {

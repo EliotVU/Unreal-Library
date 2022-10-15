@@ -121,14 +121,17 @@
     <value>D:\Projecten\UE Explorer Tests\Supported</value>
     <comment>Path to directory with all known .upk files that are compatible (no errors on load).</comment>
   </data>
-  <data name="Packages_Path_AAA_2_6" xml:space="preserve">
-    <value>D:\Downloads\AAA-2.6-Linux-All\System</value>
-  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="TestUC2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>upk\TestUC2\TestUC2.u;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="TestUC3" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>upk\testuc3\testuc3.u;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="UE2MapFilesPath" xml:space="preserve">
+    <value>C:\UT2004\Maps\Stock</value>
+  </data>
+  <data name="UE2MaterialFilesPath" xml:space="preserve">
+    <value>C:\UT2004\Textures\Stock</value>
   </data>
 </root>

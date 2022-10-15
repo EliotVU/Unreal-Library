@@ -70,15 +70,6 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to D:\Downloads\AAA-2.6-Linux-All\System.
-        /// </summary>
-        public static string Packages_Path_AAA_2_6 {
-            get {
-                return ResourceManager.GetString("Packages_Path_AAA_2_6", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         public static byte[] TestUC2 {
@@ -95,6 +86,24 @@ namespace Eliot.UELib.Test {
             get {
                 object obj = ResourceManager.GetObject("TestUC3", resourceCulture);
                 return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to C:\UT2004\Maps\Stock.
+        /// </summary>
+        public static string UE2MapFilesPath {
+            get {
+                return ResourceManager.GetString("UE2MapFilesPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to C:\UT2004\Textures\Stock.
+        /// </summary>
+        public static string UE2MaterialFilesPath {
+            get {
+                return ResourceManager.GetString("UE2MaterialFilesPath", resourceCulture);
             }
         }
     }

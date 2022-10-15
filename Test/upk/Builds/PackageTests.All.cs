@@ -25,10 +25,12 @@ namespace Eliot.UELib.Test.upk.Builds
             }
 
             UnrealConfig.SuppressSignature = true;
-            var files = Enumerable.Concat(
-                Directory.GetFiles(PackagesPath, "*.u"),
-                Directory.GetFiles(PackagesPath, "*.upk")
-            );
+            var files = Enumerable
+                .Concat(
+                    Directory.GetFiles(PackagesPath, "*.u"),
+                    Directory.GetFiles(PackagesPath, "*.upk")
+                )
+                .ToList();
             var exceptions = new List<Exception>();
             foreach (string file in files)
             {
@@ -42,7 +44,7 @@ namespace Eliot.UELib.Test.upk.Builds
                         case UnrealPackage.GameBuild.BuildName.BioShock:
                             continue;
                     }
-                    
+
                     linker.InitializePackage();
                     var objWithError = linker.Objects.Find(obj =>
                         (obj.DeserializationState & UObject.ObjectState.Errorlized) != 0);
@@ -55,7 +57,7 @@ namespace Eliot.UELib.Test.upk.Builds
             }
 
             Assert.IsTrue(exceptions.Count == 0, string.Join('\n', exceptions));
-            Debug.WriteLine($"Successfully tested {files.Count()} packages");
+            Debug.WriteLine($"Successfully tested {files.Count} packages");
         }
     }
 }
