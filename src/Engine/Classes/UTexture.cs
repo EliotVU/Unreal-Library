@@ -47,13 +47,7 @@ namespace UELib.Core
 
             public void Deserialize(IUnrealStream stream)
             {
-                if (stream.Version >= 63)
-                {
-                    int positionAfterData = stream.ReadInt32();
-                }
-
-                Data = new byte[stream.ReadIndex()];
-                stream.Read(Data, 0, Data.Length);
+                stream.ReadLazyArray(out Data);
                 USize = stream.ReadInt32();
                 VSize = stream.ReadInt32();
                 UBits = stream.ReadByte();

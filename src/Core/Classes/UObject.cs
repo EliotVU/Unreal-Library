@@ -252,8 +252,7 @@ namespace UELib.Core
             // This appears to be serialized for templates of classes like AmbientSoundNonLoop
             if (HasObjectFlag(ObjectFlagsLO.HasStack))
             {
-                StateFrame = new UStateFrame();
-                StateFrame.Deserialize(_Buffer);
+                _Buffer.ReadClass(out StateFrame);
             }
 #if MKKE || BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||

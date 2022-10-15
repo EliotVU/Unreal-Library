@@ -907,7 +907,15 @@ namespace UELib
                 handle.Free();
             }
         }
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ReadClass<T>(this IUnrealStream stream, out T item)
+            where T : class, IUnrealDeserializableClass, new()
+        {
+            item = new T();
+            item.Deserialize(stream);
+        }
+        
         // Can't seem to overload this :(
         public static void ReadMarshalArray<T>(this IUnrealStream stream, out UArray<T> array, int count)
             where T : struct, IUnrealAtomicStruct
@@ -927,6 +935,24 @@ namespace UELib
                 handle.Free();
                 array.Add(element);
             }
+#if BINARYMETADATA
+            stream.LastPosition = position;
+#endif
+        }
+
+        public static void ReadLazyArray(this IUnrealStream stream, out byte[] array)
+        {
+#if BINARYMETADATA
+            long position = stream.Position;
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.LazyArrayAdded)
+            {
+                int skipOffset = stream.ReadInt32();
+            }
+            
+            int c = stream.ReadLength();
+            array = new byte[c];
+            stream.Read(array, 0, c);
 #if BINARYMETADATA
             stream.LastPosition = position;
 #endif
@@ -1250,7 +1276,14 @@ namespace UELib
                 handle.Free();
             }
         }
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteClass<T>(this IUnrealStream stream, ref T item)
+            where T : class, IUnrealSerializableClass, new()
+        {
+            item.Serialize(stream);
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(this IUnrealStream stream, string value)
         {
