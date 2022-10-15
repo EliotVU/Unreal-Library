@@ -438,7 +438,9 @@ namespace UELib.Core
         [Obsolete("To be deprecated")]
         public string GetClassName()
         {
-            return Class?.Name;
+            return ImportTable != null 
+                ? ImportTable.ClassName 
+                : Class?.Name ?? "Class";
         }
 
         /// <summary>
