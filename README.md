@@ -78,7 +78,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
 | Mobile Forces | 436 | 81-83/000, 69 | |
-| Clive Barker's Undying | 420 | 72-85/000 | Licensee modifications are supported in the "develop" branch. Versions 72 to 73 are not auto detected. |
+| Clive Barker's Undying | 420 | 72-85/000 | Licensee modifications are supported in the "develop" branch. Versions 72 to 83 are not auto detected. |
 | Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
 | Thief: Deadly Shadows | 777:Flesh | 95/133 | LinkedData not supported |
 |     |     |     |     |
