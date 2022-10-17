@@ -109,6 +109,7 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
+| Frontlines: Fuel of War | 2917 | 433/052 | Poor output of functions; better support in the "develop" branch |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
 | Mortal Kombat Komplete Edition | 2605 | 472/046 |     |
 | Stargate Worlds | 3004 | 486/007 |     |
