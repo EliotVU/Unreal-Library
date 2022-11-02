@@ -667,10 +667,10 @@ namespace UELib.Core
 
                 case PropertyType.Rotator:
                 {
-                    string pitch = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    string yaw = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    string roll = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    propertyValue += $"Pitch={pitch},Yaw={yaw},Roll={roll}";
+                    _Buffer.ReadAtomicStruct(out URotator rotator);
+                    propertyValue += $"Pitch={rotator.Pitch}," +
+                                     $"Yaw={rotator.Yaw}," +
+                                     $"Roll={rotator.Roll}";
                     break;
                 }
 

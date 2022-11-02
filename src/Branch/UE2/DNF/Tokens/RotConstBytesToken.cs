@@ -7,11 +7,11 @@ namespace UELib.Branch.UE2.DNF.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             // FIXME: These must have been compressed right?
-            Value.Pitch = stream.ReadByte(); 
+            Rotation.Pitch = stream.ReadByte(); 
             Decompiler.AlignSize(sizeof(byte));
-            Value.Roll = stream.ReadByte(); 
+            Rotation.Roll = stream.ReadByte(); 
             Decompiler.AlignSize(sizeof(byte));
-            Value.Yaw = stream.ReadByte(); 
+            Rotation.Yaw = stream.ReadByte(); 
             Decompiler.AlignSize(sizeof(byte));
         }
     }

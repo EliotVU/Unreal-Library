@@ -28,6 +28,8 @@ defaultproperties
 	Vector4=(X=1.0,Y=2.0,Z=3.0,W=4.0)
 	Vector2D=(X=1.0,Y=2.0)
 	Plane=(W=0,X=1,Y=2,Z=3)
+	Rotator=(Pitch=180,Yaw=90,Roll=45)
+	Quat=(X=1.0,Y=2.0,Z=3.0,W=4.0)
 	Color=(B=20,G=40,R=80,A=160)
 	LinearColor=(R=0.2,G=0.4,B=0.6,A=0.8)
 	Box={(
@@ -40,5 +42,5 @@ defaultproperties
 		YPlane=(W=4,X=5,Y=6,Z=7),
 		ZPlane=(W=8,X=9,Y=10,Z=11),
 		WPlane=(W=12,X=13,Y=14,Z=15)
-	})
+	)}
 }

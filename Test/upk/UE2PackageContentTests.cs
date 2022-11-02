@@ -58,7 +58,8 @@ namespace Eliot.UELib.Test.upk
                 "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Plane",
                 "(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)");
-            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Color",
+            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Rotator",
+                "(Pitch=180,Yaw=90,Roll=45)");            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Color",
                 "(B=20,G=40,R=80,A=160)");
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Box",
                 "(Min=(X=0.0000000,Y=1.0000000,Z=2.0000000)," +

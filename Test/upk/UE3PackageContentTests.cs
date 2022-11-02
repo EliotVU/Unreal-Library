@@ -36,6 +36,8 @@ namespace Eliot.UELib.Test.upk
                 "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Vector2D",
                 "(X=1.0000000,Y=2.0000000)");
+            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Rotator",
+                "(Pitch=180,Yaw=90,Roll=45)");
             //Plane=(W=0,X=1,Y=2,Z=3)
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Plane",
                 "(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)");

@@ -226,27 +226,19 @@ namespace UELib.Core
 
             public class RotationConstToken : Token
             {
-                public struct Rotator
-                {
-                    public int Pitch, Yaw, Roll;
-                }
-
-                public Rotator Value;
+                public URotator Rotation;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value.Pitch = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
-                    Value.Yaw = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
-                    Value.Roll = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
+                    stream.ReadStruct(out Rotation);
+                    Decompiler.AlignSize(12);
                 }
 
                 public override string Decompile()
                 {
-                    return
-                        $"rot({PropertyDisplay.FormatLiteral(Value.Pitch)}, {PropertyDisplay.FormatLiteral(Value.Yaw)}, {PropertyDisplay.FormatLiteral(Value.Roll)})";
+                    return $"rot({PropertyDisplay.FormatLiteral(Rotation.Pitch)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Rotation.Yaw)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Rotation.Roll)})";
                 }
             }
 
