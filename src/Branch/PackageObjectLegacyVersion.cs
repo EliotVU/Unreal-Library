@@ -52,6 +52,8 @@ namespace UELib.Branch
         // FIXME: Version
         FastSerializeStructs = UE3,
         
+        // FIXME: Version
+        EnumTagNameAddedToBytePropertyTag = UE3,
 
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
@@ -73,9 +75,14 @@ namespace UELib.Branch
 
         LightmassAdded = 600,
         UProcBuildingReferenceAddedToPoly = 606,
+        
+        EnumNameAddedToBytePropertyTag = 633,
+        
         LightmassShadowIndirectOnlyOptionAdded = 652,
         LightmassExplicitEmissiveLightRadiusAdded = 636,
         PolyRulesetVariationTypeChangedToName = 670,
+
+        BoolValueToByteForBoolPropertyTag = 673,
 
         ProbeMaskReducedAndIgnoreMaskRemoved = 692,
         ForceScriptOrderAddedToUClass = 749,

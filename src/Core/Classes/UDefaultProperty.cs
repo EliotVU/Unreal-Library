@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Types;
@@ -11,91 +12,186 @@ using UELib.UnrealScript;
 namespace UELib.Core
 {
     /// <summary>
-    /// [Default]Properties values deserializer.
+    ///     [Default]Properties values deserializer.
     /// </summary>
     public sealed class UDefaultProperty : IUnrealDecompilable
     {
         [Flags]
         public enum DeserializeFlags : byte
         {
-            None                    = 0x00,
-            WithinStruct            = 0x01,
-            WithinArray             = 0x02,
-            Complex                 = WithinStruct | WithinArray,
+            None = 0x00,
+            WithinStruct = 0x01,
+            WithinArray = 0x02,
+            Complex = WithinStruct | WithinArray
         }
+
+        private const byte InfoTypeMask = 0x0F;
+        private const byte InfoSizeMask = 0x70;
+        private const byte InfoArrayIndexMask = 0x80;
 
         private const byte DoNotAppendName = 0x01;
         private const byte ReplaceNameMarker = 0x02;
-
-        private const int V3 = 220;
-
-        // FIXME: Wrong version, naive approach
-        private const int VAtomicStructs = V3;
-        private const int VEnumName = 633;
-        private const int VBoolSizeToOne = 673;
-
-        private IUnrealStream _Buffer => _Container.Buffer;
 
         private readonly UObject _Container;
         private UStruct _Outer;
         private bool _RecordingEnabled = true;
 
-        internal long _BeginOffset { get; set; }
-        private long _ValueOffset { get; set; }
+        private IUnrealStream _Buffer => _Container.Buffer;
+
+        internal long _TagPosition { get; set; }
+        internal long _PropertyValuePosition { get; set; }
 
         private byte _TempFlags { get; set; }
+
+        /// <summary>
+        ///     The deserialized and decompiled output.
+        ///     Serves as a temporary workaround, don't rely on it.
+        /// </summary>
+        [PublicAPI]
+        public string Value { get; private set; }
+
+        public string Decompile()
+        {
+            _TempFlags = 0x00;
+            string value;
+            _Container.EnsureBuffer();
+            try
+            {
+                value = DeserializeValue();
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Exception thrown: {e} in {nameof(Decompile)}");
+                value = $"/*ERROR: {e}*/";
+            }
+            finally
+            {
+                _Container.MaybeDisposeBuffer();
+            }
+
+            // Array or Inlined object
+            if ((_TempFlags & DoNotAppendName) != 0)
+                // The tag handles the name etc on its own.
+            {
+                return value;
+            }
+
+            var arrayIndex = string.Empty;
+            if (ArrayIndex > 0 && Type != PropertyType.BoolProperty)
+            {
+                arrayIndex += $"[{ArrayIndex}]";
+            }
+
+            return $"{Name}{arrayIndex}={value}";
+        }
+
+        private UProperty FindProperty(out UStruct outer)
+        {
+            UProperty property = null;
+            outer = _Outer ?? _Container.Class as UStruct;
+            for (var structField = outer; structField != null; structField = structField.Super)
+            {
+                if (structField.Variables == null || !structField.Variables.Any())
+                {
+                    continue;
+                }
+
+                property = structField.Variables.Find(i => i.Table.ObjectName == Name);
+                if (property == null)
+                {
+                    continue;
+                }
+
+                switch (property.Type)
+                {
+                    case PropertyType.StructProperty:
+                        outer = ((UStructProperty)property).StructObject;
+                        break;
+
+                    case PropertyType.ArrayProperty:
+                        var arrayField = property as UArrayProperty;
+                        Debug.Assert(arrayField != null, "arrayField != null");
+                        var arrayInnerField = arrayField.InnerProperty;
+                        if (arrayInnerField.Type == PropertyType.StructProperty)
+                        {
+                            _Outer = ((UStructProperty)arrayInnerField).StructObject;
+                        }
+
+                        break;
+
+                    default:
+                        outer = structField;
+                        break;
+                }
+
+                break;
+            }
+
+            return property;
+        }
+
+        [Conditional("BINARYMETADATA")]
+        private void Record(string varName, object varObject = null)
+        {
+            if (_RecordingEnabled)
+            {
+                _Container.Record(varName, varObject);
+            }
+        }
 
         #region Serialized Members
 
         /// <summary>
-        /// Name of the UProperty.
-        ///
-        /// get and private remain to maintain compatibility with UE Explorer
+        ///     Name of the UProperty.
         /// </summary>
-        [PublicAPI]
-        public UName Name { get; private set; }
+        public UName Name;
 
         /// <summary>
-        /// Name of the UStruct. If type equals StructProperty.
+        ///     See PropertyType enum in UnrealFlags.cs
         /// </summary>
-        [PublicAPI] [CanBeNull] public UName ItemName;
+        public PropertyType Type;
+
+        [StructLayout(LayoutKind.Explicit, Size = 8)]
+        private struct PropertyTypeData
+        {
+            /// <summary>
+            ///     Name of the UStruct. If <see cref="UDefaultProperty.Type" /> is StructProperty.
+            /// </summary>
+            [FieldOffset(0)] public UName StructName; // Formerly known as "ItemName"
+
+            /// <summary>
+            ///     Name of the UEnum. If <see cref="UDefaultProperty.Type" /> is ByteProperty.
+            /// </summary>
+            [FieldOffset(0)] public UName EnumName;
+
+            /// <summary>
+            ///     Name of the UArray's inner type. If <see cref="UDefaultProperty.Type" /> is ArrayProperty.
+            /// </summary>
+            [FieldOffset(0)] public UName InnerTypeName;
+        }
+
+        private PropertyTypeData _TypeData;
+
+        [CanBeNull] public UName StructName => _TypeData.StructName;
+        [CanBeNull] public UName EnumName => _TypeData.EnumName;
+        [CanBeNull] public UName InnerTypeName => _TypeData.InnerTypeName;
 
         /// <summary>
-        /// Name of the UEnum. If Type equals ByteProperty.
+        ///     The size in bytes of this tag's value.
         /// </summary>
-        [PublicAPI] [CanBeNull] public UName EnumName;
-
-        [PublicAPI] [CanBeNull] public UName InnerTypeName;
+        public int Size;
 
         /// <summary>
-        /// See PropertyType enum in UnrealFlags.cs
-        /// </summary>
-        [PublicAPI] public PropertyType Type;
-
-        [PublicAPI] public PropertyType InnerType;
-
-        /// <summary>
-        /// The stream size of this DefaultProperty.
-        /// </summary>
-        private int Size { get; set; }
-
-        /// <summary>
-        /// Whether this property is part of an static array, and the index into it
+        ///     The element index of this tag e.g. consider this static array: "var Object Elements[2];"
+        ///     This defines a static array of 2 elements which would have two tags with this field being the index into that
+        ///     array.
         /// </summary>
         public int ArrayIndex = -1;
 
         /// <summary>
-        /// Value of the UBoolProperty. If Type equals BoolProperty.
+        ///     Value of the UBoolProperty. If Type equals BoolProperty.
         /// </summary>
         public bool? BoolValue;
-
-        /// <summary>
-        /// The deserialized and decompiled output.
-        ///
-        /// Serves as a temporary workaround, don't rely on it.
-        /// </summary>
-        [PublicAPI]
-        public string Value { get; private set; }
 
         #endregion
 
@@ -140,8 +236,6 @@ namespace UELib.Core
             }
         }
 
-        private const byte ArrayIndexMask = 0x80;
-
         private int DeserializeTagArrayIndexUE1()
         {
             int arrayIndex;
@@ -149,15 +243,22 @@ namespace UELib.Core
             long startPos = _Buffer.Position;
 #endif
             byte b = _Buffer.ReadByte();
-            if ((b & ArrayIndexMask) == 0)
+            if ((b & InfoArrayIndexMask) == 0)
+            {
                 arrayIndex = b;
-            else if ((b & 0xC0) == ArrayIndexMask)
-                arrayIndex = ((b & 0x7F) << 8) + _Buffer.ReadByte();
+            }
+            else if ((b & 0xC0) == InfoArrayIndexMask)
+            {
+                byte c = _Buffer.ReadByte();
+                arrayIndex = ((b & 0x7F) << 8) + c;
+            }
             else
-                arrayIndex = ((b & 0x3F) << 24)
-                             + (_Buffer.ReadByte() << 16)
-                             + (_Buffer.ReadByte() << 8)
-                             + _Buffer.ReadByte();
+            {
+                byte c = _Buffer.ReadByte();
+                byte d = _Buffer.ReadByte();
+                byte e = _Buffer.ReadByte();
+                arrayIndex = ((b & 0x3F) << 24) + (c << 16) + (d << 8) + e;
+            }
 #if BINARYMETADATA
             _Buffer.LastPosition = startPos;
 #endif
@@ -167,13 +268,13 @@ namespace UELib.Core
         /// <returns>True if there are more property tags.</returns>
         public bool Deserialize()
         {
-            _BeginOffset = _Buffer.Position;
+            _TagPosition = _Buffer.Position;
             if (DeserializeNextTag())
             {
                 return false;
             }
 
-            _ValueOffset = _Buffer.Position;
+            _PropertyValuePosition = _Buffer.Position;
             try
             {
                 DeserializeValue();
@@ -183,7 +284,7 @@ namespace UELib.Core
             {
                 // Even if something goes wrong, we can still skip everything and safely deserialize the next property if any!
                 // Note: In some builds @Size is not serialized
-                _Buffer.Position = _ValueOffset + Size;
+                _Buffer.Position = _PropertyValuePosition + Size;
             }
 
             return true;
@@ -192,10 +293,15 @@ namespace UELib.Core
         /// <returns>True if this is the last tag.</returns>
         private bool DeserializeNextTag()
         {
-            if (_Buffer.Version < V3) return DeserializeTagUE1();
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.UE3)
+            {
+                return DeserializeTagUE1();
+            }
 #if BATMAN
             if (_Buffer.Package.Build == BuildGeneration.RSS)
+            {
                 return DeserializeTagByOffset();
+            }
 #endif
             return DeserializeTagUE3();
         }
@@ -205,26 +311,20 @@ namespace UELib.Core
         {
             Name = _Buffer.ReadNameReference();
             Record(nameof(Name), Name);
-            if (Name.IsNone()) return true;
+            if (Name.IsNone())
+            {
+                return true;
+            }
 
-            const byte typeMask = 0x0F;
-            const byte sizeMask = 0x70;
-
-            // Packed byte
             byte info = _Buffer.ReadByte();
-            Record(
-                $"Info(Type={(PropertyType)(byte)(info & typeMask)}," +
-                $"SizeMask=0x{(byte)(info & sizeMask):X2}," +
-                $"ArrayIndexMask=0x{info & ArrayIndexMask:X2})",
-                info
-            );
+            Record(nameof(info), info);
 
-            Type = (PropertyType)(byte)(info & typeMask);
+            Type = (PropertyType)(byte)(info & InfoTypeMask);
             switch (Type)
             {
                 case PropertyType.StructProperty:
-                    ItemName = _Buffer.ReadNameReference();
-                    Record(nameof(ItemName), ItemName);
+                    _Buffer.Read(out _TypeData.StructName);
+                    Record(nameof(_TypeData.StructName), _TypeData.StructName);
                     break;
 
                 case PropertyType.ArrayProperty:
@@ -233,30 +333,26 @@ namespace UELib.Core
                     if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                         _Buffer.Version >= 124)
                     {
-                        InnerTypeName = _Buffer.ReadNameReference();
-                        Record(nameof(InnerTypeName), InnerTypeName);
-                        if (!Enum.TryParse(InnerTypeName, out InnerType))
-                        {
-                            throw new Exception($"Couldn't convert InnerTypeName \"{InnerTypeName}\" to PropertyType");
-                        }
+                        _Buffer.Read(out _TypeData.InnerTypeName);
+                        Record(nameof(_TypeData.InnerTypeName), _TypeData.InnerTypeName);
                     }
 #endif
                     break;
                 }
             }
 
-            Size = DeserializePackedSize((byte)(info & sizeMask));
+            Size = DeserializePackedSize((byte)(info & InfoSizeMask));
             Record(nameof(Size), Size);
 
             // TypeData
             switch (Type)
             {
                 case PropertyType.BoolProperty:
-                    BoolValue = (info & ArrayIndexMask) != 0;
+                    BoolValue = (info & InfoArrayIndexMask) != 0;
                     break;
 
                 default:
-                    if ((info & ArrayIndexMask) != 0)
+                    if ((info & InfoArrayIndexMask) != 0)
                     {
                         ArrayIndex = DeserializeTagArrayIndexUE1();
                         Record(nameof(ArrayIndex), ArrayIndex);
@@ -273,7 +369,10 @@ namespace UELib.Core
         {
             Name = _Buffer.ReadNameReference();
             Record(nameof(Name), Name);
-            if (Name.IsNone()) return true;
+            if (Name.IsNone())
+            {
+                return true;
+            }
 
             string typeName = _Buffer.ReadName();
             Record(nameof(typeName), typeName);
@@ -294,7 +393,10 @@ namespace UELib.Core
         {
             Type = (PropertyType)_Buffer.ReadInt16();
             Record(nameof(Type), Type.ToString());
-            if (Type == PropertyType.None) return true;
+            if (Type == PropertyType.None)
+            {
+                return true;
+            }
 
             if (_Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Batman3MP)
             {
@@ -369,8 +471,8 @@ namespace UELib.Core
             switch (Type)
             {
                 case PropertyType.StructProperty:
-                    ItemName = _Buffer.ReadNameReference();
-                    Record(nameof(ItemName), ItemName);
+                    _Buffer.Read(out _TypeData.StructName);
+                    Record(nameof(_TypeData.StructName), _TypeData.StructName);
 #if UE4
                     if (_Buffer.UE4Version >= 441)
                     {
@@ -380,16 +482,16 @@ namespace UELib.Core
                     break;
 
                 case PropertyType.ByteProperty:
-                    if (_Buffer.Version >= VEnumName)
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag)
                     {
-                        EnumName = _Buffer.ReadNameReference();
-                        Record(nameof(EnumName), EnumName);
+                        _Buffer.Read(out _TypeData.EnumName);
+                        Record(nameof(_TypeData.EnumName), _TypeData.EnumName);
                     }
 
                     break;
 
                 case PropertyType.BoolProperty:
-                    BoolValue = _Buffer.Version >= VBoolSizeToOne
+                    BoolValue = _Buffer.Version >= (uint)PackageObjectLegacyVersion.BoolValueToByteForBoolPropertyTag
                         ? _Buffer.ReadByte() > 0
                         : _Buffer.ReadInt32() > 0;
                     Record(nameof(BoolValue), BoolValue);
@@ -400,9 +502,8 @@ namespace UELib.Core
                     // FIXME: UE4 version
                     if (_Buffer.UE4Version > 220)
                     {
-                        InnerTypeName = _Buffer.ReadNameReference();
-                        Record(nameof(InnerTypeName), InnerTypeName);
-                        InnerType = (PropertyType)Enum.Parse(typeof(PropertyType), InnerTypeName);
+                        _Buffer.Read(out _TypeData.InnerTypeName);
+                        Record(nameof(_TypeData.InnerTypeName), _TypeData.InnerTypeName);
                     }
 #endif
                     break;
@@ -410,9 +511,8 @@ namespace UELib.Core
         }
 
         /// <summary>
-        /// Deserialize the value of this UPropertyTag instance.
-        ///
-        /// Note:
+        ///     Deserialize the value of this UPropertyTag instance.
+        ///     Note:
         ///     Only call after the whole package has been deserialized!
         /// </summary>
         /// <returns>The deserialized value if any.</returns>
@@ -422,10 +522,13 @@ namespace UELib.Core
             if (_Buffer == null)
             {
                 _Container.EnsureBuffer();
-                if (_Buffer == null) throw new DeserializationException("_Buffer is not initialized!");
+                if (_Buffer == null)
+                {
+                    throw new DeserializationException("_Buffer is not initialized!");
+                }
             }
 
-            _Buffer.Seek(_ValueOffset, SeekOrigin.Begin);
+            _Buffer.Seek(_PropertyValuePosition, SeekOrigin.Begin);
             return TryDeserializeDefaultPropertyValue(Type, ref deserializeFlags);
         }
 
@@ -453,7 +556,7 @@ namespace UELib.Core
         }
 
         /// <summary>
-        /// Deserialize a default property value of a specified type.
+        ///     Deserialize a default property value of a specified type.
         /// </summary>
         /// <param name="type">Kind of type to try deserialize.</param>
         /// <returns>The deserialized value if any.</returns>
@@ -469,7 +572,7 @@ namespace UELib.Core
                 {
                     Debug.Assert(BoolValue != null, nameof(BoolValue) + " != null");
                     bool value = BoolValue.Value;
-                    if (Size == 1 && _Buffer.Version < V3)
+                    if (Size == 1 && _Buffer.Version < (uint)PackageObjectLegacyVersion.UE3)
                     {
                         value = _Buffer.ReadByte() > 0;
                         Record(nameof(value), value);
@@ -502,7 +605,6 @@ namespace UELib.Core
                     propertyValue = PropertyDisplay.FormatLiteral(value);
                     break;
                 }
-
 #if BIOSHOCK
                 case PropertyType.QwordProperty:
                 {
@@ -517,7 +619,6 @@ namespace UELib.Core
                                     ",?=" + _Buffer.ReadByte() + ",?=" + _Buffer.ReadName() + ") */";
                     break;
 #endif
-
                 case PropertyType.FloatProperty:
                 {
                     float value = _Buffer.ReadFloat();
@@ -528,18 +629,21 @@ namespace UELib.Core
 
                 case PropertyType.ByteProperty:
                 {
-                    if (_Buffer.Version >= V3 && Size == 8)
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag &&
+                        Size == 8)
                     {
-                        string value = _Buffer.ReadName();
-                        Record(nameof(value), value);
-                        propertyValue = value;
-                        if (_Buffer.Version >= VEnumName) propertyValue = $"{EnumName}.{propertyValue}";
+                        string enumTagName = _Buffer.ReadName();
+                        Record(nameof(enumTagName), enumTagName);
+                        propertyValue = _Buffer.Version >=
+                                        (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag
+                            ? $"{_TypeData.EnumName}.{enumTagName}"
+                            : enumTagName;
                     }
                     else
                     {
-                        byte value = _Buffer.ReadByte();
-                        Record(nameof(value), value);
-                        propertyValue = PropertyDisplay.FormatLiteral(value);
+                        byte enumTagValue = _Buffer.ReadByte();
+                        Record(nameof(enumTagValue), enumTagValue);
+                        propertyValue = PropertyDisplay.FormatLiteral(enumTagValue);
                     }
 
                     break;
@@ -580,7 +684,9 @@ namespace UELib.Core
 
                         if (!inline)
                             // =CLASS'Package.Group(s)+.Name'
+                        {
                             propertyValue = PropertyDisplay.FormatLiteral(constantObject);
+                        }
                     }
                     else
                     {
@@ -593,11 +699,9 @@ namespace UELib.Core
 
                 case PropertyType.ClassProperty:
                 {
-                    var classObject = _Buffer.ReadObject();
+                    var classObject = _Buffer.ReadObject<UClass>();
                     Record(nameof(classObject), classObject);
-                    propertyValue = classObject != null
-                        ? $"class'{classObject.Name}'"
-                        : "none";
+                    propertyValue = PropertyDisplay.FormatLiteral(classObject);
                     break;
                 }
 
@@ -805,7 +909,7 @@ namespace UELib.Core
                     }
 #endif
                     // Ugly hack, but this will do for now until this entire function gets "rewritten" :D
-                    if (Enum.TryParse(ItemName, out PropertyType structPropertyType))
+                    if (Enum.TryParse(_TypeData.StructName, out PropertyType structPropertyType))
                     {
                         // Not atomic if <=UE2,
                         // TODO: Figure out all non-atomic structs
@@ -861,7 +965,9 @@ namespace UELib.Core
                         else
                         {
                             if (propertyValue.EndsWith(","))
+                            {
                                 propertyValue = propertyValue.Remove(propertyValue.Length - 1, 1);
+                            }
 
                             break;
                         }
@@ -884,15 +990,17 @@ namespace UELib.Core
                         break;
                     }
 
+                    var arrayType = PropertyType.None;
+                    if (_TypeData.InnerTypeName != null && !Enum.TryParse(_TypeData.InnerTypeName, out arrayType))
+                    {
+                        throw new Exception(
+                            $"Couldn't convert InnerTypeName \"{_TypeData.InnerTypeName}\" to PropertyType");
+                    }
+
                     // Find the property within the outer/owner or its inheritances.
                     // If found it has to modify the outer so structs within this array can find their array variables.
                     // Additionally we need to know the property to determine the array's type.
-                    var arrayType = PropertyType.None;
-                    if (InnerType != PropertyType.None)
-                    {
-                        arrayType = InnerType;
-                    }
-                    else
+                    if (arrayType == PropertyType.None)
                     {
                         var property = FindProperty(out _Outer) as UArrayProperty;
                         if (property?.InnerProperty != null)
@@ -904,7 +1012,10 @@ namespace UELib.Core
                         else if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey(Name))
                         {
                             var varTuple = UnrealConfig.VariableTypes[Name];
-                            if (varTuple != null) arrayType = varTuple.Item2;
+                            if (varTuple != null)
+                            {
+                                arrayType = varTuple.Item2;
+                            }
                         }
                     }
 
@@ -919,11 +1030,15 @@ namespace UELib.Core
                     {
                         // Hardcoded fix for InterpCurve and InterpCurvePoint.
                         if (string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
+                        {
                             arrayType = PropertyType.StructProperty;
+                        }
 
                         for (var i = 0; i < arraySize; ++i)
+                        {
                             propertyValue += DeserializeDefaultPropertyValue(arrayType, ref deserializeFlags)
                                              + (i != arraySize - 1 ? "," : string.Empty);
+                        }
 
                         propertyValue = $"({propertyValue})";
                     }
@@ -942,7 +1057,10 @@ namespace UELib.Core
                                 propertyValue += $"{Name}({i})={elementValue}";
                             }
 
-                            if (i != arraySize - 1) propertyValue += "\r\n" + UDecompilingState.Tabs;
+                            if (i != arraySize - 1)
+                            {
+                                propertyValue += "\r\n" + UDecompilingState.Tabs;
+                            }
                         }
                     }
 
@@ -959,92 +1077,9 @@ namespace UELib.Core
         }
 
         #endregion
-
-        #region Decompilation
-
-        public string Decompile()
-        {
-            _TempFlags = 0x00;
-            string value;
-            _Container.EnsureBuffer();
-            try
-            {
-                value = DeserializeValue();
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine($"Exception thrown: {e} in {nameof(Decompile)}");
-                value = $"/*ERROR: {e}*/";
-            }
-            finally
-            {
-                _Container.MaybeDisposeBuffer();
-            }
-
-            // Array or Inlined object
-            if ((_TempFlags & DoNotAppendName) != 0)
-                // The tag handles the name etc on its own.
-                return value;
-
-            var arrayIndex = string.Empty;
-            if (ArrayIndex > 0 && Type != PropertyType.BoolProperty) arrayIndex += $"[{ArrayIndex}]";
-
-            return $"{Name}{arrayIndex}={value}";
-        }
-
-        #endregion
-
-        #region Methods
-
-        private UProperty FindProperty(out UStruct outer)
-        {
-            UProperty property = null;
-            outer = _Outer ?? _Container.Class as UStruct;
-            for (var structField = outer; structField != null; structField = structField.Super as UStruct)
-            {
-                if (structField.Variables == null || !structField.Variables.Any())
-                    continue;
-
-                property = structField.Variables.Find(i => i.Table.ObjectName == Name);
-                if (property == null)
-                    continue;
-
-                switch (property.Type)
-                {
-                    case PropertyType.StructProperty:
-                        outer = ((UStructProperty)property).StructObject;
-                        break;
-
-                    case PropertyType.ArrayProperty:
-                        var arrayField = property as UArrayProperty;
-                        Debug.Assert(arrayField != null, "arrayField != null");
-                        var arrayInnerField = arrayField.InnerProperty;
-                        if (arrayInnerField.Type == PropertyType.StructProperty)
-                            _Outer = ((UStructProperty)arrayInnerField).StructObject;
-
-                        break;
-
-                    default:
-                        outer = structField;
-                        break;
-                }
-
-                break;
-            }
-
-            return property;
-        }
-
-        #endregion
-
-        [Conditional("BINARYMETADATA")]
-        private void Record(string varName, object varObject = null)
-        {
-            if (_RecordingEnabled) _Container.Record(varName, varObject);
-        }
     }
 
-    [System.Runtime.InteropServices.ComVisible(false)]
+    [ComVisible(false)]
     public sealed class DefaultPropertiesCollection : List<UDefaultProperty>
     {
         [CanBeNull]

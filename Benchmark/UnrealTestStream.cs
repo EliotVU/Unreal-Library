@@ -52,12 +52,12 @@ namespace Eliot.UELib.Benchmark
             throw new NotImplementedException();
         }
 
-        public int ReadNameIndex()
+        public new int ReadNameIndex()
         {
             throw new NotImplementedException();
         }
 
-        public int ReadNameIndex(out int num)
+        public new int ReadNameIndex(out int num)
         {
             throw new NotImplementedException();
         }

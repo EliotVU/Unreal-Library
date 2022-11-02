@@ -766,6 +766,12 @@ namespace UELib
             _PeekStartPosition = Position;
         }
 
+        public void StartPeek(long position)
+        {
+            _PeekStartPosition = Position;
+            Position = position;
+        }
+        
         /// <summary>
         /// Stop peeking, the original position is restored.
         /// </summary>
