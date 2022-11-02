@@ -244,41 +244,37 @@ namespace UELib.Core
 
             public class VectorConstToken : Token
             {
-                public float X, Y, Z;
+                public UVector Vector;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    X = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
-                    Y = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
-                    Z = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
+                    stream.ReadStruct(out Vector);
+                    Decompiler.AlignSize(12);
                 }
 
                 public override string Decompile()
                 {
-                    return
-                        $"vect({PropertyDisplay.FormatLiteral(X)}, {PropertyDisplay.FormatLiteral(Y)}, {PropertyDisplay.FormatLiteral(Z)})";
+                    return $"vect({PropertyDisplay.FormatLiteral(Vector.X)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Vector.Y)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Vector.Z)})";
                 }
             }
 
             public class RangeConstToken : Token
             {
-                public float A, B;
+                public URange Range;
                 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    A = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
-                    B = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
+                    stream.ReadStruct(out Range);
+                    Decompiler.AlignSize(8);
                 }
 
                 public override string Decompile()
                 {
                     return
-                        $"rng({PropertyDisplay.FormatLiteral(A)}, {PropertyDisplay.FormatLiteral(B)})";
+                        $"rng({PropertyDisplay.FormatLiteral(Range.A)}, " +
+                        $"{PropertyDisplay.FormatLiteral(Range.B)})";
                 }
             }
         }

@@ -52,7 +52,7 @@ namespace Eliot.UELib.Test
             var tag = obj.Properties.Find(tagName);
             Assert.IsNotNull(tag, $"Couldn't find property tag of '{tagName}'");
             string colorValue = tag.DeserializeValue();
-            Assert.AreEqual(expectedFormat, colorValue);
+            Assert.AreEqual(expectedFormat, colorValue, $"tag '{tagName}'");
         }
 
         internal static void AssertExportsOfType<T>(IEnumerable<UObject> exports)

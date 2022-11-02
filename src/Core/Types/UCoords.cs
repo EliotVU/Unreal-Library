@@ -3,7 +3,7 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Implements FCoords/UObject.Coords
+    ///     Implements FCoords/UObject.Coords
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct UCoords : IUnrealSerializableClass, IUnrealAtomicStruct

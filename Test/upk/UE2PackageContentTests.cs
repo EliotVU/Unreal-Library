@@ -56,14 +56,33 @@ namespace Eliot.UELib.Test.upk
                 "0.0123457");
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Vector",
                 "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
+            // Not atomic!
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Plane",
                 "(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)");
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Rotator",
-                "(Pitch=180,Yaw=90,Roll=45)");            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Color",
-                "(B=20,G=40,R=80,A=160)");
+                "(Pitch=180,Yaw=90,Roll=45)");
+            // Not atomic!
+            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Coords",
+                "(Origin=(X=0.2000000,Y=0.4000000,Z=1.0000000)," +
+                "XAxis=(X=1.0000000,Y=0.0000000,Z=0.0000000)," +
+                "YAxis=(X=0.0000000,Y=1.0000000,Z=0.0000000)," +
+                "ZAxis=(X=0.0000000,Y=0.0000000,Z=1.0000000))");
+            // Not atomic!
+            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Quat",
+                "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
+            // Not atomic!
+            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Range",
+                "(Min=80.0000000,Max=40.0000000)");
+            // Not atomic!
+            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Scale",
+                "(Scale=(X=1.0000000,Y=2.0000000,Z=3.0000000),SheerRate=5.0000000,SheerAxis=6)");
+            UnrealPackageTests.AssertPropertyTagFormat(defaults, "Color",
+                "(R=80,G=40,B=20,A=160)");
+            // Not atomic!
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Box",
                 "(Min=(X=0.0000000,Y=1.0000000,Z=2.0000000)," +
                 "Max=(X=0.0000000,Y=2.0000000,Z=1.0000000),IsValid=1)");
+            // Not atomic!
             UnrealPackageTests.AssertPropertyTagFormat(defaults, "Matrix",
                 "(XPlane=(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)," +
                 "YPlane=(W=4.0000000,X=5.0000000,Y=6.0000000,Z=7.0000000)," +

@@ -104,27 +104,6 @@ namespace UELib.UnrealScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string FormatLiteral(ref UColor input)
-        {
-            // No parenthesis, may eventually change
-            return
-                $"B={FormatLiteral(input.B)}," +
-                $"G={FormatLiteral(input.G)}," +
-                $"R={FormatLiteral(input.R)}," +
-                $"A={FormatLiteral(input.A)}";
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string FormatLiteral(ref UVector input)
-        {
-            // No parenthesis, may eventually change
-            return
-                $"X={FormatLiteral(input.X)}," +
-                $"Y={FormatLiteral(input.Y)}," +
-                $"Z={FormatLiteral(input.Z)}";
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatExport(float input)
         {
             return input.ToString("+00000.000000;-00000.000000", CultureInfo.InvariantCulture);

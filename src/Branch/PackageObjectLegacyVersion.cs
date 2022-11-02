@@ -45,7 +45,13 @@ namespace UELib.Branch
         IsLocalAddedToDelegateFunctionToken = 181,
         
         UE3 = 184,
+        
+        // FIXME: Version
         RangeConstTokenDeprecated = UE3,
+        
+        // FIXME: Version
+        FastSerializeStructs = UE3,
+        
 
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,

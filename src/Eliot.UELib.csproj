@@ -107,8 +107,16 @@
     <CodeAnalysisRuleSet>GlobalizationRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMetaData.cs" />
@@ -181,12 +189,20 @@
     <Compile Include="Core\Classes\UComponent.cs" />
     <Compile Include="ByteCodeDecompiler.cs" />
     <Compile Include="Branch\UE2\VG\Tokens\LogFunctionToken.cs" />
+    <Compile Include="Core\Types\UBox.cs" />
     <Compile Include="Core\Types\UCoords.cs" />
     <Compile Include="Core\Types\UGuid.cs" />
+    <Compile Include="Core\Types\ULinearColor.cs" />
+    <Compile Include="Core\Types\UMatrix.cs" />
     <Compile Include="Core\Types\UPlane.cs" />
+    <Compile Include="Core\Types\UQuat.cs" />
+    <Compile Include="Core\Types\URange.cs" />
+    <Compile Include="Core\Types\URangeVector.cs" />
     <Compile Include="Core\Types\URotator.cs" />
     <Compile Include="Core\Types\UScale.cs" />
     <Compile Include="Core\Types\USphere.cs" />
+    <Compile Include="Core\Types\UVector2D.cs" />
+    <Compile Include="Core\Types\UVector4.cs" />
     <Compile Include="Engine\Classes\UMultiFont.cs" />
     <Compile Include="Engine\Classes\UProcBuildingRuleset.cs" />
     <Compile Include="Engine\Classes\URenderedMaterial.cs" />

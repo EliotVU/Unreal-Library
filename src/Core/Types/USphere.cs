@@ -4,13 +4,12 @@ using UELib.Branch;
 namespace UELib.Core
 {
     /// <summary>
-    /// Implements FSphere/UObject.Sphere
-    /// 
-    /// Extends Plane, but we can't do this in C#
-    /// Cannot be serialized in bulk due the addition of the "W" field.
+    ///     Implements FSphere/UObject.Sphere
+    ///     Extends Plane, but we can't do this in C#
+    ///     Cannot be serialized in bulk due the addition of the "W" field.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct USphere : IUnrealSerializableClass
+    public struct USphere : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float W, X, Y, Z;
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Types;
 using UELib.UnrealScript;
 
@@ -446,6 +447,11 @@ namespace UELib.Core
             }
         }
 
+        private void AssertFastSerialize(IUnrealArchive archive)
+        {
+            Debug.Assert(archive.Version >= (uint)PackageObjectLegacyVersion.FastSerializeStructs);
+        }
+
         /// <summary>
         /// Deserialize a default property value of a specified type.
         /// </summary>
@@ -616,25 +622,47 @@ namespace UELib.Core
                 case PropertyType.Color:
                 {
                     _Buffer.ReadAtomicStruct(out UColor color);
-                    propertyValue += PropertyDisplay.FormatLiteral(ref color);
+                    propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
+                                     $"G={PropertyDisplay.FormatLiteral(color.G)}," +
+                                     $"B={PropertyDisplay.FormatLiteral(color.B)}," +
+                                     $"A={PropertyDisplay.FormatLiteral(color.A)}";
                     break;
                 }
 
                 case PropertyType.LinearColor:
                 {
-                    string r = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string g = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string b = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string a = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+                    _Buffer.ReadAtomicStruct(out ULinearColor color);
+                    propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
+                                     $"G={PropertyDisplay.FormatLiteral(color.G)}," +
+                                     $"B={PropertyDisplay.FormatLiteral(color.B)}," +
+                                     $"A={PropertyDisplay.FormatLiteral(color.A)}";
+                    break;
+                }
 
-                    propertyValue += $"R={r},G={g},B={b},A={a}";
+                case PropertyType.Vector2D:
+                {
+                    _Buffer.ReadAtomicStruct(out UVector2D vector);
+                    propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
+                                     $"Y={PropertyDisplay.FormatLiteral(vector.Y)}";
                     break;
                 }
 
                 case PropertyType.Vector:
                 {
                     _Buffer.ReadAtomicStruct(out UVector vector);
-                    propertyValue += PropertyDisplay.FormatLiteral(ref vector);
+                    propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
+                                     $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
+                                     $"Z={PropertyDisplay.FormatLiteral(vector.Z)}";
+                    break;
+                }
+
+                case PropertyType.Vector4:
+                {
+                    _Buffer.ReadAtomicStruct(out UVector4 vector);
+                    propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
+                                     $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
+                                     $"Z={PropertyDisplay.FormatLiteral(vector.Z)}," +
+                                     $"W={PropertyDisplay.FormatLiteral(vector.W)}";
                     break;
                 }
 
@@ -642,26 +670,8 @@ namespace UELib.Core
                 {
                     string v1 = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                     string v2 = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
-                    propertyValue += $"v1=({v1}),v2=({v2})";
-                    break;
-                }
-
-                case PropertyType.Vector4:
-                {
-                    string x = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string y = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string z = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string w = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-
-                    propertyValue += $"X={x},Y={y},Z={z},W={w}";
-                    break;
-                }
-
-                case PropertyType.Vector2D:
-                {
-                    string x = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string y = DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    propertyValue += $"X={x},Y={y}";
+                    propertyValue += $"v1=({v1})," +
+                                     $"v2=({v2})";
                     break;
                 }
 
@@ -676,42 +686,30 @@ namespace UELib.Core
 
                 case PropertyType.Guid:
                 {
-                    string a = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    string b = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    string c = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    string d = DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
-                    propertyValue += $"A={a},B={b},C={c},D={d}";
+                    _Buffer.ReadAtomicStruct(out UGuid guid);
+                    propertyValue += $"A={guid.A}," +
+                                     $"B={guid.B}," +
+                                     $"C={guid.C}," +
+                                     $"D={guid.D}";
                     break;
                 }
 
                 case PropertyType.Sphere:
                 {
-                    if (_Buffer.Version < VAtomicStructs)
-                    {
-                        throw new NotSupportedException("Not atomic");
-                    }
-
-                    _Buffer.ReadStruct(out USphere sphere);
-
-                    propertyValue += _Buffer.Version >= 62 
-                        ? $"W={PropertyDisplay.FormatLiteral(sphere.W)}," 
-                        : "" +
-                         $"X={PropertyDisplay.FormatLiteral(sphere.X)}," +
-                         $"Y={PropertyDisplay.FormatLiteral(sphere.Y)}," +
-                         $"Z={PropertyDisplay.FormatLiteral(sphere.Z)}";
+                    AssertFastSerialize(_Buffer);
+                    _Buffer.ReadAtomicStruct(out USphere sphere);
+                    propertyValue += $"W={PropertyDisplay.FormatLiteral(sphere.W)}," +
+                                     $"X={PropertyDisplay.FormatLiteral(sphere.X)}," +
+                                     $"Y={PropertyDisplay.FormatLiteral(sphere.Y)}," +
+                                     $"Z={PropertyDisplay.FormatLiteral(sphere.Z)}";
 
                     break;
                 }
-                
+
                 case PropertyType.Plane:
                 {
-                    if (_Buffer.Version < VAtomicStructs)
-                    {
-                        throw new NotSupportedException("Not atomic");
-                    }
-
+                    AssertFastSerialize(_Buffer);
                     _Buffer.ReadAtomicStruct(out UPlane plane);
-                        
                     propertyValue += $"W={PropertyDisplay.FormatLiteral(plane.W)}," +
                                      $"X={PropertyDisplay.FormatLiteral(plane.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(plane.Y)}," +
@@ -721,43 +719,44 @@ namespace UELib.Core
 
                 case PropertyType.Scale:
                 {
-                    string scale = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
-                    string sheerRate =
-                        DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
-                    string sheerAxis =
-                        DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-                    propertyValue += $"Scale=({scale}),SheerRate={sheerRate},SheerAxis={sheerAxis}";
+                    _Buffer.ReadAtomicStruct(out UScale scale);
+                    propertyValue += "Scale=(" +
+                                     $"X={PropertyDisplay.FormatLiteral(scale.Scale.X)}," +
+                                     $"Y={PropertyDisplay.FormatLiteral(scale.Scale.Y)}," +
+                                     $"Z={PropertyDisplay.FormatLiteral(scale.Scale.Z)})," +
+                                     $"SheerRate={PropertyDisplay.FormatLiteral(scale.SheerRate)}," +
+                                     $"SheerAxis={scale.SheerAxis}";
                     break;
                 }
 
                 case PropertyType.Box:
                 {
-                    if (_Buffer.Version < VAtomicStructs)
-                    {
-                        throw new NotSupportedException("Not atomic");
-                    }
-
+                    AssertFastSerialize(_Buffer);
                     string min = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                     string max = DeserializeDefaultPropertyValue(PropertyType.Vector, ref deserializeFlags);
                     string isValid =
                         DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
-                    propertyValue += $"Min=({min}),Max=({max}),IsValid={isValid}";
+                    propertyValue += $"Min=({min})," +
+                                     $"Max=({max})," +
+                                     $"IsValid={isValid}";
                     break;
                 }
 
                 case PropertyType.Quat:
                 {
-                    propertyValue += DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
+                    AssertFastSerialize(_Buffer);
+                    _Buffer.ReadAtomicStruct(out UQuat quat);
+                    propertyValue += $"X={PropertyDisplay.FormatLiteral(quat.X)}," +
+                                     $"Y={PropertyDisplay.FormatLiteral(quat.Y)}," +
+                                     $"Z={PropertyDisplay.FormatLiteral(quat.Z)}," +
+                                     $"W={PropertyDisplay.FormatLiteral(quat.W)}";
                     break;
                 }
 
                 case PropertyType.Matrix:
                 {
-                    if (_Buffer.Version < VAtomicStructs)
-                    {
-                        throw new NotSupportedException("Not atomic");
-                    }
-
+                    AssertFastSerialize(_Buffer);
+                    //_Buffer.ReadAtomicStruct(out UMatrix matrix);
                     string xPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                     string yPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
                     string zPlane = DeserializeDefaultPropertyValue(PropertyType.Plane, ref deserializeFlags);
@@ -801,18 +800,34 @@ namespace UELib.Core
                     {
                         // Not atomic if <=UE2,
                         // TODO: Figure out all non-atomic structs
-                        if (_Buffer.Version < VAtomicStructs) switch (structPropertyType)
+                        if (_Buffer.Version < (uint)PackageObjectLegacyVersion.FastSerializeStructs)
                         {
-                            case PropertyType.Matrix:
-                            case PropertyType.Box:
-                            case PropertyType.Plane:
-                                goto nonAtomic;
+                            switch (structPropertyType)
+                            {
+                                case PropertyType.Quat:
+                                case PropertyType.Scale: // not available in UE3
+                                case PropertyType.Matrix:
+                                case PropertyType.Box:
+                                case PropertyType.Plane:
+                                    goto nonAtomic;
+
+                                // None of these exist in older packages (UE2 or older). 
+                                case PropertyType.LinearColor:
+                                case PropertyType.Vector2D:
+                                case PropertyType.Vector4:
+                                    goto nonAtomic;
+                            }
                         }
-                        else switch (structPropertyType)
+                        else
                         {
-                            // Deprecated in UDK
-                            case PropertyType.PointRegion:
-                                goto nonAtomic;
+                            switch (structPropertyType)
+                            {
+                                //case PropertyType.Coords:
+                                //case PropertyType.Range:
+                                // Deprecated in UDK
+                                case PropertyType.PointRegion:
+                                    goto nonAtomic;
+                            }
                         }
 
                         propertyValue += DeserializeDefaultPropertyValue(structPropertyType, ref deserializeFlags);

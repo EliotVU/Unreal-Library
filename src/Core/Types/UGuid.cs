@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace UELib.Core
 {
     /// <summary>
-    /// Implements FGuid/UObject.Guid
+    ///     Implements FGuid/UObject.Guid
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct UGuid : IUnrealSerializableClass, IUnrealAtomicStruct
@@ -52,7 +52,7 @@ namespace UELib.Core
 
         public override string ToString()
         {
-            return ((Guid)this).ToString();
+            return $"{A:X8}{B:X8}{C:X8}{D:X8}";
         }
     }
 }

@@ -3,13 +3,13 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Implements FColor/UObject.Color
+    ///     Implements FColor/UObject.Color
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct UColor : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         // The order may change based on compile-time constants.
-        
+
         // <Intel-byte-order Win32 x86>
         public byte B, G, R, A;     // UE2, UE3
         //public byte R, G, B, A;   // UE1
@@ -28,7 +28,7 @@ namespace UELib.Core
             R = r;
             A = a;
         }
-        
+
         // FIXME: RGBA UE1, UE2, UE3..
         // Always packed as one Int32 (order BGRA for Intel-byte-order) if serialized in bulk, and non bulk for later UE3 builds.
         // Packed as RGBA for UE1 unless not build intel-byte-order.

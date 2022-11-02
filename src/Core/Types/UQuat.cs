@@ -4,21 +4,14 @@ using System.Runtime.InteropServices;
 namespace UELib.Core
 {
     /// <summary>
-    ///     Implements FPlane/UObject.Plane
-    ///     Extends Vector, but we can't do this in C#
+    ///     Implements FQuat/UObject.Quat
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UPlane : IUnrealSerializableClass, IUnrealAtomicStruct
+    public struct UQuat : IUnrealSerializableClass, IUnrealAtomicStruct
     {
-        /// <summary>
-        ///     It's important to retain W as the first field, because in Unreal FPlane extends FVector.
-        ///     A necessary evil for proper Marshalling of the type.
-        /// </summary>
-        public float W;
+        public float X, Y, Z, W;
 
-        public float X, Y, Z;
-
-        public UPlane(float x, float y, float z, float w)
+        public UQuat(float x, float y, float z, float w)
         {
             X = x;
             Y = y;
@@ -26,7 +19,7 @@ namespace UELib.Core
             W = w;
         }
 
-        public UPlane(ref UVector v, float w)
+        public UQuat(ref UVector v, float w)
         {
             X = v.X;
             Y = v.Y;
@@ -50,19 +43,19 @@ namespace UELib.Core
             stream.Write(W);
         }
 
-        public static unsafe explicit operator Plane(UPlane u)
+        public static unsafe explicit operator Quaternion(UQuat u)
         {
-            return *(Plane*)&u;
+            return *(Quaternion*)&u;
         }
 
-        public static unsafe explicit operator UPlane(Plane m)
+        public static unsafe explicit operator UQuat(Quaternion m)
         {
-            return *(UPlane*)&m;
+            return *(UQuat*)&m;
         }
 
         public override int GetHashCode()
         {
-            return ((Plane)this).GetHashCode();
+            return ((Quaternion)this).GetHashCode();
         }
     }
 }

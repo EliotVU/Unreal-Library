@@ -4,18 +4,19 @@ using System.Runtime.InteropServices;
 namespace UELib.Core
 {
     /// <summary>
-    ///     Implements FVector/UObject.Vector
+    ///     Implements FVector4/UObject.Vector4
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UVector : IUnrealSerializableClass, IUnrealAtomicStruct
+    public struct UVector4 : IUnrealSerializableClass, IUnrealAtomicStruct
     {
-        public float X, Y, Z;
+        public float X, Y, Z, W;
 
-        public UVector(float x, float y, float z)
+        public UVector4(float x, float y, float z, float w)
         {
             X = x;
             Y = y;
             Z = z;
+            W = w;
         }
 
         public void Deserialize(IUnrealStream stream)
@@ -23,6 +24,7 @@ namespace UELib.Core
             stream.Read(out X);
             stream.Read(out Y);
             stream.Read(out Z);
+            stream.Read(out W);
         }
 
         public void Serialize(IUnrealStream stream)
@@ -30,26 +32,22 @@ namespace UELib.Core
             stream.Write(X);
             stream.Write(Y);
             stream.Write(Z);
+            stream.Write(W);
         }
 
-        public static unsafe explicit operator Vector3(UVector u)
+        public static unsafe explicit operator Vector4(UVector4 u)
         {
-            return *(Vector3*)&u;
+            return *(Vector4*)&u;
         }
 
-        public static unsafe explicit operator UVector(Vector3 m)
+        public static unsafe explicit operator UVector4(Vector4 m)
         {
-            return *(UVector*)&m;
+            return *(UVector4*)&m;
         }
 
         public override int GetHashCode()
         {
-            return ((Vector3)this).GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return $"vect({X:F},{Y:F},{Z:F})";
+            return ((Vector4)this).GetHashCode();
         }
     }
 }
