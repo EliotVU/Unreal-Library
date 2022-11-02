@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\Eliot.UELib.csproj" />
-    <ProjectReference Include="..\Test\Eliot.UELib.Test.csproj" />
   </ItemGroup>
 
 </Project>

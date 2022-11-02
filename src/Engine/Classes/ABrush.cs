@@ -3,7 +3,7 @@
 namespace UELib.Engine
 {
     /// <summary>
-    /// Implements ABrush/Engine.Brush
+    ///     Implements ABrush/Engine.Brush
     /// </summary>
     [Output("Brush")]
     [UnrealRegisterClass]

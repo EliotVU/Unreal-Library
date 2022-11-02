@@ -44,8 +44,8 @@ namespace UELib.Core
         /// </summary>
         [CanBeNull]
         [Output(OutputSlot.Parameter)]
-        public UObject Class => ExportTable != null 
-            ? Package.GetIndexObject(ExportTable.ClassIndex) 
+        public UObject Class => ExportTable != null
+            ? Package.GetIndexObject(ExportTable.ClassIndex)
             : null;
 
         /// <summary>
@@ -57,8 +57,8 @@ namespace UELib.Core
         /// <summary>
         /// The object's index represented as a table index.
         /// </summary>
-        private int _ObjectIndex => Table is UExportTableItem 
-            ? Table.Index + 1 
+        private int _ObjectIndex => Table is UExportTableItem
+            ? Table.Index + 1
             : -(Table.Index + 1);
 
         /// <summary>
@@ -66,8 +66,7 @@ namespace UELib.Core
         /// </summary>
         private ulong _ObjectFlags => ExportTable?.ObjectFlags ?? 0;
 
-        [Output(OutputSlot.Parameter)]
-        public string Name => Table.ObjectName;
+        [Output(OutputSlot.Parameter)] public string Name => Table.ObjectName;
 
         #region Serialized Members
 
@@ -78,6 +77,8 @@ namespace UELib.Core
         /// </summary>
         public UObjectStream Buffer => _Buffer;
 
+        public int NetIndex = -1;
+        
         [CanBeNull] public UObject Default { get; protected set; }
 
         /// <summary>
@@ -230,6 +231,7 @@ namespace UELib.Core
             }
         }
 #endif
+
         /// <summary>
         /// Deserialize this object's structure from the _Buffer stream.
         /// </summary>
@@ -276,19 +278,12 @@ namespace UELib.Core
             if (_Buffer.Version >= UExportTableItem.VNetObjects &&
                 _Buffer.UE4Version < 196)
             {
-                int netIndex = _Buffer.ReadInt32();
-                Record(nameof(netIndex), netIndex);
+                _Buffer.Read(out NetIndex);
+                Record(nameof(NetIndex), NetIndex);
             }
-            skipNetIndex:
 
-            // TODO: Serialize component data here
-            //if( _Buffer.Version > 400
-            //    && HasObjectFlag( Flags.ObjectFlagsHO.PropertiesObject )
-            //    && HasObjectFlag( Flags.ObjectFlagsHO.ArchetypeObject ) )
-            //{
-            //    var componentClass = _Buffer.ReadObjectIndex();
-            //    var componentName = _Buffer.ReadNameIndex();
-            //}
+        skipNetIndex:
+
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
             if (Package.Build == BuildGeneration.Flesh && GetType() != typeof(UnknownObject))
@@ -349,7 +344,7 @@ namespace UELib.Core
             }
         }
 
-#endregion
+        #endregion
 
         /// <summary>
         /// Checks if the object contains the specified @flag or one of the specified flags.
@@ -450,8 +445,8 @@ namespace UELib.Core
         [Obsolete("To be deprecated")]
         public string GetClassName()
         {
-            return ImportTable != null 
-                ? ImportTable.ClassName 
+            return ImportTable != null
+                ? ImportTable.ClassName
                 : Class?.Name ?? "Class";
         }
 
@@ -473,7 +468,7 @@ namespace UELib.Core
             return Package.GetIndexObject(index);
         }
 
-#region IBuffered
+        #region IBuffered
 
         public virtual byte[] CopyBuffer()
         {
@@ -521,11 +516,11 @@ namespace UELib.Core
         public string GetBufferId(bool fullName = false)
         {
             return fullName
-                ? Package.PackageName + "." + GetOuterGroup() + "." + GetClassName()
-                : GetOuterGroup() + "." + GetClassName();
+                ? $"{Package.PackageName}.{GetPath()}.{GetClassName()}"
+                : $"{GetPath()}.{GetClassName()}";
         }
 
-#endregion
+        #endregion
 
         /// <summary>
         /// TODO: Move this feature into a stream.
@@ -609,7 +604,7 @@ namespace UELib.Core
         {
             return visitor.Visit(this);
         }
-        
+
         public static explicit operator int(UObject obj)
         {
             return obj?._ObjectIndex ?? 0;
@@ -628,7 +623,7 @@ namespace UELib.Core
         {
             return Outer?.Name;
         }
-        
+
         [Obsolete("Pending deprecation")]
         public virtual void PostInitialize()
         {

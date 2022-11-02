@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
 using BenchmarkDotNet.Attributes;
-using Eliot.UELib.Test;
 using UELib;
 
 namespace Eliot.UELib.Benchmark
@@ -9,11 +8,11 @@ namespace Eliot.UELib.Benchmark
     public class UnrealPackageBenchmark
     {
         private readonly string _TempFilePath;
-        private UnrealPackage _Linker;
+        private readonly UnrealPackage _Linker;
 
         public UnrealPackageBenchmark()
         {
-            byte[] testFileBytes = Packages.TestUC2;
+            byte[] testFileBytes = { };
             _TempFilePath = Path.Join(Assembly.GetExecutingAssembly().Location, "../test.u");
             // Workaround due the enforced use of UnrealLoader's UPackageStream
             File.WriteAllBytes(_TempFilePath, testFileBytes);

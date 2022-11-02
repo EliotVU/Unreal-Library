@@ -1071,7 +1071,7 @@ namespace UELib
                 {
 #endif
                     int generationCount = stream.ReadInt32();
-                    Contract.Assert(generationCount > 0);
+                    Contract.Assert(generationCount >= 0);
                     Console.WriteLine("Generations Count:" + generationCount);
 #if APB
                     // Guid, however only serialized for the first generation item.

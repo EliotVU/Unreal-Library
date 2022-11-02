@@ -1,38 +1,49 @@
 ﻿using System.IO;
-using UELib;
 using BenchmarkDotNet.Attributes;
+using UELib;
 using UELib.Core;
 
 namespace Eliot.UELib.Benchmark
 {
     public class UnrealStreamBenchmark
     {
-        private IUnrealStream _Stream;
+        private readonly IUnrealStream _Stream;
+        private UColor _Color;
 
         public UnrealStreamBenchmark()
         {
-            // B, G, R, A;
-            var structBuffer = new byte[] { 255, 128, 64, 80 };
-            var baseStream = new MemoryStream(structBuffer);
+            _Color = new UColor(128, 64, 32, 0);
+
+            var baseStream = new MemoryStream(new byte[4]);
             _Stream = new UnrealTestStream(null, baseStream);
         }
 
         [Benchmark]
-        public void ReadStruct()
+        public void WriteColor()
         {
-            var stream = _Stream;
-            stream.Seek(0, SeekOrigin.Begin);
-            stream.ReadStruct(out UColor color);
+            _Stream.Position = 0;
+            _Stream.WriteStruct(ref _Color);
         }
-        /// <summary>
-        /// Verify that ReadAtomicStruct is indeed performing its purpose :)
-        /// </summary>
+
         [Benchmark]
-        public void ReadAtomicStruct()
+        public void ReadColor()
         {
-            var stream = _Stream;
-            stream.Seek(0, SeekOrigin.Begin);
-            stream.ReadAtomicStruct(out UColor color);
+            _Stream.Position = 0;
+            _Stream.ReadStruct(out _Color);
+        }
+
+        [Benchmark]
+        public void WriteColorMarshal()
+        {
+            _Stream.Position = 0;
+            _Stream.WriteAtomicStruct(ref _Color);
+        }
+
+        [Benchmark]
+        public void ReadColorMarshal()
+        {
+            _Stream.Position = 0;
+            _Stream.ReadAtomicStruct(out _Color);
         }
     }
 }
