@@ -611,9 +611,18 @@ namespace UELib.Core
                     string delegateName = _Buffer.ReadName();
                     Record(nameof(delegateName), delegateName);
 
-                    // Strip __%delegateName%__Delegate
-                    string normalizedDelegateName = ((string)Name).Substring(2, Name.Length - 12);
-                    propertyValue = $"{normalizedDelegateName}={delegateName}";
+                    // Re-point the compiler-generated delegate property to the actual delegate function's name
+                    // e.g. __%delegateName%__Delegate -> %delegateName%
+                    if (delegateName.EndsWith("__Delegate"))
+                    {
+                        string normalizedDelegateName = ((string)Name).Substring(2, Name.Length - 12);
+                        propertyValue = $"{normalizedDelegateName}={delegateName}";
+                    }
+                    else
+                    {
+                        propertyValue += delegateName;
+                    }
+
                     break;
                 }
 
