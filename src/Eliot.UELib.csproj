@@ -125,8 +125,10 @@
     <Compile Include="Branch\UE3\MOH\EngineBranch.MOH.cs" />
     <Compile Include="Branch\UE3\RSS\EngineBranch.RSS.cs" />
     <Compile Include="Branch\UE3\RSS\Tokens\NameConstNoNumberToken.cs" />
+    <Compile Include="Engine\Classes\UActorComponent.cs" />
     <Compile Include="Engine\Classes\UMaterial.cs" />
     <Compile Include="Engine\Classes\UMaterialInterface.cs" />
+    <Compile Include="Engine\Classes\UPrimitiveComponent.cs" />
     <Compile Include="Core\Tokens\TokenFactory.cs" />
     <Compile Include="Core\Tokens\TokenMap.cs" />
     <Compile Include="Branch\UE3\DD2\EngineBranch.DD2.cs" />

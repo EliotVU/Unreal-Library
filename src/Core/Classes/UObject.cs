@@ -254,6 +254,18 @@ namespace UELib.Core
             {
                 _Buffer.ReadClass(out StateFrame);
             }
+
+            if (_Buffer.Version >= 220 && this is UComponent component)
+            {
+                _Buffer.Read(out component.TemplateOwnerClass);
+                Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
+                if (EnumerateOuter().Any(obj => obj.HasObjectFlag(ObjectFlagsHO.PropertiesObject)))
+                {
+                    _Buffer.Read(out component.TemplateName);
+                    Record(nameof(component.TemplateName), component.TemplateName);
+                }
+            }
+
 #if MKKE || BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
                 Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
