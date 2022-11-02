@@ -69,7 +69,6 @@ namespace UELib.Branch
             /// <summary>
             /// The package is encrypted.
             /// <= UT
-            /// Also attested in file UT2004/Packages.MD5 but it is not encrypted.
             /// </summary>
             Encrypted = 0x00000020U
         }
@@ -77,6 +76,8 @@ namespace UELib.Branch
         [Flags]
         public enum PackageFlagsUE2 : uint
         {
+            // UE2.5
+            Official = 0x00000020U,
         }
 
         [Flags]
@@ -140,7 +141,10 @@ namespace UELib.Branch
             if (linker.Version > 61 && linker.Version <= 69) // <= UT99
                 PackageFlags[(int)Flags.PackageFlags.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
 #endif
-
+#if UE2
+            if( linker.Build == BuildGeneration.UE2_5)
+                PackageFlags[(int)Flags.PackageFlags.Official] = (uint)PackageFlagsUE2.Official;
+#endif
 #if UE3
             // Map the new PackageFlags, but the version is nothing but a guess!
             if (linker.Version >= 180)
@@ -281,13 +285,19 @@ namespace UELib.Branch
                 },
 
                 // Added with UE2 (FIXME: version)
+                // FIXME: Bad expr in GoW
                 { 0x3B, typeof(DelegateCmpEqToken) },
+                // FIXME: Bad expr in GoW
                 { 0x3C, typeof(DelegateCmpNeToken) },
+                // FIXME: Bad expr in GoW
                 { 0x3D, typeof(DelegateFunctionCmpEqToken) },
+                // FIXME: Bad expr in GoW
                 { 0x3E, typeof(DelegateFunctionCmpNeToken) },
+                // FIXME: Bad expr in GoW
                 { 0x3F, typeof(EmptyDelegateToken) },
                 
                 { 0x40, typeof(BadToken) },
+                // FIXME: Valid in GoW, no bytes
                 { 0x41, typeof(BadToken) },
                 { 0x42, typeof(BadToken) },
                 { 0x43, typeof(BadToken) },
@@ -427,7 +437,9 @@ namespace UELib.Branch
             tokenMap[0x47] = typeof(DynamicArrayFindStructToken);
             tokenMap[0x48] = typeof(OutVariableToken);
             tokenMap[0x49] = typeof(DefaultParameterToken);
+            // FIXME: added post GoW
             tokenMap[0x4A] = typeof(EmptyParmToken);
+            // FIXME: added post GoW
             tokenMap[0x4B] = typeof(InstanceDelegateToken);
             //tokenMap[0x50] = typeof(BadToken);
             // Attested in GoW
@@ -441,6 +453,7 @@ namespace UELib.Branch
             tokenMap[0x56] = typeof(DynamicArrayRemoveItemToken);
             tokenMap[0x57] = typeof(DynamicArrayInsertItemToken);
             tokenMap[0x58] = typeof(DynamicArrayIteratorToken);
+            // FIXME: added post GoW
             tokenMap[0x59] = typeof(DynamicArraySortToken);
 
             // Added with a late UDK build.

@@ -86,6 +86,8 @@ namespace UELib.Flags
         /// </summary>
         Encrypted,
         
+        Official,
+        
         Cooked,
 #if UE3
         ContainsMap,
