@@ -19,7 +19,7 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        public ushort ArrayDim { get; private set; }
+        public int ArrayDim { get; private set; }
 
         public ushort ElementSize { get; private set; }
 
@@ -36,7 +36,7 @@ namespace UELib.Core
         [CanBeNull] public UEnum ArrayEnum { get; private set; }
 
         [CanBeNull] public UName RepNotifyFuncName;
-        
+
         public ushort RepOffset { get; private set; }
 
         public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
@@ -72,56 +72,51 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-#if XIII
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII)
+#if XIII || DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                ArrayDim = _Buffer.ReadUShort();
-                Record("ArrayDim", ArrayDim);
-                goto skipInfo;
+                ArrayDim = _Buffer.ReadInt16();
+                Record(nameof(ArrayDim), ArrayDim);
+                goto skipArrayDim;
             }
 #endif
+            ArrayDim = _Buffer.ReadInt32();
+            Record(nameof(ArrayDim), ArrayDim);
+            ElementSize = (ushort)(ArrayDim >> 16);
+        skipArrayDim:
+            // Just to verify if this is in use at all.
+            Debug.Assert(ElementSize == 0, $"ElementSize: {ElementSize}");
+            // 2048 is the max allowed dimension in the UnrealScript compiler, however some licensees have extended this to a much higher size.
+            //Debug.Assert(
+            //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
+            //    $"Bad array dimension {ArrayDim & 0x0000FFFFU} for property ${GetReferencePath()}");
 #if AA2
-            if (Package.Build == BuildGeneration.AGP && Package.LicenseeVersion > 7)
+            if (Package.Build == BuildGeneration.AGP &&
+                _Buffer.LicenseeVersion > 7)
             {
                 // Always 26125 (hardcoded in the assembly) 
-                uint unknown = _Buffer.ReadUInt32();
-                Record("Unknown:AA2", unknown);
+                uint aa2FixedPack = _Buffer.ReadUInt32();
+                Record(nameof(aa2FixedPack), aa2FixedPack);
             }
 #endif
-#if DNF
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
-            {
-                ArrayDim = _Buffer.ReadUInt16();
-                Record("ArrayDim", ArrayDim);
-                Debug.Assert(ArrayDim <= 2048, "Bad array dim");
-                // No serialized element size?
-                goto skipInfo;
-            }
-#endif
-            int info = _Buffer.ReadInt32();
-            Record("ArrayDim&ElementSize", info);
-            ArrayDim = (ushort)(info & 0x0000FFFFU);
-            Debug.Assert(ArrayDim <= 2048, "Bad array dim");
-            ElementSize = (ushort)(info >> 16);
-        skipInfo:
-
             PropertyFlags = Package.Version >= 220
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
-            Record("PropertyFlags", PropertyFlags);
+            Record(nameof(PropertyFlags), PropertyFlags);
 #if BATMAN
             if (Package.Build == BuildGeneration.RSS &&
                 _Buffer.LicenseeVersion >= 101)
             {
                 PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
-                Record("PropertyFlags", (PropertyFlagsLO)PropertyFlags);
+                Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
             }
 #endif
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {
                 ConfigName = _Buffer.ReadNameReference();
-                Record("ConfigName", ConfigName);
+                Record(nameof(ConfigName), ConfigName);
             }
 #endif
 #if THIEF_DS || DEUSEX_IW
@@ -202,16 +197,16 @@ namespace UELib.Core
             // Appears to be a UE2.5 feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
             if ((HasPropertyFlag(PropertyFlagsLO.EditorData) &&
-                 (Package.Build == BuildGeneration.UE2_5 
+                 (Package.Build == BuildGeneration.UE2_5
                   || Package.Build == BuildGeneration.AGP
                   || Package.Build == BuildGeneration.Flesh))
                 // No property flag
                 || Package.Build == BuildGeneration.Vengeance
 #if LSGAME
-                || (Package.Build == UnrealPackage.GameBuild.BuildName.LSGame && 
+                || (Package.Build == UnrealPackage.GameBuild.BuildName.LSGame &&
                     Package.LicenseeVersion >= 3)
 #endif
-                )
+               )
             {
                 // May represent a tooltip/comment in some games. Usually in the form of a quoted string, sometimes as a double-flash comment or both.
                 EditorDataText = _Buffer.ReadText();
@@ -252,11 +247,12 @@ namespace UELib.Core
         #endregion
 
         #region Methods
+
         public bool HasPropertyFlag(uint flag)
         {
             return ((uint)PropertyFlags & flag) != 0;
         }
-        
+
         public bool HasPropertyFlag(PropertyFlagsLO flag)
         {
             return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;
