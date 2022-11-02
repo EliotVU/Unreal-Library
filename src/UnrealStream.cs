@@ -945,7 +945,11 @@ namespace UELib
 #if BINARYMETADATA
             long position = stream.Position;
 #endif
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.LazyArrayAdded)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset)
+            {
+                int skipCount = stream.ReadIndex();
+            }
+            else
             {
                 int skipOffset = stream.ReadInt32();
             }
@@ -1249,6 +1253,32 @@ namespace UELib
             foreach (var element in array)
             {
                 element.Serialize(stream);
+            }
+        }
+
+        public static void WriteLazyArray(this IUnrealStream stream, ref byte[] array)
+        {
+            Debug.Assert(array != null);
+            if (stream.Version < (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset)
+            {
+                stream.WriteIndex(array.Length);
+                WriteIndex(stream, array.Length);
+                Write(stream, array, 0, array.Length);
+            }
+            else // skip using an absolute offset
+            {
+                var p = stream.Position;
+                Write(stream, 0);
+
+                WriteIndex(stream, array.Length);
+                Write(stream, array, 0, array.Length);
+
+                // We could easily predict the skip offset for byte arrays,
+                // but at some point we'll have to implement this for non-1byte arrays.
+                var p2 = stream.Position;
+                stream.Position = p;
+                Write(stream, (int)p2);
+                stream.Position = p2;
             }
         }
 

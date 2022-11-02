@@ -10,7 +10,7 @@ namespace UELib.Branch
         ReturnExpressionAddedToReturnToken = 62,
 
         SphereExtendsPlane = 62,
-        LazyArrayAdded = 63,
+        LazyArraySkipCountToSkipOffset = 62,
 
         CharRemapAddedToUFont = 69,
 
