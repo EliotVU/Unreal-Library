@@ -36,4 +36,30 @@ namespace UELib.Branch
             EngineVersion = engineVersion;
         }
     }
+
+
+    /// <summary>
+    /// Not yet usable.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field)]
+    public class BuildGenerationRangeAttribute : Attribute
+    {
+        public readonly BuildGeneration MinGeneration, MaxGeneration;
+        public readonly int MinEngineVersion = -1, MaxEngineVersion = -1;
+
+        public BuildGenerationRangeAttribute(BuildGeneration minGeneration, BuildGeneration maxGeneration)
+        {
+            MinGeneration = minGeneration;
+            MaxGeneration = maxGeneration;
+        }
+
+        public BuildGenerationRangeAttribute(BuildGeneration minGeneration, int minEngineVersion, int maxEngineVersion, BuildGeneration maxGeneration)
+        {
+            MinGeneration = minGeneration;
+            MaxGeneration = maxGeneration;
+
+            MinEngineVersion = minEngineVersion;
+            MaxEngineVersion = maxEngineVersion;
+        }
+    }
 }

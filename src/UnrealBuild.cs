@@ -18,6 +18,11 @@ namespace UELib
         UE1,
 
         /// <summary>
+        /// Modified version for Harry Potter's Unreal Engine 1
+        /// </summary>
+        HP,
+        
+        /// <summary>
         /// Unreal Engine 2
         /// 
         /// Not in use yet.

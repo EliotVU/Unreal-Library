@@ -1,12 +1,14 @@
 using System.Collections.Generic;
+using UELib.Branch;
 
 namespace UELib.Core
 {
     /// <summary>
-    /// Implements USound/Engine.Sound
+    ///     Implements USound/Engine.Sound
     /// </summary>
     [UnrealRegisterClass]
-    public class USound : UObject, IUnrealViewable, IUnrealExportable
+    [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)] // Re-branded in UE3 to USoundNodeWave
+    public class USound : UObject, IUnrealExportable
     {
         #region Serialized Members
 
@@ -31,7 +33,7 @@ namespace UELib.Core
 
         public bool CanExport()
         {
-            return Package.Version >= 61 && Package.Version <= 129;
+            return Data?.Length != 0;
         }
 
         public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
@@ -45,6 +47,35 @@ namespace UELib.Core
 
             FileType = _Buffer.ReadNameReference();
             Record(nameof(FileType), FileType);
+#if HP
+            if (Package.Build == BuildGeneration.HP)
+            {
+                _Buffer.Read(out uint flags);
+                Record(nameof(flags), flags);
+                _Buffer.Read(out float duration);
+                Record(nameof(duration), duration);
+
+                if (_Buffer.Version >= 77)
+                {
+                    _Buffer.Read(out int numSamples);
+                    Record(nameof(numSamples), numSamples);
+                }
+
+                if (_Buffer.Version >= 78)
+                {
+                    _Buffer.Read(out int bitsPerSample);
+                    Record(nameof(bitsPerSample), bitsPerSample);
+                    _Buffer.Read(out int numChannels);
+                    Record(nameof(numChannels), numChannels);
+                }
+
+                if (_Buffer.Version >= 79)
+                {
+                    _Buffer.Read(out int sampleRate);
+                    Record(nameof(sampleRate), sampleRate);
+                }
+            }
+#endif
 #if UNDYING
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying)
             {
