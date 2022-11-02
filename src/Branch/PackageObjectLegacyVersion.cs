@@ -20,6 +20,8 @@ namespace UELib.Branch
         CastStringSizeTokenDeprecated = 70,
         
         PanUVRemovedFromPoly = 78,
+        
+        CompMipsDeprecated = 84,
 
         /// <summary>
         /// FIXME: Version, set 95 (Deus Ex: IW)

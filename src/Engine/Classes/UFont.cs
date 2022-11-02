@@ -4,10 +4,10 @@ using UELib.Core;
 namespace UELib.Engine
 {
     /// <summary>
-    /// Implements UFont:Engine.Font
+    ///     Implements UFont/Engine.Font
     /// </summary>
     [UnrealRegisterClass]
-    public class UFont : UObject, IUnrealViewable
+    public class UFont : UObject
     {
         public UArray<FontCharacter> Characters;
         public UArray<UObject> Textures;
@@ -82,8 +82,7 @@ namespace UELib.Engine
                 _Buffer.Read(out IsRemapped);
                 Record(nameof(IsRemapped), IsRemapped);
 
-                //if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP &&
-                //    _Buffer.LicenseeVersion > 0)
+                //if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
                 //{
                 //    _Buffer.Read(out int xPad);
                 //    _Buffer.Read(out int yPad);

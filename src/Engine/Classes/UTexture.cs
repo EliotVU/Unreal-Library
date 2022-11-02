@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using UELib.Branch;
 using UELib.Engine;
 
 namespace UELib.Core
 {
     /// <summary>
-    /// Implements UTexture/Engine.Texture
+    ///     Implements UTexture/Engine.Texture
     /// </summary>
     [UnrealRegisterClass]
-    public class UTexture : UBitmapMaterial, IUnrealViewable
+    public class UTexture : UBitmapMaterial
     {
         public UArray<MipMap> Mips;
         public bool HasComp;
@@ -22,18 +23,22 @@ namespace UELib.Core
                 throw new NotSupportedException("UTexture is not supported for this build");
             }
 
-            _Buffer.ReadArray(out Mips);
-            Record(nameof(Mips), Mips);
-
-            var bHasCompProperty = Properties.Find("bHasComp");
-            if (bHasCompProperty != null)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.CompMipsDeprecated)
             {
-                HasComp = bool.Parse(bHasCompProperty.Value);
-                if (HasComp)
+                var bHasCompProperty = Properties.Find("bHasComp");
+                if (bHasCompProperty != null)
                 {
-                    throw new NotSupportedException("UTexture of this kind is not supported");
+                    HasComp = bool.Parse(bHasCompProperty.Value);
+                    if (HasComp)
+                    {
+                        _Buffer.ReadArray(out UArray<MipMap> oldMips);
+                        Record(nameof(oldMips), oldMips);
+                    }
                 }
             }
+
+            _Buffer.ReadArray(out Mips);
+            Record(nameof(Mips), Mips);
         }
 
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
@@ -48,15 +53,19 @@ namespace UELib.Core
             public void Deserialize(IUnrealStream stream)
             {
                 stream.ReadLazyArray(out Data);
-                USize = stream.ReadInt32();
-                VSize = stream.ReadInt32();
-                UBits = stream.ReadByte();
-                VBits = stream.ReadByte();
+                stream.Read(out USize);
+                stream.Read(out VSize);
+                stream.Read(out UBits);
+                stream.Read(out VBits);
             }
 
             public void Serialize(IUnrealStream stream)
             {
-                throw new NotImplementedException();
+                stream.WriteLazyArray(ref Data);
+                stream.Write(USize);
+                stream.Write(VSize);
+                stream.Write(UBits);
+                stream.Write(VBits);
             }
         }
     }

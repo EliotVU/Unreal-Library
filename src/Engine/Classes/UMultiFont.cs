@@ -4,7 +4,7 @@ using UELib.Core;
 namespace UELib.Engine
 {
     /// <summary>
-    /// Represents the UMultiFont:Engine.MultiFont
+    ///     Implements UMultiFont/Engine.MultiFont
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]

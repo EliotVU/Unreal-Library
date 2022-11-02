@@ -5,7 +5,7 @@ using UELib.Core;
 namespace UELib.Engine
 {
     /// <summary>
-    /// Implements UPalette/Engine.Palette
+    ///     Implements UPalette/Engine.Palette
     /// </summary>
     [UnrealRegisterClass]
     public class UPalette : UObject, IUnrealViewable
@@ -30,7 +30,8 @@ namespace UELib.Engine
             // This could be a lot faster with a fixed array, but it's not a significant class of interest.
             int count = _Buffer.ReadIndex();
             Debug.Assert(count == 256);
-            _Buffer.ReadMarshalArray(out Colors, count);
+            _Buffer.ReadArray(out Colors, count);
+            Record(nameof(Colors), Colors);
 #if UNDYING
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying &&
                 _Buffer.Version >= 75)
