@@ -183,6 +183,9 @@
     <Compile Include="Core\Types\UScale.cs" />
     <Compile Include="Core\Types\USphere.cs" />
     <Compile Include="Engine\Classes\UMultiFont.cs" />
+    <Compile Include="Engine\Classes\UProcBuildingRuleset.cs" />
+    <Compile Include="Engine\Types\LightingChannelContainer.cs" />
+    <Compile Include="Engine\Types\LightmassPrimitiveSettings.cs" />
     <Compile Include="ObjectModel\Annotations\OutputAttribute.cs" />
     <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
@@ -194,6 +197,7 @@
     <Compile Include="Engine\Classes\AActor.cs" />
     <Compile Include="Engine\Classes\UBitmapMaterial.cs" />
     <Compile Include="Engine\Classes\ABrush.cs" />
+    <Compile Include="Engine\Classes\UPolys.cs" />
     <Compile Include="Engine\Classes\UPalette.cs" />
     <Compile Include="Decoding\IBufferDecoder.cs" />
     <Compile Include="Branch\UE2\AA2\EngineBranch.AA2.cs" />
@@ -204,6 +208,7 @@
     <Compile Include="Engine\Classes\UModel.cs" />
     <Compile Include="Engine\Classes\UTexture.cs" />
     <Compile Include="Engine\Classes\USound.cs" />
+    <Compile Include="Engine\Types\Poly.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Branch\UE2\DNF\Tokens\IntConstWordToken.cs" />
     <Compile Include="Properties\Annotations.cs" />
