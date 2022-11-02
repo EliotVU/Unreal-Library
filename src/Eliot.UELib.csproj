@@ -189,6 +189,7 @@
     <Compile Include="Engine\Classes\UMultiFont.cs" />
     <Compile Include="Engine\Classes\UProcBuildingRuleset.cs" />
     <Compile Include="Engine\Classes\URenderedMaterial.cs" />
+    <Compile Include="Engine\Classes\USoundGroup.cs" />
     <Compile Include="Engine\Classes\USurface.cs" />
     <Compile Include="Engine\Types\LightingChannelContainer.cs" />
     <Compile Include="Engine\Types\LightmassPrimitiveSettings.cs" />
