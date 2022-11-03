@@ -138,6 +138,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Bioshock Infinite | 6829 | 727/075 |     |
 | Bulletstorm | 7052 | 742/029 | |
 | Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | |
+| Rising Storm 2: Vietnam | 7258 | 765/771 | |
 | Aliens: Colonial Marines | 4170 | 787/047 | |
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
 | Tribes: Ascend | 7748 | 805/Unknown |     |
@@ -179,7 +180,6 @@ This is a table of games that are confirmed to be compatible with the current st
 | Outlast | 12046 | Unknown |     |
 | Sherlock Holmes: Crimes and Punishments | 10897 | Unknown | |
 | Alien Rage | 7255 | Unknown |     |
-| Rising Storm 2: Vietnam | 7258 | Unknown | |
 
 **Beware, opening an unsupported package could crash your system! Make sure you have
 saved everything before opening any file!**
