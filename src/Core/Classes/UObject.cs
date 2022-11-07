@@ -171,16 +171,15 @@ namespace UELib.Core
 
         private void InitBuffer()
         {
-            //Console.WriteLine( "Init buffer for {0}", (string)this );
-            var buff = new byte[ExportTable.SerialSize];
             Package.Stream.Seek(ExportTable.SerialOffset, SeekOrigin.Begin);
-            Package.Stream.Read(buff, 0, ExportTable.SerialSize);
-            if (Package.Stream.BigEndianCode)
-            {
-                Array.Reverse(buff);
-            }
+            
+            //Console.WriteLine( "Init buffer for {0}", (string)this );
+            var buffer = new byte[ExportTable.SerialSize];
+            _Buffer = new UObjectStream(Package.Stream, buffer);
 
-            _Buffer = new UObjectStream(Package.Stream, buff);
+            // Bypass the terrible and slow endian reverse call
+            int read = Package.Stream.EndianAgnosticRead(buffer, 0, ExportTable.SerialSize);
+            Debug.Assert(read == ExportTable.SerialSize);
         }
 
         internal void EnsureBuffer()

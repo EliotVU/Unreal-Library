@@ -74,6 +74,8 @@ namespace UELib
         // Stream
         long Length { get; }
         long Position { get; set; }
+        // HACK: To be deprecated, but for now we need this to help us retrieve the absolute position when serializing within an UObject's buffer.
+        long AbsolutePosition { get; set; }
         long LastPosition { get; set; }
         int Read(byte[] buffer, int index, int count);
         long Seek(long offset, SeekOrigin origin);
@@ -263,7 +265,7 @@ namespace UELib
             const byte isProceeded = 0x80; // 8th bit
             const byte proceededValue = 0xFF - isProceeded; // 7F
 
-            var index = 0;
+            int index = 0;
             byte b0 = ReadByte();
             if ((b0 & isIndiced) != 0)
             {
@@ -431,6 +433,12 @@ namespace UELib
         public UnrealReader UR { get; private set; }
         public UnrealWriter UW { get; private set; }
 
+        public long AbsolutePosition
+        {
+            get => Position;
+            set => Position = value;
+        }
+
         public long LastPosition { get; set; }
 
         public bool BigEndianCode { get; private set; }
@@ -463,7 +471,7 @@ namespace UELib
 
             var bytes = new byte[4];
             base.Read(bytes, 0, 4);
-            var readSignature = BitConverter.ToUInt32(bytes, 0);
+            uint readSignature = BitConverter.ToUInt32(bytes, 0);
             if (readSignature == UnrealPackage.Signature_BigEndian)
             {
                 Console.WriteLine("Encoding:BigEndian");
@@ -487,7 +495,13 @@ namespace UELib
             if (BigEndianCode && length > 1) Array.Reverse(buffer, 0, length);
             return length;
         }
-
+        
+        public int EndianAgnosticRead(byte[] buffer, int index, int count)
+        {
+            int length = base.Read(buffer, index, count);
+            return length;
+        }
+        
         public new byte ReadByte()
         {
 #if BINARYMETADATA
@@ -617,12 +631,21 @@ namespace UELib
         public UnrealWriter UW { get; private set; }
 
         private long _PeekStartPosition;
+        private readonly long _ObjectPositionInPackage;
+        public long AbsolutePosition
+        {
+            get => Position + _ObjectPositionInPackage;
+            set => Position = value - _ObjectPositionInPackage;
+        }
+
         public long LastPosition { get; set; }
 
         public bool BigEndianCode => Package.Stream.BigEndianCode;
 
         public UObjectStream(IUnrealStream stream)
         {
+            _ObjectPositionInPackage = stream.Position;
+            
             UW = null;
             UR = null;
             Package = stream.Package;
@@ -631,6 +654,8 @@ namespace UELib
 
         public UObjectStream(IUnrealStream str, byte[] buffer) : base(buffer, true)
         {
+            _ObjectPositionInPackage = str.Position;
+            
             UW = null;
             UR = null;
             Package = str.Package;
@@ -860,7 +885,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             array = new UArray<T>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 var element = new T();
                 element.Deserialize(stream);
@@ -878,7 +903,7 @@ namespace UELib
             long position = stream.Position;
 #endif
             array = new UArray<T>(count);
-            for (var i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 var element = new T();
                 element.Deserialize(stream);
@@ -893,10 +918,16 @@ namespace UELib
         public static void ReadStruct<T>(this IUnrealStream stream, out T item)
             where T : struct, IUnrealDeserializableClass
         {
+#if BINARYMETADATA
+            long position = stream.Position;
+#endif
             item = new T();
             item.Deserialize(stream);
+#if BINARYMETADATA
+            stream.LastPosition = position;
+#endif
         }
-        
+
         public static void ReadAtomicStruct<T>(this IUnrealStream stream, out T item)
             where T : struct, IUnrealAtomicStruct
         {
@@ -913,15 +944,21 @@ namespace UELib
                 handle.Free();
             }
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ReadClass<T>(this IUnrealStream stream, out T item)
             where T : class, IUnrealDeserializableClass, new()
         {
+#if BINARYMETADATA
+            long position = stream.Position;
+#endif
             item = new T();
             item.Deserialize(stream);
+#if BINARYMETADATA
+            stream.LastPosition = position;
+#endif
         }
-        
+
         // Can't seem to overload this :(
         public static void ReadMarshalArray<T>(this IUnrealStream stream, out UArray<T> array, int count)
             where T : struct, IUnrealAtomicStruct
@@ -932,7 +969,7 @@ namespace UELib
             var structType = typeof(T);
             int structSize = Marshal.SizeOf(structType);
             array = new UArray<T>(count);
-            for (var i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 var data = new byte[structSize];
                 stream.Read(data, 0, structSize);
@@ -975,7 +1012,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             array = new UArray<int>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 stream.Read(out int element);
                 array.Add(element);
@@ -992,7 +1029,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             array = new UArray<float>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 Read(stream, out float element);
                 array.Add(element);
@@ -1009,7 +1046,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             array = new UArray<string>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 string element = stream.ReadText();
                 array.Add(element);
@@ -1026,7 +1063,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             array = new UArray<UName>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 var element = stream.ReadNameReference();
                 array.Add(element);
@@ -1043,7 +1080,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             array = new UArray<UObject>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 var element = stream.ReadObject();
                 array.Add(element);
@@ -1059,7 +1096,7 @@ namespace UELib
             long position = stream.Position;
 #endif
             array = new UArray<UObject>(count);
-            for (var i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 var element = stream.ReadObject();
                 array.Add(element);
@@ -1076,7 +1113,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             map = new UMap<ushort, ushort>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 Read(stream, out ushort key);
                 Read(stream, out ushort value);
@@ -1096,7 +1133,7 @@ namespace UELib
 #endif
             int c = stream.ReadLength();
             map = new UMap<TKey, TValue>(c);
-            for (var i = 0; i < c; ++i)
+            for (int i = 0; i < c; ++i)
             {
                 Read(stream, out UName key);
                 Read(stream, out TValue value);
@@ -1195,7 +1232,13 @@ namespace UELib
         {
             ReadMap(stream, out map);
         }
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, byte[] data)
+        {
+            stream.Read(data, 0, data.Length);
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out byte value)
         {
@@ -1319,7 +1362,13 @@ namespace UELib
         {
             item.Serialize(stream);
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(this IUnrealStream stream, byte[] data)
+        {
+            stream.Write(data, 0, data.Length);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(this IUnrealStream stream, string value)
         {

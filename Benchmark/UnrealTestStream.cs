@@ -84,6 +84,12 @@ namespace Eliot.UELib.Benchmark
             set => BaseStream.Position = value;
         }
 
+        public long AbsolutePosition
+        {
+            get => Position;
+            set => Position = value;
+        }
+
         public long LastPosition
         {
             get => _Archive.LastPosition;
