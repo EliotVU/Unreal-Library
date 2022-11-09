@@ -1817,20 +1817,39 @@ namespace UELib
         private void CreateObject(UImportTableItem item)
         {
             var classType = GetClassType(item.ClassName);
-            item.Object = classType == null
-                ? new UnknownObject()
-                : (UObject)Activator.CreateInstance(classType);
+            item.Object = (UObject)Activator.CreateInstance(classType);
             AddObject(item.Object, item);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
         }
 
         private void CreateObject(UExportTableItem item)
         {
-            var @class = GetIndexTable(item.ClassIndex);
-            var classType = GetClassType(@class != null ? @class.ObjectName : "Class");
-            item.Object = classType == null
-                ? new UnknownObject()
-                : (UObject)Activator.CreateInstance(classType);
+            var objectClass = item.Class;
+            var classType = GetClassType(objectClass != null ? objectClass.ObjectName : "Class");
+            // Try one of the "super" classes for unregistered classes.
+            loop:
+            if (objectClass != null && classType == typeof(UnknownObject))
+            {
+                switch (objectClass)
+                {
+                    case UExportTableItem classExp:
+                        var super = classExp.Super;
+                        switch (super)
+                        {
+                            //case UImportTableItem superImport:
+                            //    CreateObject(superImport);
+                            //    return;
+
+                            case UExportTableItem superExport:
+                                objectClass = superExport;
+                                classType = GetClassType(objectClass.ObjectName);
+                                goto loop;
+                        }
+                        break;
+                }
+                
+            }
+            item.Object = (UObject)Activator.CreateInstance(classType);
             AddObject(item.Object, item);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
         }
@@ -1871,10 +1890,11 @@ namespace UELib
         }
 
         [PublicAPI]
+        [NotNull]
         public Type GetClassType(string className)
         {
             _ClassTypes.TryGetValue(className.ToLower(), out var classType);
-            return classType;
+            return classType ?? typeof(UnknownObject);
         }
 
         [PublicAPI]
