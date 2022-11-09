@@ -41,6 +41,8 @@ namespace UELib.Branch
         
         // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
         TemplateDataAddedToUComponent = 200,
+        
+        DisplacedScriptPropertiesWithClassDefaultObject = 200,
 
         /// <summary>
         /// Present in all released UE3 games (starting with RoboBlitz).
@@ -77,13 +79,14 @@ namespace UELib.Branch
 
         // FIXME: Not attested in the GoW client, must have been before v321
         ShadowMapScaleAddedToPoly = 300,
-        
+
         // 321 according to the GoW client
         ElementOwnerAddedToUPolys = 321,
 
+        NetObjectsAdded = 322,
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
-        
+
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
 

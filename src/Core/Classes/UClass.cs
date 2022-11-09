@@ -517,10 +517,9 @@ namespace UELib.Core
             }
 #endif
         scriptProperties:
-            // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
-            // TODO: Corrigate Version
-            if (_Buffer.Version >= 322)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.DisplacedScriptPropertiesWithClassDefaultObject)
             {
+                // DEFAULT_ClassName
                 Default = _Buffer.ReadObject();
                 Record(nameof(Default), Default);
             }

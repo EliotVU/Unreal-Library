@@ -146,7 +146,17 @@ namespace UELib.Core
                 BinaryMetaData = new BinaryMetaData();
 #endif
                 DeserializationState |= ObjectState.Deserializing;
-                Deserialize();
+                if (HasObjectFlag(ObjectFlagsHO.PropertiesObject)
+                    // Just in-case we have passed an overlapped object flag in UE2 or older packages.
+                    && _Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
+                {
+                    DeserializeClassDefault();
+                }
+                else
+                {
+                    Deserialize();
+                }
+
                 DeserializationState |= ObjectState.Deserialied;
 #if STRICT
                 Debug.Assert(Buffer.Position == Buffer.Length);
@@ -249,6 +259,16 @@ namespace UELib.Core
 
             _Buffer.Read(out NetIndex);
             Record(nameof(NetIndex), NetIndex);
+        }
+
+        /// <summary>
+        /// Special route for objects that are acting as the ClassDefault for a class
+        /// i.e. a class like PrimitiveComponent is accompanied by an instance DEFAULT_PrimitiveComponent of the same class.
+        /// </summary>
+        private void DeserializeClassDefault()
+        {
+            DeserializeNetIndex();
+            DeserializeProperties();
         }
 
         private void DeserializeTemplate(UComponent component)

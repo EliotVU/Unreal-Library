@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib
@@ -14,9 +15,6 @@ namespace UELib
         public const int VObjectFlagsToULONG = 195;
 
         private const int VSerialSizeConditionless = 249;
-
-        // FIXME: Version?
-        public const int VNetObjects = 322;
 
         #region Serialized Members
         
@@ -219,7 +217,7 @@ namespace UELib
 
         streamExportFlags:
             ExportFlags = stream.ReadUInt32();
-            if (stream.Version < VNetObjects)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectsAdded)
                 return;
 #if TRANSFORMERS
             if (stream.Package.Build == BuildGeneration.HMS &&
