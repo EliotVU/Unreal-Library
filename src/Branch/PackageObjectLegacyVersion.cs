@@ -38,6 +38,9 @@ namespace UELib.Branch
         MaterialAddedToPoly = 170,
 
         UE3 = 178,
+        
+        // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
+        TemplateDataAddedToUComponent = 200,
 
         /// <summary>
         /// Present in all released UE3 games (starting with RoboBlitz).
@@ -63,6 +66,11 @@ namespace UELib.Branch
         StorageSizeAddedToLazyArray = 254,
         L8AddedToLazyArray = 260,
         LazyArrayReplacedWithBulkData = 266,
+
+        // 267 according to the GoW client,
+        // -- albeit the exact nature is not clear
+        // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
+        ClassDefaultCheckAddedToTemplateName = 267,
 
         // FIXME: Not attested in the GoW client, must have been before v321
         LightMapScaleRemovedFromPoly = 300,

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
 
@@ -78,7 +80,7 @@ namespace UELib.Core
         public UObjectStream Buffer => _Buffer;
 
         public int NetIndex = -1;
-        
+
         [CanBeNull] public UObject Default { get; protected set; }
 
         /// <summary>
@@ -172,7 +174,7 @@ namespace UELib.Core
         private void InitBuffer()
         {
             Package.Stream.Seek(ExportTable.SerialOffset, SeekOrigin.Begin);
-            
+
             //Console.WriteLine( "Init buffer for {0}", (string)this );
             var buffer = new byte[ExportTable.SerialSize];
             _Buffer = new UObjectStream(Package.Stream, buffer);
@@ -230,6 +232,40 @@ namespace UELib.Core
             }
         }
 #endif
+        private void DeserializeNetIndex()
+        {
+#if MKKE || BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                return;
+            }
+#endif
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.NetObjectsAdded ||
+                _Buffer.UE4Version >= 196)
+            {
+                return;
+            }
+
+            _Buffer.Read(out NetIndex);
+            Record(nameof(NetIndex), NetIndex);
+        }
+
+        private void DeserializeTemplate(UComponent component)
+        {
+            _Buffer.Read(out component.TemplateOwnerClass);
+            Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
+
+            // The ObjectFlagsHO.ArchetypeObject flag check was added later (Not checked for in GoW), no known version.
+            const ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject;
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName
+                || HasObjectFlag(templateFlags)
+                || EnumerateOuter().Any(obj => obj.HasObjectFlag(templateFlags)))
+            {
+                _Buffer.Read(out component.TemplateName);
+                Record(nameof(component.TemplateName), component.TemplateName);
+            }
+        }
 
         /// <summary>
         /// Deserialize this object's structure from the _Buffer stream.
@@ -256,33 +292,27 @@ namespace UELib.Core
                 _Buffer.ReadClass(out StateFrame);
             }
 
-            if (_Buffer.Version >= 220 && this is UComponent component)
+            // No version check found in the GoW PC client
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.TemplateDataAddedToUComponent)
             {
-                _Buffer.Read(out component.TemplateOwnerClass);
-                Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
-                if (EnumerateOuter().Any(obj => obj.HasObjectFlag(ObjectFlagsHO.PropertiesObject)))
+                switch (this)
                 {
-                    _Buffer.Read(out component.TemplateName);
-                    Record(nameof(component.TemplateName), component.TemplateName);
+                    case UComponent component:
+                        DeserializeTemplate(component);
+                        break;
+
+                    // HACK: Ugly work around for unregistered component classes...
+                    // Simply for checking for the parent's class is not reliable without importing objects.
+                    case UnknownObject _ when _Buffer.Length >= 12 && GetClassName().EndsWith("Component"):
+                        {
+                            var fakeComponent = new UComponent();
+                            DeserializeTemplate(fakeComponent);
+                            break;
+                        }
                 }
             }
 
-#if MKKE || BATMAN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-            {
-                goto skipNetIndex;
-            }
-#endif
-            if (_Buffer.Version >= UExportTableItem.VNetObjects &&
-                _Buffer.UE4Version < 196)
-            {
-                _Buffer.Read(out NetIndex);
-                Record(nameof(NetIndex), NetIndex);
-            }
-
-        skipNetIndex:
-
+            DeserializeNetIndex();
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
             if (Package.Build == BuildGeneration.Flesh && GetType() != typeof(UnknownObject))
@@ -290,7 +320,7 @@ namespace UELib.Core
                 // var native private const int ObjectInternalPropertyHash[1];
                 int thiefLinkDataObjectCount = _Buffer.ReadInt32();
                 Record(nameof(thiefLinkDataObjectCount), thiefLinkDataObjectCount);
-                for (var i = 0; i < thiefLinkDataObjectCount; i++)
+                for (int i = 0; i < thiefLinkDataObjectCount; i++)
                 {
                     // These probably contain the missing UFields.
                     var thiefLinkDataObject = _Buffer.ReadObject();
@@ -309,7 +339,6 @@ namespace UELib.Core
             }
 
             DeserializeProperties();
-
 #if UE4
             if (_Buffer.UE4Version > 0)
             {
@@ -352,9 +381,10 @@ namespace UELib.Core
         /// </summary>
         /// <param name="flag">The flag(s) to compare to.</param>
         /// <returns>Whether it contained one of the specified flags.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasObjectFlag(ObjectFlagsLO flag)
         {
-            return ((uint)_ObjectFlags & (uint)flag) != 0;
+            return (_ObjectFlags & (ulong)flag) != 0;
         }
 
         /// <summary>
@@ -364,9 +394,10 @@ namespace UELib.Core
         /// </summary>
         /// <param name="flag">The flag(s) to compare to.</param>
         /// <returns>Whether it contained one of the specified flags.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasObjectFlag(ObjectFlagsHO flag)
         {
-            return ((_ObjectFlags >> 32) & (uint)flag) != 0;
+            return (_ObjectFlags & ((ulong)flag << 32)) != 0;
         }
 
         public bool IsPublic()
@@ -680,25 +711,6 @@ namespace UELib.Core
         public UnknownObject()
         {
             ShouldDeserializeOnDemand = true;
-        }
-
-        protected override void Deserialize()
-        {
-            if (Package.Version > 400 && _Buffer.Length >= 12)
-            {
-                // componentClassIndex
-                _Buffer.Position += sizeof(int);
-                int componentNameIndex = _Buffer.ReadNameIndex();
-                if (componentNameIndex == (int)Table.ObjectName)
-                {
-                    base.Deserialize();
-                    return;
-                }
-
-                _Buffer.Position -= 12;
-            }
-
-            base.Deserialize();
         }
 
         protected override bool CanDisposeBuffer()
