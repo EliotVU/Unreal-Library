@@ -10,7 +10,7 @@ namespace UELib.Branch
         ReturnExpressionAddedToReturnToken = 62,
 
         SphereExtendsPlane = 62,
-        LazyArraySkipCountToSkipOffset = 62,
+        LazyArraySkipCountChangedToSkipOffset = 62,
 
         CharRemapAddedToUFont = 69,
 
@@ -18,9 +18,9 @@ namespace UELib.Branch
         /// FIXME: Unknown version.
         /// </summary>
         CastStringSizeTokenDeprecated = 70,
-        
+
         PanUVRemovedFromPoly = 78,
-        
+
         CompMipsDeprecated = 84,
 
         /// <summary>
@@ -36,27 +36,33 @@ namespace UELib.Branch
         // The estimated version changes that came after the latest known UE2 build.
         TextureDeprecatedFromPoly = 170,
         MaterialAddedToPoly = 170,
-        
+
+        UE3 = 178,
+
         /// <summary>
         /// Present in all released UE3 games (starting with RoboBlitz).
         /// 
         /// FIXME: Unknown version.
         /// </summary>
         IsLocalAddedToDelegateFunctionToken = 181,
-        
-        UE3 = 184,
-        
+
         // FIXME: Version
         RangeConstTokenDeprecated = UE3,
-        
+
         // FIXME: Version
         FastSerializeStructs = UE3,
-        
+
         // FIXME: Version
         EnumTagNameAddedToBytePropertyTag = UE3,
 
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
+
+        // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
+        LazyLoaderFlagsAddedToLazyArray = 251,
+        StorageSizeAddedToLazyArray = 254,
+        L8AddedToLazyArray = 260,
+        LazyArrayReplacedWithBulkData = 266,
 
         // FIXME: Not attested in the GoW client, must have been before v321
         LightMapScaleRemovedFromPoly = 300,
@@ -66,10 +72,10 @@ namespace UELib.Branch
         
         // 321 according to the GoW client
         ElementOwnerAddedToUPolys = 321,
-        
+
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
-
+        
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
 

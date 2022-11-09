@@ -983,28 +983,6 @@ namespace UELib
 #endif
         }
 
-        public static void ReadLazyArray(this IUnrealStream stream, out byte[] array)
-        {
-#if BINARYMETADATA
-            long position = stream.Position;
-#endif
-            if (stream.Version < (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset)
-            {
-                int skipCount = stream.ReadIndex();
-            }
-            else
-            {
-                int skipOffset = stream.ReadInt32();
-            }
-            
-            int c = stream.ReadLength();
-            array = new byte[c];
-            stream.Read(array, 0, c);
-#if BINARYMETADATA
-            stream.LastPosition = position;
-#endif
-        }
-
         public static void ReadArray(this IUnrealStream stream, out UArray<int> array)
         {
 #if BINARYMETADATA
@@ -1189,6 +1167,13 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read<T>(this IUnrealStream stream, out UBulkData<T> value)
+            where T : unmanaged
+        {
+            ReadStruct(stream, out value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UObject value)
         {
             value = ReadObject<UObject>(stream);
@@ -1305,32 +1290,6 @@ namespace UELib
             }
         }
 
-        public static void WriteLazyArray(this IUnrealStream stream, ref byte[] array)
-        {
-            Debug.Assert(array != null);
-            if (stream.Version < (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset)
-            {
-                stream.WriteIndex(array.Length);
-                WriteIndex(stream, array.Length);
-                Write(stream, array, 0, array.Length);
-            }
-            else // skip using an absolute offset
-            {
-                var p = stream.Position;
-                Write(stream, 0);
-
-                WriteIndex(stream, array.Length);
-                Write(stream, array, 0, array.Length);
-
-                // We could easily predict the skip offset for byte arrays,
-                // but at some point we'll have to implement this for non-1byte arrays.
-                var p2 = stream.Position;
-                stream.Position = p;
-                Write(stream, (int)p2);
-                stream.Position = p2;
-            }
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteStruct<T>(this IUnrealStream stream, ref T item)
             where T : struct, IUnrealSerializableClass
@@ -1381,6 +1340,13 @@ namespace UELib
             stream.UW.WriteIndex(name.Index);
             if (stream.Version < UName.VNameNumbered) return;
             stream.UW.Write((uint)name.Number + 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write<T>(this IUnrealStream stream, ref UBulkData<T> value)
+            where T : unmanaged
+        {
+            WriteStruct(stream, ref value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

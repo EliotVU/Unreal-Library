@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib.Branch;
+using UELib.Core;
 using UELib.Flags;
 
 namespace Eliot.UELib.Test
@@ -32,6 +33,16 @@ namespace Eliot.UELib.Test
             // Verify actual flags
             Assert.IsTrue(flags.HasFlags((uint)DefaultEngineBranch.PackageFlagsDefault.AllowDownload));
             Assert.IsFalse(flags.HasFlags((uint)DefaultEngineBranch.PackageFlagsDefault.ClientOptional));
+        }
+
+        [TestMethod]
+        public void TestBulkDataToCompressionFlags()
+        {
+            const BulkDataFlags dataFlags = BulkDataFlags.Unused | BulkDataFlags.CompressedLZX;
+
+            var compressionFlags = dataFlags.ToCompressionFlags();
+            Assert.IsTrue(compressionFlags.HasFlag(CompressionFlags.ZLX));
+            Assert.IsTrue(compressionFlags == CompressionFlags.ZLX);
         }
     }
 }

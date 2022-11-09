@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using UELib.Annotations;
+using UELib.Flags;
 
 namespace UELib
 {
@@ -126,6 +127,11 @@ namespace UELib
         {
             CompressedSize = stream.ReadInt32();
             UncompressedSize = stream.ReadInt32();
+        }
+
+        public int Decompress(byte[] compressedData, int index, CompressionFlags flags)
+        {
+            return UncompressedSize;
         }
     }
 }

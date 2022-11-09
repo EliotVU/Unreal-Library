@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
+using UELib.Branch;
 using UELib.Core;
 
 namespace Eliot.UELib.Test
@@ -12,19 +12,19 @@ namespace Eliot.UELib.Test
     public class UnrealStreamTests
     {
         // HACK: Ugly workaround the issues with UPackageStream
-        private static UPackageStream CreateTempStream(string name = "test.u")
+        private static UPackageStream CreateTempStream()
         {
-            string tempFilePath = Path.Join(Assembly.GetExecutingAssembly().Location, "../", name);
+            string tempFilePath = Path.Join(Path.GetTempFileName());
             File.WriteAllBytes(tempFilePath, BitConverter.GetBytes(UnrealPackage.Signature));
 
             var stream = new UPackageStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
             return stream;
         }
-        
+
         [TestMethod]
         public void ReadString()
         {
-            using var stream = CreateTempStream("string.u");
+            using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
@@ -62,7 +62,7 @@ namespace Eliot.UELib.Test
         [TestMethod]
         public void ReadAtomicStruct()
         {
-            using var stream = CreateTempStream("atomicstruct.u");
+            using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
@@ -73,7 +73,7 @@ namespace Eliot.UELib.Test
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
-            
+
             // B, G, R, A;
             var inColor = new UColor(255, 128, 64, 80);
             stream.WriteAtomicStruct(ref inColor);
@@ -82,11 +82,57 @@ namespace Eliot.UELib.Test
             stream.Seek(sizeof(int), SeekOrigin.Begin);
             stream.ReadAtomicStruct(out UColor outColor);
             Assert.AreEqual(8, stream.Position);
-            
+
             Assert.AreEqual(255, outColor.B);
             Assert.AreEqual(128, outColor.G);
             Assert.AreEqual(64, outColor.R);
             Assert.AreEqual(80, outColor.A);
+        }
+
+        [TestMethod]
+        public void TestBulkData()
+        {
+            using var stream = CreateTempStream();
+            using var linker = new UnrealPackage(stream);
+            linker.Summary = new UnrealPackage.PackageFileSummary
+            {
+                Build = new UnrealPackage.GameBuild(linker),
+            };
+
+            using var writer = new BinaryWriter(stream);
+            // Skip past the signature
+            writer.Seek(sizeof(int), SeekOrigin.Begin);
+
+            // Verify the oldest stage of LazyArray.
+            //linker.Summary.Version = (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset - 1;
+            //TestBulkDataSerialization(stream);
+            
+            //linker.Summary.Version = (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset;
+            //TestBulkDataSerialization(stream);
+            
+            linker.Summary.Version = (uint)PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData;
+            TestBulkDataSerialization(stream);
+        }
+
+        private void TestBulkDataSerialization(IUnrealStream stream)
+        {
+            byte[] rawData = Encoding.ASCII.GetBytes("LET'S PRETEND THAT THIS IS BULK DATA!");
+            var bulkData = new UBulkData<byte>(0, rawData);
+
+            long bulkPosition = stream.Position;
+            stream.Write(ref bulkData);
+            Assert.AreEqual(rawData.Length, bulkData.StorageSize);
+
+            stream.Position = bulkPosition;
+            stream.Read(out UBulkData<byte> readBulkData);
+            Assert.IsNull(readBulkData.ElementData);
+            Assert.AreEqual(bulkData.StorageSize, readBulkData.StorageSize);
+            Assert.AreEqual(bulkData.StorageOffset, readBulkData.StorageOffset);
+            Assert.AreEqual(bulkData.ElementCount, readBulkData.ElementCount);
+
+            readBulkData.LoadData(stream);
+            Assert.IsNotNull(readBulkData.ElementData);
+            Assert.AreEqual(bulkData.ElementData.Length, readBulkData.ElementData.Length);
         }
     }
 }
