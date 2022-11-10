@@ -304,7 +304,7 @@ namespace UELib
             long lastPosition = BaseStream.Position;
 #endif
             int index = ReadIndex();
-            if (_Archive.Version >= UName.VNameNumbered
+            if (_Archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
 #if BIOSHOCK
                 || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
 #endif
@@ -326,7 +326,7 @@ namespace UELib
             long lastPosition = BaseStream.Position;
 #endif
             int index = ReadIndex();
-            if (_Archive.Version >= UName.VNameNumbered
+            if (_Archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
 #if BIOSHOCK
                 || _Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
 #endif
@@ -1338,7 +1338,7 @@ namespace UELib
         public static void Write(this IUnrealStream stream, UName name)
         {
             stream.UW.WriteIndex(name.Index);
-            if (stream.Version < UName.VNameNumbered) return;
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NumberAddedToName) return;
             stream.UW.Write((uint)name.Number + 1);
         }
 

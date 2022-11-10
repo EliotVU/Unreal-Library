@@ -74,11 +74,6 @@
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
-                    {
-                        Decompiler.AlignSize(sizeof(int));
-                    }
-
                     PropertyName = ReadName(stream);
 
                     // TODO: Corrigate version. Seen in version ~648(The Ball) may have been introduced earlier, but not prior 610.

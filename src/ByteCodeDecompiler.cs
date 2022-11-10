@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Core.Tokens;
 using UELib.Flags;
 using UELib.Tokens;
@@ -58,7 +59,7 @@ namespace UELib.Core
             private int ScriptPosition { get; set; }
 
             /// <summary>
-            /// Size of FName in memory (int Index, (> 500) int Number).
+            /// Size of FName in memory (int Index, (>= 343) int Number).
             /// </summary>
             private byte _NameMemorySize = sizeof(int);
 
@@ -77,7 +78,7 @@ namespace UELib.Core
                     return;
                 }
 #endif
-                const short vNameSizeTo8 = 500;
+                const uint vNameSizeTo8 = (uint)PackageObjectLegacyVersion.NumberAddedToName;
                 if (_Package.Version >= vNameSizeTo8) _NameMemorySize = sizeof(int) + sizeof(int);
 #if TERA
                 // Tera's reported version is false (partial upgrade?)

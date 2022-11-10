@@ -9,7 +9,6 @@ namespace UELib.Core
     {
         private const string    None = "None";
         public const int        Numeric = 0;
-        public const int        VNameNumbered = 343;
 
         private UNameTableItem  _NameItem;
 

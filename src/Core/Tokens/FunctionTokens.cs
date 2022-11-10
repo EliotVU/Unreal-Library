@@ -247,11 +247,6 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
-                    {
-                        Decompiler.AlignSize(sizeof(int));
-                    }
-
                     FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
@@ -288,7 +283,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // TODO: Corrigate Version
+                    // FIXME: Version
                     if (stream.Version >= (uint)PackageObjectLegacyVersion.IsLocalAddedToDelegateFunctionToken)
                     {
                         IsLocal = stream.ReadByte();

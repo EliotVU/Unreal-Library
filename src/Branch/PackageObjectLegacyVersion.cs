@@ -84,6 +84,9 @@ namespace UELib.Branch
         ElementOwnerAddedToUPolys = 321,
 
         NetObjectsAdded = 322,
+
+        NumberAddedToName = 343,
+
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
 
