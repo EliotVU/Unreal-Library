@@ -42,17 +42,17 @@ namespace UELib.Core
             public class AssertToken : Token
             {
                 public ushort Line;
-                public byte? DebugMode;
+                public byte? IsDebug;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Line = stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(short));
 
-                    // TODO: Corrigate version, at least known since Mirrors Edge(536)
-                    if (stream.Version >= 536)
+                    // FIXME: Version, verified against (RoboBlitz v369)
+                    if (stream.Version >= 200)
                     {
-                        DebugMode = stream.ReadByte();
+                        IsDebug = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
@@ -61,9 +61,9 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    if (Package.Version >= 536)
+                    if (IsDebug.HasValue)
                     {
-                        Decompiler.PreComment = "// DebugMode:" + DebugMode;
+                        Decompiler.PreComment = $"// DebugMode: {IsDebug}";
                     }
 
                     string condition = DecompileNext();
