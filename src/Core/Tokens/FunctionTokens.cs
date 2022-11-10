@@ -240,13 +240,14 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // TODO: Corrigate Version (Definitely not in MOHA, but in roboblitz(369))
-                    if (stream.Version >= 178 && stream.Version < 421 /*MOHA*/)
+#if UE3Proto
+                    // FIXME: Version
+                    if (stream.Version >= 178 && stream.Version < 200)
                     {
-                        byte isSuperCall = stream.ReadByte();
+                        byte isSuper = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
-
+#endif
                     FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
