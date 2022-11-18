@@ -1,6 +1,7 @@
 ﻿using static UELib.UnrealPackage;
 using System.Diagnostics;
 using System.IO;
+using UELib.Core;
 using UELib.Core.Tokens;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
@@ -42,7 +43,7 @@ namespace UELib.Branch.UE2.AA2
                     { 0x0A, typeof(LabelTableToken) },
                     { 0x0B, typeof(AssertToken) },
                     { 0x0C, typeof(CaseToken) },
-                    { 0x0D, typeof(EatReturnValueToken) },
+                    { 0x0D, typeof(EatStringToken) },
                     { 0x0E, typeof(LetToken) },
                     { 0x0F, typeof(GotoLabelToken) },
                     { 0x10, typeof(DynamicArrayElementToken) },
@@ -79,7 +80,7 @@ namespace UELib.Branch.UE2.AA2
                     { 0x2F, typeof(DynamicCastToken) },
                     { 0x30, typeof(BadToken) },
                     { 0x31, typeof(StructCmpNeToken) },
-                    { 0x32, typeof(UniStringConstToken) },
+                    { 0x32, typeof(UnicodeStringConstToken) },
                     { 0x33, typeof(IteratorNextToken) },
                     { 0x34, typeof(StructCmpEqToken) },
                     { 0x35, typeof(IteratorPopToken) },
@@ -140,7 +141,7 @@ namespace UELib.Branch.UE2.AA2
                     { 0x0A, typeof(JumpIfNotToken) },
                     { 0x0B, typeof(LabelTableToken) },
                     { 0x0C, typeof(FinalFunctionToken) },
-                    { 0x0D, typeof(EatReturnValueToken) },
+                    { 0x0D, typeof(EatStringToken) },
                     { 0x0E, typeof(LetToken) },
                     { 0x0F, typeof(StopToken) },
                     { 0x10, typeof(NewToken) },
@@ -183,7 +184,7 @@ namespace UELib.Branch.UE2.AA2
                     { 0x34, typeof(BoolVariableToken) },
                     // FIXME: Verify IteratorNext/IteratorPop?
                     { 0x35, typeof(IteratorPopToken) },
-                    { 0x36, typeof(UniStringConstToken) },
+                    { 0x36, typeof(UnicodeStringConstToken) },
                     { 0x37, typeof(StructMemberToken) },
                     { 0x38, typeof(BadToken) },
                     { 0x39, typeof(DelegateFunctionToken) },

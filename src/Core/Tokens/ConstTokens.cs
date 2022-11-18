@@ -160,6 +160,12 @@ namespace UELib.Core
                 }
             }
 
+            // Not supported, but has existed here and there
+            public class StructConstToken : Token
+            {
+                
+            }
+
             public class ObjectConstToken : Token
             {
                 public UObject ObjectRef;
@@ -208,7 +214,7 @@ namespace UELib.Core
                 }
             }
 
-            public class UniStringConstToken : Token
+            public class UnicodeStringConstToken : Token
             {
                 public string Value;
 

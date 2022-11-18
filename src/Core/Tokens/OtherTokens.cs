@@ -35,6 +35,7 @@ namespace UELib.Core
                 }
             }
 
+            // Also known as an EndCode or EndFunction token.
             public class EndOfScriptToken : Token
             {
             }
@@ -153,7 +154,7 @@ namespace UELib.Core
                     return output;
                 }
             }
-
+            
             public class EatReturnValueToken : Token
             {
                 // Null if version < 200

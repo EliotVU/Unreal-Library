@@ -11,6 +11,13 @@ namespace UELib.Branch
 
         SphereExtendsPlane = 62,
         LazyArraySkipCountChangedToSkipOffset = 62,
+        
+        /// <summary>
+        /// This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.
+        /// 
+        /// FIXME: Version, generally not accessible in Unreal Engine 1 except for some, so we'll map the tokens for v62.
+        /// </summary>
+        DynamicArrayTokensAdded = 62,
 
         CharRemapAddedToUFont = 69,
 
@@ -22,7 +29,10 @@ namespace UELib.Branch
         PanUVRemovedFromPoly = 78,
 
         CompMipsDeprecated = 84,
-
+        
+        // FIXME: Version, attested as of UE2
+        DynamicArrayInsertTokenAdded = 95,
+        
         /// <summary>
         /// FIXME: Version, set 95 (Deus Ex: IW)
         /// </summary>
@@ -38,10 +48,10 @@ namespace UELib.Branch
         MaterialAddedToPoly = 170,
 
         UE3 = 178,
-        
+
         // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
         TemplateDataAddedToUComponent = 200,
-        
+
         DisplacedScriptPropertiesWithClassDefaultObject = 200,
 
         /// <summary>
@@ -90,6 +100,12 @@ namespace UELib.Branch
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
 
+        // FIXME: Version, not attested in (RoboBlitz v369, but attested in GoW v490).
+        SkipSizeAddedToArrayFindTokenIntrinsics = 400,
+        
+        // FIXME: Version, not attested in (GoW v490)
+        SkipSizeAddedToArrayTokenIntrinsics = 491,
+
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
 
@@ -100,6 +116,10 @@ namespace UELib.Branch
         
         LightmassShadowIndirectOnlyOptionAdded = 652,
         LightmassExplicitEmissiveLightRadiusAdded = 636,
+
+        // FIXME: Version
+        EndTokenAppendedToArrayTokenIntrinsics = 649,
+        
         PolyRulesetVariationTypeChangedToName = 670,
 
         BoolValueToByteForBoolPropertyTag = 673,

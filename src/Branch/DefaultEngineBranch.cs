@@ -142,7 +142,7 @@ namespace UELib.Branch
                 PackageFlags[(int)Flags.PackageFlags.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
 #endif
 #if UE2
-            if( linker.Build == BuildGeneration.UE2_5)
+            if (linker.Build == BuildGeneration.UE2_5)
                 PackageFlags[(int)Flags.PackageFlags.Official] = (uint)PackageFlagsUE2.Official;
 #endif
 #if UE3
@@ -168,6 +168,9 @@ namespace UELib.Branch
         /// <summary>
         /// Builds a tokens map for UE1, 2, and 3.
         /// The default byte-codes are correct for UE2 and are adjusted accordingly for UE1, and UE3.
+        ///
+        /// FYI: Any version is not actually correct, in most cases changes that have been made to the UnrealScript byte-code are not versioned.
+        /// -- Any version here is an approximation that works best for most packages.
         /// </summary>
         protected override TokenMap BuildTokenMap(UnrealPackage linker)
         {
@@ -187,36 +190,36 @@ namespace UELib.Branch
                 { 0x0B, typeof(NothingToken) },
                 { 0x0C, typeof(LabelTableToken) },
                 { 0x0D, typeof(GotoLabelToken) },
-                { 0x0E, typeof(EatReturnValueToken) },
-                { 0x0F, typeof(LetToken) },
-                
-                // +UE2
-                { 0x10, typeof(DynamicArrayElementToken) },
-                
-                // Bad expr in UE1 v61
-                { 0x11, linker.Version < 62 
-                    ? typeof(BadToken)
-                    : typeof(NewToken)
+                {
+                    0x0E, linker.Version < 62
+                        // Serialized but never emitted, must have been a really old expression.
+                        ? typeof(ValidateObjectToken)
+                        : typeof(EatStringToken)
                 },
-                
+                { 0x0F, typeof(LetToken) },
+                { 0x10, typeof(BadToken) },
+
+                // Bad expr in UE1 v61
+                {
+                    0x11, linker.Version < 62
+                        ? typeof(BadToken)
+                        : typeof(NewToken)
+                },
                 { 0x12, typeof(ClassContextToken) },
                 { 0x13, typeof(MetaClassCastToken) },
-
                 {
                     0x14, linker.Version < 62
                         ? typeof(BeginFunctionToken)
                         : typeof(LetBoolToken)
                 },
-
                 {
                     0x15, linker.Version < 62
-                        ? typeof(EatReturnValueToken)
+                        ? typeof(EndOfScriptToken)
                         // Attested in UE2 builds such as Unreal2 and Unreal2XMP, but not in any UE1 or UE2.5 builds, nor RS3 (UE2)
-                        : linker.Build == BuildGeneration.UE2
+                        : linker.Version < (uint)PackageObjectLegacyVersion.UE3
                             ? typeof(LineNumberToken)
                             : typeof(BadToken)
                 },
-
                 { 0x16, typeof(EndFunctionParmsToken) },
                 { 0x17, typeof(SelfToken) },
                 { 0x18, typeof(SkipToken) },
@@ -238,13 +241,11 @@ namespace UELib.Branch
                 { 0x28, typeof(FalseToken) },
                 { 0x29, typeof(NativeParameterToken) },
                 { 0x2A, typeof(NoObjectToken) },
-
                 {
                     0x2B, linker.Version < (uint)PackageObjectLegacyVersion.CastStringSizeTokenDeprecated
                         ? typeof(ResizeStringToken)
                         : typeof(BadToken)
                 },
-
                 { 0x2C, typeof(IntConstByteToken) },
                 { 0x2D, typeof(BoolVariableToken) },
                 { 0x2E, typeof(DynamicCastToken) },
@@ -253,35 +254,33 @@ namespace UELib.Branch
                 { 0x31, typeof(IteratorNextToken) },
                 { 0x32, typeof(StructCmpEqToken) },
                 { 0x33, typeof(StructCmpNeToken) },
-                
-                // No unicode support in UE1 v61
-                { 0x34, linker.Version < 62 
-                    ? typeof(BadToken)
-                    : typeof(UniStringConstToken)
-                },
-                
                 {
-                    0x35, linker.Build == BuildGeneration.UE2
-                        ? typeof(RangeConstToken)
-                        : typeof(BadToken)
+                    0x34, linker.Version < 62
+                        // Actually a StructConstToken but is not implemented in the VM.
+                        ? typeof(BadToken)
+                        : typeof(UnicodeStringConstToken)
                 },
-                
+                {
+                    0x35, linker.Version < 62
+                        ? typeof(BadToken)
+                        // Defined and emitted but ignored by the VM in UE2,
+                        // -- however some builds do serialize this token, so we'll keep it
+                        : linker.Build == BuildGeneration.UE2
+                            ? typeof(RangeConstToken)
+                            : typeof(BadToken)
+                },
                 { 0x36, typeof(StructMemberToken) },
-                
-                { 0x37, linker.Version < 62 
-                    ? typeof(BadToken)
-                    : typeof(DynamicArrayElementToken)
-                },
-                
+                { 0x37, typeof(BadToken) },
                 { 0x38, typeof(GlobalFunctionToken) },
+
+                // PrimitiveCast:MinConversion/RotationToVector (UE1)
                 { 0x39, typeof(PrimitiveCastToken) },
-                
+
+                // PrimitiveCast:ByteToInt (UE1)
                 {
-                    0x3A, linker.Version >= 420
-                        ? typeof(DynamicArrayInsertToken)
-                        : linker.Version >= (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded
-                            ? typeof(ReturnNothingToken)
-                            : typeof(BadToken) // will be overriden down if UE1
+                    0x3A, linker.Version < (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded
+                        ? typeof(BadToken) // will be overridden down if UE1
+                        : typeof(ReturnNothingToken)
                 },
 
                 // Added with UE2 (FIXME: version)
@@ -295,7 +294,6 @@ namespace UELib.Branch
                 { 0x3E, typeof(DelegateFunctionCmpNeToken) },
                 // FIXME: Bad expr in GoW
                 { 0x3F, typeof(EmptyDelegateToken) },
-                
                 { 0x40, typeof(BadToken) },
                 // FIXME: Valid in GoW, no bytes
                 { 0x41, typeof(BadToken) },
@@ -303,8 +301,11 @@ namespace UELib.Branch
                 { 0x43, typeof(BadToken) },
                 { 0x44, typeof(BadToken) },
                 { 0x45, typeof(BadToken) },
+                // Unused PrimitiveCast (UE1)
                 { 0x46, typeof(BadToken) },
+                // PrimitiveCast:ObjectToTool (UE1)
                 { 0x47, typeof(EndOfScriptToken) },
+                // PrimitiveCast:NameToBool (UE1)
                 { 0x48, typeof(ConditionalToken) },
                 { 0x49, typeof(BadToken) },
                 { 0x4A, typeof(BadToken) },
@@ -323,6 +324,7 @@ namespace UELib.Branch
                 { 0x57, typeof(BadToken) },
                 { 0x58, typeof(BadToken) },
                 { 0x59, typeof(BadToken) },
+                // PrimitiveCast:MaxConversion (UE1)
                 { 0x5A, typeof(BadToken) },
                 { 0x5B, typeof(BadToken) },
                 { 0x5C, typeof(BadToken) },
@@ -330,7 +332,21 @@ namespace UELib.Branch
                 { 0x5E, typeof(BadToken) },
                 { 0x5F, typeof(BadToken) },
             };
-            
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayTokensAdded)
+            {
+                tokenMap[0x10] = typeof(DynamicArrayElementToken);
+                // Added in a later engine build, but some UE1 games (or special builds) do allow this token.
+                tokenMap[0x37] = typeof(DynamicArrayLengthToken);
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayInsertTokenAdded)
+            {
+                // Beware! these will be shifted down, see UnshiftTokens3
+                tokenMap[0x40] = typeof(DynamicArrayInsertToken);
+                tokenMap[0x41] = typeof(DynamicArrayRemoveToken);
+            }
+
             if (linker.Version < (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded)
                 DowngradePrimitiveCasts(tokenMap);
 #if UE3
@@ -362,15 +378,20 @@ namespace UELib.Branch
                     break;
 #endif
             }
-            
+
             return tokenMap;
         }
 
         // TODO: Confirm if these are correct for UE1
+        /// <summary>
+        /// Downgrades any UE2+ byte codes to their UE1 counterpart.
+        /// In UE1 primitive casts were on the same level as any other token expression.
+        /// In UE2 or earlier these were displaced and inlined within a new "PrimitiveCast" token.
+        /// </summary>
         protected void DowngradePrimitiveCasts(TokenMap tokenMap)
         {
             var primitiveCastTokenType = typeof(PrimitiveInlineCastToken);
-            // No implementation attested for (Vector/Rotator casts) in UE1 v61, but nonetheless accepted as a cast.
+            // Functions as the "MinConversion" (UE1) and also "RotatorToVector"
             tokenMap[(byte)CastToken.RotatorToVector] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.ByteToInt] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.ByteToBool] = primitiveCastTokenType;
@@ -384,10 +405,10 @@ namespace UELib.Branch
             tokenMap[(byte)CastToken.FloatToByte] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.FloatToInt] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.FloatToBool] = primitiveCastTokenType;
-            
-            // Non-existent but accepted as a primitive cast...
+
+            // "StringToName" seen in some builds, otherwise a bad token but we cannot assume any version boundaries.
             tokenMap[(byte)CastToken.ObjectToInterface] = primitiveCastTokenType;
-            
+
             tokenMap[(byte)CastToken.ObjectToBool] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.NameToBool] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.StringToByte] = primitiveCastTokenType;
@@ -407,13 +428,17 @@ namespace UELib.Branch
             tokenMap[(byte)CastToken.NameToString] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.VectorToString] = primitiveCastTokenType;
             tokenMap[(byte)CastToken.RotatorToString] = primitiveCastTokenType;
-            
-            // UE2+, later deprecated
-            tokenMap[(byte)CastToken.DelegateToString] = primitiveCastTokenType; // StringToName in?
+
+            // Represents the "MaxConversion" (UE1)
+            // "DelegateToString" (UE2+), later deprecated
+            tokenMap[(byte)CastToken.DelegateToString] = typeof(BadToken);
         }
 #if UE3
         protected void UnshiftTokens3(TokenMap tokenMap)
         {
+            // EatString -> EatReturnValueToken
+            tokenMap[0x0E] = typeof(EatReturnValueToken);
+
             tokenMap[0x15] = typeof(EndParmValueToken);
 
             tokenMap[0x35] = typeof(StructMemberToken);

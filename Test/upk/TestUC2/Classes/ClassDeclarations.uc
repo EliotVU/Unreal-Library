@@ -24,9 +24,23 @@ struct Struct1
 
 var int Var3;
 
+delegate Delegate1();
+event Event1();
+
 final function int Function1();
 
 final function int Function2(int param1, int param2)
 {
-    return 0;
+    const Const4 = 1;
+    return Const4;
+}
+
+state State1
+{
+    begin:
+    stop;
+}
+
+defaultproperties
+{
 }

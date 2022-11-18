@@ -1,6 +1,7 @@
 ﻿using static UELib.Core.UStruct.UByteCodeDecompiler;
 using UELib.Core.Tokens;
 using UELib.Branch.UE2.DNF.Tokens;
+using UELib.Core;
 using UELib.Tokens;
 
 namespace UELib.Branch.UE2.DNF
@@ -30,7 +31,7 @@ namespace UELib.Branch.UE2.DNF
                 { 0x0B, typeof(NothingToken) },
                 { 0x0C, typeof(LabelTableToken) },
                 { 0x0D, typeof(GotoLabelToken) },
-                { 0x0E, typeof(EatReturnValueToken) },
+                { 0x0E, typeof(EatStringToken) },
                 { 0x0F, typeof(LetToken) },
                 { 0x10, typeof(DynamicArrayElementToken) },
                 { 0x11, typeof(NewToken) },
@@ -68,7 +69,7 @@ namespace UELib.Branch.UE2.DNF
                 { 0x31, typeof(IteratorNextToken) },
                 { 0x32, typeof(StructCmpEqToken) },
                 { 0x33, typeof(StructCmpNeToken) },
-                { 0x34, typeof(UniStringConstToken) },
+                { 0x34, typeof(UnicodeStringConstToken) },
                 { 0x35, typeof(BadToken) },
                 { 0x36, typeof(StructMemberToken) },
                 { 0x37, typeof(DebugInfoToken) },

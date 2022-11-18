@@ -1,14 +1,11 @@
-﻿namespace UELib.Core
+﻿using UELib.Branch;
+
+namespace UELib.Core
 {
     public partial class UStruct
     {
         public partial class UByteCodeDecompiler
         {
-            private const uint ArrayMethodEndParmsVersion = 648; // TODO: Corrigate Version
-
-            private const uint
-                ArrayMethodSizeParmsVersion = 480; // TODO: Corrigate Version   (Definitely before 490(GoW))
-
             public class ArrayElementToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -48,15 +45,14 @@
                 }
             }
 
-            // TODO:Byte code of this has apparently changed to ReturnNothing in UE3
             public abstract class DynamicArrayMethodToken : Token
             {
-                protected virtual void DeserializeMethodOne(IUnrealStream stream)
+                protected void DeserializeOneParamMethodWithSkip(IUnrealStream stream, uint skipSizeVersion = (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayTokenIntrinsics)
                 {
                     // Array
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodSizeParmsVersion)
+                    if (stream.Version >= skipSizeVersion)
                     {
                         // Size
                         stream.Skip(2);
@@ -66,19 +62,58 @@
                     // Param 1
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodEndParmsVersion)
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
                     {
                         // EndParms
                         DeserializeNext();
                     }
+                    
+                    Decompiler.DeserializeDebugToken();
                 }
-
-                protected virtual void DeserializeMethodTwo(IUnrealStream stream)
+                
+                protected void DeserializeOneParamMethodNoSkip(IUnrealStream stream)
                 {
                     // Array
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodSizeParmsVersion)
+                    // Param 1
+                    DeserializeNext();
+
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    {
+                        // EndParms
+                        DeserializeNext();
+                    }
+
+                    Decompiler.DeserializeDebugToken();
+                }
+                
+                protected void DeserializeTwoParamMethodNoSkip(IUnrealStream stream)
+                {
+                    // Array
+                    DeserializeNext();
+
+                    // Param 1
+                    DeserializeNext();
+
+                    // Param 2
+                    DeserializeNext();
+
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    {
+                        // EndParms
+                        DeserializeNext();
+                    }
+
+                    Decompiler.DeserializeDebugToken();
+                }
+                
+                protected void DeserializeTwoParamMethodWithSkip(IUnrealStream stream, uint skipSizeVersion = (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayTokenIntrinsics)
+                {
+                    // Array
+                    DeserializeNext();
+
+                    if (stream.Version >= skipSizeVersion)
                     {
                         // Size
                         stream.Skip(2);
@@ -91,29 +126,29 @@
                     // Param 2
                     DeserializeNext();
 
-                    if (stream.Version > ArrayMethodEndParmsVersion)
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
                     {
                         // EndParms
                         DeserializeNext();
                     }
+                    
+                    Decompiler.DeserializeDebugToken();
                 }
 
-                protected string DecompileMethodOne(string functionName)
+                protected string DecompileOneParamMethod(string functionName)
                 {
                     Decompiler._CanAddSemicolon = true;
                     string context = DecompileNext();
                     string param1 = DecompileNext();
-                    if (Package.Version > ArrayMethodEndParmsVersion) DecompileNext(); // )
                     return $"{context}.{functionName}({param1})";
                 }
 
-                protected string DecompileMethodTwo(string functionName)
+                protected string DecompileTwoParamMethod(string functionName)
                 {
                     Decompiler._CanAddSemicolon = true;
                     string context = DecompileNext();
                     string param1 = DecompileNext();
                     string param2 = DecompileNext();
-                    if (Package.Version > ArrayMethodEndParmsVersion) DecompileNext(); // )
                     return $"{context}.{functionName}({param1}, {param2})";
                 }
             }
@@ -122,12 +157,12 @@
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodOne(stream);
+                    DeserializeOneParamMethodWithSkip(stream, (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayFindTokenIntrinsics);
                 }
-
+                
                 public override string Decompile()
                 {
-                    return DecompileMethodOne("Find");
+                    return DecompileOneParamMethod("Find");
                 }
             }
 
@@ -135,12 +170,12 @@
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodTwo(stream);
+                    DeserializeOneParamMethodWithSkip(stream, (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayFindTokenIntrinsics);
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodTwo("Find");
+                    return DecompileTwoParamMethod("Find");
                 }
             }
 
@@ -148,12 +183,12 @@
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodOne(stream);
+                    DeserializeOneParamMethodWithSkip(stream);
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodOne("Sort");
+                    return DecompileOneParamMethod("Sort");
                 }
             }
 
@@ -169,11 +204,13 @@
 
                     // EndParms
                     DeserializeNext();
+                    
+                    Decompiler.DeserializeDebugToken();
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodOne("Add");
+                    return DecompileOneParamMethod("Add");
                 }
             }
 
@@ -181,43 +218,25 @@
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodOne(stream);
+                    DeserializeOneParamMethodWithSkip(stream);
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodOne("AddItem");
+                    return DecompileOneParamMethod("AddItem");
                 }
             }
 
             public class DynamicArrayInsertToken : DynamicArrayMethodToken
             {
-                protected override void DeserializeMethodTwo(IUnrealStream stream)
-                {
-                    // Array
-                    DeserializeNext();
-
-                    // Param 1
-                    DeserializeNext();
-
-                    // Param 2
-                    DeserializeNext();
-
-                    if (stream.Version > ArrayMethodEndParmsVersion)
-                    {
-                        // EndParms
-                        DeserializeNext();
-                    }
-                }
-
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodTwo(stream);
+                    DeserializeTwoParamMethodNoSkip(stream);
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodTwo("Insert");
+                    return DecompileTwoParamMethod("Insert");
                 }
             }
 
@@ -225,43 +244,25 @@
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodTwo(stream);
+                    DeserializeTwoParamMethodWithSkip(stream);
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodTwo("InsertItem");
+                    return DecompileTwoParamMethod("InsertItem");
                 }
             }
 
             public class DynamicArrayRemoveToken : DynamicArrayMethodToken
             {
-                protected override void DeserializeMethodTwo(IUnrealStream stream)
-                {
-                    // Array
-                    DeserializeNext();
-
-                    // Param 1
-                    DeserializeNext();
-
-                    // Param 2
-                    DeserializeNext();
-
-                    if (stream.Version > ArrayMethodEndParmsVersion)
-                    {
-                        // EndParms
-                        DeserializeNext();
-                    }
-                }
-
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodTwo(stream);
+                    DeserializeTwoParamMethodNoSkip(stream);
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodTwo("Remove");
+                    return DecompileTwoParamMethod("Remove");
                 }
             }
 
@@ -269,12 +270,12 @@
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeMethodOne(stream);
+                    DeserializeOneParamMethodWithSkip(stream);
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileMethodOne("RemoveItem");
+                    return DecompileOneParamMethod("RemoveItem");
                 }
             }
         }

@@ -1,5 +1,7 @@
 class Casts extends Object;
 
+// var pointer instancePointer;
+
 static final preoperator bool \ ( string v ) { return true; }
 
 delegate FieldDelegate();
@@ -70,5 +72,10 @@ function AllCasts()
 	// RotatorToX
 	assert (\"RotatorToBool" && bool(localRotator) == false); 
 	assert (\"RotatorToVector" && Vector(localRotator) == vect(0,0,0)); 
-	assert (\"RotatorToString" && string(localRotator) == "(Pitch=0,Yaw=0,Roll=0)"); 
+	assert (\"RotatorToString" && string(localRotator) == "(Pitch=0,Yaw=0,Roll=0)");
+
+    // This emits EX_PointerConst, however this crashes the compiler because the byte code is not serialized.
+    // instancePointer = 1;
+
+    // assert (int(instancePointer) == 0);
 }
