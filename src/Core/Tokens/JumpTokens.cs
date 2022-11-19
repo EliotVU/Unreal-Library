@@ -108,17 +108,12 @@ namespace UELib.Core
                         );
                 }
 
-                protected void Commentize()
+                protected void SetEndComment()
                 {
                     Decompiler.PreComment = $"// End:0x{CodeOffset:X2}";
                 }
 
-                protected void Commentize(string statement)
-                {
-                    Decompiler.PreComment = $"// End:0x{CodeOffset:X2} [{statement}]";
-                }
-
-                protected void CommentStatement(string statement)
+                private void SetStatementComment(string statement)
                 {
                     Decompiler.PreComment = $"// [{statement}]";
                 }
@@ -170,7 +165,7 @@ namespace UELib.Core
                             || Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null)
                         {
                             NoJumpLabel();
-                            Commentize();
+                            SetEndComment();
                             // 'break' CodeOffset sits at the end of the switch,
                             // check that it doesn't exist already and add it
                             int switchEnd = Decompiler.IsInNest(NestManager.Nest.NestType.Default) != null
@@ -194,7 +189,7 @@ namespace UELib.Core
                                 }
 
                                 NoJumpLabel();
-                                Commentize();
+                                SetEndComment();
                                 Decompiler._CanAddSemicolon = true;
                                 return "break";
                             }
@@ -202,7 +197,7 @@ namespace UELib.Core
                             if (Decompiler.TokenAt(CodeOffset) is IteratorNextToken)
                             {
                                 NoJumpLabel();
-                                Commentize();
+                                SetEndComment();
                                 Decompiler._CanAddSemicolon = true;
                                 return "continue";
                             }
@@ -212,13 +207,13 @@ namespace UELib.Core
                         {
                             if (CodeOffset + 10 == destJump.CodeOffset)
                             {
-                                CommentStatement("Explicit Continue");
+                                SetStatementComment("Explicit Continue");
                                 goto gotoJump;
                             }
 
                             if (CodeOffset == destJump.CodeOffset)
                             {
-                                CommentStatement("Explicit Break");
+                                SetStatementComment("Explicit Break");
                                 goto gotoJump;
                             }
                         }
@@ -234,7 +229,7 @@ namespace UELib.Core
                                     && LinkedIfNest.Creator != outerNestEnd.Creator)
                                 {
                                     // this is more likely a continue within a for(;;) loop
-                                    CommentStatement("Explicit Continue");
+                                    SetStatementComment("Explicit Continue");
                                     goto gotoJump;
                                 }
                             }
@@ -252,7 +247,7 @@ namespace UELib.Core
                         if (JumpsOutOfSwitch())
                         {
                             NoJumpLabel();
-                            Commentize();
+                            SetEndComment();
                             // 'break' CodeOffset sits at the end of the switch,
                             // check that it doesn't exist already and add it
                             Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, CodeOffset);
@@ -264,7 +259,7 @@ namespace UELib.Core
 
                     if (CodeOffset < Position)
                     {
-                        CommentStatement("Loop Continue");
+                        SetStatementComment("Loop Continue");
                     }
 
                 gotoJump:
@@ -377,7 +372,7 @@ namespace UELib.Core
                         }
                     }
 
-                    Commentize();
+                    SetEndComment();
                     if (IsLoop)
                     {
                         Decompiler.PreComment += " [Loop If]";
@@ -462,7 +457,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._Nester.AddNest(NestManager.Nest.NestType.Scope, Position, CodeOffset);
-                    Commentize();
+                    SetEndComment();
                     return "filtereditoronly";
                 }
             }
@@ -549,7 +544,7 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
-                    Commentize();
+                    SetEndComment();
                     if (CodeOffset != ushort.MaxValue)
                     {
                         Decompiler._Nester.AddNest(NestManager.Nest.NestType.Case, Position, CodeOffset);
@@ -575,7 +570,7 @@ namespace UELib.Core
                 public override string Decompile()
                 {
                     Decompiler._Nester.AddNest(NestManager.Nest.NestType.ForEach, Position, CodeOffset, this);
-                    Commentize();
+                    SetEndComment();
 
                     // foreach FunctionCall
                     string expression = DecompileNext();
@@ -586,18 +581,20 @@ namespace UELib.Core
 
             public class DynamicArrayIteratorToken : JumpToken
             {
-                public byte WithSecondParam;
+                public byte WithIndexParam;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // Expression
                     DeserializeNext();
 
-                    // Param 1
+                    // Item param
                     DeserializeNext();
 
-                    WithSecondParam = stream.ReadByte();
+                    WithIndexParam = stream.ReadByte();
                     Decompiler.AlignSize(sizeof(byte));
+                    
+                    // Index param
                     DeserializeNext();
 
                     base.Deserialize(stream);
@@ -607,13 +604,21 @@ namespace UELib.Core
                 {
                     Decompiler._Nester.AddNest(NestManager.Nest.NestType.ForEach, Position, CodeOffset, this);
 
-                    Commentize();
+                    SetEndComment();
 
                     // foreach ArrayVariable( Parameters )
                     string output;
-                    output = WithSecondParam > 0
-                        ? $"foreach {DecompileNext()}({DecompileNext()}, {DecompileNext()})"
-                        : $"foreach {DecompileNext()}({DecompileNext()})";
+                    if (WithIndexParam > 0)
+                    {
+                        output = $"foreach {DecompileNext()}({DecompileNext()}, {DecompileNext()})";
+                    }
+                    else
+                    {
+                        output = $"foreach {DecompileNext()}({DecompileNext()})";
+                        // Skip Index param
+                        NextToken();
+                    }
+
                     Decompiler._CanAddSemicolon = false;
                     return output;
                 }
