@@ -59,10 +59,10 @@ namespace UELib.Core
             {
                 value = DeserializeValue();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.Error.WriteLine($"Exception thrown: {e} in {nameof(Decompile)}");
-                value = $"/*ERROR: {e}*/";
+                Console.Error.WriteLine($"Exception thrown: {ex} in {nameof(Decompile)}");
+                value = $"/* ERROR: {ex.GetType()} */";
             }
             finally
             {
@@ -543,10 +543,12 @@ namespace UELib.Core
                 // Abort decompilation
                 throw;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.Error.WriteLine($"Exception thrown: {e} in {nameof(DeserializeDefaultPropertyValue)}");
-                return $"/*ERROR: {e}*/";
+                Console.Error.WriteLine($"\r\n> PropertyTag value deserialization error for {_Container.GetPath()}.{Name}" +
+                                        $"\r\n Exception: {ex}");
+
+                return $"/* ERROR: {ex.GetType()} */";
             }
         }
 

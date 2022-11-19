@@ -67,7 +67,7 @@ namespace UELib
         public BinaryMetaData BinaryMetaData { get; } = new BinaryMetaData();
 
         // Reference to the stream used when reading this package
-        public readonly UPackageStream Stream;
+        public UPackageStream Stream;
 
         /// <summary>
         /// The signature of a 'Unreal Package'.
@@ -1638,9 +1638,11 @@ namespace UELib
         {
             if ((initFlags & InitFlags.RegisterClasses) != 0) RegisterExportedClassTypes();
 
-            if ((initFlags & InitFlags.Construct) == 0) return;
+            if ((initFlags & InitFlags.Construct) != 0)
+            {
+                ConstructObjects();
+            };
 
-            ConstructObjects();
             if ((initFlags & InitFlags.Deserialize) == 0)
                 return;
 
@@ -1648,21 +1650,19 @@ namespace UELib
             {
                 DeserializeObjects();
             }
-            catch
+            catch (Exception ex)
             {
-                throw new DeserializingObjectsException();
+                throw new UnrealException("Deserialization", ex);
             }
 
             try
             {
                 if ((initFlags & InitFlags.Link) != 0) LinkObjects();
             }
-            catch
+            catch (Exception ex)
             {
-                throw new LinkingObjectsException();
+                throw new UnrealException("Linking", ex);
             }
-
-            DisposeStream();
         }
 
         /// <summary>
@@ -2154,9 +2154,6 @@ namespace UELib
         /// <inheritdoc/>
         public void Dispose()
         {
-            Console.WriteLine("Disposing {0}", PackageName);
-
-            DisposeStream();
             if (Objects != null && Objects.Any())
             {
                 foreach (var obj in Objects) obj.Dispose();
@@ -2164,15 +2161,12 @@ namespace UELib
                 Objects.Clear();
                 Objects = null;
             }
-        }
 
-        private void DisposeStream()
-        {
             if (Stream == null)
                 return;
 
-            Console.WriteLine("Disposing package stream");
-            Stream.Dispose();
+            Stream.Close();
+            Stream = null;
         }
 
         #endregion

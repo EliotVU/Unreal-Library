@@ -606,11 +606,12 @@ namespace UELib
 
         protected override void Dispose(bool disposing)
         {
-            if (!disposing)
-                return;
-
-            UR = null;
-            UW = null;
+            base.Dispose(disposing);
+            if (disposing)
+            {
+                UR = null;
+                UW = null;
+            }
         }
     }
 
@@ -818,8 +819,6 @@ namespace UELib
                 UW.Dispose();
                 UW = null;
             }
-
-            Dispose();
         }
     }
 

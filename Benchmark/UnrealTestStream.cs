@@ -7,13 +7,32 @@ using UELib.Decoding;
 
 namespace Eliot.UELib.Benchmark
 {
+    public class UnrealTestArchive : IUnrealArchive
+    {
+        public UnrealTestArchive(UnrealPackage package, uint version, uint licenseeVersion = 0, uint ue4Version = 0, bool bigEndianCode = false)
+        {
+            Package = package;
+            Version = version;
+            LicenseeVersion = licenseeVersion;
+            UE4Version = ue4Version;
+            BigEndianCode = bigEndianCode;
+        }
+
+        public UnrealPackage Package { get; }
+        public uint Version { get; }
+        public uint LicenseeVersion { get; }
+        public uint UE4Version { get; }
+        public bool BigEndianCode { get; }
+        public long LastPosition { get; set; }
+    }
+    
     /// Hackish workaround for the issue with UPackageStream requiring a file and path, so that we can perform stream tests without a package.
     public class UnrealTestStream : UnrealReader, IUnrealStream
     {
         public uint Version => _Archive.Version;
-        public uint LicenseeVersion { get; }
-        public uint UE4Version { get; }
-        public bool BigEndianCode { get; }
+        public uint LicenseeVersion => _Archive.LicenseeVersion;
+        public uint UE4Version => _Archive.UE4Version;
+        public bool BigEndianCode => _Archive.BigEndianCode;
         
         public UnrealPackage Package => _Archive.Package;
         public UnrealReader UR => this;
@@ -92,8 +111,8 @@ namespace Eliot.UELib.Benchmark
 
         public long LastPosition
         {
-            get => _Archive.LastPosition;
-            set => _Archive.LastPosition = value;
+            get => BaseStream.Position;
+            set => BaseStream.Position = value;
         }
         
         public long Seek(long offset, SeekOrigin origin)

@@ -169,10 +169,8 @@ namespace UELib.Core
                 ExceptionPosition = _Buffer?.Position ?? -1;
                 DeserializationState |= ObjectState.Errorlized;
 
-                Console.WriteLine(e.Source + ":" + Name + ":" + e.GetType().Name + " occurred while deserializing;"
-                                  + "\r\n" + e.StackTrace
-                                  + "\r\n" + e.Message
-                );
+                Console.Error.WriteLine($"\r\n> Object deserialization error for {GetReferencePath()} as {GetType()}" +
+                                  $"\r\n> Exception: {ThrownException}");
             }
             finally
             {
@@ -632,17 +630,20 @@ namespace UELib.Core
             Dispose(true);
         }
 
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (!disposing)
             {
-                MaybeDisposeBuffer();
+                return;
             }
+
+            _Buffer?.Close();
+            _Buffer = null;
         }
 
         ~UObject()
         {
-            Dispose(false);
+            Dispose(true);
         }
 
         public virtual void Accept(IVisitor visitor)
