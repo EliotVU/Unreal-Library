@@ -72,6 +72,15 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
+#if AA2
+            if (Package.Build == BuildGeneration.AGP &&
+                _Buffer.LicenseeVersion >= 8)
+            {
+                // Always 26125 (hardcoded in the assembly) 
+                uint aa2FixedPack = _Buffer.ReadUInt32();
+                Record(nameof(aa2FixedPack), aa2FixedPack);
+            }
+#endif
 #if XIII || DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII ||
                 Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
@@ -91,15 +100,7 @@ namespace UELib.Core
             //Debug.Assert(
             //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
             //    $"Bad array dimension {ArrayDim & 0x0000FFFFU} for property ${GetReferencePath()}");
-#if AA2
-            if (Package.Build == BuildGeneration.AGP &&
-                _Buffer.LicenseeVersion > 7)
-            {
-                // Always 26125 (hardcoded in the assembly) 
-                uint aa2FixedPack = _Buffer.ReadUInt32();
-                Record(nameof(aa2FixedPack), aa2FixedPack);
-            }
-#endif
+
             PropertyFlags = Package.Version >= 220
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
