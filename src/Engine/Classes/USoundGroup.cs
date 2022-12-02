@@ -25,6 +25,7 @@ namespace UELib.Core
             }
 #endif
             _Buffer.ReadArray(out Sounds);
+            Record(nameof(Sounds), Sounds);
         }
     }
 }

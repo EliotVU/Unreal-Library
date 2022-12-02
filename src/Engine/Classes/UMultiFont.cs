@@ -19,6 +19,7 @@ namespace UELib.Engine
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
             {
                 _Buffer.ReadArray(out ResolutionTestTable);
+                Record(nameof(ResolutionTestTable), ResolutionTestTable);
             }
         }
     }

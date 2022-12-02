@@ -37,6 +37,7 @@ namespace UELib.Engine
                 _Buffer.Version >= 75)
             {
                 _Buffer.Read(out HasAlphaChannel); // v28
+                Record(nameof(HasAlphaChannel), HasAlphaChannel);
             }
 #endif
         }
