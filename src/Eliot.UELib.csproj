@@ -153,6 +153,7 @@
     <Compile Include="Core\Tokens\EatStringToken.cs" />
     <Compile Include="Core\Tokens\ValidateObjectToken.cs" />
     <Compile Include="Engine\Classes\UActorComponent.cs" />
+    <Compile Include="Core\Types\UBulkData.cs" />
     <Compile Include="Engine\Classes\UMaterial.cs" />
     <Compile Include="Engine\Classes\UMaterialInterface.cs" />
     <Compile Include="Engine\Classes\UPrimitiveComponent.cs" />

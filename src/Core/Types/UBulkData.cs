@@ -123,6 +123,9 @@ namespace UELib.Core
                 Debugger.Break();
             }
 
+            Debug.Assert(StorageOffset != -1);
+            Debug.Assert(StorageSize != -1);
+
             long returnPosition = stream.Position;
             stream.AbsolutePosition = StorageOffset;
 

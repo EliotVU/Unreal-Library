@@ -1,9 +1,8 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using UELib.Annotations;
 using UELib.Branch;
-using UELib.Engine;
+using UELib.Core;
 
-namespace UELib.Core
+namespace UELib.Engine
 {
     /// <summary>
     ///     Implements UTexture/Engine.Texture
@@ -11,8 +10,10 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UTexture : UBitmapMaterial
     {
-        public UArray<MipMap> Mips;
         public bool HasComp;
+
+        [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)] [CanBeNull]
+        public UArray<LegacyMipMap> Mips;
 
         protected override void Deserialize()
         {
@@ -31,7 +32,7 @@ namespace UELib.Core
                     HasComp = bool.Parse(bHasCompProperty.Value);
                     if (HasComp)
                     {
-                        _Buffer.ReadArray(out UArray<MipMap> oldMips);
+                        _Buffer.ReadArray(out UArray<LegacyMipMap> oldMips);
                         Record(nameof(oldMips), oldMips);
                     }
                 }
@@ -41,10 +42,9 @@ namespace UELib.Core
             Record(nameof(Mips), Mips);
         }
 
-        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-        public struct MipMap : IUnrealSerializableClass
+        public struct LegacyMipMap : IUnrealSerializableClass
         {
-            public byte[] Data;
+            public UBulkData<byte> Data;
             public int USize;
             public int VSize;
             public byte UBits;
@@ -52,7 +52,7 @@ namespace UELib.Core
 
             public void Deserialize(IUnrealStream stream)
             {
-                stream.ReadLazyArray(out Data);
+                stream.Read(out Data);
                 stream.Read(out USize);
                 stream.Read(out VSize);
                 stream.Read(out UBits);
@@ -61,7 +61,7 @@ namespace UELib.Core
 
             public void Serialize(IUnrealStream stream)
             {
-                stream.WriteLazyArray(ref Data);
+                stream.Write(ref Data);
                 stream.Write(USize);
                 stream.Write(VSize);
                 stream.Write(UBits);

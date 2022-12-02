@@ -20,7 +20,7 @@ namespace UELib.Core
         /// </summary>
         public float? Likelihood;
 
-        public byte[] Data;
+        public UBulkData<byte> RawData;
 
         #endregion
 
@@ -33,12 +33,12 @@ namespace UELib.Core
 
         public bool CanExport()
         {
-            return Data?.Length != 0;
+            return RawData.StorageSize != -1;
         }
 
         public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
         {
-            exportStream.Write(Data, 0, Data.Length);
+            exportStream.Write(RawData.ElementData, 0, RawData.ElementData.Length);
         }
 
         protected override void Deserialize()
@@ -120,8 +120,8 @@ namespace UELib.Core
             }
 #endif
             // Resource Interchange File Format
-            _Buffer.ReadLazyArray(out Data);
-            Record(nameof(Data), Data);
+            _Buffer.Read(out RawData);
+            Record(nameof(RawData), RawData);
 #if UNDYING
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying)
             {
