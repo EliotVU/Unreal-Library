@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -34,6 +35,39 @@ namespace Eliot.UELib.Test
             Assert.IsTrue(privateProperty.IsPrivate());
         }
 
+        internal static void AssertScriptDecompile(UStruct scriptInstance)
+        {
+            if (scriptInstance.ByteCodeManager != null)
+            {
+                try
+                {
+                    scriptInstance.ByteCodeManager.Decompile();
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Token decompilation exception in script instance {scriptInstance.GetReferencePath()}: {ex.Message}");
+                }
+            }
+            
+            foreach (var subScriptInstance in scriptInstance
+                         .EnumerateFields()
+                         .OfType<UStruct>())
+            {
+                if (subScriptInstance.ByteCodeManager == null) continue;
+                
+                try
+                {
+                    subScriptInstance.ByteCodeManager.Decompile();
+                    // ... for states
+                    AssertScriptDecompile(subScriptInstance);
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Token decompilation exception in script instance {subScriptInstance.GetReferencePath()}: {ex.Message}");
+                }
+            }
+        }
+
         internal static UObject AssertDefaultPropertiesClass(UnrealPackage linker)
         {
             var testClass = linker.FindObject<UClass>("DefaultProperties");
@@ -68,6 +102,25 @@ namespace Eliot.UELib.Test
         {
             obj.BeginDeserializing();
             Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialied, obj.GetReferencePath());
+        }
+
+        internal static void AssertTokenType<T>(UStruct.UByteCodeDecompiler.Token token)
+            where T : UStruct.UByteCodeDecompiler.Token
+        {
+            Assert.AreEqual(typeof(T), token.GetType());
+        }
+
+        internal static void AssertTokenType(UStruct.UByteCodeDecompiler.Token token, Type tokenType)
+        {
+            Assert.AreEqual(tokenType, token.GetType());
+        }
+
+        internal static void AssertTokens(UStruct.UByteCodeDecompiler script, params Type[] tokenTypesSequence)
+        {
+            foreach (var tokenType in tokenTypesSequence)
+            {
+                AssertTokenType(script.NextToken, tokenType);
+            }
         }
     }
 }

@@ -340,15 +340,24 @@ namespace UELib.Branch
                 tokenMap[0x37] = typeof(DynamicArrayLengthToken);
             }
 
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayInsertTokenAdded)
-            {
-                // Beware! these will be shifted down, see UnshiftTokens3
-                tokenMap[0x40] = typeof(DynamicArrayInsertToken);
-                tokenMap[0x41] = typeof(DynamicArrayRemoveToken);
-            }
-
             if (linker.Version < (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded)
+            {
                 DowngradePrimitiveCasts(tokenMap);
+            }
+            else
+            {
+                if (linker.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayInsertTokenAdded)
+                {
+                    // Beware! these will be shifted down, see UnshiftTokens3
+                    tokenMap[0x40] = typeof(DynamicArrayInsertToken);
+                    tokenMap[0x41] = typeof(DynamicArrayRemoveToken);
+                }
+                
+                tokenMap[0x42] = typeof(DebugInfoToken);
+                tokenMap[0x43] = typeof(DelegateFunctionToken);
+                tokenMap[0x44] = typeof(DelegatePropertyToken);
+                tokenMap[0x45] = typeof(LetDelegateToken);
+            }
 #if UE3
             // RangeConst was deprecated to add new tokens, and as a result all op codes past it were shifted around.
             if (linker.Version >= (uint)PackageObjectLegacyVersion.RangeConstTokenDeprecated)
@@ -466,7 +475,6 @@ namespace UELib.Branch
             tokenMap[0x4A] = typeof(EmptyParmToken);
             // FIXME: added post GoW
             tokenMap[0x4B] = typeof(InstanceDelegateToken);
-            //tokenMap[0x50] = typeof(BadToken);
             // Attested in GoW
             tokenMap[0x50] = typeof(UndefinedVariableToken);
 

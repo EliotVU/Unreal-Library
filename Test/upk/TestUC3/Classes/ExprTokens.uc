@@ -1,8 +1,9 @@
-class Casts extends Object;
+class ExprTokens extends Object;
+
+var int InstanceInt;
+var delegate<OnDelegate> InstanceDelegate;
 
 static final preoperator bool \ ( string v ) { return true; }
-
-delegate FieldDelegate();
 
 function AllCasts()
 {
@@ -75,10 +76,40 @@ function AllCasts()
 	assert (\"RotatorToString" && string(localRotator) == "(Pitch=0,Yaw=0,Roll=0)"); 
 
 	// DelegateToX
-	assert (\"DelegateToString" && string(__FieldDelegate__Delegate) == "None"); 
+	assert (\"DelegateToString" && string(__OnDelegate__Delegate) == "None"); 
 
 	// InterfaceToX
 	assert (\"InterfaceToObject" && Object(localInterface) == none); 
 	assert (\"InterfaceToString" && string(localInterface) == "None"); 
 	assert (\"InterfaceToBool" && bool(localInterface) == false); 
+}
+
+function VarTokens()
+{
+    local int localInt;
+
+	assert (\"LocalVariable" && localInt == 0);
+	assert (\"InstanceVariable" && InstanceInt == 0);
+	assert (\"DefaultVariable" && default.InstanceInt == 0);
+}
+
+delegate OnDelegate();
+private function InternalOnDelegate();
+
+// OnDelegate gets internally redirected to property __OnDelegate__Delegate
+function DelegateTokens()
+{
+    // DelegateFunction token
+    OnDelegate();
+    // LetDelegate token
+    OnDelegate = InternalOnDelegate;
+    OnDelegate = none;
+
+    // DelegateEq/Ne tokens
+    if (OnDelegate == InstanceDelegate);
+    if (OnDelegate != InstanceDelegate);
+    // Test for DelegateFunctionEq/Ne tokens and the InstanceDelegate(InternalOnDelegate) token
+    if (OnDelegate == InternalOnDelegate);
+    if (OnDelegate != InternalOnDelegate);
+    if (OnDelegate == none); // Test the EmptyDelegate token
 }

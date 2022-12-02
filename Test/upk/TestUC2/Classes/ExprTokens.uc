@@ -1,10 +1,10 @@
-class Casts extends Object;
+class ExprTokens extends Object;
+
+var int InstanceInt;
 
 // var pointer instancePointer;
 
 static final preoperator bool \ ( string v ) { return true; }
-
-delegate FieldDelegate();
 
 function AllCasts()
 {
@@ -78,4 +78,24 @@ function AllCasts()
     // instancePointer = 1;
 
     // assert (int(instancePointer) == 0);
+}
+
+function VarTokens()
+{
+    local int localInt;
+
+	assert (\"LocalVariable" && localInt == 0);
+	assert (\"InstanceVariable" && InstanceInt == 0);
+	assert (\"DefaultVariable" && default.InstanceInt == 0);
+}
+
+delegate OnDelegate();
+private function InternalOnDelegate();
+
+// OnDelegate gets internally redirected to property __OnDelegate__Delegate
+function DelegateTokens()
+{
+    OnDelegate();
+    OnDelegate = InternalOnDelegate;
+    OnDelegate = none;
 }
