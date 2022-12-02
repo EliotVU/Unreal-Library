@@ -24,6 +24,7 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
+            // UT2004(v128) < LicenseeVersion 29, but the correct version to test against is 122
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.FontPagesDisplaced)
             {
                 _Buffer.Read(out UArray<FontPage> pages);
@@ -34,7 +35,7 @@ namespace UELib.Engine
 
                 Characters = new UArray<FontCharacter>();
                 Textures = new UArray<UObject>();
-                for (var i = 0; i < pages.Count; i++)
+                for (int i = 0; i < pages.Count; i++)
                 {
                     Textures.Add(pages[i].Texture);
                     foreach (var c in pages[i].Characters)
@@ -61,12 +62,14 @@ namespace UELib.Engine
 
                 _Buffer.Read(out Textures);
                 Record(nameof(Textures), Textures);
+            }
 
-                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.KerningAddedToUFont)
-                {
-                    _Buffer.Read(out Kerning);
-                    Record(nameof(Kerning), Kerning);
-                }
+            // No version check in UT2003 (v120) and UT2004 (v128)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.KerningAddedToUFont &&
+                _Buffer.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
+            {
+                _Buffer.Read(out Kerning);
+                Record(nameof(Kerning), Kerning);
             }
 
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.CharRemapAddedToUFont)
