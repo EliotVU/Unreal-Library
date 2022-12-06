@@ -115,6 +115,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMetaData.cs" />
+    <Compile Include="Branch\UE3\RSS\Tokens\Bm4ContextToken.cs" />
+    <Compile Include="Branch\UE3\RSS\Tokens\NameConstNoNumberToken.cs" />
     <Compile Include="Core\Classes\Props\Custom\UScriptMapProperty.cs" />
     <Compile Include="Core\Classes\Props\UArrayProperty.cs" />
     <Compile Include="Core\Classes\Props\UBoolProperty.cs" />
@@ -252,7 +254,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
+      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

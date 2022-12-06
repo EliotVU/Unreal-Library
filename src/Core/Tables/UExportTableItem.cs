@@ -143,9 +143,9 @@ namespace UELib
             }
 
 #if BATMAN
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
+            if (stream.Package.Build == BuildGeneration.RSS)
             {
-                stream.Skip( sizeof(int) );
+                stream.Skip(sizeof(int));
             }
 #endif
 

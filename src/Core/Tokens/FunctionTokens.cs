@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace UELib.Core
@@ -14,34 +15,24 @@ namespace UELib.Core
 
             public abstract class FunctionToken : Token
             {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected UName DeserializeFunctionName(IUnrealStream stream)
+                {
+                    return ReadName(stream);
+                }
+
                 protected void DeserializeCall()
                 {
                     DeserializeParms();
                     Decompiler.DeserializeDebugToken();
                 }
 
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private void DeserializeParms()
                 {
 #pragma warning disable 642
                     while (!(DeserializeNext() is EndFunctionParmsToken)) ;
 #pragma warning restore 642
-                }
-
-                protected void DeserializeBinaryOperator()
-                {
-                    DeserializeNext();
-                    DeserializeNext();
-
-                    DeserializeNext(); // )
-                    Decompiler.DeserializeDebugToken();
-                }
-
-                protected void DeserializeUnaryOperator()
-                {
-                    DeserializeNext();
-
-                    DeserializeNext(); // )
-                    Decompiler.DeserializeDebugToken();
                 }
 
                 private static string PrecedenceToken(Token t)
@@ -61,29 +52,46 @@ namespace UELib.Core
                             break;
                     }
 
-                    return addParenthesis ? $"({t.Decompile()})" : t.Decompile();
+                    return addParenthesis
+                        ? $"({t.Decompile()})"
+                        : t.Decompile();
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private bool NeedsSpace(string operatorName)
+                {
+                    return char.IsUpper(operatorName[0])
+                           || char.IsLower(operatorName[0]);
                 }
 
                 protected string DecompilePreOperator(string operatorName)
                 {
-                    string output = operatorName + (operatorName.Length > 1 ? " " : string.Empty) + DecompileNext();
-                    DecompileNext(); // )
-                    return output;
+                    string operand = DecompileNext();
+                    AssertSkipCurrentToken<EndFunctionParmsToken>();
+
+                    // Only space out if we have a non-symbol operator name.
+                    return NeedsSpace(operatorName)
+                        ? $"{operatorName} {operand}"
+                        : $"{operatorName}{operand}";
                 }
 
                 protected string DecompileOperator(string operatorName)
                 {
                     var output =
-                        $"{PrecedenceToken(GrabNextToken())} {operatorName} {PrecedenceToken(GrabNextToken())}";
-                    DecompileNext(); // )
+                        $"{PrecedenceToken(NextToken())} {operatorName} {PrecedenceToken(NextToken())}";
+                    AssertSkipCurrentToken<EndFunctionParmsToken>();
                     return output;
                 }
 
                 protected string DecompilePostOperator(string operatorName)
                 {
-                    string output = $"{operatorName} {DecompileNext()}";
-                    DecompileNext(); // )
-                    return output;
+                    string operand = DecompileNext();
+                    AssertSkipCurrentToken<EndFunctionParmsToken>();
+
+                    // Only space out if we have a non-symbol operator name.
+                    return NeedsSpace(operatorName)
+                        ? $"{operand} {operatorName}"
+                        : $"{operand}{operatorName}";
                 }
 
                 protected string DecompileCall(string functionName)
@@ -108,7 +116,7 @@ namespace UELib.Core
                     var tokens = new List<Tuple<Token, string>>();
                     {
                     next:
-                        var t = GrabNextToken();
+                        var t = NextToken();
                         tokens.Add(Tuple.Create(t, t.Decompile()));
                         if (!(t is EndFunctionParmsToken))
                             goto next;
@@ -161,7 +169,7 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(int));
                     }
 
-                    Function = stream.ReadObject() as UFunction;
+                    Function = stream.ReadObject<UFunction>();
                     Decompiler.AlignObjectSize();
 
                     DeserializeCall();
@@ -242,9 +250,7 @@ namespace UELib.Core
                         Decompiler.AlignSize(sizeof(int));
                     }
 
-                    FunctionName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
-
+                    FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
 
@@ -261,9 +267,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    FunctionName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
-
+                    FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
 
@@ -276,24 +280,23 @@ namespace UELib.Core
 
             public class DelegateFunctionToken : FunctionToken
             {
+                public byte? IsLocal;
+                public UProperty DelegateProperty;
                 public UName FunctionName;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // TODO: Corrigate Version
-                    if (stream.Version > 180)
+                    if (stream.Version >= 181)
                     {
-                        ++stream.Position; // ReadByte()
+                        IsLocal = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
-                    // Delegate object index
-                    stream.ReadObjectIndex();
+                    DelegateProperty = stream.ReadObject<UProperty>();
                     Decompiler.AlignObjectSize();
 
-                    FunctionName = stream.ReadNameReference();
-                    Decompiler.AlignNameSize();
-
+                    FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall();
                 }
 
@@ -310,35 +313,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (NativeItem == null)
-                    {
-                        NativeItem = new NativeTableItem
-                        {
-                            Type = FunctionType.Function,
-                            Name = "UnresolvedNativeFunction_" + RepresentToken,
-                            ByteToken = RepresentToken
-                        };
-                    }
-
-                    switch (NativeItem.Type)
-                    {
-                        case FunctionType.Function:
-                            DeserializeCall();
-                            break;
-
-                        case FunctionType.PreOperator:
-                        case FunctionType.PostOperator:
-                            DeserializeUnaryOperator();
-                            break;
-
-                        case FunctionType.Operator:
-                            DeserializeBinaryOperator();
-                            break;
-
-                        default:
-                            DeserializeCall();
-                            break;
-                    }
+                    DeserializeCall();
                 }
 
                 public override string Decompile()

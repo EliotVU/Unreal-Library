@@ -574,18 +574,20 @@ namespace UELib.Core
 
             public class ArrayIteratorToken : JumpToken
             {
-                protected bool HasSecondParm;
+                public byte WithIndexParam;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // Expression
                     DeserializeNext();
 
-                    // Param 1
+                    // Item param
                     DeserializeNext();
 
-                    HasSecondParm = stream.ReadByte() > 0;
+                    WithIndexParam = stream.ReadByte();
                     Decompiler.AlignSize(sizeof(byte));
+                    
+                    // Index param
                     DeserializeNext();
 
                     base.Deserialize(stream);
@@ -598,10 +600,20 @@ namespace UELib.Core
                     Commentize();
 
                     // foreach ArrayVariable( Parameters )
-                    var output = $"foreach {DecompileNext()}({DecompileNext()}";
-                    output += (HasSecondParm ? ", " : string.Empty) + DecompileNext();
+                    string output;
+                    if (WithIndexParam > 0)
+                    {
+                        output = $"foreach {DecompileNext()}({DecompileNext()}, {DecompileNext()})";
+                    }
+                    else
+                    {
+                        output = $"foreach {DecompileNext()}({DecompileNext()})";
+                        // Skip Index param
+                        NextToken();
+                    }
+
                     Decompiler._CanAddSemicolon = false;
-                    return $"{output})";
+                    return output;
                 }
             }
 

@@ -120,7 +120,7 @@ namespace UELib.Core
 #endif
             base.Deserialize();
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance &&
+            if (Package.Build == BuildGeneration.Vengeance &&
                 Package.LicenseeVersion >= 36)
             {
                 var header = (2, 0);
@@ -171,7 +171,7 @@ namespace UELib.Core
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
 
-            skipTo61Stuff:
+        skipTo61Stuff:
             if (Package.Version >= 62)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
@@ -203,6 +203,7 @@ namespace UELib.Core
                            )
                             DeserializeHideCategories();
 
+                        // Seems to have been removed in transformer packages
                         DeserializeComponentsMap();
 
                         // RoboBlitz(369)
@@ -240,10 +241,32 @@ namespace UELib.Core
                                 || Package.Version <= vHideCategoriesOldOrder || Package.Version >= 576)
                                 AutoExpandCategories = DeserializeGroup("AutoExpandCategories");
 
+#if TRANSFORMERS
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                            {
+                                var constructorsCount = _Buffer.ReadInt32();
+                                Record("Constructors.Count", constructorsCount);
+                                if (constructorsCount >= 0)
+                                {
+                                    int numBytes = constructorsCount * 4;
+                                    AssertEOS(numBytes, "Constructors");
+                                    _Buffer.Skip(numBytes);
+                                }
+                            }
+#endif
+
                             if (Package.Version > 670)
                             {
                                 AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
-
+#if BATMAN
+                                // Only attested in bm4 with no version check.
+                                if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                                    _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                                {
+                                    IList<int> bm4_v198;
+                                    bm4_v198 = DeserializeGroup(nameof(bm4_v198));
+                                }
+#endif
                                 if (Package.Version >= 749
 #if SPECIALFORCE2
                                     && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
@@ -258,32 +281,35 @@ namespace UELib.Core
                                     {
                                         var unknownName = _Buffer.ReadNameReference();
                                         Record("Unknown:Dishonored", unknownName);
+
+                                        NativeClassName = _Buffer.ReadText();
+                                        Record(nameof(NativeClassName), NativeClassName);
+                                        goto skipEditorContent;
+                                    }
+#endif
+#if BATMAN
+                                    if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                                        _Buffer.Package.LicenseeVersion >= 95)
+                                    {
+                                        uint bm4_v174 = _Buffer.ReadUInt32();
+                                        Record(nameof(bm4_v174), bm4_v174);
                                     }
 #endif
                                     if (Package.Version >= UnrealPackage.VCLASSGROUP)
                                     {
-#if DISHONORED
-                                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
-                                        {
-                                            NativeClassName = _Buffer.ReadText();
-                                            Record(nameof(NativeClassName), NativeClassName);
-                                            goto skipClassGroups;
-                                        }
-#endif
                                         ClassGroups = DeserializeGroup("ClassGroups");
-                                        if (Package.Version >= 813)
-                                        {
-                                            NativeClassName = _Buffer.ReadText();
-                                            Record(nameof(NativeClassName), NativeClassName);
-                                        }
                                     }
-#if DISHONORED
-                                    skipClassGroups: ;
-#endif
+
+                                    // No version check in batman???
+                                    if (Package.Version >= 813)
+                                    {
+                                        NativeClassName = _Buffer.ReadText();
+                                        Record(nameof(NativeClassName), NativeClassName);
+                                    }
                                 }
                             }
 
-                            // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
+                            // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
                             if (Package.Version > 575 && Package.Version < 673
 #if TERA
@@ -299,12 +325,8 @@ namespace UELib.Core
                             }
                         }
                     }
-#if BATMAN
-                    if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
-                    {
-                        _Buffer.Skip(sizeof(int));
-                    }
-#endif
+
+                skipEditorContent:
                     if (Package.Version >= UnrealPackage.VDLLBIND)
                     {
                         if (!Package.Build.Flags.HasFlag(BuildFlags.NoDLLBind))
@@ -334,13 +356,13 @@ namespace UELib.Core
                 }
             }
 #if THIEF_DS || DeusEx_IW
-            if (Package.Build.Generation == BuildGeneration.Thief)
+            if (Package.Build == BuildGeneration.Thief)
             {
                 string thiefClassVisibleName = _Buffer.ReadText();
                 Record(nameof(thiefClassVisibleName), thiefClassVisibleName);
 
                 // Restore the human-readable name if possible
-                if (!string.IsNullOrEmpty(thiefClassVisibleName) 
+                if (!string.IsNullOrEmpty(thiefClassVisibleName)
                     && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
                     var nameEntry = new UNameTableItem()
@@ -352,7 +374,7 @@ namespace UELib.Core
             }
 #endif
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 if (Package.LicenseeVersion >= 2)
                 {

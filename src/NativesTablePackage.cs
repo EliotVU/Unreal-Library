@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UELib.Annotations;
@@ -22,17 +23,17 @@ namespace UELib
         [PublicAPI]
         public NativeTableItem(UFunction function)
         {
-            if (function.IsOperator())
-            {
-                Type = FunctionType.Operator;
-            }
-            else if (function.IsPost())
+            if (function.IsPost())
             {
                 Type = FunctionType.PostOperator;
             }
             else if (function.IsPre())
             {
                 Type = FunctionType.PreOperator;
+            }
+            else if (function.IsOperator())
+            {
+                Type = FunctionType.Operator;
             }
             else
             {
@@ -41,9 +42,7 @@ namespace UELib
 
             OperPrecedence = function.OperPrecedence;
             ByteToken = function.NativeToken;
-            Name = Type == FunctionType.Function
-                ? function.Name
-                : function.FriendlyName;
+            Name = function.FriendlyName;
         }
     }
 
@@ -66,21 +65,28 @@ namespace UELib
         [PublicAPI]
         public List<NativeTableItem> NativeTableList;
 
-        private Dictionary<int, NativeTableItem> _NativeFunctionMap;
-
-        [PublicAPI]
-        public void LoadPackage(string name)
+        public Dictionary<ushort, NativeTableItem> NativeTokenMap { get; set; }
+        
+        [Obsolete]
+        public NativeTableItem FindTableItem(uint nativeIndex)
         {
-            var stream = new FileStream(name + Extension, FileMode.Open, FileAccess.Read);
+            NativeTokenMap.TryGetValue((ushort)nativeIndex, out var item);
+            return item;
+        }
+        
+        [PublicAPI]
+        public void LoadPackage(string filePath)
+        {
+            var stream = new FileStream(filePath + Extension, FileMode.Open, FileAccess.Read);
             using (var binReader = new BinaryReader(stream))
             {
                 if (binReader.ReadUInt32() != Signature)
                 {
-                    throw new UnrealException($"File {stream.Name} is not a NTL file!");
+                    throw new FileLoadException($"File {stream.Name} is not a NTL file!");
                 }
 
                 int count = binReader.ReadInt32();
-                NativeTableList = new List<NativeTableItem>();
+                NativeTableList = new List<NativeTableItem>(count);
                 for (var i = 0; i < count; ++i)
                 {
                     var item = new NativeTableItem
@@ -90,24 +96,22 @@ namespace UELib
                         Type = (FunctionType)binReader.ReadByte(),
                         ByteToken = binReader.ReadInt32()
                     };
+                    // Avoid duplicates to prevent ToDictionary from throwing an exception.
+                    if (NativeTableList.Find(it => it.ByteToken == item.ByteToken) != null)
+                    {
+                        continue;
+                    }
                     NativeTableList.Add(item);
                 }
             }
             NativeTableList.Sort((nt1, nt2) => nt1.ByteToken.CompareTo(nt2.ByteToken));
-            _NativeFunctionMap = NativeTableList.ToDictionary(item => item.ByteToken);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeTableItem FindTableItem(uint nativeIndex)
-        {
-            _NativeFunctionMap.TryGetValue((int)nativeIndex, out var item);
-            return item;
+            NativeTokenMap = NativeTableList.ToDictionary(item => (ushort)item.ByteToken);
         }
 
         [PublicAPI]
-        public void CreatePackage(string name)
+        public void CreatePackage(string filePath)
         {
-            var stream = new FileStream(name + Extension, FileMode.Create, FileAccess.Write);
+            var stream = new FileStream(filePath + Extension, FileMode.Create, FileAccess.Write);
             using (var binWriter = new BinaryWriter(stream))
             {
                 binWriter.Write(Signature);

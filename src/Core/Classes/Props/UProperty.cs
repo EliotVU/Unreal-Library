@@ -88,18 +88,24 @@ namespace UELib.Core
             }
 #endif
             int info = _Buffer.ReadInt32();
+            Record("ArrayDim&ElementSize", info);
             ArrayDim = (ushort)(info & 0x0000FFFFU);
-            Record("ArrayDim", ArrayDim);
             Debug.Assert(ArrayDim <= 2048, "Bad array dim");
             ElementSize = (ushort)(info >> 16);
-            Record("ElementSize", ElementSize);
         skipInfo:
 
             PropertyFlags = Package.Version >= 220
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
             Record("PropertyFlags", PropertyFlags);
-
+#if BATMAN
+            if (Package.Build == BuildGeneration.RSS &&
+                Package.LicenseeVersion >= 101)
+            {
+                PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
+                Record("PropertyFlags", (PropertyFlagsLO)PropertyFlags);
+            }
+#endif
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {
@@ -108,7 +114,7 @@ namespace UELib.Core
             }
 #endif
 #if THIEF_DS || DEUSEX_IW
-            if (Package.Build.Generation == BuildGeneration.Thief)
+            if (Package.Build == BuildGeneration.Thief)
             {
                 // Property flags like CustomEditor, CustomViewer, ThiefProp, DeusExProp, NoTextExport, NoTravel
                 uint deusFlags = _Buffer.ReadUInt32();
@@ -128,7 +134,7 @@ namespace UELib.Core
                 else
                 {
 #if THIEF_DS || DEUSEX_IW
-                    if (Package.Build.Generation == BuildGeneration.Thief)
+                    if (Package.Build == BuildGeneration.Thief)
                     {
                         short deusInheritedOrRuntimeInstiantiated = _Buffer.ReadInt16();
                         Record(nameof(deusInheritedOrRuntimeInstiantiated), deusInheritedOrRuntimeInstiantiated);
@@ -145,7 +151,7 @@ namespace UELib.Core
                 Record("RepOffset", RepOffset);
             }
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 var vengeanceEditComboType = _Buffer.ReadNameReference();
                 Record(nameof(vengeanceEditComboType), vengeanceEditComboType);
@@ -155,9 +161,9 @@ namespace UELib.Core
 #endif
             // Appears to be a UE2X feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
-            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) && (Package.Build.Generation == BuildGeneration.UE2_5 || Package.Build.Generation == BuildGeneration.Thief))
+            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) && (Package.Build == BuildGeneration.UE2_5 || Package.Build == BuildGeneration.Thief))
                 // No property flag
-                || Package.Build.Generation == BuildGeneration.Vengeance)
+                || Package.Build == BuildGeneration.Vengeance)
             {
                 // May represent a tooltip/comment in some games.
                 EditorDataText = _Buffer.ReadText();

@@ -225,7 +225,7 @@ namespace UELib.Core
         protected virtual void Deserialize()
         {
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 if (Package.LicenseeVersion >= 25)
                 {
@@ -244,16 +244,19 @@ namespace UELib.Core
                 StateFrame = new UStateFrame();
                 StateFrame.Deserialize(_Buffer);
             }
-
-            if (_Buffer.Version >= UExportTableItem.VNetObjects
-#if MKKE
-                && Package.Build != UnrealPackage.GameBuild.BuildName.MKKE
+#if MKKE || BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                goto skipNetIndex;
+            }
 #endif
-               )
+            if (_Buffer.Version >= UExportTableItem.VNetObjects)
             {
                 int netIndex = _Buffer.ReadInt32();
                 Record(nameof(netIndex), netIndex);
             }
+            skipNetIndex:
 
             // TODO: Serialize component data here
             //if( _Buffer.Version > 400
@@ -265,7 +268,7 @@ namespace UELib.Core
             //}
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
-            if (Package.Build.Generation == BuildGeneration.Thief && GetType() != typeof(UnknownObject))
+            if (Package.Build == BuildGeneration.Thief && GetType() != typeof(UnknownObject))
             {
                 // var native private const int ObjectInternalPropertyHash[1];
                 int thiefLinkDataObjectCount = _Buffer.ReadInt32();
@@ -432,7 +435,9 @@ namespace UELib.Core
         [Pure]
         public string GetClassName()
         {
-            return Table.ClassName;
+            return ImportTable != null 
+                ? ImportTable.ClassName 
+                : Class?.Name ?? "Class";
         }
 
         /// <summary>

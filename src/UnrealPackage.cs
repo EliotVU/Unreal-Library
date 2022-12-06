@@ -80,13 +80,7 @@ namespace UELib
 
         #region Serialized Members
 
-        private uint _Version;
-
-        public uint Version
-        {
-            get => OverrideVersion > 0 ? OverrideVersion : _Version;
-            set => _Version = value;
-        }
+        public uint Version { get; set; }
 
         /// <summary>
         /// For debugging purposes. Change this to override the present Version deserialized from the package.
@@ -119,13 +113,7 @@ namespace UELib
 
         #endregion
 
-        private ushort _LicenseeVersion;
-
-        public ushort LicenseeVersion
-        {
-            get => OverrideLicenseeVersion > 0 ? OverrideLicenseeVersion : _LicenseeVersion;
-            private set => _LicenseeVersion = value;
-        }
+        public ushort LicenseeVersion { get; set; }
 
         /// <summary>
         /// For debugging purposes. Change this to override the present Version deserialized from the package.
@@ -474,11 +462,15 @@ namespace UELib
                 InfinityBlade2,
 
                 /// <summary>
+                /// XCom
+                /// 
                 /// 845/059
                 /// </summary>
                 [Build(845, 59)] XCOM_EU,
 
                 /// <summary>
+                /// XCom 2: War of The Chosen
+                /// 
                 /// 845/120
                 /// </summary>
                 [Build(845, 120)] XCOM2WotC,
@@ -501,17 +493,38 @@ namespace UELib
                 [Build(860, 4)] Hawken,
 
                 /// <summary>
-                /// 805-6/101-3
-                /// 807/137-8
-                /// 807/104
-                /// 863/32995
+                /// Batman: Arkham City
+                /// 
+                /// 805/101
                 /// </summary>
-                [Build(805, 101, BuildGeneration.Batman2)]
-                [Build(806, 103, BuildGeneration.Batman3)]
-                [Build(807, 807, 137, 138, BuildGeneration.Batman3)]
-                [Build(807, 104, BuildGeneration.Batman3MP)]
-                [Build(863, 32995, BuildGeneration.Batman4)]
-                BatmanUDK,
+                [Build(805, 101, BuildGeneration.RSS)]
+                Batman2,
+
+                /// <summary>
+                /// Batman: Arkham Origins
+                ///
+                /// 806/103
+                /// 807/137-138
+                /// </summary>
+                [Build(806, 103, BuildGeneration.RSS)]
+                [Build(807, 807, 137, 138, BuildGeneration.RSS)]
+                Batman3,
+
+                /// <summary>
+                /// 807/104
+                /// </summary>
+                [Build(807, 104, BuildGeneration.RSS)]
+                Batman3MP,
+
+
+                /// <summary>
+                /// Batman: Arkham Knight
+                ///
+                /// 863/32995(227 & ~8000)
+                /// </summary>
+                [Build(863, 32995, BuildGeneration.RSS)]
+                [OverridePackageVersion(863, 227)]
+                Batman4,
 
                 /// <summary>
                 /// 867/009:032
@@ -528,7 +541,9 @@ namespace UELib
             public BuildName Name { get; }
 
             public uint Version { get; }
+            public uint? OverrideVersion { get; }
             public uint LicenseeVersion { get; }
+            public ushort? OverrideLicenseeVersion { get; }
 
             /// <summary>
             /// Is cooked for consoles.
@@ -550,32 +565,34 @@ namespace UELib
             {
                 if (UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console) Flags |= BuildFlags.ConsoleCooked;
 
-                var gameBuilds = (BuildName[])Enum.GetValues(typeof(BuildName));
-                foreach (var gameBuild in gameBuilds)
+                var builds = typeof(BuildName).GetFields();
+                foreach (var build in builds)
                 {
-                    var gameBuildMember = typeof(BuildName).GetMember(gameBuild.ToString());
-                    if (gameBuildMember.Length == 0)
-                        continue;
-
-                    object[] attribs = gameBuildMember[0].GetCustomAttributes(false);
-                    var game = attribs.OfType<BuildAttribute>().SingleOrDefault(attr => attr.Verify(this, package));
-                    if (game == null)
+                    var buildAttributes = build.GetCustomAttributes<BuildAttribute>(false);
+                    var buildAttribute = buildAttributes.FirstOrDefault(attr => attr.Verify(this, package));
+                    if (buildAttribute == null)
                         continue;
 
                     Version = package.Version;
                     LicenseeVersion = package.LicenseeVersion;
-                    Flags = game.Flags;
-                    Generation = game.Generation;
+                    Flags = buildAttribute.Flags;
+                    Generation = buildAttribute.Generation;
 
-                    Name = (BuildName)Enum.Parse(typeof(BuildName), Enum.GetName(typeof(BuildName), gameBuild));
+                    var overrideAttribute = build.GetCustomAttribute<OverridePackageVersionAttribute>(false);
+                    if (overrideAttribute != null)
+                    {
+                        OverrideVersion = overrideAttribute.FixedVersion;
+                        OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                    }
+
+                    Name = (BuildName)Enum.Parse(typeof(BuildName), build.Name);
                     if (package.Decoder != null) break;
 
-                    var buildDecoderAttr =
-                        attribs.SingleOrDefault(attr => attr is BuildDecoderAttribute) as BuildDecoderAttribute;
-                    if (buildDecoderAttr == null)
+                    var buildDecoderAttribute = build.GetCustomAttribute<BuildDecoderAttribute>(false);
+                    if (buildDecoderAttribute == null)
                         break;
 
-                    package.Decoder = buildDecoderAttr.CreateDecoder();
+                    package.Decoder = buildDecoderAttribute.CreateDecoder();
                     break;
                 }
 
@@ -583,14 +600,24 @@ namespace UELib
                     Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;
             }
 
-            public static bool operator ==(GameBuild b, BuildName i)
+            public static bool operator ==(GameBuild b, BuildGeneration gen)
             {
-                return b != null && b.Name == i;
+                return b?.Generation == gen;
             }
 
-            public static bool operator !=(GameBuild b, BuildName i)
+            public static bool operator !=(GameBuild b, BuildGeneration gen)
             {
-                return b != null && b.Name != i;
+                return b?.Generation != gen;
+            }
+
+            public static bool operator ==(GameBuild b, BuildName name)
+            {
+                return b?.Name == name;
+            }
+
+            public static bool operator !=(GameBuild b, BuildName name)
+            {
+                return b?.Name != name;
             }
 
             /// <inheritdoc/>
@@ -971,11 +998,9 @@ namespace UELib
             LicenseeVersion = (ushort)(Version >> 16);
             Version &= 0xFFFFU;
             Console.WriteLine("Package Version:" + Version + "/" + LicenseeVersion);
-
-            Build = new GameBuild(this);
-            Console.WriteLine("Build:" + Build.Name);
-
+            SetupBuild(stream);
             stream.BuildDetected(Build);
+            Console.WriteLine("Build:" + Build.Name);
 
             if (Version >= VHeaderSize)
             {
@@ -1046,7 +1071,7 @@ namespace UELib
                     goto skipGuid;
                 GUID = stream.ReadGuid().ToString();
                 Console.WriteLine("GUID:" + GUID);
-                skipGuid:
+            skipGuid:
 #if TERA
                 if (Build == GameBuild.BuildName.Tera) stream.Position -= 4;
 #endif
@@ -1260,55 +1285,102 @@ namespace UELib
 
                 if (_TablesData.DependsOffset > 0)
                 {
-                    stream.Seek(_TablesData.DependsOffset, SeekOrigin.Begin);
-                    int dependsCount = _TablesData.ExportsCount;
+                    try
+                    {
+                        stream.Seek(_TablesData.DependsOffset, SeekOrigin.Begin);
+                        int dependsCount = _TablesData.ExportsCount;
 #if BIOSHOCK
-                    // FIXME: Version?
-                    if (Build == GameBuild.BuildName.Bioshock_Infinite)
-                    {
-                        dependsCount = stream.ReadInt32();
-                    }
-#endif
-                    var dependsMap = new List<int[]>(dependsCount);
-                    for (var i = 0; i < dependsCount; ++i)
-                    {
-                        // DependencyList, index to import table
-                        int count = stream.ReadInt32(); // -1 in DCUO?
-                        var imports = new int[count];
-                        for (var j = 0; j < count; ++j)
+                        // FIXME: Version?
+                        if (Build == GameBuild.BuildName.Bioshock_Infinite)
                         {
-                            imports[j] = stream.ReadInt32();
+                            dependsCount = stream.ReadInt32();
                         }
+#endif
+                        var dependsMap = new List<int[]>(dependsCount);
+                        for (var i = 0; i < dependsCount; ++i)
+                        {
+                            // DependencyList, index to import table
+                            int count = stream.ReadInt32(); // -1 in DCUO?
+                            var imports = new int[count];
+                            for (var j = 0; j < count; ++j)
+                            {
+                                imports[j] = stream.ReadInt32();
+                            }
 
-                        dependsMap.Add(imports);
+                            dependsMap.Add(imports);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                        Console.Error.WriteLine("Couldn't parse DependenciesTable");
+                        Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                        throw new UnrealException("Couldn't parse DependenciesTable", ex);
+#endif
                     }
                 }
             }
 
             if (_TablesData.ImportExportGuidsOffset > 0)
             {
-                for (var i = 0; i < _TablesData.ImportGuidsCount; ++i)
+                try
                 {
-                    string levelName = stream.ReadText();
-                    int guidCount = stream.ReadInt32();
-                    stream.Skip(guidCount * 16);
-                }
+                    for (var i = 0; i < _TablesData.ImportGuidsCount; ++i)
+                    {
+                        string levelName = stream.ReadText();
+                        int guidCount = stream.ReadInt32();
+                        stream.Skip(guidCount * 16);
+                    }
 
-                for (var i = 0; i < _TablesData.ExportGuidsCount; ++i)
+                    for (var i = 0; i < _TablesData.ExportGuidsCount; ++i)
+                    {
+                        var objectGuid = stream.ReadGuid();
+                        int exportIndex = stream.ReadInt32();
+                    }
+                }
+                catch (Exception ex)
                 {
-                    var objectGuid = stream.ReadGuid();
-                    int exportIndex = stream.ReadInt32();
+                    // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                    Console.Error.WriteLine("Couldn't parse ImportExportGuidsTable");
+                    Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                        throw new UnrealException("Couldn't parse ImportExportGuidsTable", ex);
+#endif
                 }
             }
 
             if (_TablesData.ThumbnailTableOffset != 0)
             {
-                int thumbnailCount = stream.ReadInt32();
-                // TODO: Serialize
+                try
+                {
+                    int thumbnailCount = stream.ReadInt32();
+                    // TODO: Serialize
+                }
+                catch (Exception ex)
+                {
+                    // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                    Console.Error.WriteLine("Couldn't parse ThumbnailTable");
+                    Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                    throw new UnrealException("Couldn't parse ThumbnailTable", ex);
+#endif
+                }
             }
 
             Debug.Assert(stream.Position <= int.MaxValue);
             HeaderSize = (int)stream.Position;
+        }
+
+        private void SetupBuild(UPackageStream stream)
+        {
+            Build = new GameBuild(this);
+
+            if (Build.OverrideVersion.HasValue) Version = Build.OverrideVersion.Value;
+            if (Build.OverrideLicenseeVersion.HasValue) LicenseeVersion = Build.OverrideLicenseeVersion.Value;
+
+            if (OverrideVersion != 0) Version = OverrideVersion;
+            if (OverrideLicenseeVersion != 0) LicenseeVersion = OverrideLicenseeVersion;
         }
 
         /// <summary>

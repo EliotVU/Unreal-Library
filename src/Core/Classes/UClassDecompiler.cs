@@ -189,7 +189,7 @@ namespace UELib.Core
                 output += $" within {Within.Name}";
             }
 #if VENGEANCE
-            if (Package.Build.Generation == BuildGeneration.Vengeance)
+            if (Package.Build == BuildGeneration.Vengeance)
             {
                 if (Vengeance_Implements != null && Vengeance_Implements.Any()) 
                     output += $" implements {string.Join(", ", Vengeance_Implements.Select(i => i.Name))}";

@@ -6,12 +6,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Flags;
 using UELib.Tokens;
 
 namespace UELib.Core
 {
     using System.Linq;
     using System.Text;
+    using UELib.Branch.UE3.RSS.Tokens;
 
     public partial class UStruct
     {
@@ -306,6 +308,18 @@ namespace UELib.Core
                 { 0x59, (byte)ExprToken.Unused }
             };
 #endif
+#if BATMAN
+            private static readonly Dictionary<byte, byte> ByteCodeMap_BuildBatman4 = new Dictionary<byte, byte>
+            {
+                { 0x2B, (byte)ExprToken.Unused }, // NameConst but without the Int32 number at the end
+                // 0x4E, unknown but it has the same pattern as a DynamicCast
+                { 0x4F, (byte)ExprToken.DynamicCast },
+                // 0x4F, unknown but it has the same pattern as a DynamicCast
+                { 0x50, (byte)ExprToken.DynamicCast },
+                // 0x50
+                { 0x51, (byte)ExprToken.Unused },
+            };
+#endif
 #if APB
             private static readonly Dictionary<byte, byte> ByteCodeMap_BuildApb = new Dictionary<byte, byte>
             {
@@ -363,6 +377,13 @@ namespace UELib.Core
                             _ByteCodeMap = ByteCodeMap_BuildAa2_6;
                     }
 
+                    return;
+                }
+#endif
+#if BIOSHOCK
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                {
+                    _ByteCodeMap = ByteCodeMap_BuildBatman4;
                     return;
                 }
 #endif
@@ -504,7 +525,12 @@ namespace UELib.Core
 
             private NativeFunctionToken CreateNativeToken(ushort nativeIndex)
             {
-                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex);
+                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex) ?? new NativeTableItem
+                {
+                    Type = FunctionType.Function,
+                    Name = $"__NFUN_{nativeIndex}__",
+                    ByteToken = nativeIndex
+                };
                 return new NativeFunctionToken
                 {
                     NativeItem = nativeTableItem
@@ -1113,8 +1139,26 @@ namespace UELib.Core
                         }
                     }
                 }
+#if BATMAN
+                // HACK: temporary for the hotfix (:D)
+                if (token == null && Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                {
+                    switch (serializedByte)
+                    {
+                        case 0x2B:
+                            token = new NameConstNoNumberToken();
+                            break;
 
-                if (token == null) token = new UnresolvedToken();
+                        case 0x50:
+                            token = new Bm4ContextToken();
+                            break;
+                    }
+                }
+#endif
+                if (token == null)
+                {
+                    token = new UnresolvedToken();
+                }
                 AddToken(token, serializedByte, tokenPosition);
                 return token;
             }
@@ -1300,11 +1344,11 @@ namespace UELib.Core
                 return token;
             }
 
-            #endregion
+#endregion
 
 #if DECOMPILE
 
-            #region Decompile
+#region Decompile
 
             public class NestManager
             {
@@ -1571,6 +1615,10 @@ namespace UELib.Core
 #endif
                                 }
                             }
+                            catch (EndOfStreamException)
+                            {
+                                break;
+                            }
                             catch (Exception e)
                             {
                                 output.Append($"// ({e.GetType().Name})");
@@ -1590,6 +1638,10 @@ namespace UELib.Core
                                             _MustCommentStatement = true;
                                     }
                                 }
+                            }
+                            catch (EndOfStreamException)
+                            {
+                                break;
                             }
                             catch (Exception e)
                             {
@@ -1921,9 +1973,9 @@ namespace UELib.Core
                 return output;
             }
 
-            #endregion
+#endregion
 
-            #region Disassemble
+#region Disassemble
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
             public string Disassemble()
@@ -1931,7 +1983,7 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-            #endregion
+#endregion
 
 #endif
         }
