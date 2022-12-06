@@ -35,23 +35,6 @@ namespace UELib.Core
 #pragma warning restore 642
                 }
 
-                protected void DeserializeBinaryOperator()
-                {
-                    DeserializeNext();
-                    DeserializeNext();
-
-                    DeserializeNext(); // )
-                    Decompiler.DeserializeDebugToken();
-                }
-
-                protected void DeserializeUnaryOperator()
-                {
-                    DeserializeNext();
-
-                    DeserializeNext(); // )
-                    Decompiler.DeserializeDebugToken();
-                }
-
                 private static string PrecedenceToken(Token t)
                 {
                     if (!(t is FunctionToken))
@@ -69,29 +52,46 @@ namespace UELib.Core
                             break;
                     }
 
-                    return addParenthesis ? $"({t.Decompile()})" : t.Decompile();
+                    return addParenthesis
+                        ? $"({t.Decompile()})"
+                        : t.Decompile();
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private bool NeedsSpace(string operatorName)
+                {
+                    return char.IsUpper(operatorName[0])
+                           || char.IsLower(operatorName[0]);
                 }
 
                 protected string DecompilePreOperator(string operatorName)
                 {
-                    string output = operatorName + (operatorName.Length > 1 ? " " : string.Empty) + DecompileNext();
-                    DecompileNext(); // )
-                    return output;
+                    string operand = DecompileNext();
+                    AssertSkipCurrentToken<EndFunctionParmsToken>();
+
+                    // Only space out if we have a non-symbol operator name.
+                    return NeedsSpace(operatorName)
+                        ? $"{operatorName} {operand}"
+                        : $"{operatorName}{operand}";
                 }
 
                 protected string DecompileOperator(string operatorName)
                 {
                     var output =
-                        $"{PrecedenceToken(GrabNextToken())} {operatorName} {PrecedenceToken(GrabNextToken())}";
-                    DecompileNext(); // )
+                        $"{PrecedenceToken(NextToken())} {operatorName} {PrecedenceToken(NextToken())}";
+                    AssertSkipCurrentToken<EndFunctionParmsToken>();
                     return output;
                 }
 
                 protected string DecompilePostOperator(string operatorName)
                 {
-                    string output = $"{operatorName} {DecompileNext()}";
-                    DecompileNext(); // )
-                    return output;
+                    string operand = DecompileNext();
+                    AssertSkipCurrentToken<EndFunctionParmsToken>();
+
+                    // Only space out if we have a non-symbol operator name.
+                    return NeedsSpace(operatorName)
+                        ? $"{operand} {operatorName}"
+                        : $"{operand}{operatorName}";
                 }
 
                 protected string DecompileCall(string functionName)
@@ -116,7 +116,7 @@ namespace UELib.Core
                     var tokens = new List<Tuple<Token, string>>();
                     {
                     next:
-                        var t = GrabNextToken();
+                        var t = NextToken();
                         tokens.Add(Tuple.Create(t, t.Decompile()));
                         if (!(t is EndFunctionParmsToken))
                             goto next;
@@ -313,35 +313,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (NativeItem == null)
-                    {
-                        NativeItem = new NativeTableItem
-                        {
-                            Type = FunctionType.Function,
-                            Name = "UnresolvedNativeFunction_" + RepresentToken,
-                            ByteToken = RepresentToken
-                        };
-                    }
-
-                    switch (NativeItem.Type)
-                    {
-                        case FunctionType.Function:
-                            DeserializeCall();
-                            break;
-
-                        case FunctionType.PreOperator:
-                        case FunctionType.PostOperator:
-                            DeserializeUnaryOperator();
-                            break;
-
-                        case FunctionType.Operator:
-                            DeserializeBinaryOperator();
-                            break;
-
-                        default:
-                            DeserializeCall();
-                            break;
-                    }
+                    DeserializeCall();
                 }
 
                 public override string Decompile()

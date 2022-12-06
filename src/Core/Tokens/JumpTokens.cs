@@ -609,7 +609,7 @@ namespace UELib.Core
                     {
                         output = $"foreach {DecompileNext()}({DecompileNext()})";
                         // Skip Index param
-                        GrabNextToken();
+                        NextToken();
                     }
 
                     Decompiler._CanAddSemicolon = false;
