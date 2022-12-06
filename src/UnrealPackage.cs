@@ -512,13 +512,14 @@ namespace UELib
                 [Build(807, 104, BuildGeneration.RSS)]
                 Batman3MP,
 
+
                 /// <summary>
                 /// Batman: Arkham Knight
                 ///
                 /// 863/32995(227 & ~8000)
                 /// </summary>
                 [Build(863, 32995, BuildGeneration.RSS)]
-                //[OverridePackageVersion(863, 227)]
+                [OverridePackageVersion(863, 227)]
                 Batman4,
 
                 /// <summary>

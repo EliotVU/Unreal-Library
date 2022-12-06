@@ -106,7 +106,7 @@ namespace UELib
             FixedVersion = fixedVersion;
         }
         
-        public OverridePackageVersionAttribute(uint fixedVersion, ushort? fixedLicenseeVersion)
+        public OverridePackageVersionAttribute(uint fixedVersion, ushort fixedLicenseeVersion)
         {
             FixedVersion = fixedVersion;
             FixedLicenseeVersion = fixedLicenseeVersion;
