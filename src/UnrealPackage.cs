@@ -462,11 +462,15 @@ namespace UELib
                 InfinityBlade2,
 
                 /// <summary>
+                /// XCom
+                /// 
                 /// 845/059
                 /// </summary>
                 [Build(845, 59)] XCOM_EU,
 
                 /// <summary>
+                /// XCom 2: War of The Chosen
+                /// 
                 /// 845/120
                 /// </summary>
                 [Build(845, 120)] XCOM2WotC,
@@ -573,7 +577,7 @@ namespace UELib
                     LicenseeVersion = package.LicenseeVersion;
                     Flags = buildAttribute.Flags;
                     Generation = buildAttribute.Generation;
-                    
+
                     var overrideAttribute = build.GetCustomAttribute<OverridePackageVersionAttribute>(false);
                     if (overrideAttribute != null)
                     {
@@ -1067,7 +1071,7 @@ namespace UELib
                     goto skipGuid;
                 GUID = stream.ReadGuid().ToString();
                 Console.WriteLine("GUID:" + GUID);
-                skipGuid:
+            skipGuid:
 #if TERA
                 if (Build == GameBuild.BuildName.Tera) stream.Position -= 4;
 #endif
@@ -1281,51 +1285,87 @@ namespace UELib
 
                 if (_TablesData.DependsOffset > 0)
                 {
-                    stream.Seek(_TablesData.DependsOffset, SeekOrigin.Begin);
-                    int dependsCount = _TablesData.ExportsCount;
+                    try
+                    {
+                        stream.Seek(_TablesData.DependsOffset, SeekOrigin.Begin);
+                        int dependsCount = _TablesData.ExportsCount;
 #if BIOSHOCK
-                    // FIXME: Version?
-                    if (Build == GameBuild.BuildName.Bioshock_Infinite)
-                    {
-                        dependsCount = stream.ReadInt32();
-                    }
-#endif
-                    var dependsMap = new List<int[]>(dependsCount);
-                    for (var i = 0; i < dependsCount; ++i)
-                    {
-                        // DependencyList, index to import table
-                        int count = stream.ReadInt32(); // -1 in DCUO?
-                        var imports = new int[count];
-                        for (var j = 0; j < count; ++j)
+                        // FIXME: Version?
+                        if (Build == GameBuild.BuildName.Bioshock_Infinite)
                         {
-                            imports[j] = stream.ReadInt32();
+                            dependsCount = stream.ReadInt32();
                         }
+#endif
+                        var dependsMap = new List<int[]>(dependsCount);
+                        for (var i = 0; i < dependsCount; ++i)
+                        {
+                            // DependencyList, index to import table
+                            int count = stream.ReadInt32(); // -1 in DCUO?
+                            var imports = new int[count];
+                            for (var j = 0; j < count; ++j)
+                            {
+                                imports[j] = stream.ReadInt32();
+                            }
 
-                        dependsMap.Add(imports);
+                            dependsMap.Add(imports);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                        Console.Error.WriteLine("Couldn't parse DependenciesTable");
+                        Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                        throw new UnrealException("Couldn't parse DependenciesTable", ex);
+#endif
                     }
                 }
             }
 
             if (_TablesData.ImportExportGuidsOffset > 0)
             {
-                for (var i = 0; i < _TablesData.ImportGuidsCount; ++i)
+                try
                 {
-                    string levelName = stream.ReadText();
-                    int guidCount = stream.ReadInt32();
-                    stream.Skip(guidCount * 16);
-                }
+                    for (var i = 0; i < _TablesData.ImportGuidsCount; ++i)
+                    {
+                        string levelName = stream.ReadText();
+                        int guidCount = stream.ReadInt32();
+                        stream.Skip(guidCount * 16);
+                    }
 
-                for (var i = 0; i < _TablesData.ExportGuidsCount; ++i)
+                    for (var i = 0; i < _TablesData.ExportGuidsCount; ++i)
+                    {
+                        var objectGuid = stream.ReadGuid();
+                        int exportIndex = stream.ReadInt32();
+                    }
+                }
+                catch (Exception ex)
                 {
-                    var objectGuid = stream.ReadGuid();
-                    int exportIndex = stream.ReadInt32();
+                    // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                    Console.Error.WriteLine("Couldn't parse ImportExportGuidsTable");
+                    Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                        throw new UnrealException("Couldn't parse ImportExportGuidsTable", ex);
+#endif
                 }
             }
 
             if (_TablesData.ThumbnailTableOffset != 0)
             {
-                int thumbnailCount = stream.ReadInt32();
-                // TODO: Serialize
+                try
+                {
+                    int thumbnailCount = stream.ReadInt32();
+                    // TODO: Serialize
+                }
+                catch (Exception ex)
+                {
+                    // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                    Console.Error.WriteLine("Couldn't parse ThumbnailTable");
+                    Console.Error.WriteLine(ex.ToString());
+#if STRICT
+                    throw new UnrealException("Couldn't parse ThumbnailTable", ex);
+#endif
+                }
             }
 
             Debug.Assert(stream.Position <= int.MaxValue);
@@ -1335,7 +1375,7 @@ namespace UELib
         private void SetupBuild(UPackageStream stream)
         {
             Build = new GameBuild(this);
-            
+
             if (Build.OverrideVersion.HasValue) Version = Build.OverrideVersion.Value;
             if (Build.OverrideLicenseeVersion.HasValue) LicenseeVersion = Build.OverrideLicenseeVersion.Value;
 
