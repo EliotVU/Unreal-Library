@@ -171,7 +171,7 @@ namespace UELib.Core
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
 
-            skipTo61Stuff:
+        skipTo61Stuff:
             if (Package.Version >= 62)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
@@ -258,7 +258,15 @@ namespace UELib.Core
                             if (Package.Version > 670)
                             {
                                 AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
-
+#if BATMAN
+                                // Only attested in bm4 with no version check.
+                                if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                                    _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                                {
+                                    IList<int> bm4_v198;
+                                    bm4_v198 = DeserializeGroup(nameof(bm4_v198));
+                                }
+#endif
                                 if (Package.Version >= 749
 #if SPECIALFORCE2
                                     && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
@@ -273,28 +281,31 @@ namespace UELib.Core
                                     {
                                         var unknownName = _Buffer.ReadNameReference();
                                         Record("Unknown:Dishonored", unknownName);
+
+                                        NativeClassName = _Buffer.ReadText();
+                                        Record(nameof(NativeClassName), NativeClassName);
+                                        goto skipEditorContent;
+                                    }
+#endif
+#if BATMAN
+                                    if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                                        _Buffer.Package.LicenseeVersion >= 95)
+                                    {
+                                        uint bm4_v174 = _Buffer.ReadUInt32();
+                                        Record(nameof(bm4_v174), bm4_v174);
                                     }
 #endif
                                     if (Package.Version >= UnrealPackage.VCLASSGROUP)
                                     {
-#if DISHONORED
-                                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
-                                        {
-                                            NativeClassName = _Buffer.ReadText();
-                                            Record(nameof(NativeClassName), NativeClassName);
-                                            goto skipClassGroups;
-                                        }
-#endif
                                         ClassGroups = DeserializeGroup("ClassGroups");
-                                        if (Package.Version >= 813)
-                                        {
-                                            NativeClassName = _Buffer.ReadText();
-                                            Record(nameof(NativeClassName), NativeClassName);
-                                        }
                                     }
-#if DISHONORED
-                                    skipClassGroups: ;
-#endif
+
+                                    // No version check in batman???
+                                    if (Package.Version >= 813)
+                                    {
+                                        NativeClassName = _Buffer.ReadText();
+                                        Record(nameof(NativeClassName), NativeClassName);
+                                    }
                                 }
                             }
 
@@ -314,16 +325,8 @@ namespace UELib.Core
                             }
                         }
                     }
-#if BATMAN
-                    if (_Buffer.Package.Build == BuildGeneration.RSS)
-                    {
-                        _Buffer.Skip(sizeof(int));
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-                        {
-                            _Buffer.Skip(sizeof(int));
-                        }
-                    }
-#endif
+
+                skipEditorContent:
                     if (Package.Version >= UnrealPackage.VDLLBIND)
                     {
                         if (!Package.Build.Flags.HasFlag(BuildFlags.NoDLLBind))
@@ -359,7 +362,7 @@ namespace UELib.Core
                 Record(nameof(thiefClassVisibleName), thiefClassVisibleName);
 
                 // Restore the human-readable name if possible
-                if (!string.IsNullOrEmpty(thiefClassVisibleName) 
+                if (!string.IsNullOrEmpty(thiefClassVisibleName)
                     && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
                     var nameEntry = new UNameTableItem()
