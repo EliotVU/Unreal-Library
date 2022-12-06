@@ -61,7 +61,7 @@ namespace UELib.Core
                 }
             }
 
-            public class InterfaceCastToken : ObjectCastToken
+            public class InterfaceCastToken : DynamicCastToken
             {
             }
 
