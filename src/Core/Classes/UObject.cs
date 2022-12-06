@@ -244,16 +244,19 @@ namespace UELib.Core
                 StateFrame = new UStateFrame();
                 StateFrame.Deserialize(_Buffer);
             }
-
-            if (_Buffer.Version >= UExportTableItem.VNetObjects
-#if MKKE
-                && Package.Build != UnrealPackage.GameBuild.BuildName.MKKE
+#if MKKE || BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                goto skipNetIndex;
+            }
 #endif
-               )
+            if (_Buffer.Version >= UExportTableItem.VNetObjects)
             {
                 int netIndex = _Buffer.ReadInt32();
                 Record(nameof(netIndex), netIndex);
             }
+            skipNetIndex:
 
             // TODO: Serialize component data here
             //if( _Buffer.Version > 400
@@ -432,7 +435,9 @@ namespace UELib.Core
         [Pure]
         public string GetClassName()
         {
-            return Table.ClassName;
+            return ImportTable != null 
+                ? ImportTable.ClassName 
+                : Class?.Name ?? "Class";
         }
 
         /// <summary>

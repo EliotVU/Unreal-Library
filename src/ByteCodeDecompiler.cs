@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Flags;
 using UELib.Tokens;
 
 namespace UELib.Core
@@ -504,7 +505,12 @@ namespace UELib.Core
 
             private NativeFunctionToken CreateNativeToken(ushort nativeIndex)
             {
-                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex);
+                var nativeTableItem = _Container.Package.NTLPackage?.FindTableItem(nativeIndex) ?? new NativeTableItem
+                {
+                    Type = FunctionType.Function,
+                    Name = $"__NFUN_{nativeIndex}__",
+                    ByteToken = nativeIndex
+                };
                 return new NativeFunctionToken
                 {
                     NativeItem = nativeTableItem
@@ -1571,6 +1577,10 @@ namespace UELib.Core
 #endif
                                 }
                             }
+                            catch (EndOfStreamException)
+                            {
+                                break;
+                            }
                             catch (Exception e)
                             {
                                 output.Append($"// ({e.GetType().Name})");
@@ -1590,6 +1600,10 @@ namespace UELib.Core
                                             _MustCommentStatement = true;
                                     }
                                 }
+                            }
+                            catch (EndOfStreamException)
+                            {
+                                break;
                             }
                             catch (Exception e)
                             {

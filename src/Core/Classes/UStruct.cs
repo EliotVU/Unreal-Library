@@ -76,17 +76,27 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
+#if BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                goto skipScriptText;
+            }
+#endif
             // --SuperField
             if (!Package.IsConsoleCooked())
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ScriptText), ScriptText);
             }
-
+            skipScriptText:
             Children = _Buffer.ReadObject<UField>();
             Record(nameof(Children), Children);
-
+#if BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                goto serializeByteCode;
+            }
+#endif
             // Moved to UFunction in UE3
             if (Package.Version < VFriendlyNameMoved)
             {
@@ -151,6 +161,7 @@ namespace UELib.Core
                 _Buffer.Skip(4);
             }
 #endif
+            serializeByteCode:
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
             const int vDataScriptSize = 639;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace UELib.Core
 {
@@ -74,9 +75,43 @@ namespace UELib.Core
                     return t;
                 }
 
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected Token DeserializeNext()
                 {
                     return Decompiler.DeserializeNext();
+                }
+
+                /// <summary>
+                /// Wrapper for IUnrealStream.ReadNameReference to handle memory alignment as well as differences between builds.
+                ///
+                /// In Batman4 tokens with name references have been reduced to only serialize the index reference, except for NameConstToken among others.
+                ///
+                /// TODO: Maybe wrap the IUnrealStream underlying type instead, and implement all memory alignment logic in there.
+                /// </summary>
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected UName ReadName(IUnrealStream stream)
+                {
+                    UName name;
+#if BATMAN
+                    // (Only for byte-codes) No int32 numeric followed after a name index for Batman4
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                    {
+                        Decompiler.AlignSize(sizeof(int));
+                        int nameIndex = stream.ReadInt32();
+                        name = new UName(stream.Package.Names[nameIndex]);
+                        return name;
+                    }
+#endif
+                    Decompiler.AlignNameSize();
+                    name = stream.ReadNameReference();
+                    return name;
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected T ReadObject<T>(IUnrealStream stream) where T : UObject
+                {
+                    Decompiler.AlignObjectSize();
+                    return stream.ReadObject<T>();
                 }
 
                 public override string ToString()

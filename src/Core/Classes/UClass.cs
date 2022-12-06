@@ -300,9 +300,13 @@ namespace UELib.Core
                         }
                     }
 #if BATMAN
-                    if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.BatmanUDK)
+                    if (_Buffer.Package.Build == BuildGeneration.RSS)
                     {
                         _Buffer.Skip(sizeof(int));
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                        {
+                            _Buffer.Skip(sizeof(int));
+                        }
                     }
 #endif
                     if (Package.Version >= UnrealPackage.VDLLBIND)

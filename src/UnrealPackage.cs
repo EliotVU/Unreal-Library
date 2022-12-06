@@ -501,17 +501,37 @@ namespace UELib
                 [Build(860, 4)] Hawken,
 
                 /// <summary>
-                /// 805-6/101-3
-                /// 807/137-8
-                /// 807/104
-                /// 863/32995
+                /// Batman: Arkham City
+                /// 
+                /// 805/101
                 /// </summary>
-                [Build(805, 101, BuildGeneration.Batman2)]
-                [Build(806, 103, BuildGeneration.Batman3)]
-                [Build(807, 807, 137, 138, BuildGeneration.Batman3)]
-                [Build(807, 104, BuildGeneration.Batman3MP)]
-                [Build(863, 32995, BuildGeneration.Batman4)]
-                BatmanUDK,
+                [Build(805, 101, BuildGeneration.RSS)]
+                Batman2,
+
+                /// <summary>
+                /// Batman: Arkham Origins
+                ///
+                /// 806/103
+                /// 807/137-138
+                /// </summary>
+                [Build(806, 103, BuildGeneration.RSS)]
+                [Build(807, 807, 137, 138, BuildGeneration.RSS)]
+                Batman3,
+
+                /// <summary>
+                /// 807/104
+                /// </summary>
+                [Build(807, 104, BuildGeneration.RSS)]
+                Batman3MP,
+
+                /// <summary>
+                /// Batman: Arkham Knight
+                ///
+                /// 863/32995(227 & ~8000)
+                /// </summary>
+                [Build(863, 32995, BuildGeneration.RSS)]
+                //[OverridePackageVersion(863, 227)]
+                Batman4,
 
                 /// <summary>
                 /// 867/009:032
@@ -582,7 +602,17 @@ namespace UELib
                 if (Name == BuildName.Unset)
                     Name = package.LicenseeVersion == 0 ? BuildName.Default : BuildName.Unknown;
             }
+            
+            public static bool operator ==(GameBuild b, BuildGeneration gen)
+            {
+                return b.Generation == gen;
+            }
 
+            public static bool operator !=(GameBuild b, BuildGeneration gen)
+            {
+                return b.Generation != gen;
+            }
+            
             public static bool operator ==(GameBuild b, BuildName i)
             {
                 return b != null && b.Name == i;

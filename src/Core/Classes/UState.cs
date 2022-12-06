@@ -67,7 +67,7 @@ namespace UELib.Core
             }
 #endif
 
-            if (Package.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
+            if (_Buffer.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
             {
                 ProbeMask = _Buffer.ReadUInt64();
                 Record(nameof(ProbeMask), ProbeMask);
@@ -85,12 +85,13 @@ namespace UELib.Core
             LabelTableOffset = _Buffer.ReadUInt16();
             Record(nameof(LabelTableOffset), LabelTableOffset);
 
-            if (Package.Version >= VStateFlags)
+            if (_Buffer.Version >= VStateFlags)
             {
-#if BORDERLANDS2 || TRANSFORMERS
+#if BORDERLANDS2 || TRANSFORMERS || BATMAN
                 // FIXME:Temp fix
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Transformers ||
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
                 {
                     _StateFlags = _Buffer.ReadUShort();
                     goto skipStateFlags;
@@ -110,7 +111,7 @@ namespace UELib.Core
             }
 #endif
 
-            if (Package.Version < VFuncMap) return;
+            if (_Buffer.Version < VFuncMap) return;
             _Buffer.ReadMap(out FuncMap); 
             Record(nameof(FuncMap), FuncMap);
         }
