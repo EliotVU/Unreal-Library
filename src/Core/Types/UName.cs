@@ -5,7 +5,7 @@ namespace UELib.Core
     /// <summary>
     /// Implements FName. A data type that represents a string, usually acquired from a names table.
     /// </summary>
-    public class UName
+    public class UName : IComparable<UName>
     {
         private const string    None = "None";
         public const int        Numeric = 0;
@@ -51,6 +51,8 @@ namespace UELib.Core
         {
             return _NameItem.Name.Equals(None, StringComparison.OrdinalIgnoreCase);
         }
+
+        public int CompareTo(UName other) => string.Compare(other.Text, Text, StringComparison.OrdinalIgnoreCase);
 
         public override string ToString()
         {

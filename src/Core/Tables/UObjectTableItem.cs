@@ -8,7 +8,7 @@ namespace UELib
     /// <summary>
     /// An internal implementation for the Export and Import table classes.
     /// </summary>
-    public abstract class UObjectTableItem : UTableItem, IBuffered
+    public abstract class UObjectTableItem : UTableItem, IBuffered, IComparable<string>
     {
         /// <summary>
         /// Reference to the UnrealPackage this object resists in
@@ -37,7 +37,6 @@ namespace UELib
             get => _OuterIndex;
             set => _OuterIndex = value;
         }
-
 
         [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
         [Obsolete, Browsable(false)] public UObjectTableItem ClassTable => null;
@@ -96,6 +95,11 @@ namespace UELib
         public static explicit operator int(UObjectTableItem item)
         {
             return item.Index;
+        }
+
+        public int CompareTo(string other)
+        {
+            return string.Compare(ObjectName.ToString(), other, StringComparison.Ordinal);
         }
     }
 }
