@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Globalization;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 using UELib.UnrealScript;
 
 namespace UELib.Core
@@ -8,6 +10,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.IntZero)]
             public class IntZeroToken : Token
             {
                 public override string Decompile()
@@ -16,6 +19,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IntOne)]
             public class IntOneToken : Token
             {
                 public override string Decompile()
@@ -24,6 +28,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.True)]
             public class TrueToken : Token
             {
                 public override string Decompile()
@@ -32,6 +37,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.False)]
             public class FalseToken : Token
             {
                 public override string Decompile()
@@ -40,6 +46,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.NoObject)]
             public class NoneToken : Token
             {
                 public override string Decompile()
@@ -48,6 +55,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Self)]
             public class SelfToken : Token
             {
                 public override string Decompile()
@@ -56,6 +64,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IntConst)]
             public class IntConstToken : Token
             {
                 public int Value;
@@ -72,6 +81,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.ByteConst)]
             public class ByteConstToken : Token
             {
                 public byte Value;
@@ -128,6 +138,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IntConstByte)]
             public class IntConstByteToken : Token
             {
                 public byte Value;
@@ -144,6 +155,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.FloatConst)]
             public class FloatConstToken : Token
             {
                 public float Value;
@@ -161,11 +173,13 @@ namespace UELib.Core
             }
 
             // Not supported, but has existed here and there
+            [ExprToken(ExprToken.StructConst)]
             public class StructConstToken : Token
             {
                 
             }
 
+            [ExprToken(ExprToken.ObjectConst)]
             public class ObjectConstToken : Token
             {
                 public UObject ObjectRef;
@@ -182,6 +196,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.NameConst)]
             public class NameConstToken : Token
             {
                 public UName Name;
@@ -198,6 +213,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.StringConst)]
             public class StringConstToken : Token
             {
                 public string Value;
@@ -214,6 +230,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.UnicodeStringConst)]
             public class UnicodeStringConstToken : Token
             {
                 public string Value;
@@ -230,6 +247,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.RotationConst)]
             public class RotationConstToken : Token
             {
                 public URotator Rotation;
@@ -248,6 +266,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.VectorConst)]
             public class VectorConstToken : Token
             {
                 public UVector Vector;
@@ -266,6 +285,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.RangeConst)]
             public class RangeConstToken : Token
             {
                 public URange Range;

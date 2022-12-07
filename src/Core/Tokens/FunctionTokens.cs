@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UELib.Branch;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -10,6 +12,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.EndFunctionParms)]
             public class EndFunctionParmsToken : Token
             {
             }
@@ -159,6 +162,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.FinalFunction)]
             public class FinalFunctionToken : FunctionToken
             {
                 public UFunction Function;
@@ -234,6 +238,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.VirtualFunction)]
             public class VirtualFunctionToken : FunctionToken
             {
                 public UName FunctionName;
@@ -259,6 +264,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.GlobalFunction)]
             public class GlobalFunctionToken : FunctionToken
             {
                 public UName FunctionName;
@@ -276,6 +282,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DelegateFunction)]
             public class DelegateFunctionToken : FunctionToken
             {
                 public byte? IsLocal;
@@ -305,6 +312,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.NativeFunction)]
             public class NativeFunctionToken : FunctionToken
             {
                 public NativeTableItem NativeItem;

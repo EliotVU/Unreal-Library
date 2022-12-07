@@ -12,14 +12,6 @@
     <AssemblyName>Eliot.UELib</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -124,9 +116,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
@@ -245,6 +234,7 @@
     <Compile Include="Engine\Classes\UTextureMovie.cs" />
     <Compile Include="Engine\Types\LightingChannelContainer.cs" />
     <Compile Include="Engine\Types\LightmassPrimitiveSettings.cs" />
+    <Compile Include="ObjectModel\Annotations\ExprTokenAttribute.cs" />
     <Compile Include="ObjectModel\Annotations\OutputAttribute.cs" />
     <Compile Include="Core\Types\UColor.cs" />
     <Compile Include="Core\Types\UMap.cs" />
@@ -351,12 +341,16 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Branch\UE3\HMS\" />
+    <Folder Include="UnrealModel\Core\Types\" />
+    <Folder Include="UnrealModel\Engine\Classes\" />
+    <Folder Include="UnrealModel\Engine\Types\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="UnrealModel\README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
-    </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

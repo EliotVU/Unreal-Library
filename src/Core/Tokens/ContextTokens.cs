@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using UELib.Annotations;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -7,8 +9,10 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.Context)]
             public class ContextToken : Token
             {
+                public UProperty Property;
                 public ushort PropertyType;
                 
                 public override void Deserialize(IUnrealStream stream)
@@ -31,7 +35,7 @@ namespace UELib.Core
                     if (propertyAdded)
                     {
                         // Property
-                        stream.ReadObjectIndex();
+                        stream.Read(out Property);
                         Decompiler.AlignObjectSize();
                     }
 
@@ -61,6 +65,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.ClassContext)]
             public class ClassContextToken : ContextToken
             {
                 public override string Decompile()
@@ -72,6 +77,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.InterfaceContext)]
             public class InterfaceContextToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -85,6 +91,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.StructMember)]
             public class StructMemberToken : Token
             {
                 public UField Property;

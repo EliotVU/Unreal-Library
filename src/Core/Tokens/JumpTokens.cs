@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using UELib.Annotations;
 using UELib.Branch;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -9,6 +10,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.Return)]
             public class ReturnToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -44,6 +46,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.ReturnNothing)]
             public class ReturnNothingToken : EatReturnValueToken
             {
                 public override string Decompile()
@@ -60,6 +63,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.GotoLabel)]
             public class GotoLabelToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -75,6 +79,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Jump)]
             public class JumpToken : Token
             {
                 public bool MarkedAsSwitchBreak;
@@ -326,6 +331,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.JumpIfNot)]
             public class JumpIfNotToken : JumpToken
             {
                 public bool IsLoop;
@@ -452,6 +458,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.FilterEditorOnly)]
             public class FilterEditorOnlyToken : JumpToken
             {
                 public override string Decompile()
@@ -462,8 +469,10 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Switch)]
             public class SwitchToken : Token
             {
+                public UField ExpressionField;
                 public ushort PropertyType;
 
                 public override void Deserialize(IUnrealStream stream)
@@ -472,11 +481,11 @@ namespace UELib.Core
                     {
                         // Points to the object that was passed to the switch,
                         // beware that the followed token chain contains it as well!
-                        stream.ReadObjectIndex();
+                        stream.Read(out ExpressionField);
                         Decompiler.AlignObjectSize();
                     }
 
-                    // TODO: Corrigate version
+                    // FIXME: version
                     if ((stream.Version >= 536 && stream.Version <= 587)
 #if DNF
                         || stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF
@@ -529,6 +538,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Case)]
             public class CaseToken : JumpToken
             {
                 public bool IsDefault => CodeOffset == ushort.MaxValue;
@@ -559,6 +569,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Iterator)]
             public class IteratorToken : JumpToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -579,6 +590,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayIterator)]
             public class DynamicArrayIteratorToken : JumpToken
             {
                 public byte WithIndexParam;
@@ -624,6 +636,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IteratorNext)]
             public class IteratorNextToken : Token
             {
                 public override string Decompile()
@@ -638,6 +651,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IteratorPop)]
             public class IteratorPopToken : Token
             {
                 public override string Decompile()
@@ -656,6 +670,7 @@ namespace UELib.Core
             private List<ULabelEntry> _Labels;
             private List<(ULabelEntry entry, int refs)> _TempLabels;
 
+            [ExprToken(ExprToken.LabelTable)]
             public class LabelTableToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -684,11 +699,14 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Skip)]
             public class SkipToken : Token
             {
+                public ushort Size;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadUInt16(); // Size
+                    Size = stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(ushort));
 
                     DeserializeNext();
@@ -700,6 +718,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Stop)]
             public class StopToken : Token
             {
                 public override string Decompile()

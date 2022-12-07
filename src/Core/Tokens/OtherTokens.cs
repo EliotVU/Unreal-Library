@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using UELib.Annotations;
+using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
 namespace UELib.Core
@@ -9,6 +10,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.Nothing)]
             public class NothingToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -18,15 +20,18 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.EmptyDelegate)]
             public class EmptyDelegateToken : NoneToken
             {
             }
 
+            [ExprToken(ExprToken.NoObject)]
             public class NoObjectToken : NoneToken
             {
             }
 
             // A skipped parameter when calling a function
+            [ExprToken(ExprToken.EmptyParmValue)]
             public class EmptyParmToken : Token
             {
                 public override string Decompile()
@@ -36,10 +41,12 @@ namespace UELib.Core
             }
 
             // Also known as an EndCode or EndFunction token.
+            [ExprToken(ExprToken.EndOfScript)]
             public class EndOfScriptToken : Token
             {
             }
 
+            [ExprToken(ExprToken.Assert)]
             public class AssertToken : Token
             {
                 public ushort Line;
@@ -86,6 +93,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.StructCmpEq)]
             public class StructCmpEqToken : ComparisonToken
             {
                 public override string Decompile()
@@ -94,6 +102,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.StructCmpNe)]
             public class StructCmpNeToken : ComparisonToken
             {
                 public override string Decompile()
@@ -115,6 +124,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DelegateCmpEq)]
             public class DelegateCmpEqToken : DelegateComparisonToken
             {
                 public override string Decompile()
@@ -124,7 +134,19 @@ namespace UELib.Core
                     return output;
                 }
             }
-
+            
+            [ExprToken(ExprToken.DelegateCmpNe)]
+            public class DelegateCmpNeToken : DelegateComparisonToken
+            {
+                public override string Decompile()
+                {
+                    var output = $"{DecompileNext()} != {DecompileNext()}";
+                    DecompileNext();
+                    return output;
+                }
+            }
+            
+            [ExprToken(ExprToken.DelegateFunctionCmpEq)]
             public class DelegateFunctionCmpEqToken : DelegateComparisonToken
             {
                 public override string Decompile()
@@ -135,16 +157,7 @@ namespace UELib.Core
                 }
             }
 
-            public class DelegateCmpNeToken : DelegateComparisonToken
-            {
-                public override string Decompile()
-                {
-                    var output = $"{DecompileNext()} != {DecompileNext()}";
-                    DecompileNext();
-                    return output;
-                }
-            }
-
+            [ExprToken(ExprToken.DelegateFunctionCmpNe)]
             public class DelegateFunctionCmpNeToken : DelegateComparisonToken
             {
                 public override string Decompile()
@@ -155,6 +168,7 @@ namespace UELib.Core
                 }
             }
             
+            [ExprToken(ExprToken.EatReturnValue)]
             public class EatReturnValueToken : Token
             {
                 // Null if version < 200
@@ -171,6 +185,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.ResizeString)]
             public class ResizeStringToken : Token
             {
                 public byte Length;
@@ -190,6 +205,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.BeginFunction)]
             public class BeginFunctionToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -209,6 +225,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.New)]
             public class NewToken : Token
             {
                 // Greater Than!
@@ -297,6 +314,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DebugInfo)]
             public class DebugInfoToken : Token
             {
                 // Version, usually 100
@@ -345,6 +363,7 @@ namespace UELib.Core
 #endif
             }
 
+            [ExprToken(ExprToken.LineNumber)]
             public class LineNumberToken : Token
             {
                 public ushort Line;

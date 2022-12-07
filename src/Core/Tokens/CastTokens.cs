@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
 namespace UELib.Core
@@ -10,6 +11,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.PrimitiveCast)]
             public class PrimitiveCastToken : Token
             {
                 public CastToken CastOpCode = CastToken.None;
@@ -58,6 +60,11 @@ namespace UELib.Core
                         { CastToken.StringToName, "name" }
                     };
 
+                public void GetFriendlyCastName(out string castTypeName)
+                {
+                    CastTypeNameMap.TryGetValue(CastOpCode, out castTypeName);
+                }
+
                 protected virtual void DeserializeCastToken(IUnrealStream stream)
                 {
                     CastOpCode = (CastToken)stream.ReadByte();
@@ -96,12 +103,13 @@ namespace UELib.Core
                             return DecompileNext();
                     }
 
-                    CastTypeNameMap.TryGetValue(CastOpCode, out string castTypeName);
+                    GetFriendlyCastName(out string castTypeName);
                     Debug.Assert(castTypeName != default, "Detected an unresolved token.");
                     return $"{castTypeName}({DecompileNext()})";
                 }
             }
 
+            [ExprToken(ExprToken.PrimitiveCast)]
             public class PrimitiveInlineCastToken : PrimitiveCastToken
             {
                 protected override void DeserializeCastToken(IUnrealStream stream)
@@ -110,6 +118,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynamicCast)]
             public class DynamicCastToken : Token
             {
                 public UClass CastClass;
@@ -128,6 +137,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.MetaCast)]
             public class MetaClassCastToken : DynamicCastToken
             {
                 public override string Decompile()
@@ -136,6 +146,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.InterfaceCast)]
             public class InterfaceCastToken : DynamicCastToken
             {
             }

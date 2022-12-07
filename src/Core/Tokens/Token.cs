@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -14,8 +17,6 @@ namespace UELib.Core
                 public UByteCodeDecompiler Decompiler { get; set; }
 
                 protected UnrealPackage Package => Decompiler._Package;
-
-                public ExprToken TokenKind;
 
                 /// <summary>
                 /// The raw serialized byte-code for this token.
@@ -49,11 +50,6 @@ namespace UELib.Core
                     return string.Empty;
                 }
 
-                public virtual string Disassemble()
-                {
-                    return $"0x{OpCode:X2}";
-                }
-
                 protected string DecompileNext()
                 {
                 tryNext:
@@ -62,14 +58,14 @@ namespace UELib.Core
 
                     return token.Decompile();
                 }
-                
+
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected T NextToken<T>()
                     where T : Token
                 {
                     return (T)NextToken();
                 }
-                
+
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected Token NextToken()
                 {
@@ -148,7 +144,7 @@ namespace UELib.Core
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                protected T ReadObject<T>(IUnrealStream stream) 
+                protected T ReadObject<T>(IUnrealStream stream)
                     where T : UObject
                 {
                     var obj = stream.ReadObject<T>();
@@ -166,18 +162,22 @@ namespace UELib.Core
                     return visitor.Visit(this);
                 }
 
-                public override int GetHashCode()
+                public ExprToken GetExprToken()
                 {
-                    return GetType().GetHashCode();
+                    var type = GetType();
+                    var exprTokenAttr = type.GetCustomAttribute<ExprTokenAttribute>();
+                    return exprTokenAttr.ExprToken;
                 }
+                
+                public override int GetHashCode() => (int)GetExprToken();
 
                 public override string ToString()
                 {
                     return
-                        $"\r\nType:{GetType().Name}\r\nToken:{OpCode:X2}\r\nPosition:{Position}\r\nSize:{Size}"
-                            .Replace("\n", "\n"
-                                           + UDecompilingState.Tabs
-                            );
+                        $"\r\nInstantiated Type: {GetType().Name}" +
+                        $"\r\nSerialized OpCode: {OpCode:X2}h" +
+                        $"\r\nOffset: {PropertyDisplay.FormatOffset(Position)}" +
+                        $"\r\nSize: {PropertyDisplay.FormatOffset(Size)}";
                 }
             }
 

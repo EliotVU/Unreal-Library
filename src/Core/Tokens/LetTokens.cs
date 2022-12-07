@@ -1,9 +1,13 @@
-﻿namespace UELib.Core
+﻿using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
+
+namespace UELib.Core
 {
     public partial class UStruct
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.Let)]
             public class LetToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -20,14 +24,17 @@
                 }
             }
 
+            [ExprToken(ExprToken.LetBool)]
             public class LetBoolToken : LetToken
             {
             }
 
+            [ExprToken(ExprToken.LetDelegate)]
             public class LetDelegateToken : LetToken
             {
             }
 
+            [ExprToken(ExprToken.EndParmValue)]
             public class EndParmValueToken : Token
             {
                 public override string Decompile()
@@ -36,6 +43,7 @@
                 }
             }
 
+            [ExprToken(ExprToken.Conditional)]
             public class ConditionalToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using UELib.Annotations;
+using UELib.Core;
 
 namespace UELib
 {
@@ -59,13 +60,15 @@ namespace UELib
     public interface IVisitor
     {
         void Visit(IAcceptable visitable);
+        void Visit(UStruct.UByteCodeDecompiler.Token token);
     }
-    
+
     public interface IVisitor<out TResult>
     {
         TResult Visit(IAcceptable visitable);
+        TResult Visit(UStruct.UByteCodeDecompiler.Token token);
     }
-    
+
     public interface IAcceptable
     {
         void Accept(IVisitor visitor);
@@ -95,7 +98,7 @@ namespace UELib
 
     /// <summary>
     /// This class is capable of exporting data to a non-unreal format.
-    /// e.g. <see cref="UELib.Engine.USound.Data" /> can be serialized to a stream and in turn be flushed to a .wav file.
+    /// e.g. <see cref="USound.Data" /> can be serialized to a stream and in turn be flushed to a .wav file.
     /// </summary>
     public interface IUnrealExportable
     {

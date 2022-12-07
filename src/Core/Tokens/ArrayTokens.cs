@@ -1,4 +1,6 @@
 ﻿using UELib.Branch;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -6,6 +8,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.ArrayElement)]
             public class ArrayElementToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -26,10 +29,12 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayElement)]
             public class DynamicArrayElementToken : ArrayElementToken
             {
             }
 
+            [ExprToken(ExprToken.DynArrayLength)]
             public class DynamicArrayLengthToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -153,6 +158,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayFind)]
             public class DynamicArrayFindToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -166,6 +172,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayFindStruct)]
             public class DynamicArrayFindStructToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -179,6 +186,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArraySort)]
             public class DynamicArraySortToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -192,6 +200,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayAdd)]
             public class DynamicArrayAddToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -214,6 +223,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayAddItem)]
             public class DynamicArrayAddItemToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -227,6 +237,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayInsert)]
             public class DynamicArrayInsertToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -240,6 +251,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayInsertItem)]
             public class DynamicArrayInsertItemToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -253,6 +265,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayRemove)]
             public class DynamicArrayRemoveToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -266,6 +279,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DynArrayRemoveItem)]
             public class DynamicArrayRemoveItemToken : DynamicArrayMethodToken
             {
                 public override void Deserialize(IUnrealStream stream)

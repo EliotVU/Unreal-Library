@@ -1,4 +1,7 @@
-﻿namespace UELib.Core
+﻿using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
+
+namespace UELib.Core
 {
     public partial class UStruct
     {
@@ -22,6 +25,7 @@
                 }
             }
 
+            [ExprToken(ExprToken.NativeParm)]
             public class NativeParameterToken : FieldToken
             {
                 public override string Decompile()
@@ -36,22 +40,27 @@
                 }
             }
 
+            [ExprToken(ExprToken.InstanceVariable)]
             public class InstanceVariableToken : FieldToken
             {
             }
 
+            [ExprToken(ExprToken.LocalVariable)]
             public class LocalVariableToken : FieldToken
             {
             }
 
+            [ExprToken(ExprToken.StateVariable)]
             public class StateVariableToken : FieldToken
             {
             }
 
+            [ExprToken(ExprToken.OutVariable)]
             public class OutVariableToken : FieldToken
             {
             }
 
+            [ExprToken(ExprToken.DefaultVariable)]
             public class DefaultVariableToken : FieldToken
             {
                 public override string Decompile()
@@ -59,7 +68,7 @@
                     return $"default.{base.Decompile()}";
                 }
             }
-
+            
             public class UndefinedVariableToken : Token
             {
                 public override string Decompile()
@@ -68,6 +77,7 @@
                 }
             }
 
+            [ExprToken(ExprToken.DelegateProperty)]
             public class DelegatePropertyToken : FieldToken
             {
                 public UName PropertyName;
@@ -89,11 +99,14 @@
                 }
             }
 
+            [ExprToken(ExprToken.DefaultParmValue)]
             public class DefaultParameterToken : Token
             {
+                public ushort Size;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadUInt16(); // Size
+                    Size = stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(ushort));
 
                     if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
@@ -113,6 +126,7 @@
                 }
             }
 
+            [ExprToken(ExprToken.BoolVariable)]
             public class BoolVariableToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -126,6 +140,7 @@
                 }
             }
 
+            [ExprToken(ExprToken.InstanceDelegate)]
             public class InstanceDelegateToken : Token
             {
                 public UName DelegateName;
