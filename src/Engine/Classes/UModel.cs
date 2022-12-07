@@ -8,7 +8,7 @@ namespace UELib.Core
     /// </summary>
     [Output("Brush")]
     [UnrealRegisterClass]
-    public class UModel : UObject
+    public class UModel : UPrimitive
     {
         [Output]
         public UPolys Polys;

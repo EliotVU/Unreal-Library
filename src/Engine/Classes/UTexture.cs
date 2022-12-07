@@ -15,13 +15,19 @@ namespace UELib.Engine
         [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)] [CanBeNull]
         public UArray<LegacyMipMap> Mips;
 
+        [BuildGeneration(BuildGeneration.UE3)]
+        public UBulkData<byte> SourceArt;
+
         protected override void Deserialize()
         {
             base.Deserialize();
 
-            if (_Buffer.Version > 160)
+            // This kind of data was moved to UTexture2D
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3)
             {
-                throw new NotSupportedException("UTexture is not supported for this build");
+                _Buffer.Read(out SourceArt);
+                Record(nameof(SourceArt), SourceArt);
+                return;
             }
 
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.CompMipsDeprecated)

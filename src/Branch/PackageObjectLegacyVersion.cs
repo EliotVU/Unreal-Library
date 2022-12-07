@@ -84,6 +84,8 @@ namespace UELib.Branch
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
 
+        DisplacedUTexture2DProperties = 297,
+
         // FIXME: Not attested in the GoW client, must have been before v321
         LightMapScaleRemovedFromPoly = 300,
 
@@ -109,23 +111,28 @@ namespace UELib.Branch
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
 
+        AddedTextureFileCacheGuidToTexture2D = 567,
+
         LightmassAdded = 600,
         UProcBuildingReferenceAddedToPoly = 606,
-        
-        EnumNameAddedToBytePropertyTag = 633,
-        
-        LightmassShadowIndirectOnlyOptionAdded = 652,
-        LightmassExplicitEmissiveLightRadiusAdded = 636,
 
+        EnumNameAddedToBytePropertyTag = 633,
+
+        LightmassExplicitEmissiveLightRadiusAdded = 636,
         // FIXME: Version
         EndTokenAppendedToArrayTokenIntrinsics = 649,
-        
+        LightmassShadowIndirectOnlyOptionAdded = 652,
         PolyRulesetVariationTypeChangedToName = 670,
 
         BoolValueToByteForBoolPropertyTag = 673,
 
+        AddedPVRTCToUTexture2D = 674,
+
         ProbeMaskReducedAndIgnoreMaskRemoved = 692,
         ForceScriptOrderAddedToUClass = 749,
         SuperReferenceMovedToUStruct = 756,
+
+        AddedATITCToUTexture2D = 857,
+        AddedETCToUTexture2D = 864,
     }
 }
