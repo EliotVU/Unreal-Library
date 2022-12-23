@@ -36,7 +36,7 @@ namespace UELib.Core
         private UStruct _Outer;
         private bool _RecordingEnabled = true;
 
-        private IUnrealStream _Buffer => _Container.Buffer;
+        private UObjectRecordStream _Buffer => (UObjectRecordStream)_Container.Buffer;
 
         internal long _TagPosition { get; set; }
         internal long _PropertyValuePosition { get; set; }
@@ -239,9 +239,6 @@ namespace UELib.Core
         private int DeserializeTagArrayIndexUE1()
         {
             int arrayIndex;
-#if BINARYMETADATA
-            long startPos = _Buffer.Position;
-#endif
             byte b = _Buffer.ReadByte();
             if ((b & InfoArrayIndexMask) == 0)
             {
@@ -259,9 +256,6 @@ namespace UELib.Core
                 byte e = _Buffer.ReadByte();
                 arrayIndex = ((b & 0x3F) << 24) + (c << 16) + (d << 8) + e;
             }
-#if BINARYMETADATA
-            _Buffer.LastPosition = startPos;
-#endif
             return arrayIndex;
         }
 
@@ -277,7 +271,7 @@ namespace UELib.Core
             _PropertyValuePosition = _Buffer.Position;
             try
             {
-                DeserializeValue();
+                Value = DeserializeValue();
                 _RecordingEnabled = false;
             }
             finally
@@ -285,6 +279,7 @@ namespace UELib.Core
                 // Even if something goes wrong, we can still skip everything and safely deserialize the next property if any!
                 // Note: In some builds @Size is not serialized
                 _Buffer.Position = _PropertyValuePosition + Size;
+                _Buffer.ConformRecordPosition();
             }
 
             return true;
@@ -477,6 +472,7 @@ namespace UELib.Core
                     if (_Buffer.UE4Version >= 441)
                     {
                         _Buffer.Skip(16);
+                        _Buffer.ConformRecordPosition();
                     }
 #endif
                     break;
@@ -736,7 +732,7 @@ namespace UELib.Core
 
                 case PropertyType.Color:
                 {
-                    _Buffer.ReadAtomicStruct(out UColor color);
+                    _Buffer.ReadStructMarshal(out UColor color);
                     propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
                                      $"G={PropertyDisplay.FormatLiteral(color.G)}," +
                                      $"B={PropertyDisplay.FormatLiteral(color.B)}," +
@@ -746,7 +742,7 @@ namespace UELib.Core
 
                 case PropertyType.LinearColor:
                 {
-                    _Buffer.ReadAtomicStruct(out ULinearColor color);
+                    _Buffer.ReadStructMarshal(out ULinearColor color);
                     propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
                                      $"G={PropertyDisplay.FormatLiteral(color.G)}," +
                                      $"B={PropertyDisplay.FormatLiteral(color.B)}," +
@@ -756,7 +752,7 @@ namespace UELib.Core
 
                 case PropertyType.Vector2D:
                 {
-                    _Buffer.ReadAtomicStruct(out UVector2D vector);
+                    _Buffer.ReadStructMarshal(out UVector2D vector);
                     propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(vector.Y)}";
                     break;
@@ -764,7 +760,7 @@ namespace UELib.Core
 
                 case PropertyType.Vector:
                 {
-                    _Buffer.ReadAtomicStruct(out UVector vector);
+                    _Buffer.ReadStructMarshal(out UVector vector);
                     propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
                                      $"Z={PropertyDisplay.FormatLiteral(vector.Z)}";
@@ -773,7 +769,7 @@ namespace UELib.Core
 
                 case PropertyType.Vector4:
                 {
-                    _Buffer.ReadAtomicStruct(out UVector4 vector);
+                    _Buffer.ReadStructMarshal(out UVector4 vector);
                     propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
                                      $"Z={PropertyDisplay.FormatLiteral(vector.Z)}," +
@@ -792,7 +788,7 @@ namespace UELib.Core
 
                 case PropertyType.Rotator:
                 {
-                    _Buffer.ReadAtomicStruct(out URotator rotator);
+                    _Buffer.ReadStructMarshal(out URotator rotator);
                     propertyValue += $"Pitch={rotator.Pitch}," +
                                      $"Yaw={rotator.Yaw}," +
                                      $"Roll={rotator.Roll}";
@@ -801,7 +797,7 @@ namespace UELib.Core
 
                 case PropertyType.Guid:
                 {
-                    _Buffer.ReadAtomicStruct(out UGuid guid);
+                    _Buffer.ReadStructMarshal(out UGuid guid);
                     propertyValue += $"A={guid.A}," +
                                      $"B={guid.B}," +
                                      $"C={guid.C}," +
@@ -812,7 +808,7 @@ namespace UELib.Core
                 case PropertyType.Sphere:
                 {
                     AssertFastSerialize(_Buffer);
-                    _Buffer.ReadAtomicStruct(out USphere sphere);
+                    _Buffer.ReadStructMarshal(out USphere sphere);
                     propertyValue += $"W={PropertyDisplay.FormatLiteral(sphere.W)}," +
                                      $"X={PropertyDisplay.FormatLiteral(sphere.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(sphere.Y)}," +
@@ -824,7 +820,7 @@ namespace UELib.Core
                 case PropertyType.Plane:
                 {
                     AssertFastSerialize(_Buffer);
-                    _Buffer.ReadAtomicStruct(out UPlane plane);
+                    _Buffer.ReadStructMarshal(out UPlane plane);
                     propertyValue += $"W={PropertyDisplay.FormatLiteral(plane.W)}," +
                                      $"X={PropertyDisplay.FormatLiteral(plane.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(plane.Y)}," +
@@ -834,7 +830,7 @@ namespace UELib.Core
 
                 case PropertyType.Scale:
                 {
-                    _Buffer.ReadAtomicStruct(out UScale scale);
+                    _Buffer.ReadStructMarshal(out UScale scale);
                     propertyValue += "Scale=(" +
                                      $"X={PropertyDisplay.FormatLiteral(scale.Scale.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(scale.Scale.Y)}," +
@@ -860,7 +856,7 @@ namespace UELib.Core
                 case PropertyType.Quat:
                 {
                     AssertFastSerialize(_Buffer);
-                    _Buffer.ReadAtomicStruct(out UQuat quat);
+                    _Buffer.ReadStructMarshal(out UQuat quat);
                     propertyValue += $"X={PropertyDisplay.FormatLiteral(quat.X)}," +
                                      $"Y={PropertyDisplay.FormatLiteral(quat.Y)}," +
                                      $"Z={PropertyDisplay.FormatLiteral(quat.Z)}," +
@@ -1079,6 +1075,16 @@ namespace UELib.Core
         }
 
         #endregion
+
+        public static PropertyType ResolvePropertyType(ushort propertyType)
+        {
+            return (PropertyType)propertyType;
+        }
+
+        public static string ResolvePropertyTypeName(PropertyType propertyType)
+        {
+            return Enum.GetName(typeof(PropertyType), propertyType);
+        }
     }
 
     [ComVisible(false)]

@@ -162,7 +162,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value = stream.UR.ReadSingle();
+                    Value = stream.ReadFloat();
                     Decompiler.AlignSize(sizeof(float));
                 }
 
@@ -220,7 +220,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value = stream.UR.ReadAnsi();
+                    Value = stream.ReadAnsiNullString();
                     Decompiler.AlignSize(Value.Length + 1); // inc null char
                 }
 
@@ -237,7 +237,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value = stream.UR.ReadUnicode();
+                    Value = stream.ReadUnicodeNullString();
                     Decompiler.AlignSize(Value.Length * 2 + 2); // inc null char
                 }
 

@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Branch;
 using UELib.Core;
+using UELib.Engine;
 
 namespace Eliot.UELib.Test
 {
@@ -21,54 +22,73 @@ namespace Eliot.UELib.Test
             return stream;
         }
 
-        [TestMethod]
-        public void ReadString()
+        [DataTestMethod]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 1, +0b0000000000000000000000100001)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 1, -0b0000000000000000000000100001)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 2, +0b0000000000000001000001100001)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 3, +0b0000000010000011000001100001)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 4, +0b0100000110000011000001100001)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 5, +0b1100000110000011000001100001)]
+        [DataRow(PackageObjectLegacyVersion.CompactIndexDeprecated, 4, int.MaxValue)]
+        public void SerializeCompactIndex(PackageObjectLegacyVersion version, int count, int compactIndex)
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
-                Build = new UnrealPackage.GameBuild(linker),
-                // The easiest version to test against.
-                Version = 300
+                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
             };
-            using var writer = new BinaryWriter(stream);
+
+            using var writer = new UnrealWriter(stream, stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
 
-            const string rawUtf8String = "String";
-            byte[] utf8StringBytes = Encoding.UTF8.GetBytes(rawUtf8String);
-            writer.Write(rawUtf8String.Length + 1);
-            writer.Write(utf8StringBytes);
-            writer.Write((byte)'\0');
+            writer.WriteIndex(compactIndex);
 
-            const string rawUnicodeString = "语言处理";
-            byte[] unicodeStringBytes = Encoding.Unicode.GetBytes(rawUnicodeString);
-            writer.Write(-(rawUnicodeString.Length + 1));
-            writer.Write(unicodeStringBytes);
-            writer.Write((short)'\0');
+            long length = stream.Position - sizeof(int);
+            Assert.AreEqual(count, length);
 
-            // Test our stream implementation
+            using var reader = new UnrealReader(stream, stream);
             // Skip past the signature
             stream.Seek(sizeof(int), SeekOrigin.Begin);
 
-            string readString = stream.ReadText();
-            Assert.AreEqual(rawUtf8String, readString);
+            int readCompactIndex = reader.ReadIndex();
+            Assert.AreEqual(compactIndex, readCompactIndex);
 
-            readString = stream.ReadText();
-            Assert.AreEqual(rawUnicodeString, readString);
+            long readLength = stream.Position - sizeof(int);
+            Assert.AreEqual(length, readLength);
+        }
+
+        [DataTestMethod]
+        [DataRow(PackageObjectLegacyVersion.Undefined, "String")]
+        [DataRow(PackageObjectLegacyVersion.Undefined, "语言处理")]
+        public void SerializeString(PackageObjectLegacyVersion version, string text)
+        {
+            using var stream = CreateTempStream();
+            using var linker = new UnrealPackage(stream);
+            linker.Summary = new UnrealPackage.PackageFileSummary
+            {
+                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
+            };
+
+            using var writer = new UnrealWriter(stream, stream);
+            writer.Seek(sizeof(int), SeekOrigin.Begin);
+            writer.WriteString(text);
+
+            using var reader = new UnrealReader(stream, stream);
+            stream.Seek(sizeof(int), SeekOrigin.Begin);
+            string readString = reader.ReadString();
+            Assert.AreEqual(text, readString);
         }
 
         [TestMethod]
-        public void ReadAtomicStruct()
+        public void SerializeStruct()
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
                 Build = new UnrealPackage.GameBuild(linker),
-                // The easiest version to test against.
-                Version = 300
             };
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
@@ -76,11 +96,11 @@ namespace Eliot.UELib.Test
 
             // B, G, R, A;
             var inColor = new UColor(255, 128, 64, 80);
-            stream.WriteAtomicStruct(ref inColor);
+            stream.WriteStruct(ref inColor);
             Assert.AreEqual(8, stream.Position);
 
             stream.Seek(sizeof(int), SeekOrigin.Begin);
-            stream.ReadAtomicStruct(out UColor outColor);
+            stream.ReadStruct(out UColor outColor);
             Assert.AreEqual(8, stream.Position);
 
             Assert.AreEqual(255, outColor.B);
@@ -90,7 +110,7 @@ namespace Eliot.UELib.Test
         }
 
         [TestMethod]
-        public void TestBulkData()
+        public void SerializeStructMarshal()
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
@@ -98,28 +118,60 @@ namespace Eliot.UELib.Test
             {
                 Build = new UnrealPackage.GameBuild(linker),
             };
+            using var writer = new BinaryWriter(stream);
+            // Skip past the signature
+            writer.Seek(sizeof(int), SeekOrigin.Begin);
+
+            long p1 = stream.Position;
+
+            // B, G, R, A;
+            var inColor = new UColor(255, 128, 64, 80);
+            stream.WriteStructMarshal(inColor);
+            var inColor2 = new UColor(128, 128, 64, 80);
+            stream.WriteStructMarshal(inColor2);
+            var inColor3 = new UColor(64, 128, 64, 80);
+            stream.WriteStructMarshal(inColor3);
+
+            stream.Seek(p1, SeekOrigin.Begin);
+            stream.ReadStructMarshal(out UColor outColor);
+
+            // Verify order
+            Assert.AreEqual(255, outColor.B);
+            Assert.AreEqual(128, outColor.G);
+            Assert.AreEqual(64, outColor.R);
+            Assert.AreEqual(80, outColor.A);
+
+            stream.Seek(p1, SeekOrigin.Begin);
+            stream.ReadArrayMarshal(out UArray<UColor> colors, 3);
+            Assert.AreEqual(inColor, colors[0]);
+            Assert.AreEqual(inColor2, colors[1]);
+            Assert.AreEqual(inColor3, colors[2]);
+        }
+
+        [DataTestMethod]
+        [DataRow(PackageObjectLegacyVersion.Undefined)]
+        [DataRow(PackageObjectLegacyVersion.LazyArraySkipCountChangedToSkipOffset)]
+        [DataRow(PackageObjectLegacyVersion.LazyLoaderFlagsAddedToLazyArray)]
+        [DataRow(PackageObjectLegacyVersion.StorageSizeAddedToLazyArray)]
+        //[DataRow(PackageObjectLegacyVersion.L8AddedToLazyArray)]
+        [DataRow(PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData)]
+        public void SerializeBulkData(PackageObjectLegacyVersion version)
+        {
+            using var stream = CreateTempStream();
+            using var linker = new UnrealPackage(stream);
+            linker.Summary = new UnrealPackage.PackageFileSummary
+            {
+                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
+            };
 
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
 
-            // Verify the oldest stage of LazyArray.
-            //linker.Summary.Version = (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset - 1;
-            //TestBulkDataSerialization(stream);
-            
-            //linker.Summary.Version = (uint)PackageObjectLegacyVersion.LazyArraySkipCountToSkipOffset;
-            //TestBulkDataSerialization(stream);
-            
-            linker.Summary.Version = (uint)PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData;
-            TestBulkDataSerialization(stream);
-        }
-
-        private void TestBulkDataSerialization(IUnrealStream stream)
-        {
             byte[] rawData = Encoding.ASCII.GetBytes("LET'S PRETEND THAT THIS IS BULK DATA!");
             var bulkData = new UBulkData<byte>(0, rawData);
 
-            long bulkPosition = stream.Position;
+            long bulkPosition = ((IUnrealStream)stream).Position;
             stream.Write(ref bulkData);
             Assert.AreEqual(rawData.Length, bulkData.StorageSize);
 
@@ -133,6 +185,46 @@ namespace Eliot.UELib.Test
             readBulkData.LoadData(stream);
             Assert.IsNotNull(readBulkData.ElementData);
             Assert.AreEqual(bulkData.ElementData.Length, readBulkData.ElementData.Length);
+        }
+
+        [DataTestMethod]
+        [DataRow(PackageObjectLegacyVersion.FontPagesDisplaced)]
+        [DataRow(PackageObjectLegacyVersion.VerticalOffsetAddedToUFont)]
+        public void SerializeDataTypes(PackageObjectLegacyVersion version)
+        {
+            using var stream = CreateTempStream();
+            using var linker = new UnrealPackage(stream);
+            linker.Summary = new UnrealPackage.PackageFileSummary
+            {
+                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
+            };
+            using var writer = new BinaryWriter(stream);
+            // Skip past the signature
+            writer.Seek(sizeof(int), SeekOrigin.Begin);
+
+            var fontPage = new UFont.FontPage
+            {
+                Characters = new UArray<UFont.FontCharacter>
+                {
+                    new UFont.FontCharacter
+                    {
+                        StartU = 1,
+                        StartV = 2,
+                        USize = 64,
+                        VSize = 64,
+                        TextureIndex = 0,
+                        VerticalOffset = 0
+                    }
+                },
+                Texture = null
+            };
+
+            long p1 = stream.Position;
+            stream.WriteStruct(ref fontPage);
+            stream.Seek(p1, SeekOrigin.Begin);
+            stream.ReadStruct(out UFont.FontPage newFontPage);
+            Assert.AreEqual(fontPage.Texture, newFontPage.Texture);
+            Assert.AreEqual(fontPage.Characters[0].GetHashCode(), newFontPage.Characters[0].GetHashCode());
         }
     }
 }

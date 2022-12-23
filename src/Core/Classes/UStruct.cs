@@ -229,24 +229,10 @@ namespace UELib.Core
             }
             else
             {
-                const int moonbaseVersion = 587;
-                const int shadowcomplexVersion = 590;
-
-                bool isTrueScriptSize = Package.Build == UnrealPackage.GameBuild.BuildName.MOHA ||
-                                        (
-                                            _Buffer.Version >= UnrealPackage.VINDEXDEPRECATED
-                                            && (_Buffer.Version < moonbaseVersion &&
-                                                _Buffer.Version > shadowcomplexVersion)
-                                        );
-                if (isTrueScriptSize)
-                {
-                    _Buffer.Skip(DataScriptSize);
-                }
-                else
-                {
-                    ByteCodeManager.Deserialize();
-                }
+                ByteCodeManager.Deserialize();
             }
+
+            _Buffer.ConformRecordPosition();
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {

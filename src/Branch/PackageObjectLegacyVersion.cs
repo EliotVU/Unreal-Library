@@ -4,6 +4,8 @@ namespace UELib.Branch
 {
     public enum PackageObjectLegacyVersion
     {
+        Undefined = 0,
+        
         /// <summary>
         /// This is one particular update with A LOT of general package changes.
         /// </summary>
@@ -11,7 +13,7 @@ namespace UELib.Branch
 
         SphereExtendsPlane = 62,
         LazyArraySkipCountChangedToSkipOffset = 62,
-        
+
         /// <summary>
         /// This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.
         /// 
@@ -29,10 +31,10 @@ namespace UELib.Branch
         PanUVRemovedFromPoly = 78,
 
         CompMipsDeprecated = 84,
-        
+
         // FIXME: Version, attested as of UE2
         DynamicArrayInsertTokenAdded = 95,
-        
+
         /// <summary>
         /// FIXME: Version, set 95 (Deus Ex: IW)
         /// </summary>
@@ -48,6 +50,7 @@ namespace UELib.Branch
         MaterialAddedToPoly = 170,
 
         UE3 = 178,
+        CompactIndexDeprecated = 178,
 
         // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
         TemplateDataAddedToUComponent = 200,
@@ -104,7 +107,7 @@ namespace UELib.Branch
 
         // FIXME: Version, not attested in (RoboBlitz v369, but attested in GoW v490).
         SkipSizeAddedToArrayFindTokenIntrinsics = 400,
-        
+
         // FIXME: Version, not attested in (GoW v490)
         SkipSizeAddedToArrayTokenIntrinsics = 491,
 
@@ -119,6 +122,7 @@ namespace UELib.Branch
         EnumNameAddedToBytePropertyTag = 633,
 
         LightmassExplicitEmissiveLightRadiusAdded = 636,
+
         // FIXME: Version
         EndTokenAppendedToArrayTokenIntrinsics = 649,
         LightmassShadowIndirectOnlyOptionAdded = 652,

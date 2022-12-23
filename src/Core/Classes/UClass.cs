@@ -364,7 +364,11 @@ namespace UELib.Core
                             int unknownInt32 = _Buffer.ReadInt32();
                             Record("Unknown", unknownInt32);
 #if SINGULARITY
-                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity) _Buffer.Skip(8);
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity)
+                            {
+                                _Buffer.Skip(8);
+                                _Buffer.ConformRecordPosition();
+                            }
 #endif
                         }
                     }
@@ -376,6 +380,8 @@ namespace UELib.Core
                         {
                             _Buffer.Skip(sizeof(int));
                         }
+
+                        _Buffer.ConformRecordPosition();
                     }
 #endif
                     if (_Buffer.Version >= UnrealPackage.VDLLBIND && _Buffer.UE4Version < 117)
@@ -572,6 +578,7 @@ namespace UELib.Core
             int numBytes = componentsCount * 12;
             AssertEOS(numBytes, "Components");
             _Buffer.Skip(numBytes);
+            _Buffer.ConformRecordPosition();
         }
 
         protected override void FindChildren()

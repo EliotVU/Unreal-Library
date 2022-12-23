@@ -338,7 +338,7 @@ namespace UELib.Core
                     // Also in RSRS, and GBX engine
                     if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP)
                     {
-                        OpCodeText = stream.ReadASCIIString();
+                        OpCodeText = stream.ReadAnsiNullString();
                         Decompiler.AlignSize(OpCodeText.Length + 1);
                         Decompiler._Container.Record(nameof(OpCodeText), OpCodeText);
                         if (!Enum.TryParse(OpCodeText, true, out OpCode))

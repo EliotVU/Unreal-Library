@@ -30,7 +30,7 @@ namespace UELib.Core
             _NameItem = stream.Package.Names[index];
         }
 
-        public UName(UNameTableItem nameItem, int number)
+        public UName(UNameTableItem nameItem, int number = Numeric)
 {
             _NameItem = nameItem;
             _Number = number;
@@ -44,7 +44,7 @@ namespace UELib.Core
                 Name = text
             };
             _NameItem = nameEntry;
-            _Number = 0;
+            _Number = Numeric;
         }
 
         public bool IsNone()

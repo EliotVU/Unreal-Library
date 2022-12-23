@@ -139,7 +139,7 @@ namespace UELib.Engine
 
             if (stream.Version >= (uint)PackageObjectLegacyVersion.LightingChannelsAddedToPoly)
             {
-                stream.ReadAtomicStruct(out LightingChannels);
+                stream.ReadStructMarshal(out LightingChannels);
             }
             else
             {

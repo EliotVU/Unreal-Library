@@ -112,6 +112,7 @@ namespace UELib.Core
             if (Package.Build == BuildGeneration.HMS)
             {
                 _Buffer.Skip(4);
+                _Buffer.ConformRecordPosition();
                 return;
             }
 #endif

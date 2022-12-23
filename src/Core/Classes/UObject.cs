@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -72,7 +73,7 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        protected UObjectStream _Buffer;
+        protected UObjectRecordStream _Buffer;
 
         /// <summary>
         /// Copy of the Object bytes
@@ -143,7 +144,7 @@ namespace UELib.Core
             try
             {
 #if BINARYMETADATA
-                BinaryMetaData = new BinaryMetaData();
+                BinaryMetaData = _Buffer.BinaryMetaData;
 #endif
                 DeserializationState |= ObjectState.Deserializing;
                 if (HasObjectFlag(ObjectFlagsHO.PropertiesObject)
@@ -185,11 +186,12 @@ namespace UELib.Core
 
             //Console.WriteLine( "Init buffer for {0}", (string)this );
             var buffer = new byte[ExportTable.SerialSize];
-            _Buffer = new UObjectStream(Package.Stream, buffer);
+            _Buffer = new UObjectRecordStream(Package.Stream, buffer);
 
             // Bypass the terrible and slow endian reverse call
             int read = Package.Stream.EndianAgnosticRead(buffer, 0, ExportTable.SerialSize);
-            Debug.Assert(read == ExportTable.SerialSize);
+            Contract.Assert(ExportTable.SerialOffset + ExportTable.SerialSize <= Package.Stream.Length, "Exceeded file's length");
+            //Debug.Assert(read == ExportTable.SerialSize, $"Incomplete read; expected a total bytes of {ExportTable.SerialSize} but got {read}");
         }
 
         internal void EnsureBuffer()
@@ -348,6 +350,7 @@ namespace UELib.Core
                 if (ExportTable.ClassIndex != 0)
                 {
                     _Buffer.Skip(4);
+                    _Buffer.ConformRecordPosition();
                 }
             }
 #endif
@@ -570,34 +573,11 @@ namespace UELib.Core
 
         #endregion
 
-        /// <summary>
-        /// TODO: Move this feature into a stream.
-        /// Outputs the present position and the value of the parsed object.
-        ///
-        /// Only called in the DEBUGBUILD!
-        /// </summary>
-        /// <param name="varName">The struct that was read from the previous buffer position.</param>
-        /// <param name="varObject">The struct's value that was read.</param>
         [Conditional("BINARYMETADATA")]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Record(string varName, object varObject = null)
         {
-            long size = _Buffer.Position - _Buffer.LastPosition;
-            BinaryMetaData.AddField(varName, varObject, _Buffer.LastPosition, size);
-#if LOG_RECORDS
-            if( varObject == null )
-            {
-                Console.WriteLine( varName );
-                return;
-            }
-
-            var propertyType = varObject.GetType();
-            Console.WriteLine(
-                "0x" + _Buffer.LastPosition.ToString("x8").ToUpper()
-                + " : ".PadLeft( 2, ' ' )
-                + varName.PadRight( 32, ' ' ) + ":" + propertyType.Name.PadRight( 32, ' ' )
-                + " => " + varObject
-            );
-#endif
+            _Buffer.Record(varName, varObject);
         }
 
         protected void AssertEOS(int size, string testSubject = "")

@@ -50,7 +50,7 @@ namespace UELib
         {
 #if UE1
             // Very old packages use a simple Ansi encoding.
-            if (stream.Version < UnrealPackage.VSIZEPREFIXDEPRECATED) return stream.ReadASCIIString();
+            if (stream.Version < UnrealPackage.VSIZEPREFIXDEPRECATED) return stream.ReadAnsiNullString();
 #endif
             return stream.ReadText();
         }

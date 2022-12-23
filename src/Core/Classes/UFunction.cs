@@ -47,8 +47,9 @@ namespace UELib.Core
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
             {
                 ushort size = _Buffer.ReadUShort();
-                Record("Unknown:Borderlands2", size);
                 _Buffer.Skip(size * 2);
+                Record("Unknown:Borderlands2", size);
+
             }
 #endif
             base.Deserialize();

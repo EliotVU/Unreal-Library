@@ -90,7 +90,7 @@ namespace UELib
 
     /// <summary>
     /// An atomic struct (e.g. UObject.Color, Vector, etc).
-    /// See <see cref="UnrealStreamImplementations.ReadAtomicStruct"/>
+    /// See <see cref="UnrealStreamImplementations.ReadStructMarshal{T}"/>
     /// </summary>
     public interface IUnrealAtomicStruct
     {

@@ -155,6 +155,11 @@ namespace UELib.Engine
                     stream.Write(VerticalOffset);
                 }
             }
+
+            public override int GetHashCode()
+            {
+                return StartU ^ StartV ^ USize ^ VSize;
+            }
         }
     }
 }

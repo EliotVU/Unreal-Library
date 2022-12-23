@@ -1873,7 +1873,7 @@ namespace UELib
         public void WritePackageFlags()
         {
             Stream.Position = 8;
-            Stream.UW.Write(PackageFlags);
+            Stream.Writer.Write(PackageFlags);
         }
 
         [PublicAPI]

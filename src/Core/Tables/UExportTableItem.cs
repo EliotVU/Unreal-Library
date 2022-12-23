@@ -276,7 +276,7 @@ namespace UELib
         public void WriteObjectFlags()
         {
             Owner.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);
-            Owner.Stream.UW.Write((uint)ObjectFlags);
+            Owner.Stream.Writer.Write((uint)ObjectFlags);
         }
 
         public override string ToString()
