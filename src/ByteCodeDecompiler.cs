@@ -148,22 +148,39 @@ namespace UELib.Core
                 }
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void DeserializeDebugToken()
             {
                 // Sometimes we may end up at the end of a script
                 // -- and by coincidence pickup a DebugInfo byte-code outside of the script-boundary.
-                if (ScriptPosition == _Container.ByteScriptSize) return;
+                if (ScriptPosition+sizeof(byte)+sizeof(int) >= _Container.ByteScriptSize) return;
 
-                _Buffer.StartPeek();
+                long p = _Buffer.Position;
                 byte opCode = _Buffer.ReadByte();
-                _Buffer.EndPeek();
 
                 // Let's avoid converting native calls to a token type ;D
-                if (opCode >= _TokenFactory.ExtendedNative) return;
+                if (opCode >= _TokenFactory.ExtendedNative)
+                {
+                    _Buffer.Position = p;
+                    return;
+                }
+
+                int version = 0;
                 
                 var tokenType = _TokenFactory.GetTokenTypeFromOpCode(opCode);
-                if (tokenType == typeof(DebugInfoToken)) DeserializeNext();
+                if (tokenType == typeof(DebugInfoToken))
+                {
+                    // Sometimes we may catch a false positive,
+                    // e.g. A FinalFunction within an Iterator may expect a debug token and by mere coincidence match the Iterator's CodeOffset.
+                    // So let's verify the next 4 bytes too.
+                    version = _Buffer.ReadInt32();
+                }
+
+                _Buffer.Position = p;
+                if (version == 100)
+                {
+                    // Expecting a DebugInfo token.
+                    DeserializeNext();
+                }
             }
 
             private Token DeserializeNextOpCodeToToken()
