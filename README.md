@@ -172,6 +172,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Hawken | 10681 | 860/004 |     |
 | Batman: Arkham Knight | | 863/32995 | Not verified  |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
+| Bombshell | 11767 | 870/000 | |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
 | Shadow Complex Remastered | 10897 | 893/001 | |
