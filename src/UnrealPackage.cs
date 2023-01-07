@@ -580,20 +580,33 @@ namespace UELib
 
             public BuildName Name { get; }
 
+            [Obsolete]
             public uint Version { get; }
-            public uint? OverrideVersion { get; }
+            
+            [Obsolete]
             public uint LicenseeVersion { get; }
+            
+            public uint? OverrideVersion { get; }
             public ushort? OverrideLicenseeVersion { get; }
 
             public BuildGeneration Generation { get; }
             [CanBeNull] public readonly Type EngineBranchType;
 
+            [Obsolete("To be deprecated")]
             public readonly BuildFlags Flags;
+
+            public GameBuild(uint overrideVersion, ushort overrideLicenseeVersion, BuildGeneration generation, Type engineBranchType,
+                BuildFlags flags)
+            {
+                OverrideVersion = overrideVersion;
+                OverrideLicenseeVersion = overrideLicenseeVersion;
+                Generation = generation;
+                EngineBranchType = engineBranchType;
+                Flags = flags;
+            }
 
             public GameBuild(UnrealPackage package)
             {
-                if (UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console) Flags |= BuildFlags.ConsoleCooked;
-
                 var buildInfo = FindBuildInfo(package, out var buildAttribute);
                 if (buildInfo == null)
                 {
@@ -699,8 +712,23 @@ namespace UELib
         }
 
         public GameBuild.BuildName BuildTarget = GameBuild.BuildName.Unset;
-        public GameBuild Build => Summary.Build;
-        public EngineBranch Branch => Summary.Branch;
+
+        /// <summary>
+        /// The auto-detected (can be set before deserialization to override auto-detection).
+        /// This needs to be set to the correct build in order to load some game-specific data from packages.
+        /// </summary>
+        public GameBuild Build;
+
+        /// <summary>
+        /// The branch that we are using to load the data contained within this package.
+        /// </summary>
+        public EngineBranch Branch;
+
+        /// <summary>
+        /// The platform that the cooker was cooking this package for.
+        /// Needs to be set to Console for decompressed .xxx packages etc.
+        /// </summary>
+        public BuildPlatform CookerPlatform;
 
         public struct PackageFileEngineVersion : IUnrealDeserializableClass
         {
@@ -725,9 +753,6 @@ namespace UELib
 
         public struct PackageFileSummary : IUnrealSerializableClass
         {
-            public GameBuild Build;
-            public EngineBranch Branch;
-
             public uint Version;
             public ushort LicenseeVersion;
 
@@ -806,10 +831,18 @@ namespace UELib
             // In UELib 2.0 we pass the version to the Archives instead.
             private void SetupBuild(UnrealPackage package)
             {
-                Build = new GameBuild(package);
+                // Auto-detect
+                if (package.Build == null)
+                {
+                    package.Build = new GameBuild(package);
+                    if (package.Build.Flags.HasFlag(BuildFlags.ConsoleCooked))
+                    {
+                        package.CookerPlatform = BuildPlatform.Console;
+                    }
+                }
 
-                if (Build.OverrideVersion.HasValue) Version = Build.OverrideVersion.Value;
-                if (Build.OverrideLicenseeVersion.HasValue) LicenseeVersion = Build.OverrideLicenseeVersion.Value;
+                if (package.Build.OverrideVersion.HasValue) Version = package.Build.OverrideVersion.Value;
+                if (package.Build.OverrideLicenseeVersion.HasValue) LicenseeVersion = package.Build.OverrideLicenseeVersion.Value;
 
                 if (OverrideVersion != 0) Version = OverrideVersion;
                 if (OverrideLicenseeVersion != 0) LicenseeVersion = OverrideLicenseeVersion;
@@ -820,19 +853,19 @@ namespace UELib
             {
                 if (package.Build.EngineBranchType != null)
                 {
-                    Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType,
+                    package.Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType,
                         package.Build.Generation);
                 }
                 else if (package.Summary.UE4Version > 0)
                 {
-                    Branch = new EngineBranchUE4();
+                    package.Branch = new EngineBranchUE4();
                 }
                 else
                 {
-                    Branch = new DefaultEngineBranch(package.Build.Generation);
+                    package.Branch = new DefaultEngineBranch(package.Build.Generation);
                 }
 
-                Branch.Setup(package);
+                package.Branch.Setup(package);
             }
 
             public void Serialize(IUnrealStream stream)
@@ -909,11 +942,12 @@ namespace UELib
                 Console.WriteLine("Package Version:" + Version + "/" + LicenseeVersion);
 
                 SetupBuild(stream.Package);
-                Debug.Assert(Build != null);
-                Console.WriteLine("Build:" + Build);
+                Debug.Assert(stream.Package.Build != null);
+                Console.WriteLine("Build:" + stream.Package.Build);
+                
                 SetupBranch(stream.Package);
-                Debug.Assert(Branch != null);
-                Console.WriteLine("Branch:" + Branch);
+                Debug.Assert(stream.Package.Branch != null);
+                Console.WriteLine("Branch:" + stream.Package.Branch);
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -1641,7 +1675,7 @@ namespace UELib
             if ((initFlags & InitFlags.Construct) != 0)
             {
                 ConstructObjects();
-            };
+            }
 
             if ((initFlags & InitFlags.Deserialize) == 0)
                 return;
@@ -1790,12 +1824,14 @@ namespace UELib
                 try
                 {
                     if (!(exp.Object is UnknownObject)) exp.Object.PostInitialize();
-
-                    OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
                 }
                 catch (InvalidCastException)
                 {
                     Console.WriteLine("InvalidCastException occurred on object: " + exp.Object);
+                }
+                finally
+                {
+                    OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
                 }
         }
 
@@ -1827,7 +1863,7 @@ namespace UELib
             var objectClass = item.Class;
             var classType = GetClassType(objectClass != null ? objectClass.ObjectName : "Class");
             // Try one of the "super" classes for unregistered classes.
-            loop:
+        loop:
             if (objectClass != null && classType == typeof(UnknownObject))
             {
                 switch (objectClass)
@@ -1845,10 +1881,11 @@ namespace UELib
                                 classType = GetClassType(objectClass.ObjectName);
                                 goto loop;
                         }
+
                         break;
                 }
-                
             }
+
             item.Object = (UObject)Activator.CreateInstance(classType);
             AddObject(item.Object, item);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
@@ -2019,8 +2056,8 @@ namespace UELib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsConsoleCooked()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked) &&
-                   Build.Flags.HasFlag(BuildFlags.ConsoleCooked);
+            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked)
+                   && CookerPlatform == BuildPlatform.Console;
         }
 
         /// <summary>

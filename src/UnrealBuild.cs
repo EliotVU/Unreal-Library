@@ -91,6 +91,7 @@ namespace UELib
     }
 
     [Flags]
+    [Obsolete("To be deprecated, see BuildPlatform")]
     public enum BuildFlags : byte
     {
         /// <summary>
@@ -102,6 +103,13 @@ namespace UELib
         /// Is cooked for Xenon(Xbox 360). Could be true on PC games.
         /// </summary>
         XenonCooked = 0x02,
+    }
+
+    public enum BuildPlatform
+    {
+        Undetermined,
+        PC,
+        Console
     }
 
     [AttributeUsage(AttributeTargets.Field)]

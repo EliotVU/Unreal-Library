@@ -34,9 +34,10 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
+            linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
-                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
+                Version = (uint)version
             };
 
             using var writer = new UnrealWriter(stream, stream);
@@ -66,9 +67,10 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
+            linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
-                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
+                Version = (uint)version
             };
 
             using var writer = new UnrealWriter(stream, stream);
@@ -86,10 +88,9 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
-            linker.Summary = new UnrealPackage.PackageFileSummary
-            {
-                Build = new UnrealPackage.GameBuild(linker),
-            };
+            linker.Build = new UnrealPackage.GameBuild(linker);
+            linker.Summary = new UnrealPackage.PackageFileSummary();
+            
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
@@ -114,10 +115,8 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
-            linker.Summary = new UnrealPackage.PackageFileSummary
-            {
-                Build = new UnrealPackage.GameBuild(linker),
-            };
+            linker.Build = new UnrealPackage.GameBuild(linker);
+            linker.Summary = new UnrealPackage.PackageFileSummary();
             using var writer = new BinaryWriter(stream);
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
@@ -126,11 +125,11 @@ namespace Eliot.UELib.Test
 
             // B, G, R, A;
             var inColor = new UColor(255, 128, 64, 80);
-            stream.WriteStructMarshal(inColor);
+            stream.WriteStructMarshal(ref inColor);
             var inColor2 = new UColor(128, 128, 64, 80);
-            stream.WriteStructMarshal(inColor2);
+            stream.WriteStructMarshal(ref inColor2);
             var inColor3 = new UColor(64, 128, 64, 80);
-            stream.WriteStructMarshal(inColor3);
+            stream.WriteStructMarshal(ref inColor3);
 
             stream.Seek(p1, SeekOrigin.Begin);
             stream.ReadStructMarshal(out UColor outColor);
@@ -159,9 +158,10 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
+            linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
-                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
+                Version = (uint)version
             };
 
             using var writer = new BinaryWriter(stream);
@@ -194,9 +194,10 @@ namespace Eliot.UELib.Test
         {
             using var stream = CreateTempStream();
             using var linker = new UnrealPackage(stream);
+            linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
             {
-                Build = new UnrealPackage.GameBuild(linker), Version = (uint)version
+                Version = (uint)version
             };
             using var writer = new BinaryWriter(stream);
             // Skip past the signature

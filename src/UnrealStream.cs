@@ -970,7 +970,7 @@ namespace UELib
         public static UnrealFlags<TEnum> ReadFlags32<TEnum>(this IUnrealStream stream)
             where TEnum : Enum
         {
-            stream.Package.Summary.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
+            stream.Package.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
             Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
 
             ulong flags = stream.ReadUInt32();
@@ -980,7 +980,7 @@ namespace UELib
         public static UnrealFlags<TEnum> ReadFlags64<TEnum>(this IUnrealStream stream)
             where TEnum : Enum
         {
-            stream.Package.Summary.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
+            stream.Package.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
             Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
 
             ulong flags = stream.ReadUInt64();
