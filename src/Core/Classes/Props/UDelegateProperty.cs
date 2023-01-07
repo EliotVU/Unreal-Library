@@ -29,10 +29,21 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            FunctionObject = GetIndexObject(_Buffer.ReadObjectIndex());
-            if (Package.Version > 184)
+            FunctionObject = _Buffer.ReadObject();
+            // FIXME: Version 128-178
+            if (_Buffer.Version <= 184)
             {
-                DelegateObject = GetIndexObject(_Buffer.ReadObjectIndex());
+                return;
+            }
+
+            // FIXME: Version 374-491; Delegate source type changed from Name to Object
+            if (_Buffer.Version <= 375)
+            {
+                _Buffer.ReadNameReference();
+            }
+            else
+            {
+                DelegateObject = _Buffer.ReadObject();
             }
         }
 
