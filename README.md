@@ -155,6 +155,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Borderlands 2 | 8623/023 | 832/056 | |
 | Remember Me | 8623 | 832/021 |     |
 | The Haunted: Hells Reach | 8788 | 841/000 |     |
+| Asura's Wrath | 8788 | 841/000 | -zlib; platform needs to be set to console. |
 | Blacklight Retribution | 8788-10499 | 841-864/002 |     |
 | Infinity Blade 2 | 9059 | 842/001 |     |
 | Q.U.B.E | 8916 | 845/000 |     |
