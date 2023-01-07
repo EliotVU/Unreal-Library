@@ -39,7 +39,7 @@ namespace UELib.Engine
             base.Deserialize();
 
             // These properties have been moved to ScriptProperties.
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.DisplacedUTexture2DProperties)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
             {
                 _Buffer.Read(out SizeX);
                 Record(nameof(SizeX), SizeX);

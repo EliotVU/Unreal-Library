@@ -1,4 +1,5 @@
 ﻿using UELib.Branch;
+using UELib.Core;
 
 namespace UELib.Engine
 {
@@ -9,6 +10,15 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UPrimitiveComponent : UActorComponent
     {
+        protected override void Deserialize()
+        {
+            base.Deserialize();
+
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ComponentGuidDeprecated)
+            {
+                _Buffer.ReadStruct(out UGuid guid);
+            }
+        }
     }
     
     /// <summary>

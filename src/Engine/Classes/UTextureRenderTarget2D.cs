@@ -3,11 +3,11 @@
 namespace UELib.Engine
 {
     /// <summary>
-    ///     Implements UTextureCube/Engine.TextureCube
+    ///     Implements UTextureRenderTarget2D/Engine.TextureRenderTarget2D
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UTextureCube : UTexture
+    public class UTextureRenderTarget2D : UTexture
     {
         public uint SizeX, SizeY;
 

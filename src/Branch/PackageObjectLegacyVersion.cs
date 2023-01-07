@@ -86,8 +86,13 @@ namespace UELib.Branch
         // -- albeit the exact nature is not clear
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
+        
+        ComponentGuidDeprecated = 273,
 
-        DisplacedUTexture2DProperties = 297,
+        /// <summary>
+        /// Some properties like SizeX, SizeY, Format have been displaced to ScriptProperties.
+        /// </summary>
+        DisplacedUTextureProperties = 297,
 
         // FIXME: Not attested in the GoW client, must have been before v321
         LightMapScaleRemovedFromPoly = 300,

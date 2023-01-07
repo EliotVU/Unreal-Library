@@ -232,6 +232,8 @@
     <Compile Include="Engine\Classes\UTextureCube.cs" />
     <Compile Include="Engine\Classes\UTextureFlipBook.cs" />
     <Compile Include="Engine\Classes\UTextureMovie.cs" />
+    <Compile Include="Engine\Classes\UTextureRenderTarget2D.cs" />
+    <Compile Include="Engine\Classes\UTextureRenderTargetCube.cs" />
     <Compile Include="Engine\Types\LightingChannelContainer.cs" />
     <Compile Include="Engine\Types\LightmassPrimitiveSettings.cs" />
     <Compile Include="ObjectModel\Annotations\ExprTokenAttribute.cs" />
