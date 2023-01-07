@@ -331,14 +331,14 @@ namespace UELib.Core
                 output += $"\r\n\tdllbind({DLLBindName})";
             }
 
-            if (ClassDependencies != null) foreach (var dependency in ClassDependencies)
-            {
-                var obj = dependency.Class;
-                if (obj != null && (int)obj > (int)this && obj != Super)
-                {
-                    output += $"\r\n\tdependson({obj.Name})";
-                }
-            }
+            //if (ClassDependencies != null) foreach (var dependency in ClassDependencies)
+            //{
+            //    var obj = dependency.Class;
+            //    if (obj != null && (int)obj > (int)this && obj != Super)
+            //    {
+            //        output += $"\r\n\tdependson({obj.Name})";
+            //    }
+            //}
 
             output += FormatNameGroup("dontsortcategories", DontSortCategories);
             output += FormatNameGroup("hidecategories", HideCategories);
