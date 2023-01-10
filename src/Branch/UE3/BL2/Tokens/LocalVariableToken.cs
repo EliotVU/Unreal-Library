@@ -1,8 +1,11 @@
 ﻿using UELib.Core;
 using UELib.Core.Tokens;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Branch.UE3.BL2.Tokens
 {
+    [ExprToken(ExprToken.LocalVariable)]
     public class LocalVariableToken<T> : UStruct.UByteCodeDecompiler.Token
     {
         public int LocalIndex;

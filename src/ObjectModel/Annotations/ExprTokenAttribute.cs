@@ -3,7 +3,7 @@ using UELib.Tokens;
 
 namespace UELib.ObjectModel.Annotations
 {
-    internal class ExprTokenAttribute : Attribute
+    public class ExprTokenAttribute : Attribute
     {
         public readonly ExprToken ExprToken;
 

@@ -169,7 +169,7 @@ namespace UELib.Core
                     return exprTokenAttr.ExprToken;
                 }
                 
-                public override int GetHashCode() => (int)GetExprToken();
+                public override int GetHashCode() => GetType().GetHashCode();
 
                 public override string ToString()
                 {
