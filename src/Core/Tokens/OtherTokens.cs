@@ -13,11 +13,6 @@ namespace UELib.Core
             [ExprToken(ExprToken.Nothing)]
             public class NothingToken : Token
             {
-                public override void Deserialize(IUnrealStream stream)
-                {
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
-                        Decompiler.AlignSize(sizeof(int));
-                }
             }
 
             [ExprToken(ExprToken.EmptyDelegate)]

@@ -109,11 +109,6 @@ namespace UELib.Core
                     Size = stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(ushort));
 
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
-                    {
-                        Decompiler.AlignSize(sizeof(ushort));
-                    }
-
                     DeserializeNext(); // Expression
                     DeserializeNext(); // EndParmValue
                 }

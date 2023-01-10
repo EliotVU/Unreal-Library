@@ -169,11 +169,6 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
-                    {
-                        Decompiler.AlignSize(sizeof(int));
-                    }
-
                     Function = stream.ReadObject<UFunction>();
                     Decompiler.AlignObjectSize();
 
