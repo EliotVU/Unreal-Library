@@ -611,7 +611,7 @@ namespace UELib.Core
                 {
                     var value = _Buffer.ReadNameReference();
                     Record(nameof(value), value);
-                    propertyValue = value;
+                    propertyValue = $"\"{value}\"";
                     break;
                 }
 
