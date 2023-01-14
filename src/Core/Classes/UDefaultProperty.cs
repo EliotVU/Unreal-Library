@@ -21,8 +21,7 @@ namespace UELib.Core
         {
             None = 0x00,
             WithinStruct = 0x01,
-            WithinArray = 0x02,
-            Complex = WithinStruct | WithinArray
+            WithinArray = 0x02
         }
 
         private const byte InfoTypeMask = 0x0F;
@@ -76,13 +75,22 @@ namespace UELib.Core
                 return value;
             }
 
-            var arrayIndex = string.Empty;
-            if (ArrayIndex > 0)
+            string name = Name;
+            if (Type == PropertyType.DelegateProperty && _Container.Package.Version >= 100)
             {
-                arrayIndex += $"[{ArrayIndex}]";
+                // Re-point the compiler-generated delegate property to the actual delegate function's name
+                // e.g. __%delegateName%__Delegate -> %delegateName%
+                if (name.EndsWith("__Delegate"))
+                {
+                    string normalizedDelegateName = name.Substring(2, name.Length - 12);
+                    name = $"{normalizedDelegateName}";
+                }
             }
 
-            return $"{Name}{arrayIndex}={value}";
+            string expr = name;
+            return ArrayIndex > 0
+                ? $"{expr}[{ArrayIndex}]={value}"
+                : $"{expr}={value}";
         }
 
         [CanBeNull]
@@ -714,28 +722,27 @@ namespace UELib.Core
                     break;
                 }
 
-                case PropertyType.DelegateProperty:
+                    // Old StringProperty with a fixed size and null termination.
+                case PropertyType.StringProperty when _Buffer.Version < 100:
                 {
-                    _TempFlags |= DoNotAppendName;
+                    string str = _Buffer.ReadAnsiNullString();
+                    propertyValue = str;
+                    break;
+                }
+                
+                case PropertyType.DelegateProperty when _Buffer.Version >= 100:
+                {
+                    // Can by any object, usually a class.
+                    var functionOwner = _Buffer.ReadObject();
+                    Record(nameof(functionOwner), functionOwner);
 
-                    var outerObj = _Buffer.ReadObject(); // Where the assigned delegate property exists.
-                    Record(nameof(outerObj), outerObj);
+                    string functionName = _Buffer.ReadName();
+                    Record(nameof(functionName), functionName);
 
-                    string delegateName = _Buffer.ReadName();
-                    Record(nameof(delegateName), delegateName);
-
-                    // Re-point the compiler-generated delegate property to the actual delegate function's name
-                    // e.g. __%delegateName%__Delegate -> %delegateName%
-                    if (delegateName.EndsWith("__Delegate"))
-                    {
-                        string normalizedDelegateName = ((string)Name).Substring(2, Name.Length - 12);
-                        propertyValue = $"{normalizedDelegateName}={delegateName}";
-                    }
-                    else
-                    {
-                        propertyValue += delegateName;
-                    }
-
+                    // Can be null in UE3 packages
+                    propertyValue = functionOwner != null
+                        ? $"{functionOwner.Name}.{functionName}"
+                        : $"{functionName}";
                     break;
                 }
 
@@ -907,7 +914,6 @@ namespace UELib.Core
 
                 #endregion
 
-                case PropertyType.PointerProperty:
                 case PropertyType.StructProperty:
                 {
                     deserializeFlags |= DeserializeFlags.WithinStruct;
