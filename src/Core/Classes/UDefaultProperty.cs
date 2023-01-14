@@ -77,7 +77,7 @@ namespace UELib.Core
             }
 
             var arrayIndex = string.Empty;
-            if (ArrayIndex > 0 && Type != PropertyType.BoolProperty)
+            if (ArrayIndex > 0)
             {
                 arrayIndex += $"[{ArrayIndex}]";
             }
@@ -85,18 +85,30 @@ namespace UELib.Core
             return $"{Name}{arrayIndex}={value}";
         }
 
-        private UProperty FindProperty(out UStruct outer)
+        [CanBeNull]
+        private T FindProperty<T>(out UStruct outer)
+            where T : UProperty
         {
             UProperty property = null;
-            outer = _Outer ?? _Container.Class as UStruct;
-            for (var structField = outer; structField != null; structField = structField.Super)
+            outer = _Outer ?? (UStruct)_Container.Class;
+            Debug.Assert(outer != null, nameof(outer) + " != null");
+            foreach (var super in outer.EnumerateSuper(outer))
             {
-                if (structField.Variables == null || !structField.Variables.Any())
+                foreach (var field in super
+                             .EnumerateFields()
+                             .OfType<UProperty>())
                 {
-                    continue;
+                    // FIXME: UName
+                    if (field.Table.ObjectName != Name)
+                    {
+                        continue;
+                    }
+
+                    property = field;
+                    outer = super;
+                    break;
                 }
 
-                property = structField.Variables.Find(i => i.Table.ObjectName == Name);
                 if (property == null)
                 {
                     continue;
@@ -109,25 +121,20 @@ namespace UELib.Core
                         break;
 
                     case PropertyType.ArrayProperty:
-                        var arrayField = property as UArrayProperty;
+                        var arrayField = (UArrayProperty)property;
                         Debug.Assert(arrayField != null, "arrayField != null");
                         var arrayInnerField = arrayField.InnerProperty;
                         if (arrayInnerField.Type == PropertyType.StructProperty)
                         {
-                            _Outer = ((UStructProperty)arrayInnerField).StructObject;
+                            outer = ((UStructProperty)arrayInnerField).StructObject;
                         }
 
                         break;
-
-                    default:
-                        outer = structField;
-                        break;
                 }
-
                 break;
             }
 
-            return property;
+            return (T)property;
         }
 
         [Conditional("BINARYMETADATA")]
@@ -568,14 +575,18 @@ namespace UELib.Core
             {
                 case PropertyType.BoolProperty:
                 {
-                    Debug.Assert(BoolValue != null, nameof(BoolValue) + " != null");
-                    bool value = BoolValue.Value;
-                    if (Size == 1 && _Buffer.Version < (uint)PackageObjectLegacyVersion.UE3)
+                    bool value;
+                    if (Size == 0)
+                    {
+                        Debug.Assert(BoolValue != null, nameof(BoolValue) + " != null");
+                        value = BoolValue.Value;
+                    }
+                    else
                     {
                         value = _Buffer.ReadByte() > 0;
-                        Record(nameof(value), value);
                     }
 
+                    Record(nameof(value), value);
                     propertyValue = value ? "true" : "false";
                     break;
                 }

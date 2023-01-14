@@ -48,7 +48,15 @@ namespace UELib.Core
                 yield return super;
             }
         }
-        
+
+        public IEnumerable<UStruct> EnumerateSuper(UStruct super)
+        {
+            for (; super != null; super = super.Super)
+            {
+                yield return super;
+            }
+        }
+
         public IEnumerable<UField> EnumerateNext()
         {
             for (var next = NextField; next != null; next = next.NextField)
