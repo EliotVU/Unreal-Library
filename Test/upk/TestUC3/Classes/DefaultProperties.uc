@@ -1,8 +1,21 @@
-class DefaultProperties extends Object;
+class DefaultProperties extends DefaultPropertiesBase;
 
 // Primitives
-var string String;
+var byte Byte;
+var int Int;
+// var bool Bool;
 var float Float;
+var name NameProperty;
+// var string[255] String;
+var string String;
+
+var Object Object;
+var Class<DefaultProperties> MetaClass;
+var delegate<OnDelegate> Delegate;
+
+// FixedArray
+var byte ByteFixedArray[2];
+var int IntFixedArray[2];
 
 // Structs
 var Guid Guid;
@@ -19,11 +32,31 @@ var LinearColor LinearColor;
 var Box Box;
 var Matrix Matrix;
 
+var array<bool> BoolArray;
+
+delegate OnDelegate();
+private function InternalOnDelegate();
+
 defaultproperties
 {
+    BoolTrue=true
+    BoolFalse=false
+
+    Byte=255
+    Int=1000
+	Float=.0123456789
+    NameProperty="Name"
 	// ASCII
 	String="String_\"\\\0\a\b\f\n\r\t\v"
-	Float=.0123456789
+
+    Object=Object'DefaultProperties'
+    MetaClass=Class'DefaultProperties'
+    Delegate=InternalOnDelegate
+
+    ByteFixedArray[0]=1
+    IntFixedArray[0]=1
+    IntFixedArray[1]=2
+
 	Vector=(X=1.0,Y=2.0,Z=3.0)
 	Vector4=(X=1.0,Y=2.0,Z=3.0,W=4.0)
 	Vector2D=(X=1.0,Y=2.0)
@@ -43,4 +76,9 @@ defaultproperties
 		ZPlane=(W=8,X=9,Y=10,Z=11),
 		WPlane=(W=12,X=13,Y=14,Z=15)
 	)}
+
+    BoolArray(0)=true
+    BoolArray(1)=false
+
+    OnDelegate=DefaultProperties.InternalOnDelegate
 }

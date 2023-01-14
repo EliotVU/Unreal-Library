@@ -44,10 +44,20 @@ namespace Eliot.UELib.Test.upk
             void AssertDefaults(UnrealPackage unrealPackage)
             {
                 var defaults = AssertDefaultPropertiesClass(unrealPackage);
-                AssertPropertyTagFormat(defaults, "String",
-                    "\"String_\\\"\\\\0abfnrtv\"");
+                AssertPropertyTagFormat(defaults, "BoolTrue",
+                    "true");
+                AssertPropertyTagFormat(defaults, "BoolFalse",
+                    "false");
+                AssertPropertyTagFormat(defaults, "Byte",
+                    "255");
+                AssertPropertyTagFormat(defaults, "Int",
+                    "1000");
                 AssertPropertyTagFormat(defaults, "Float",
                     "0.0123457");
+                AssertPropertyTagFormat(defaults, "NameProperty",
+                    "\"Name\"");
+                AssertPropertyTagFormat(defaults, "String",
+                    "\"String_\\\"\\\\0abfnrtv\"");
                 AssertPropertyTagFormat(defaults, "Vector",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
                 // Not atomic!
