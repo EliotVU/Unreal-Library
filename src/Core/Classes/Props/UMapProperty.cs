@@ -4,16 +4,14 @@ namespace UELib.Core
 {
     /// <summary>
     /// Dynamic Map Property
-    ///
-    /// Obsolete
     /// </summary>
     [UnrealRegisterClass]
     public class UMapProperty : UProperty
     {
         #region Serialized Members
 
-        private int _Key;
-        private int _Value;
+        public UProperty KeyProperty;
+        public UProperty ValueProperty;
 
         #endregion
 
@@ -29,14 +27,22 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            _Key = _Buffer.ReadObjectIndex();
-            _Value = _Buffer.ReadObjectIndex();
+            KeyProperty = _Buffer.ReadObject<UProperty>();
+            Record(nameof(KeyProperty), KeyProperty);
+            
+            ValueProperty = _Buffer.ReadObject<UProperty>();
+            Record(nameof(ValueProperty), ValueProperty);
         }
 
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return $"map<{_Key}, {_Value}>";
+            if (KeyProperty == null || ValueProperty == null)
+            {
+                return "map{VOID,VOID}";
+            }
+            
+            return $"map<{KeyProperty.GetFriendlyType()}, {ValueProperty.GetFriendlyType()}>";
         }
     }
 }

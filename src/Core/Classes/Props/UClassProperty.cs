@@ -14,7 +14,7 @@ namespace UELib.Core
         #region Serialized Members
 
         // MetaClass
-        public UClass ClassObject;
+        public UClass MetaClass;
 
         #endregion
 
@@ -30,16 +30,16 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            int classIndex = _Buffer.ReadObjectIndex();
-            ClassObject = (UClass)GetIndexObject(classIndex);
+            MetaClass = _Buffer.ReadObject<UClass>();
+            Record(nameof(MetaClass), MetaClass);
         }
 
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            if (ClassObject != null)
+            if (MetaClass != null)
             {
-                return (string.Compare(ClassObject.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0)
+                return (string.Compare(MetaClass.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0)
                     ? Object.GetFriendlyType()
                     : ($"class<{GetFriendlyInnerType()}>");
             }
@@ -49,7 +49,7 @@ namespace UELib.Core
 
         public override string GetFriendlyInnerType()
         {
-            return ClassObject != null ? ClassObject.GetFriendlyType() : "@NULL";
+            return MetaClass != null ? MetaClass.GetFriendlyType() : "@NULL";
         }
     }
 }

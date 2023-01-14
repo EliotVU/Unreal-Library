@@ -125,7 +125,7 @@ namespace UELib.Core
                 switch (property.Type)
                 {
                     case PropertyType.StructProperty:
-                        outer = ((UStructProperty)property).StructObject;
+                        outer = ((UStructProperty)property).Struct;
                         break;
 
                     case PropertyType.ArrayProperty:
@@ -134,7 +134,7 @@ namespace UELib.Core
                         var arrayInnerField = arrayField.InnerProperty;
                         if (arrayInnerField.Type == PropertyType.StructProperty)
                         {
-                            outer = ((UStructProperty)arrayInnerField).StructObject;
+                            outer = ((UStructProperty)arrayInnerField).Struct;
                         }
 
                         break;
@@ -658,15 +658,22 @@ namespace UELib.Core
                     }
                     else
                     {
-                        byte enumTagValue = _Buffer.ReadByte();
-                        Record(nameof(enumTagValue), enumTagValue);
-                        propertyValue = PropertyDisplay.FormatLiteral(enumTagValue);
+                        byte value = _Buffer.ReadByte();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                     }
 
                     break;
                 }
 
                 case PropertyType.InterfaceProperty:
+                {
+                    var interfaceClass = _Buffer.ReadObject();
+                    Record(nameof(interfaceClass), interfaceClass);
+                    propertyValue = PropertyDisplay.FormatLiteral(interfaceClass);
+                    break;
+                }
+                
                 case PropertyType.ComponentProperty:
                 case PropertyType.ObjectProperty:
                 {
@@ -965,26 +972,41 @@ namespace UELib.Core
                 nonAtomic:
                     // We have to modify the outer so that dynamic arrays within this struct
                     // will be able to find its variables to determine the array type.
-                    FindProperty(out _Outer);
+                    FindProperty<UProperty>(out _Outer);
+                    var structTags = new LinkedList<UDefaultProperty>();
+                    bool hasMore = true;
                     while (true)
                     {
                         var tag = new UDefaultProperty(_Container, _Outer);
-                        if (tag.Deserialize())
+                        try
                         {
-                            propertyValue += tag.Name +
-                                             (tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty
-                                                 ? $"[{tag.ArrayIndex}]"
-                                                 : string.Empty) +
-                                             "=" + tag.DeserializeValue(deserializeFlags) + ",";
-                        }
-                        else
-                        {
-                            if (propertyValue.EndsWith(","))
+                            // Might throw an exception if the struct is atomic
+                            if (tag.Deserialize())
                             {
-                                propertyValue = propertyValue.Remove(propertyValue.Length - 1, 1);
+                                structTags.AddLast(tag);
+                                continue;
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            // ignored
+                        }
 
-                            break;
+                        break;
+                    }
+
+                    foreach (var tag in structTags)
+                    {
+                        string tagExpr = tag.Name;
+                        if (tag.ArrayIndex > 0)
+                        {
+                            tagExpr += $"[{tag.ArrayIndex}]";
+                        }
+                        propertyValue += $"{tagExpr}={tag.Value}";
+
+                        if (tag != structTags.Last.Value)
+                        {
+                            propertyValue += ",";
                         }
                     }
 
@@ -1017,7 +1039,7 @@ namespace UELib.Core
                     // Additionally we need to know the property to determine the array's type.
                     if (arrayType == PropertyType.None)
                     {
-                        var property = FindProperty(out _Outer) as UArrayProperty;
+                        var property = FindProperty<UArrayProperty>(out _Outer);
                         if (property?.InnerProperty != null)
                         {
                             arrayType = property.InnerProperty.Type;
@@ -1080,6 +1102,65 @@ namespace UELib.Core
                     }
 
                     _TempFlags |= DoNotAppendName;
+                    break;
+                }
+
+                case PropertyType.MapProperty:
+                {
+                    if (Size == 0) break;
+                    
+                    int count = _Buffer.ReadIndex();
+                    Record(nameof(count), count);
+
+                    var property = FindProperty<UMapProperty>(out _Outer);
+                    if (property == null)
+                    {
+                        propertyValue = "// Unable to decompile Map data.";
+                        break;
+                    }
+
+                    propertyValue = "(";
+                    for (int i = 0; i < count; ++i)
+                    {
+                        propertyValue += DeserializeDefaultPropertyValue(property.ValueProperty.Type, ref deserializeFlags);
+                        if (i + 1 != count)
+                        {
+                            propertyValue += ",";
+                        }
+                    }
+                    propertyValue += ")";
+                    break;
+                }
+
+                case PropertyType.FixedArrayProperty:
+                {
+                    // We require the InnerProperty to properly deserialize this data type.
+                    var property = FindProperty<UFixedArrayProperty>(out _Outer);
+                    if (property == null)
+                    {
+                        propertyValue = "// Unable to decompile FixedArray data.";
+                        break;
+                    }
+
+                    var innerType = property.InnerProperty.Type;
+                    propertyValue = "(";
+                    for (int i = 0; i < property.Count; ++i)
+                    {
+                        propertyValue += DeserializeDefaultPropertyValue(innerType, ref deserializeFlags);
+                        if (i + 1 != property.Count)
+                        {
+                            propertyValue += ",";
+                        }
+                    }
+                    propertyValue += ")";
+                    break;
+                }
+
+                // Note: We don't have to verify the package's version here.
+                case PropertyType.PointerProperty:
+                {
+                    int offset = _Buffer.ReadInt32();
+                    propertyValue = PropertyDisplay.FormatLiteral(offset);
                     break;
                 }
 

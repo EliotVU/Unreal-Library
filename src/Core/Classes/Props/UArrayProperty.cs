@@ -25,9 +25,8 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
-            int innerIndex = _Buffer.ReadObjectIndex();
-            InnerProperty = (UProperty)GetIndexObject(innerIndex);
+            
+            InnerProperty = _Buffer.ReadObject<UProperty>();
         }
 
         /// <inheritdoc/>

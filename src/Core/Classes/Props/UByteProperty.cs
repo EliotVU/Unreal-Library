@@ -10,7 +10,7 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UEnum EnumObject;
+        public UEnum Enum;
 
         #endregion
 
@@ -26,7 +26,8 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            EnumObject = _Buffer.ReadObject<UEnum>();
+            Enum = _Buffer.ReadObject<UEnum>();
+            Record(nameof(Enum), Enum);
         }
 
         public override string GetFriendlyType()

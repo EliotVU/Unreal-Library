@@ -10,7 +10,7 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UStruct StructObject;
+        public UStruct Struct;
 
         #endregion
 
@@ -26,13 +26,14 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            StructObject = (UStruct)GetIndexObject(_Buffer.ReadObjectIndex());
+            Struct = _Buffer.ReadObject<UStruct>();
+            Record(nameof(Struct), Struct);
         }
 
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return StructObject != null ? StructObject.GetFriendlyType() : "@NULL";
+            return Struct != null ? Struct.GetFriendlyType() : "@NULL";
         }
     }
 }

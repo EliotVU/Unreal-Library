@@ -25,12 +25,13 @@ namespace UELib.Core
             base.Deserialize();
 
             Size = _Buffer.ReadInt32();
+            Record(nameof(Size), Size);
         }
 
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return "string[" + Size + "]";
+            return $"string[{Size}]";
         }
     }
 }

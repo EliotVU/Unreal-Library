@@ -262,7 +262,7 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                innerOutput = $"{UDecompilingState.Tabs}// {e.GetType().Name} occurred while decompiling properties!" +
+                innerOutput = $"{UDecompilingState.Tabs}/* {e} */ // occurred while decompiling properties!" +
                               "\r\n";
             }
             finally

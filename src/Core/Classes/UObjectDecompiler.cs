@@ -45,6 +45,7 @@ namespace UELib.Core
             var output = string.Empty;
             for (var i = 0; i < Properties.Count; ++i)
             {
+                //output += $"{UDecompilingState.Tabs}// {Properties[i].Type}\r\n";
                 string propOutput = Properties[i].Decompile();
 
                 // This is the first element of a static array
