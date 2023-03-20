@@ -1,3 +1,5 @@
+# UELib
+
 [![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 
@@ -11,15 +13,18 @@ It accomplishes this by reading the necessary Unreal data classes such as:
 
 Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
 
-How to use
-==============
+## How to use
+
 To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) (The library will move to .NET 6 or higher at version 2.0)
 
 Install using either:
+
 * Package Manager:
+
+``` cmd
+Install-Package Eliot.UELib.dll
 ```
-    Install-Package Eliot.UELib.dll
-```
+
 * NuGet: <https://www.nuget.org/packages/Eliot.UELib.dll>
 
 See [usage](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for further instructions on how to use the library in your project.
@@ -28,14 +33,12 @@ If you're looking to modify the library for the sole purpose of modding [UE Expl
 
 Want to try out the [latest library release](https://github.com/EliotVU/Unreal-Library/releases)? Then you can simply save ```Eliot.UELib.dll``` to the folder where you have installed UE Explorer at. Note that the current release of UE Explorer is using version [1.2.7.1](https://github.com/EliotVU/Unreal-Library/releases/tag/release-1.2.7.1).
 
-How to contribute
-==============
+## How to contribute
 
 * Open an issue
 * Or make a pull-request by creating a [fork](https://help.github.com/articles/fork-a-repo/) of this repository, create a new branch and commit your changes to that particular branch, so that I can easily merge your changes.
 
-Compatible Games
-==============
+## Compatible Games
 
 This is a table of games that are confirmed to be compatible with the current state of UELib, the table is sorted by Package-Version.
 
@@ -53,6 +56,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | XIII | Unknown | 100/058 |     |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-? | 118/012:014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
+| Devastation | 600-? | 118-120/004-008 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |

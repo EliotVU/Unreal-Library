@@ -207,6 +207,9 @@ namespace UELib.Core
                 || (Package.Build == UnrealPackage.GameBuild.BuildName.LSGame &&
                     Package.LicenseeVersion >= 3)
 #endif
+#if DEVASTATION
+                || Package.Build == UnrealPackage.GameBuild.BuildName.Devastation
+#endif
                )
             {
                 // May represent a tooltip/comment in some games. Usually in the form of a quoted string, sometimes as a double-flash comment or both.

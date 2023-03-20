@@ -456,6 +456,11 @@
         /// DynamicArray.Sort(expr)
         /// </summary>
         DynArraySort,
+
+        /// <summary>
+        /// DynamicArray.Empty(expr?)
+        /// </summary>
+        DynArrayEmpty,
         
         /// <summary>
         /// JumpIfNot statement

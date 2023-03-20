@@ -23,7 +23,7 @@ namespace UELib.Core
             [NotNull] public UClass Class;
             public bool IsDeep;
             public uint ScriptTextCRC;
-            
+
             public void Serialize(IUnrealStream stream)
             {
                 stream.Write(Class);
@@ -42,7 +42,7 @@ namespace UELib.Core
                 }
 #endif
                 IsDeep = stream.ReadBool();
-                skipDeep:
+            skipDeep:
                 ScriptTextCRC = stream.ReadUInt32();
             }
         }
@@ -125,8 +125,9 @@ namespace UELib.Core
         // TODO: Clean this mess up...
         protected override void Deserialize()
         {
-#if UNREAL2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+#if UNREAL2 || DEVASTATION
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2 ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Devastation)
             {
                 _Buffer.ReadArray(out UArray<UObject> u2NetProperties);
                 Record(nameof(u2NetProperties), u2NetProperties);
@@ -214,7 +215,7 @@ namespace UELib.Core
                         // Unknown purpose, used to set a global variable to 0 (GIsATablesInitialized_exref) if it reads 0.
                         bool dnfBool = _Buffer.ReadBool();
                         Record(nameof(dnfBool), dnfBool);
-                        
+
                         // FBitArray data, not sure if this behavior is correct, always 0.
                         int dnfBitArrayLength = _Buffer.ReadInt32();
                         _Buffer.Skip(dnfBitArrayLength);
@@ -427,10 +428,7 @@ namespace UELib.Core
                 if (!string.IsNullOrEmpty(thiefClassVisibleName)
                     && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
-                    var nameEntry = new UNameTableItem()
-                    {
-                        Name = thiefClassVisibleName
-                    };
+                    var nameEntry = new UNameTableItem() { Name = thiefClassVisibleName };
                     NameTable.Name = nameEntry;
                 }
             }

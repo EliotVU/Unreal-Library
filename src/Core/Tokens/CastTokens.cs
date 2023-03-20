@@ -110,7 +110,7 @@ namespace UELib.Core
             }
 
             [ExprToken(ExprToken.PrimitiveCast)]
-            public class PrimitiveInlineCastToken : PrimitiveCastToken
+            public sealed class PrimitiveInlineCastToken : PrimitiveCastToken
             {
                 protected override void DeserializeCastToken(IUnrealStream stream)
                 {

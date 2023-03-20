@@ -10,7 +10,7 @@ namespace UELib.Branch.UE2.VG.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             // NothingToken(0x0B) twice
-            DeserializeCall();
+            DeserializeCall(stream);
         }
 
         public override string Decompile()

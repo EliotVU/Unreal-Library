@@ -21,6 +21,7 @@ namespace UELib
 {
     using Core;
     using Decoding;
+    using Branch.UE2.DVS;
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -223,6 +224,12 @@ namespace UELib
                 /// 110/2609
                 /// </summary>
                 [Build(110, 110, 2481u, 2609u)] Unreal2,
+
+                /// <summary>
+                /// 118:120/004:008
+                /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchDVS))]
+                [Build(118, 120, 4u, 8u)] Devastation,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield

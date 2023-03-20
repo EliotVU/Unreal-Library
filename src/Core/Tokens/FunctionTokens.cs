@@ -25,7 +25,7 @@ namespace UELib.Core
                     return ReadName(stream);
                 }
 
-                protected void DeserializeCall()
+                protected virtual void DeserializeCall(IUnrealStream stream)
                 {
                     DeserializeParms();
                     Decompiler.DeserializeDebugToken();
@@ -172,7 +172,7 @@ namespace UELib.Core
                     Function = stream.ReadObject<UFunction>();
                     Decompiler.AlignObjectSize();
 
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
@@ -249,7 +249,7 @@ namespace UELib.Core
                     }
 #endif
                     FunctionName = DeserializeFunctionName(stream);
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
@@ -267,7 +267,7 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     FunctionName = DeserializeFunctionName(stream);
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
@@ -297,7 +297,7 @@ namespace UELib.Core
                     Decompiler.AlignObjectSize();
 
                     FunctionName = DeserializeFunctionName(stream);
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
@@ -314,7 +314,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()

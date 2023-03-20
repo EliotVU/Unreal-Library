@@ -110,6 +110,15 @@ namespace UELib.Core
                 }
             }
 #endif
+#if DEVASTATION
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Devastation
+                && _Buffer.LicenseeVersion >= 6
+                && _Buffer.LicenseeVersion < 8)
+            {
+                _Buffer.Read(out int l14);
+                Record(nameof(l14), l14);
+            }
+#endif
 #if UT
             if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
                  Package.Build == UnrealPackage.GameBuild.BuildName.UT2003)
