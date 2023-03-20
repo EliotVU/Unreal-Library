@@ -6,10 +6,11 @@
     <Configurations>Debug;Release;UnitTest</Configurations>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPublishable>False</IsPublishable>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
   </ItemGroup>
 
   <ItemGroup>
