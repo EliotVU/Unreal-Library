@@ -32,9 +32,14 @@ namespace UELib.Core
 
         public override string GetFriendlyType()
         {
-            return EnumObject != null
-                ? EnumObject.GetOuterGroup()
-                : "byte";
+            if (Enum != null)
+            {
+                // The compiler doesn't understand any non-UClass qualified identifiers.
+                return Enum.Outer is UClass
+                    ? $"{Enum.Outer.Name}.{Enum.Name}"
+                    : Enum.Name;
+            }
+            return "byte";
         }
     }
 }
