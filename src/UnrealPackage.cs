@@ -532,9 +532,9 @@ namespace UELib
                 Transformers3,
 
                 /// <summary>
-                /// 860/004
+                /// 860/002-004
                 /// </summary>
-                [Build(860, 4)] Hawken,
+                [Build(860, 860, 2, 4)] Hawken,
 
                 /// <summary>
                 /// Batman: Arkham City
