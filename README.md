@@ -142,6 +142,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Aliens: Colonial Marines | 4170 | 787/047 | |
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
 | Tribes: Ascend | 7748 | 805/Unknown |     |
+| Tony Hawk's Pro Skater HD | |
 | Rock of Ages | 7748 | 805/000 |     |
 | Batman: Arkham City | 7748 | 805/101 | | 
 | Batman: Arkham Origins | 7748 | 807/138 | Not verified |
