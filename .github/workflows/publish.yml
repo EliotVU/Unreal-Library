@@ -27,9 +27,9 @@ jobs:
       run: msbuild src/Eliot.UELib.csproj -t:rebuild -property:Configuration=Publish
       
     - name: Publish Eliot.UELib
-      uses: brandedoutcast/publish-nuget@v2
+      uses: alirezanet/publish-nuget@v3.1.0
       with:
           PROJECT_FILE_PATH: src/Eliot.UELib.csproj
           VERSION_FILE_PATH: src/Properties/AssemblyInfo.cs
-          VERSION_REGEX: AssemblyVersion\(\"(.*)\"\)
+          VERSION_REGEX: AssemblyFileVersion\(\"(.*)\"\)
           NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
