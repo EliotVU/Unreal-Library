@@ -1,6 +1,8 @@
 [![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
 
+# UELib
+
 The Unreal library (UELib) provides you an API to read (parse/deserialize) the contents of Unreal Engine game package files such as .UDK, .UPK.
 Its main purpose is to decompile the UnrealScript byte-code to its original source-code.
 
@@ -11,8 +13,8 @@ It accomplishes this by reading the necessary Unreal data classes such as:
 
 Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
 
-How to use
-==============
+## How to use
+
 To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) (The library will move to .NET 6 or higher at version 2.0)
 
 Install using either:
@@ -43,16 +45,7 @@ Install using either:
 
 If you're looking to modify the library for the sole purpose of modding [UE Explorer](https://github.com/UE-Explorer/UE-Explorer), I recommend you to clone or fork this repository and install UE Explorer within your ```UELib/src/bin/Debug/``` folder, or change the project's configuration to build inside of the UE Explorer's folder.
 
-Want to try out the [latest library release](https://github.com/EliotVU/Unreal-Library/releases)? Then you can simply save ```Eliot.UELib.dll``` to the folder where you have installed UE Explorer at. Note that the current release of UE Explorer is using version [1.2.7.1](https://github.com/EliotVU/Unreal-Library/releases/tag/release-1.2.7.1).
-
-How to contribute
-==============
-
-* Open an issue
-* Or make a pull-request by creating a [fork](https://help.github.com/articles/fork-a-repo/) of this repository, create a new branch and commit your changes to that particular branch, so that I can easily merge your changes.
-
-Compatible Games
-==============
+## Compatible Games
 
 This is a table of games that are confirmed to be compatible with the current state of UELib, the table is sorted by Package-Version.
 
@@ -195,8 +188,12 @@ Want to add support for a game? See [adding support for new Unreal classes](http
 
 Do you know a game that is compatible but is not listed here? Click on the top right to edit this file!
 
-Special thanks to
-==============
+## How to contribute
+
+* Open an issue
+* Or make a pull-request by creating a [fork](https://help.github.com/articles/fork-a-repo/) of this repository, create a new branch and commit your changes to that particular branch, so that I can easily merge your changes.
+
+## Special thanks to
 
   * Epic Games for [UDN: Packages](http://www.hypercoop.tk/infobase/archive/unrealtech/Packages.htm) (general package format)
   * [Antonio Cordero Balcazar](https://github.com/acorderob) for [UTPT](https://www.acordero.org/projects/unreal-tournament-package-tool) (game support) and documentation (format)
