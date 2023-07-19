@@ -31,5 +31,5 @@ jobs:
       with:
           PROJECT_FILE_PATH: src/Eliot.UELib.csproj
           VERSION_FILE_PATH: src/Properties/AssemblyInfo.cs
-          VERSION_REGEX: ^AssemblyVersion\(\"(.*)\"\)$
+          VERSION_REGEX: AssemblyVersion\(\"(.*)\"\)
           NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
