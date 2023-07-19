@@ -1,28 +1,33 @@
-name: Build .NET and Publish to NuGet
+name: Build .NET Framework and Publish to NuGet
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master ]
+    tags:
+      - 'release-*'
+      - 'hotfix-*'
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-      
+    runs-on: windows-2019
+    
     steps:
     - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 5.0.x
+      
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+      
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+      
     - name: Restore dependencies
-      run: dotnet restore src/Eliot.UELib.csproj
+      run: nuget restore src/Eliot.UELib.csproj
+      
     - name: Build
-      run: dotnet build src/Eliot.UELib.csproj --no-restore
-    - name: Test
-      run: dotnet test src/Eliot.UELib.csproj --no-build --verbosity normal
+      run: msbuild src/Eliot.UELib.csproj -t:rebuild -property:Configuration=Publish
+      
     - name: Publish Eliot.UELib
-      uses: brandedoutcast/publish-nuget@v2.5.5
+      uses: brandedoutcast/publish-nuget@v2
       with:
           PROJECT_FILE_PATH: src/Eliot.UELib.csproj
-          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
