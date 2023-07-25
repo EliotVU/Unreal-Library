@@ -116,5 +116,17 @@ namespace UELib.UnrealScript
                    $"{FormatExport(input.Y)}," +
                    $"{FormatExport(input.Z)}";
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatOffset(short input)
+        {
+            return $"{input:X3}h";
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatOffset(int input)
+        {
+            return $"{input:X4}h";
+        }
     }
 }
