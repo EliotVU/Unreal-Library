@@ -1,13 +1,14 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core;
 
 namespace UELib
 {
     /// <summary>
-    /// An export table entry, representing a @UObject in a package.
+    /// An export table entry, represents a @UObject export within a package.
     /// </summary>
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
@@ -24,6 +25,7 @@ namespace UELib
             get => _ClassIndex;
             set => _ClassIndex = value;
         }
+        [CanBeNull]
         public UObjectTableItem Class => Owner.GetIndexTable(ClassIndex);
 
         public int _SuperIndex;
@@ -32,6 +34,7 @@ namespace UELib
             get => _SuperIndex;
             set => _SuperIndex = value;
         }
+        [CanBeNull]
         public UObjectTableItem Super => Owner.GetIndexTable(_SuperIndex);
 
         public int _TemplateIndex;
@@ -40,6 +43,7 @@ namespace UELib
             get => _TemplateIndex;
             set => _TemplateIndex = value;
         }
+        [CanBeNull]
         public UObjectTableItem Template => Owner.GetIndexTable(_TemplateIndex);
 
         public int _ArchetypeIndex;
@@ -48,6 +52,7 @@ namespace UELib
             get => _ArchetypeIndex;
             set => _ArchetypeIndex = value;
         }
+        [CanBeNull]
         public UObjectTableItem Archetype => Owner.GetIndexTable(_ArchetypeIndex);
 
         [Obsolete, Browsable(false)] public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
@@ -277,6 +282,13 @@ namespace UELib
         {
             Owner.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);
             Owner.Stream.Writer.Write((uint)ObjectFlags);
+        }
+
+        public override string GetReferencePath()
+        {
+            return Class != null
+                ? $"{Class.ObjectName}'{GetPath()}'"
+                : $"Class'{GetPath()}'";
         }
 
         public override string ToString()

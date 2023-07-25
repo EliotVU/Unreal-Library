@@ -3,8 +3,7 @@ using UELib.Core;
 namespace UELib
 {
     /// <summary>
-    /// An import table entry, representing a @UObject dependency in a package.
-    /// This includes the name of the package that this dependency belongs to.
+    /// An import table entry, represents a @UObject import within a package.
     /// </summary>
     public sealed class UImportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
@@ -42,6 +41,11 @@ namespace UELib
             _ClassName = stream.ReadNameReference();
             _OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
             _ObjectName = stream.ReadNameReference();
+        }
+
+        public override string GetReferencePath()
+        {
+            return $"{_ClassName}'{GetPath()}'";
         }
 
         public override string ToString()

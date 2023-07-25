@@ -276,15 +276,18 @@ namespace UELib.Core
             _Buffer.Read(out component.TemplateOwnerClass);
             Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
 
-            // The ObjectFlagsHO.ArchetypeObject flag check was added later (Not checked for in GoW), no known version.
-            const ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject;
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName
-                || HasObjectFlag(templateFlags)
-                || EnumerateOuter().Any(obj => obj.HasObjectFlag(templateFlags)))
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate())
             {
                 _Buffer.Read(out component.TemplateName);
                 Record(nameof(component.TemplateName), component.TemplateName);
             }
+        }
+
+        public bool IsTemplate()
+        {
+            // The ObjectFlagsHO.ArchetypeObject flag check was added later (Not checked for in GoW), no known version.
+            const ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject;
+            return HasObjectFlag(templateFlags) || EnumerateOuter().Any(obj => obj.HasObjectFlag(templateFlags));
         }
 
         /// <summary>

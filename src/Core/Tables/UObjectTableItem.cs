@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
+using UELib.Annotations;
 using UELib.Core;
 
 namespace UELib
@@ -54,6 +57,36 @@ namespace UELib
         }
 
         #endregion
+
+        public IEnumerable<UObjectTableItem> EnumerateOuter()
+        {
+            for (var outer = Outer; outer != null; outer = outer.Outer)
+            {
+                yield return outer;
+            }
+        }
+
+        /// <summary>
+        /// Builds a full path string of the object
+        /// </summary>
+        /// <returns>Full path of object e.g. "Core.Object.Vector"</returns>
+        public string GetPath()
+        {
+            string group = EnumerateOuter().Aggregate(string.Empty, (current, outer) => $"{outer.ObjectName}.{current}");
+            return $"{group}{ObjectName}";
+        }
+
+        public virtual string GetReferencePath()
+        {
+            return $"?'{GetPath()}'";
+        }
+
+        public static string GetReferencePath([CanBeNull] UObjectTableItem item)
+        {
+            return item != null
+                ? item.GetReferencePath()
+                : "None";
+        }
 
         #region IBuffered
 
