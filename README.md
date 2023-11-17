@@ -53,8 +53,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Deus Ex: Invisible War | Thief | 95/069 | LinkedData not supported |
 |     |     |     |     |
 |     |     |     |     |
-| XIII | Unknown | 100/058 |     |
-| Tom Clancy's Rainbow Six 3: Raven Shield | 600-? | 118/012:014 | |
+| XIII | 829 | 100/058 |     |
+| Tom Clancy's Splinter Cell | 829 | 100/017 | |
+| Tom Clancy's Rainbow Six 3: Raven Shield | 927 | 118/012:014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Devastation | 600-? | 118-120/004-008 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |

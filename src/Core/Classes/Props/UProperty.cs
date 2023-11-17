@@ -72,6 +72,22 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
+#if SPLINTERCELL
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SC1 &&
+                _Buffer.LicenseeVersion >= 15)
+            {
+                ArrayDim = _Buffer.ReadUInt16();
+                Record(nameof(ArrayDim), ArrayDim);
+
+                PropertyFlags = _Buffer.ReadUInt32();
+                Record(nameof(PropertyFlags), PropertyFlags);
+
+                _Buffer.Read(out CategoryName);
+                Record(nameof(CategoryName), CategoryName);
+
+                return;
+            }
+#endif
 #if AA2
             if (Package.Build == BuildGeneration.AGP &&
                 _Buffer.LicenseeVersion >= 8)

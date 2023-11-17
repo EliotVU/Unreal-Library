@@ -215,6 +215,8 @@ namespace UELib
                 /// </summary>
                 [Build(99, 117, 5u, 8u)] UT2003,
 
+                [Build(100, 17)] SC1,
+
                 /// <summary>
                 /// 100/058
                 /// </summary>
@@ -1048,6 +1050,17 @@ namespace UELib
                     int unknown = stream.ReadInt32();
                     Console.WriteLine("Unknown:" + unknown);
                 }
+#endif
+#if SPLINTERCELL
+                if (stream.Package.Build == GameBuild.BuildName.SC1 &&
+                    stream.LicenseeVersion >= 12)
+                {
+                    // compiled-constant: 0xff0adde
+                    stream.Read(out int uStack_10c);
+
+                    // An FString converted to an FArray? Concatenating appUserName, appComputerName, appBaseDir, and appTimestamp.
+                    stream.ReadArray(out UArray<byte> iStack_fc);
+                } 
 #endif
 #if BORDERLANDS
                 if (stream.Package.Build == GameBuild.BuildName.Borderlands) stream.Skip(4);
