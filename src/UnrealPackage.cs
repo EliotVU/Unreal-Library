@@ -578,6 +578,15 @@ namespace UELib
                 [Build(867, 868, 9u, 32u)] RocketLeague,
 
                 /// <summary>
+                /// Battleborn
+                ///
+                /// 874/078
+                ///
+                /// EngineVersion and CookerVersion are packed with the respective Licensee version.
+                /// </summary>
+                [Build(874, 78u)] Battleborn,
+
+                /// <summary>
                 /// Special Force 2
                 /// 
                 /// 904/009 (Non-standard version, actual Epic version might be 692 or higher)
@@ -1247,7 +1256,14 @@ namespace UELib
                     }
 #endif
                 }
-
+#if BORDERLANDS
+                if (stream.Package.Build == GameBuild.BuildName.Battleborn)
+                {
+                    // FIXME: Package format is being deserialzied incorrectly and fails here.
+                    stream.ReadUInt32();
+                    return;
+                }
+#endif
                 if (stream.Version >= VTextureAllocations)
                 {
                     // TextureAllocations, TextureTypes

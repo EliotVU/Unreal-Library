@@ -367,6 +367,7 @@ namespace UELib.Branch
             switch (linker.Build.Name)
             {
 #if BORDERLANDS2
+                case UnrealPackage.GameBuild.BuildName.Battleborn:
                 case UnrealPackage.GameBuild.BuildName.Borderlands2:
                     tokenMap[0x4C] = typeof(LocalVariableToken<int>);
                     tokenMap[0x4D] = typeof(LocalVariableToken<float>);

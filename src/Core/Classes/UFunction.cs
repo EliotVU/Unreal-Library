@@ -44,7 +44,8 @@ namespace UELib.Core
         protected override void Deserialize()
         {
 #if BORDERLANDS2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
                 ushort size = _Buffer.ReadUShort();
                 _Buffer.Skip(size * 2);

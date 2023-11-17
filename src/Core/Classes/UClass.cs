@@ -402,7 +402,8 @@ namespace UELib.Core
                         ClassGroups = DeserializeGroup("ClassGroups");
 #endif
 #if BORDERLANDS2
-                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                        Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
                     {
                         byte unknownByte = _Buffer.ReadByte();
                         Record("Unknown:Borderlands2", unknownByte);
