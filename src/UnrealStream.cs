@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 using UELib.Annotations;
 using UELib.Branch;
@@ -42,7 +41,7 @@ namespace UELib
         [Obsolete("use ReadObject or ReadIndex instead")]
         int ReadObjectIndex();
 
-        [PublicAPI("UE Explorer")]
+        [Obsolete("UE Explorer")]
         UObject ParseObject(int index);
 
         [Obsolete("use ReadName instead")]
@@ -51,7 +50,7 @@ namespace UELib
         [Obsolete("use ReadName instead")]
         int ReadNameIndex(out int num);
 
-        [PublicAPI("UE Explorer")]
+        [Obsolete("UE Explorer")]
         string ParseName(int index);
 
         void Skip(int bytes);
@@ -325,7 +324,7 @@ namespace UELib
             return index;
         }
 
-        [PublicAPI("UE Explorer - Hex Viewer")]
+        [Obsolete("UE Explorer - Hex Viewer")]
         public static int ReadIndexFromBuffer(byte[] value, IUnrealStream stream)
         {
             if (stream.Version >= UnrealPackage.VINDEXDEPRECATED)
@@ -865,7 +864,18 @@ namespace UELib
                 }
             }
         }
-
+        
+        public static void ReadArray(this IUnrealStream stream, out UArray<byte> array)
+        {
+            int c = stream.ReadLength();
+            array = new UArray<byte>(c);
+            for (int i = 0; i < c; ++i)
+            {
+                stream.Read(out byte element);
+                array.Add(element);
+            }
+        }
+        
         public static void ReadArray(this IUnrealStream stream, out UArray<int> array)
         {
             int c = stream.ReadLength();
