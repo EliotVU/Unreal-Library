@@ -18,7 +18,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.3
       
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1
+      uses: NuGet/setup-nuget@v2
       
     - name: Restore dependencies
       run: nuget restore src/Eliot.UELib.csproj
