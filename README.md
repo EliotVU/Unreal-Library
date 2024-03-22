@@ -1,5 +1,5 @@
-[![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
-[![Nuget](https://img.shields.io/nuget/v/Eliot.UELib.dll?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib.dll/)
+[![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
+[![Nuget](https://img.shields.io/nuget/v/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
 
 # UELib
 
@@ -21,9 +21,9 @@ Install using either:
 * Package Manager:
 
 ```
-    Install-Package Eliot.UELib.dll
+    Install-Package Eliot.UELib
 ```
-* NuGet: <https://www.nuget.org/packages/Eliot.UELib.dll>
+* NuGet: <https://www.nuget.org/packages/Eliot.UELib>
 
 * Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
 
