@@ -1,19 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{7E45273F-434F-42FA-8269-0E760AEB41E1}</ProjectGuid>
+    <DefineConstants>DECOMPILE;BINARYMETADATA;Forms;UE1;UE2;UE3;UE4;VENGEANCE;SWAT4;UNREAL2;INFINITYBLADE;BORDERLANDS2;GOW2;APB;SPECIALFORCE2;XIII;SINGULARITY;THIEF_DS;DEUSEX_IW;BORDERLANDS;MIRRORSEDGE;BIOSHOCK;HAWKEN;UT;DISHONORED;REMEMBERME;ALPHAPROTOCOL;VANGUARD;TERA;MKKE;TRANSFORMERS;XCOM2;DD2;DCUO;AA2;SPELLBORN;BATMAN;MOH;ROCKETLEAGUE;DNF;LSGAME;UNDYING;HP;DEVASTATION;SPLINTERCELL</DefineConstants>
+    <TargetFramework>net48</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UELib</RootNamespace>
-    <AssemblyName>Eliot.UELib</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <LangVersion>7.3</LangVersion>
-    <FileAlignment>512</FileAlignment>
-    <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -29,282 +19,22 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
-    <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 UE4 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DD2 DCUO AA2 SPELLBORN BATMAN MOH ROCKETLEAGUE DNF LSGAME UNDYING HP DEVASTATION SPLINTERCELL</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
+    <DefineConstants>$(DefineConstants);TRACE;DEBUG;</DefineConstants>
     <WarningLevel>0</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>
-    </DocumentationFile>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-    <NoWarn>
-    </NoWarn>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn></NoWarn>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <CodeAnalysisRuleSet>GlobalizationRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 UE4 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DD2 DCUO AA2 SPELLBORN BATMAN ROCKETLEAGUE DNF LSGAME UNDYING HP</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DefineConstants>$(DefineConstants);TRACE;</DefineConstants>
     <UseVSHostingProcess>true</UseVSHostingProcess>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DecompileDebug|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DECOMPILE BINARYMETADATA Forms UE1 UE2 UE3 UE4 DEBUG_TEST DEBUG_TOKENPOSITIONS DEBUG_HIDDENTOKENS DEBUG_NESTS DEBUG_FUNCTIONINFO UE1 UE2 UE3 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DD2 DCUO AA2 SPELLBORN BATMAN MOH ROCKETLEAGUE DNF LSGAME UNDYING HP</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <Optimize>false</Optimize>
-    <WarningLevel>0</WarningLevel>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish|AnyCPU'">
-    <OutputPath>bin\Publish\</OutputPath>
-    <DefineConstants>Forms DECOMPILE BINARYMETADATA UE1 UE2 UE3 UE4 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DD2 DCUO AA2 SPELLBORN BATMAN ROCKETLEAGUE DNF LSGAME UNDYING HP</DefineConstants>
-    <Optimize>true</Optimize>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>
-    </DocumentationFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTest|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Test\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;STRICT DECOMPILE UE1 UE2 UE3 UE4 VENGEANCE SWAT4 UNREAL2 INFINITYBLADE BORDERLANDS2 GOW2 DEBUG_TEST APB SPECIALFORCE2 XIII SINGULARITY THIEF_DS DEUSEX_IW BORDERLANDS MIRRORSEDGE BIOSHOCK HAWKEN UT DISHONORED REMEMBERME ALPHAPROTOCOL VANGUARD TERA MKKE TRANSFORMERS XCOM2 DD2 DCUO AA2 SPELLBORN BATMAN ROCKETLEAGUE DNF LSGAME UNDYING HP</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <WarningLevel>0</WarningLevel>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>GlobalizationRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="BinaryMetaData.cs" />
-    <Compile Include="Branch\BuildAttribute.cs" />
-    <Compile Include="Branch\DefaultEngineBranch.cs" />
-    <Compile Include="Branch\DefaultPackageSerializer.cs" />
-    <Compile Include="Branch\EngineBranch.cs" />
-    <Compile Include="Branch\BuildEngineBranchAttribute.cs" />
-    <Compile Include="Branch\PackageObjectLegacyVersion.cs" />
-    <Compile Include="Branch\PackageSerializerBase.cs" />
-    <Compile Include="Branch\UE2\DNF\EngineBranch.DNF.cs" />
-    <Compile Include="Branch\UE2\DVS\Tokens\ColorConstToken.cs" />
-    <Compile Include="Branch\UE2\DVS\EngineBranch.DVS.cs" />
-    <Compile Include="Branch\UE3\APB\EngineBranch.APB.cs" />
-    <Compile Include="Branch\UE3\BL2\Tokens\LocalVariableToken.cs" />
-    <Compile Include="Branch\UE3\MOH\EngineBranch.MOH.cs" />
-    <Compile Include="Branch\UE3\RSS\EngineBranch.RSS.cs" />
-    <Compile Include="Branch\UE3\RSS\Tokens\Bm4ContextToken.cs" />
-    <Compile Include="Branch\UE3\RSS\Tokens\NameConstNoNumberToken.cs" />
-    <Compile Include="Core\Tokens\EatStringToken.cs" />
-    <Compile Include="Core\Tokens\ValidateObjectToken.cs" />
-    <Compile Include="Engine\Classes\UActorComponent.cs" />
-    <Compile Include="Core\Types\UBulkData.cs" />
-    <Compile Include="Engine\Classes\UBrushComponent.cs" />
-    <Compile Include="Engine\Classes\UDecalComponent.cs" />
-    <Compile Include="Engine\Classes\ULightComponent.cs" />
-    <Compile Include="Engine\Classes\UMaterial.cs" />
-    <Compile Include="Engine\Classes\UMaterialInterface.cs" />
-    <Compile Include="Engine\Classes\UMeshComponent.cs" />
-    <Compile Include="Engine\Classes\UModelComponent.cs" />
-    <Compile Include="Engine\Classes\UPrimitive.cs" />
-    <Compile Include="Engine\Classes\UPrimitiveComponent.cs" />
-    <Compile Include="Core\Tokens\TokenFactory.cs" />
-    <Compile Include="Core\Tokens\TokenMap.cs" />
-    <Compile Include="Branch\UE3\DD2\EngineBranch.DD2.cs" />
-    <Compile Include="Branch\UE4\EngineBranch.UE4.cs" />
-    <Compile Include="Branch\PackageSerializer.cs" />
-    <Compile Include="Branch\UE4\PackageSerializer.UE4.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\BreakpointToken.cs" />
-    <Compile Include="Core\Classes\Props\Custom\UScriptMapProperty.cs" />
-    <Compile Include="Core\Classes\Props\UArrayProperty.cs" />
-    <Compile Include="Core\Classes\Props\UBoolProperty.cs" />
-    <Compile Include="Core\Classes\Props\UByteProperty.cs" />
-    <Compile Include="Core\Classes\Props\UClassProperty.cs" />
-    <Compile Include="Core\Classes\Props\UComponentProperty.cs" />
-    <Compile Include="Core\Classes\Props\UDelegateProperty.cs" />
-    <Compile Include="Core\Classes\Props\UFixedArrayProperty.cs" />
-    <Compile Include="Core\Classes\Props\UFloatProperty.cs" />
-    <Compile Include="Core\Classes\Props\UInterfaceProperty.cs" />
-    <Compile Include="Core\Classes\Props\UIntProperty.cs" />
-    <Compile Include="Core\Classes\Props\UMapProperty.cs" />
-    <Compile Include="Core\Classes\Props\Custom\UMKItemNoDestroyProperty.cs" />
-    <Compile Include="Core\Classes\Props\UNameProperty.cs" />
-    <Compile Include="Core\Classes\Props\UObjectProperty.cs" />
-    <Compile Include="Core\Classes\Props\UPointerProperty.cs" />
-    <Compile Include="Core\Classes\Props\Custom\UQWordProperty.cs" />
-    <Compile Include="Core\Classes\Props\Custom\UNativeTypeProperty.cs" />
-    <Compile Include="Core\Classes\Props\Custom\UMKItemProperty.cs" />
-    <Compile Include="Core\Classes\Props\UStringProperty.cs" />
-    <Compile Include="Core\Classes\Props\UStrProperty.cs" />
-    <Compile Include="Core\Classes\Props\UStructProperty.cs" />
-    <Compile Include="Core\Classes\Props\Custom\UResourceProperty.cs" />
-    <Compile Include="Core\Classes\Props\Custom\UXWeakReferenceProperty.cs" />
-    <Compile Include="Core\Classes\UPackage.cs" />
-    <Compile Include="Core\Tables\UExportTableItem.cs" />
-    <Compile Include="Core\Tables\UGenerationTableItem.cs" />
-    <Compile Include="Core\Tables\UImportTableItem.cs" />
-    <Compile Include="Core\Tables\UNameTableItem.cs" />
-    <Compile Include="Core\Tables\UObjectTableItem.cs" />
-    <Compile Include="Core\Tokens\ArrayTokens.cs" />
-    <Compile Include="Core\Tokens\BluePrintTokens.cs" />
-    <Compile Include="Core\Tokens\CastTokens.cs" />
-    <Compile Include="Core\Tokens\ConstTokens.cs" />
-    <Compile Include="Core\Tokens\ContextTokens.cs" />
-    <Compile Include="Core\Tokens\FieldTokens.cs" />
-    <Compile Include="Core\Tokens\FunctionTokens.cs" />
-    <Compile Include="Core\Tokens\JumpTokens.cs" />
-    <Compile Include="Core\Tokens\LetTokens.cs" />
-    <Compile Include="Core\Tokens\OtherTokens.cs" />
-    <Compile Include="Core\Tokens\Token.cs" />
-    <Compile Include="Core\Classes\UClassDecompiler.cs" />
-    <Compile Include="Core\Classes\UComponent.cs" />
-    <Compile Include="ByteCodeDecompiler.cs" />
-    <Compile Include="Branch\UE2\VG\Tokens\LogFunctionToken.cs" />
-    <Compile Include="Core\Types\UBox.cs" />
-    <Compile Include="Core\Types\UCoords.cs" />
-    <Compile Include="Core\Types\UGuid.cs" />
-    <Compile Include="Core\Types\ULinearColor.cs" />
-    <Compile Include="Core\Types\UMatrix.cs" />
-    <Compile Include="Core\Types\UPlane.cs" />
-    <Compile Include="Core\Types\UQuat.cs" />
-    <Compile Include="Core\Types\URange.cs" />
-    <Compile Include="Core\Types\URangeVector.cs" />
-    <Compile Include="Core\Types\URotator.cs" />
-    <Compile Include="Core\Types\UScale.cs" />
-    <Compile Include="Core\Types\USphere.cs" />
-    <Compile Include="Core\Types\UVector2D.cs" />
-    <Compile Include="Core\Types\UVector4.cs" />
-    <Compile Include="Engine\Classes\UMultiFont.cs" />
-    <Compile Include="Engine\Classes\UProcBuildingRuleset.cs" />
-    <Compile Include="Engine\Classes\URenderedMaterial.cs" />
-    <Compile Include="Engine\Classes\UShadowMapTexture2D.cs" />
-    <Compile Include="Engine\Classes\USoundGroup.cs" />
-    <Compile Include="Engine\Classes\USurface.cs" />
-    <Compile Include="Engine\Classes\UTerrainWeightMapTexture.cs" />
-    <Compile Include="Engine\Classes\UTexture2D.cs" />
-    <Compile Include="Engine\Classes\UTexture2DComposite.cs" />
-    <Compile Include="Engine\Classes\UTexture2DDynamic.cs" />
-    <Compile Include="Engine\Classes\UTexture3D.cs" />
-    <Compile Include="Engine\Classes\UTextureCube.cs" />
-    <Compile Include="Engine\Classes\UTextureFlipBook.cs" />
-    <Compile Include="Engine\Classes\UTextureMovie.cs" />
-    <Compile Include="Engine\Classes\UTextureRenderTarget2D.cs" />
-    <Compile Include="Engine\Classes\UTextureRenderTargetCube.cs" />
-    <Compile Include="Engine\Types\LightingChannelContainer.cs" />
-    <Compile Include="Engine\Types\LightmassPrimitiveSettings.cs" />
-    <Compile Include="ObjectModel\Annotations\ExprTokenAttribute.cs" />
-    <Compile Include="ObjectModel\Annotations\OutputAttribute.cs" />
-    <Compile Include="Core\Types\UColor.cs" />
-    <Compile Include="Core\Types\UMap.cs" />
-    <Compile Include="Core\Types\UVector.cs" />
-    <Compile Include="Core\UStateFrame.cs" />
-    <Compile Include="Branch\UE2\AA2\CryptoDecoder.AA2.cs" />
-    <Compile Include="Decoding\CryptoCore.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\DynamicArrayEmptyToken.cs" />
-    <Compile Include="Engine\Classes\AActor.cs" />
-    <Compile Include="Engine\Classes\UBitmapMaterial.cs" />
-    <Compile Include="Engine\Classes\ABrush.cs" />
-    <Compile Include="Engine\Classes\UPolys.cs" />
-    <Compile Include="Engine\Classes\UPalette.cs" />
-    <Compile Include="Decoding\IBufferDecoder.cs" />
-    <Compile Include="Branch\UE2\AA2\EngineBranch.AA2.cs" />
-    <Compile Include="Branch\UE2\AA2\PackageSerializer.AA2.cs" />
-    <Compile Include="Core\Types\UArray.cs" />
-    <Compile Include="Core\Classes\UScriptStruct.cs" />
-    <Compile Include="Core\Classes\UTextBuffer.cs" />
-    <Compile Include="Engine\Classes\UModel.cs" />
-    <Compile Include="Engine\Classes\UTexture.cs" />
-    <Compile Include="Engine\Classes\USound.cs" />
-    <Compile Include="Engine\Types\Poly.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\IntConstWordToken.cs" />
-    <Compile Include="Properties\Annotations.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Core\Classes\UConstDecompiler.cs" />
-    <Compile Include="Core\Classes\UEnumDecompiler.cs" />
-    <Compile Include="Core\Classes\UFieldDecompiler.cs" />
-    <Compile Include="Core\Classes\UFunctionDecompiler.cs" />
-    <Compile Include="Core\Classes\UObjectDecompiler.cs" />
-    <Compile Include="Core\Classes\Props\UPropertyDecompiler.cs" />
-    <Compile Include="Core\Classes\UStateDecompiler.cs" />
-    <Compile Include="Core\Classes\UStructDecompiler.cs" />
-    <Compile Include="Core\Classes\UTextBufferDecompiler.cs" />
-    <Compile Include="Core\Classes\UClass.cs" />
-    <Compile Include="Core\Classes\UConst.cs" />
-    <Compile Include="Core\Classes\UDefaultProperty.cs" />
-    <Compile Include="Core\Classes\UEnum.cs" />
-    <Compile Include="Core\Classes\UField.cs" />
-    <Compile Include="Core\Classes\UFunction.cs" />
-    <Compile Include="Core\Classes\UMetaData.cs" />
-    <Compile Include="Core\Classes\UObject.cs" />
-    <Compile Include="Core\Classes\Props\UProperty.cs" />
-    <Compile Include="Core\Classes\UState.cs" />
-    <Compile Include="Core\Classes\UStruct.cs" />
-    <Compile Include="Engine\Classes\UFont.cs" />
-    <Compile Include="NativesTablePackage.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\RotConstBytesToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\RotConstPitchToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\RotConstRollToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\RotConstYawToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\RotConstZeroToken.cs" />
-    <Compile Include="UnrealScript\PropertyDisplay.cs" />
-    <Compile Include="UDecompilingState.cs" />
-    <Compile Include="Core\Types\UName.cs" />
-    <Compile Include="UnrealBuild.cs" />
-    <Compile Include="UnrealCache.cs" />
-    <Compile Include="UnrealConfig.cs" />
-    <Compile Include="UnrealFlags.cs" />
-    <Compile Include="UnrealExtensions.cs" />
-    <Compile Include="UnrealInterfaces.cs" />
-    <Compile Include="UnrealLoader.cs" />
-    <Compile Include="UnrealMethods.cs" />
-    <Compile Include="UnrealMod.cs" />
-    <Compile Include="UnrealPackage.cs" />
-    <Compile Include="UnrealPackageCompression.cs" />
-    <Compile Include="UnrealStream.cs" />
-    <Compile Include="UnrealScript\ScriptConstants.cs" />
-    <Compile Include="Core\Tables\UTableItem.cs" />
-    <Compile Include="UnrealTokens.cs" />
-    <Compile Include="UnrealTypes.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorConstUnitZToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorConstZeroToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorXToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorXYToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorXZToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorYToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorYZToken.cs" />
-    <Compile Include="Branch\UE2\DNF\Tokens\VectorZToken.cs" />
-  </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.8">
       <Visible>False</Visible>
@@ -319,24 +49,22 @@
     <Folder Include="UnrealModel\Engine\Types\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="UnrealModel\README.md" />
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
       <Version>6.0.0</Version>
     </PackageReference>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <ProjectExtensions>
-  </ProjectExtensions>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <ProjectExtensions></ProjectExtensions>
   <PropertyGroup>
     <NuspecFile>Eliot.UELib.nuspec</NuspecFile>
     <NuspecProperties>$(NuspecProperties);configuration=$(Configuration)</NuspecProperties>
@@ -350,5 +78,18 @@
     <NuspecProperties>$(NuspecProperties);PackageTags=$(PackageTags)</NuspecProperties>
     <NuspecProperties>$(NuspecProperties);RepositoryType=$(RepositoryType)</NuspecProperties>
     <NuspecProperties>$(NuspecProperties);RepositoryUrl=$(RepositoryUrl)</NuspecProperties>
+    <Description>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</Description>
+    <PackageTags>UnrealEngine;UnrealScript;Decompiler;UPK;Exporter;Bytecode</PackageTags>
+    <Copyright>2009-2024 Eliot van Uytfanghe. All rights reserved.</Copyright>
+    <Authors>EliotVU</Authors>
+    <PackageProjectUrl>https://github.com/EliotVU/Unreal-Library</PackageProjectUrl>
+    <PackageReadmeFile>README.MD</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/EliotVU/Unreal-Library</RepositoryUrl>
+    <Version>$(VersionPrefix)1.4.0</Version>
+    <NeutralLanguage>en</NeutralLanguage>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
   </PropertyGroup>
 </Project>

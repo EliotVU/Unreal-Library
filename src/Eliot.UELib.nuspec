@@ -13,7 +13,7 @@
         <readme>docs\README.md</readme>
         <releaseNotes>docs\CHANGELOG.md</releaseNotes>
         <copyright>$copyright$</copyright>
-        <tags>UnrealEngine UnrealScript Decompiler UPK Explorer Viewer Exporter Bytecode</tags>
+        <tags>$tags$</tags>
         <dependencies></dependencies>
     </metadata>
     <files>
