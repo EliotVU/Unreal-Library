@@ -230,8 +230,8 @@ namespace UELib
                 /// <summary>
                 /// 118:120/004:008
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchDVS))]
-                [Build(118, 120, 4u, 8u)] Devastation,
+                [BuildEngineBranch(typeof(EngineBranchDVS))] [Build(118, 120, 4u, 8u)]
+                Devastation,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
@@ -598,22 +598,20 @@ namespace UELib
 
             public BuildName Name { get; }
 
-            [Obsolete]
-            public uint Version { get; }
-            
-            [Obsolete]
-            public uint LicenseeVersion { get; }
-            
+            [Obsolete] public uint Version { get; }
+
+            [Obsolete] public uint LicenseeVersion { get; }
+
             public uint? OverrideVersion { get; }
             public ushort? OverrideLicenseeVersion { get; }
 
             public BuildGeneration Generation { get; }
             [CanBeNull] public readonly Type EngineBranchType;
 
-            [Obsolete("To be deprecated")]
-            public readonly BuildFlags Flags;
+            [Obsolete("To be deprecated")] public readonly BuildFlags Flags;
 
-            public GameBuild(uint overrideVersion, ushort overrideLicenseeVersion, BuildGeneration generation, Type engineBranchType,
+            public GameBuild(uint overrideVersion, ushort overrideLicenseeVersion, BuildGeneration generation,
+                Type engineBranchType,
                 BuildFlags flags)
             {
                 OverrideVersion = overrideVersion;
@@ -860,7 +858,8 @@ namespace UELib
                 }
 
                 if (package.Build.OverrideVersion.HasValue) Version = package.Build.OverrideVersion.Value;
-                if (package.Build.OverrideLicenseeVersion.HasValue) LicenseeVersion = package.Build.OverrideLicenseeVersion.Value;
+                if (package.Build.OverrideLicenseeVersion.HasValue)
+                    LicenseeVersion = package.Build.OverrideLicenseeVersion.Value;
 
                 if (OverrideVersion != 0) Version = OverrideVersion;
                 if (OverrideLicenseeVersion != 0) LicenseeVersion = OverrideLicenseeVersion;
@@ -962,7 +961,7 @@ namespace UELib
                 SetupBuild(stream.Package);
                 Debug.Assert(stream.Package.Build != null);
                 Console.WriteLine("Build:" + stream.Package.Build);
-                
+
                 SetupBranch(stream.Package);
                 Debug.Assert(stream.Package.Branch != null);
                 Console.WriteLine("Branch:" + stream.Package.Branch);
@@ -1069,7 +1068,7 @@ namespace UELib
 
                     // An FString converted to an FArray? Concatenating appUserName, appComputerName, appBaseDir, and appTimestamp.
                     stream.ReadArray(out UArray<byte> iStack_fc);
-                } 
+                }
 #endif
 #if BORDERLANDS
                 if (stream.Package.Build == GameBuild.BuildName.Borderlands) stream.Skip(4);
@@ -1708,9 +1707,9 @@ namespace UELib
         {
             if ((initFlags & InitFlags.RegisterClasses) != 0) RegisterExportedClassTypes();
 
-            if ((initFlags & InitFlags.Construct) != 0)
+            if ((initFlags & InitFlags.Construct) == 0)
             {
-                ConstructObjects();
+                return;
             }
 
             if ((initFlags & InitFlags.Deserialize) == 0)

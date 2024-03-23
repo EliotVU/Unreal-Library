@@ -11,6 +11,7 @@
     <RootNamespace>UELib</RootNamespace>
     <AssemblyName>Eliot.UELib</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <LangVersion>7.3</LangVersion>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -122,6 +123,7 @@
     <Compile Include="Branch\UE3\BL2\Tokens\LocalVariableToken.cs" />
     <Compile Include="Branch\UE3\MOH\EngineBranch.MOH.cs" />
     <Compile Include="Branch\UE3\RSS\EngineBranch.RSS.cs" />
+    <Compile Include="Branch\UE3\RSS\Tokens\Bm4ContextToken.cs" />
     <Compile Include="Branch\UE3\RSS\Tokens\NameConstNoNumberToken.cs" />
     <Compile Include="Core\Tokens\EatStringToken.cs" />
     <Compile Include="Core\Tokens\ValidateObjectToken.cs" />
@@ -336,7 +338,17 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <NuspecFile>Eliot.UELib.nuspec</NuspecFile>
+    <NuspecProperties>$(NuspecProperties);configuration=$(Configuration)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);version=$(Version)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);id=$(PackageId)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);author=$(Authors)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);PackageProjectUrl=$(PackageProjectUrl)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);Description=$(Description)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);PackageReleaseNotes=$(PackageReleaseNotes)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);Copyright=$(Copyright)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);PackageTags=$(PackageTags)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);RepositoryType=$(RepositoryType)</NuspecProperties>
+    <NuspecProperties>$(NuspecProperties);RepositoryUrl=$(RepositoryUrl)</NuspecProperties>
   </PropertyGroup>
 </Project>

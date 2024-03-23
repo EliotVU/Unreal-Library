@@ -21,7 +21,7 @@ namespace UELib
         /// Modified version for Harry Potter's Unreal Engine 1
         /// </summary>
         HP,
-        
+
         /// <summary>
         /// Unreal Engine 2
         /// 
@@ -43,12 +43,12 @@ namespace UELib
         /// The Unreal Engine 2.5 engine used in the America's Army series.
         /// </summary>
         AGP,
-        
+
         /// <summary>
         /// Heavily modified Unreal Engine 2.5 for Vengeance: Tribes; also used by Swat4 and BioShock.
         /// </summary>
         Vengeance,
-        
+
         /// <summary>
         /// Heavily modified Unreal Engine 2.5 for Splinter Cell
         ///
@@ -67,7 +67,7 @@ namespace UELib
         /// Not in use yet.
         /// </summary>
         UE3,
-        
+
         /// <summary>
         /// Rocksteady Studios
         ///

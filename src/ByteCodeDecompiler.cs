@@ -13,6 +13,7 @@ namespace UELib.Core
 {
     using System.Linq;
     using System.Text;
+    using UELib.Branch.UE3.RSS.Tokens;
 
     public partial class UStruct
     {
@@ -223,7 +224,7 @@ namespace UELib.Core
 
 #if DECOMPILE
 
-            #region Decompile
+#region Decompile
 
             public class NestManager
             {
@@ -878,9 +879,9 @@ namespace UELib.Core
                 return output;
             }
 
-            #endregion
+#endregion
 
-            #region Disassemble
+#region Disassemble
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
             public string Disassemble()
@@ -888,7 +889,7 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-            #endregion
+#endregion
 
 #endif
         }

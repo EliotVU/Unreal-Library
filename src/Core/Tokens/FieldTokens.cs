@@ -68,7 +68,7 @@ namespace UELib.Core
                     return $"default.{base.Decompile()}";
                 }
             }
-            
+
             public class UndefinedVariableToken : Token
             {
                 public override string Decompile()

@@ -302,6 +302,15 @@ namespace UELib.Core
                         if (_Buffer.Version > 670)
                         {
                             AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
+#if BATMAN
+                            // Only attested in bm4 with no version check.
+                            if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                            {
+                                IList<int> bm4_v198;
+                                bm4_v198 = DeserializeGroup(nameof(bm4_v198));
+                            }
+#endif
                         }
 
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.ForceScriptOrderAddedToUClass

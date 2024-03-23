@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata>
-    <id>Eliot.UELib.dll</id>
-    <version>$version$</version>
-    <authors>Eliot</authors>
-    <owners>Eliot</owners>
-    <license type="expression">MIT</license>
-
-    <projectUrl>https://github.com/EliotVU/Unreal-Library</projectUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <title>UELib</title>
-    <description>A library for parsing data from games built with the Unreal Engine such as .u, and .upk files.</description>
-    <readme>docs\README.md</readme>
-    <copyright>Copyright (c) Eliot van Uytfanghe</copyright>
-    <tags>UnrealEngine UnrealScript Decompiler UPK Explorer Viewer Exporter</tags>
-    <dependencies>
-    </dependencies>
-  </metadata>
-  <files>
-    <file src="..\README.md" target="docs\" />
-  </files>
+    <metadata>
+        <id>$id$</id>
+        <version>$version$</version>
+        <authors>Eliot</authors>
+        <owners>Eliot</owners>
+        <license type="expression">MIT</license>
+        <projectUrl>https://github.com/EliotVU/Unreal-Library</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <title>$title$</title>
+        <description>$description$</description>
+        <readme>docs\README.md</readme>
+        <releaseNotes>docs\CHANGELOG.md</releaseNotes>
+        <copyright>$copyright$</copyright>
+        <tags>UnrealEngine UnrealScript Decompiler UPK Explorer Viewer Exporter Bytecode</tags>
+        <dependencies></dependencies>
+    </metadata>
+    <files>
+        <file src="..\README.md" target="docs\" />
+        <file src="..\CHANGELOG.md" target="docs\" />
+    </files>
 </package>

@@ -314,7 +314,13 @@ namespace UELib.Core
             {
                 _Buffer.ReadClass(out StateFrame);
             }
-
+#if MKKE || BATMAN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                goto skipNetIndex;
+            }
+#endif
             // No version check found in the GoW PC client
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.TemplateDataAddedToUComponent)
             {
@@ -334,6 +340,7 @@ namespace UELib.Core
                         }
                 }
             }
+            skipNetIndex:
 
             DeserializeNetIndex();
 #if THIEF_DS || DEUSEX_IW
