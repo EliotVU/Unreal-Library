@@ -118,11 +118,15 @@
     <Compile Include="Branch\UE2\DNF\EngineBranch.DNF.cs" />
     <Compile Include="Branch\UE2\DVS\Tokens\ColorConstToken.cs" />
     <Compile Include="Branch\UE2\DVS\EngineBranch.DVS.cs" />
+    <Compile Include="Branch\UE3\SFX\Classes\UStringRefProperty.cs" />
+    <Compile Include="Branch\UE3\SFX\EngineBranch.SFX.cs" />
     <Compile Include="Branch\UE3\APB\EngineBranch.APB.cs" />
     <Compile Include="Branch\UE3\BL2\Tokens\LocalVariableToken.cs" />
     <Compile Include="Branch\UE3\MOH\EngineBranch.MOH.cs" />
     <Compile Include="Branch\UE3\RSS\EngineBranch.RSS.cs" />
     <Compile Include="Branch\UE3\RSS\Tokens\NameConstNoNumberToken.cs" />
+    <Compile Include="Branch\UE3\SFX\PackageSerializer.SFX.cs" />
+    <Compile Include="Branch\UE3\SFX\Tokens\StringRefConstToken.cs" />
     <Compile Include="Core\Tokens\EatStringToken.cs" />
     <Compile Include="Core\Tokens\ValidateObjectToken.cs" />
     <Compile Include="Engine\Classes\UActorComponent.cs" />

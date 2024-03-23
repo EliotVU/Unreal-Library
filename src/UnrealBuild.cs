@@ -69,6 +69,11 @@ namespace UELib
         UE3,
         
         /// <summary>
+        /// A modified Unreal Engine 3 for the Mass Effect series.
+        /// </summary>
+        SFX,
+        
+        /// <summary>
         /// Rocksteady Studios
         ///
         /// Heavily modified Unreal Engine 3 for the Arkham series.

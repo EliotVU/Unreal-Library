@@ -22,6 +22,7 @@ namespace UELib
     using Core;
     using Decoding;
     using Branch.UE2.DVS;
+    using Branch.UE3.SFX;
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -453,6 +454,34 @@ namespace UELib
                 /// 648/6405
                 /// </summary>
                 [Build(648, 6405)] DCUO,
+
+                /// <summary>
+                /// Mass Effect: Legendary Edition
+                ///
+                /// 684/171
+                /// Engine: 6383
+                /// Cooker: 65643
+                /// </summary>
+                [Build(391, 0092, BuildGeneration.SFX)] // Xenon
+                [Build(491, 1008, BuildGeneration.SFX)] // PC
+                [Build(684, 0153, BuildGeneration.SFX)] // PS3
+                [Build(684, 0171, BuildGeneration.SFX)] // LE
+                [BuildEngineBranch(typeof(EngineBranchSFX))]
+                ME1,
+
+                [Build(512, 0130, BuildGeneration.SFX)] // Demo
+                [Build(513, 0130, BuildGeneration.SFX)] // PC
+                [Build(684, 0150, BuildGeneration.SFX)] // PS3
+                [Build(684, 0168, BuildGeneration.SFX)] // LE
+                [BuildEngineBranch(typeof(EngineBranchSFX))]
+                ME2,
+
+                [Build(684, 0185, BuildGeneration.SFX)] // Demo
+                [Build(684, 0194, BuildGeneration.SFX)] // PC
+                [Build(845, 0194, BuildGeneration.SFX)] // Wii
+                [Build(685, 0205, BuildGeneration.SFX)] // LE
+                [BuildEngineBranch(typeof(EngineBranchSFX))]
+                ME3,
 
                 /// <summary>
                 /// Dungeon Defenders 2
@@ -950,7 +979,7 @@ namespace UELib
                 SetupBuild(stream.Package);
                 Debug.Assert(stream.Package.Build != null);
                 Console.WriteLine("Build:" + stream.Package.Build);
-                
+
                 SetupBranch(stream.Package);
                 Debug.Assert(stream.Package.Branch != null);
                 Console.WriteLine("Branch:" + stream.Package.Branch);
@@ -990,6 +1019,18 @@ namespace UELib
                 if (stream.Package.Build == GameBuild.BuildName.Hawken &&
                     stream.LicenseeVersion >= 2)
                     stream.Skip(4);
+#endif
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX && 
+                    stream.LicenseeVersion >= 194 &&
+                    stream.LicenseeVersion != 1008) // Oh why, this high number...
+                {
+                    if (PackageFlags.HasFlag(Flags.PackageFlags.Cooked))
+                    {
+                        // SFXPatch Version (according to a localized string that references the same global constant)
+                        int v94 = stream.ReadInt32();
+                    }
+                }
 #endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
@@ -1187,7 +1228,14 @@ namespace UELib
                     CookerVersion = stream.ReadInt32();
                     Console.WriteLine("CookerVersion:" + CookerVersion);
                 }
-
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX)
+                {
+                    // changelist 1376256
+                    stream.ReadInt32();
+                    stream.ReadInt32();
+                }
+#endif
                 // Read compressed info?
                 if (stream.Version >= VCompression)
                 {
