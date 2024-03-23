@@ -592,9 +592,9 @@ namespace UELib.Core
                     else
                     {
                         value = _Buffer.ReadByte() > 0;
+                        Record(nameof(value), value);
                     }
 
-                    Record(nameof(value), value);
                     propertyValue = value ? "true" : "false";
                     break;
                 }

@@ -18,7 +18,7 @@ namespace UELib
         UE1,
 
         /// <summary>
-        /// Modified version for Harry Potter's Unreal Engine 1
+        /// Modified version for Harry Potter's Unreal Engine 1.
         /// </summary>
         HP,
         
@@ -30,7 +30,7 @@ namespace UELib
         UE2,
 
         /// <summary>
-        /// Heavily modified Unreal Engine 2 by Ion Storm for Thief: Deadly Shadows
+        /// Heavily modified Unreal Engine 2 by Ion Storm for Thief: Deadly Shadows.
         /// </summary>
         Flesh,
 
@@ -50,14 +50,14 @@ namespace UELib
         Vengeance,
         
         /// <summary>
-        /// Heavily modified Unreal Engine 2.5 for Splinter Cell
+        /// Heavily modified Unreal Engine 2.5 for Splinter Cell.
         ///
         /// Not yet supported.
         /// </summary>
         Lead,
 
         /// <summary>
-        /// Modified Unreal Engine 2 for Xbox e.g. Unreal Championship 2: The Liandri Conflict
+        /// Modified Unreal Engine 2 for Xbox e.g. Unreal Championship 2: The Liandri Conflict.
         /// </summary>
         UE2X,
 
@@ -71,14 +71,14 @@ namespace UELib
         /// <summary>
         /// Rocksteady Studios
         ///
-        /// Heavily modified Unreal Engine 3 for the Arkham series
+        /// Heavily modified Unreal Engine 3 for the Arkham series.
         /// </summary>
         RSS,
 
         /// <summary>
         /// High Moon Studios
         ///
-        /// Heavily modified Unreal Engine 3 for Transformers and Deadpool etc
+        /// Heavily modified Unreal Engine 3 for Transformers and Deadpool etc.
         /// </summary>
         HMS,
 

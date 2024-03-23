@@ -228,8 +228,8 @@ namespace UELib
                 /// <summary>
                 /// 118:120/004:008
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchDVS))]
-                [Build(118, 120, 4u, 8u)] Devastation,
+                [BuildEngineBranch(typeof(EngineBranchDVS))] [Build(118, 120, 4u, 8u)]
+                Devastation,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
@@ -587,22 +587,20 @@ namespace UELib
 
             public BuildName Name { get; }
 
-            [Obsolete]
-            public uint Version { get; }
-            
-            [Obsolete]
-            public uint LicenseeVersion { get; }
-            
+            [Obsolete] public uint Version { get; }
+
+            [Obsolete] public uint LicenseeVersion { get; }
+
             public uint? OverrideVersion { get; }
             public ushort? OverrideLicenseeVersion { get; }
 
             public BuildGeneration Generation { get; }
             [CanBeNull] public readonly Type EngineBranchType;
 
-            [Obsolete("To be deprecated")]
-            public readonly BuildFlags Flags;
+            [Obsolete("To be deprecated")] public readonly BuildFlags Flags;
 
-            public GameBuild(uint overrideVersion, ushort overrideLicenseeVersion, BuildGeneration generation, Type engineBranchType,
+            public GameBuild(uint overrideVersion, ushort overrideLicenseeVersion, BuildGeneration generation,
+                Type engineBranchType,
                 BuildFlags flags)
             {
                 OverrideVersion = overrideVersion;
@@ -849,7 +847,8 @@ namespace UELib
                 }
 
                 if (package.Build.OverrideVersion.HasValue) Version = package.Build.OverrideVersion.Value;
-                if (package.Build.OverrideLicenseeVersion.HasValue) LicenseeVersion = package.Build.OverrideLicenseeVersion.Value;
+                if (package.Build.OverrideLicenseeVersion.HasValue)
+                    LicenseeVersion = package.Build.OverrideLicenseeVersion.Value;
 
                 if (OverrideVersion != 0) Version = OverrideVersion;
                 if (OverrideLicenseeVersion != 0) LicenseeVersion = OverrideLicenseeVersion;
@@ -1358,19 +1357,19 @@ namespace UELib
         /// List of unique unreal names.
         /// </summary>
         [PublicAPI]
-        public List<UNameTableItem> Names { get; private set; }
+        public List<UNameTableItem> Names { get; private set; } = new List<UNameTableItem>();
 
         /// <summary>
         /// List of info about exported objects.
         /// </summary>
         [PublicAPI]
-        public List<UExportTableItem> Exports { get; private set; }
+        public List<UExportTableItem> Exports { get; private set; } = new List<UExportTableItem>();
 
         /// <summary>
         /// List of info about imported objects.
         /// </summary>
         [PublicAPI]
-        public List<UImportTableItem> Imports { get; private set; }
+        public List<UImportTableItem> Imports { get; private set; } = new List<UImportTableItem>();
 
         /// <summary>
         /// List of info about dependency objects.
@@ -1390,7 +1389,7 @@ namespace UELib
         /// Includes Exports and Imports!.
         /// </summary>
         [PublicAPI]
-        public List<UObject> Objects { get; private set; }
+        public List<UObject> Objects { get; private set; } = new List<UObject>();
 
         [PublicAPI] public NativesTablePackage NTLPackage;
 
@@ -1460,9 +1459,16 @@ namespace UELib
                 "Branch.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
 
             // We can't continue without decompressing.
-            if (CompressedChunks != null && CompressedChunks.Any())
+            if (Summary.CompressedChunks != null &&
+                Summary.CompressedChunks.Any())
             {
-                return;
+                if (Summary.CompressionFlags != 0)
+                {
+                    return;
+                }
+
+                // Flags 0? Let's pretend that we no longer possess any chunks.
+                Summary.CompressedChunks.Clear();
             }
 #if TERA
             if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
