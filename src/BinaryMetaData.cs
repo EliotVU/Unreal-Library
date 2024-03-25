@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
 
@@ -37,6 +38,14 @@ namespace UELib
             /// </summary>
             public long Size { get; set; }
 
+            [Obsolete("Use Field")]
+            public string Name => Field;
+
+            [Obsolete("Use Value")]
+            public object Tag => Value;
+
+            [Obsolete("Use Offset")] public int Position => (int)Offset;
+
             /// <summary>
             /// Decompiles and returns the output of @Tag.
             /// </summary>
@@ -57,20 +66,20 @@ namespace UELib
         /// <summary>
         /// Adds a new field to the @Fields stack.
         /// </summary>
-        /// <param name="name">Name of the field</param>
-        /// <param name="tag">Value of the field</param>
-        /// <param name="position">Position in bytes where the field is read from</param>
+        /// <param name="field">Name of the field</param>
+        /// <param name="value">Value of the field</param>
+        /// <param name="offset">Position in bytes where the field is read from</param>
         /// <param name="size">Size in bytes of the field</param>
-        public void AddField(string name, object tag, long position, long size)
+        public void AddField(string field, object value, long offset, long size)
         {
-            Debug.Assert(size > 0, $"Size of field {name} at {position} cannot be less than 1");
+            //Debug.Assert(size > 0, $"Size of field {field} at {offset} cannot be less than 1");
             Fields.Push
             (
                 new BinaryField
                 {
-                    Field = name,
-                    Value = tag,
-                    Offset = position,
+                    Field = field,
+                    Value = value,
+                    Offset = offset,
                     Size = size
                 }
             );

@@ -78,25 +78,25 @@ namespace UELib.Core
             return content;
         }
 
-        [Obsolete]
+        [Obsolete("Deprecated", true)]
         public string GetDependencies()
         {
             throw new NotImplementedException();
         }
 
-        [Obsolete]
+        [Obsolete("Deprecated", true)]
         private string GetImports()
         {
             throw new NotImplementedException();
         }
 
-        [Obsolete]
+        [Obsolete("Deprecated", true)]
         public string GetStats()
         {
             throw new NotImplementedException();
         }
 
-        protected override string FormatHeader()
+        public override string FormatHeader()
         {
             string output = (IsClassInterface() ? "interface " : "class ") + Name;
             string metaData = DecompileMeta();

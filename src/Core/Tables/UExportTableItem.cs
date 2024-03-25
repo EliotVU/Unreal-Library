@@ -25,6 +25,7 @@ namespace UELib
             get => _ClassIndex;
             set => _ClassIndex = value;
         }
+
         [CanBeNull]
         public UObjectTableItem Class => Owner.GetIndexTable(ClassIndex);
 
@@ -54,9 +55,14 @@ namespace UELib
         }
         [CanBeNull]
         public UObjectTableItem Archetype => Owner.GetIndexTable(_ArchetypeIndex);
+        
+        [Obsolete("Use Class"), Browsable(false)] public UObjectTableItem ClassTable => Owner.GetIndexTable(_ClassIndex);
 
-        [Obsolete, Browsable(false)] public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
-        [Obsolete, Browsable(false)]
+        [Obsolete]
+        protected override int __ClassIndex => _ClassIndex;
+
+        [Obsolete("Use Super"), Browsable(false)] public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
+        [Obsolete("Use Super?.ObjectName"), Browsable(false)]
         public string SuperName
         {
             get
@@ -66,8 +72,8 @@ namespace UELib
             }
         }
 
-        [Obsolete, Browsable(false)] public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(_ArchetypeIndex);
-        [Obsolete, Browsable(false)]
+        [Obsolete("Use Archetype"), Browsable(false)] public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(_ArchetypeIndex);
+        [Obsolete("Use Archetype?.ObjectName"), Browsable(false)]
         public string ArchetypeName
         {
             get
@@ -294,6 +300,12 @@ namespace UELib
         public override string ToString()
         {
             return $"{ObjectName}({Index}{1})";
+        }
+
+        [Obsolete("Use ToString()")]
+        public string ToString(bool v)
+        {
+            return ToString();
         }
 
         public static explicit operator int(UExportTableItem item)

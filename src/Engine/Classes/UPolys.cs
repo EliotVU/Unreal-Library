@@ -28,7 +28,7 @@ namespace UELib.Engine
             base.Deserialize();
 
             // Faster serialization for cooked packages, no don't have to check for the package's version here.
-            if (Package.Summary.PackageFlags.HasFlag(PackageFlags.Cooked))
+            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked))
             {
                 ElementOwner = _Buffer.ReadObject();
                 Record(nameof(ElementOwner), ElementOwner);

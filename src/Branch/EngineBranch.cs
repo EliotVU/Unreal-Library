@@ -32,7 +32,7 @@ namespace UELib.Branch
         /// </summary>
         public readonly Dictionary<Type, ulong[]> EnumFlagsMap = new Dictionary<Type, ulong[]>();
 
-        protected readonly ulong[] PackageFlags = new ulong[(int)Flags.PackageFlags.Max];
+        protected readonly ulong[] PackageFlags = new ulong[(int)Flags.PackageFlag.Max];
 
         public EngineBranch()
         {

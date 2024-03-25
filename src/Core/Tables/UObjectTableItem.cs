@@ -42,11 +42,11 @@ namespace UELib
         }
 
         [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
-        [Obsolete, Browsable(false)] public UObjectTableItem ClassTable => null;
+        [Obsolete("Use UExportTableItem.Class"), Browsable(false)] public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
         [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
         public UObjectTableItem Outer => Owner.GetIndexTable(_OuterIndex);
 
-        [Obsolete, Browsable(false)]
+        [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
         public string OuterName
         {
             get
@@ -55,6 +55,18 @@ namespace UELib
                 return table != null ? table._ObjectName : string.Empty;
             }
         }
+
+        [Obsolete("Use UExportTableItem.ClassIndex"), Browsable(false)]
+        public int ClassIndex => __ClassIndex;
+
+        [Obsolete]
+        protected virtual int __ClassIndex => 0;
+
+        [Obsolete("Use Class?.ObjectName or UImportTableItem.ClassName"), Browsable(false)]
+        public string ClassName => __ClassName;
+
+        [Obsolete]
+        protected virtual string __ClassName => "";
 
         #endregion
 

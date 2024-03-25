@@ -215,7 +215,7 @@ namespace UELib.Core
             return output;
         }
 
-        protected override string FormatHeader()
+        public override string FormatHeader()
         {
             var output = string.Empty;
             // static function (string?:) Name(Parms)...
