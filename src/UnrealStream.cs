@@ -685,7 +685,7 @@ namespace UELib
     /// <summary>
     ///     Methods that shouldn't be duplicated between UObjectStream and UPackageStream.
     /// </summary>
-    [Obsolete("Don't use directly, in 2.0 these are implemented once in a single shared IUnrealStream")]
+    [Obsolete("Pending deprecation")]
     public static class UnrealStreamImplementations
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,3 +1,4 @@
+using System;
 using UELib.Core;
 
 namespace UELib
@@ -25,6 +26,9 @@ namespace UELib
             set => _ClassName = value;
         }
 
+        [Obsolete] protected override string __ClassName => _ClassName;
+        [Obsolete] protected override int __ClassIndex => (int)_ClassName;
+
         #endregion
 
         public void Serialize(IUnrealStream stream)
@@ -51,6 +55,12 @@ namespace UELib
         public override string ToString()
         {
             return $"{ObjectName}({-(Index + 1)})";
+        }
+
+        [Obsolete("Use ToString()")]
+        public string ToString(bool v)
+        {
+            return ToString();
         }
 
         public static explicit operator int(UImportTableItem item)

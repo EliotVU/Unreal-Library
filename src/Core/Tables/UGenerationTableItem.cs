@@ -1,3 +1,4 @@
+using System;
 using UELib.Annotations;
 
 namespace UELib
@@ -26,6 +27,13 @@ namespace UELib
             get => _NetObjectCount;
             set => _NetObjectCount = value;
         }
+
+        [Obsolete]
+        public object ExportsCount => ExportCount;
+        [Obsolete]
+        public object NamesCount => NameCount;
+        [Obsolete]
+        public object NetObjectsCount => NetObjectCount;
 
         public const int VNetObjectsCount = 322;
 

@@ -41,20 +41,20 @@ namespace UELib.Branch.UE4
         public override void Setup(UnrealPackage linker)
         {
             SetupEnumPackageFlags(linker);
-            EnumFlagsMap.Add(typeof(PackageFlags), PackageFlags);
+            EnumFlagsMap.Add(typeof(PackageFlag), PackageFlags);
         }
 
         protected virtual void SetupEnumPackageFlags(UnrealPackage linker)
         {
-            PackageFlags[(int)Flags.PackageFlags.ClientOptional] =
+            PackageFlags[(int)Flags.PackageFlag.ClientOptional] =
                 (uint)DefaultEngineBranch.PackageFlagsDefault.ClientOptional;
-            PackageFlags[(int)Flags.PackageFlags.ServerSideOnly] =
+            PackageFlags[(int)Flags.PackageFlag.ServerSideOnly] =
                 (uint)DefaultEngineBranch.PackageFlagsDefault.ServerSideOnly;
-            PackageFlags[(int)Flags.PackageFlags.EditorOnly] = (uint)PackageFlagsUE4.EditorOnly;
-            PackageFlags[(int)Flags.PackageFlags.Cooked] = (uint)PackageFlagsUE4.Cooked;
-            PackageFlags[(int)Flags.PackageFlags.UnversionedProperties] = (uint)PackageFlagsUE4.UnversionedProperties;
-            PackageFlags[(int)Flags.PackageFlags.ReloadingForCooker] = (uint)PackageFlagsUE4.ReloadingForCooker;
-            PackageFlags[(int)Flags.PackageFlags.FilterEditorOnly] = (uint)PackageFlagsUE4.FilterEditorOnly;
+            PackageFlags[(int)Flags.PackageFlag.EditorOnly] = (uint)PackageFlagsUE4.EditorOnly;
+            PackageFlags[(int)Flags.PackageFlag.Cooked] = (uint)PackageFlagsUE4.Cooked;
+            PackageFlags[(int)Flags.PackageFlag.UnversionedProperties] = (uint)PackageFlagsUE4.UnversionedProperties;
+            PackageFlags[(int)Flags.PackageFlag.ReloadingForCooker] = (uint)PackageFlagsUE4.ReloadingForCooker;
+            PackageFlags[(int)Flags.PackageFlag.FilterEditorOnly] = (uint)PackageFlagsUE4.FilterEditorOnly;
         }
 
         protected override void SetupSerializer(UnrealPackage linker)

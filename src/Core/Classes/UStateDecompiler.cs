@@ -55,7 +55,7 @@ namespace UELib.Core
             return HasStateFlag(Flags.StateFlags.Editable) ? "()" : string.Empty;
         }
 
-        protected override string FormatHeader()
+        public override string FormatHeader()
         {
             var output = $"{GetAuto()}{GetSimulated()}state{GetEdit()} {Name}";
             if (Super != null && Super.Name != Name

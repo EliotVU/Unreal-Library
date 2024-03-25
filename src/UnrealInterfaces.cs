@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UELib.Annotations;
 using UELib.Core;
@@ -20,6 +21,7 @@ namespace UELib
     /// <summary>
     /// This class has a reference to an object and are both decompilable.
     /// </summary>
+    [Obsolete]
     public interface IDecompilableObject : IUnrealDecompilable
     {
         /// <summary>
@@ -121,6 +123,15 @@ namespace UELib
         bool CanExport();
 
         void SerializeExport(string desiredExportExtension, Stream exportStream);
+    }
+
+    public static class IUnrealExportableImplementation
+    {
+        [Obsolete("Use CanExport()")]
+        public static bool CompatableExport(this IUnrealExportable exportable)
+        {
+            return exportable.CanExport();
+        }
     }
 
     /// <summary>

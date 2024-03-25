@@ -670,7 +670,7 @@ namespace UELib.Core
         {
         }
 
-        [Obsolete]
+        [Obsolete("Deprecated", true)]
         public virtual void InitializeImports()
         {
             throw new NotImplementedException();

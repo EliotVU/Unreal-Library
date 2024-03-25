@@ -64,6 +64,9 @@
       <Version>6.0.0</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
   <ProjectExtensions></ProjectExtensions>
   <PropertyGroup>
     <NuspecFile>Eliot.UELib.nuspec</NuspecFile>

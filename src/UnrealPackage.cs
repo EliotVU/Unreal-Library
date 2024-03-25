@@ -775,11 +775,13 @@ namespace UELib
             public uint UE4Version;
             public uint UE4LicenseeVersion;
 
-            public UnrealFlags<PackageFlags> PackageFlags;
+            public UnrealFlags<PackageFlag> PackageFlags;
 
+            [Obsolete]
             private const int VHeaderSize = 249;
             public int HeaderSize;
 
+            [Obsolete]
             private const int VFolderName = 269;
 
             /// <summary>
@@ -799,6 +801,7 @@ namespace UELib
             /// </summary>
             public UArray<UGuid> Heritages;
 
+            [Obsolete]
             private const int VDependsOffset = 415;
             public int DependsOffset;
 
@@ -808,29 +811,39 @@ namespace UELib
             private PackageFileEngineVersion PackageEngineVersion;
             private PackageFileEngineVersion PackageCompatibleEngineVersion;
 
+            [Obsolete]
             private const int VEngineVersion = 245;
-            public int EngineVersion;
+
+            [Obsolete]
             public const int VCookerVersion = 277;
+            
+            public int EngineVersion;
             public int CookerVersion;
 
+            [Obsolete]
             private const int VCompression = 334;
             public uint CompressionFlags;
             public UArray<CompressedChunk> CompressedChunks;
 
+            [Obsolete]
             private const int VPackageSource = 482;
             public uint PackageSource;
 
+            [Obsolete]
             private const int VAdditionalPackagesToCook = 516;
             public UArray<string> AdditionalPackagesToCook;
 
+            [Obsolete]
             private const int VImportExportGuidsOffset = 623;
             public int ImportExportGuidsOffset;
             public int ImportGuidsCount;
             public int ExportGuidsCount;
 
+            [Obsolete]
             private const int VThumbnailTableOffset = 584;
             public int ThumbnailTableOffset;
 
+            [Obsolete]
             private const int VTextureAllocations = 767;
 
             public int GatherableTextDataCount;
@@ -844,7 +857,6 @@ namespace UELib
             public UGuid PersistentGuid;
             public UGuid OwnerPersistentGuid;
 
-            // In UELib 2.0 we pass the version to the Archives instead.
             private void SetupBuild(UnrealPackage package)
             {
                 // Auto-detect
@@ -995,7 +1007,7 @@ namespace UELib
                     FolderName = stream.ReadText();
                 }
 
-                PackageFlags = stream.ReadFlags32<PackageFlags>();
+                PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
 #if HAWKEN
                 if (stream.Package.Build == GameBuild.BuildName.Hawken &&
@@ -1107,7 +1119,7 @@ namespace UELib
 #endif
 #if DD2
                 // No version check found in the .exe
-                if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(Flags.PackageFlags.Cooked))
+                if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
                     stream.Skip(4);
 #endif
                 if (stream.Version >= VThumbnailTableOffset)
@@ -1280,7 +1292,7 @@ namespace UELib
                 }
 #if ROCKETLEAGUE
                 if (stream.Package.Build == GameBuild.BuildName.RocketLeague
-                    && PackageFlags.HasFlag(Flags.PackageFlags.Cooked))
+                    && PackageFlags.HasFlag(PackageFlag.Cooked))
                 {
                     int garbageSize = stream.ReadInt32();
                     Debug.WriteLine(garbageSize, "GarbageSize");
@@ -1302,18 +1314,20 @@ namespace UELib
         /// </summary>
         public bool IsBigEndianEncoded { get; }
 
+        [Obsolete]
         public const int VSIZEPREFIXDEPRECATED = 64;
+        
+        [Obsolete]
         public const int VINDEXDEPRECATED = 178;
 
-        /// <summary>
-        /// DLLBind(Name)
-        /// </summary>
+        [Obsolete]
         public const int VDLLBIND = 655;
 
-        /// <summary>
-        /// New class modifier "ClassGroup(Name[,Name])"
-        /// </summary>
+        [Obsolete]
         public const int VCLASSGROUP = 789;
+
+        [Obsolete]
+        public const int VCOOKEDPACKAGES = 277;
 
         public uint Version => Summary.Version;
 
@@ -1422,7 +1436,7 @@ namespace UELib
 
         [PublicAPI] public NativesTablePackage NTLPackage;
 
-        [Obsolete("See UPackageStream.Decoder")]
+        [Obsolete("See UPackageStream.Decoder", true)]
         public IBufferDecoder Decoder;
 
         #endregion
@@ -1686,7 +1700,7 @@ namespace UELib
         /// Constructs all import objects.
         /// </summary>
         /// <param name="initialize">If TRUE initialize all constructed objects.</param>
-        [PublicAPI]
+        [Obsolete("Pending deprecation")]
         public void InitializeImportObjects(bool initialize = true)
         {
             Objects = new List<UObject>(Imports.Count);
@@ -2092,30 +2106,30 @@ namespace UELib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsConsoleCooked()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked)
+            return Summary.PackageFlags.HasFlag(PackageFlag.Cooked)
                    && CookerPlatform == BuildPlatform.Console;
         }
 
         /// <summary>
-        /// Checks whether this package is marked with @flag.
+        /// Checks whether this package is marked with @flags.
         /// </summary>
-        /// <param name="flag">The enum @flag to test.</param>
+        /// <param name="flags">The enum @flag to test.</param>
         /// <returns>Whether this package is marked with @flag.</returns>
-        [Obsolete]
-        public bool HasPackageFlag(PackageFlags flag)
+        [Obsolete("See Summary.PackageFlags.HasFlag")]
+        public bool HasPackageFlag(PackageFlags flags)
         {
-            return (PackageFlags & (uint)flag) != 0;
+            return Summary.PackageFlags.HasFlags((uint)flags);
         }
 
         /// <summary>
-        /// Checks whether this package is marked with @flag.
+        /// Checks whether this package is marked with @flags.
         /// </summary>
-        /// <param name="flag">The uint @flag to test</param>
+        /// <param name="flags">The uint @flag to test</param>
         /// <returns>Whether this package is marked with @flag.</returns>
-        [Obsolete]
-        public bool HasPackageFlag(uint flag)
+        [Obsolete("See Summary.PackageFlags.HasFlag")]
+        public bool HasPackageFlag(uint flags)
         {
-            return (PackageFlags & flag) != 0;
+            return (PackageFlags & flags) != 0;
         }
 
         /// <summary>
@@ -2125,7 +2139,7 @@ namespace UELib
         [Obsolete]
         public bool IsCooked()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Cooked);
+            return Summary.PackageFlags.HasFlag(PackageFlag.Cooked);
         }
 
         /// <summary>
@@ -2135,7 +2149,7 @@ namespace UELib
         [Obsolete]
         public bool IsMap()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.ContainsMap);
+            return Summary.PackageFlags.HasFlag(PackageFlag.ContainsMap);
         }
 
         /// <summary>
@@ -2145,7 +2159,7 @@ namespace UELib
         [Obsolete]
         public bool IsScript()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.ContainsScript);
+            return Summary.PackageFlags.HasFlag(PackageFlag.ContainsScript);
         }
 
         /// <summary>
@@ -2155,7 +2169,7 @@ namespace UELib
         [Obsolete]
         public bool IsDebug()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.ContainsDebugData);
+            return Summary.PackageFlags.HasFlag(PackageFlag.ContainsDebugData);
         }
 
         /// <summary>
@@ -2165,7 +2179,7 @@ namespace UELib
         [Obsolete]
         public bool IsStripped()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.StrippedSource);
+            return Summary.PackageFlags.HasFlag(PackageFlag.StrippedSource);
         }
 
         /// <summary>
@@ -2175,13 +2189,13 @@ namespace UELib
         [Obsolete]
         public bool IsEncrypted()
         {
-            return Summary.PackageFlags.HasFlag(Flags.PackageFlags.Encrypted);
+            return Summary.PackageFlags.HasFlag(PackageFlag.Encrypted);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsEditorData()
         {
-            return Summary.UE4Version > 0 && !Summary.PackageFlags.HasFlag(Flags.PackageFlags.FilterEditorOnly);
+            return Summary.UE4Version > 0 && !Summary.PackageFlags.HasFlag(PackageFlag.FilterEditorOnly);
         }
 
         #region IBuffered

@@ -37,6 +37,11 @@ namespace UELib.Core
                    $"// Reference: {Class.Name}'{GetOuterGroup()}'";
         }
 
+        public virtual string FormatHeader()
+        {
+            return GetReferencePath();
+        }
+
         protected string DecompileProperties()
         {
             if (Properties == null || Properties.Count == 0)

@@ -124,6 +124,7 @@ namespace UELib
     /// <summary>
     /// Provides static methods for formating flags.
     /// </summary>
+    [Obsolete("Use .ToString() on the target enum instead.")]
     public static class UnrealMethods
     {
         public static string FlagsListToString(List<string> flagsList)

@@ -128,34 +128,34 @@ namespace UELib.Branch
         public override void Setup(UnrealPackage linker)
         {
             SetupEnumPackageFlags(linker);
-            EnumFlagsMap.Add(typeof(PackageFlags), PackageFlags);
+            EnumFlagsMap.Add(typeof(PackageFlag), PackageFlags);
         }
 
         protected virtual void SetupEnumPackageFlags(UnrealPackage linker)
         {
-            PackageFlags[(int)Flags.PackageFlags.AllowDownload] = (uint)PackageFlagsDefault.AllowDownload;
-            PackageFlags[(int)Flags.PackageFlags.ClientOptional] = (uint)PackageFlagsDefault.ClientOptional;
-            PackageFlags[(int)Flags.PackageFlags.ServerSideOnly] = (uint)PackageFlagsDefault.ServerSideOnly;
+            PackageFlags[(int)Flags.PackageFlag.AllowDownload] = (uint)PackageFlagsDefault.AllowDownload;
+            PackageFlags[(int)Flags.PackageFlag.ClientOptional] = (uint)PackageFlagsDefault.ClientOptional;
+            PackageFlags[(int)Flags.PackageFlag.ServerSideOnly] = (uint)PackageFlagsDefault.ServerSideOnly;
 #if UE1
             // FIXME: Version
             if (linker.Version > 61 && linker.Version <= 69) // <= UT99
-                PackageFlags[(int)Flags.PackageFlags.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
+                PackageFlags[(int)Flags.PackageFlag.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
 #endif
 #if UE2
             if (linker.Build == BuildGeneration.UE2_5)
-                PackageFlags[(int)Flags.PackageFlags.Official] = (uint)PackageFlagsUE2.Official;
+                PackageFlags[(int)Flags.PackageFlag.Official] = (uint)PackageFlagsUE2.Official;
 #endif
 #if UE3
             // Map the new PackageFlags, but the version is nothing but a guess!
             if (linker.Version >= 180)
             {
                 if (linker.Version >= UnrealPackage.PackageFileSummary.VCookerVersion)
-                    PackageFlags[(int)Flags.PackageFlags.Cooked] = (uint)PackageFlagsUE3.Cooked;
+                    PackageFlags[(int)Flags.PackageFlag.Cooked] = (uint)PackageFlagsUE3.Cooked;
 
-                PackageFlags[(int)Flags.PackageFlags.ContainsMap] = (uint)PackageFlagsUE3.ContainsMap;
-                PackageFlags[(int)Flags.PackageFlags.ContainsDebugData] = (uint)PackageFlagsUE3.ContainsDebugData;
-                PackageFlags[(int)Flags.PackageFlags.ContainsScript] = (uint)PackageFlagsUE3.ContainsScript;
-                PackageFlags[(int)Flags.PackageFlags.StrippedSource] = (uint)PackageFlagsUE3.StrippedSource;
+                PackageFlags[(int)Flags.PackageFlag.ContainsMap] = (uint)PackageFlagsUE3.ContainsMap;
+                PackageFlags[(int)Flags.PackageFlag.ContainsDebugData] = (uint)PackageFlagsUE3.ContainsDebugData;
+                PackageFlags[(int)Flags.PackageFlag.ContainsScript] = (uint)PackageFlagsUE3.ContainsScript;
+                PackageFlags[(int)Flags.PackageFlag.StrippedSource] = (uint)PackageFlagsUE3.StrippedSource;
             }
 #endif
         }
