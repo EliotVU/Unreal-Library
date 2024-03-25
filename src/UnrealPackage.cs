@@ -1712,6 +1712,7 @@ namespace UELib
                 return;
             }
 
+            ConstructObjects();
             if ((initFlags & InitFlags.Deserialize) == 0)
                 return;
 
