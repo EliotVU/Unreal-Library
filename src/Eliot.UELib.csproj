@@ -21,6 +21,7 @@
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DefineConstants>$(DefineConstants);TRACE;DEBUG;</DefineConstants>
@@ -69,27 +70,18 @@
   </ItemGroup>
   <ProjectExtensions></ProjectExtensions>
   <PropertyGroup>
-    <NuspecFile>Eliot.UELib.nuspec</NuspecFile>
-    <NuspecProperties>$(NuspecProperties);configuration=$(Configuration)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);version=$(Version)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);id=$(PackageId)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);author=$(Authors)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);PackageProjectUrl=$(PackageProjectUrl)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);Description=$(Description)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);PackageReleaseNotes=$(PackageReleaseNotes)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);Copyright=$(Copyright)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);PackageTags=$(PackageTags)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);RepositoryType=$(RepositoryType)</NuspecProperties>
-    <NuspecProperties>$(NuspecProperties);RepositoryUrl=$(RepositoryUrl)</NuspecProperties>
-    <Description>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <AssemblyName>Eliot.UELib</AssemblyName>
+    <PackageId>$(AssemblyName)</PackageId>
+    <Version>$(VersionPrefix)1.4.0</Version>
+    <Authors>EliotVU</Authors>
+    <Title>$(AssemblyName)</Title>
+    <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>
     <PackageTags>UnrealEngine;UnrealScript;Decompiler;UPK;Exporter;Bytecode</PackageTags>
     <Copyright>2009-2024 Eliot van Uytfanghe. All rights reserved.</Copyright>
-    <Authors>EliotVU</Authors>
     <PackageProjectUrl>https://github.com/EliotVU/Unreal-Library</PackageProjectUrl>
-    <PackageReadmeFile>README.MD</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/EliotVU/Unreal-Library</RepositoryUrl>
-    <Version>$(VersionPrefix)1.4.0</Version>
-    <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>

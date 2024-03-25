@@ -20,15 +20,15 @@ namespace Eliot.UELib.Test
                 (ulong)(DefaultEngineBranch.PackageFlagsDefault.AllowDownload |
                         DefaultEngineBranch.PackageFlagsDefault.ServerSideOnly);
             
-            var flagsMap = new ulong[(int)PackageFlags.Max];
-            flagsMap[(int)PackageFlags.AllowDownload] = (ulong)DefaultEngineBranch.PackageFlagsDefault.AllowDownload;
-            flagsMap[(int)PackageFlags.ServerSideOnly] = (ulong)DefaultEngineBranch.PackageFlagsDefault.ServerSideOnly;
-            var flags = new UnrealFlags<PackageFlags>(serializedFlags, ref flagsMap);
+            var flagsMap = new ulong[(int)PackageFlag.Max];
+            flagsMap[(int)PackageFlag.AllowDownload] = (ulong)DefaultEngineBranch.PackageFlagsDefault.AllowDownload;
+            flagsMap[(int)PackageFlag.ServerSideOnly] = (ulong)DefaultEngineBranch.PackageFlagsDefault.ServerSideOnly;
+            var flags = new UnrealFlags<PackageFlag>(serializedFlags, ref flagsMap);
 
             // Verify mapped flags
-            Assert.IsTrue(flags.HasFlag(PackageFlags.AllowDownload));
-            Assert.IsTrue(flags.HasFlag(PackageFlags.ServerSideOnly));
-            Assert.IsFalse(flags.HasFlag(PackageFlags.ClientOptional));
+            Assert.IsTrue(flags.HasFlag(PackageFlag.AllowDownload));
+            Assert.IsTrue(flags.HasFlag(PackageFlag.ServerSideOnly));
+            Assert.IsFalse(flags.HasFlag(PackageFlag.ClientOptional));
             
             // Verify actual flags
             Assert.IsTrue(flags.HasFlags((uint)DefaultEngineBranch.PackageFlagsDefault.AllowDownload));
