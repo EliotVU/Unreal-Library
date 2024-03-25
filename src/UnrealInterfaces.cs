@@ -18,6 +18,17 @@ namespace UELib
     }
 
     /// <summary>
+    /// This class has a reference to an object and are both decompilable.
+    /// </summary>
+    public interface IDecompilableObject : IUnrealDecompilable
+    {
+        /// <summary>
+        /// The decompileable object that will be decompiled when this object's Decompile() function is called.
+        /// </summary>
+        IUnrealDecompilable Object { get; }
+    }
+
+    /// <summary>
     /// This class has a stream reference.
     /// </summary>
     public interface IBuffered
