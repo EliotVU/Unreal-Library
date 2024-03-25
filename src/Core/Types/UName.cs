@@ -1,16 +1,14 @@
 ﻿using System;
 
-// FIXME: Namespace correction is blocked by (UE Explorer)
-namespace UELib
+namespace UELib.Core
 {
     /// <summary>
     /// Implements FName. A data type that represents a string, usually acquired from a names table.
     /// </summary>
-    public class UName
+    public class UName : IComparable<UName>
     {
         private const string    None = "None";
         public const int        Numeric = 0;
-        public const int        VNameNumbered = 343;
 
         private UNameTableItem  _NameItem;
 
@@ -32,7 +30,7 @@ namespace UELib
             _NameItem = stream.Package.Names[index];
         }
 
-        public UName(UNameTableItem nameItem, int number)
+        public UName(UNameTableItem nameItem, int number = Numeric)
 {
             _NameItem = nameItem;
             _Number = number;
@@ -46,13 +44,15 @@ namespace UELib
                 Name = text
             };
             _NameItem = nameEntry;
-            _Number = 0;
+            _Number = Numeric;
         }
 
         public bool IsNone()
         {
             return _NameItem.Name.Equals(None, StringComparison.OrdinalIgnoreCase);
         }
+
+        public int CompareTo(UName other) => string.Compare(other.Text, Text, StringComparison.OrdinalIgnoreCase);
 
         public override string ToString()
         {

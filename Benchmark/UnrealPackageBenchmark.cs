@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
 using BenchmarkDotNet.Attributes;
-using Eliot.UELib.Test;
 using UELib;
 
 namespace Eliot.UELib.Benchmark
@@ -9,11 +8,11 @@ namespace Eliot.UELib.Benchmark
     public class UnrealPackageBenchmark
     {
         private readonly string _TempFilePath;
-        private UnrealPackage _Linker;
+        private readonly UnrealPackage _Linker;
 
         public UnrealPackageBenchmark()
         {
-            byte[] testFileBytes = Packages.TestUC2;
+            byte[] testFileBytes = { };
             _TempFilePath = Path.Join(Assembly.GetExecutingAssembly().Location, "../test.u");
             // Workaround due the enforced use of UnrealLoader's UPackageStream
             File.WriteAllBytes(_TempFilePath, testFileBytes);
@@ -34,8 +33,8 @@ namespace Eliot.UELib.Benchmark
         public void NamesDeserialization()
         {
             _Linker.Stream.Position = 4;
-            _Linker.Stream.Seek(_Linker.Summary.NamesOffset, SeekOrigin.Begin);
-            for (var i = 0; i < _Linker.Summary.NamesCount; ++i)
+            _Linker.Stream.Seek(_Linker.Summary.NameOffset, SeekOrigin.Begin);
+            for (var i = 0; i < _Linker.Summary.NameCount; ++i)
             {
                 var nameEntry = new UNameTableItem();
                 nameEntry.Deserialize(_Linker.Stream);

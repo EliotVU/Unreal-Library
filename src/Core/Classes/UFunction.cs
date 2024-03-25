@@ -44,16 +44,30 @@ namespace UELib.Core
         protected override void Deserialize()
         {
 #if BORDERLANDS2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2)
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
                 ushort size = _Buffer.ReadUShort();
-                Record("Unknown:Borderlands2", size);
                 _Buffer.Skip(size * 2);
+                Record("Unknown:Borderlands2", size);
+
             }
 #endif
-
             base.Deserialize();
-
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                FunctionFlags = _Buffer.ReadUInt32();
+                Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+                if (HasFunctionFlag(Flags.FunctionFlags.Net))
+                {
+                    RepOffset = _Buffer.ReadUShort();
+                    Record(nameof(RepOffset), RepOffset);
+                }
+                FriendlyName = ExportTable.ObjectName;
+                return;
+            }
+#endif
             if (_Buffer.Version < 64)
             {
                 ushort paramsSize = _Buffer.ReadUShort();
@@ -80,7 +94,7 @@ namespace UELib.Core
 
 #if TRANSFORMERS
             // TODO: Version?
-            FunctionFlags = Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
+            FunctionFlags = Package.Build == BuildGeneration.HMS
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
 #else
@@ -108,8 +122,8 @@ namespace UELib.Core
             // TODO: Data-strip version?
             if (_Buffer.Version >= VFriendlyName && !Package.IsConsoleCooked()
 #if TRANSFORMERS
-                // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
-                && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
+                                                 // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
+                                                 && Package.Build != BuildGeneration.HMS
 #endif
 #if MKKE
                 // Cooked and stripped, but FriendlyName still remains
@@ -124,7 +138,7 @@ namespace UELib.Core
             {
                 // HACK: Workaround for packages that have stripped FriendlyName data.
                 // FIXME: Operator names need to be translated.
-                FriendlyName = Table.ObjectName;
+                if (FriendlyName == null) FriendlyName = Table.ObjectName;
             }
         }
 
@@ -143,7 +157,11 @@ namespace UELib.Core
         #endregion
 
         #region Methods
-
+        public bool HasFunctionFlag(uint flag)
+        {
+            return ((uint)FunctionFlags & flag) != 0;
+        }
+        
         public bool HasFunctionFlag(FunctionFlags flag)
         {
             return ((uint)FunctionFlags & (uint)flag) != 0;
@@ -162,6 +180,14 @@ namespace UELib.Core
         public bool IsPre()
         {
             return IsOperator() && HasFunctionFlag(Flags.FunctionFlags.PreOperator);
+        }
+
+        public bool HasOptionalParamData()
+        {
+            // FIXME: Deprecate version check, and re-map the function flags using the EngineBranch class approach.
+            return Package.Version > 300 
+                   && ByteCodeManager != null 
+                   && HasFunctionFlag(Flags.FunctionFlags.OptionalParameters);
         }
 
         #endregion

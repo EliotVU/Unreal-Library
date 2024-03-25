@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using UELib.Annotations;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -10,12 +12,10 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        [CanBeNull] public UField Super { get; private set; }
-        [CanBeNull] public UField NextField { get; private set; }
+        [CanBeNull] public UStruct Super { get; set; }
+        [CanBeNull] public UField NextField { get; set; }
 
         #endregion
-
-        #region Script Members
 
         /// <summary>
         /// Initialized by the UMetaData object,
@@ -23,61 +23,46 @@ namespace UELib.Core
         /// </summary>
         [CanBeNull] public UMetaData.UFieldData MetaData;
 
-        #endregion
-
         #region Constructors
 
         protected override void Deserialize()
         {
             base.Deserialize();
 
-            // _SuperIndex got moved into UStruct since 700+
-            if ((Package.Version < 756
-#if SPECIALFORCE2
-                 || Package.Build == UnrealPackage.GameBuild.BuildName.SpecialForce2
-#endif
-#if TRANSFORMERS
-                 || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
-#endif
-                )
-#if BIOSHOCK
-                && Package.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
-#endif
-               )
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
-                Super = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                Record("Super", Super);
-
-                NextField = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                Record("NextField", NextField);
+                Super = _Buffer.ReadObject<UStruct>();
+                Record(nameof(Super), Super);
             }
-            else
-            {
-                NextField = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                Record("NextField", NextField);
 
-                // Should actually resist in UStruct
-                if (this is UStruct)
-                {
-                    Super = GetIndexObject(_Buffer.ReadObjectIndex()) as UField;
-                    Record("Super", Super);
-                }
-            }
+            NextField = _Buffer.ReadObject<UField>();
+            Record(nameof(NextField), NextField);
         }
 
         #endregion
-
-        #region Methods
-
-        public string GetSuperGroup()
+        
+        public IEnumerable<UStruct> EnumerateSuper()
         {
-            var group = string.Empty;
-            for (var field = Super; field != null; field = field.Super)
+            for (var super = Super; super != null; super = super.Super)
             {
-                group = $"{field.Name}.{@group}";
+                yield return super;
             }
+        }
 
-            return group + Name;
+        public IEnumerable<UStruct> EnumerateSuper(UStruct super)
+        {
+            for (; super != null; super = super.Super)
+            {
+                yield return super;
+            }
+        }
+
+        public IEnumerable<UField> EnumerateNext()
+        {
+            for (var next = NextField; next != null; next = next.NextField)
+            {
+                yield return next;
+            }
         }
 
         public bool Extends(string classType)
@@ -93,6 +78,16 @@ namespace UELib.Core
             return false;
         }
 
-        #endregion
+        [Obsolete]
+        public string GetSuperGroup()
+        {
+            var group = string.Empty;
+            for (var field = Super; field != null; field = field.Super)
+            {
+                group = $"{field.Name}.{@group}";
+            }
+
+            return group + Name;
+        }
     }
 }

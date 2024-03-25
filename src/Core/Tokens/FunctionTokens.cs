@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
+using UELib.Branch;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -9,6 +12,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.EndFunctionParms)]
             public class EndFunctionParmsToken : Token
             {
             }
@@ -21,7 +25,7 @@ namespace UELib.Core
                     return ReadName(stream);
                 }
 
-                protected void DeserializeCall()
+                protected virtual void DeserializeCall(IUnrealStream stream)
                 {
                     DeserializeParms();
                     Decompiler.DeserializeDebugToken();
@@ -52,8 +56,8 @@ namespace UELib.Core
                             break;
                     }
 
-                    return addParenthesis
-                        ? $"({t.Decompile()})"
+                    return addParenthesis 
+                        ? $"({t.Decompile()})" 
                         : t.Decompile();
                 }
 
@@ -131,7 +135,7 @@ namespace UELib.Core
                         switch (t)
                         {
                             // Skipped optional parameters
-                            case NoParmToken _:
+                            case EmptyParmToken _:
                                 output.Append(v);
                                 break;
 
@@ -158,73 +162,70 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.FinalFunction)]
             public class FinalFunctionToken : FunctionToken
             {
                 public UFunction Function;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
-                    {
-                        Decompiler.AlignSize(sizeof(int));
-                    }
-
                     Function = stream.ReadObject<UFunction>();
                     Decompiler.AlignObjectSize();
 
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
                 {
                     var output = string.Empty;
-                    if (Function != null)
+                    // Support for non native operators.
+                    if (Function.IsPost())
                     {
-                        // Support for non native operators.
-                        if (Function.IsPost())
+                        output = DecompilePreOperator(Function.FriendlyName);
+                    }
+                    else if (Function.IsPre())
+                    {
+                        output = DecompilePostOperator(Function.FriendlyName);
+                    }
+                    else if (Function.IsOperator())
+                    {
+                        output = DecompileOperator(Function.FriendlyName);
+                    }
+                    else
+                    {
+                        // Calling Super??.
+                        if (Function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext)
                         {
-                            output = DecompilePreOperator(Function.FriendlyName);
-                        }
-                        else if (Function.IsPre())
-                        {
-                            output = DecompilePostOperator(Function.FriendlyName);
-                        }
-                        else if (Function.IsOperator())
-                        {
-                            output = DecompileOperator(Function.FriendlyName);
-                        }
-                        else
-                        {
-                            // Calling Super??.
-                            if (Function.Name == Decompiler._Container.Name && !Decompiler._IsWithinClassContext)
-                            {
-                                output = "super";
+                            output = "super";
 
-                                // Check if the super call is within the super class of this functions outer(class)
-                                var container = Decompiler._Container;
-                                var context = (UField)container.Outer;
-                                if (context?.Super == null || Function.GetOuterName() != context.Super.Name)
+                            // Check if the super call is within the super class of this functions outer(class)
+                            var container = Decompiler._Container;
+                            var context = (UField)container.Outer;
+                            // ReSharper disable once PossibleNullReferenceException
+                            var contextFuncOuterName = context.Name;
+                            // ReSharper disable once PossibleNullReferenceException
+                            var callFuncOuterName = Function.Outer.Name;
+                            if (context.Super == null || callFuncOuterName != context.Super.Name)
+                            {
+                                // If there's no super to call, then we have a recursive call.
+                                if (container.Super == null)
                                 {
-                                    // There's no super to call then do a recursive super call.
-                                    if (container.Super == null)
+                                    output += $"({contextFuncOuterName})";
+                                }
+                                else
+                                {
+                                    // Different owners, then it is a deep super call.
+                                    if (callFuncOuterName != contextFuncOuterName)
                                     {
-                                        output += $"({container.GetOuterName()})";
-                                    }
-                                    else
-                                    {
-                                        // Different owners, then it is a deep super call.
-                                        if (Function.GetOuterName() != container.GetOuterName())
-                                        {
-                                            output += $"({Function.GetOuterName()})";
-                                        }
+                                        output += $"({callFuncOuterName})";
                                     }
                                 }
-
-                                output += ".";
                             }
 
-                            output += DecompileCall(Function.Name);
+                            output += ".";
                         }
+
+                        output += DecompileCall(Function.Name);
                     }
 
                     Decompiler._CanAddSemicolon = true;
@@ -232,26 +233,23 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.VirtualFunction)]
             public class VirtualFunctionToken : FunctionToken
             {
                 public UName FunctionName;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // TODO: Corrigate Version (Definitely not in MOHA, but in roboblitz(369))
-                    if (stream.Version >= 178 && stream.Version < 421 /*MOHA*/)
+#if UE3Proto
+                    // FIXME: Version
+                    if (stream.Version >= 178 && stream.Version < 200)
                     {
-                        byte isSuperCall = stream.ReadByte();
+                        byte isSuper = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
-
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MOHA)
-                    {
-                        Decompiler.AlignSize(sizeof(int));
-                    }
-
+#endif
                     FunctionName = DeserializeFunctionName(stream);
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
@@ -261,6 +259,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.GlobalFunction)]
             public class GlobalFunctionToken : FunctionToken
             {
                 public UName FunctionName;
@@ -268,7 +267,7 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     FunctionName = DeserializeFunctionName(stream);
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
@@ -278,6 +277,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.DelegateFunction)]
             public class DelegateFunctionToken : FunctionToken
             {
                 public byte? IsLocal;
@@ -286,8 +286,8 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // TODO: Corrigate Version
-                    if (stream.Version >= 181)
+                    // FIXME: Version
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.IsLocalAddedToDelegateFunctionToken)
                     {
                         IsLocal = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
@@ -297,7 +297,7 @@ namespace UELib.Core
                     Decompiler.AlignObjectSize();
 
                     FunctionName = DeserializeFunctionName(stream);
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()
@@ -307,13 +307,14 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.NativeFunction)]
             public class NativeFunctionToken : FunctionToken
             {
                 public NativeTableItem NativeItem;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeCall();
+                    DeserializeCall(stream);
                 }
 
                 public override string Decompile()

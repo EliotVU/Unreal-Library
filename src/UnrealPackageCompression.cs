@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using UELib.Annotations;
-using UELib.Core.Types;
+using UELib.Flags;
 
 namespace UELib
 {
@@ -10,46 +10,70 @@ namespace UELib
     [PublicAPI]
     public class CompressedChunk : IUnrealSerializableClass
     {
-        public int UncompressedOffset;
-        public int UncompressedSize;
-        public int CompressedOffset;
-        public int CompressedSize;
+        private long _UncompressedOffset;
+        private int _UncompressedSize;
+        private long _CompressedOffset;
+        private int _CompressedSize;
+
+        public long UncompressedOffset
+        {
+            get => _UncompressedOffset;
+            set => _UncompressedOffset = value;
+        }
+
+        public int UncompressedSize
+        {
+            get => _UncompressedSize;
+            set => _UncompressedSize = value;
+        }
+
+        public long CompressedOffset
+        {
+            get => _CompressedOffset;
+            set => _CompressedOffset = value;
+        }
+
+        public int CompressedSize
+        {
+            get => _CompressedSize;
+            set => _CompressedSize = value;
+        }
 
         public void Serialize(IUnrealStream stream)
         {
 #if ROCKETLEAGUE
 
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague
-                && stream.Package.LicenseeVersion >= 22)
+                && stream.LicenseeVersion >= 22)
             {
-                stream.Write((long)UncompressedOffset);
-                stream.Write((long)CompressedOffset);
+                stream.Write(_UncompressedOffset);
+                stream.Write(_CompressedOffset);
                 goto streamStandardSize;
             }
 #endif
-            stream.Write(UncompressedOffset);
-            stream.Write(UncompressedSize);
+            stream.Write((int)_UncompressedOffset);
+            stream.Write(_UncompressedSize);
         streamStandardSize:
-            stream.Write(CompressedOffset);
-            stream.Write(CompressedSize);
+            stream.Write((int)_CompressedOffset);
+            stream.Write(_CompressedSize);
         }
 
         public void Deserialize(IUnrealStream stream)
         {
 #if ROCKETLEAGUE
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague
-                && stream.Package.LicenseeVersion >= 22)
+                && stream.LicenseeVersion >= 22)
             {
-                UncompressedOffset = (int)stream.ReadInt64();
-                CompressedOffset = (int)stream.ReadInt64();
+                _UncompressedOffset = stream.ReadInt64();
+                _CompressedOffset = stream.ReadInt64();
                 goto streamStandardSize;
             }
 #endif
-            UncompressedOffset = stream.ReadInt32();
-            CompressedOffset = stream.ReadInt32();
+            _UncompressedOffset = stream.ReadInt32();
+            _CompressedOffset = stream.ReadInt32();
         streamStandardSize:
-            UncompressedSize = stream.ReadInt32();
-            CompressedSize = stream.ReadInt32();
+            _UncompressedSize = stream.ReadInt32();
+            _CompressedSize = stream.ReadInt32();
         }
     }
 
@@ -103,6 +127,11 @@ namespace UELib
         {
             CompressedSize = stream.ReadInt32();
             UncompressedSize = stream.ReadInt32();
+        }
+
+        public int Decompress(byte[] compressedData, int index, CompressionFlags flags)
+        {
+            return UncompressedSize;
         }
     }
 }

@@ -12,25 +12,24 @@
         FloatProperty		= 4,
         ObjectProperty		= 5,	// Object, Component, Interface
         NameProperty		= 6,
-        StringProperty		= 7,	// (Fixed String UE1)
-        DelegateProperty	= 7,	// (Delegate UE2+)
-        ClassProperty		= 8, 	// Deprecated???
-        ArrayProperty		= 9,	// Dynamic Array
+        StringProperty		= 7,	// <= UE1, fixed string
+        DelegateProperty	= StringProperty,	// >= UE2, displaced StringProperty
+        ClassProperty		= 8,
+        ArrayProperty		= 9,	// >= UT, dynamic array
         StructProperty		= 10, 	// Struct, Pointer
         // 11, 12 moved to hardcoded structs.
-        StrProperty			= 13,	// Dynamic string(UE2+)
-        MapProperty			= 14,
-        FixedArrayProperty	= 15,	// Fixed Array
+        StrProperty			= 13,	// >= UT, dynamic string
+        MapProperty			= 14,   // >= UT
+        FixedArrayProperty	= 15,	// >= UT, fixed array, < UE3
+        PointerProperty     = 16,	// >= UE2.5 (UT2004), < UE3
 
 #if BIOSHOCK
         QwordProperty,              // (UE3, Bioshock Infinite)
         XWeakReferenceProperty,
 #endif
 
-        // Temp
-        PointerProperty,	        // (UE2)
-        InterfaceProperty,	        // (UE3)
-        ComponentProperty,	        // (UE3)
+        InterfaceProperty,  // >= UE3, displaced FixedArrayProperty, actual value 15, but we don't need the value for UE3 types.
+        ComponentProperty,	// >= UE3
 
         StructOffset		= (1 + ComponentProperty),
 
@@ -53,5 +52,10 @@
         TwoVectors			= (16 + StructOffset),
         //InterpCurve		= (17 + PropertyType.StructOffset)
         //InterpCurvePoint	= (18 + PropertyType.StructOffset)
+        PointRegion         = (19 + StructOffset),
+
+        // Auto-conversions for old (<= 61) "StructName"s
+        Rotation = Rotator,
+        Region = PointRegion,
     }
 }

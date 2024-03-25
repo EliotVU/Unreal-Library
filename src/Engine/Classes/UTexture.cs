@@ -1,42 +1,56 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using UELib.Annotations;
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib.Engine
 {
+    /// <summary>
+    ///     Implements UTexture/Engine.Texture
+    /// </summary>
     [UnrealRegisterClass]
-    public class UTexture : UBitmapMaterial, IUnrealViewable
+    public class UTexture : UBitmapMaterial
     {
-        public UArray<MipMap> Mips;
         public bool HasComp;
+
+        [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)] [CanBeNull]
+        public UArray<LegacyMipMap> Mips;
+
+        [BuildGeneration(BuildGeneration.UE3)]
+        public UBulkData<byte> SourceArt;
 
         protected override void Deserialize()
         {
             base.Deserialize();
 
-            if (_Buffer.Version > 160)
+            // This kind of data was moved to UTexture2D
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3)
             {
-                throw new NotSupportedException("UTexture is not supported for this build");
+                _Buffer.Read(out SourceArt);
+                Record(nameof(SourceArt), SourceArt);
+                return;
+            }
+
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.CompMipsDeprecated)
+            {
+                var bHasCompProperty = Properties.Find("bHasComp");
+                if (bHasCompProperty != null)
+                {
+                    HasComp = bool.Parse(bHasCompProperty.Value);
+                    if (HasComp)
+                    {
+                        _Buffer.ReadArray(out UArray<LegacyMipMap> oldMips);
+                        Record(nameof(oldMips), oldMips);
+                    }
+                }
             }
 
             _Buffer.ReadArray(out Mips);
             Record(nameof(Mips), Mips);
-
-            var bHasCompProperty = Properties.Find("bHasComp");
-            if (bHasCompProperty != null)
-            {
-                HasComp = bool.Parse(bHasCompProperty.Value);
-                if (HasComp)
-                {
-                    throw new NotSupportedException("UTexture of this kind is not supported");
-                }
-            }
         }
 
-        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-        public struct MipMap : IUnrealSerializableClass
+        public struct LegacyMipMap : IUnrealSerializableClass
         {
-            public byte[] Data;
+            public UBulkData<byte> Data;
             public int USize;
             public int VSize;
             public byte UBits;
@@ -44,22 +58,20 @@ namespace UELib.Engine
 
             public void Deserialize(IUnrealStream stream)
             {
-                if (stream.Version >= 63)
-                {
-                    int positionAfterData = stream.ReadInt32();
-                }
-
-                Data = new byte[stream.ReadIndex()];
-                stream.Read(Data, 0, Data.Length);
-                USize = stream.ReadInt32();
-                VSize = stream.ReadInt32();
-                UBits = stream.ReadByte();
-                VBits = stream.ReadByte();
+                stream.Read(out Data);
+                stream.Read(out USize);
+                stream.Read(out VSize);
+                stream.Read(out UBits);
+                stream.Read(out VBits);
             }
 
             public void Serialize(IUnrealStream stream)
             {
-                throw new NotImplementedException();
+                stream.Write(ref Data);
+                stream.Write(USize);
+                stream.Write(VSize);
+                stream.Write(UBits);
+                stream.Write(VBits);
             }
         }
     }

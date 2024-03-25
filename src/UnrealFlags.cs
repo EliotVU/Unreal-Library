@@ -1,19 +1,110 @@
 using System;
+using System.Text;
 
 namespace UELib.Flags
 {
+    public class UnrealFlags<TEnum>
+        where TEnum : Enum
+    {
+        private ulong _Flags;
+        private readonly ulong[] _FlagsMap;
+        
+        public ulong Flags
+        {
+            get => _Flags;
+            set => _Flags = value;
+        }
+
+        public UnrealFlags(ulong flags, ref ulong[] flagsMap)
+        {
+            _Flags = flags;
+            _FlagsMap = flagsMap;
+        }
+        
+        private bool HasFlag(int flagIndex)
+        {
+            ulong flag = _FlagsMap[flagIndex];
+            return flag != 0 && (_Flags & flag) != 0;
+        }
+
+        public bool HasFlag(TEnum flagIndex)
+        {
+            ulong flag = _FlagsMap[(int)(object)flagIndex];
+            return flag != 0 && (_Flags & _FlagsMap[(int)(object)flagIndex]) != 0;
+        }
+
+        public bool HasFlags(uint flags)
+        {
+            return (_Flags & flags) != 0;
+        }
+
+        public bool HasFlags(ulong flags)
+        {
+            return (_Flags & flags) != 0;
+        }
+
+        public static explicit operator uint(UnrealFlags<TEnum> flags)
+        {
+            return (uint)flags._Flags;
+        }
+
+        public static explicit operator ulong(UnrealFlags<TEnum> flags)
+        {
+            return flags._Flags;
+        }
+
+        public override string ToString()
+        {
+            var stringBuilder = new StringBuilder();
+            var values = Enum.GetValues(typeof(TEnum));
+            for (var i = 0; i < values.Length - 1 /* Max */; i++)
+            {
+                if (!HasFlag(i)) continue;
+                string n = Enum.GetName(typeof(TEnum), i);
+                stringBuilder.Append($"{n};");
+            }
+            return stringBuilder.ToString();
+        }
+    }
+
     /// <summary>
-    /// Flags describing an package instance.
-    ///
-    /// Note:
-    ///     This is valid for UE3 as well unless otherwise noted.
-    ///
-    /// @Redefined( Version, Clone )
-    ///     The flag is redefined in (Version) as (Clone)
-    ///
-    /// @Removed( Version )
-    ///     The flag is removed in (Version)
+    /// <see cref="Branch.DefaultEngineBranch.PackageFlagsDefault"/>
+    /// 
+    /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE1"/>
+    /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE2"/>
+    /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE3"/>
+    /// <seealso cref="UELib.Branch.UE4.EngineBranchUE4.PackageFlagsUE4"/>
     /// </summary>
+    public enum PackageFlag
+    {
+        AllowDownload,
+        ClientOptional,
+        ServerSideOnly,
+
+        /// <summary>
+        /// UE1???
+        /// </summary>
+        Encrypted,
+        
+        Official,
+        
+        Cooked,
+#if UE3
+        ContainsMap,
+        ContainsDebugData,
+        ContainsScript,
+        StrippedSource,
+#endif
+#if UE4
+        EditorOnly,
+        UnversionedProperties,
+        ReloadingForCooker,
+        FilterEditorOnly,
+#endif
+        Max,
+    }
+
+    [Obsolete("Use the normalized PackageFlag instead")]
     [Flags]
     public enum PackageFlags : uint
     {
@@ -22,43 +113,50 @@ namespace UELib.Flags
         // 00020001 : A ordinary package
 
         /// <summary>
-        /// Whether clients are allowed to download the package from the server.
+        /// UEX: Whether clients are allowed to download the package from the server.
+        /// UE4: Displaced by "NewlyCreated"
         /// </summary>
-        AllowDownload       = 0x00000001U,
+        AllowDownload = 0x00000001U,
 
         /// <summary>
         /// Whether clients can skip downloading the package but still able to join the server.
         /// </summary>
-        ClientOptional      = 0x00000002U,
+        ClientOptional = 0x00000002U,
 
         /// <summary>
         /// Only necessary to load on the server.
         /// </summary>
-        ServerSideOnly      = 0x00000004U,
+        ServerSideOnly = 0x00000004U,
 
-        BrokenLinks         = 0x00000008U,      // @Redefined(UE3, Cooked)
+        BrokenLinks = 0x00000008U,      // @Redefined(UE3, Cooked)
 
         /// <summary>
         /// The package is cooked.
         /// </summary>
-        Cooked              = 0x00000008U,      // @Redefined
+        Cooked = 0x00000008U,      // @Redefined
 
         /// <summary>
         /// ???
         /// <= UT
         /// </summary>
-        Unsecure            = 0x00000010U,
+        Unsecure = 0x00000010U,
 
         /// <summary>
         /// The package is encrypted.
         /// <= UT
+        /// Also attested in file UT2004/Packages.MD5 but it is not encrypted.
         /// </summary>
-        Encrypted           = 0x00000020U,
+        Encrypted = 0x00000020U,
+
+#if UE4
+        EditorOnly = 0x00000040U,
+        UnversionedProperties = 0x00002000U,
+#endif
 
         /// <summary>
         /// Clients must download the package.
         /// </summary>
-        Need                = 0x00008000U,
+        Need = 0x00008000U,
 
         /// <summary>
         /// Unknown flags
@@ -67,33 +165,40 @@ namespace UELib.Flags
         ///
 
         /// Package holds map data.
-        Map                 = 0x00020000U,
+        ContainsMap = 0x00020000U,
 
         /// <summary>
         /// Package contains classes.
         /// </summary>
-        Script              = 0x00200000U,
+        ContainsScript = 0x00200000U,
 
         /// <summary>
         /// The package was build with -Debug
         /// </summary>
-        Debug               = 0x00400000U,
-        Imports             = 0x00800000U,
+        ContainsDebugData = 0x00400000U,
 
-        Compressed          = 0x02000000U,
-        FullyCompressed     = 0x04000000U,
+        Imports = 0x00800000U,
+
+        Compressed = 0x02000000U,
+        FullyCompressed = 0x04000000U,
 
         /// <summary>
         /// Whether package has metadata exported(anything related to the editor).
         /// </summary>
-        NoExportsData       = 0x20000000U,
+        NoExportsData = 0x20000000U,
 
         /// <summary>
         /// Package's source is stripped.
+        /// UE4: Same as ReloadingForCooker?
         /// </summary>
-        Stripped            = 0x40000000U,
-
-        Protected           = 0x80000000U,
+        Stripped = 0x40000000U,
+#if UE4
+        FilterEditorOnly = 0x80000000U,
+#endif
+        Protected = 0x80000000U,
+#if TRANSFORMERS
+        HMS_XmlFormat = 0x80000000U,
+#endif
     }
 
     [Flags]
@@ -179,10 +284,10 @@ namespace UELib.Flags
     }
 
     /// <summary>
-    /// Flags describing an function instance.
+    /// Flags describing a function instance.
     /// </summary>
     [Flags]
-    public enum FunctionFlags : ulong // actually uint but were using ulong for UE2 and UE3 Compatably
+    public enum FunctionFlags : ulong
     {
         Final               = 0x00000001U,
         Defined             = 0x00000002U,
@@ -198,24 +303,46 @@ namespace UELib.Flags
         Event               = 0x00000800U,
         Operator            = 0x00001000U,
         Static              = 0x00002000U,
-        NoExport            = 0x00004000U,      // Can also be an identifier for functions with Optional parameters.
+        
+        /// <summary>
+        /// NoExport
+        /// UE3 (~V300): Indicates whether we have optional parameters, including optional expression data.
+        /// </summary>
         OptionalParameters  = 0x00004000U,
+        NoExport            = 0x00004000U,
+
         Const               = 0x00008000U,
         Invariant           = 0x00010000U,
+        
+        // UE2 additions
+        // =============
+        
         Public              = 0x00020000U,
         Private             = 0x00040000U,
         Protected           = 0x00080000U,
         Delegate            = 0x00100000U,
-        NetServer           = 0x00200000U,
 #if VENGEANCE
         // Generated/Constructor?
         VG_Unk1             = 0x00200000U,
         VG_Overloaded       = 0x00800000U,
-#endif
+#endif      
+        /// <summary>
+        /// UE2: Multicast (Replicated to all relevant clients)
+        /// UE3: Function is replicated to relevant client.
+        /// </summary>
+        NetServer           = 0x00200000U,
+        
+        Interface           = 0x00400000U,
         NetClient           = 0x01000000U,
-        DLLImport           = 0x02000000U,      // Also available in UE2(unknown meaning there)
+        
+        /// <summary>
+        /// UE2: Unknown
+        /// UE3 (V655)
+        /// </summary>
+        DLLImport           = 0x02000000U,
+        // K2 Additions, late UDK, early implementation of Blueprints that were soon deprecated.
         K2Call              = 0x04000000U,
-        K2Override          = 0x08000000U,      // K2Call?
+        K2Override          = 0x08000000U,
         K2Pure              = 0x10000000U,
     }
 

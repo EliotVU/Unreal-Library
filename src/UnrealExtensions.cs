@@ -5,69 +5,63 @@ namespace UELib
 {
     public static class UnrealExtensions
     {
-        // .TFC - Texture File Cache
-
         public const string UnrealCodeExt = ".uc";
         public const string UnrealFlagsExt = ".UPKG";
 
-        public static readonly string[] ScriptExt       = new[]{ ".u", ".d2u", ".t3u" };
-        public static readonly string[] TextureExt      = new[]{ ".utx" };
-        public static readonly string[] SoundExt        = new[]{ ".uax", ".umx" };
-        public static readonly string[] MeshExt         = new[]{ ".usx", ".upx", ".ugx" };
-        public static readonly string[] AnimExt         = new[]{ ".ukx" };
-        public static readonly string[] CacheExt        = new[]{ ".uxx" };
-        // UT2004, UDK, Unreal, Red Orchestra Map
-        public static readonly string[] MapExt          = new[]
+        public static readonly string[] Code = { ".d2u", ".t3u" };
+        public static readonly string[] Map =
         {
-            ".ut2", ".udk", ".unr", ".rom", ".un2", ".aao",
-            ".run", ".sac", ".xcm", ".nrf", ".wot", ".scl",
-            ".dvs", ".rsm", ".ut3"
+            ".ut2", ".udk", ".unr",
+            ".rom", ".un2", ".aao",
+            ".run", ".sac", ".xcm",
+            ".nrf", ".wot", ".scl",
+            ".dvs", ".rsm", ".ut3",
+            ".umap"
         };
-        public static readonly string[] SaveExt         = new[]{ ".uvx", ".md5", ".usa", ".ums", ".rsa", ".sav" };
-        public static readonly string[] PackageExt      = new[]{ ".upk" };
-        public static readonly string[] ModExt          = new[]{ ".umod", ".ut2mod", ".ut4mod" };
+
+        public static readonly string[] Other = { ".md5", ".usa", ".ums", ".rsa", ".sav" };
+        public static readonly string[] Mod = { ".umod", ".ut2mod", ".ut4mod" };
+
+        public static readonly string[] Common = { ".u", ".upk", ".xxx", ".umap", ".uasset" };
+        public static readonly string[] Legacy =
+        {
+            ".utx", ".uax", ".umx",
+            ".usx", ".upx", ".ugx",
+            ".ukx", ".uxx", ".uvx"
+        };
 
         public static string FormatUnrealExtensionsAsFilter()
         {
-            var extensions = string.Empty;
-            var exts = FormatUnrealExtensionsAsList();
-            foreach (string ext in exts)
-            {
-                extensions += "*" + ext;
-                if (ext != exts.Last())
-                {
-                    extensions += ";";
-                }
-            }
+            string commonFilter = string.Empty;
+            commonFilter = Common.Aggregate(commonFilter, (current, ext) => current + "*" + ext + ";");
+            
+            string mapFilter = string.Empty;
+            mapFilter = Map.Aggregate(mapFilter, (current, ext) => current + "*" + ext + ";");
+            
+            string legacyFilter = string.Empty;
+            legacyFilter = Legacy.Aggregate(legacyFilter, (current, ext) => current + "*" + ext + ";" );
 
-            return "All Unreal Files(" + extensions + ")|" + extensions;
+            return "All Files (*.*)|*.*";
+            //$"Unreal Files ()|{commonFilter}|" +
+            //$"Unreal Legacy Files ()|{legacyFilter}|" +
+            //$"Unreal Map Files ()|{mapFilter}";
         }
 
         public static List<string> FormatUnrealExtensionsAsList()
         {
-            var exts = new List<string>
+            var extensionsList = new List<string>
             (
-                ScriptExt.Length +
-                TextureExt.Length +
-                SoundExt.Length +
-                MeshExt.Length +
-                AnimExt.Length +
-                CacheExt.Length +
-                MapExt.Length +
-                SaveExt.Length +
-                PackageExt.Length
+                Common.Length +
+                Legacy.Length +
+                Map.Length +
+                Other.Length
             );
 
-            exts.AddRange(ScriptExt);
-            exts.AddRange(TextureExt);
-            exts.AddRange(SoundExt);
-            exts.AddRange(MeshExt);
-            exts.AddRange(AnimExt);
-            exts.AddRange(CacheExt);
-            exts.AddRange(MapExt);
-            exts.AddRange(SaveExt);
-            exts.AddRange(PackageExt);
-            return exts;
+            extensionsList.AddRange(Common);
+            extensionsList.AddRange(Legacy);
+            extensionsList.AddRange(Map);
+            extensionsList.AddRange(Other);
+            return extensionsList;
         }
     }
 }

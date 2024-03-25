@@ -10,7 +10,7 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UObject Object { get; private set; }
+        public UObject Object;
 
         #endregion
 
@@ -26,8 +26,7 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            int objectIndex = _Buffer.ReadObjectIndex();
-            Object = GetIndexObject(objectIndex);
+            Object = _Buffer.ReadObject<UObject>();
             Record(nameof(Object), Object);
         }
 

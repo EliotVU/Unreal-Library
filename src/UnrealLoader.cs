@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.IO;
+using System.Linq;
 using UELib.Decoding;
 
 namespace UELib
@@ -9,21 +10,21 @@ namespace UELib
     /// </summary>
     public static class UnrealLoader
     {
-        /// <summary>
-        /// Stored packages that were imported by certain objects. Kept here that in case re-use is necessary, that it will be loaded faster.
-        /// The packages and the list is closed and cleared by the main package that loaded them with ImportObjects().
-        /// In any other case the list needs to be cleared manually.
-        /// </summary>
-        private static readonly List<UnrealPackage> _CachedPackages = new List<UnrealPackage>();
+        public static UnrealPackage LoadPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
+        {
+            return LoadPackage(packagePath, UnrealPackage.GameBuild.BuildName.Unset, fileAccess);
+        }
 
         /// <summary>
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
+        public static UnrealPackage LoadPackage(string packagePath, UnrealPackage.GameBuild.BuildName buildTarget,
+            FileAccess fileAccess = FileAccess.Read)
         {
             var stream = new UPackageStream(packagePath, FileMode.Open, fileAccess);
             var package = new UnrealPackage(stream);
+            package.BuildTarget = buildTarget;
             package.Deserialize(stream);
             return package;
         }
@@ -35,28 +36,9 @@ namespace UELib
         public static UnrealPackage LoadPackage(string packagePath, IBufferDecoder decoder,
             FileAccess fileAccess = FileAccess.Read)
         {
-            var stream = new UPackageStream(packagePath, FileMode.Open, fileAccess);
-            var package = new UnrealPackage(stream) { Decoder = decoder };
+            var stream = new UPackageStream(packagePath, FileMode.Open, fileAccess) { Decoder = decoder };
+            var package = new UnrealPackage(stream);
             package.Deserialize(stream);
-            return package;
-        }
-
-        /// <summary>
-        /// Looks if the package is already loaded before by looking into the CachedPackages list first.
-        /// If it is not found then it loads the given file specified by PackagePath and returns the serialized UnrealPackage.
-        /// </summary>
-        public static UnrealPackage LoadCachedPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
-        {
-            var package = _CachedPackages.Find(pkg => pkg.PackageName == Path.GetFileNameWithoutExtension(packagePath));
-            if (package != null)
-                return package;
-
-            package = LoadPackage(packagePath, fileAccess);
-            if (package != null)
-            {
-                _CachedPackages.Add(package);
-            }
-
             return package;
         }
 
@@ -70,6 +52,46 @@ namespace UELib
             package?.InitializePackage();
 
             return package;
+        }
+
+        /// <summary>
+        /// Looks if the package is already loaded before by looking into the CachedPackages list first.
+        /// If it is not found then it loads the given file specified by PackagePath and returns the serialized UnrealPackage.
+        /// </summary>
+        [Obsolete]
+        public static UnrealPackage LoadCachedPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
+        {
+            throw new NotImplementedException("Deprecated");
+        }
+
+        /// <summary>
+        /// Tests if the given file path has a Unreal extension.
+        /// </summary>
+        /// <param name="filePath">The path to the Unreal file.</param>
+        public static bool IsUnrealFileExtension(string filePath)
+        {
+            string fileExt = Path.GetExtension(filePath);
+            return UnrealExtensions.Common.Any(ext => fileExt == ext);
+        }
+
+        /// <summary>
+        /// Tests if the given file has a Unreal signature.
+        /// </summary>
+        /// <param name="filePath">The path to the Unreal file.</param>
+        public static bool IsUnrealFileSignature(string filePath)
+        {
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            byte[] buffer = new byte[4];
+            int read = stream.Read(buffer, 0, 4);
+            stream.Dispose();
+
+            uint signature = BitConverter.ToUInt32(buffer, 0);
+            // Naive and a bit slow, but this works for most standard files.
+            return read == 4 && (
+                signature == UnrealPackage.Signature ||
+                signature == UnrealPackage.Signature_BigEndian
+                // TODO: Check for other games' signatures
+            );
         }
     }
 }

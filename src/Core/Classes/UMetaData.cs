@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace UELib.Core
@@ -10,8 +9,6 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public sealed class UMetaData : UObject
     {
-        #region Serialized Members
-
         public sealed class UFieldData : IUnrealDecompilable, IUnrealSerializableClass
         {
             private string _FieldName;
@@ -19,7 +16,7 @@ namespace UELib.Core
             private UField _Field;
 
             // Dated qualified identifier to this meta data's field. e.g. UT3, Mirrors Edge
-            public Dictionary<string, string> Tags;
+            public UMap<string, string> Tags;
 
             public void Serialize(IUnrealStream stream)
             {
@@ -36,12 +33,12 @@ namespace UELib.Core
                 else
                 {
                     // TODO: Possibly linked to a non-ufield?
-                    _Field = (UField)stream.ReadObject();
+                    _Field = stream.ReadObject<UField>();
                     _Field.MetaData = this;
                 }
 
                 int length = stream.ReadInt32();
-                Tags = new Dictionary<string, string>(length);
+                Tags = new UMap<string, string>(length);
                 for (var i = 0; i < length; ++i)
                 {
                     var key = stream.ReadNameReference();
@@ -72,8 +69,15 @@ namespace UELib.Core
             }
         }
 
-        // ReSharper disable once MemberCanBePrivate.Global
-        public UArray<UFieldData> MetaObjects;
+        #region Serialized Members
+        
+        private UArray<UFieldData> _Fields;
+
+        public UArray<UFieldData> Fields
+        {
+            get => _Fields;
+            set => _Fields = value;
+        }
 
         #endregion
 
@@ -82,7 +86,8 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-            _Buffer.ReadArray(out MetaObjects);
+            _Buffer.ReadArray(out _Fields);
+            Record(nameof(_Fields), _Fields);
         }
 
         #endregion
@@ -103,12 +108,12 @@ namespace UELib.Core
         {
             // UE3 Debug
             BeginDeserializing();
-            if (MetaObjects == null)
+            if (_Fields == null)
             {
                 return "";
             }
 
-            return string.Join("\r\n", MetaObjects.ConvertAll(data => data + data.Decompile()));
+            return string.Join("\r\n", _Fields.ConvertAll(data => data + data.Decompile()));
         }
 
         #endregion

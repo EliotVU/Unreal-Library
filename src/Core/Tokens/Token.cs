@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -8,29 +12,30 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
-            public abstract class Token : IUnrealDecompilable, IUnrealDeserializableClass
+            public abstract class Token : IUnrealDecompilable, IUnrealDeserializableClass, IAcceptable
             {
                 public UByteCodeDecompiler Decompiler { get; set; }
 
-                protected UnrealPackage Package => Decompiler.Package;
-
-                public byte RepresentToken;
+                protected UnrealPackage Package => Decompiler._Package;
 
                 /// <summary>
-                /// The relative position of this token.
-                /// Storage--The actual token position within the Buffer.
+                /// The raw serialized byte-code for this token.
+                ///
+                /// e.g. if this token were to represent an expression token such as <see cref="ExprToken.StructMember"/>
+                /// then the OpCode will read 0x36 for UE2, but 0x35 for UE3.
+                /// This can be useful for tracking or re-writing a token to a file.
                 /// </summary>
-                public uint Position;
-
-                public uint StoragePosition;
+                public byte OpCode;
 
                 /// <summary>
-                /// The size of this token and its inlined tokens.
-                /// Storage--The actual token size within the Buffer.
+                /// The read position of this token in memory relative to <see cref="UStruct.ScriptOffset"/>.
                 /// </summary>
-                public ushort Size;
+                public int Position, StoragePosition;
 
-                public ushort StorageSize;
+                /// <summary>
+                /// The read size of this token in memory, inclusive of child tokens.
+                /// </summary>
+                public short Size, StorageSize;
 
                 public virtual void Deserialize(IUnrealStream stream)
                 {
@@ -45,11 +50,6 @@ namespace UELib.Core
                     return string.Empty;
                 }
 
-                public virtual string Disassemble()
-                {
-                    return $"0x{RepresentToken:X2}";
-                }
-
                 protected string DecompileNext()
                 {
                 tryNext:
@@ -58,7 +58,7 @@ namespace UELib.Core
 
                     return token.Decompile();
                 }
-                
+
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected T NextToken<T>()
                     where T : Token
@@ -75,13 +75,13 @@ namespace UELib.Core
 
                     return t;
                 }
-                
+
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected void SkipCurrentToken()
                 {
                     ++Decompiler.CurrentTokenIndex;
                 }
-                
+
                 /// <summary>
                 /// Asserts that the token that we want to skip is indeed of the correct type, this also skips past any <see cref="DebugInfoToken"/>.
                 /// </summary>
@@ -103,6 +103,13 @@ namespace UELib.Core
                 protected Token DeserializeNext()
                 {
                     return Decompiler.DeserializeNext();
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                protected T DeserializeNext<T>()
+                    where T : Token
+                {
+                    return (T)Decompiler.DeserializeNext();
                 }
 
                 /// <summary>
@@ -145,13 +152,48 @@ namespace UELib.Core
                     return obj;
                 }
 
+                public void Accept(IVisitor visitor)
+                {
+                    visitor.Visit(this);
+                }
+
+                public TResult Accept<TResult>(IVisitor<TResult> visitor)
+                {
+                    return visitor.Visit(this);
+                }
+
+                public ExprToken GetExprToken()
+                {
+                    var type = GetType();
+                    var exprTokenAttr = type.GetCustomAttribute<ExprTokenAttribute>();
+                    return exprTokenAttr.ExprToken;
+                }
+                
+                public override int GetHashCode() => GetType().GetHashCode();
+
                 public override string ToString()
                 {
                     return
-                        $"\r\nType:{GetType().Name}\r\nToken:{RepresentToken:X2}\r\nPosition:{Position}\r\nSize:{Size}"
-                            .Replace("\n", "\n"
-                                           + UDecompilingState.Tabs
-                            );
+                        $"\r\nInstantiated Type: {GetType().Name}" +
+                        $"\r\nSerialized OpCode: {OpCode:X2}h" +
+                        $"\r\nOffset: {PropertyDisplay.FormatOffset(Position)}" +
+                        $"\r\nSize: {PropertyDisplay.FormatOffset(Size)}";
+                }
+            }
+
+            public class BadToken : Token
+            {
+                public override void Deserialize(IUnrealStream stream)
+                {
+#if STRICT
+                    Debug.Fail($"Bad expression token 0x{OpCode:X2}");
+#endif
+                }
+
+                public override string Decompile()
+                {
+                    Decompiler.PreComment = $"// {FormatTokenInfo(this)}";
+                    return default;
                 }
             }
 

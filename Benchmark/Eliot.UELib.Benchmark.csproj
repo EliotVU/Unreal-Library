@@ -4,15 +4,17 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Configurations>Debug;Release;UnitTest</Configurations>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPublishable>False</IsPublishable>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\Eliot.UELib.csproj" />
-    <ProjectReference Include="..\Test\Eliot.UELib.Test.csproj" />
   </ItemGroup>
 
 </Project>

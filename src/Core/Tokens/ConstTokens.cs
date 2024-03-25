@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Globalization;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 using UELib.UnrealScript;
 
 namespace UELib.Core
@@ -8,6 +10,7 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.IntZero)]
             public class IntZeroToken : Token
             {
                 public override string Decompile()
@@ -16,6 +19,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IntOne)]
             public class IntOneToken : Token
             {
                 public override string Decompile()
@@ -24,6 +28,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.True)]
             public class TrueToken : Token
             {
                 public override string Decompile()
@@ -32,6 +37,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.False)]
             public class FalseToken : Token
             {
                 public override string Decompile()
@@ -40,6 +46,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.NoObject)]
             public class NoneToken : Token
             {
                 public override string Decompile()
@@ -48,6 +55,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.Self)]
             public class SelfToken : Token
             {
                 public override string Decompile()
@@ -56,6 +64,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IntConst)]
             public class IntConstToken : Token
             {
                 public int Value;
@@ -72,6 +81,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.ByteConst)]
             public class ByteConstToken : Token
             {
                 public byte Value;
@@ -128,6 +138,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.IntConstByte)]
             public class IntConstByteToken : Token
             {
                 public byte Value;
@@ -144,13 +155,14 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.FloatConst)]
             public class FloatConstToken : Token
             {
                 public float Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value = stream.UR.ReadSingle();
+                    Value = stream.ReadFloat();
                     Decompiler.AlignSize(sizeof(float));
                 }
 
@@ -160,6 +172,14 @@ namespace UELib.Core
                 }
             }
 
+            // Not supported, but has existed here and there
+            [ExprToken(ExprToken.StructConst)]
+            public class StructConstToken : Token
+            {
+                
+            }
+
+            [ExprToken(ExprToken.ObjectConst)]
             public class ObjectConstToken : Token
             {
                 public UObject ObjectRef;
@@ -170,18 +190,13 @@ namespace UELib.Core
                     Decompiler.AlignObjectSize();
                 }
 
-                // Produces: ClassName'ObjectName'
                 public override string Decompile()
                 {
-                    if (ObjectRef == null) return "none";
-
-                    string className = ObjectRef.GetClassName();
-                    if (string.IsNullOrEmpty(className)) className = "class";
-
-                    return $"{className}'{ObjectRef.Name}'";
+                    return PropertyDisplay.FormatLiteral(ObjectRef);
                 }
             }
 
+            [ExprToken(ExprToken.NameConst)]
             public class NameConstToken : Token
             {
                 public UName Name;
@@ -198,13 +213,14 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.StringConst)]
             public class StringConstToken : Token
             {
                 public string Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value = stream.UR.ReadAnsi();
+                    Value = stream.ReadAnsiNullString();
                     Decompiler.AlignSize(Value.Length + 1); // inc null char
                 }
 
@@ -214,13 +230,14 @@ namespace UELib.Core
                 }
             }
 
-            public class UniStringConstToken : Token
+            [ExprToken(ExprToken.UnicodeStringConst)]
+            public class UnicodeStringConstToken : Token
             {
                 public string Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value = stream.UR.ReadUnicode();
+                    Value = stream.ReadUnicodeNullString();
                     Decompiler.AlignSize(Value.Length * 2 + 2); // inc null char
                 }
 
@@ -230,69 +247,60 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.RotationConst)]
             public class RotationConstToken : Token
             {
-                public struct Rotator
-                {
-                    public int Pitch, Yaw, Roll;
-                }
-
-                public Rotator Value;
+                public URotator Rotation;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Value.Pitch = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
-                    Value.Yaw = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
-                    Value.Roll = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
+                    stream.ReadStruct(out Rotation);
+                    Decompiler.AlignSize(12);
                 }
 
                 public override string Decompile()
                 {
-                    return
-                        $"rot({PropertyDisplay.FormatLiteral(Value.Pitch)}, {PropertyDisplay.FormatLiteral(Value.Yaw)}, {PropertyDisplay.FormatLiteral(Value.Roll)})";
+                    return $"rot({PropertyDisplay.FormatLiteral(Rotation.Pitch)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Rotation.Yaw)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Rotation.Roll)})";
                 }
             }
 
+            [ExprToken(ExprToken.VectorConst)]
             public class VectorConstToken : Token
             {
-                public float X, Y, Z;
+                public UVector Vector;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    X = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
-                    Y = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
-                    Z = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
+                    stream.ReadStruct(out Vector);
+                    Decompiler.AlignSize(12);
                 }
 
                 public override string Decompile()
                 {
-                    return
-                        $"vect({PropertyDisplay.FormatLiteral(X)}, {PropertyDisplay.FormatLiteral(Y)}, {PropertyDisplay.FormatLiteral(Z)})";
+                    return $"vect({PropertyDisplay.FormatLiteral(Vector.X)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Vector.Y)}, " +
+                           $"{PropertyDisplay.FormatLiteral(Vector.Z)})";
                 }
             }
 
+            [ExprToken(ExprToken.RangeConst)]
             public class RangeConstToken : Token
             {
-                public float A, B;
+                public URange Range;
                 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    A = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
-                    B = stream.UR.ReadSingle();
-                    Decompiler.AlignSize(sizeof(float));
+                    stream.ReadStruct(out Range);
+                    Decompiler.AlignSize(8);
                 }
 
                 public override string Decompile()
                 {
                     return
-                        $"rng({PropertyDisplay.FormatLiteral(A)}, {PropertyDisplay.FormatLiteral(B)})";
+                        $"rng({PropertyDisplay.FormatLiteral(Range.A)}, " +
+                        $"{PropertyDisplay.FormatLiteral(Range.B)})";
                 }
             }
         }

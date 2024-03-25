@@ -12,8 +12,8 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UObject FunctionObject;
-        public UObject DelegateObject;
+        public UFunction Function;
+        public UFunction Delegate;
 
         #endregion
 
@@ -29,10 +29,24 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            FunctionObject = GetIndexObject(_Buffer.ReadObjectIndex());
-            if (Package.Version > 184)
+            Function = _Buffer.ReadObject<UFunction>();
+            Record(nameof(Function), Function);
+            // FIXME: Version 128-178
+            if (_Buffer.Version <= 184)
             {
-                DelegateObject = GetIndexObject(_Buffer.ReadObjectIndex());
+                return;
+            }
+
+            // FIXME: Version 374-491; Delegate source type changed from Name to Object
+            if (_Buffer.Version <= 375)
+            {
+                var source = _Buffer.ReadNameReference();
+                Record(nameof(source), source);
+            }
+            else
+            {
+                Delegate = _Buffer.ReadObject<UFunction>();
+                Record(nameof(Delegate), Delegate);
             }
         }
 
@@ -44,7 +58,7 @@ namespace UELib.Core
 
         public override string GetFriendlyInnerType()
         {
-            return FunctionObject != null ? FunctionObject.GetFriendlyType() : "@NULL";
+            return Function != null ? Function.GetFriendlyType() : "@NULL";
         }
     }
 }

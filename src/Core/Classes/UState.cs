@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UELib.Flags;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -17,6 +18,7 @@ namespace UELib.Core
     {
         // FIXME: Version 61 is the lowest package version I know that supports StateFlags.
         private const int VStateFlags = 61;
+
         // FIXME: Version
         private const int VFuncMap = 220;
         public const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
@@ -59,15 +61,20 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
+#if UE4
+            if (_Buffer.UE4Version > 0)
+            {
+                return;
+            }
+#endif
 #if TRANSFORMERS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+            if (Package.Build == BuildGeneration.HMS)
             {
                 goto noMasks;
             }
 #endif
 
-            if (_Buffer.Version < VProbeMaskReducedAndIgnoreMaskRemoved)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved)
             {
                 ProbeMask = _Buffer.ReadUInt64();
                 Record(nameof(ProbeMask), ProbeMask);
@@ -81,7 +88,7 @@ namespace UELib.Core
                 Record(nameof(ProbeMask), ProbeMask);
             }
 
-            noMasks:
+        noMasks:
             LabelTableOffset = _Buffer.ReadUInt16();
             Record(nameof(LabelTableOffset), LabelTableOffset);
 
@@ -90,29 +97,28 @@ namespace UELib.Core
 #if BORDERLANDS2 || TRANSFORMERS || BATMAN
                 // FIXME:Temp fix
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Transformers ||
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                    Package.Build == BuildGeneration.HMS ||
                     Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
                 {
                     _StateFlags = _Buffer.ReadUShort();
                     goto skipStateFlags;
                 }
 #endif
-
                 _StateFlags = _Buffer.ReadUInt32();
-                skipStateFlags:
+            skipStateFlags:
                 Record(nameof(_StateFlags), (StateFlags)_StateFlags);
             }
-
 #if TRANSFORMERS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+            if (Package.Build == BuildGeneration.HMS)
             {
                 _Buffer.Skip(4);
+                _Buffer.ConformRecordPosition();
                 return;
             }
 #endif
-
             if (_Buffer.Version < VFuncMap) return;
-            _Buffer.ReadMap(out FuncMap); 
+            _Buffer.ReadMap(out FuncMap);
             Record(nameof(FuncMap), FuncMap);
         }
 

@@ -49,7 +49,7 @@ namespace UELib.Core
             return content + UnrealConfig.PrintEndBracket() + ";";
         }
 
-        protected override string FormatHeader()
+        public override string FormatHeader()
         {
             var output = $"struct {FormatFlags()}{Name}{(Super != null ? $" {FormatExtends()} {Super.Name}" : string.Empty)}";
             string metaData = DecompileMeta();
@@ -214,6 +214,11 @@ namespace UELib.Core
                         : $"({property.CategoryName})";
                 }
                 output += $" {property.Decompile()};";
+                string s = property.PostDecompile();
+                if (!string.IsNullOrEmpty(s))
+                {
+                    output += s;
+                }
             }
 
             return output + "\r\n";
@@ -233,7 +238,7 @@ namespace UELib.Core
             var output = string.Empty;
             string innerOutput;
 
-            if (IsClassType("Class"))
+            if (ExportTable.ClassIndex == 0)
             {
                 output += "\r\n" +
                           "defaultproperties" +
@@ -257,7 +262,7 @@ namespace UELib.Core
             }
             catch (Exception e)
             {
-                innerOutput = $"{UDecompilingState.Tabs}// {e.GetType().Name} occurred while decompiling properties!" +
+                innerOutput = $"{UDecompilingState.Tabs}/* {e} */ // occurred while decompiling properties!" +
                               "\r\n";
             }
             finally

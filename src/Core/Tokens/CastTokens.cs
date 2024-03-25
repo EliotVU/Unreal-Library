@@ -1,4 +1,9 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -6,380 +11,144 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
-            public class CastToken : Token
-            {
-                public override void Deserialize(IUnrealStream stream)
-                {
-                    DeserializeNext();
-                }
-
-                public override string Decompile()
-                {
-                    return $"({DecompileNext()})";
-                }
-            }
-
+            [ExprToken(ExprToken.PrimitiveCast)]
             public class PrimitiveCastToken : Token
             {
+                public CastToken CastOpCode = CastToken.None;
+
+                [SuppressMessage("ReSharper", "StringLiteralTypo")]
+                private static readonly Dictionary<CastToken, string> CastTypeNameMap =
+                    new Dictionary<CastToken, string>
+                    {
+                        //{ CastToken.InterfaceToObject, "" },
+                        { CastToken.InterfaceToString, "string" },
+                        { CastToken.InterfaceToBool, "bool" },
+                        { CastToken.RotatorToVector, "Vector" },
+                        { CastToken.ByteToInt, "int" },
+                        { CastToken.ByteToBool, "bool" },
+                        { CastToken.ByteToFloat, "float" },
+                        { CastToken.IntToByte, "byte" },
+                        { CastToken.IntToBool, "bool" },
+                        { CastToken.IntToFloat, "float" },
+                        { CastToken.BoolToByte, "byte" },
+                        { CastToken.BoolToInt, "int" },
+                        { CastToken.BoolToFloat, "float" },
+                        { CastToken.FloatToByte, "byte" },
+                        { CastToken.FloatToInt, "int" },
+                        { CastToken.FloatToBool, "bool" },
+                        //{ CastToken.ObjectToInterface, "" },
+                        { CastToken.ObjectToBool, "bool" },
+                        { CastToken.NameToBool, "bool" },
+                        { CastToken.StringToByte, "byte" },
+                        { CastToken.StringToInt, "int" },
+                        { CastToken.StringToBool, "bool" },
+                        { CastToken.StringToFloat, "float" },
+                        { CastToken.StringToVector, "Vector" },
+                        { CastToken.StringToRotator, "Rotator" },
+                        { CastToken.VectorToBool, "bool" },
+                        { CastToken.VectorToRotator, "Rotator" },
+                        { CastToken.RotatorToBool, "bool" },
+                        { CastToken.ByteToString, "string" },
+                        { CastToken.IntToString, "string" },
+                        { CastToken.BoolToString, "string" },
+                        { CastToken.FloatToString, "string" },
+                        { CastToken.ObjectToString, "string" },
+                        { CastToken.NameToString, "string" },
+                        { CastToken.VectorToString, "string" },
+                        { CastToken.RotatorToString, "string" },
+                        { CastToken.DelegateToString, "string" },
+                        { CastToken.StringToName, "name" }
+                    };
+
+                public void GetFriendlyCastName(out string castTypeName)
+                {
+                    CastTypeNameMap.TryGetValue(CastOpCode, out castTypeName);
+                }
+
+                protected virtual void DeserializeCastToken(IUnrealStream stream)
+                {
+                    CastOpCode = (CastToken)stream.ReadByte();
+                    Decompiler.AlignSize(sizeof(byte));
+                }
+
+                private void RemapCastToken(IUnrealArchive stream)
+                {
+                    if (stream.Version >= VInterfaceClass) return;
+                    
+                    // TODO: Could there be more?
+                    switch (CastOpCode)
+                    {
+                        case CastToken.ObjectToInterface:
+                            CastOpCode = CastToken.StringToName;
+                            break;
+                    }
+                }
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
+                    DeserializeCastToken(stream);
+                    RemapCastToken(stream);
                     DeserializeNext();
                 }
 
                 public override string Decompile()
                 {
-                    return DecompileNext();
+                    // Suppress implicit casts
+                    switch (CastOpCode)
+                    {
+                        //case CastToken.IntToFloat:
+                        //case CastToken.ByteToInt:
+                        case CastToken.InterfaceToObject:
+                        case CastToken.ObjectToInterface:
+                            return DecompileNext();
+                    }
+
+                    GetFriendlyCastName(out string castTypeName);
+                    Debug.Assert(castTypeName != default, "Detected an unresolved token.");
+                    return $"{castTypeName}({DecompileNext()})";
                 }
             }
 
-            public abstract class ObjectCastToken : CastToken
+            [ExprToken(ExprToken.PrimitiveCast)]
+            public sealed class PrimitiveInlineCastToken : PrimitiveCastToken
             {
-                public UObject CastedObject;
+                protected override void DeserializeCastToken(IUnrealStream stream)
+                {
+                    CastOpCode = (CastToken)OpCode;
+                }
+            }
+
+            [ExprToken(ExprToken.DynamicCast)]
+            public class DynamicCastToken : Token
+            {
+                public UClass CastClass;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    CastedObject = stream.ReadObject();
+                    CastClass = stream.ReadObject<UClass>();
                     Decompiler.AlignObjectSize();
 
-                    base.Deserialize(stream);
+                    DeserializeNext();
+                }
+
+                public override string Decompile()
+                {
+                    return $"{CastClass.Name}({DecompileNext()})";
                 }
             }
 
-            public class DynamicCastToken : ObjectCastToken
+            [ExprToken(ExprToken.MetaCast)]
+            public class MetaClassCastToken : DynamicCastToken
             {
                 public override string Decompile()
                 {
-                    return CastedObject.Name + base.Decompile();
+                    return $"class<{CastClass.Name}>({DecompileNext()})";
                 }
             }
 
-            public class MetaCastToken : ObjectCastToken
-            {
-                public override string Decompile()
-                {
-                    return $"class<{CastedObject.Name}>{base.Decompile()}";
-                }
-            }
-
+            [ExprToken(ExprToken.InterfaceCast)]
             public class InterfaceCastToken : DynamicCastToken
             {
-            }
-
-            public class RotatorToVectorToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"vector{base.Decompile()}";
-                }
-            }
-
-            public class ByteToIntToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return DecompileNext();
-                    //return "int" + base.Decompile();
-                }
-            }
-
-            public class ByteToFloatToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"float{base.Decompile()}";
-                }
-            }
-
-            public class ByteToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class IntToByteToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"byte{base.Decompile()}";
-                }
-            }
-
-            public class IntToBoolToken : CastToken
-            {
-#if !SUPPRESS_BOOLINTEXPLOIT
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-#endif
-            }
-
-            public class IntToFloatToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"float{base.Decompile()}";
-                }
-            }
-
-            public class BoolToByteToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"byte{base.Decompile()}";
-                }
-            }
-
-            public class BoolToIntToken : CastToken
-            {
-#if !SUPPRESS_BOOLINTEXPLOIT
-                public override string Decompile()
-                {
-                    return $"int{base.Decompile()}";
-                }
-#endif
-            }
-
-            public class BoolToFloatToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"float{base.Decompile()}";
-                }
-            }
-
-            public class FloatToByteToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"byte{base.Decompile()}";
-                }
-            }
-
-            public class FloatToIntToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"int{base.Decompile()}";
-                }
-            }
-
-            public class FloatToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class ObjectToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class NameToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class StringToByteToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"byte{base.Decompile()}";
-                }
-            }
-
-            public class StringToIntToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"int{base.Decompile()}";
-                }
-            }
-
-            public class StringToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class StringToFloatToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"float{base.Decompile()}";
-                }
-            }
-
-            public class StringToVectorToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"vector{base.Decompile()}";
-                }
-            }
-
-            public class StringToRotatorToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"rotator{base.Decompile()}";
-                }
-            }
-
-            public class VectorToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class VectorToRotatorToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"rotator{base.Decompile()}";
-                }
-            }
-
-            public class RotatorToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class ByteToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class IntToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class BoolToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class FloatToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class NameToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class VectorToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class RotatorToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class StringToNameToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"name{base.Decompile()}";
-                }
-            }
-
-            public class ObjectToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class InterfaceToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public class InterfaceToBoolToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"bool{base.Decompile()}";
-                }
-            }
-
-            public class InterfaceToObjectToken : CastToken
-            {
-            }
-
-            public class ObjectToInterfaceToken : CastToken
-            {
-            }
-
-            public class DelegateToStringToken : CastToken
-            {
-                public override string Decompile()
-                {
-                    return $"string{base.Decompile()}";
-                }
-            }
-
-            public sealed class UnresolvedCastToken : CastToken
-            {
-                public override void Deserialize(IUnrealStream stream)
-                {
-#if DEBUG_HIDDENTOKENS
-                    Debug.WriteLine("Detected an unresolved token.");
-#endif
-                }
-                
-                public override string Decompile()
-                {
-                    Decompiler.PreComment = $"// {FormatTokenInfo(this)}";
-                    return base.Decompile();
-                }
             }
         }
     }

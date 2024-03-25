@@ -12,8 +12,7 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UClass InterfaceObject;
-        //public UInterfaceProperty InterfaceType = null;
+        public UClass InterfaceClass;
 
         #endregion
 
@@ -29,17 +28,14 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            int index = _Buffer.ReadObjectIndex();
-            InterfaceObject = (UClass)GetIndexObject(index);
-
-            //Index = _Buffer.ReadObjectIndex();
-            //_InterfaceType = (UInterfaceProperty)GetIndexObject( Index );
+            InterfaceClass = _Buffer.ReadObject<UClass>();
+            Record(nameof(InterfaceClass), InterfaceClass);
         }
 
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            return InterfaceObject != null ? InterfaceObject.GetFriendlyType() : "@NULL";
+            return InterfaceClass != null ? InterfaceClass.GetFriendlyType() : "@NULL";
         }
     }
 }

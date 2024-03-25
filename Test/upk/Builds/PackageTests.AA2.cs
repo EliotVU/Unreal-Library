@@ -1,10 +1,12 @@
 ﻿#if AA2
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
-using UELib.Decoding;
+using UELib.Branch.UE2.AA2;
+using UELib.Core;
 
 namespace Eliot.UELib.Test.upk.Builds
 {
@@ -12,9 +14,9 @@ namespace Eliot.UELib.Test.upk.Builds
     public class PackageTestsAA2
     {
         // Testing the "Arcade" packages only
-        private static readonly string PackagesPath = Packages.Packages_Path_AAA_2_6;
-        private static readonly string NoEncryptionCorePackagePath = Path.Join(PackagesPath, "AAA_Core.u");
-        private static readonly string EncryptedCorePackagePath = Path.Join(PackagesPath, "Core.u");
+        private static readonly string PackagesPath = Packages.Packages_Path;
+        private static readonly string NoEncryptionCorePackagePath = Path.Join(PackagesPath, "(V128_032,Encrypted)AAA_2_6_Core.u");
+        private static readonly string EncryptedCorePackagePath = Path.Join(PackagesPath, "(V128_032,Encrypted)AAA_2_6_Core.u");
 
         [TestMethod]
         public void TestPackageAAA2_6()
@@ -26,17 +28,21 @@ namespace Eliot.UELib.Test.upk.Builds
                 return;
             }
 
-            using var linker = UnrealLoader.LoadPackage(NoEncryptionCorePackagePath);
+            using var linker = UnrealLoader.LoadPackage(NoEncryptionCorePackagePath, UnrealPackage.GameBuild.BuildName.AA2_2_6);
             Assert.IsNotNull(linker);
-            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2, linker.Build.Name, "Incorrect package's build");
+            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2_2_6, linker.Build.Name, "Incorrect package's build");
+            Assert.AreEqual(typeof(EngineBranchAA2), linker.Branch.GetType(), "Incorrect package's branch");
 
-            // Requires UELib to be built without "Forms"
-            //linker.InitializePackage(UnrealPackage.InitFlags.Construct | UnrealPackage.InitFlags.RegisterClasses);
-            //var fn = linker.FindObject("ResetScores", typeof(UFunction));
-            //Debug.WriteLine($"Testing Object: {fn.Class.Name}'{fn.GetOuterGroup()}'");
-            //fn.BeginDeserializing();
-            //fn.Decompile();
-            //Assert.IsNull(fn.ThrownException);
+            linker.InitializePackage(UnrealPackage.InitFlags.Construct | UnrealPackage.InitFlags.RegisterClasses);
+            
+            var funcGetItemName = linker.FindObject<UFunction>("GetItemName");
+            Assert.IsNotNull(funcGetItemName);
+            
+            Debug.WriteLine($"Testing Object: {funcGetItemName.GetReferencePath()}");
+            funcGetItemName.BeginDeserializing();
+            Assert.IsNull(funcGetItemName.ThrownException, "Function 'GetItemName' had thrown an exception during its deserialization process");
+            
+            funcGetItemName.Decompile();
         }
 
         [TestMethod]
@@ -49,9 +55,10 @@ namespace Eliot.UELib.Test.upk.Builds
                 return;
             }
 
-            using var linker = UnrealLoader.LoadPackage(EncryptedCorePackagePath);
+            using var linker = UnrealLoader.LoadPackage(EncryptedCorePackagePath, UnrealPackage.GameBuild.BuildName.AA2_2_6);
             Assert.IsNotNull(linker);
-            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2, linker.Build.Name, "Incorrect package's build");
+            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.AA2_2_6, linker.Build.Name, "Incorrect package's build");
+            Assert.AreEqual(typeof(EngineBranchAA2), linker.Branch.GetType(), "Incorrect package's branch");
         }
 
         [TestMethod("AA2 Decryption of string 'None'")]

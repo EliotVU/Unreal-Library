@@ -23,12 +23,14 @@ namespace UELib
         public static string PreEndBracket = "\r\n{0}";
         public static string Indention = "\t";
 
+        [Obsolete]
         public enum CookedPlatform
         {
             PC,
             Console
         }
 
+        [Obsolete]
         public static CookedPlatform Platform;
         public static Dictionary<string, Tuple<string, PropertyType>> VariableTypes;
 

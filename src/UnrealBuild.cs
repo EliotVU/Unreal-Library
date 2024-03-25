@@ -2,6 +2,10 @@
 
 namespace UELib
 {
+    /// <summary>
+    /// TODO: Re-purpose.
+    /// <seealso cref="Branch.EngineBranch"/>
+    /// </summary>
     public enum BuildGeneration
     {
         Undefined,
@@ -14,6 +18,11 @@ namespace UELib
         UE1,
 
         /// <summary>
+        /// Modified version for Harry Potter's Unreal Engine 1
+        /// </summary>
+        HP,
+
+        /// <summary>
         /// Unreal Engine 2
         /// 
         /// Not in use yet.
@@ -23,12 +32,17 @@ namespace UELib
         /// <summary>
         /// Heavily modified Unreal Engine 2 by Ion Storm for Thief: Deadly Shadows
         /// </summary>
-        Thief,
+        Flesh,
 
         /// <summary>
         /// Unreal Engine 2 with some early UE3 upgrades.
         /// </summary>
         UE2_5,
+
+        /// <summary>
+        /// The Unreal Engine 2.5 engine used in the America's Army series.
+        /// </summary>
+        AGP,
 
         /// <summary>
         /// Heavily modified Unreal Engine 2.5 for Vengeance: Tribes; also used by Swat4 and BioShock.
@@ -77,6 +91,7 @@ namespace UELib
     }
 
     [Flags]
+    [Obsolete("To be deprecated, see BuildPlatform")]
     public enum BuildFlags : byte
     {
         /// <summary>
@@ -88,11 +103,13 @@ namespace UELib
         /// Is cooked for Xenon(Xbox 360). Could be true on PC games.
         /// </summary>
         XenonCooked = 0x02,
+    }
 
-        /// <summary>
-        /// Some UDK games have disabled the DLLBind feature.
-        /// </summary>
-        NoDLLBind = 0x04
+    public enum BuildPlatform
+    {
+        Undetermined,
+        PC,
+        Console
     }
 
     [AttributeUsage(AttributeTargets.Field)]

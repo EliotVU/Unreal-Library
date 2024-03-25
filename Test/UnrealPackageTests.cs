@@ -1,79 +1,126 @@
-using System.IO;
-using System.Reflection;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using UELib;
 using UELib.Core;
 
-namespace UELib.Test
+namespace Eliot.UELib.Test
 {
-    /// <summary>
-    /// The following tests requires UELib to be built without WinForms dependencies.
-    /// You will have to change your active solution configuration to Test in order to run the tests without WinForms.
-    /// </summary>
     [TestClass]
     public class UnrealPackageTests
     {
-        [TestMethod]
-        public void LoadPackageTest()
+        internal static void AssertTestClass(UnrealPackage linker)
         {
-            string testPackageUC2Path = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk",
-                "TestUC2", "TestUC2.u");
-            var packageUC2 = UnrealLoader.LoadPackage(testPackageUC2Path);
-            Assert.IsNotNull(packageUC2);
-            AssertTestPackage(packageUC2);
-            AssertDefaultPropertiesClass(packageUC2);
-
-            string testPackageUC3Path = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk",
-                "TestUC3", "TestUC3.u");
-            var packageUC3 = UnrealLoader.LoadPackage(testPackageUC3Path);
-            Assert.IsNotNull(packageUC3);
-            AssertTestPackage(packageUC3);
-        }
-
-        private static void AssertTestPackage(UnrealPackage package)
-        {
-            package.InitializePackage();
-
-            AssertTestClass(package);
-        }
-
-        private static void AssertTestClass(UnrealPackage package)
-        {
-            var testClass = package.FindObject<UClass>("Test");
+            var testClass = linker.FindObject<UClass>("Test");
             Assert.IsNotNull(testClass);
 
             // Validate that Public/Protected/Private are correct and distinguishable.
-            var publicProperty = package.FindObject<UIntProperty>("Public");
+            var publicProperty = linker.FindObject<UIntProperty>("Public");
             Assert.IsNotNull(publicProperty);
             Assert.IsTrue(publicProperty.IsPublic());
             Assert.IsFalse(publicProperty.IsProtected());
             Assert.IsFalse(publicProperty.IsPrivate());
 
-            var protectedProperty = package.FindObject<UIntProperty>("Protected");
+            var protectedProperty = linker.FindObject<UIntProperty>("Protected");
             Assert.IsNotNull(protectedProperty);
             Assert.IsTrue(protectedProperty.IsPublic());
             Assert.IsTrue(protectedProperty.IsProtected());
             Assert.IsFalse(protectedProperty.IsPrivate());
 
-            var privateProperty = package.FindObject<UIntProperty>("Private");
+            var privateProperty = linker.FindObject<UIntProperty>("Private");
             Assert.IsNotNull(privateProperty);
             Assert.IsFalse(privateProperty.IsPublic());
             Assert.IsFalse(privateProperty.IsProtected());
             Assert.IsTrue(privateProperty.IsPrivate());
         }
 
-        private static void AssertDefaultPropertiesClass(UnrealPackage package)
+        internal static void AssertScriptDecompile(UStruct scriptInstance)
         {
-            var testClass = package.FindObject<UClass>("DefaultProperties");
-            Assert.IsNotNull(testClass);
+            if (scriptInstance.ByteCodeManager != null)
+            {
+                try
+                {
+                    scriptInstance.ByteCodeManager.Decompile();
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Token decompilation exception in script instance {scriptInstance.GetReferencePath()}: {ex.Message}");
+                }
+            }
             
-            Assert.IsNotNull(testClass.Properties);
-            string stringValue = testClass.Properties.Find("String").DeserializeValue();
-            Assert.AreEqual("\"String_\\\"\\\\0abfnrtv\"", stringValue);
+            foreach (var subScriptInstance in scriptInstance
+                         .EnumerateFields()
+                         .OfType<UStruct>())
+            {
+                if (subScriptInstance.ByteCodeManager == null) continue;
+                
+                try
+                {
+                    subScriptInstance.ByteCodeManager.Decompile();
+                    // ... for states
+                    AssertScriptDecompile(subScriptInstance);
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Token decompilation exception in script instance {subScriptInstance.GetReferencePath()}: {ex.Message}");
+                }
+            }
+        }
 
-            Assert.IsNotNull(testClass.Properties);
-            string floatValue = testClass.Properties.Find("Float").DeserializeValue();
-            // 0.0123456789 in its compiled form
-            Assert.AreEqual("0.012345679", floatValue);
+        internal static UObject AssertDefaultPropertiesClass(UnrealPackage linker)
+        {
+            var testClass = linker.FindObject<UClass>("DefaultProperties");
+            Assert.IsNotNull(testClass);
+
+            var defaults = testClass.Default ?? testClass;
+            defaults.BeginDeserializing();
+            Assert.IsNotNull(defaults.Properties);
+
+            return defaults;
+        }
+
+        internal static void AssertPropertyTagFormat(UObject obj, string tagName, string expectedFormat)
+        {
+            Assert.IsNotNull(obj.Properties);
+            var tag = obj.Properties.Find(tagName);
+            Assert.IsNotNull(tag, $"Couldn't find property tag of '{tagName}'");
+            string colorValue = tag.DeserializeValue();
+            Assert.AreEqual(expectedFormat, colorValue, $"tag '{tagName}'");
+        }
+
+        internal static void AssertExportsOfType<T>(IEnumerable<UObject> exports)
+            where T : UObject
+        {
+            var textures = exports.OfType<T>()
+                .ToList();
+            Assert.IsTrue(textures.Any());
+            textures.ForEach(AssertObjectDeserialization);
+        }
+
+        internal static void AssertObjectDeserialization(UObject obj)
+        {
+            obj.BeginDeserializing();
+            Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialied, obj.GetReferencePath());
+        }
+
+        internal static void AssertTokenType<T>(UStruct.UByteCodeDecompiler.Token token)
+            where T : UStruct.UByteCodeDecompiler.Token
+        {
+            Assert.AreEqual(typeof(T), token.GetType());
+        }
+
+        internal static void AssertTokenType(UStruct.UByteCodeDecompiler.Token token, Type tokenType)
+        {
+            Assert.AreEqual(tokenType, token.GetType());
+        }
+
+        internal static void AssertTokens(UStruct.UByteCodeDecompiler script, params Type[] tokenTypesSequence)
+        {
+            foreach (var tokenType in tokenTypesSequence)
+            {
+                AssertTokenType(script.NextToken, tokenType);
+            }
         }
     }
 }

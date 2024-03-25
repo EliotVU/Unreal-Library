@@ -1,10 +1,15 @@
-﻿using System;
+﻿using UELib.Annotations;
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib.Engine
 {
+    /// <summary>
+    /// Implements UBitmapMaterial/Engine.BitmapMaterial
+    /// </summary>
     [UnrealRegisterClass]
-    public class UBitmapMaterial : UObject
+    [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)]
+    public class UBitmapMaterial : URenderedMaterial
     {
         // UE2 implementation
         public enum TextureFormat
@@ -24,20 +29,35 @@ namespace UELib.Engine
         };
 
         public TextureFormat Format;
+        [CanBeNull] public UPalette Palette;
 
         public UBitmapMaterial()
         {
             ShouldDeserializeOnDemand = true;
         }
-        
+
         protected override void Deserialize()
         {
             base.Deserialize();
 
+            // HACK: This will do until we have a proper property linking setup.
+
             var formatProperty = Properties.Find("Format");
             if (formatProperty != null)
             {
-                Enum.TryParse(formatProperty.Value, out Format);
+                _Buffer.StartPeek(formatProperty._PropertyValuePosition);
+                _Buffer.Read(out byte index);
+                _Buffer.EndPeek();
+                
+                Format = (TextureFormat)index;
+            }
+
+            var paletteProperty = Properties.Find("Palette");
+            if (paletteProperty != null)
+            {
+                _Buffer.StartPeek(paletteProperty._PropertyValuePosition);
+                _Buffer.Read(out Palette);
+                _Buffer.EndPeek();
             }
         }
     }

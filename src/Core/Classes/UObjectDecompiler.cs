@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using System.Diagnostics;
+
+namespace UELib.Core
 {
     public partial class UObject : IUnrealDecompilable
     {
@@ -12,7 +14,14 @@
                 BeginDeserializing();
             }
 
-            var output = $"begin object name={Name} class={Class.Name}\r\n";
+            if (ImportTable != null)
+            {
+                return $"// Cannot decompile import {Name}";
+            }
+
+            Debug.Assert(Class != null);
+            string output = $"begin object name={Name} class={Class.Name}" +
+                            "\r\n";
             UDecompilingState.AddTabs(1);
             try
             {
@@ -23,14 +32,14 @@
                 UDecompilingState.RemoveTabs(1);
             }
 
-            return $"{output}{UDecompilingState.Tabs}object end\r\n{UDecompilingState.Tabs}// Reference: {Class.Name}'{GetOuterGroup()}'";
+            return $"{output}{UDecompilingState.Tabs}object end" +
+                   $"\r\n{UDecompilingState.Tabs}" +
+                   $"// Reference: {Class.Name}'{GetOuterGroup()}'";
         }
 
-        // Ment to be overriden!
-        protected virtual string FormatHeader()
+        public virtual string FormatHeader()
         {
-            // Note:Dangerous recursive call!
-            return Decompile();
+            return GetReferencePath();
         }
 
         protected string DecompileProperties()
@@ -39,14 +48,9 @@
                 return UDecompilingState.Tabs + "// This object has no properties!\r\n";
 
             var output = string.Empty;
-
-#if DEBUG
-            output += UDecompilingState.Tabs + "// Object Offset:" +
-                      UnrealMethods.FlagToString((uint)ExportTable.SerialOffset) + "\r\n";
-#endif
-
             for (var i = 0; i < Properties.Count; ++i)
             {
+                //output += $"{UDecompilingState.Tabs}// {Properties[i].Type}\r\n";
                 string propOutput = Properties[i].Decompile();
 
                 // This is the first element of a static array
@@ -59,11 +63,7 @@
                 }
 
                 // FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
-                output += UDecompilingState.Tabs +
-#if DEBUG_POSITIONS
-            "/*" + UnrealMethods.FlagToString( (uint)Properties[i]._BeginOffset ) + "*/\t" +
-#endif
-                          propOutput + "\r\n";
+                output += UDecompilingState.Tabs + propOutput + "\r\n";
             }
 
             return output;

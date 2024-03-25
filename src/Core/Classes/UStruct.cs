@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UELib.Annotations;
+using UELib.Branch;
+using UELib.Core.Tokens;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -12,18 +15,18 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UStruct : UField
     {
-        // Greater or equal than:
-        // Definitely not after 110
-        // FIXME: Version
-        private const int PrimitveCastVersion = 100;
-
         private const int VCppText = 120;
 
         // FIXME: Version
-        private const int VProcessedText = 129;
-
-        // FIXME: Version
         private const int VFriendlyNameMoved = 160;
+
+        /// <summary>
+        /// Used to determine if UClass has an interfaces UArray, and the ObjectToInterface CastToken (among others). 
+        /// FIXME: Version
+        /// </summary>
+        public const int VInterfaceClass = 220;
+
+        private const int VStorageScriptSize = 639;
 
         #region Serialized Members
 
@@ -76,14 +79,19 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
+
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
+            {
+                Super = _Buffer.ReadObject<UStruct>();
+                Record(nameof(Super), Super);
+            }
 #if BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
                 goto skipScriptText;
             }
 #endif
-            // --SuperField
-            if (!Package.IsConsoleCooked())
+            if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ScriptText), ScriptText);
@@ -98,16 +106,45 @@ namespace UELib.Core
             }
 #endif
             // Moved to UFunction in UE3
-            if (Package.Version < VFriendlyNameMoved)
+            if (_Buffer.Version < VFriendlyNameMoved)
             {
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
             }
-            
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                if (_Buffer.LicenseeVersion >= 17)
+                {
+                    // Back-ported CppText
+                    CppText = _Buffer.ReadObject<UTextBuffer>();
+                    Record(nameof(CppText), CppText);
+                    
+                    var dnfTextObj2 = _Buffer.ReadObject();
+                    Record(nameof(dnfTextObj2), dnfTextObj2);
+                    
+                    _Buffer.ReadArray(out UArray<UObject> dnfIncludeTexts);
+                    Record(nameof(dnfIncludeTexts), dnfIncludeTexts);
+                }
+
+                if (_Buffer.LicenseeVersion >= 2)
+                {
+                    // Bool?
+                    byte dnfByte = _Buffer.ReadByte();
+                    Record(nameof(dnfByte), dnfByte);
+                    
+                    var dnfName = _Buffer.ReadNameReference();
+                    Record(nameof(dnfName), dnfName);
+                }
+                
+                goto lineData;
+            }
+#endif
             // Standard, but UT2004' derived games do not include this despite reporting version 128+
-            if (Package.Version >= VCppText 
-                && !Package.IsConsoleCooked()
-                && Package.Build != BuildGeneration.UE2_5)
+            if (_Buffer.Version >= VCppText && _Buffer.UE4Version < 117
+                && !Package.IsConsoleCooked() &&
+                (Package.Build != BuildGeneration.UE2_5 && 
+                 Package.Build != BuildGeneration.AGP))
             {
                 CppText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(CppText), CppText);
@@ -115,7 +152,7 @@ namespace UELib.Core
 #if VENGEANCE
             // Introduced with BioShock
             if (Package.Build == BuildGeneration.Vengeance &&
-                Package.LicenseeVersion >= 29)
+                _Buffer.LicenseeVersion >= 29)
             {
                 int vengeanceUnknownObject = _Buffer.ReadObjectIndex();
                 Record(nameof(vengeanceUnknownObject), vengeanceUnknownObject);
@@ -123,21 +160,24 @@ namespace UELib.Core
 #endif
             // UE3 or UE2.5 build, it appears that StructFlags may have been merged from an early UE3 build.
             // UT2004 reports version 26, and BioShock version 2
-            if ((Package.Build == BuildGeneration.UE2_5 && Package.LicenseeVersion >= 26) ||
-                (Package.Build == BuildGeneration.Vengeance && Package.LicenseeVersion >= 2))
+            if ((Package.Build == BuildGeneration.UE2_5 && _Buffer.LicenseeVersion >= 26) ||
+                (Package.Build == BuildGeneration.AGP && _Buffer.LicenseeVersion >= 17) ||
+                (Package.Build == BuildGeneration.Vengeance && _Buffer.LicenseeVersion >= 2))
             {
                 StructFlags = _Buffer.ReadUInt32();
                 Record(nameof(StructFlags), (StructFlags)StructFlags);
             }
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance &&
-                Package.LicenseeVersion >= 14)
+                _Buffer.LicenseeVersion >= 14)
             {
                 ProcessedText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ProcessedText), ProcessedText);
             }
 #endif
-            if (!Package.IsConsoleCooked())
+            lineData:
+            if (!Package.IsConsoleCooked() &&
+                _Buffer.UE4Version < 117)
             {
                 Line = _Buffer.ReadInt32();
                 Record(nameof(Line), Line);
@@ -155,21 +195,17 @@ namespace UELib.Core
             }
 #endif
 #if TRANSFORMERS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+            if (Package.Build == BuildGeneration.HMS)
             {
+                int transformersEndLine = _Buffer.ReadInt32();
                 // The line where the struct's code body ends.
-                _Buffer.Skip(4);
+                Record(nameof(transformersEndLine), transformersEndLine);
             }
 #endif
             serializeByteCode:
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
-            const int vDataScriptSize = 639;
-            bool hasFixedScriptSize = Package.Version >= vDataScriptSize
-#if TRANSFORMERS
-                                      && Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
-#endif
-                ;
+            bool hasFixedScriptSize = _Buffer.Version >= VStorageScriptSize;
             if (hasFixedScriptSize)
             {
                 DataScriptSize = _Buffer.ReadInt32();
@@ -193,24 +229,16 @@ namespace UELib.Core
             }
             else
             {
-                const int moonbaseVersion = 587;
-                const int shadowcomplexVersion = 590;
-
-                bool isTrueScriptSize = Package.Build == UnrealPackage.GameBuild.BuildName.MOHA ||
-                                        (
-                                            Package.Version >= UnrealPackage.VINDEXDEPRECATED
-                                            && (Package.Version < moonbaseVersion &&
-                                                Package.Version > shadowcomplexVersion)
-                                        );
-                if (isTrueScriptSize)
-                {
-                    _Buffer.Skip(DataScriptSize);
-                }
-                else
-                {
-                    ByteCodeManager.Deserialize();
-                }
+                ByteCodeManager.Deserialize();
             }
+
+            _Buffer.ConformRecordPosition();
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                //_Buffer.ReadByte();
+            }
+#endif
         }
 
         protected override bool CanDisposeBuffer()
@@ -233,7 +261,7 @@ namespace UELib.Core
                 Console.WriteLine(ice.Message);
             }
         }
-
+        
         [Obsolete("Pending deprecation")]
         protected virtual void FindChildren()
         {
@@ -256,7 +284,7 @@ namespace UELib.Core
                 {
                     Enums.Insert(0, (UEnum)child);
                 }
-                else if (child is UStruct && ((UStruct)(child)).IsPureStruct())
+                else if (child is UStruct && ((UStruct)child).IsPureStruct())
                 {
                     Structs.Insert(0, (UStruct)child);
                 }
@@ -276,20 +304,33 @@ namespace UELib.Core
             }
         }
 
-#endregion
+        #endregion
+        
+        public IEnumerable<UField> EnumerateFields()
+        {
+            for (var field = Children; field != null; field = field.NextField)
+            {
+                yield return field;
+            }
+        }
 
-#region Methods
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TokenFactory GetTokenFactory()
+        {
+            return Package.Branch.GetTokenFactory(Package);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasStructFlag(StructFlags flag)
         {
             return (StructFlags & (uint)flag) != 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsPureStruct()
         {
             return IsClassType("Struct") || IsClassType("ScriptStruct");
         }
-
-#endregion
     }
 }

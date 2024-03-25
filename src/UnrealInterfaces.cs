@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using UELib.Annotations;
+using UELib.Core;
 
 namespace UELib
 {
@@ -19,6 +21,7 @@ namespace UELib
     /// <summary>
     /// This class has a reference to an object and are both decompilable.
     /// </summary>
+    [Obsolete]
     public interface IDecompilableObject : IUnrealDecompilable
     {
         /// <summary>
@@ -38,16 +41,12 @@ namespace UELib
         /// <returns>The copied buffer.</returns>
         byte[] CopyBuffer();
 
-        [Pure]
         IUnrealStream GetBuffer();
 
-        [Pure]
         int GetBufferPosition();
 
-        [Pure]
         int GetBufferSize();
 
-        [Pure]
         string GetBufferId(bool fullName = false);
     }
 
@@ -56,7 +55,7 @@ namespace UELib
     /// </summary>
     public interface IBinaryData : IBuffered
     {
-        BinaryMetaData BinaryMetaData { get; }
+        [CanBeNull] BinaryMetaData BinaryMetaData { get; }
     }
 
     public interface IContainsTable
@@ -69,6 +68,24 @@ namespace UELib
     /// </summary>
     public interface IUnrealViewable
     {
+    }
+    
+    public interface IVisitor
+    {
+        void Visit(IAcceptable visitable);
+        void Visit(UStruct.UByteCodeDecompiler.Token token);
+    }
+
+    public interface IVisitor<out TResult>
+    {
+        TResult Visit(IAcceptable visitable);
+        TResult Visit(UStruct.UByteCodeDecompiler.Token token);
+    }
+
+    public interface IAcceptable
+    {
+        void Accept(IVisitor visitor);
+        TResult Accept<TResult>(IVisitor<TResult> visitor);
     }
 
     /// <summary>
@@ -86,21 +103,35 @@ namespace UELib
 
     /// <summary>
     /// An atomic struct (e.g. UObject.Color, Vector, etc).
-    /// See <see cref="UnrealStreamImplementations.ReadAtomicStruct"/>
+    /// See <see cref="UnrealStreamImplementations.ReadStructMarshal{T}"/>
     /// </summary>
     public interface IUnrealAtomicStruct
     {
     }
 
     /// <summary>
-    /// This class is exportable into an non-unreal format
+    /// This class is capable of exporting data to a non-unreal format.
+    /// e.g. <see cref="USound.Data" /> can be serialized to a stream and in turn be flushed to a .wav file.
     /// </summary>
     public interface IUnrealExportable
     {
         IEnumerable<string> ExportableExtensions { get; }
 
-        bool CompatableExport();
+        /// <summary>
+        /// Whether this object is exportable, usually called before any deserialization has occurred.
+        /// </summary>
+        bool CanExport();
+
         void SerializeExport(string desiredExportExtension, Stream exportStream);
+    }
+
+    public static class IUnrealExportableImplementation
+    {
+        [Obsolete("Use CanExport()")]
+        public static bool CompatableExport(this IUnrealExportable exportable)
+        {
+            return exportable.CanExport();
+        }
     }
 
     /// <summary>

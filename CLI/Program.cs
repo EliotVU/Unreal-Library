@@ -59,7 +59,7 @@ namespace UELib.CLI
                                 break;
                             }
 
-                            Console.WriteLine($"Object:{obj.GetOuterGroup()}");
+                            Console.WriteLine($"Object:{obj.GetPath()}");
                             break;
                         }
                         
@@ -69,12 +69,12 @@ namespace UELib.CLI
                             if (classLimitor == null)
                             {
                                 foreach (var obj in pkg.Objects)
-                                    Console.WriteLine($"{obj.GetClassName()}'{obj.GetOuterGroup()}'");
+                                    Console.WriteLine(obj.GetReferencePath());
                                 break;
                             }
 
                             foreach (var obj in pkg.Objects.Where(e => e.Class?.Name == classLimitor))
-                                Console.WriteLine($"{obj.GetClassName()}'{obj.GetOuterGroup()}'");
+                                Console.WriteLine(obj.GetReferencePath());
                             break;
                         }
 
@@ -108,7 +108,7 @@ namespace UELib.CLI
                             if (defaultProperty == null)
                             {
                                 Console.Error.WriteLine("Object '{0}' has no property of the name '{1}'",
-                                    obj.GetOuterGroup(), propertyName);
+                                    obj.GetPath(), propertyName);
                                 break;
                             }
 

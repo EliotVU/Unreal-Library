@@ -10,9 +10,8 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UProperty InnerObject;
-
-        public int Count { get; private set; }
+        public UProperty InnerProperty;
+        public int Count;
 
         #endregion
 
@@ -29,16 +28,17 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            int innerIndex = _Buffer.ReadObjectIndex();
-            InnerObject = (UProperty)GetIndexObject(innerIndex);
+            InnerProperty = _Buffer.ReadObject<UProperty>();
+            Record(nameof(InnerProperty), InnerProperty);
+            
             Count = _Buffer.ReadIndex();
+            Record(nameof(Count), Count);
         }
 
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            // Just move to decompiling?
-            return $"{base.GetFriendlyType()}[{Count}]";
+            return $"{InnerProperty.GetFriendlyType()}[{Count}]";
         }
     }
 }

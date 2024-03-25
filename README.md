@@ -18,9 +18,10 @@ Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript 
 To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) (The library will move to .NET 6 or higher at version 2.0)
 
 Install using either:
+
 * Package Manager:
 
-```
+``` cmd
     Install-Package Eliot.UELib
 ```
 * NuGet: <https://www.nuget.org/packages/Eliot.UELib>
@@ -72,14 +73,16 @@ This is a table of games that are confirmed to be compatible with the current st
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
 | Mobile Forces | 436 | 81-83/000, 69 | |
 | Clive Barker's Undying | 420 | 72-85/000 | Licensee modifications are supported in the "develop" branch. Versions 72 to 83 are not auto detected. |
-| Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
 | Thief: Deadly Shadows | 777:Flesh | 95/133 | LinkedData not supported |
+| Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
 |     |     |     |     |
 |     |     |     |     |
 | XIII | 829 | 100/058 |     |
 | Postal 2: Paradise Lost | 1417 | 118/002 | |
+| Tom Clancy's Splinter Cell | 829 | 100/017 | |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
+| Devastation | 600-? | 118-120/004-008 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
@@ -88,6 +91,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory: Battery | 3369 | 128/029? | |
+| Vanguard: Saga of Heroes | Unknown | 129/035 | |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) |
 | Shrek 2 | 2226 | 129 | |
 | Shark Tale | 2226 | 129/003 | |
@@ -98,6 +102,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Bioshock 2 | 2226:Vengeance | 143/059 | |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) |
 | The Chronicles of Spellborn | 3323 | 159/029 | |
+| Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |
@@ -165,6 +170,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Painkiller HD | 9953 | 860/000 |     |
 | Chivalry: Medieval Warfare | 10246 | 860/000 | |
 | Hawken | 10681 | 860/004 | /002 is not auto-detected |
+| Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) |
 | Styx: Master of Shadows | 10499 | 860/004 | | 
 | Batman: Arkham Knight | | 863/32995 | Not verified  |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |

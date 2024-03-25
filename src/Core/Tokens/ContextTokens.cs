@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using UELib.Annotations;
+using UELib.ObjectModel.Annotations;
+using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -7,46 +9,49 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler
         {
+            [ExprToken(ExprToken.Context)]
             public class ContextToken : Token
             {
-                // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
-                // Greater or Equal than
-                private const ushort VSizeByteMoved = 588;
-
+                public UProperty Property;
+                public ushort PropertyType;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    bool propertyAdded = stream.Version >= VSizeByteMoved
-#if TERA
-                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
-#endif
-#if TRANSFORMERS
-                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Transformers
-#endif
-                        ;
-
                     // A.?
                     DeserializeNext();
 
                     // SkipSize
                     stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(ushort));
+                    
 
                     // Doesn't seem to exist in APB
+                    // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
+                    bool propertyAdded = stream.Version >= 588
+#if TERA
+                                         && stream.Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+#endif
+                        ;
                     if (propertyAdded)
                     {
                         // Property
-                        stream.ReadObjectIndex();
+                        stream.Read(out Property);
                         Decompiler.AlignObjectSize();
                     }
 
-                    // PropertyType
-                    stream.ReadByte();
-                    Decompiler.AlignSize(sizeof(byte));
-
-                    // Additional byte in APB?
-                    if (stream.Version > 512 && !propertyAdded)
+                    // FIXME: Thinking of it... this appears to be identical to the changes found in SwitchToken, but the existing versions are different?.
+                    if ((stream.Version >= 512 && !propertyAdded)
+#if DNF
+                        || stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                       )
                     {
-                        stream.ReadByte();
+                        PropertyType = stream.ReadUInt16();
+                        Decompiler.AlignSize(sizeof(ushort));
+                    }
+                    else
+                    {
+                        PropertyType = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
@@ -60,6 +65,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.ClassContext)]
             public class ClassContextToken : ContextToken
             {
                 public override string Decompile()
@@ -71,6 +77,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.InterfaceContext)]
             public class InterfaceContextToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
@@ -84,6 +91,7 @@ namespace UELib.Core
                 }
             }
 
+            [ExprToken(ExprToken.StructMember)]
             public class StructMemberToken : Token
             {
                 public UField Property;

@@ -1,8 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
+using UELib.Decoding;
 
-namespace UELib.Decoding
+namespace UELib.Branch.UE2.AA2
 {
-    // TODO: Re-implement as a BaseStream wrapper (in UELib 2.0)
+    // TODO: Re-implement as a BaseStream wrapper
     public class CryptoDecoderAA2 : IBufferDecoder
     {
         public void PreDecode(IUnrealStream stream)

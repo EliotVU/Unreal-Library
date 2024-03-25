@@ -10,7 +10,7 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UEnum EnumObject;
+        public UEnum Enum;
 
         #endregion
 
@@ -26,14 +26,20 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            EnumObject = _Buffer.ReadObject<UEnum>();
+            Enum = _Buffer.ReadObject<UEnum>();
+            Record(nameof(Enum), Enum);
         }
 
         public override string GetFriendlyType()
         {
-            return EnumObject != null
-                ? EnumObject.GetOuterGroup()
-                : "byte";
+            if (Enum != null)
+            {
+                // The compiler doesn't understand any non-UClass qualified identifiers.
+                return Enum.Outer is UClass
+                    ? $"{Enum.Outer.Name}.{Enum.Name}"
+                    : Enum.Name;
+            }
+            return "byte";
         }
     }
 }

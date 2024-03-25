@@ -5,203 +5,484 @@
     /// </summary>
     public enum ExprToken : ushort
     {
-        // ValidateObject
-        // ResizeString
-        LocalVariable           = 0x00,
-        InstanceVariable        = 0x01,
-        DefaultVariable         = 0x02,     // default.Property
         /// <summary>
-        /// UE1: ???
-        /// UE2: Deprecated (Bad Expr Token)
-        /// UE3: Introduced in a late UDK build.
+        /// A reference to a local variable (declared in a function)
         /// </summary>
-        StateVariable           = 0x03,
-        Return                  = 0x04,     // return EXPRESSION
-        Switch                  = 0x05,     // switch (CONDITION)
-        Jump                    = 0x06,     // goto CODEOFFSET
-        JumpIfNot               = 0x07,     // if( !CONDITION ) goto CODEOFFSET;
-        Stop                    = 0x08,     // Stop         (State)
-        Assert                  = 0x09,     // assert (CONDITION)
-        Case                    = 0x0A,     // case CONDITION:
-        Nothing                 = 0x0B,
-        LabelTable              = 0x0C,
-        GotoLabel               = 0x0D,     // goto EXPRESSION
-        EatString               = 0x0E,
-        EatReturnValue          = 0x0E,     // Formerly known as EatString
-        Let                     = 0x0F,     // A = B
-        DynArrayElement         = 0x10,     // Array[EXPRESSION]
-        New                     = 0x11,     // new(OUTER) CLASS...
-        ClassContext            = 0x12,     // Class'Path'.static.Function()
-        MetaCast                = 0x13,     // <CLASS>(CLASS)
+        LocalVariable,
 
         /// <summary>
-        /// UE1: BeginFunction
-        /// UE2: LetBool
+        /// A reference to a variable (declared in a class), equivalent to an explicit "self.Field" expression.
         /// </summary>
-        BeginFunction           = 0x14,
-        LetBool                 = 0x14,
+        InstanceVariable,
 
         /// <summary>
-        /// UE1: ???
-        /// UE2: LineNumber (early UE2)?
-        /// UE2X: Deprecated (Bad Expr Token)
-        /// UE3: EndParmValue
+        /// default.Property
         /// </summary>
-        LineNumber              = 0x15,
-        EndParmValue            = 0x15,
-        EndFunctionParms        = 0x16,     // )
-        Self                    = 0x17,     // Self
-        Skip                    = 0x18,
-        Context                 = 0x19,     // A.B
-        ArrayElement            = 0x1A,     // A[x]
-        VirtualFunction         = 0x1B,     // F(...)
-        FinalFunction           = 0x1C,     // F(...)
-        IntConst                = 0x1D,
-        FloatConst              = 0x1E,
-        StringConst             = 0x1F,     // "String"
-        ObjectConst             = 0x20,
-        NameConst               = 0x21,     // 'Name'
-        RotationConst           = 0x22,
-        VectorConst             = 0x23,
-        ByteConst               = 0x24,
-        IntZero                 = 0x25,
-        IntOne                  = 0x26,
-        True                    = 0x27,
-        False                   = 0x28,
-        NativeParm              = 0x29,     // A            (Native)
-        NoObject                = 0x2A,     // None
-        /// <summary>
-        /// UE1: A string size cast
-        /// UE2: Deprecated (Bad Expr Token)
-        /// </summary>
-        CastStringSize          = 0x2B,
-        IntConstByte            = 0x2C,     // 0-9          (<= 255)
-        BoolVariable            = 0x2D,     // B            (Bool)
-        DynamicCast             = 0x2E,     // A(B)
-        Iterator                = 0x2F,     // ForEach
-        IteratorPop             = 0x30,     // Break        (Implied/Explicit)
-        IteratorNext            = 0x31,     // Continue     (Implied/Explicit)
-        StructCmpEq             = 0x32,     // A == B
-        StructCmpNE             = 0x33,     // A != B
-        // UnicodeStringConst
-        UniStringConst          = 0x34,     // "UNICODE"
-
-        // Note: These byte-codes have shifted since UE3 and have therefor incorrect values assigned.
-        #region FixedByteCodes
-        /// <summary>
-        /// UE1: ???
-        /// UE2: RangeConst or Deprecated (Bad Expr Token)
-        /// UE3: ???
-        /// </summary>
-        RangeConst              = 0x35,
-        StructMember            = 0x36,     // Struct.Property
-        DynArrayLength          = 0x37,     // ARRAY.Length
-        GlobalFunction          = 0x38,     // Global.
+        DefaultVariable,
 
         /// <summary>
-        /// Redefined(RotatorToVector)
-        ///
-        /// UE1: RotatorToVector cast.
-        /// UE2+: Followed by any of the CastTokens to free space for other tokens, most are unused from 0x39 to 0x3F.
+        /// A reference to a local variable (declared in a state)
         /// </summary>
-        PrimitiveCast           = 0x39,     // TYPE(EXPRESSION)
-        #endregion
+        StateVariable,
+
+        /// <summary>
+        /// return expr;
+        /// </summary>
+        Return,
+
+        /// <summary>
+        /// switch (c)
+        /// </summary>
+        Switch,
+
+        /// <summary>
+        /// goto offset;
+        /// </summary>
+        Jump,
+
+        /// <summary>
+        /// if (!c) goto offset;
+        /// </summary>
+        JumpIfNot,
+
+        /// <summary>
+        /// stop;
+        /// </summary>
+        Stop,
+
+        /// <summary>
+        /// assert(c);
+        /// </summary>
+        Assert,
         
         /// <summary>
-        /// Redefined(DynArrayRemove)
-        ///
-        /// UE1: ByteToInt cast.
-        /// UE2: ReturnNothing (Deprecated)
-        /// UE3: ReturnNothing if previous token is a ReturnToken, DynArrayRemove when not.
+        /// case/default: expr
         /// </summary>
-        ReturnNothing           = 0x3A,
+        Case,
 
-        // UE2:ReturnNothing (Deprecated)
-        DelegateCmpEq           = 0x3B,
-        DelegateCmpNE           = 0x3C,
-        DelegateFunctionCmpEq   = 0x3D,
-        DelegateFunctionCmpNE   = 0x3E,
-        NoDelegate              = 0x3F,
+        /// <summary>
+        /// May indicate an optional parameter with no default assignment, or an empty argument in a function call.
+        /// </summary>
+        Nothing,
 
-        // Note: These byte-codes have shifted since UE3 and have therefor incorrect values assigned.
-        #region FixedByteCodes
-        DynArrayInsert          = 0x40,
-        DynArrayRemove          = 0x41,
-        DebugInfo               = 0x42,
-        DelegateFunction        = 0x43,
-        DelegateProperty        = 0x44,
-        LetDelegate             = 0x45,
         /// <summary>
-        /// UE3: An alternative to Else-If statements using A ? B : C;
+        /// label:
         /// </summary>
-        Conditional             = 0x46,     // CONDITION ? TRUE_LET : FALSE_LET
+        LabelTable,
+
         /// <summary>
-        /// Redefined(ObjectToBool,DynArrayFind)
+        /// goto 'label' or name expr;
+        /// </summary>
+        GotoLabel,
+        
+        ValidateObject,
+        EatString,
+        EatReturnValue,
+
+        /// <summary>
+        /// expr = expr;
+        /// </summary>
+        Let,
+
+        /// <summary>
+        /// DynamicArray[expr]
+        /// </summary>
+        DynArrayElement,
+
+        /// <summary>
+        /// new (expr) expr...
+        /// </summary>
+        New,
+
+        /// <summary>
+        /// expr.expr i.e. Class'Package.Group.Object'.default/static/const.Field
+        /// </summary>
+        ClassContext,
+        
+        /// <summary>
+        /// <Class>(expr)
+        /// </summary>
+        MetaCast,
+
+        /// <summary>
+        /// Contains the size of elements in the function's stack.
+        /// </summary>
+        BeginFunction,
+        
+        /// <summary>
+        /// expr = expr;
+        /// </summary>
+        LetBool,
+
+        /// <summary>
+        /// Marks the current script line number.
+        /// </summary>
+        LineNumber,
+
+        /// <summary>
+        /// Indicates the end of a default parameter assignment.
+        /// </summary>
+        EndParmValue,
+
+        /// <summary>
+        /// Indicates the end of a function call.
+        /// </summary>
+        EndFunctionParms,
+
+        /// <summary>
+        /// self
+        /// </summary>
+        Self,
+
+        /// <summary>
+        /// Marks a code size for the VM to skip, used in operators to skip a redundant conditional check.
+        /// </summary>
+        Skip,
+
+        /// <summary>
+        /// expr.expr
+        /// </summary>
+        Context,
+
+        /// <summary>
+        /// FixedArray[expr]
+        /// </summary>
+        ArrayElement,
+
+        /// <summary>
+        /// Object.VirtualFunction(params...)
+        /// </summary>
+        VirtualFunction,
+
+        /// <summary>
+        /// Object.FinalFunction(params...)
+        /// </summary>
+        FinalFunction,
+
+        /// <summary>
+        /// 0xFFFFFFFF
+        /// </summary>
+        IntConst,
+
+        /// <summary>
+        /// 0.0f
+        /// </summary>
+        FloatConst,
+
+        /// <summary>
+        /// "String"
+        /// </summary>
+        StringConst,
+
+        /// <summary>
+        /// Class'Package.Group.Object'
+        /// </summary>
+        ObjectConst,
+
+        /// <summary>
+        /// 'Name'
+        /// </summary>
+        NameConst,
+
+        /// <summary>
+        /// rot(0, 0, 0)
+        /// </summary>
+        RotationConst,
+
+        /// <summary>
+        /// vect(0f, 0f, 0f)
+        /// </summary>
+        VectorConst,
+
+        /// <summary>
+        /// 0xFF
+        /// </summary>
+        ByteConst,
+
+        /// <summary>
+        /// 0
+        /// </summary>
+        IntZero,
+
+        /// <summary>
+        /// 1
+        /// </summary>
+        IntOne,
+
+        /// <summary>
+        /// true
+        /// </summary>
+        True,
+
+        /// <summary>
+        /// false
+        /// </summary>
+        False,
+
+        /// <summary>
+        /// A reference to a native/intrinsic parameter.
+        /// </summary>
+        NativeParm,
+
+        /// <summary>
+        /// none
+        /// </summary>
+        NoObject,
+
+        /// <summary>
+        /// (string)
+        /// </summary>
+        ResizeString,
+
+        /// <summary>
+        /// byte(0xFF)
+        /// </summary>
+        IntConstByte,
+
+        /// <summary>
+        /// (bool)
+        /// </summary>
+        BoolVariable,
+
+        /// <summary>
+        /// Class(Expr)
+        /// </summary>
+        DynamicCast,
+        
+        /// <summary>
+        /// foreach expr
+        /// </summary>
+        Iterator,
+        
+        /// <summary>
+        /// break;
+        /// </summary>
+        IteratorPop,
+        
+        /// <summary>
+        /// continue;
+        /// </summary>
+        IteratorNext,
+
+        /// <summary>
+        /// A == B
+        /// </summary>
+        StructCmpEq,
+        
+        /// <summary>
+        /// A != B
+        /// </summary>
+        StructCmpNe, 
+
+        StructConst,
+
+        /// <summary>
+        /// "Unicode characters"
+        /// </summary>
+        UnicodeStringConst,
+
+        /// <summary>
+        /// rng(a, b)
+        /// </summary>
+        RangeConst,
+
+        /// <summary>
+        /// Struct.Member
+        /// </summary>
+        StructMember,
+
+        /// <summary>
+        /// Array.Length
         ///
-        /// UE1: As an ObjectToBool cast.
-        /// UE2: As an indicator of a function's end(unless preceded by PrimitiveCast then it is treat as an ObjectToBool).
-        /// UE3: See DynArrayFind(See EndOfScript).
+        /// aka DynArrayCount
         /// </summary>
-        FunctionEnd             = 0x47,
+        DynArrayLength,
+
         /// <summary>
-        /// Find an item within an Array.
+        /// global.VirtualFunction(params...)
         /// </summary>
-        DynArrayFind            = 0x47,     // ARRAY.Find( EXPRESSION )
+        GlobalFunction,
+
         /// <summary>
-        /// UE3: Find an item within a struct in an Array.
+        /// primitiveKeyword(Expr)
         /// </summary>
-        DynArrayFindStruct      = 0x48,     // ARRAY.Find( EXPRESSION, EXPRESSION )
+        PrimitiveCast,
+
         /// <summary>
-        /// In some Unreal Engine 2 games, see Conditional for Unreal Engine 3.
+        /// return;
+        /// </summary>
+        ReturnNothing,
+
+        /// <summary>
+        /// expr == expr
+        /// </summary>
+        DelegateCmpEq,
+        
+        /// <summary>
+        /// expr != expr
+        /// </summary>
+        DelegateCmpNe,
+
+        /// <summary>
+        /// expr == expr
+        /// </summary>
+        DelegateFunctionCmpEq,
+
+        /// <summary>
+        /// expr != expr
+        /// </summary>
+        DelegateFunctionCmpNe,
+
+        /// <summary>
+        /// none
+        /// </summary>
+        EmptyDelegate,
+
+        /// <summary>
+        /// DynamicArray.Insert(...)
+        /// </summary>
+        DynArrayInsert,
+        
+        /// <summary>
+        /// DynamicArray.Remove(...)
+        /// </summary>
+        DynArrayRemove,
+
+        /// <summary>
+        /// Marks the current line number and the control context.
+        /// </summary>
+        DebugInfo,
+
+        /// <summary>
+        /// A reference to a declared delegate function.
+        /// </summary>
+        DelegateFunction,
+
+        /// <summary>
+        /// A reference to to a declared delegate property.
+        /// </summary>
+        DelegateProperty,
+
+        /// <summary>
+        /// expr = expr;
+        /// </summary>
+        LetDelegate,
+
+        /// <summary>
+        /// expr ? expr : expr
+        /// </summary>
+        Conditional,
+
+        /// <summary>
+        /// Array.Find(expr)
+        /// </summary>
+        DynArrayFind,
+
+        /// <summary>
+        /// ArrayOfStructs.Find(expr, expr)
+        /// </summary>
+        DynArrayFindStruct,
+
+        /// <summary>
+        /// A reference to an out variable
         ///
-        /// An alternative to Else-If statements using A ? B : C;.
+        /// <example>
+        /// (out int parameter)
+        /// </example>
         /// </summary>
-        Eval                    = 0x48,     // See Conditional
+        OutVariable,
+
         /// <summary>
-        /// UE3: Reference to a property with the Out modifier.
+        /// (int parameter = expr)
         /// </summary>
-        OutVariable             = 0x49,
+        DefaultParmValue,
+
         /// <summary>
-        /// UE3: Default value of a parameter property.
+        /// Indicates an empty argument was passed to a function call e.g. Call(1,, 1)
         /// </summary>
-        DefaultParmValue        = 0x4A,     // PARAMETER = EXPRESSION
+        EmptyParmValue,
+
         /// <summary>
-        /// UE3: No parameter value was given e.g: Foo( Foo,, Foo );
+        /// A reference to a delegate (but by name).
         /// </summary>
-        EmptyParmValue          = 0x4B,     // Empty argument, Call(Parm1,,Parm2)
-        InstanceDelegate        = 0x4C,
-        VarInt                  = 0x4D,     // Found in Borderlands 2
-        VarFloat                = 0x4E,     // Found in Borderlands 2
-        VarByte                 = 0x4F,     // Found in Borderlands 2
-        VarBool                 = 0x50,     // Found in Borderlands 2
-        VarObject               = 0x51,     // Found in Borderlands 2
-        StringRef               = 0x50,     // Found in Mirrors Edge
-        UndefinedVariable       = 0x51,     // Found in Gears of War
-        InterfaceContext        = 0x52,
-        InterfaceCast           = 0x53,
-        EndOfScript             = 0x54,
-        DynArrayAdd             = 0x55,
-        DynArrayAddItem         = 0x56,
-        DynArrayRemoveItem      = 0x57,
-        DynArrayInsertItem      = 0x58,
-        DynArrayIterator        = 0x59,
-        DynArraySort            = 0x5A,
-        FilterEditorOnly        = 0x5B,     // filtereditoronly { BLOCK }
-        Unused5C                = 0x5C,
-        Unused5D                = 0x5D,
-        Unused5E                = 0x5E,
-        Unused5F                = 0x5F,
-        #endregion
+        InstanceDelegate,
+
+        /// <summary>
+        /// expr.expr
+        /// </summary>
+        InterfaceContext,
+
+        /// <summary>
+        /// InterfaceClass(expr)
+        /// </summary>
+        InterfaceCast,
+
+        /// <summary>
+        /// 0xFFFF
+        /// </summary>
+        PointerConst,
+
+        /// <summary>
+        /// Indicates the end of the script.
+        /// </summary>
+        EndOfScript,
+
+        /// <summary>
+        /// DynamicArray.Add(expr)
+        /// </summary>
+        DynArrayAdd,
+        
+        /// <summary>
+        /// DynamicArray.AddItem(expr)
+        /// </summary>
+        DynArrayAddItem,
+
+        /// <summary>
+        /// DynamicArray.AddItem(expr)
+        /// </summary>
+        DynArrayRemoveItem,
+
+        /// <summary>
+        /// DynamicArray.InsertItem(expr, expr)
+        /// </summary>
+        DynArrayInsertItem,
+
+        /// <summary>
+        /// foreach expr (expr, expr?)
+        /// </summary>
+        DynArrayIterator,
+
+        /// <summary>
+        /// DynamicArray.Sort(expr)
+        /// </summary>
+        DynArraySort,
+
+        /// <summary>
+        /// DynamicArray.Empty(expr?)
+        /// </summary>
+        DynArrayEmpty,
+        
+        /// <summary>
+        /// JumpIfNot statement
+        /// 
+        /// FilterEditorOnly
+        /// {
+        ///     BLOCK
+        /// }
+        /// </summary>
+        FilterEditorOnly,
+
+        NativeFunction,
 
         ExtendedNative          = 0x60,
         FirstNative             = 0x70,
         MaxNative               = 0x1000,
-        
-        MaxNonNative            = ExtendedNative - 1,
-        InternalUnresolved      = MaxNonNative,
-        Unused                  = InternalUnresolved,
     }
 
+    /// <summary>
+    /// These tokens begin at-non-zero because they were once part of <see cref="ExprToken"/> &lt; <see cref="UStruct.PrimitiveCastVersion"/>.
+    /// Handled by token: <see cref="UStruct.UByteCodeDecompiler.PrimitiveCastToken"/>
+    /// </summary>
     public enum CastToken : byte
     {
         None                    = 0x00,
@@ -212,22 +493,26 @@
         InterfaceToBool         = 0x38,
         #endregion
 
-        RotatorToVector         = 0x39,     // Redefined
-        ByteToInt               = 0x3A,     // Redefined(ReturnNothing)
+        RotatorToVector         = 0x39,
+        ByteToInt               = 0x3A,
         ByteToBool              = 0x3B,
         ByteToFloat             = 0x3C,
         IntToByte               = 0x3D,
         IntToBool               = 0x3E,
         IntToFloat              = 0x3F,
-        BoolToByte              = 0x40,     // Redefined
-        BoolToInt               = 0x41,     // Redefined
-        BoolToFloat             = 0x42,     // Redefined
-        FloatToByte             = 0x43,     // Redefined
-        FloatToInt              = 0x44,     // Redefined
-        FloatToBool             = 0x45,     // Redefined
+        BoolToByte              = 0x40,
+        BoolToInt               = 0x41,
+        BoolToFloat             = 0x42,
+        FloatToByte             = 0x43,
+        FloatToInt              = 0x44,
+        FloatToBool             = 0x45,
+        /// <summary>
+        /// UE1: StringToName
+        /// UE2: Deprecated?
+        /// </summary>
         ObjectToInterface       = 0x46,
-        ObjectToBool            = 0x47,     // Redefined
-        NameToBool              = 0x48,     // Redefined
+        ObjectToBool            = 0x47,
+        NameToBool              = 0x48,
         StringToByte            = 0x49,
         StringToInt             = 0x4A,
         StringToBool            = 0x4B,

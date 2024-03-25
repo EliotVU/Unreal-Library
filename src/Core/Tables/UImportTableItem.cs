@@ -1,64 +1,71 @@
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
+using System;
+using UELib.Core;
 
 namespace UELib
 {
     /// <summary>
-    /// An import table entry, representing a @UObject dependency in a package.
-    /// This includes the name of the package that this dependency belongs to.
+    /// An import table entry, represents a @UObject import within a package.
     /// </summary>
     public sealed class UImportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
         #region Serialized Members
 
-        public UName PackageName;
+        private UName _PackageName;
+
+        public UName PackageName
+        {
+            get => _PackageName;
+            set => _PackageName = value;
+        }
+
         private UName _ClassName;
 
-        [Pure]
-        public override string ClassName => _ClassName;
+        public UName ClassName
+        {
+            get => _ClassName;
+            set => _ClassName = value;
+        }
+
+        [Obsolete] protected override string __ClassName => _ClassName;
+        [Obsolete] protected override int __ClassIndex => (int)_ClassName;
 
         #endregion
 
         public void Serialize(IUnrealStream stream)
         {
-            stream.Write(PackageName);
+            stream.Write(_PackageName);
             stream.Write(_ClassName);
-            stream.Write(OuterTable != null ? (int)OuterTable.Object : 0); // Always an ordinary integer
-            stream.Write(ObjectName);
+            stream.Write(_OuterIndex); // Always an ordinary integer
+            stream.Write(_ObjectName);
         }
 
         public void Deserialize(IUnrealStream stream)
         {
-#if AA2
-            // Not attested in packages of LicenseeVersion 32
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.AA2
-                && stream.Package.LicenseeVersion >= 33)
-            {
-                PackageName = stream.ReadNameReference();
-                _ClassName = stream.ReadNameReference();
-                ClassIndex = (int)_ClassName;
-                byte unkByte = stream.ReadByte();
-                Debug.WriteLine(unkByte, "unkByte");
-                ObjectName = stream.ReadNameReference();
-                OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
-                return;
-            }
-#endif
-
-            PackageName = stream.ReadNameReference();
+            _PackageName = stream.ReadNameReference();
             _ClassName = stream.ReadNameReference();
-            ClassIndex = (int)_ClassName;
-            OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
-            ObjectName = stream.ReadNameReference();
+            _OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
+            _ObjectName = stream.ReadNameReference();
         }
 
-        #region Methods
+        public override string GetReferencePath()
+        {
+            return $"{_ClassName}'{GetPath()}'";
+        }
 
         public override string ToString()
         {
             return $"{ObjectName}({-(Index + 1)})";
         }
 
-        #endregion
+        [Obsolete("Use ToString()")]
+        public string ToString(bool v)
+        {
+            return ToString();
+        }
+
+        public static explicit operator int(UImportTableItem item)
+        {
+            return -item.Index;
+        }
     }
 }
