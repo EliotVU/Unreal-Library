@@ -8,10 +8,17 @@ Its main purpose is to decompile the UnrealScript byte-code to its original sour
 
 It accomplishes this by reading the necessary Unreal data classes such as:
 
-    UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState,
-    UClass, UTextBuffer, UMetaData, UFont, USound, UPackage
+    UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState, UClass, 
+    UTextBuffer, UMetaData, UPackage
 
 Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
+
+Additionally UELib is also capable of deserializing of many more data classes such as:
+
+    UFont, USound, UPalette, UTexture, 
+    UTexture2D, UTexture2DDynamic, UTexture2DComposite, UTexture3D, 
+    UTextureCube, UTextureFlipBook, UTextureMovie
+    UPrimitive, UPolys
 
 ## How to use
 
