@@ -3,9 +3,8 @@ name: Build .NET Framework and Publish to NuGet
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'release-*'
-      - 'hotfix-*'
+    tags: 
+      - '^[0-9]+\.[0-9]+\.[0-9]+$'
 
 jobs:
   build:
@@ -24,7 +23,7 @@ jobs:
       run: nuget restore src/Eliot.UELib.csproj
       
     - name: Build
-      run: msbuild src/Eliot.UELib.csproj -t:rebuild -property:Configuration=Publish
+      run: msbuild src/Eliot.UELib.csproj -t:rebuild -property:Configuration=Remease
       
     - name: Publish Eliot.UELib
       uses: alirezanet/publish-nuget@v3.1.0
