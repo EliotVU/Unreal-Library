@@ -99,19 +99,44 @@ namespace UELib.Core
             {
                 output += "noexport ";
             }
+            
+#if AHIT
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
+            {
+                if (HasFunctionFlag(Flags.FunctionFlags.AHIT_Optional))
+                {
+                    output += "optional ";  // optional interface functions use this.
+                }
+
+                if (HasFunctionFlag(Flags.FunctionFlags.AHIT_Multicast))
+                {
+                    output += "multicast ";
+                }
+
+                if (HasFunctionFlag(Flags.FunctionFlags.AHIT_NoOwnerRepl))
+                {
+                    output += "NoOwnerReplication ";
+                }
+            }
+#endif
 
             // FIXME: Version, added with one of the later UDK builds.
-            if (Package.Version >= 500)
+            if (Package.Version >= 500
+#if AHIT
+                // For AHIT, don't write these K2 specifiers, since they overlap with its custom flags.
+                && Package.Build != UnrealPackage.GameBuild.BuildName.AHIT
+#endif
+               )
             {
                 if (HasFunctionFlag(Flags.FunctionFlags.K2Call))
                 {
                     output += "k2call ";
                 }
 
-                if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
-                {
-                    output += "k2override ";
-                }
+            if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
+            {
+                output += "k2override ";
+            }
 
                 if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
                 {
@@ -211,6 +236,14 @@ namespace UELib.Core
             {
                 output += "function ";
             }
+
+#if AHIT
+            // Needs to be after function/event/operator/etc.
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT && HasFunctionFlag(Flags.FunctionFlags.AHIT_EditorOnly))
+            {
+                output += "editoronly ";
+            }
+#endif
 
             return output;
         }

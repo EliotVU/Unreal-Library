@@ -594,6 +594,15 @@ namespace UELib
                 [Build(904, 904, 09u, 014u)]
                 [OverridePackageVersion((uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved)]
                 SpecialForce2,
+
+                /// <summary>
+                /// A Hat in Time
+                /// 
+                /// 877:893/005
+                /// 
+                /// The earliest available version with any custom specifiers is 1.0 (877).
+                /// </summary>
+                [Build(877, 893, 5, 5)] AHIT,
             }
 
             public BuildName Name { get; }
