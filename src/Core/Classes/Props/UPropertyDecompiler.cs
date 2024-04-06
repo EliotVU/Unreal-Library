@@ -317,6 +317,22 @@ namespace UELib.Core
                         output += "serializetext ";
                         copyFlags &= ~(ulong)Flags.PropertyFlagsLO.SerializeText;
                     }
+
+#if AHIT
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
+                    {
+                        if (HasPropertyFlag(Flags.PropertyFlagsHO.AHIT_Serialize))
+                        {
+                            output += "serialize ";
+                            copyFlags &= ~(ulong)Flags.PropertyFlagsHO.AHIT_Serialize << 32;
+                        }
+                        if (HasPropertyFlag(Flags.PropertyFlagsLO.AHIT_Bitwise))
+                        {
+                            output += "bitwise ";
+                            copyFlags &= ~(ulong)Flags.PropertyFlagsLO.AHIT_Bitwise;
+                        }
+                    }
+#endif
                 }
 
                 if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.Native) != 0)
@@ -408,7 +424,11 @@ namespace UELib.Core
                     }
                 }
 
-                if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EdFindable) != 0)
+                if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EdFindable) != 0
+#if AHIT
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.AHIT
+#endif
+                   )
                 {
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EdFindable;
                     output += "edfindable ";

@@ -104,20 +104,44 @@ namespace UELib.Core
                 output += "noexport ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.K2Call))
+#if AHIT
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
             {
-                output += "k2call ";
-            }
+                if (HasFunctionFlag(Flags.FunctionFlags.AHIT_Optional))
+                {
+                    output += "optional ";  // optional interface functions use this.
+                }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
-            {
-                output += "k2override ";
-            }
+                if (HasFunctionFlag(Flags.FunctionFlags.AHIT_Multicast))
+                {
+                    output += "multicast ";
+                }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
-            {
-                output += "k2pure ";
+                if (HasFunctionFlag(Flags.FunctionFlags.AHIT_NoOwnerRepl))
+                {
+                    output += "NoOwnerReplication ";
+                }
             }
+            else  // For AHIT, don't write these K2 specifiers, since they overlap with its custom flags.
+            {
+#endif
+                if (HasFunctionFlag(Flags.FunctionFlags.K2Call))
+                {
+                    output += "k2call ";
+                }
+
+                if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
+                {
+                    output += "k2override ";
+                }
+
+                if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
+                {
+                    output += "k2pure ";
+                }
+#if AHIT
+            }
+#endif
 
             if (HasFunctionFlag(Flags.FunctionFlags.Invariant))
             {
@@ -184,6 +208,14 @@ namespace UELib.Core
             {
                 output += "function ";
             }
+
+#if AHIT
+            // Needs to be after function/event/operator/etc.
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT && HasFunctionFlag(Flags.FunctionFlags.AHIT_EditorOnly))
+            {
+                output += "editoronly ";
+            }
+#endif
 
             return output;
         }

@@ -211,6 +211,15 @@ namespace UELib.Core
                         if (Package.Version >= 369) DeserializeInterfaces();
                     }
 
+#if AHIT
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT && Package.Version >= 878)
+                    {
+                        // AHIT auto-generates a list of unused function names for its optional interface functions.
+                        // Seems to have been added in 878, during the modding beta between 1.Nov.17 and 6.Jan.18.
+                        DeserializeGroup("UnusedOptionalInterfaceFunctions");
+                    }
+#endif
+
                     if (!Package.IsConsoleCooked() && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
                     {
                         if (Package.Version >= 603
@@ -511,9 +520,9 @@ namespace UELib.Core
                     States.Insert(0, (UState)child);
         }
 
-        #endregion
+#endregion
 
-        #region Methods
+#region Methods
 
         private IList<int> DeserializeGroup(string groupName = "List", int count = -1)
         {
@@ -562,6 +571,6 @@ namespace UELib.Core
             return Within != null && !string.Equals(Within.Name, "Object", StringComparison.OrdinalIgnoreCase);
         }
 
-        #endregion
+#endregion
     }
 }
