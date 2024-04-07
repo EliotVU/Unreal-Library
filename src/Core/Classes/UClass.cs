@@ -608,9 +608,9 @@ namespace UELib.Core
                     States.Insert(0, (UState)child);
         }
 
-#endregion
+        #endregion
 
-#region Methods
+        #region Methods
 
         private IList<int> DeserializeGroup(string groupName = "List", int count = -1)
         {
@@ -659,7 +659,7 @@ namespace UELib.Core
             return Within != null && !string.Equals(Within.Name, "Object", StringComparison.OrdinalIgnoreCase);
         }
 
-#endregion
+        #endregion
     }
 
     [UnrealRegisterClass]
