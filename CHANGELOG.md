@@ -1,3 +1,7 @@
+# [1.5.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.5.0)
+
+* 1ef135d Improved support for A Hat in Time (UE3), contributed by @Un-Drew
+
 # [1.4.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.4.0)
 
 Notable changes that affect UnrealScript output:

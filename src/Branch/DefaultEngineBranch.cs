@@ -375,6 +375,8 @@ namespace UELib.Branch
                     tokenMap[0x4F] = typeof(LocalVariableToken<bool>);
                     tokenMap[0x50] = typeof(LocalVariableToken<UObject>);
                     tokenMap[0x51] = typeof(LocalVariableToken<dynamic>);
+
+                    tokenMap[0x5B] = typeof(ByteConstToken);
                     break;
 #endif
 #if BIOSHOCK
