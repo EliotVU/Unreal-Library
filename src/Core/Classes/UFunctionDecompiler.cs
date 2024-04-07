@@ -133,10 +133,10 @@ namespace UELib.Core
                     output += "k2call ";
                 }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
-            {
-                output += "k2override ";
-            }
+                if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
+                {
+                    output += "k2override ";
+                }
 
                 if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
                 {

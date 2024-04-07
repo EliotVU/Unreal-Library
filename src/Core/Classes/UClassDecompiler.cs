@@ -340,6 +340,20 @@ namespace UELib.Core
             //    }
             //}
 
+#if AHIT
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
+            {
+                if ((ClassFlags & (uint)Flags.ClassFlags.AHIT_AlwaysLoaded) != 0)
+                {
+                    output += "\r\n\tAlwaysLoaded";
+                }
+                if ((ClassFlags & (uint)Flags.ClassFlags.AHIT_IterOptimized) != 0)
+                {
+                    output += "\r\n\tIterationOptimized";
+                }
+            }
+#endif
+
             output += FormatNameGroup("dontsortcategories", DontSortCategories);
             output += FormatNameGroup("hidecategories", HideCategories);
             // TODO: Decompile ShowCategories (but this is not possible without traversing the super chain)
