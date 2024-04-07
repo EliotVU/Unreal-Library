@@ -185,6 +185,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Orcs Must Die! Unchained | 20430 | 870/000 | |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
+| A Hat in Time | 12097 | 877-893/005 | |
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | 10508 | Unknown |     |
