@@ -69,6 +69,7 @@ namespace UELib.Core
         //protected uint _CodePosition;
 
         public long ScriptOffset { get; private set; }
+        public int ScriptSize { get; private set; }
 
         public UByteCodeDecompiler ByteCodeManager;
 
@@ -233,6 +234,7 @@ namespace UELib.Core
             }
 
             _Buffer.ConformRecordPosition();
+            ScriptSize = (int)(_Buffer.Position - ScriptOffset);
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {

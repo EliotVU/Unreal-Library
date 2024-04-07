@@ -8,10 +8,17 @@ Its main purpose is to decompile the UnrealScript byte-code to its original sour
 
 It accomplishes this by reading the necessary Unreal data classes such as:
 
-    UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState,
-    UClass, UTextBuffer, UMetaData, UFont, USound, UPackage
+    UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState, UClass, 
+    UTextBuffer, UMetaData, UPackage
 
 Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
+
+Additionally UELib is also capable of deserializing of many more data classes such as:
+
+    UFont, USound, UPalette, UTexture, 
+    UTexture2D, UTexture2DDynamic, UTexture2DComposite, UTexture3D, 
+    UTextureCube, UTextureFlipBook, UTextureMovie
+    UPrimitive, UPolys
 
 ## How to use
 
@@ -178,6 +185,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Orcs Must Die! Unchained | 20430 | 870/000 | |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
+| A Hat in Time | 12097 | 877-893/005 | |
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | 10508 | Unknown |     |

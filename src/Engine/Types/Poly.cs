@@ -74,7 +74,7 @@ namespace UELib.Engine
         public void Deserialize(IUnrealStream stream)
         {
             // Always 16
-            int numVertices = stream.Version < (uint)PackageObjectLegacyVersion.FixedVerticesToArrayFromPoly
+            int verticesCount = stream.Version < (uint)PackageObjectLegacyVersion.FixedVerticesToArrayFromPoly
                 ? stream.ReadIndex()
                 : -1;
 
@@ -89,7 +89,7 @@ namespace UELib.Engine
             }
             else
             {
-                stream.ReadArray(out Vertex, numVertices);
+                stream.ReadArray(out Vertex, verticesCount);
             }
 
             PolyFlags = stream.ReadUInt32();

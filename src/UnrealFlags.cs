@@ -344,6 +344,12 @@ namespace UELib.Flags
         K2Call              = 0x04000000U,
         K2Override          = 0x08000000U,
         K2Pure              = 0x10000000U,
+#if AHIT
+        AHIT_Multicast      = 0x04000000U,
+        AHIT_NoOwnerRepl    = 0x08000000U,
+        AHIT_Optional       = 0x10000000U,
+        AHIT_EditorOnly     = 0x20000000U,
+#endif
     }
 
     /// <summary>
@@ -424,6 +430,9 @@ namespace UELib.Flags
 
         EditInline          = 0x04000000U,
         EdFindable          = 0x08000000U,
+#if AHIT
+        AHIT_Bitwise        = 0x08000000U,
+#endif
         EditInlineUse       = 0x10000000U,
         Deprecated          = 0x20000000U,
 
@@ -472,6 +481,9 @@ namespace UELib.Flags
         // GAP!
         CrossLevelPassive   = 0x00001000U,
         CrossLevelActive    = 0x00002000U,
+#if AHIT
+        AHIT_Serialize      = 0x00004000U,
+#endif
 #if BIOSHOCK
         BIOINF_Unk1         = 0x00080000U,
 
@@ -529,6 +541,11 @@ namespace UELib.Flags
         EditInlineNew       = 0x00001000U,
         CollapseCategories  = 0x00002000U,
         ExportStructs       = 0x00004000U,      // @Removed(UE3 in early but not latest)
+
+#if AHIT
+        AHIT_AlwaysLoaded   = 0x00008000U,
+        AHIT_IterOptimized  = 0x00010000U,
+#endif
 
         Instanced           = 0x00200000U,      // @Removed(UE3)
         HideDropDown        = 0x00400000U,      // @Redefined(UE3, HasComponents), @Moved(UE3, HideDropDown2)

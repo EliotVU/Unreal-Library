@@ -587,6 +587,15 @@ namespace UELib
                 [Build(874, 78u)] Battleborn,
 
                 /// <summary>
+                /// A Hat in Time
+                /// 
+                /// 877:893/005
+                /// 
+                /// The earliest available version with any custom specifiers is 1.0 (877) - Un-Drew.
+                /// </summary>
+                [Build(877, 893, 5, 5)] AHIT,
+
+                /// <summary>
                 /// Special Force 2
                 /// 
                 /// 904/009 (Non-standard version, actual Epic version might be 692 or higher)
@@ -1502,9 +1511,16 @@ namespace UELib
                 "Branch.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
 
             // We can't continue without decompressing.
-            if (CompressedChunks != null && CompressedChunks.Any())
+            if (Summary.CompressedChunks != null &&
+                Summary.CompressedChunks.Any())
             {
-                return;
+                if (Summary.CompressionFlags != 0)
+                {
+                    return;
+                }
+
+                // Flags 0? Let's pretend that we no longer possess any chunks.
+                Summary.CompressedChunks.Clear();
             }
 #if TERA
             if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
