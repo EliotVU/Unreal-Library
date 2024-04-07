@@ -1511,9 +1511,16 @@ namespace UELib
                 "Branch.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
 
             // We can't continue without decompressing.
-            if (CompressedChunks != null && CompressedChunks.Any())
+            if (Summary.CompressedChunks != null &&
+                Summary.CompressedChunks.Any())
             {
-                return;
+                if (Summary.CompressionFlags != 0)
+                {
+                    return;
+                }
+
+                // Flags 0? Let's pretend that we no longer possess any chunks.
+                Summary.CompressedChunks.Clear();
             }
 #if TERA
             if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;

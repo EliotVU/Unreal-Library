@@ -110,31 +110,32 @@ namespace UELib.Core
                         Debug.Assert(Struct != null);
                     }
 #endif
-                    // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369)
-                    if (stream.Version > 369)
+                    // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369), first seen in MOHA(421).
+                    if (stream.Version > 374)
                     {
                         Struct = stream.ReadObject<UStruct>();
                         Decompiler.AlignObjectSize();
                         Debug.Assert(Struct != null);
 #if MKKE
-                        if (Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE)
                         {
-#endif
-                            // Copy?
-                            stream.ReadByte();
-                            Decompiler.AlignSize(sizeof(byte));
-#if MKKE
+                            goto skipToNext;
                         }
 #endif
+                        // Copy?
+                        stream.ReadByte();
+                        Decompiler.AlignSize(sizeof(byte));
                     }
-                    
-                    // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in SWG(486).
-                    if (stream.Version > 472)
+
+                    // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in FFOW(433).
+                    if (stream.Version >= 433)
                     {
                         // Modification?
                         stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
+
+                skipToNext:
 
                     // Pre-Context
                     DeserializeNext();
