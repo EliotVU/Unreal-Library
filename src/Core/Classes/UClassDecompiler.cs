@@ -376,6 +376,20 @@ namespace UELib.Core
             }
 #endif
 
+#if AHIT
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
+            {
+                if ((ClassFlags & (uint)Flags.ClassFlags.AHIT_AlwaysLoaded) != 0)
+                {
+                    output += "\r\n\tAlwaysLoaded";
+                }
+                if ((ClassFlags & (uint)Flags.ClassFlags.AHIT_IterOptimized) != 0)
+                {
+                    output += "\r\n\tIterationOptimized";
+                }
+            }
+#endif
+
             output += FormatNameGroup("classgroup", ClassGroups);
             output += FormatNameGroup("autoexpandcategories", AutoExpandCategories);
             output += FormatNameGroup("autocollapsecategories", AutoCollapseCategories);

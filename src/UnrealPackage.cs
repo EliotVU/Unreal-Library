@@ -587,6 +587,15 @@ namespace UELib
                 [Build(874, 78u)] Battleborn,
 
                 /// <summary>
+                /// A Hat in Time
+                /// 
+                /// 877:893/005
+                /// 
+                /// The earliest available version with any custom specifiers is 1.0 (877) - Un-Drew.
+                /// </summary>
+                [Build(877, 893, 5, 5)] AHIT,
+
+                /// <summary>
                 /// Special Force 2
                 /// 
                 /// 904/009 (Non-standard version, actual Epic version might be 692 or higher)
