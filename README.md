@@ -52,16 +52,16 @@ Install using either:
     foreach (var obj in package.Objects)
     {
         // If positive then we have an export, or import if negative, if null, we are working with a 'None' object, but this shouldn't occur here.
-        if (int(obj) > 0)
+        if ((int)obj > 0)
         {
             Console.WriteLine($"Export:");
         }
-        else if (int(obj) < 0)
+        else if ((int)obj < 0)
         {
             Console.WriteLine($"Import:");
         }
 
-        Console.WriteLine($"ObjectIndex: {int(obj)}");
+        Console.WriteLine($"ObjectIndex: {(int)obj}");
         Console.WriteLine($"Name: {obj.Name}");
         Console.WriteLine($"Class: {obj.Class?.Name}");
         Console.WriteLine($"Outer: {obj.Outer}");
