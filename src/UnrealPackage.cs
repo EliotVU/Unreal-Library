@@ -483,9 +483,11 @@ namespace UELib
                 [Build(801, 30)] Dishonored,
 
                 /// <summary>
-                /// 828/000
+                /// 788/001,828/000
                 /// </summary>
-                [Build(788, 1, BuildFlags.ConsoleCooked)] [Build(828, 0, BuildFlags.ConsoleCooked)]
+                [Build(788, 1, BuildFlags.ConsoleCooked)]
+                // Conflict with GoW3
+                //[Build(828, 0, BuildFlags.ConsoleCooked)]
                 InfinityBlade,
 
                 /// <summary>
@@ -507,10 +509,21 @@ namespace UELib
                 [Build(832, 46)] Borderlands2,
 
                 /// <summary>
-                /// 842/001
+                /// 842-864/001
                 /// </summary>
                 [Build(842, 1, BuildFlags.ConsoleCooked)]
+                [Build(864, 1, BuildFlags.ConsoleCooked)]
                 InfinityBlade2,
+
+                // Cannot auto-detect, ambiguous with UDK-2015-01-29
+                //[Build(868, 0, BuildFlags.ConsoleCooked)]
+                InfinityBlade3,
+
+                /// <summary>
+                /// 868/008
+                /// </summary>
+                [Build(868, 8, BuildFlags.ConsoleCooked)]
+                InjusticeMobile,
 
                 /// <summary>
                 /// XCom
