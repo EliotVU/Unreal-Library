@@ -36,18 +36,36 @@ Install using either:
 * Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
 
 ```csharp
+    using UELib;
+
+    // Instantiates a FileStream and deserializes the package's header, will also auto-detected a suitable build to associate the package with.
     var package = UnrealLoader.LoadPackage(@"C:\Path\Package.upk", System.IO.FileAccess.Read);
     Console.WriteLine($"Version: {package.Summary.Version}");
+
+    // Necessary if working with packages that have been cooked for a console platform, and IF the build was not properly auto-detected. 
+    // package.CookerPlatform = BuildPlatform.Console;
     
     // Initializes the registered classes, constructs and deserializes(loads) the package objects.
     package.InitializePackage();
 
-    // Now we can iterate all loaded objects, but beware! This includes fake-import objects.
+    // Now we can iterate over all the initialized objects, but beware! This includes fake-import objects.
     foreach (var obj in package.Objects)
     {
+        // If positive then we have an export, or import if negative, if null, we are working with a 'None' object, but this shouldn't occur here.
+        if (int(obj) > 0)
+        {
+            Console.WriteLine($"Export:");
+        }
+        else if (int(obj) < 0)
+        {
+            Console.WriteLine($"Import:");
+        }
+
+        Console.WriteLine($"ObjectIndex: {int(obj)}");
         Console.WriteLine($"Name: {obj.Name}");
         Console.WriteLine($"Class: {obj.Class?.Name}");
         Console.WriteLine($"Outer: {obj.Outer}");
+        Console.WriteLine($"Path: {obj.GetReferencePath()}");
     }
 ```
 
