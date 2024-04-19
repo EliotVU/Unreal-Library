@@ -632,6 +632,13 @@ namespace UELib
 
             public GameBuild(UnrealPackage package)
             {
+                // If UE Explorer's PlatformMenuItem is equal to "Console", set ConsoleCooked flag.
+                // This is required for correct serialization of unrecognized Console packages
+                if (UnrealConfig.Platform == UnrealConfig.CookedPlatform.Console)
+                {
+                    Flags |= BuildFlags.ConsoleCooked;
+                }
+
                 var buildInfo = FindBuildInfo(package, out var buildAttribute);
                 if (buildInfo == null)
                 {
