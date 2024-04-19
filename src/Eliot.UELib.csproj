@@ -73,7 +73,7 @@
   <PropertyGroup>
     <AssemblyName>Eliot.UELib</AssemblyName>
     <PackageId>$(AssemblyName)</PackageId>
-    <Version>$(VersionPrefix)1.5.0</Version>
+    <Version>$(VersionPrefix)1.5.1</Version>
     <Authors>EliotVU</Authors>
     <Title>$(AssemblyName)</Title>
     <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>
@@ -86,6 +86,6 @@
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <PackageReleaseNotes>Improved support for A Hat in Time (UE3)</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 </Project>
