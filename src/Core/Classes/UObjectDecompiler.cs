@@ -32,7 +32,7 @@ namespace UELib.Core
                 UDecompilingState.RemoveTabs(1);
             }
 
-            return $"{output}{UDecompilingState.Tabs}object end" +
+            return $"{output}{UDecompilingState.Tabs}end object" +
                    $"\r\n{UDecompilingState.Tabs}" +
                    $"// Reference: {Class.Name}'{GetOuterGroup()}'";
         }
