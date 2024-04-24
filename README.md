@@ -36,18 +36,36 @@ Install using either:
 * Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
 
 ```csharp
+    using UELib;
+
+    // Instantiates a FileStream and deserializes the package's header, will also auto-detected a suitable build to associate the package with.
     var package = UnrealLoader.LoadPackage(@"C:\Path\Package.upk", System.IO.FileAccess.Read);
     Console.WriteLine($"Version: {package.Summary.Version}");
+
+    // Necessary if working with packages that have been cooked for a console platform, and IF the build was not properly auto-detected. 
+    // package.CookerPlatform = BuildPlatform.Console;
     
     // Initializes the registered classes, constructs and deserializes(loads) the package objects.
     package.InitializePackage();
 
-    // Now we can iterate all loaded objects, but beware! This includes fake-import objects.
+    // Now we can iterate over all the initialized objects, but beware! This includes fake-import objects.
     foreach (var obj in package.Objects)
     {
+        // If positive then we have an export, or import if negative, if null, we are working with a 'None' object, but this shouldn't occur here.
+        if ((int)obj > 0)
+        {
+            Console.WriteLine($"Export:");
+        }
+        else if ((int)obj < 0)
+        {
+            Console.WriteLine($"Import:");
+        }
+
+        Console.WriteLine($"ObjectIndex: {(int)obj}");
         Console.WriteLine($"Name: {obj.Name}");
         Console.WriteLine($"Class: {obj.Class?.Name}");
         Console.WriteLine($"Outer: {obj.Outer}");
+        Console.WriteLine($"Path: {obj.GetReferencePath()}");
     }
 ```
 
@@ -79,7 +97,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | |
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
 | Mobile Forces | 436 | 81-83/000, 69 | |
-| Clive Barker's Undying | 420 | 72-85/000 | Licensee modifications are supported in the "develop" branch. Versions 72 to 83 are not auto detected. |
+| Clive Barker's Undying | 420 | 72-85/000 | Versions 72 to 83 are not auto detected. |
 | Thief: Deadly Shadows | 777:Flesh | 95/133 | LinkedData not supported |
 | Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
 |     |     |     |     |
@@ -114,7 +132,7 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 | Roboblitz | 2306 | 369/006 |     |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
-| Frontlines: Fuel of War | 2917 | 433/052 | Poor output of functions; better support in the "develop" branch |
+| Frontlines: Fuel of War | 2917 | 433/052 | Poor output of functions |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
 | Mortal Kombat Komplete Edition | 2605 | 472/046 |     |
 | Stargate Worlds | 3004 | 486/007 |     |
@@ -137,7 +155,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Unreal Development Kit | 5860-12791 | 664-868 | |
 | Blacklight: Tango Down | 6165 | 673/002 | |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | |
-| Dungeon Defenders | 6262 | 678/002 | Earlier releases only |
+| Dungeon Defenders | 6262 | 678/002 | |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |
@@ -145,6 +163,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | |
 | Rising Storm 2: Vietnam | 7258 | 765/771 | |
 | Aliens: Colonial Marines | 4170 | 787/047 | |
+| Infinity Blade 1 | 7595 | 788/001 | Console |
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
 | Tribes: Ascend | 7748 | 805/Unknown |     |
 | Tony Hawk's Pro Skater HD | |
@@ -163,7 +182,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | The Haunted: Hells Reach | 8788 | 841/000 |     |
 | Asura's Wrath | 8788 | 841/000 | -zlib; platform needs to be set to console. |
 | Blacklight Retribution | 8788-10499 | 841-864/002 |     |
-| Infinity Blade 2 | 9059 | 842/001 |     |
+| Infinity Blade 2 | 9059 | 842-864/001 | Console |
 | Q.U.B.E | 8916 | 845/000 |     |
 | DmC: Devil May Cry | 8916 | 845/004 | |
 | XCOM: Enemy Unknown | 8916 | 845/059 | |
@@ -176,10 +195,11 @@ This is a table of games that are confirmed to be compatible with the current st
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
 | Chivalry: Medieval Warfare | 10246 | 860/000 | |
-| Hawken | 10681 | 860/004 | /002 is not auto-detected |
+| Hawken | 10681 | 860/004 | |
 | Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) |
 | Styx: Master of Shadows | 10499 | 860/004 | | 
 | Batman: Arkham Knight | | 863/32995 | Not verified  |
+| Infinity Blade 3 | | 868/000 | Console |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
 | Bombshell | 11767 | 870/000 | |
 | Orcs Must Die! Unchained | 20430 | 870/000 | |

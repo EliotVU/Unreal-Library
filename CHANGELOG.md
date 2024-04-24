@@ -1,3 +1,8 @@
+# [1.5.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.5.1)
+
+* Fixed regression #74; The deprecated `UnrealConfig.CookedPlatform` field was ignored, which is still relevant for legacy-code.
+* Updated auto-detected builds for Infinity Blade's series
+
 # [1.5.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.5.0)
 
 * 1ef135d Improved support for A Hat in Time (UE3), contributed by @Un-Drew
