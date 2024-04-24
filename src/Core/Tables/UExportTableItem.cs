@@ -191,7 +191,7 @@ namespace UELib
                 if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                     stream.LicenseeVersion >= 22)
                 {
-                    SerialOffset = stream.ReadIndex();
+                    SerialOffset = (int)stream.ReadInt64();
                     goto streamExportFlags;
                 }
 #endif
