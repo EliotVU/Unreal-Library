@@ -5,7 +5,7 @@ namespace UELib.Branch
     public enum PackageObjectLegacyVersion
     {
         Undefined = 0,
-        
+
         /// <summary>
         /// This is one particular update with A LOT of general package changes.
         /// </summary>
@@ -73,8 +73,13 @@ namespace UELib.Branch
         // FIXME: Version
         EnumTagNameAddedToBytePropertyTag = UE3,
 
+        ObjectFlagsSizeChangedToULong = 195,
+        ArchetypeAddedToExports = 220,
+
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
+
+        SerialSizeConditionRemoved = 249,
 
         // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
         LazyLoaderFlagsAddedToLazyArray = 251,
@@ -86,7 +91,7 @@ namespace UELib.Branch
         // -- albeit the exact nature is not clear
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
-        
+
         ComponentGuidDeprecated = 273,
 
         /// <summary>

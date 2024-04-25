@@ -12,10 +12,8 @@ namespace UELib
     /// </summary>
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
-        private const int VArchetype = 220;
+        [Obsolete]
         public const int VObjectFlagsToULONG = 195;
-
-        private const int VSerialSizeConditionless = 249;
 
         #region Serialized Members
         
@@ -121,15 +119,15 @@ namespace UELib
             stream.Write(_SuperIndex);
             stream.Write(OuterIndex);
             stream.Write(ObjectName);
-            if (stream.Version >= VArchetype)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
             {
                 _ArchetypeIndex = stream.ReadInt32();
             }
-            stream.Write(stream.Version >= VObjectFlagsToULONG
+            stream.Write(stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeChangedToULong
                 ? ObjectFlags
                 : (uint)ObjectFlags);
             stream.WriteIndex(SerialSize); // Assumes SerialSize has been updated to @Object's buffer size.
-            if (SerialSize > 0 || stream.Version >= VSerialSizeConditionless)
+            if (SerialSize > 0 || stream.Version >= (uint)PackageObjectLegacyVersion.SerialSizeConditionRemoved)
             {
                 // SerialOffset has to be set and written after this object has been serialized.
                 stream.WriteIndex(SerialOffset); // Assumes the same as @SerialSize comment.
@@ -155,7 +153,7 @@ namespace UELib
             }
 #endif
             ObjectName = stream.ReadNameReference();
-            if (stream.Version >= VArchetype)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
             {
                 _ArchetypeIndex = stream.ReadInt32();
             }
@@ -176,14 +174,14 @@ namespace UELib
             }
 #endif
             ObjectFlags = stream.ReadUInt32();
-            if (stream.Version >= VObjectFlagsToULONG)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeChangedToULong)
             {
                 ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
             }
 
         streamSerialSize:
             SerialSize = stream.ReadIndex();
-            if (SerialSize > 0 || stream.Version >= VSerialSizeConditionless)
+            if (SerialSize > 0 || stream.Version >= (uint)PackageObjectLegacyVersion.SerialSizeConditionRemoved)
             {
 #if ROCKETLEAGUE
                 // FIXME: Can't change SerialOffset to 64bit due UE Explorer.

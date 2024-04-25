@@ -14,14 +14,28 @@ namespace UELib.Core
                 BeginDeserializing();
             }
 
+            string output = $"// Reference: {GetReferencePath()}\r\n";
+
             if (ImportTable != null)
             {
-                return $"// Cannot decompile import {Name}";
+                return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile an imported object";
             }
 
-            Debug.Assert(Class != null);
-            string output = $"begin object name={Name} class={Class.Name}" +
-                            "\r\n";
+            output += UDecompilingState.Tabs;
+            output += $"begin object name={Name}";
+            // If null then we have a new sub-object (not an override)
+            if (Archetype == null)
+            {
+                Debug.Assert(Class != null);
+                output += $" class={Class.GetReferencePath()}";
+            }
+            else
+            {
+                // Commented out, too noisy but useful.
+                //output += $" /*archetype={Archetype.GetReferencePath()}*/";
+            }
+            output += "\r\n";
+
             UDecompilingState.AddTabs(1);
             try
             {
@@ -32,9 +46,8 @@ namespace UELib.Core
                 UDecompilingState.RemoveTabs(1);
             }
 
-            return $"{output}{UDecompilingState.Tabs}end object" +
-                   $"\r\n{UDecompilingState.Tabs}" +
-                   $"// Reference: {Class.Name}'{GetOuterGroup()}'";
+            return $"{output}" +
+                   $"{UDecompilingState.Tabs}end object";
         }
 
         public virtual string FormatHeader()

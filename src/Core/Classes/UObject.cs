@@ -57,6 +57,11 @@ namespace UELib.Core
         [CanBeNull]
         public UObject Outer => Package.GetIndexObject(Table.OuterIndex);
 
+        [CanBeNull]
+        public UObject Archetype => ExportTable != null
+            ? Package.GetIndexObject(ExportTable.ArchetypeIndex)
+            : null;
+
         /// <summary>
         /// The object's index represented as a table index.
         /// </summary>
