@@ -163,6 +163,14 @@ namespace UELib.Core
 #endif
             ClassFlags = _Buffer.ReadUInt32();
             Record(nameof(ClassFlags), (ClassFlags)ClassFlags);
+#if ROCKETLEAGUE
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                _Buffer.LicenseeVersion >= 1)
+            {
+                uint v194 = _Buffer.ReadUInt32();
+                Record(nameof(v194), v194);
+            }
+#endif
 #if SPELLBORN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
             {
@@ -404,6 +412,20 @@ namespace UELib.Core
                         _Buffer.ConformRecordPosition();
                     }
 #endif
+#if ROCKETLEAGUE
+                    if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                        _Buffer.LicenseeVersion >= 21)
+                    {
+                        string v298 = _Buffer.ReadString();
+                        Record(nameof(v298), v298);
+
+                        int v2a8 = _Buffer.ReadInt32();
+                        Record(nameof(v2a8), v2a8);
+                        
+                        _Buffer.Read(out UArray<UName> v2b0);
+                        Record(nameof(v2b0), v2b0);
+                    }
+#endif
                     if (_Buffer.Version >= UnrealPackage.VDLLBIND && _Buffer.UE4Version < 117)
                     {
                         DLLBindName = _Buffer.ReadNameReference();
@@ -551,6 +573,14 @@ namespace UELib.Core
             {
                 DeserializeProperties();
             }
+#if ROCKETLEAGUE
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague)
+            {
+                // StateMap; Seems to keep track of all declared states in the class.
+                _Buffer.Read(out UMap<UName, UObject> v368);
+                Record(nameof(v368), v368);
+            }
+#endif
         }
 
         private void DeserializeInterfaces()

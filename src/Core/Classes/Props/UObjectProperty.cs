@@ -28,6 +28,15 @@ namespace UELib.Core
 
             Object = _Buffer.ReadObject<UObject>();
             Record(nameof(Object), Object);
+#if ROCKETLEAGUE
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                // version >= 17 for UComponentProperty?
+                _Buffer.LicenseeVersion >= 32)
+            {
+                var vd0 = _Buffer.ReadNameReference();
+                Record(nameof(vd0), vd0);
+            }
+#endif
         }
 
         /// <inheritdoc/>

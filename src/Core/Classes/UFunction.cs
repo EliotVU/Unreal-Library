@@ -93,20 +93,35 @@ namespace UELib.Core
             }
 
 #if TRANSFORMERS
-            // TODO: Version?
-            FunctionFlags = Package.Build == BuildGeneration.HMS
-                ? _Buffer.ReadUInt64()
-                : _Buffer.ReadUInt32();
-#else
-            FunctionFlags = _Buffer.ReadUInt32();
+            // FIXME: version
+            if (_Buffer.Package.Build == BuildGeneration.HMS)
+            {
+                FunctionFlags = _Buffer.ReadUInt64();
+                Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+
+                goto skipFunctionFlags;
+            }
 #endif
+            FunctionFlags = _Buffer.ReadUInt32();
             Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+#if ROCKETLEAGUE
+            // Disassembled code shows two calls to ByteOrderSerialize, might be a different variable not sure.
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                _Buffer.LicenseeVersion >= 24)
+            {
+                // HO:0x04 = Constructor
+                uint v134 = _Buffer.ReadUInt32();
+                Record(nameof(v134), v134);
+                
+                FunctionFlags |= ((ulong)v134 << 32);
+            }
+#endif
+        skipFunctionFlags:
             if (HasFunctionFlag(Flags.FunctionFlags.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
             }
-
 #if SPELLBORN
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn
                 && 133 < _Buffer.Version)
@@ -154,7 +169,7 @@ namespace UELib.Core
             }
         }
 
-        #endregion
+#endregion
 
         #region Methods
         public bool HasFunctionFlag(uint flag)

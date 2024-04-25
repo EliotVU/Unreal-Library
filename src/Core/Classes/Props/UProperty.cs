@@ -163,8 +163,8 @@ namespace UELib.Core
 #if THIEF_DS || DEUSEX_IW
             if (Package.Build == BuildGeneration.Flesh)
             {
-                short deusInheritedOrRuntimeInstiantiated = _Buffer.ReadInt16();
-                Record(nameof(deusInheritedOrRuntimeInstiantiated), deusInheritedOrRuntimeInstiantiated);
+                short deusInheritedOrRuntimeInstantiated = _Buffer.ReadInt16();
+                Record(nameof(deusInheritedOrRuntimeInstantiated), deusInheritedOrRuntimeInstantiated);
                 short deusUnkInt16 = _Buffer.ReadInt16();
                 Record(nameof(deusUnkInt16), deusUnkInt16);
             }
@@ -182,6 +182,21 @@ namespace UELib.Core
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
             }
+#if ROCKETLEAGUE
+            // identical to this object's name.
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                _Buffer.LicenseeVersion >= 11)
+            {
+                string vb8 = _Buffer.ReadString();
+                Record(nameof(vb8), vb8);
+
+                //if (_Buffer.LicenseeVersion == 15)
+                //{
+                //    var v68 = _Buffer.ReadNameReference();
+                //    Record(nameof(v68), v68);
+                //}
+            }
+#endif
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance)
             {
