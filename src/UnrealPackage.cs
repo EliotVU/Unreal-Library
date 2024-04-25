@@ -22,6 +22,7 @@ namespace UELib
     using Core;
     using Decoding;
     using Branch.UE2.DVS;
+    using UELib.Branch.UE3.RL;
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -588,7 +589,7 @@ namespace UELib
                 /// 867/009:032
                 /// Requires third-party decompression and decryption
                 /// </summary>
-                [Build(867, 868, 9u, 32u)] RocketLeague,
+                [Build(867, 868, 9u, 32u)] [BuildEngineBranch(typeof(EngineBranchRL))] RocketLeague,
 
                 /// <summary>
                 /// Battleborn
