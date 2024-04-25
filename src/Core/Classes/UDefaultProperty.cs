@@ -679,44 +679,38 @@ namespace UELib.Core
                 {
                     var constantObject = _Buffer.ReadObject();
                     Record(nameof(constantObject), constantObject);
-                    if (constantObject != null)
-                    {
-                        var inline = false;
-                        // If true, object is an archetype or subobject.
-                        if (constantObject.Outer == _Container &&
-                            (deserializeFlags & DeserializeFlags.WithinStruct) == 0)
-                        {
-                            // Unknown objects are only deserialized on demand.
-                            constantObject.BeginDeserializing();
-                            if (constantObject.Properties != null && constantObject.Properties.Count > 0)
-                            {
-                                inline = true;
-                                propertyValue = constantObject.Decompile() + "\r\n" + UDecompilingState.Tabs;
-
-                                _TempFlags |= DoNotAppendName;
-                                if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
-                                {
-                                    _TempFlags |= ReplaceNameMarker;
-                                    propertyValue += $"%ARRAYNAME%={constantObject.Name}";
-                                }
-                                else
-                                {
-                                    propertyValue += $"{Name}={constantObject.Name}";
-                                }
-                            }
-                        }
-
-                        if (!inline)
-                            // =CLASS'Package.Group(s)+.Name'
-                        {
-                            propertyValue = PropertyDisplay.FormatLiteral(constantObject);
-                        }
-                    }
-                    else
+                    if (constantObject == null)
                     {
                         // =none
                         propertyValue = "none";
+                        break;
                     }
+
+                    // If the object is part of the current container, then it probably was an inlined declaration.
+                    bool shouldInline = constantObject.Outer == _Container &&
+                                     (deserializeFlags & DeserializeFlags.WithinStruct) == 0;
+                    if (shouldInline)
+                    {
+                        // Unknown objects are only deserialized on demand.
+                        constantObject.BeginDeserializing();
+                        propertyValue = constantObject.Decompile() + "\r\n";
+
+                        _TempFlags |= DoNotAppendName;
+                        if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
+                        {
+                            _TempFlags |= ReplaceNameMarker;
+                            propertyValue += $"{UDecompilingState.Tabs}%ARRAYNAME%={constantObject.Name}";
+                        }
+                        else
+                        {
+                            propertyValue += $"{UDecompilingState.Tabs}{Name}={constantObject.Name}";
+                        }
+
+                        break;
+                    }
+
+                    // =Class'Package.Group.Name'
+                    propertyValue = PropertyDisplay.FormatLiteral(constantObject);
 
                     break;
                 }
