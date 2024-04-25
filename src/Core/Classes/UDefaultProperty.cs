@@ -686,31 +686,50 @@ namespace UELib.Core
                         break;
                     }
 
+                    Debug.Assert(UDecompilingState.s_inlinedSubObjects != null, "UDecompilingState.s_inlinedSubObjects != null");
+
+                    bool isPendingInline =
+                        UDecompilingState.s_inlinedSubObjects.TryGetValue(constantObject, out bool isInlined);
                     // If the object is part of the current container, then it probably was an inlined declaration.
-                    bool shouldInline = constantObject.Outer == _Container &&
-                                     (deserializeFlags & DeserializeFlags.WithinStruct) == 0;
+                    bool shouldInline = constantObject.Outer == _Container
+                                     && !isPendingInline
+                                     && !isInlined;
                     if (shouldInline)
                     {
-                        // Unknown objects are only deserialized on demand.
-                        constantObject.BeginDeserializing();
-                        propertyValue = constantObject.Decompile() + "\r\n";
+                        if ((deserializeFlags & DeserializeFlags.WithinStruct) == 0)
+                        {
+                            UDecompilingState.s_inlinedSubObjects.Add(constantObject, true);
+                            
+                            // Unknown objects are only deserialized on demand.
+                            constantObject.BeginDeserializing();
+                            
+                            propertyValue = constantObject.Decompile() + "\r\n";
 
-                        _TempFlags |= DoNotAppendName;
-                        if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
-                        {
-                            _TempFlags |= ReplaceNameMarker;
-                            propertyValue += $"{UDecompilingState.Tabs}%ARRAYNAME%={constantObject.Name}";
-                        }
-                        else
-                        {
+                            _TempFlags |= DoNotAppendName;
+                            if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
+                            {
+                                _TempFlags |= ReplaceNameMarker;
+                                propertyValue += $"{UDecompilingState.Tabs}%ARRAYNAME%={constantObject.Name}";
+
+                                break;
+                            }
+
                             propertyValue += $"{UDecompilingState.Tabs}{Name}={constantObject.Name}";
+
+                            break;
                         }
 
+                        // Within a struct, to be inlined later on!
+                        UDecompilingState.s_inlinedSubObjects.Add(constantObject, false);
+                        propertyValue = $"{Name}={constantObject.Name}";
+                        
                         break;
                     }
 
-                    // =Class'Package.Group.Name'
-                    propertyValue = PropertyDisplay.FormatLiteral(constantObject);
+                    // Use shorthand for inlined objects.
+                    propertyValue = isInlined
+                        ? constantObject.Name
+                        : PropertyDisplay.FormatLiteral(constantObject);
 
                     break;
                 }
