@@ -92,14 +92,30 @@ namespace UELib.Core
                 goto skipScriptText;
             }
 #endif
+#if BORDERLANDS
+            // Swapped order...
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+            {
+                Children = _Buffer.ReadObject<UField>();
+                Record(nameof(Children), Children);
+
+                ScriptText = _Buffer.ReadObject<UTextBuffer>();
+                Record(nameof(ScriptText), ScriptText);
+
+                // FIXME: another 2x32 uints here (IsConsoleCooked)
+                
+                goto skipChildren;
+            }
+#endif
             if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ScriptText), ScriptText);
             }
-            skipScriptText:
+        skipScriptText:
             Children = _Buffer.ReadObject<UField>();
             Record(nameof(Children), Children);
+        skipChildren:
 #if BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
