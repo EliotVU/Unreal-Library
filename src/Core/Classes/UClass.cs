@@ -330,7 +330,13 @@ namespace UELib.Core
                             }
 #endif
                         }
-
+#if BORDERLANDS
+                        // Back port of version 670? (No version specified). See also above
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+                        {
+                            AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
+                        }
+#endif
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.ForceScriptOrderAddedToUClass
 #if BIOSHOCK
                             // Partially upgraded
@@ -386,6 +392,9 @@ namespace UELib.Core
 #endif
 #if TRANSFORMERS
                                                   && Package.Build != BuildGeneration.HMS
+#endif
+#if BORDERLANDS
+                                                  && Package.Build != UnrealPackage.GameBuild.BuildName.Borderlands
 #endif
                            )
                         {

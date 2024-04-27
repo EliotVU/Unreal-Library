@@ -129,6 +129,18 @@ namespace UELib.Core
                 Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
             }
 #endif
+#if BORDERLANDS
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands &&
+                _Buffer.LicenseeVersion >= 2)
+            {
+                // Disassembled as two ReadObjects, but upon further inspection this HAS to be a FName read instead.
+                // Always the struct's name for struct properties.
+                // Always "Messaging" for message like properties.
+                // Also seen as "Action_SamePropertyName"
+                var v84 = _Buffer.ReadNameReference();
+                Record(nameof(v84), v84);
+            }
+#endif
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {

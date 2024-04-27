@@ -430,9 +430,14 @@ namespace UELib
                 MOH,
 
                 /// <summary>
-                /// 584/058
+                /// Borderlands
+                /// 
+                /// 584/057-058
+                /// 594/058
                 /// </summary>
-                [Build(584, 58)] Borderlands,
+                [Build(584, 584, 57, 58)]
+                [Build(594, 58)]
+                Borderlands,
 
                 /// <summary>
                 /// 584/126
