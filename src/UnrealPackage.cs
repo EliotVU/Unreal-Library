@@ -1112,9 +1112,6 @@ namespace UELib
                     stream.ReadArray(out UArray<byte> iStack_fc);
                 }
 #endif
-#if BORDERLANDS
-                if (stream.Package.Build == GameBuild.BuildName.Borderlands) stream.Skip(4);
-#endif
                 if (stream.UE4Version >= 384)
                 {
                     StringAssetReferencesCount = stream.ReadInt32();
@@ -1297,10 +1294,10 @@ namespace UELib
                     }
 #endif
                 }
-#if BORDERLANDS
+#if BATTLEBORN
                 if (stream.Package.Build == GameBuild.BuildName.Battleborn)
                 {
-                    // FIXME: Package format is being deserialzied incorrectly and fails here.
+                    // FIXME: Package format is being deserialized incorrectly and fails here.
                     stream.ReadUInt32();
                     return;
                 }
