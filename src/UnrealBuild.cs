@@ -83,6 +83,13 @@ namespace UELib
         HMS,
 
         /// <summary>
+        /// Gearbox Software
+        ///
+        /// Modified Unreal Engine 3 for Borderlands
+        /// </summary>
+        GB,
+
+        /// <summary>
         /// Unreal Engine 4
         /// 
         /// Not in use yet.

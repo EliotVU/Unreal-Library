@@ -433,12 +433,25 @@ namespace UELib
                 /// Borderlands
                 /// 
                 /// 584/057-058
-                /// 594/058
+                ///
+                /// Includes back-ported features from UDK
                 /// </summary>
-                [Build(584, 584, 57, 58)]
-                [Build(594, 58)]
+                [Build(584, 584, 57, 58, BuildGeneration.GB)]
                 Borderlands,
 
+                /// <summary>
+                /// Borderlands Game of the Year Enhanced
+                /// 
+                /// 594/058
+                /// 
+                /// Includes back-ported features from UDK of at least v813 (NativeClassGroup)
+                /// Appears to be missing (v623:ExportGuids, v767:TextureAllocations, and v673:FPropertyTag's BoolValue change).
+                /// Presume at least v832 from Borderlands 2 
+                /// </summary>
+                [Build(594, 58, BuildGeneration.GB)]
+                [OverridePackageVersion(832)]
+                Borderlands_GOTYE,
+                
                 /// <summary>
                 /// 584/126
                 /// </summary>
@@ -1134,6 +1147,9 @@ namespace UELib
 #if BIOSHOCK
                     && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
 #endif
+#if BORDERLANDS
+                    && stream.Package.Build != GameBuild.BuildName.Borderlands_GOTYE
+#endif
                    )
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
@@ -1299,6 +1315,12 @@ namespace UELib
                     }
 #endif
                 }
+#if BORDERLANDS
+                if (stream.Package.Build == GameBuild.BuildName.Borderlands_GOTYE)
+                {
+                    return;
+                }
+#endif
 #if BATTLEBORN
                 if (stream.Package.Build == GameBuild.BuildName.Battleborn)
                 {

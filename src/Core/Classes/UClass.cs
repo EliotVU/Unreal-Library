@@ -317,24 +317,22 @@ namespace UELib.Core
 #endif
                         }
 
-                        if (_Buffer.Version > 670)
-                        {
-                            AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
-#if BATMAN
-                            // Only attested in bm4 with no version check.
-                            if (_Buffer.Package.Build == BuildGeneration.RSS &&
-                                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-                            {
-                                IList<int> bm4_v198;
-                                bm4_v198 = DeserializeGroup(nameof(bm4_v198));
-                            }
-#endif
-                        }
+                        // FIXME: Wrong version, no version checks found in games that DO have checks for version 600+
+                        if (_Buffer.Version > 670
 #if BORDERLANDS
-                        // Back port of version 670? (No version specified). See also above
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+                            || Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands
+#endif
+                           )
                         {
                             AutoCollapseCategories = DeserializeGroup("AutoCollapseCategories");
+                        }
+#if BATMAN
+                        // Only attested in bm4 with no version check.
+                        if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                            _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                        {
+                            IList<int> bm4_v198;
+                            bm4_v198 = DeserializeGroup(nameof(bm4_v198));
                         }
 #endif
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.ForceScriptOrderAddedToUClass

@@ -111,7 +111,7 @@ namespace UELib.Core
             ElementSize = (ushort)(ArrayDim >> 16);
         skipArrayDim:
             // Just to verify if this is in use at all.
-            Debug.Assert(ElementSize == 0, $"ElementSize: {ElementSize}");
+            //Debug.Assert(ElementSize == 0, $"ElementSize: {ElementSize}");
             // 2048 is the max allowed dimension in the UnrealScript compiler, however some licensees have extended this to a much higher size.
             //Debug.Assert(
             //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
@@ -127,18 +127,6 @@ namespace UELib.Core
             {
                 PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
                 Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
-            }
-#endif
-#if BORDERLANDS
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands &&
-                _Buffer.LicenseeVersion >= 2)
-            {
-                // Disassembled as two ReadObjects, but upon further inspection this HAS to be a FName read instead.
-                // Always the struct's name for struct properties.
-                // Always "Messaging" for message like properties.
-                // Also seen as "Action_SamePropertyName"
-                var v84 = _Buffer.ReadNameReference();
-                Record(nameof(v84), v84);
             }
 #endif
 #if XCOM2
@@ -179,6 +167,16 @@ namespace UELib.Core
                 Record(nameof(deusInheritedOrRuntimeInstantiated), deusInheritedOrRuntimeInstantiated);
                 short deusUnkInt16 = _Buffer.ReadInt16();
                 Record(nameof(deusUnkInt16), deusUnkInt16);
+            }
+#endif
+#if BORDERLANDS
+            if (Package.Build == BuildGeneration.GB &&
+                _Buffer.LicenseeVersion >= 2)
+            {
+                var va8 = _Buffer.ReadObject();
+                Record(nameof(va8), va8);
+                var vb0 = _Buffer.ReadObject();
+                Record(nameof(vb0), vb0);
             }
 #endif
 #if UE4

@@ -502,9 +502,20 @@ namespace UELib.Core
                     break;
 
                 case PropertyType.BoolProperty:
-                    BoolValue = _Buffer.Version >= (uint)PackageObjectLegacyVersion.BoolValueToByteForBoolPropertyTag
-                        ? _Buffer.ReadByte() > 0
-                        : _Buffer.ReadInt32() > 0;
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.BoolValueToByteForBoolPropertyTag
+#if BORDERLANDS
+                        // GOTYE didn't apply this upgrade, but did the EnumName update? ...
+                        && _Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE
+#endif
+                        )
+                    {
+                        BoolValue = _Buffer.ReadByte() > 0;
+                    }
+                    else
+                    {
+                        BoolValue = _Buffer.ReadInt32() > 0;
+                    }
+
                     Record(nameof(BoolValue), BoolValue);
                     break;
 
