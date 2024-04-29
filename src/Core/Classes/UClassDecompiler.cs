@@ -487,7 +487,9 @@ namespace UELib.Core
                     string statementType = Package.Version < VReliableDeprecation
                         ? rel ? "reliable" : "unreliable"
                         : string.Empty;
-                    var statementFormat = $"{statementType} if({statementCode})";
+                    string statementFormat = statementType != string.Empty
+                        ? $"{statementType} if({statementCode})"
+                        : $"if({statementCode}";
                     output.Append(statementFormat);
 
                     UDecompilingState.AddTab();
