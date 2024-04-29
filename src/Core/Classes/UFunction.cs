@@ -201,8 +201,11 @@ namespace UELib.Core
         {
             // FIXME: Deprecate version check, and re-map the function flags using the EngineBranch class approach.
             return Package.Version > 300 
-                   && ByteCodeManager != null 
-                   && HasFunctionFlag(Flags.FunctionFlags.OptionalParameters);
+                   && ByteCodeManager != null
+                   && Params?.Any() == true
+                // Not available for older packages.
+                // && HasFunctionFlag(Flags.FunctionFlags.OptionalParameters);
+                   ;
         }
 
         #endregion
