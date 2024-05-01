@@ -197,7 +197,8 @@ namespace UELib.Core
         internal void EnsureBuffer()
         {
             //Console.WriteLine( "Ensure buffer for {0}", (string)this );
-            InitBuffer();
+            if (_Buffer == null)
+                InitBuffer();
         }
 
         internal void MaybeDisposeBuffer()
