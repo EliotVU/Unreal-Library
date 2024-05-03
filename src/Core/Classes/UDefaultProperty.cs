@@ -614,6 +614,11 @@ namespace UELib.Core
                     propertyValue = $"\"{value}\"";
                     break;
                 }
+#if GIGANTIC
+                case PropertyType.JsonRefProperty:
+                    propertyValue = + _Buffer.ReadNameReference() + "@JSONREF@" + _Buffer.ReadObject<UObject>();
+                    break;
+#endif
 
                 case PropertyType.IntProperty:
                 {
@@ -636,6 +641,7 @@ namespace UELib.Core
                                     ",?=" + _Buffer.ReadByte() + ",?=" + _Buffer.ReadName() + ") */";
                     break;
 #endif
+
                 case PropertyType.FloatProperty:
                 {
                     float value = _Buffer.ReadFloat();
