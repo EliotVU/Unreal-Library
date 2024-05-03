@@ -616,7 +616,7 @@ namespace UELib.Core
                 }
 #if GIGANTIC
                 case PropertyType.JsonRefProperty:
-                    propertyValue = + _Buffer.ReadNameReference() + "@JSONREF@" + _Buffer.ReadObject<UObject>();
+                    propertyValue = _Buffer.ReadNameReference() + "@JSONREF@" + _Buffer.ReadObject<UObject>();
                     break;
 #endif
 
