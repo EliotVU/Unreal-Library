@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -616,10 +617,21 @@ namespace UELib.Core
                 }
 #if GIGANTIC
                 case PropertyType.JsonRefProperty:
-                    propertyValue = _Buffer.ReadNameReference() + "@JSONREF@" + _Buffer.ReadObject<UObject>();
-                    break;
-#endif
+                {
+                    var jsonObjectName = _Buffer.ReadNameReference();
+                    var jsonObject = _Buffer.ReadObject<UObject>();
 
+                    if (jsonObject == null)
+                    {
+                        propertyValue = "none";
+                        break;
+                    }
+
+                    Contract.Assert(jsonObject.Class != null);
+                    propertyValue = $"JsonRef<{jsonObject.Class?.GetFriendlyType()}>'{jsonObjectName}'";
+                    break;
+                }
+#endif
                 case PropertyType.IntProperty:
                 {
                     int value = _Buffer.ReadInt32();
