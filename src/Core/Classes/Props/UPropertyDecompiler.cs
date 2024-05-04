@@ -302,7 +302,17 @@ namespace UELib.Core
                         output += "serializetext ";
                         copyFlags &= ~(ulong)Flags.PropertyFlagsLO.SerializeText;
                     }
-
+#if GIGANTIC
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Gigantic)
+                    {
+                        if ((PropertyFlags & (ulong)Branch.UE3.GIGANTIC.EngineBranchGigantic.PropertyFlags.JsonTransient) != 0)
+                        {
+                            // jsonserialize?
+                            output += "jsontransient ";
+                            copyFlags &= ~(ulong)Branch.UE3.GIGANTIC.EngineBranchGigantic.PropertyFlags.JsonTransient;
+                        }
+                    }
+#endif
 #if AHIT
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
                     {

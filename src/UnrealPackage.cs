@@ -12,6 +12,7 @@ using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
+using UELib.Branch.UE3.GIGANTIC;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.RSS;
 using UELib.Branch.UE4;
@@ -587,7 +588,7 @@ namespace UELib
                 /// 
                 /// 867/008:010
                 /// </summary>
-                [Build(867, 867, 8u, 10u, BuildGeneration.UE3)] Gigantic,
+                [Build(867, 867, 8u, 10u)] [BuildEngineBranch(typeof(EngineBranchGigantic))] Gigantic,
 
                 /// <summary>
                 /// Rocket League
