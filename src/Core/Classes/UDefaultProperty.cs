@@ -627,8 +627,9 @@ namespace UELib.Core
                         break;
                     }
 
-                    Contract.Assert(jsonObject.Class != null);
-                    propertyValue = $"JsonRef<{jsonObject.Class?.GetFriendlyType()}>'{jsonObjectName}'";
+                    // !!! Could be null for imports
+                    //Contract.Assert(jsonObject.Class != null);
+                    propertyValue = $"JsonRef<{jsonObject.GetClassName()}>'{jsonObjectName}'";
                     break;
                 }
 #endif
