@@ -113,9 +113,10 @@ namespace UELib.Core
                             switch ((uint)CastOpCode)
                             {
                                 case 0x32:
+                                case 0x33:
                                 case 0x34:
                                     // FIXME: Unknown format
-                                    castTypeName = "JsonRef";
+                                    castTypeName = $"JsonRef{(uint)CastOpCode:X}";
                                     break;
                             }
                         }
