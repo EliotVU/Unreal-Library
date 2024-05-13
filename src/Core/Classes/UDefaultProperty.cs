@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -625,7 +626,24 @@ namespace UELib.Core
                     propertyValue = $"\"{value}\"";
                     break;
                 }
+#if GIGANTIC
+                case PropertyType.JsonRefProperty:
+                {
+                    var jsonObjectName = _Buffer.ReadNameReference();
+                    var jsonObject = _Buffer.ReadObject<UObject>();
 
+                    if (jsonObject == null)
+                    {
+                        propertyValue = "none";
+                        break;
+                    }
+
+                    // !!! Could be null for imports
+                    //Contract.Assert(jsonObject.Class != null);
+                    propertyValue = $"JsonRef<{jsonObject.GetClassName()}>'{jsonObjectName}'";
+                    break;
+                }
+#endif
                 case PropertyType.IntProperty:
                 {
                     int value = _Buffer.ReadInt32();

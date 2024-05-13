@@ -12,6 +12,7 @@ using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
+using UELib.Branch.UE3.GIGANTIC;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.RSS;
 using UELib.Branch.UE4;
@@ -602,6 +603,13 @@ namespace UELib
                 Batman4,
 
                 /// <summary>
+                /// Gigantic: Rampage Edition
+                /// 
+                /// 867/008:010
+                /// </summary>
+                [Build(867, 867, 8u, 10u)] [BuildEngineBranch(typeof(EngineBranchGigantic))] Gigantic,
+
+                /// <summary>
                 /// Rocket League
                 /// 
                 /// 867/009:032
@@ -1057,10 +1065,13 @@ namespace UELib
 
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
-#if HAWKEN
-                if (stream.Package.Build == GameBuild.BuildName.Hawken &&
+#if HAWKEN || GIGANTIC
+                if ((stream.Package.Build == GameBuild.BuildName.Hawken ||
+                     stream.Package.Build == GameBuild.BuildName.Gigantic) &&
                     stream.LicenseeVersion >= 2)
-                    stream.Skip(4);
+                {
+                    stream.Read(out int vUnknown);
+                }
 #endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
@@ -1233,7 +1244,7 @@ namespace UELib
                 {
                     // The Engine Version this package was created with
                     EngineVersion = stream.ReadInt32();
-                    Console.WriteLine("\tEngineVersion:" + EngineVersion);
+                    Console.WriteLine("EngineVersion:" + EngineVersion);
                 }
 #if UE4
                 if (stream.Package.ContainsEditorData())

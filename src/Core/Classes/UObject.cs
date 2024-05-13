@@ -202,7 +202,8 @@ namespace UELib.Core
         internal void EnsureBuffer()
         {
             //Console.WriteLine( "Ensure buffer for {0}", (string)this );
-            InitBuffer();
+            if (_Buffer == null)
+                InitBuffer();
         }
 
         internal void MaybeDisposeBuffer()
@@ -337,7 +338,7 @@ namespace UELib.Core
 
                     // HACK: Ugly work around for unregistered component classes...
                     // Simply for checking for the parent's class is not reliable without importing objects.
-                    case UnknownObject _ when _Buffer.Length >= 12 && GetClassName().EndsWith("Component"):
+                    case UnknownObject _ when _Buffer.Length >= 12 && IsTemplate():
                         {
                             var fakeComponent = new UComponent();
                             DeserializeTemplate(fakeComponent);
@@ -529,6 +530,7 @@ namespace UELib.Core
         /// <summary>
         /// Macro for getting a object instance by index.
         /// </summary>
+        [Obsolete("To be deprecated", true)]
         protected UObject GetIndexObject(int index)
         {
             return Package.GetIndexObject(index);

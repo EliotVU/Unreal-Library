@@ -59,6 +59,10 @@ namespace UELib
         [Obsolete]
         protected override int __ClassIndex => _ClassIndex;
 
+        [Obsolete]
+        [NotNull]
+        protected override string __ClassName => Class?.ObjectName ?? "Class";
+
         [Obsolete("Use Super"), Browsable(false)] public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
         [Obsolete("Use Super?.ObjectName"), Browsable(false)]
         public string SuperName
