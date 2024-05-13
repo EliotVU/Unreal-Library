@@ -375,7 +375,15 @@ namespace UELib.Core
                 }
             }
 #endif
-
+#if GIGANTIC
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Gigantic)
+            {
+                if ((ClassFlags & (ulong)Branch.UE3.GIGANTIC.EngineBranchGigantic.ClassFlags.JsonImport) != 0)
+                {
+                    output += "\r\n\tjsonimport";
+                }
+            }
+#endif
 #if AHIT
             if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
             {

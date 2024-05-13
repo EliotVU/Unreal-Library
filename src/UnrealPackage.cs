@@ -12,6 +12,7 @@ using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
+using UELib.Branch.UE3.GIGANTIC;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.RSS;
 using UELib.Branch.UE4;
@@ -583,6 +584,13 @@ namespace UELib
                 Batman4,
 
                 /// <summary>
+                /// Gigantic: Rampage Edition
+                /// 
+                /// 867/008:010
+                /// </summary>
+                [Build(867, 867, 8u, 10u)] [BuildEngineBranch(typeof(EngineBranchGigantic))] Gigantic,
+
+                /// <summary>
                 /// Rocket League
                 /// 
                 /// 867/009:032
@@ -1034,12 +1042,14 @@ namespace UELib
                 if (stream.Version >= VFolderName)
                 {
                     FolderName = stream.ReadText();
+                   //  Console.WriteLine("Folder Name:" + FolderName);
                 }
 
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
-#if HAWKEN
-                if (stream.Package.Build == GameBuild.BuildName.Hawken &&
+#if HAWKEN || GIGANTIC
+                if ((stream.Package.Build == GameBuild.BuildName.Hawken ||
+                    stream.Package.Build == GameBuild.BuildName.Gigantic) &&
                     stream.LicenseeVersion >= 2)
                     stream.Skip(4);
 #endif
@@ -1090,10 +1100,12 @@ namespace UELib
                 if (stream.Version >= VDependsOffset)
                 {
                     DependsOffset = stream.ReadInt32();
+                    //Console.WriteLine("Depends Offset:" + DependsOffset);
                 }
-#if THIEF_DS || DEUSEX_IW
+#if THIEF_DS || DEUSEX_IW || GIGANTIC
                 if (stream.Package.Build == GameBuild.BuildName.Thief_DS ||
-                    stream.Package.Build == GameBuild.BuildName.DeusEx_IW)
+                    stream.Package.Build == GameBuild.BuildName.DeusEx_IW ||
+                    stream.Package.Build == GameBuild.BuildName.Gigantic)
                 {
                     //stream.Skip( 4 );
                     int unknown = stream.ReadInt32();
@@ -1136,6 +1148,8 @@ namespace UELib
                     ImportExportGuidsOffset = stream.ReadInt32();
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();
+                    // Console.WriteLine("ImportExportGuidsOffset:" + ImportExportGuidsOffset + " ImportsGuidCount:" + ImportGuidsCount
+                    //              + " ExportsGuid Count:" + ExportGuidsCount);
                 }
 #if TRANSFORMERS
                 if (stream.Package.Build == BuildGeneration.HMS &&
@@ -1151,9 +1165,13 @@ namespace UELib
                 if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
                     stream.Skip(4);
 #endif
-                if (stream.Version >= VThumbnailTableOffset)
+                if (stream.Version >= VThumbnailTableOffset
+#if GIGANTIC
+                    && stream.Package.Build !=GameBuild.BuildName.Gigantic)
+#endif
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
+                    // Console.WriteLine("ThumbnailTableOffset:" + ThumbnailTableOffset);
                 }
 #if MKKE
                 if (stream.Package.Build == GameBuild.BuildName.MKKE) stream.Skip(4);
@@ -1185,6 +1203,11 @@ namespace UELib
                     }
 #endif
                     stream.ReadArray(out Generations, generationCount);
+
+                    foreach (UGenerationTableItem i in Generations) {
+                        int index = Generations.IndexOf(i) + 1;
+                        // Console.WriteLine($"Generation {index}: \n\tExport Count:" + i.ExportCount + " \n\tName Count:" + i.NameCount + " \n\tNetObjectCount:" + i.NetObjectCount);
+                    }
 #if MKKE
                 }
 #endif
@@ -1214,7 +1237,7 @@ namespace UELib
                 {
                     // The Engine Version this package was created with
                     EngineVersion = stream.ReadInt32();
-                    Console.WriteLine("\tEngineVersion:" + EngineVersion);
+                    Console.WriteLine("EngineVersion:" + EngineVersion);
                 }
 #if UE4
                 if (stream.Package.ContainsEditorData())
@@ -1892,7 +1915,7 @@ namespace UELib
             foreach (var exp in Exports)
             {
                 if (!(exp.Object is UnknownObject || exp.Object.ShouldDeserializeOnDemand))
-                    //Console.WriteLine( "Deserializing object:" + exp.ObjectName );
+                   // Console.WriteLine( "Deserializing object:" + exp.ObjectName );
                     exp.Object.BeginDeserializing();
 
                 OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
