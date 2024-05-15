@@ -257,7 +257,7 @@ namespace UELib.Core
                 return;
             }
 #endif
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.NetObjectsAdded ||
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded ||
                 _Buffer.UE4Version >= 196)
             {
                 return;

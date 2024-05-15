@@ -108,7 +108,7 @@ namespace UELib.Branch
         // 321 according to the GoW client
         ElementOwnerAddedToUPolys = 321,
 
-        NetObjectsAdded = 322,
+        NetObjectCountAdded = 322,
 
         NumberAddedToName = 343,
 
@@ -123,7 +123,9 @@ namespace UELib.Branch
 
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
-
+        
+        ComponentMapDeprecated = 543,
+        
         AddedTextureFileCacheGuidToTexture2D = 567,
 
         LightmassAdded = 600,
