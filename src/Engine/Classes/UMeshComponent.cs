@@ -25,7 +25,7 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UStaticMeshComponent : UModelComponent
+    public class UStaticMeshComponent : UMeshComponent
     {
     }
 }
