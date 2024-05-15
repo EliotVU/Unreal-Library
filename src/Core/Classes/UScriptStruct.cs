@@ -10,8 +10,14 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-            StructFlags = _Buffer.ReadUInt32();
-            Record(nameof(StructFlags), (StructFlags)StructFlags);
+
+            // FIXME: Version
+            if (_Buffer.Version >= 221)
+            {
+                StructFlags = _Buffer.ReadUInt32();
+                Record(nameof(StructFlags), (StructFlags)StructFlags);
+            }
+
             DeserializeProperties();
         }
 
