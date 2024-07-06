@@ -203,6 +203,9 @@ namespace UELib.Core
             // Don't use foreach, screws up order.
             foreach (var property in Variables)
             {
+                if (property.IsCompilerGenerated())
+                    continue;
+
                 // Fix for properties within structs
                 output += "\r\n" +
                           property.PreDecompile() +
