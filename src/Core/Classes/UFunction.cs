@@ -182,6 +182,15 @@ namespace UELib.Core
             return IsOperator() && HasFunctionFlag(Flags.FunctionFlags.PreOperator);
         }
 
+        public bool IsDelegate()
+        {
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                return HasFunctionFlag(0x400000);
+#endif
+            return HasFunctionFlag(Flags.FunctionFlags.Delegate);
+        }
+
         public bool HasOptionalParamData()
         {
             // FIXME: Deprecate version check, and re-map the function flags using the EngineBranch class approach.

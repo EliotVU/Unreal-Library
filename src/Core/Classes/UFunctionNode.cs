@@ -36,7 +36,7 @@ namespace UELib.Core
             {
                 name = "Event";
             }
-            else if (HasFunctionFlag(Flags.FunctionFlags.Delegate))
+            else if (IsDelegate())
             {
                 name = "Delegate";
             }

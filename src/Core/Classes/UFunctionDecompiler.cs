@@ -210,7 +210,7 @@ namespace UELib.Core
                 isNormalFunction = false;
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Delegate))
+            if (IsDelegate())
             {
                 output += "delegate ";
                 isNormalFunction = false;
