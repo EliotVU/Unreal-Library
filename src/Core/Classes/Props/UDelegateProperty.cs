@@ -50,6 +50,14 @@ namespace UELib.Core
             }
         }
 
+#if DNF
+        public override bool IsCompilerGenerated()
+        {
+            // delegate properties are compiler generated in DNF, not part of the source.
+            return Package.Build == UnrealPackage.GameBuild.BuildName.DNF;
+        }
+#endif
+
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
