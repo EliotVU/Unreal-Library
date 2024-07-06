@@ -511,6 +511,9 @@ namespace UELib.Core
 #if DNF
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                 {
+                    // Always erase 'CommentString'
+                    copyFlags &= ~(uint)0x00800000;
+
                     if (HasPropertyFlag(0x20000000))
                     {
                         output += "edfindable ";
