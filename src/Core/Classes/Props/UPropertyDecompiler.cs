@@ -432,13 +432,20 @@ namespace UELib.Core
 #if AHIT
                     && Package.Build != UnrealPackage.GameBuild.BuildName.AHIT
 #endif
+#if DNF
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
+#endif
                    )
                 {
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EdFindable;
                     output += "edfindable ";
                 }
 
-                if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.Deprecated) != 0)
+                if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.Deprecated) != 0
+#if DNF
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                    )
                 {
                     output += "deprecated ";
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Deprecated;
@@ -504,6 +511,12 @@ namespace UELib.Core
 #if DNF
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                 {
+                    if (HasPropertyFlag(0x20000000))
+                    {
+                        output += "edfindable ";
+                        copyFlags &= ~(uint)0x20000000;
+                    }
+
                     if (HasPropertyFlag(0x1000000))
                     {
                         output += "nontrans ";
