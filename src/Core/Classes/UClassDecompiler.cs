@@ -249,17 +249,29 @@ namespace UELib.Core
                 }
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0)
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                output += "\r\n\teditinlinenew";
+                if (HasClassFlag(0x00001000U))
+                {
+                    output += "\r\n\tobsolete";
+                }
             }
             else
+#endif
             {
-                // Only do if parent had EditInlineNew
-                var parentClass = (UClass)Super;
-                if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0)
+                if ((ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0)
                 {
-                    output += "\r\n\tnoteditinlinenew";
+                    output += "\r\n\teditinlinenew";
+                }
+                else
+                {
+                    // Only do if parent had EditInlineNew
+                    var parentClass = (UClass)Super;
+                    if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0)
+                    {
+                        output += "\r\n\tnoteditinlinenew";
+                    }
                 }
             }
 
@@ -268,6 +280,25 @@ namespace UELib.Core
                 output += "\r\n\tcollapsecategories";
             }
 
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                if (HasClassFlag(0x00004000))
+                {
+                    output += "\r\n\teditinlinenew";
+                }
+                else
+                {
+                    // Only do if parent had EditInlineNew
+                    var parentClass = (UClass)Super;
+                    if (parentClass != null && (parentClass.ClassFlags & 0x00004000) != 0)
+                    {
+                        output += "\r\n\tnoteditinlinenew";
+                    }
+                }
+            }
+            else
+#endif
             // TODO: Might indicate "Interface" in later versions
             if (HasClassFlag(Flags.ClassFlags.ExportStructs) && Package.Version < 300)
             {
@@ -281,13 +312,29 @@ namespace UELib.Core
 
             if (Extends("Actor"))
             {
-                if ((ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0)
+#if DNF
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                 {
-                    output += Package.Version >= PlaceableVersion ? "\r\n\tplaceable" : "\r\n\tusercreate";
+                    if (HasClassFlag(0x02000))
+                    {
+                        output += "\r\n\tplaceable";
+                    }
+                    else
+                    {
+                        output += $"\r\n\tnotplaceable";
+                    }
                 }
                 else
+#endif
                 {
-                    output += Package.Version >= PlaceableVersion ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
+                    if ((ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0)
+                    {
+                        output += Package.Version >= PlaceableVersion ? "\r\n\tplaceable" : "\r\n\tusercreate";
+                    }
+                    else
+                    {
+                        output += Package.Version >= PlaceableVersion ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
+                    }
                 }
             }
 
