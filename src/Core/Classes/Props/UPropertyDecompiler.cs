@@ -37,6 +37,10 @@ namespace UELib.Core
 
             string[] options = EditorDataText.TrimEnd('\n').Split('\n');
             string decodedOptions = string.Join(" ", options.Select(PropertyDisplay.FormatLiteral));
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                return " ?(" + decodedOptions + ")";
+#endif
             return " " + decodedOptions;
         }
 
@@ -378,7 +382,12 @@ namespace UELib.Core
                 }
                 else // Not Automated
                 {
-                    if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.NoExport) != 0)
+                    if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.NoExport) != 0
+#if DNF
+                        // 0x00800000 is CPF_Comment in DNF
+                        && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                        )
                     {
                         output += "noexport ";
                         copyFlags &= ~(ulong)Flags.PropertyFlagsLO.NoExport;
