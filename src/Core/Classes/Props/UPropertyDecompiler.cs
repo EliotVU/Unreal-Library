@@ -407,14 +407,29 @@ namespace UELib.Core
                         copyFlags &= ~(ulong)Flags.PropertyFlagsLO.ExportObject;
                     }
 
-                    if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInline) != 0)
+                    ulong editInline = (ulong)Flags.PropertyFlagsLO.EditInline;
+                    ulong editInlineUse = (ulong)Flags.PropertyFlagsLO.EditInlineUse;
+
+#if DNF
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                     {
-                        if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineUse) != 0)
+                        editInline = 0x10000000;
+                        editInlineUse = 0x40000000;
+                    }
+#endif
+
+                    if ((PropertyFlags & editInline) != 0)
+                    {
+                        if ((PropertyFlags & editInlineUse) != 0)
                         {
-                            copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInlineUse;
+                            copyFlags &= ~editInlineUse;
                             output += "editinlineuse ";
                         }
-                        else if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineNotify) != 0)
+                        else if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineNotify) != 0
+#if DNF
+                            && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                            )
                         {
                             copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInlineNotify;
                             output += "editinlinenotify ";
@@ -424,7 +439,7 @@ namespace UELib.Core
                             output += "editinline ";
                         }
 
-                        copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInline;
+                        copyFlags &= ~editInline;
                     }
                 }
 
