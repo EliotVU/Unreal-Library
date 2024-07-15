@@ -409,12 +409,14 @@ namespace UELib.Core
 
                     ulong editInline = (ulong)Flags.PropertyFlagsLO.EditInline;
                     ulong editInlineUse = (ulong)Flags.PropertyFlagsLO.EditInlineUse;
+                    ulong editInlineNotify = (ulong)Flags.PropertyFlagsLO.EditInlineNotify;
 
 #if DNF
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                     {
                         editInline = 0x10000000;
                         editInlineUse = 0x40000000;
+                        editInlineNotify = 0x80000000;
                     }
 #endif
 
@@ -425,13 +427,9 @@ namespace UELib.Core
                             copyFlags &= ~editInlineUse;
                             output += "editinlineuse ";
                         }
-                        else if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineNotify) != 0
-#if DNF
-                            && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
-#endif
-                            )
+                        else if ((PropertyFlags & editInlineNotify) != 0)
                         {
-                            copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInlineNotify;
+                            copyFlags &= ~editInlineNotify;
                             output += "editinlinenotify ";
                         }
                         else if (!HasPropertyFlag(Flags.PropertyFlagsLO.DuplicateTransient))
