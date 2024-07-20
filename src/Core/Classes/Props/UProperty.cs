@@ -288,11 +288,6 @@ namespace UELib.Core
             return HasPropertyFlag(PropertyFlagsLO.Parm);
         }
 
-        public virtual bool IsCompilerGenerated()
-        {
-            return false;
-        }
-
         public virtual string GetFriendlyInnerType()
         {
             return string.Empty;
