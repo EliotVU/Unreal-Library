@@ -726,6 +726,14 @@ namespace UELib
                 return null;
             }
 
+            public void ConditionalBuildAction(BuildName build, Action action)
+            {
+                if (this == build)
+                {
+                    action();
+                }
+            }
+
             public static bool operator ==(GameBuild b, BuildGeneration gen)
             {
                 return b.Generation == gen;

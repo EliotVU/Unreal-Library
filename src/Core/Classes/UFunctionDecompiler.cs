@@ -146,8 +146,11 @@ namespace UELib.Core
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                // 0x20000200 unknown specifier
-                
+                if (HasFunctionFlag(0x20000000))
+                {
+                    output += "devexec ";
+                }
+
                 if (HasFunctionFlag(0x4000000))
                 {
                     output += "animevent ";
@@ -207,7 +210,7 @@ namespace UELib.Core
                 isNormalFunction = false;
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Delegate))
+            if (IsDelegate())
             {
                 output += "delegate ";
                 isNormalFunction = false;

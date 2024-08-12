@@ -37,6 +37,10 @@ namespace UELib.Core
 
             string[] options = EditorDataText.TrimEnd('\n').Split('\n');
             string decodedOptions = string.Join(" ", options.Select(PropertyDisplay.FormatLiteral));
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                return " ?(" + decodedOptions + ")";
+#endif
             return " " + decodedOptions;
         }
 
@@ -378,7 +382,12 @@ namespace UELib.Core
                 }
                 else // Not Automated
                 {
-                    if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.NoExport) != 0)
+                    if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.NoExport) != 0
+#if DNF
+                        // 0x00800000 is CPF_Comment in DNF
+                        && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                        )
                     {
                         output += "noexport ";
                         copyFlags &= ~(ulong)Flags.PropertyFlagsLO.NoExport;
@@ -398,16 +407,29 @@ namespace UELib.Core
                         copyFlags &= ~(ulong)Flags.PropertyFlagsLO.ExportObject;
                     }
 
-                    if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInline) != 0)
+                    ulong editInline = (ulong)Flags.PropertyFlagsLO.EditInline;
+                    ulong editInlineUse = (ulong)Flags.PropertyFlagsLO.EditInlineUse;
+                    ulong editInlineNotify = (ulong)Flags.PropertyFlagsLO.EditInlineNotify;
+
+#if DNF
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                     {
-                        if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineUse) != 0)
+                        editInline = 0x10000000;
+                        editInlineUse = 0x40000000;
+                        editInlineNotify = 0x80000000;
+                    }
+#endif
+
+                    if ((PropertyFlags & editInline) != 0)
+                    {
+                        if ((PropertyFlags & editInlineUse) != 0)
                         {
-                            copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInlineUse;
+                            copyFlags &= ~editInlineUse;
                             output += "editinlineuse ";
                         }
-                        else if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.EditInlineNotify) != 0)
+                        else if ((PropertyFlags & editInlineNotify) != 0)
                         {
-                            copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInlineNotify;
+                            copyFlags &= ~editInlineNotify;
                             output += "editinlinenotify ";
                         }
                         else if (!HasPropertyFlag(Flags.PropertyFlagsLO.DuplicateTransient))
@@ -415,7 +437,7 @@ namespace UELib.Core
                             output += "editinline ";
                         }
 
-                        copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EditInline;
+                        copyFlags &= ~editInline;
                     }
                 }
 
@@ -423,13 +445,20 @@ namespace UELib.Core
 #if AHIT
                     && Package.Build != UnrealPackage.GameBuild.BuildName.AHIT
 #endif
+#if DNF
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
+#endif
                    )
                 {
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.EdFindable;
                     output += "edfindable ";
                 }
 
-                if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.Deprecated) != 0)
+                if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.Deprecated) != 0
+#if DNF
+                    && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
+#endif
+                    )
                 {
                     output += "deprecated ";
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Deprecated;
@@ -495,6 +524,15 @@ namespace UELib.Core
 #if DNF
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                 {
+                    // Always erase 'CommentString'
+                    copyFlags &= ~(uint)0x00800000;
+
+                    if (HasPropertyFlag(0x20000000))
+                    {
+                        output += "edfindable ";
+                        copyFlags &= ~(uint)0x20000000;
+                    }
+
                     if (HasPropertyFlag(0x1000000))
                     {
                         output += "nontrans ";

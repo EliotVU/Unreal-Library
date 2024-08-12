@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch.UE2.DNF;
 using UELib.Core.Tokens;
 using UELib.Decoding;
 using UELib.Tokens;
@@ -42,6 +43,15 @@ namespace UELib.Branch
         public EngineBranch(BuildGeneration generation)
         {
             Generation = generation;
+        }
+
+        public void ConditionalBranchAction<T>(Action action)
+            where T : EngineBranch
+        {
+            if (GetType() == typeof(T))
+            {
+                action();
+            }
         }
 
         protected void SetupSerializer<T>()
