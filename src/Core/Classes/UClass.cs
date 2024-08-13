@@ -70,11 +70,9 @@ namespace UELib.Core
         /// </summary>
         public IList<int> PackageImports;
 
-        /// <summary>
-        /// Index of component names into the NameTableList.
-        /// UE3
-        /// </summary>
+        [Obsolete("Use ComponentDefaultObjectMap")]
         public IList<int> Components = null;
+        public UMap<UName, UComponent> ComponentDefaultObjectMap;
 
         /// <summary>
         /// Index of unsorted categories names into the NameTableList.
@@ -190,15 +188,21 @@ namespace UELib.Core
                 _Buffer.ReadStruct(out ClassGuid);
                 Record(nameof(ClassGuid), ClassGuid);
             }
-
         skipClassGuid:
-            if (_Buffer.Version < 248)
+
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDependenciesDeprecated)
             {
                 _Buffer.ReadArray(out ClassDependencies);
                 Record(nameof(ClassDependencies), ClassDependencies);
+            }
+            
+            // FIXME: version
+            if (_Buffer.Version < 220)
+            {
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
-
+            
+        serializeWithin:
             if (_Buffer.Version >= 62)
             {
                 // Class Name Extends Super.Name Within _WithinIndex
@@ -211,7 +215,7 @@ namespace UELib.Core
                 if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                     _Buffer.Version >= 102)
                 {
-                    DeserializeHideCategories();
+                    HideCategories = DeserializeGroup("HideCategories");
                     if (_Buffer.Version >= 137)
                     {
                         _Buffer.ReadArray(out UArray<string> dnfTags);
@@ -246,22 +250,76 @@ namespace UELib.Core
                 // +HideCategories
                 if (_Buffer.Version >= 99)
                 {
-                    // TODO: Corrigate Version
-                    if (_Buffer.Version >= 220)
+                    // FIXME: >= version
+                    if (_Buffer.Version >= 178
+                        && isHideCategoriesOldOrder
+                        && !Package.IsConsoleCooked()
+                        && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked)
+                        && _Buffer.UE4Version < 117)
                     {
-                        // TODO: Corrigate Version
-                        if (isHideCategoriesOldOrder && !Package.IsConsoleCooked() &&
-                            !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked) &&
-                            _Buffer.UE4Version < 117)
-                            DeserializeHideCategories();
-
-                        // Seems to have been removed in transformer packages
-                        if (_Buffer.UE4Version < 118) DeserializeComponentsMap();
+                        HideCategories = DeserializeGroup("HideCategories");
                     }
 
-                    // RoboBlitz(369)
-                    // TODO: Corrigate Version
-                    if (_Buffer.Version >= VInterfaceClass) DeserializeInterfaces();
+                    // FIXME: >= version
+                    if (_Buffer.Version >= 178 && _Buffer.Version <
+                        (uint)PackageObjectLegacyVersion.ComponentClassBridgeMapDeprecated)
+                    {
+                        _Buffer.ReadMap(out UMap<UObject, UName> componentClassBridgeMap);
+                        Record(nameof(componentClassBridgeMap), componentClassBridgeMap);
+                    }
+
+                    // FIXME: >= version (187-223)
+                    if (_Buffer.Version >= 220 &&
+                        _Buffer.Version < (uint)PackageObjectLegacyVersion.ComponentTemplatesDeprecated)
+                    {
+                        _Buffer.ReadArray(out UArray<UObject> componentTemplates);
+                        Record(nameof(componentTemplates), componentTemplates);
+                    }
+
+                    // FIXME: >= version
+                    if (_Buffer.Version >= 178 && _Buffer.UE4Version < 118)
+                    {
+                        _Buffer.Read(out ComponentDefaultObjectMap);
+                        Record(nameof(ComponentDefaultObjectMap), ComponentDefaultObjectMap);
+                    }
+
+                    // FIXME: >= version (187-223)
+                    if (_Buffer.Version >= 220)
+                    {
+                        if (_Buffer.Version < (uint)PackageObjectLegacyVersion.InterfaceClassesDeprecated)
+                        {
+                            _Buffer.ReadArray(out UArray<UObject> interfaceClasses);
+                            Record(nameof(interfaceClasses), interfaceClasses);
+                        }
+                        else
+                        {
+                            // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
+                            int interfacesCount = _Buffer.ReadInt32();
+                            Record("Implements.Count", interfacesCount);
+                            if (interfacesCount > 0)
+                            {
+                                AssertEOS(interfacesCount * 8, "Implemented");
+                                ImplementedInterfaces = new List<int>(interfacesCount);
+                                for (int i = 0; i < interfacesCount; ++i)
+                                {
+                                    int interfaceIndex = _Buffer.ReadInt32();
+                                    Record("Implemented.InterfaceIndex", interfaceIndex);
+                                    int typeIndex = _Buffer.ReadInt32();
+                                    Record("Implemented.TypeIndex", typeIndex);
+                                    ImplementedInterfaces.Add(interfaceIndex);
+#if UE4
+                                    if (_Buffer.UE4Version <= 0)
+                                    {
+                                        continue;
+                                    }
+
+                                    bool isImplementedByK2 = _Buffer.ReadInt32() > 0;
+                                    Record("Implemented.isImplementedByK2", isImplementedByK2);
+#endif
+                                }
+                            }
+                        }
+                    }
 #if UE4
                     if (_Buffer.UE4Version > 0)
                     {
@@ -269,7 +327,6 @@ namespace UELib.Core
                         Record(nameof(classGeneratedBy), classGeneratedBy);
                     }
 #endif
-
 #if AHIT
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT && _Buffer.Version >= 878)
                     {
@@ -291,7 +348,7 @@ namespace UELib.Core
                         // FIXME: Added in v99, removed in ~220?
                         if (_Buffer.Version < 220 || !isHideCategoriesOldOrder)
                         {
-                            DeserializeHideCategories();
+                            HideCategories = DeserializeGroup("HideCategories");
 #if SPELLBORN
                             if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
                             {
@@ -603,52 +660,6 @@ namespace UELib.Core
                 Record(nameof(v368), v368);
             }
 #endif
-        }
-
-        private void DeserializeInterfaces()
-        {
-            // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
-            int interfacesCount = _Buffer.ReadInt32();
-            Record("Implements.Count", interfacesCount);
-            if (interfacesCount <= 0)
-                return;
-
-            AssertEOS(interfacesCount * 8, "Implemented");
-            ImplementedInterfaces = new List<int>(interfacesCount);
-            for (var i = 0; i < interfacesCount; ++i)
-            {
-                int interfaceIndex = _Buffer.ReadInt32();
-                Record("Implemented.InterfaceIndex", interfaceIndex);
-                int typeIndex = _Buffer.ReadInt32();
-                Record("Implemented.TypeIndex", typeIndex);
-                ImplementedInterfaces.Add(interfaceIndex);
-#if UE4
-                if (_Buffer.UE4Version > 0)
-                {
-                    var isImplementedByK2 = _Buffer.ReadInt32() > 0;
-                    Record("Implemented.isImplementedByK2", isImplementedByK2);
-                }
-#endif
-            }
-        }
-
-        private void DeserializeHideCategories()
-        {
-            HideCategories = DeserializeGroup("HideCategories");
-        }
-
-        private void DeserializeComponentsMap()
-        {
-            int componentsCount = _Buffer.ReadInt32();
-            Record("Components.Count", componentsCount);
-            if (componentsCount <= 0)
-                return;
-
-            // NameIndex/ObjectIndex
-            int numBytes = componentsCount * 12;
-            AssertEOS(numBytes, "Components");
-            _Buffer.Skip(numBytes);
-            _Buffer.ConformRecordPosition();
         }
 
         protected override void FindChildren()

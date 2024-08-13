@@ -64,6 +64,8 @@ namespace UELib.Branch
         /// </summary>
         IsLocalAddedToDelegateFunctionToken = 181,
 
+        ClassDependenciesDeprecated = 186,
+
         // FIXME: Version
         RangeConstTokenDeprecated = UE3,
 
@@ -76,6 +78,8 @@ namespace UELib.Branch
         ObjectFlagsSizeChangedToULong = 195,
         ArchetypeAddedToExports = 220,
 
+        ComponentClassBridgeMapDeprecated = 248,
+
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
 
@@ -87,12 +91,16 @@ namespace UELib.Branch
         L8AddedToLazyArray = 260,
         LazyArrayReplacedWithBulkData = 266,
 
+        ComponentTemplatesDeprecated = 267,
+
         // 267 according to the GoW client,
         // -- albeit the exact nature is not clear
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
 
         ComponentGuidDeprecated = 273,
+
+        InterfaceClassesDeprecated = 288,
 
         /// <summary>
         /// Some properties like SizeX, SizeY, Format have been displaced to ScriptProperties.
@@ -108,7 +116,7 @@ namespace UELib.Branch
         // 321 according to the GoW client
         ElementOwnerAddedToUPolys = 321,
 
-        NetObjectsAdded = 322,
+        NetObjectCountAdded = 322,
 
         NumberAddedToName = 343,
 
@@ -123,6 +131,8 @@ namespace UELib.Branch
 
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
+
+        ComponentMapDeprecated = 543,
 
         AddedTextureFileCacheGuidToTexture2D = 567,
 

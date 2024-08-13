@@ -102,7 +102,9 @@ namespace UELib
         public int SerialOffset;
 
         public uint ExportFlags;
-        //public Dictionary<int, int> Components;
+        
+        public UMap<UName, int> ComponentMap;
+
         //public List<int> NetObjects;
 
         public UGuid PackageGuid;
@@ -210,7 +212,7 @@ namespace UELib
             if (stream.Version < 220)
                 return;
 
-            if (stream.Version < 543
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
 #if ALPHAPROTOCOL
                 && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
 #endif
@@ -220,9 +222,14 @@ namespace UELib
 #endif
                )
             {
-                // NameToObject
-                int componentMapCount = stream.ReadInt32();
-                stream.Skip(componentMapCount * 12);
+                stream.Read(out int c);
+                ComponentMap = new UMap<UName, int>(c);
+                for (int i = 0; i < c; ++i)
+                {
+                    stream.Read(out UName key);
+                    stream.Read(out int value);
+                    ComponentMap.Add(key, value);
+                }
             }
 
             if (stream.Version < 247)
@@ -230,7 +237,7 @@ namespace UELib
 
         streamExportFlags:
             ExportFlags = stream.ReadUInt32();
-            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectsAdded)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded)
                 return;
 #if TRANSFORMERS
             if (stream.Package.Build == BuildGeneration.HMS &&
@@ -266,7 +273,6 @@ namespace UELib
             if (stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
             {
 #endif
-                // Array of objects
                 int netObjectCount = stream.ReadInt32();
                 stream.Skip(netObjectCount * 4);
 #if MKKE
