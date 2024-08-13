@@ -66,12 +66,13 @@ namespace UELib.Core
         public UArray<Dependency> ClassDependencies;
 
         /// <summary>
-        /// A list of objects imported from a package.
+        /// A list of package names imported by this class.
+        /// 
+        /// Will be null if not deserialized.
         /// </summary>
-        public IList<int> PackageImports;
+        public UArray<UName> PackageImportNames;
 
-        [Obsolete("Use ComponentDefaultObjectMap")]
-        public IList<int> Components = null;
+        [Obsolete("Use PackageImportNames")] public IList<int> PackageImports;
 
         /// <summary>
         /// A map of default objects for the components that are instantiated by this class.
@@ -82,6 +83,9 @@ namespace UELib.Core
         /// Will be null if not deserialized.
         /// </summary>
         public UMap<UName, UObject> ComponentDefaultObjectMap;
+
+        [Obsolete("Use ComponentDefaultObjectMap")]
+        public IList<int> Components = null;
 
         /// <summary>
         /// Index of unsorted categories names into the NameTableList.
@@ -206,19 +210,18 @@ namespace UELib.Core
                 Record(nameof(ClassDependencies), ClassDependencies);
             }
 
-            // FIXME: version
-            if (_Buffer.Version < 220)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.PackageImportsDeprecated)
             {
-                PackageImports = DeserializeGroup(nameof(PackageImports));
+                _Buffer.ReadArray(out PackageImportNames);
+                Record(nameof(PackageImportNames), PackageImportNames);
             }
 
         serializeWithin:
             if (_Buffer.Version >= 62)
             {
-                // Class Name Extends Super.Name Within _WithinIndex
-                //      Config(_ConfigIndex);
                 Within = _Buffer.ReadObject<UClass>();
                 Record(nameof(Within), Within);
+
                 ConfigName = _Buffer.ReadNameReference();
                 Record(nameof(ConfigName), ConfigName);
 #if DNF
@@ -257,8 +260,7 @@ namespace UELib.Core
 #endif
                     ;
 
-                // +HideCategories
-                if (_Buffer.Version >= 99)
+                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedHideCategoriesToUClass)
                 {
                     // FIXME: >= version
                     if (_Buffer.Version >= 178
@@ -271,15 +273,14 @@ namespace UELib.Core
                     }
 
                     // FIXME: >= version
-                    if (_Buffer.Version >= 178 && _Buffer.Version <
-                        (uint)PackageObjectLegacyVersion.ComponentClassBridgeMapDeprecated)
+                    if (_Buffer.Version >= 178 &&
+                        _Buffer.Version < (uint)PackageObjectLegacyVersion.ComponentClassBridgeMapDeprecated)
                     {
                         _Buffer.ReadMap(out UMap<UObject, UName> componentClassBridgeMap);
                         Record(nameof(componentClassBridgeMap), componentClassBridgeMap);
                     }
 
-                    // FIXME: >= version (187-223)
-                    if (_Buffer.Version >= 220 &&
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedComponentTemplatesToUClass &&
                         _Buffer.Version < (uint)PackageObjectLegacyVersion.ComponentTemplatesDeprecated)
                     {
                         _Buffer.ReadArray(out UArray<UObject> componentTemplates);
@@ -293,40 +294,38 @@ namespace UELib.Core
                         Record(nameof(ComponentDefaultObjectMap), ComponentDefaultObjectMap);
                     }
 
-                    // FIXME: >= version (187-223)
-                    if (_Buffer.Version >= 220)
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedInterfacesFeature &&
+                        _Buffer.Version < (uint)PackageObjectLegacyVersion.InterfaceClassesDeprecated)
                     {
-                        if (_Buffer.Version < (uint)PackageObjectLegacyVersion.InterfaceClassesDeprecated)
-                        {
-                            _Buffer.ReadArray(out UArray<UObject> interfaceClasses);
-                            Record(nameof(interfaceClasses), interfaceClasses);
-                        }
-                        else
-                        {
-                            // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
-                            int interfacesCount = _Buffer.ReadInt32();
-                            Record("Implements.Count", interfacesCount);
-                            if (interfacesCount > 0)
-                            {
-                                AssertEOS(interfacesCount * 8, "Implemented");
-                                ImplementedInterfaces = new List<int>(interfacesCount);
-                                for (int i = 0; i < interfacesCount; ++i)
-                                {
-                                    int interfaceIndex = _Buffer.ReadInt32();
-                                    Record("Implemented.InterfaceIndex", interfaceIndex);
-                                    int typeIndex = _Buffer.ReadInt32();
-                                    Record("Implemented.TypeIndex", typeIndex);
-                                    ImplementedInterfaces.Add(interfaceIndex);
-#if UE4
-                                    if (_Buffer.UE4Version <= 0)
-                                    {
-                                        continue;
-                                    }
+                        _Buffer.ReadArray(out UArray<UObject> interfaceClasses);
+                        Record(nameof(interfaceClasses), interfaceClasses);
+                    }
 
-                                    bool isImplementedByK2 = _Buffer.ReadInt32() > 0;
-                                    Record("Implemented.isImplementedByK2", isImplementedByK2);
-#endif
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.InterfaceClassesDeprecated)
+                    {
+                        // See http://udn.epicgames.com/Three/UnrealScriptInterfaces.html
+                        int interfacesCount = _Buffer.ReadInt32();
+                        Record("Implements.Count", interfacesCount);
+                        if (interfacesCount > 0)
+                        {
+                            AssertEOS(interfacesCount * 8, "Implemented");
+                            ImplementedInterfaces = new List<int>(interfacesCount);
+                            for (int i = 0; i < interfacesCount; ++i)
+                            {
+                                int interfaceIndex = _Buffer.ReadInt32();
+                                Record("Implemented.InterfaceIndex", interfaceIndex);
+                                int typeIndex = _Buffer.ReadInt32();
+                                Record("Implemented.TypeIndex", typeIndex);
+                                ImplementedInterfaces.Add(interfaceIndex);
+#if UE4
+                                if (_Buffer.UE4Version <= 0)
+                                {
+                                    continue;
                                 }
+
+                                bool isImplementedByK2 = _Buffer.ReadInt32() > 0;
+                                Record("Implemented.isImplementedByK2", isImplementedByK2);
+#endif
                             }
                         }
                     }
@@ -348,42 +347,42 @@ namespace UELib.Core
 
                     if (!Package.IsConsoleCooked() && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked))
                     {
-                        if (_Buffer.Version >= 603 && _Buffer.UE4Version < 113
+                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDontSortCategoriesToUClass &&
+                            _Buffer.UE4Version < 113
 #if TERA
-                                                   && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
+                            && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
 #endif
                            )
+                        {
                             DontSortCategories = DeserializeGroup("DontSortCategories");
+                        }
 
                         // FIXME: Added in v99, removed in ~220?
                         if (_Buffer.Version < 220 || !isHideCategoriesOldOrder)
                         {
                             HideCategories = DeserializeGroup("HideCategories");
-#if SPELLBORN
-                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
-                            {
-                                uint replicationFlags = _Buffer.ReadUInt32();
-                                Record(nameof(replicationFlags), replicationFlags);
-                            }
-#endif
                         }
-
-                        // +AutoExpandCategories
-                        if (_Buffer.Version >= 185)
+#if SPELLBORN
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+                        {
+                            uint replicationFlags = _Buffer.ReadUInt32();
+                            Record(nameof(replicationFlags), replicationFlags);
+                        }
+#endif
+                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedAutoExpandCategoriesToUClass)
                         {
                             // 490:GoW1, 576:CrimeCraft
                             if (!HasClassFlag(Flags.ClassFlags.CollapseCategories)
                                 || _Buffer.Version <= vHideCategoriesOldOrder || _Buffer.Version >= 576)
                                 AutoExpandCategories = DeserializeGroup("AutoExpandCategories");
-#if TRANSFORMERS
-                            if (Package.Build == BuildGeneration.HMS)
-                            {
-                                _Buffer.ReadArray(out UArray<UObject> hmsConstructors);
-                                Record(nameof(hmsConstructors), hmsConstructors);
-                            }
-#endif
                         }
-
+#if TRANSFORMERS
+                        if (Package.Build == BuildGeneration.HMS)
+                        {
+                            _Buffer.ReadArray(out UArray<UObject> hmsConstructors);
+                            Record(nameof(hmsConstructors), hmsConstructors);
+                        }
+#endif
                         // FIXME: Wrong version, no version checks found in games that DO have checks for version 600+
                         if (_Buffer.Version > 670
 #if BORDERLANDS
@@ -453,14 +452,15 @@ namespace UELib.Core
                             goto skipClassGroups;
                         }
 #endif
-                        if (_Buffer.Version >= UnrealPackage.VCLASSGROUP)
+                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)
                         {
                             ClassGroups = DeserializeGroup("ClassGroups");
-                            if (_Buffer.Version >= 813)
-                            {
-                                NativeClassName = _Buffer.ReadText();
-                                Record(nameof(NativeClassName), NativeClassName);
-                            }
+                        }
+
+                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedNativeClassNameToUClass)
+                        {
+                            NativeClassName = _Buffer.ReadText();
+                            Record(nameof(NativeClassName), NativeClassName);
                         }
 
                     skipClassGroups: ;
@@ -481,14 +481,14 @@ namespace UELib.Core
                         {
                             int unknownInt32 = _Buffer.ReadInt32();
                             Record("Unknown", unknownInt32);
-#if SINGULARITY
-                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity)
-                            {
-                                _Buffer.Skip(8);
-                                _Buffer.ConformRecordPosition();
-                            }
-#endif
                         }
+#if SINGULARITY
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Singularity)
+                        {
+                            _Buffer.Skip(8);
+                            _Buffer.ConformRecordPosition();
+                        }
+#endif
                     }
 #if BATMAN
                     if (Package.Build == BuildGeneration.RSS)
@@ -514,7 +514,8 @@ namespace UELib.Core
                         Record(nameof(v2b0), v2b0);
                     }
 #endif
-                    if (_Buffer.Version >= UnrealPackage.VDLLBIND && _Buffer.UE4Version < 117)
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature &&
+                        _Buffer.UE4Version < 117)
                     {
                         DLLBindName = _Buffer.ReadNameReference();
                         Record(nameof(DLLBindName), DLLBindName);
@@ -528,7 +529,9 @@ namespace UELib.Core
 #endif
 #if DISHONORED
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
+                    {
                         ClassGroups = DeserializeGroup("ClassGroups");
+                    }
 #endif
 #if BORDERLANDS2 || BATTLEBORN
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
@@ -654,7 +657,7 @@ namespace UELib.Core
         scriptProperties:
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.DisplacedScriptPropertiesWithClassDefaultObject)
             {
-                // DEFAULT_ClassName
+                // Default__ClassName
                 Default = _Buffer.ReadObject();
                 Record(nameof(Default), Default);
             }

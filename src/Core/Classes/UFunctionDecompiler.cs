@@ -1,6 +1,7 @@
 ﻿#if DECOMPILE
 using System;
 using System.Linq;
+using UELib.Branch;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -42,7 +43,7 @@ namespace UELib.Core
                 output += "protected ";
             }
 
-            if (Package.Version >= UnrealPackage.VDLLBIND && HasFunctionFlag(Flags.FunctionFlags.DLLImport))
+            if (Package.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature && HasFunctionFlag(Flags.FunctionFlags.DLLImport))
             {
                 output += "dllimport ";
             }

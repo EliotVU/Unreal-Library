@@ -331,14 +331,16 @@ namespace UELib
                 /// </summary>
                 [Build(159, 29u, BuildGeneration.UE2_5)]
                 Spellborn,
-                
+
                 /// <summary>
                 /// EndWar
                 /// 
                 /// 369/006
                 /// </summary>
-                [Build(329, 0)] [OverridePackageVersion(220)] EndWar,
-                
+                [Build(329, 0)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.AddedInterfacesFeature)]
+                EndWar,
+
                 /// <summary>
                 /// Standard
                 /// 

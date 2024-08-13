@@ -40,6 +40,8 @@ namespace UELib.Branch
         /// </summary>
         PrimitiveCastTokenAdded = 95,
 
+        AddedHideCategoriesToUClass = 99,
+
         LightMapScaleAddedToPoly = 106,
 
         KerningAddedToUFont = 119,
@@ -54,9 +56,7 @@ namespace UELib.Branch
 
         // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
         TemplateDataAddedToUComponent = 200,
-
-        DisplacedScriptPropertiesWithClassDefaultObject = 200,
-
+        
         /// <summary>
         /// Present in all released UE3 games (starting with RoboBlitz).
         /// 
@@ -64,6 +64,7 @@ namespace UELib.Branch
         /// </summary>
         IsLocalAddedToDelegateFunctionToken = 181,
 
+        AddedAutoExpandCategoriesToUClass = 185,
         ClassDependenciesDeprecated = 186,
 
         // FIXME: Version
@@ -76,13 +77,25 @@ namespace UELib.Branch
         EnumTagNameAddedToBytePropertyTag = UE3,
 
         ObjectFlagsSizeChangedToULong = 195,
+
+        // 208 according to EndWar
+        PackageImportsDeprecated = 208,
+        
+        // 210 according to EndWar
+        AddedComponentTemplatesToUClass = 210,
+
+        // 219 according to EndWar
+        DisplacedScriptPropertiesWithClassDefaultObject = 219,
+
         ArchetypeAddedToExports = 220,
 
-        ComponentClassBridgeMapDeprecated = 248,
+        // 222 according to EndWar
+        AddedInterfacesFeature = 222,
 
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
 
+        ComponentClassBridgeMapDeprecated = 248,
         SerialSizeConditionRemoved = 249,
 
         // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
@@ -137,6 +150,9 @@ namespace UELib.Branch
         AddedTextureFileCacheGuidToTexture2D = 567,
 
         LightmassAdded = 600,
+
+        AddedDontSortCategoriesToUClass = 603,
+
         UProcBuildingReferenceAddedToPoly = 606,
 
         EnumNameAddedToBytePropertyTag = 633,
@@ -146,6 +162,9 @@ namespace UELib.Branch
         // FIXME: Version
         EndTokenAppendedToArrayTokenIntrinsics = 649,
         LightmassShadowIndirectOnlyOptionAdded = 652,
+
+        AddedDLLBindFeature = 655,
+        
         PolyRulesetVariationTypeChangedToName = 670,
 
         BoolValueToByteForBoolPropertyTag = 673,
@@ -155,6 +174,9 @@ namespace UELib.Branch
         ProbeMaskReducedAndIgnoreMaskRemoved = 692,
         ForceScriptOrderAddedToUClass = 749,
         SuperReferenceMovedToUStruct = 756,
+
+        AddedClassGroupsToUClass = 789,
+        AddedNativeClassNameToUClass = 813,
 
         AddedATITCToUTexture2D = 857,
         AddedETCToUTexture2D = 864,

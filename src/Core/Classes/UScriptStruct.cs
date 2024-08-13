@@ -12,7 +12,7 @@ namespace UELib.Core
             base.Deserialize();
 
             // FIXME: Version
-            if (_Buffer.Version >= 221)
+            if (_Buffer.Version >= 223)
             {
                 StructFlags = _Buffer.ReadUInt32();
                 Record(nameof(StructFlags), (StructFlags)StructFlags);
