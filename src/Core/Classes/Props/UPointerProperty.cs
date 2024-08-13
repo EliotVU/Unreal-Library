@@ -10,6 +10,10 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UPointerProperty : UProperty
     {
+#if DNF
+        public UName PointerType;
+#endif
+
         /// <summary>
         /// Creates a new instance of the UELib.Core.UPointerProperty class.
         /// </summary>
@@ -19,8 +23,24 @@ namespace UELib.Core
         }
 
         /// <inheritdoc/>
+        protected override void Deserialize()
+        {
+            base.Deserialize();
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                PointerType = _Buffer.ReadNameReference();
+            }
+#endif
+        }
+
+        /// <inheritdoc/>
         public override string GetFriendlyType()
         {
+#if DNF
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                return "pointer(" + PointerType.Name + ")";
+#endif
             return "pointer";
         }
     }

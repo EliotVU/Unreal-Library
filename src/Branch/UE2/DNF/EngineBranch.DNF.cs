@@ -3,6 +3,9 @@ using UELib.Core.Tokens;
 using UELib.Branch.UE2.DNF.Tokens;
 using UELib.Core;
 using UELib.Tokens;
+using System.Diagnostics;
+using System;
+using UELib.Annotations;
 
 namespace UELib.Branch.UE2.DNF
 {
@@ -11,6 +14,15 @@ namespace UELib.Branch.UE2.DNF
     {
         public EngineBranchDNF(BuildGeneration generation) : base(generation)
         {
+        }
+
+        [Conditional("DNF")]
+        public static void ConditionalBranchAction([NotNull] EngineBranch branch, Action action)
+        {
+            if (branch.GetType() == typeof(EngineBranchDNF))
+            {
+                action();
+            }
         }
 
         protected TokenMap BuildTokenMap(UnrealPackage linker)
