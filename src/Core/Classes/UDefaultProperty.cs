@@ -132,8 +132,10 @@ namespace UELib.Core
                     case PropertyType.ArrayProperty:
                         var arrayField = (UArrayProperty)property;
                         Debug.Assert(arrayField != null, "arrayField != null");
+
+                        // May be null if deserialization failed
                         var arrayInnerField = arrayField.InnerProperty;
-                        if (arrayInnerField.Type == PropertyType.StructProperty)
+                        if (arrayInnerField?.Type == PropertyType.StructProperty)
                         {
                             outer = ((UStructProperty)arrayInnerField).Struct;
                         }

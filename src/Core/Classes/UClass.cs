@@ -72,7 +72,16 @@ namespace UELib.Core
 
         [Obsolete("Use ComponentDefaultObjectMap")]
         public IList<int> Components = null;
-        public UMap<UName, UComponent> ComponentDefaultObjectMap;
+
+        /// <summary>
+        /// A map of default objects for the components that are instantiated by this class.
+        ///
+        /// The component objects are expected to be derivatives of class <see cref="UComponent"/>,
+        /// however not all UComponent objects are known to UELib, so manual safe casting is required.
+        ///
+        /// Will be null if not deserialized.
+        /// </summary>
+        public UMap<UName, UObject> ComponentDefaultObjectMap;
 
         /// <summary>
         /// Index of unsorted categories names into the NameTableList.
@@ -188,6 +197,7 @@ namespace UELib.Core
                 _Buffer.ReadStruct(out ClassGuid);
                 Record(nameof(ClassGuid), ClassGuid);
             }
+
         skipClassGuid:
 
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDependenciesDeprecated)
@@ -195,13 +205,13 @@ namespace UELib.Core
                 _Buffer.ReadArray(out ClassDependencies);
                 Record(nameof(ClassDependencies), ClassDependencies);
             }
-            
+
             // FIXME: version
             if (_Buffer.Version < 220)
             {
                 PackageImports = DeserializeGroup(nameof(PackageImports));
             }
-            
+
         serializeWithin:
             if (_Buffer.Version >= 62)
             {
