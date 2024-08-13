@@ -361,16 +361,33 @@ namespace UELib.Core
                             Record("Unknown:Dishonored", unknownName);
                         }
 #endif
+#if BATTLEBORN
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                        {
+                            // Usually 0x03
+                            byte unknownByte = _Buffer.ReadByte();
+                            Record("Unknown:Battleborn", unknownByte);
+                            
+                            NativeClassName = _Buffer.ReadText();
+                            Record(nameof(NativeClassName), NativeClassName);
+
+                            // not verified
+                            ClassGroups = DeserializeGroup("ClassGroups");
+
+                            goto skipClassGroups;
+                        }
+#endif
+#if DISHONORED
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
+                        {
+                            NativeClassName = _Buffer.ReadText();
+                            Record(nameof(NativeClassName), NativeClassName);
+                            
+                            goto skipClassGroups;
+                        }
+#endif
                         if (_Buffer.Version >= UnrealPackage.VCLASSGROUP)
                         {
-#if DISHONORED
-                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
-                            {
-                                NativeClassName = _Buffer.ReadText();
-                                Record(nameof(NativeClassName), NativeClassName);
-                                goto skipClassGroups;
-                            }
-#endif
                             ClassGroups = DeserializeGroup("ClassGroups");
                             if (_Buffer.Version >= 813)
                             {
@@ -448,8 +465,9 @@ namespace UELib.Core
                         ClassGroups = DeserializeGroup("ClassGroups");
 #endif
 #if BORDERLANDS2
-                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                        Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2
+                        || Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn
+                    )
                     {
                         byte unknownByte = _Buffer.ReadByte();
                         Record("Unknown:Borderlands2", unknownByte);
