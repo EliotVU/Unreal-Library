@@ -410,13 +410,11 @@ namespace UELib.Core
 #if BATMAN
                     if (Package.Build == BuildGeneration.RSS)
                     {
-                        _Buffer.Skip(sizeof(int));
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                        if (_Buffer.LicenseeVersion >= 95)
                         {
-                            _Buffer.Skip(sizeof(int));
+                            int bm_v174 = _Buffer.ReadInt32();
+                            Record(nameof(bm_v174), bm_v174);
                         }
-
-                        _Buffer.ConformRecordPosition();
                     }
 #endif
 #if ROCKETLEAGUE

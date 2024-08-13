@@ -122,11 +122,19 @@ namespace UELib.Core
                 : _Buffer.ReadUInt32();
             Record(nameof(PropertyFlags), PropertyFlags);
 #if BATMAN
-            if (Package.Build == BuildGeneration.RSS &&
-                _Buffer.LicenseeVersion >= 101)
+            if (Package.Build == BuildGeneration.RSS)
             {
-                PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
-                Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
+                if (_Buffer.LicenseeVersion >= 101)
+                {
+                    PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
+                    Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
+                }
+
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                {
+                    PropertyFlags = (PropertyFlags & ~(PropertyFlags >> 2 & 1)) |
+                                    ((ulong)PropertyFlagsLO.Net * (PropertyFlags >> 2 & 1));
+                }
             }
 #endif
 #if XCOM2

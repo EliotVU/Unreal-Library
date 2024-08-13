@@ -413,7 +413,7 @@ namespace UELib
                 /// 576/021
                 /// No Special support, but there's no harm in recognizing this build.
                 /// </summary>
-                [Build(576, 21, BuildGeneration.RSS)] Batman1,
+                [Build(576, 21)] Batman1,
 
                 /// <summary>
                 /// 576/100
