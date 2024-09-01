@@ -117,8 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Packages_Path" xml:space="preserve">
-    <value>D:\Projecten\UE Explorer Tests\Supported</value>
+  <data name="PackageFilesPath" xml:space="preserve">
+    <value>/Samples/</value>
     <comment>Path to directory with all known .upk files that are compatible (no errors on load).</comment>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
@@ -129,9 +129,9 @@
     <value>upk\testuc3\testuc3.u;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="UE2MapFilesPath" xml:space="preserve">
-    <value>C:\UT2004\Maps\Stock</value>
+    <value>C:\UT2004\Maps</value>
   </data>
   <data name="UE2MaterialFilesPath" xml:space="preserve">
-    <value>C:\UT2004\Textures\Stock</value>
+    <value>C:\UT2004\Textures</value>
   </data>
 </root>

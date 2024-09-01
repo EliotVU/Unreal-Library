@@ -1,4 +1,5 @@
-﻿using UELib.Types;
+﻿using UELib.Branch;
+using UELib.Types;
 
 namespace UELib.Core
 {
@@ -31,14 +32,12 @@ namespace UELib.Core
 
             Function = _Buffer.ReadObject<UFunction>();
             Record(nameof(Function), Function);
-            // FIXME: Version 128-178
-            if (_Buffer.Version <= 184)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.AddedDelegateSourceToUDelegateProperty)
             {
                 return;
             }
 
-            // FIXME: Version 374-491; Delegate source type changed from Name to Object
-            if (_Buffer.Version <= 375)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ChangedDelegateSourceFromNameToObject)
             {
                 var source = _Buffer.ReadNameReference();
                 Record(nameof(source), source);

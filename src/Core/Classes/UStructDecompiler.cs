@@ -1,6 +1,7 @@
 ﻿#if DECOMPILE
 using System;
 using System.Linq;
+using UELib.Branch;
 using UELib.Decompiler;
 
 namespace UELib.Core
@@ -52,7 +53,8 @@ namespace UELib.Core
 
         public override string FormatHeader()
         {
-            var output = $"struct {FormatFlags()}{Name}{(Super != null ? $" {FormatExtends()} {Super.Name}" : string.Empty)}";
+            var output =
+                $"struct {FormatFlags()}{Name}{(Super != null ? $" {FormatExtends()} {Super.Name}" : string.Empty)}";
             string metaData = DecompileMeta();
             if (metaData != string.Empty)
             {
@@ -126,7 +128,8 @@ namespace UELib.Core
             return output;
         }
 
-        protected virtual string CPPTextKeyword => Package.Version < VCppText ? "cppstruct" : "structcpptext";
+        protected virtual string CPPTextKeyword =>
+            Package.Version < (uint)PackageObjectLegacyVersion.AddedCppTextToUStruct ? "cppstruct" : "structcpptext";
 
         protected string FormatCPPText()
         {
@@ -216,7 +219,7 @@ namespace UELib.Core
                 {
                     output += "//";
                 }
-                
+
                 output += "var";
                 if (property.CategoryName != null && !property.CategoryName.IsNone())
                 {
@@ -224,8 +227,9 @@ namespace UELib.Core
                         ? "()"
                         : $"({property.CategoryName})";
                 }
+
                 output += $" {property.Decompile()};";
-                
+
                 string postOutput = property.PostDecompile();
                 if (!string.IsNullOrEmpty(postOutput))
                 {

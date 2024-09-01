@@ -827,7 +827,7 @@ namespace UELib
                 Minor = stream.ReadUInt16();
                 Patch = stream.ReadUInt16();
                 Changelist = stream.ReadUInt32();
-                Branch = stream.ReadText();
+                Branch = stream.ReadString();
             }
 
             public override string ToString()
@@ -1062,7 +1062,7 @@ namespace UELib
 
                 if (stream.Version >= VFolderName)
                 {
-                    FolderName = stream.ReadText();
+                    FolderName = stream.ReadString();
                 }
 
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
@@ -1080,7 +1080,7 @@ namespace UELib
 #if UE4
                 if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
                 {
-                    LocalizationId = stream.ReadText();
+                    LocalizationId = stream.ReadString();
                 }
 
                 if (stream.UE4Version >= 459)
@@ -1232,7 +1232,7 @@ namespace UELib
                         int buildSeconds = stream.ReadInt32();
                     }
 
-                    string dnfString = stream.ReadText();
+                    string dnfString = stream.ReadString();
 
                     // DLC package
                     if (PackageFlags.HasFlags(0x80U))
@@ -1694,7 +1694,7 @@ namespace UELib
                 {
                     for (var i = 0; i < Summary.ImportGuidsCount; ++i)
                     {
-                        string levelName = stream.ReadText();
+                        string levelName = stream.ReadString();
                         int guidCount = stream.ReadInt32();
                         stream.Skip(guidCount * 16);
                     }

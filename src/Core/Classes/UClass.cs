@@ -153,7 +153,7 @@ namespace UELib.Core
                 VengeanceDeserializeHeader(_Buffer, ref header);
             }
 #endif
-            if (_Buffer.Version < 62)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.Release62)
             {
                 int classRecordSize = _Buffer.ReadInt32();
                 Record(nameof(classRecordSize), classRecordSize);
@@ -188,12 +188,12 @@ namespace UELib.Core
                 goto skipClassGuid;
             }
 #endif
-            if (_Buffer.Version >= 276)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassGuidDeprecated)
             {
-                if (_Buffer.Version < 547)
+                if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassPlatformFlagsDeprecated)
                 {
-                    byte unknownByte = _Buffer.ReadByte();
-                    Record("ClassGuidReplacement???", unknownByte);
+                    byte classPlatformFlags = _Buffer.ReadByte();
+                    Record(nameof(classPlatformFlags), classPlatformFlags);
                 }
             }
             else
@@ -217,7 +217,7 @@ namespace UELib.Core
             }
 
         serializeWithin:
-            if (_Buffer.Version >= 62)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.Release62)
             {
                 Within = _Buffer.ReadObject<UClass>();
                 Record(nameof(Within), Within);
@@ -434,7 +434,7 @@ namespace UELib.Core
                             byte unknownByte = _Buffer.ReadByte();
                             Record("Unknown:Battleborn", unknownByte);
 
-                            NativeClassName = _Buffer.ReadText();
+                            NativeClassName = _Buffer.ReadString();
                             Record(nameof(NativeClassName), NativeClassName);
 
                             // not verified
@@ -446,7 +446,7 @@ namespace UELib.Core
 #if DISHONORED
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                         {
-                            NativeClassName = _Buffer.ReadText();
+                            NativeClassName = _Buffer.ReadString();
                             Record(nameof(NativeClassName), NativeClassName);
 
                             goto skipClassGroups;
@@ -459,7 +459,7 @@ namespace UELib.Core
 
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedNativeClassNameToUClass)
                         {
-                            NativeClassName = _Buffer.ReadText();
+                            NativeClassName = _Buffer.ReadString();
                             Record(nameof(NativeClassName), NativeClassName);
                         }
 
@@ -555,7 +555,7 @@ namespace UELib.Core
 #if THIEF_DS || DeusEx_IW
             if (Package.Build == BuildGeneration.Flesh)
             {
-                string thiefClassVisibleName = _Buffer.ReadText();
+                string thiefClassVisibleName = _Buffer.ReadString();
                 Record(nameof(thiefClassVisibleName), thiefClassVisibleName);
 
                 // Restore the human-readable name if possible
@@ -584,13 +584,13 @@ namespace UELib.Core
 
                 if (_Buffer.LicenseeVersion >= 2)
                 {
-                    string vengeanceDefaultPropertiesText = _Buffer.ReadText();
+                    string vengeanceDefaultPropertiesText = _Buffer.ReadString();
                     Record(nameof(vengeanceDefaultPropertiesText), vengeanceDefaultPropertiesText);
                 }
 
                 if (_Buffer.LicenseeVersion >= 6)
                 {
-                    string vengeanceClassFilePath = _Buffer.ReadText();
+                    string vengeanceClassFilePath = _Buffer.ReadString();
                     Record(nameof(vengeanceClassFilePath), vengeanceClassFilePath);
                 }
 

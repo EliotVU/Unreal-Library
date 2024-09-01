@@ -12,7 +12,7 @@ namespace Eliot.UELib.Test.upk.Builds
     [TestClass]
     public class PackageTestsAll
     {
-        private static readonly string s_packagesPath = Packages.Packages_Path;
+        private static readonly string s_packagesPath = Packages.PackageFilesPath;
 
         /// <summary>
         /// FIXME: Beware, we are experiencing a memory leak in this chain of events.

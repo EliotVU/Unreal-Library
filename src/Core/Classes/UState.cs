@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UELib.Flags;
 using UELib.Branch;
 
@@ -16,12 +17,7 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UState : UStruct
     {
-        // FIXME: Version 61 is the lowest package version I know that supports StateFlags.
-        private const int VStateFlags = 61;
-
-        // FIXME: Version
-        private const int VFuncMap = 220;
-        public const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
+        [Obsolete] public const int VProbeMaskReducedAndIgnoreMaskRemoved = 691;
 
         #region Serialized Members
 
@@ -46,6 +42,9 @@ namespace UELib.Core
         /// </summary>
         private uint _StateFlags;
 
+        /// <summary>
+        /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.AddedFuncMapToUState"/>
+        /// </summary>
         public UMap<UName, UFunction> FuncMap;
 
         #endregion
@@ -92,7 +91,7 @@ namespace UELib.Core
             LabelTableOffset = _Buffer.ReadUInt16();
             Record(nameof(LabelTableOffset), LabelTableOffset);
 
-            if (_Buffer.Version >= VStateFlags)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedStateFlagsToUState)
             {
 #if BORDERLANDS2 || TRANSFORMERS || BATMAN
                 // FIXME:Temp fix
@@ -117,7 +116,11 @@ namespace UELib.Core
                 return;
             }
 #endif
-            if (_Buffer.Version < VFuncMap) return;
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.AddedFuncMapToUState)
+            {
+                return;
+            }
+
             _Buffer.ReadMap(out FuncMap);
             Record(nameof(FuncMap), FuncMap);
         }
@@ -139,15 +142,9 @@ namespace UELib.Core
 
         #region Methods
 
-        public bool HasStateFlag(StateFlags flag)
-        {
-            return (_StateFlags & (uint)flag) != 0;
-        }
+        public bool HasStateFlag(StateFlags flag) => (_StateFlags & (uint)flag) != 0;
 
-        public bool HasStateFlag(uint flag)
-        {
-            return (_StateFlags & flag) != 0;
-        }
+        public bool HasStateFlag(uint flag) => (_StateFlags & flag) != 0;
 
         #endregion
     }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace UELib.Core
+﻿namespace UELib.Core
 {
     /// <summary>
     /// Represents a unreal enum.
@@ -13,7 +11,7 @@ namespace UELib.Core
         /// <summary>
         /// Names of each element in the UEnum.
         /// </summary>
-        public IList<UName> Names;
+        public UArray<UName> Names;
 
         #endregion
 
@@ -23,12 +21,8 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            int count = _Buffer.ReadLength();
-            Names = new List<UName>(count);
-            for (var i = 0; i < count; ++i)
-            {
-                Names.Add(_Buffer.ReadNameReference());
-            }
+            _Buffer.ReadArray(out Names);
+            Record(nameof(Names), Names);
 #if SPELLBORN
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn
                 && 145 < _Buffer.Version)
@@ -36,8 +30,8 @@ namespace UELib.Core
                 uint unknownEnumFlags = _Buffer.ReadUInt32();
                 Record(nameof(unknownEnumFlags), unknownEnumFlags);
             }
-        }
 #endif
+        }
 
         #endregion
     }

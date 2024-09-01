@@ -25,10 +25,11 @@ namespace UELib.Core
 
             public void Deserialize(IUnrealStream stream)
             {
+                // FIXME: Unversioned
                 if (stream.Version <= 540)
                 {
                     // e.g. Core.Object.X
-                    _FieldName = stream.ReadText();
+                    _FieldName = stream.ReadString();
                 }
                 else
                 {
@@ -42,7 +43,7 @@ namespace UELib.Core
                 for (var i = 0; i < length; ++i)
                 {
                     var key = stream.ReadNameReference();
-                    string value = stream.ReadText();
+                    string value = stream.ReadString();
                     Tags.Add(key.Name, value);
                 }
             }
@@ -65,7 +66,7 @@ namespace UELib.Core
 
             public override string ToString()
             {
-                return _Field != null ? _Field.GetOuterGroup() : _FieldName;
+                return _Field != null ? _Field.GetPath() : _FieldName;
             }
         }
 
@@ -86,6 +87,7 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
+            
             _Buffer.ReadArray(out _Fields);
             Record(nameof(_Fields), _Fields);
         }

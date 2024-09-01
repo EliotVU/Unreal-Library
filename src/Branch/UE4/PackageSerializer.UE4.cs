@@ -29,7 +29,7 @@ namespace UELib.Branch.UE4
 
         public void Deserialize(IUnrealStream stream, UNameTableItem item)
         {
-            item.Name = stream.ReadText();
+            item.Name = stream.ReadString();
             Debug.Assert(item.Name.Length <= MaxNameLengthUE4, "Maximum name length exceeded! Possible corrupt or unsupported package.");
             
             if (stream.UE4Version < 504) return;

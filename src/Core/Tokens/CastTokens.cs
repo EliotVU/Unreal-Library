@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using UELib.Branch;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -73,7 +74,7 @@ namespace UELib.Core
 
                 private void RemapCastToken(IUnrealArchive stream)
                 {
-                    if (stream.Version >= VInterfaceClass) return;
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedInterfacesFeature) return;
                     
                     // TODO: Could there be more?
                     switch (CastOpCode)

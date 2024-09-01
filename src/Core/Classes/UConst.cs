@@ -20,7 +20,8 @@
         protected override void Deserialize()
         {
             base.Deserialize();
-            Value = _Buffer.ReadText();
+            
+            Value = _Buffer.ReadString();
             Record(nameof(Value), Value);
         }
 

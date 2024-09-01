@@ -615,7 +615,7 @@ namespace UELib.Core
 
                 case PropertyType.StrProperty:
                 {
-                    string value = _Buffer.ReadText();
+                    string value = _Buffer.ReadString();
                     Record(nameof(value), value);
                     propertyValue = PropertyDisplay.FormatLiteral(value);
                     break;

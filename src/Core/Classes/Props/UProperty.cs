@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Flags;
 using UELib.Types;
 
@@ -80,7 +80,7 @@ namespace UELib.Core
                 Record(nameof(ArrayDim), ArrayDim);
 
                 PropertyFlags = _Buffer.ReadUInt32();
-                Record(nameof(PropertyFlags), PropertyFlags);
+                Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
 
                 _Buffer.Read(out CategoryName);
                 Record(nameof(CategoryName), CategoryName);
@@ -117,10 +117,10 @@ namespace UELib.Core
             //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
             //    $"Bad array dimension {ArrayDim & 0x0000FFFFU} for property ${GetReferencePath()}");
 
-            PropertyFlags = Package.Version >= 220
+            PropertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
-            Record(nameof(PropertyFlags), PropertyFlags);
+            Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
 #if BATMAN
             if (Package.Build == BuildGeneration.RSS)
             {
@@ -161,7 +161,7 @@ namespace UELib.Core
                     Record(nameof(CategoryName), CategoryName);
                 }
 
-                if (_Buffer.Version > 400)
+                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty)
                 {
                     ArrayEnum = _Buffer.ReadObject<UEnum>();
                     Record(nameof(ArrayEnum), ArrayEnum);
@@ -229,7 +229,7 @@ namespace UELib.Core
             {
                 if (HasPropertyFlag(0x800000))
                 {
-                    EditorDataText = _Buffer.ReadText();
+                    EditorDataText = _Buffer.ReadString();
                     Record(nameof(EditorDataText), EditorDataText);
                 }
 
@@ -262,7 +262,7 @@ namespace UELib.Core
                )
             {
                 // May represent a tooltip/comment in some games. Usually in the form of a quoted string, sometimes as a double-flash comment or both.
-                EditorDataText = _Buffer.ReadText();
+                EditorDataText = _Buffer.ReadString();
                 Record(nameof(EditorDataText), EditorDataText);
             }
 #if SPELLBORN

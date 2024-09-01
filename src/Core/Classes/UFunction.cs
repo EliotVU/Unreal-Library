@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UELib.Branch;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -11,8 +12,6 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UFunction : UStruct, IUnrealNetObject
     {
-        private const uint VFriendlyName = 189;
-
         #region Serialized Members
 
         public ushort NativeToken { get; private set; }
@@ -51,7 +50,6 @@ namespace UELib.Core
                 ushort size = _Buffer.ReadUShort();
                 _Buffer.Skip(size * 2);
                 Record("Unknown:Borderlands2", size);
-
             }
 #endif
             base.Deserialize();
@@ -65,11 +63,12 @@ namespace UELib.Core
                     RepOffset = _Buffer.ReadUShort();
                     Record(nameof(RepOffset), RepOffset);
                 }
+
                 FriendlyName = ExportTable.ObjectName;
                 return;
             }
 #endif
-            if (_Buffer.Version < 64)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.Release64)
             {
                 ushort paramsSize = _Buffer.ReadUShort();
                 Record(nameof(paramsSize), paramsSize);
@@ -78,7 +77,7 @@ namespace UELib.Core
             NativeToken = _Buffer.ReadUShort();
             Record(nameof(NativeToken), NativeToken);
 
-            if (_Buffer.Version < 64)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.Release64)
             {
                 byte paramsCount = _Buffer.ReadByte();
                 Record(nameof(paramsCount), paramsCount);
@@ -87,7 +86,7 @@ namespace UELib.Core
             OperPrecedence = _Buffer.ReadByte();
             Record(nameof(OperPrecedence), OperPrecedence);
 
-            if (_Buffer.Version < 64)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.Release64)
             {
                 ushort returnValueOffset = _Buffer.ReadUShort();
                 Record(nameof(returnValueOffset), returnValueOffset);
@@ -113,7 +112,7 @@ namespace UELib.Core
                 // HO:0x04 = Constructor
                 uint v134 = _Buffer.ReadUInt32();
                 Record(nameof(v134), v134);
-                
+
                 FunctionFlags |= ((ulong)v134 << 32);
             }
 #endif
@@ -135,11 +134,11 @@ namespace UELib.Core
             }
 #endif
 
-            // TODO: Data-strip version?
-            if (_Buffer.Version >= VFriendlyName && !Package.IsConsoleCooked()
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction &&
+                !Package.IsConsoleCooked()
 #if TRANSFORMERS
-                                                 // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
-                                                 && Package.Build != BuildGeneration.HMS
+                // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
+                && Package.Build != BuildGeneration.HMS
 #endif
 #if MKKE
                 // Cooked and stripped, but FriendlyName still remains
@@ -170,14 +169,15 @@ namespace UELib.Core
             }
         }
 
-#endregion
+        #endregion
 
         #region Methods
+
         public bool HasFunctionFlag(uint flag)
         {
             return ((uint)FunctionFlags & flag) != 0;
         }
-        
+
         public bool HasFunctionFlag(FunctionFlags flag)
         {
             return ((uint)FunctionFlags & (uint)flag) != 0;
@@ -210,12 +210,12 @@ namespace UELib.Core
         public bool HasOptionalParamData()
         {
             // FIXME: Deprecate version check, and re-map the function flags using the EngineBranch class approach.
-            return Package.Version > 300 
+            return Package.Version > 300
                    && ByteCodeManager != null
                    && Params?.Any() == true
                 // Not available for older packages.
                 // && HasFunctionFlag(Flags.FunctionFlags.OptionalParameters);
-                   ;
+                ;
         }
 
         #endregion
