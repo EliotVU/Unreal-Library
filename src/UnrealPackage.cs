@@ -12,6 +12,7 @@ using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
+using UELib.Branch.UE3.GIGANTIC;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.RSS;
 using UELib.Branch.UE4;
@@ -22,6 +23,7 @@ namespace UELib
     using Core;
     using Decoding;
     using Branch.UE2.DVS;
+    using UELib.Branch.UE3.RL;
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -331,6 +333,15 @@ namespace UELib
                 Spellborn,
 
                 /// <summary>
+                /// EndWar
+                /// 
+                /// 369/006
+                /// </summary>
+                [Build(329, 0)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.AddedInterfacesFeature)]
+                EndWar,
+
+                /// <summary>
                 /// Standard
                 /// 
                 /// 369/006
@@ -429,9 +440,26 @@ namespace UELib
                 MOH,
 
                 /// <summary>
-                /// 584/058
+                /// Borderlands
+                /// 
+                /// 584/057-058
+                ///
+                /// Includes back-ported features from UDK
                 /// </summary>
-                [Build(584, 58)] Borderlands,
+                [Build(584, 584, 57, 58, BuildGeneration.GB)]
+                Borderlands,
+
+                /// <summary>
+                /// Borderlands Game of the Year Enhanced
+                /// 
+                /// 594/058
+                /// 
+                /// Includes back-ported features from UDK of at least v813 (NativeClassGroup)
+                /// Appears to be missing (v623:ExportGuids, v767:TextureAllocations, and v673:FPropertyTag's BoolValue change).
+                /// Presume at least v832 from Borderlands 2 
+                /// </summary>
+                [Build(594, 58, BuildGeneration.GB)] [OverridePackageVersion(832)]
+                Borderlands_GOTYE,
 
                 /// <summary>
                 /// 584/126
@@ -511,8 +539,7 @@ namespace UELib
                 /// <summary>
                 /// 842-864/001
                 /// </summary>
-                [Build(842, 1, BuildFlags.ConsoleCooked)]
-                [Build(864, 1, BuildFlags.ConsoleCooked)]
+                [Build(842, 1, BuildFlags.ConsoleCooked)] [Build(864, 1, BuildFlags.ConsoleCooked)]
                 InfinityBlade2,
 
                 // Cannot auto-detect, ambiguous with UDK-2015-01-29
@@ -556,7 +583,7 @@ namespace UELib
                 /// 
                 /// 805/101
                 /// </summary>
-                [Build(805, 101)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(805, 101, BuildGeneration.RSS)] [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman2,
 
                 /// <summary>
@@ -565,13 +592,15 @@ namespace UELib
                 /// 806/103
                 /// 807/137-138
                 /// </summary>
-                [Build(806, 103)] [Build(807, 807, 137, 138)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(806, 103, BuildGeneration.RSS)]
+                [Build(807, 807, 137, 138, BuildGeneration.RSS)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3,
 
                 /// <summary>
                 /// 807/104
                 /// </summary>
-                [Build(807, 104)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(807, 104, BuildGeneration.RSS)] [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3MP,
 
                 /// <summary>
@@ -579,8 +608,18 @@ namespace UELib
                 ///
                 /// 863/32995(227 & ~8000)
                 /// </summary>
-                [Build(863, 32995)] [OverridePackageVersion(863, 227)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(863, 32995, BuildGeneration.RSS)]
+                [OverridePackageVersion(863, 227)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman4,
+
+                /// <summary>
+                /// Gigantic: Rampage Edition
+                /// 
+                /// 867/008:010
+                /// </summary>
+                [Build(867, 867, 8u, 10u)] [BuildEngineBranch(typeof(EngineBranchGigantic))]
+                Gigantic,
 
                 /// <summary>
                 /// Rocket League
@@ -588,7 +627,8 @@ namespace UELib
                 /// 867/009:032
                 /// Requires third-party decompression and decryption
                 /// </summary>
-                [Build(867, 868, 9u, 32u)] RocketLeague,
+                [Build(867, 868, 9u, 32u)] [BuildEngineBranch(typeof(EngineBranchRL))]
+                RocketLeague,
 
                 /// <summary>
                 /// Battleborn
@@ -787,7 +827,7 @@ namespace UELib
                 Minor = stream.ReadUInt16();
                 Patch = stream.ReadUInt16();
                 Changelist = stream.ReadUInt32();
-                Branch = stream.ReadText();
+                Branch = stream.ReadString();
             }
 
             public override string ToString()
@@ -806,12 +846,10 @@ namespace UELib
 
             public UnrealFlags<PackageFlag> PackageFlags;
 
-            [Obsolete]
-            private const int VHeaderSize = 249;
+            [Obsolete] private const int VHeaderSize = 249;
             public int HeaderSize;
 
-            [Obsolete]
-            private const int VFolderName = 269;
+            [Obsolete] private const int VFolderName = 269;
 
             /// <summary>
             /// UPK content category e.g. Weapons, Sounds or Meshes.
@@ -830,8 +868,7 @@ namespace UELib
             /// </summary>
             public UArray<UGuid> Heritages;
 
-            [Obsolete]
-            private const int VDependsOffset = 415;
+            [Obsolete] private const int VDependsOffset = 415;
             public int DependsOffset;
 
             public UGuid Guid;
@@ -840,40 +877,32 @@ namespace UELib
             private PackageFileEngineVersion PackageEngineVersion;
             private PackageFileEngineVersion PackageCompatibleEngineVersion;
 
-            [Obsolete]
-            private const int VEngineVersion = 245;
+            [Obsolete] private const int VEngineVersion = 245;
 
-            [Obsolete]
-            public const int VCookerVersion = 277;
-            
+            [Obsolete] public const int VCookerVersion = 277;
+
             public int EngineVersion;
             public int CookerVersion;
 
-            [Obsolete]
-            private const int VCompression = 334;
+            [Obsolete] private const int VCompression = 334;
             public uint CompressionFlags;
             public UArray<CompressedChunk> CompressedChunks;
 
-            [Obsolete]
-            private const int VPackageSource = 482;
+            [Obsolete] private const int VPackageSource = 482;
             public uint PackageSource;
 
-            [Obsolete]
-            private const int VAdditionalPackagesToCook = 516;
+            [Obsolete] private const int VAdditionalPackagesToCook = 516;
             public UArray<string> AdditionalPackagesToCook;
 
-            [Obsolete]
-            private const int VImportExportGuidsOffset = 623;
+            [Obsolete] private const int VImportExportGuidsOffset = 623;
             public int ImportExportGuidsOffset;
             public int ImportGuidsCount;
             public int ExportGuidsCount;
 
-            [Obsolete]
-            private const int VThumbnailTableOffset = 584;
+            [Obsolete] private const int VThumbnailTableOffset = 584;
             public int ThumbnailTableOffset;
 
-            [Obsolete]
-            private const int VTextureAllocations = 767;
+            [Obsolete] private const int VTextureAllocations = 767;
 
             public int GatherableTextDataCount;
             public int GatherableTextDataOffset;
@@ -1033,22 +1062,25 @@ namespace UELib
 
                 if (stream.Version >= VFolderName)
                 {
-                    FolderName = stream.ReadText();
+                    FolderName = stream.ReadString();
                 }
 
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
-#if HAWKEN
-                if (stream.Package.Build == GameBuild.BuildName.Hawken &&
+#if HAWKEN || GIGANTIC
+                if ((stream.Package.Build == GameBuild.BuildName.Hawken ||
+                     stream.Package.Build == GameBuild.BuildName.Gigantic) &&
                     stream.LicenseeVersion >= 2)
-                    stream.Skip(4);
+                {
+                    stream.Read(out int vUnknown);
+                }
 #endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
 #if UE4
                 if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
                 {
-                    LocalizationId = stream.ReadText();
+                    LocalizationId = stream.ReadString();
                 }
 
                 if (stream.UE4Version >= 459)
@@ -1111,9 +1143,6 @@ namespace UELib
                     stream.ReadArray(out UArray<byte> iStack_fc);
                 }
 #endif
-#if BORDERLANDS
-                if (stream.Package.Build == GameBuild.BuildName.Borderlands) stream.Skip(4);
-#endif
                 if (stream.UE4Version >= 384)
                 {
                     StringAssetReferencesCount = stream.ReadInt32();
@@ -1130,6 +1159,9 @@ namespace UELib
                     // FIXME: Correct the output version of these games instead.
 #if BIOSHOCK
                     && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+#endif
+#if BORDERLANDS
+                    && stream.Package.Build != GameBuild.BuildName.Borderlands_GOTYE
 #endif
                    )
                 {
@@ -1200,7 +1232,7 @@ namespace UELib
                         int buildSeconds = stream.ReadInt32();
                     }
 
-                    string dnfString = stream.ReadText();
+                    string dnfString = stream.ReadString();
 
                     // DLC package
                     if (PackageFlags.HasFlags(0x80U))
@@ -1214,7 +1246,7 @@ namespace UELib
                 {
                     // The Engine Version this package was created with
                     EngineVersion = stream.ReadInt32();
-                    Console.WriteLine("\tEngineVersion:" + EngineVersion);
+                    Console.WriteLine("EngineVersion:" + EngineVersion);
                 }
 #if UE4
                 if (stream.Package.ContainsEditorData())
@@ -1297,9 +1329,15 @@ namespace UELib
 #endif
                 }
 #if BORDERLANDS
+                if (stream.Package.Build == GameBuild.BuildName.Borderlands_GOTYE)
+                {
+                    return;
+                }
+#endif
+#if BATTLEBORN
                 if (stream.Package.Build == GameBuild.BuildName.Battleborn)
                 {
-                    // FIXME: Package format is being deserialzied incorrectly and fails here.
+                    // FIXME: Package format is being deserialized incorrectly and fails here.
                     stream.ReadUInt32();
                     return;
                 }
@@ -1343,20 +1381,15 @@ namespace UELib
         /// </summary>
         public bool IsBigEndianEncoded { get; }
 
-        [Obsolete]
-        public const int VSIZEPREFIXDEPRECATED = 64;
-        
-        [Obsolete]
-        public const int VINDEXDEPRECATED = 178;
+        [Obsolete] public const int VSIZEPREFIXDEPRECATED = 64;
 
-        [Obsolete]
-        public const int VDLLBIND = 655;
+        [Obsolete] public const int VINDEXDEPRECATED = 178;
 
-        [Obsolete]
-        public const int VCLASSGROUP = 789;
+        [Obsolete] public const int VDLLBIND = 655;
 
-        [Obsolete]
-        public const int VCOOKEDPACKAGES = 277;
+        [Obsolete] public const int VCLASSGROUP = 789;
+
+        [Obsolete] public const int VCOOKEDPACKAGES = 277;
 
         public uint Version => Summary.Version;
 
@@ -1661,7 +1694,7 @@ namespace UELib
                 {
                     for (var i = 0; i < Summary.ImportGuidsCount; ++i)
                     {
-                        string levelName = stream.ReadText();
+                        string levelName = stream.ReadString();
                         int guidCount = stream.ReadInt32();
                         stream.Skip(guidCount * 16);
                     }

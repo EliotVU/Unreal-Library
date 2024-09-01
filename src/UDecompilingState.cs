@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using UELib.Annotations;
+using UELib.Core;
+
 namespace UELib
 {
     public static class UDecompilingState
@@ -5,6 +9,13 @@ namespace UELib
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
             "CA2211:NonConstantFieldsShouldNotBeVisible")]
         public static string Tabs = string.Empty;
+
+        /// <summary>
+        /// Objects that have been inlined (if true) in the current decompiling state.
+        ///
+        /// Internal because this is a hack patch to fix an issue where each object is inlined for every reference. 
+        /// </summary>
+        [CanBeNull] internal static Dictionary<UObject, bool> s_inlinedSubObjects = new Dictionary<UObject, bool>();
 
         public static void AddTabs(int count)
         {

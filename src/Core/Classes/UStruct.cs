@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using UELib.Branch;
@@ -15,18 +14,7 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UStruct : UField
     {
-        private const int VCppText = 120;
-
-        // FIXME: Version
-        private const int VFriendlyNameMoved = 160;
-
-        /// <summary>
-        /// Used to determine if UClass has an interfaces UArray, and the ObjectToInterface CastToken (among others). 
-        /// FIXME: Version
-        /// </summary>
-        public const int VInterfaceClass = 220;
-
-        private const int VStorageScriptSize = 639;
+        [Obsolete] public const int VInterfaceClass = 222;
 
         #region Serialized Members
 
@@ -71,7 +59,7 @@ namespace UELib.Core
         public long ScriptOffset { get; private set; }
         public int ScriptSize { get; private set; }
 
-        public UByteCodeDecompiler ByteCodeManager;
+        [CanBeNull] public UByteCodeDecompiler ByteCodeManager;
 
         #endregion
 
@@ -92,14 +80,31 @@ namespace UELib.Core
                 goto skipScriptText;
             }
 #endif
+#if BORDERLANDS
+            // Swapped order...
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+            {
+                Children = _Buffer.ReadObject<UField>();
+                Record(nameof(Children), Children);
+
+                ScriptText = _Buffer.ReadObject<UTextBuffer>();
+                Record(nameof(ScriptText), ScriptText);
+
+                // FIXME: another 2x32 uints here (IsConsoleCooked)
+
+                goto skipChildren;
+            }
+#endif
             if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ScriptText), ScriptText);
             }
-            skipScriptText:
+
+        skipScriptText:
             Children = _Buffer.ReadObject<UField>();
             Record(nameof(Children), Children);
+        skipChildren:
 #if BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
@@ -107,7 +112,7 @@ namespace UELib.Core
             }
 #endif
             // Moved to UFunction in UE3
-            if (_Buffer.Version < VFriendlyNameMoved)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
             {
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
@@ -120,10 +125,10 @@ namespace UELib.Core
                     // Back-ported CppText
                     CppText = _Buffer.ReadObject<UTextBuffer>();
                     Record(nameof(CppText), CppText);
-                    
+
                     var dnfTextObj2 = _Buffer.ReadObject();
                     Record(nameof(dnfTextObj2), dnfTextObj2);
-                    
+
                     _Buffer.ReadArray(out UArray<UObject> dnfIncludeTexts);
                     Record(nameof(dnfIncludeTexts), dnfIncludeTexts);
                 }
@@ -133,18 +138,19 @@ namespace UELib.Core
                     // Bool?
                     byte dnfByte = _Buffer.ReadByte();
                     Record(nameof(dnfByte), dnfByte);
-                    
+
                     var dnfName = _Buffer.ReadNameReference();
                     Record(nameof(dnfName), dnfName);
                 }
-                
+
                 goto lineData;
             }
 #endif
             // Standard, but UT2004' derived games do not include this despite reporting version 128+
-            if (_Buffer.Version >= VCppText && _Buffer.UE4Version < 117
-                && !Package.IsConsoleCooked() &&
-                (Package.Build != BuildGeneration.UE2_5 && 
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedCppTextToUStruct &&
+                _Buffer.UE4Version < 117 &&
+                !Package.IsConsoleCooked() &&
+                (Package.Build != BuildGeneration.UE2_5 &&
                  Package.Build != BuildGeneration.AGP))
             {
                 CppText = _Buffer.ReadObject<UTextBuffer>();
@@ -176,7 +182,7 @@ namespace UELib.Core
                 Record(nameof(ProcessedText), ProcessedText);
             }
 #endif
-            lineData:
+        lineData:
             if (!Package.IsConsoleCooked() &&
                 _Buffer.UE4Version < 117)
             {
@@ -184,6 +190,7 @@ namespace UELib.Core
                 Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
                 Record(nameof(TextPos), TextPos);
+                // Version < 200 (EndWar)
                 //var MinAlignment = _Buffer.ReadInt32();
                 //Record(nameof(MinAlignment), MinAlignment);
             }
@@ -203,11 +210,11 @@ namespace UELib.Core
                 Record(nameof(transformersEndLine), transformersEndLine);
             }
 #endif
-            serializeByteCode:
+        serializeByteCode:
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
-            bool hasFixedScriptSize = _Buffer.Version >= VStorageScriptSize;
-            if (hasFixedScriptSize)
+
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
             {
                 DataScriptSize = _Buffer.ReadInt32();
                 Record(nameof(DataScriptSize), DataScriptSize);
@@ -224,7 +231,7 @@ namespace UELib.Core
                 return;
 
             ByteCodeManager = new UByteCodeDecompiler(this);
-            if (hasFixedScriptSize)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
             {
                 _Buffer.Skip(DataScriptSize);
             }
@@ -263,7 +270,7 @@ namespace UELib.Core
                 Console.WriteLine(ice.Message);
             }
         }
-        
+
         [Obsolete("Pending deprecation")]
         protected virtual void FindChildren()
         {
@@ -307,7 +314,7 @@ namespace UELib.Core
         }
 
         #endregion
-        
+
         public IEnumerable<UField> EnumerateFields()
         {
             for (var field = Children; field != null; field = field.NextField)
@@ -316,13 +323,13 @@ namespace UELib.Core
             }
         }
 
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TokenFactory GetTokenFactory()
         {
             return Package.Branch.GetTokenFactory(Package);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasStructFlag(StructFlags flag)
         {

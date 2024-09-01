@@ -61,11 +61,11 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to D:\Projecten\UE Explorer Tests\Supported.
+        ///   Looks up a localized string similar to /Samples/.
         /// </summary>
-        public static string Packages_Path {
+        public static string PackageFilesPath {
             get {
-                return ResourceManager.GetString("Packages_Path", resourceCulture);
+                return ResourceManager.GetString("PackageFilesPath", resourceCulture);
             }
         }
         
@@ -90,7 +90,7 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to C:\UT2004\Maps\Stock.
+        ///   Looks up a localized string similar to C:\UT2004\Maps.
         /// </summary>
         public static string UE2MapFilesPath {
             get {
@@ -99,7 +99,7 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to C:\UT2004\Textures\Stock.
+        ///   Looks up a localized string similar to C:\UT2004\Textures.
         /// </summary>
         public static string UE2MaterialFilesPath {
             get {

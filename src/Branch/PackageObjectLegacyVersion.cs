@@ -1,18 +1,13 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace UELib.Branch
+﻿namespace UELib.Branch
 {
     public enum PackageObjectLegacyVersion
     {
         Undefined = 0,
-        
-        /// <summary>
-        /// This is one particular update with A LOT of general package changes.
-        /// </summary>
-        ReturnExpressionAddedToReturnToken = 62,
 
-        SphereExtendsPlane = 62,
-        LazyArraySkipCountChangedToSkipOffset = 62,
+        /// <summary>
+        /// FIXME: Version 61 is the lowest package version I know that supports StateFlags.
+        /// </summary>
+        AddedStateFlagsToUState = 61,
 
         /// <summary>
         /// This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.
@@ -20,6 +15,19 @@ namespace UELib.Branch
         /// FIXME: Version, generally not accessible in Unreal Engine 1 except for some, so we'll map the tokens for v62.
         /// </summary>
         DynamicArrayTokensAdded = 62,
+
+        /// <summary>
+        /// Mixed changes.
+        /// </summary>
+        Release62 = 62,
+        ReturnExpressionAddedToReturnToken = 62,
+        SphereExtendsPlane = 62,
+        LazyArraySkipCountChangedToSkipOffset = 62,
+
+        /// <summary>
+        /// Mixed changes.
+        /// </summary>
+        Release64 = 64,
 
         CharRemapAddedToUFont = 69,
 
@@ -40,10 +48,16 @@ namespace UELib.Branch
         /// </summary>
         PrimitiveCastTokenAdded = 95,
 
+        AddedHideCategoriesToUClass = 99,
+
         LightMapScaleAddedToPoly = 106,
 
         KerningAddedToUFont = 119,
+        AddedCppTextToUStruct = 120,
         FontPagesDisplaced = 122,
+
+        // FIXME: Version
+        MovedFriendlyNameToUFunction = 160,
 
         // The estimated version changes that came after the latest known UE2 build.
         TextureDeprecatedFromPoly = 170,
@@ -52,17 +66,21 @@ namespace UELib.Branch
         UE3 = 178,
         CompactIndexDeprecated = 178,
 
-        // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
-        TemplateDataAddedToUComponent = 200,
-
-        DisplacedScriptPropertiesWithClassDefaultObject = 200,
-
         /// <summary>
         /// Present in all released UE3 games (starting with RoboBlitz).
         /// 
         /// FIXME: Unknown version.
         /// </summary>
         IsLocalAddedToDelegateFunctionToken = 181,
+
+        // FIXME: Version, added somewhere between 186 ... 230
+        AddedStateStackToUStateFrame = 187,
+
+        // FIXME: Version 128-178
+        AddedDelegateSourceToUDelegateProperty = 185,
+
+        AddedAutoExpandCategoriesToUClass = 185,
+        ClassDependenciesDeprecated = 186,
 
         // FIXME: Version
         RangeConstTokenDeprecated = UE3,
@@ -73,8 +91,39 @@ namespace UELib.Branch
         // FIXME: Version
         EnumTagNameAddedToBytePropertyTag = UE3,
 
+        ObjectFlagsSizeExpandedTo64Bits = 195,
+
+        // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
+        TemplateDataAddedToUComponent = 200,
+
+        // 208 according to EndWar
+        PackageImportsDeprecated = 208,
+
+        // 210 according to EndWar
+        AddedComponentTemplatesToUClass = 210,
+
+        // 219 according to EndWar
+        DisplacedScriptPropertiesWithClassDefaultObject = 219,
+
+        // FIXME: Version
+        AddedFuncMapToUState = 220,
+
+        /// <summary>
+        /// And ComponentMap
+        /// </summary>
+        ArchetypeAddedToExports = 220,
+
+        PropertyFlagsSizeExpandedTo64Bits = 220,
+
+        // 222 according to EndWar
+        AddedInterfacesFeature = 222,
+
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
+
+        ExportFlagsAddedToExports = 247,
+        ComponentClassBridgeMapDeprecated = 248,
+        SerialSizeConditionRemoved = 249,
 
         // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
         LazyLoaderFlagsAddedToLazyArray = 251,
@@ -82,12 +131,17 @@ namespace UELib.Branch
         L8AddedToLazyArray = 260,
         LazyArrayReplacedWithBulkData = 266,
 
+        ComponentTemplatesDeprecated = 267,
+
         // 267 according to the GoW client,
         // -- albeit the exact nature is not clear
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
-        
+
         ComponentGuidDeprecated = 273,
+        ClassGuidDeprecated = 276,
+
+        InterfaceClassesDeprecated = 288,
 
         /// <summary>
         /// Some properties like SizeX, SizeY, Format have been displaced to ScriptProperties.
@@ -103,9 +157,12 @@ namespace UELib.Branch
         // 321 according to the GoW client
         ElementOwnerAddedToUPolys = 321,
 
-        NetObjectsAdded = 322,
+        NetObjectCountAdded = 322,
 
         NumberAddedToName = 343,
+
+        // FIXME: Version 374-491; Delegate source type changed from Name to Object
+        ChangedDelegateSourceFromNameToObject = 376,
 
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
@@ -113,33 +170,55 @@ namespace UELib.Branch
         // FIXME: Version, not attested in (RoboBlitz v369, but attested in GoW v490).
         SkipSizeAddedToArrayFindTokenIntrinsics = 400,
 
+        AddedArrayEnumToUProperty = 401,
+
         // FIXME: Version, not attested in (GoW v490)
         SkipSizeAddedToArrayTokenIntrinsics = 491,
 
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
 
+        ComponentMapDeprecated = 543,
+
+        /// <summary>
+        /// Added with <see cref="ClassGuidDeprecated"/>
+        /// </summary>
+        ClassPlatformFlagsDeprecated = 547,
+
+        StateFrameLatentActionReduced = 566,
+
         AddedTextureFileCacheGuidToTexture2D = 567,
 
         LightmassAdded = 600,
+
+        AddedDontSortCategoriesToUClass = 603,
+
         UProcBuildingReferenceAddedToPoly = 606,
 
         EnumNameAddedToBytePropertyTag = 633,
 
         LightmassExplicitEmissiveLightRadiusAdded = 636,
 
+        AddedDataScriptSizeToUStruct = 639,
+
         // FIXME: Version
         EndTokenAppendedToArrayTokenIntrinsics = 649,
         LightmassShadowIndirectOnlyOptionAdded = 652,
+
+        AddedDLLBindFeature = 655,
+
         PolyRulesetVariationTypeChangedToName = 670,
 
         BoolValueToByteForBoolPropertyTag = 673,
 
         AddedPVRTCToUTexture2D = 674,
 
-        ProbeMaskReducedAndIgnoreMaskRemoved = 692,
+        ProbeMaskReducedAndIgnoreMaskRemoved = 691,
         ForceScriptOrderAddedToUClass = 749,
         SuperReferenceMovedToUStruct = 756,
+
+        AddedClassGroupsToUClass = 789,
+        AddedNativeClassNameToUClass = 813,
 
         AddedATITCToUTexture2D = 857,
         AddedETCToUTexture2D = 864,

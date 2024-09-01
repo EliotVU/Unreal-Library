@@ -1,6 +1,7 @@
 ﻿#if DECOMPILE
 using System;
 using System.Linq;
+using UELib.Branch;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -42,7 +43,7 @@ namespace UELib.Core
                 output += "protected ";
             }
 
-            if (Package.Version >= UnrealPackage.VDLLBIND && HasFunctionFlag(Flags.FunctionFlags.DLLImport))
+            if (Package.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature && HasFunctionFlag(Flags.FunctionFlags.DLLImport))
             {
                 output += "dllimport ";
             }
@@ -146,8 +147,11 @@ namespace UELib.Core
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                // 0x20000200 unknown specifier
-                
+                if (HasFunctionFlag(0x20000000))
+                {
+                    output += "devexec ";
+                }
+
                 if (HasFunctionFlag(0x4000000))
                 {
                     output += "animevent ";
@@ -207,7 +211,7 @@ namespace UELib.Core
                 isNormalFunction = false;
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Delegate))
+            if (IsDelegate())
             {
                 output += "delegate ";
                 isNormalFunction = false;

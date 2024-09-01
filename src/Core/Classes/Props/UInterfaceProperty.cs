@@ -30,6 +30,14 @@ namespace UELib.Core
 
             InterfaceClass = _Buffer.ReadObject<UClass>();
             Record(nameof(InterfaceClass), InterfaceClass);
+#if ROCKETLEAGUE
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                _Buffer.LicenseeVersion >= 32)
+            {
+                var vd0 = _Buffer.ReadNameReference();
+                Record(nameof(vd0), vd0);
+            }
+#endif
         }
 
         /// <inheritdoc/>

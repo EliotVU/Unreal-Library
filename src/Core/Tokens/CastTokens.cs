@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using UELib.Branch;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -73,7 +74,7 @@ namespace UELib.Core
 
                 private void RemapCastToken(IUnrealArchive stream)
                 {
-                    if (stream.Version >= VInterfaceClass) return;
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedInterfacesFeature) return;
                     
                     // TODO: Could there be more?
                     switch (CastOpCode)
@@ -104,7 +105,25 @@ namespace UELib.Core
                     }
 
                     GetFriendlyCastName(out string castTypeName);
-                    Debug.Assert(castTypeName != default, "Detected an unresolved token.");
+                    if (castTypeName == default)
+                    {
+#if GIGANTIC
+                        // HACK: Should implement a cast tokens table in the engine branch instead.
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Gigantic)
+                        {
+                            switch ((uint)CastOpCode)
+                            {
+                                case 0x32:
+                                case 0x33:
+                                case 0x34:
+                                    // FIXME: Unknown format
+                                    castTypeName = $"JsonRef{(uint)CastOpCode:X}";
+                                    break;
+                            }
+                        }
+#endif
+                    }
+                    Debug.Assert(castTypeName != default, $"Detected an unresolved token '0x{CastOpCode:X}'.");
                     return $"{castTypeName}({DecompileNext()})";
                 }
             }

@@ -327,7 +327,7 @@ namespace UELib
         [Obsolete("UE Explorer - Hex Viewer")]
         public static int ReadIndexFromBuffer(byte[] value, IUnrealStream stream)
         {
-            if (stream.Version >= UnrealPackage.VINDEXDEPRECATED)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.CompactIndexDeprecated)
             {
                 return BitConverter.ToInt32(value, 0);
             }
@@ -904,7 +904,7 @@ namespace UELib
             array = new UArray<string>(c);
             for (int i = 0; i < c; ++i)
             {
-                string element = stream.ReadText();
+                string element = stream.ReadString();
                 array.Add(element);
             }
         }
@@ -967,6 +967,18 @@ namespace UELib
             }
         }
 
+        public static void ReadMap(this IUnrealStream stream, out UMap<UObject, UName> map)
+        {
+            int c = stream.ReadLength();
+            map = new UMap<UObject, UName>(c);
+            for (int i = 0; i < c; ++i)
+            {
+                Read(stream, out UObject key);
+                Read(stream, out UName value);
+                map.Add(key, value);
+            }
+        }
+
         [Obsolete("See UGuid")]
         public static Guid ReadGuid(this IUnrealStream stream)
         {
@@ -1018,7 +1030,7 @@ namespace UELib
         public static void Read(this IUnrealStream stream, out UObject value) => value = ReadObject<UObject>(stream);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out string value) => value = stream.ReadText();
+        public static void Read(this IUnrealStream stream, out string value) => value = stream.ReadString();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UName value) => value = ReadNameReference(stream);
@@ -1030,7 +1042,10 @@ namespace UELib
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UArray<UObject> array) => ReadArray(stream, out array);
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UArray<UName> array) => ReadArray(stream, out array);
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
             where TKey : UName

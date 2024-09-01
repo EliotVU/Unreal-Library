@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Flags;
 using UELib.Types;
 
@@ -80,7 +80,7 @@ namespace UELib.Core
                 Record(nameof(ArrayDim), ArrayDim);
 
                 PropertyFlags = _Buffer.ReadUInt32();
-                Record(nameof(PropertyFlags), PropertyFlags);
+                Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
 
                 _Buffer.Read(out CategoryName);
                 Record(nameof(CategoryName), CategoryName);
@@ -111,22 +111,30 @@ namespace UELib.Core
             ElementSize = (ushort)(ArrayDim >> 16);
         skipArrayDim:
             // Just to verify if this is in use at all.
-            Debug.Assert(ElementSize == 0, $"ElementSize: {ElementSize}");
+            //Debug.Assert(ElementSize == 0, $"ElementSize: {ElementSize}");
             // 2048 is the max allowed dimension in the UnrealScript compiler, however some licensees have extended this to a much higher size.
             //Debug.Assert(
             //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
             //    $"Bad array dimension {ArrayDim & 0x0000FFFFU} for property ${GetReferencePath()}");
 
-            PropertyFlags = Package.Version >= 220
+            PropertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
-            Record(nameof(PropertyFlags), PropertyFlags);
+            Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
 #if BATMAN
-            if (Package.Build == BuildGeneration.RSS &&
-                _Buffer.LicenseeVersion >= 101)
+            if (Package.Build == BuildGeneration.RSS)
             {
-                PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
-                Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
+                if (_Buffer.LicenseeVersion >= 101)
+                {
+                    PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
+                    Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
+                }
+
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                {
+                    PropertyFlags = (PropertyFlags & ~(PropertyFlags >> 2 & 1)) |
+                                    ((ulong)PropertyFlagsLO.Net * (PropertyFlags >> 2 & 1));
+                }
             }
 #endif
 #if XCOM2
@@ -153,7 +161,7 @@ namespace UELib.Core
                     Record(nameof(CategoryName), CategoryName);
                 }
 
-                if (_Buffer.Version > 400)
+                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty)
                 {
                     ArrayEnum = _Buffer.ReadObject<UEnum>();
                     Record(nameof(ArrayEnum), ArrayEnum);
@@ -163,10 +171,20 @@ namespace UELib.Core
 #if THIEF_DS || DEUSEX_IW
             if (Package.Build == BuildGeneration.Flesh)
             {
-                short deusInheritedOrRuntimeInstiantiated = _Buffer.ReadInt16();
-                Record(nameof(deusInheritedOrRuntimeInstiantiated), deusInheritedOrRuntimeInstiantiated);
+                short deusInheritedOrRuntimeInstantiated = _Buffer.ReadInt16();
+                Record(nameof(deusInheritedOrRuntimeInstantiated), deusInheritedOrRuntimeInstantiated);
                 short deusUnkInt16 = _Buffer.ReadInt16();
                 Record(nameof(deusUnkInt16), deusUnkInt16);
+            }
+#endif
+#if BORDERLANDS
+            if (Package.Build == BuildGeneration.GB &&
+                _Buffer.LicenseeVersion >= 2)
+            {
+                var va8 = _Buffer.ReadObject();
+                Record(nameof(va8), va8);
+                var vb0 = _Buffer.ReadObject();
+                Record(nameof(vb0), vb0);
             }
 #endif
 #if UE4
@@ -182,6 +200,21 @@ namespace UELib.Core
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
             }
+#if ROCKETLEAGUE
+            // identical to this object's name.
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                _Buffer.LicenseeVersion >= 11)
+            {
+                string vb8 = _Buffer.ReadString();
+                Record(nameof(vb8), vb8);
+
+                //if (_Buffer.LicenseeVersion == 15)
+                //{
+                //    var v68 = _Buffer.ReadNameReference();
+                //    Record(nameof(v68), v68);
+                //}
+            }
+#endif
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance)
             {
@@ -196,7 +229,7 @@ namespace UELib.Core
             {
                 if (HasPropertyFlag(0x800000))
                 {
-                    EditorDataText = _Buffer.ReadText();
+                    EditorDataText = _Buffer.ReadString();
                     Record(nameof(EditorDataText), EditorDataText);
                 }
 
@@ -229,7 +262,7 @@ namespace UELib.Core
                )
             {
                 // May represent a tooltip/comment in some games. Usually in the form of a quoted string, sometimes as a double-flash comment or both.
-                EditorDataText = _Buffer.ReadText();
+                EditorDataText = _Buffer.ReadString();
                 Record(nameof(EditorDataText), EditorDataText);
             }
 #if SPELLBORN

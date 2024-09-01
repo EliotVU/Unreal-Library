@@ -27,6 +27,7 @@ namespace UELib.Core
             base.Deserialize();
             
             InnerProperty = _Buffer.ReadObject<UProperty>();
+            Record(nameof(InnerProperty), InnerProperty);
         }
 
         /// <inheritdoc/>

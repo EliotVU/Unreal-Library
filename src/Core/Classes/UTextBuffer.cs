@@ -47,7 +47,7 @@ namespace UELib.Core
                 return;
             }
 #endif
-            ScriptText = _Buffer.ReadText();
+            ScriptText = _Buffer.ReadString();
             Record(nameof(ScriptText), "...");
         }
 

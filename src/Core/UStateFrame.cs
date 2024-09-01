@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -8,10 +9,6 @@ namespace UELib.Core
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public class UStateFrame : IUnrealSerializableClass
     {
-        // FIXME: Version, added somewhere between 186 ... 230
-        private const int VStateStack = 187;
-        private const int VLatentActionReduced = 566;
-
         public UStruct Node;
         public UState StateNode;
         public ulong ProbeMask;
@@ -24,10 +21,10 @@ namespace UELib.Core
         {
             Node = stream.ReadObject<UStruct>();
             StateNode = stream.ReadObject<UState>();
-            ProbeMask = stream.Version < UState.VProbeMaskReducedAndIgnoreMaskRemoved
+            ProbeMask = stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved
                 ? stream.ReadUInt64()
                 : stream.ReadUInt32();
-            LatentAction = stream.Version < VLatentActionReduced
+            LatentAction = stream.Version < (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
                 ? stream.ReadUInt32()
                 : stream.ReadUInt16();
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
@@ -35,7 +32,9 @@ namespace UELib.Core
             {
                 uint dnfUInt32 = stream.ReadUInt32();
             }
-            if (stream.Version >= VStateStack) stream.ReadArray(out StateStack);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
+                stream.ReadArray(out StateStack);
             if (Node != null) Offset = stream.ReadIndex();
         }
 
@@ -43,15 +42,16 @@ namespace UELib.Core
         {
             stream.Write(Node);
             stream.Write(StateNode);
-            stream.Write(stream.Version < UState.VProbeMaskReducedAndIgnoreMaskRemoved
+            stream.Write(stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved
                 ? ProbeMask
                 : (uint)ProbeMask
             );
-            stream.Write(stream.Version < VLatentActionReduced
+            stream.Write(stream.Version < (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
                 ? LatentAction
                 : (ushort)LatentAction
             );
-            if (stream.Version >= VStateStack) stream.Write(ref StateStack);
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
+                stream.Write(ref StateStack);
             if (Node != null) stream.Write(Offset);
         }
 

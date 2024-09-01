@@ -9,12 +9,14 @@ on:
 jobs:
   build:
     runs-on: windows-2019
-    
+    permissions:
+      packages: write
+      contents: read
     steps:
     - uses: actions/checkout@v4
       
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.3
+      uses: microsoft/setup-msbuild@v2
       
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
@@ -23,12 +25,31 @@ jobs:
       run: nuget restore src/Eliot.UELib.csproj
       
     - name: Build
-      run: msbuild src/Eliot.UELib.csproj -t:rebuild -property:Configuration=Remease
+      run: msbuild src/Eliot.UELib.csproj -t:rebuild -property:Configuration=Release
       
-    - name: Publish Eliot.UELib
+    - name: Publish Eliot.UELib to NuGet
+      id: nuget
       uses: alirezanet/publish-nuget@v3.1.0
       with:
-          PROJECT_FILE_PATH: src/Eliot.UELib.csproj
-          VERSION_FILE_PATH: src/Eliot.UELib.csproj
-          VERSION_REGEX: \>\$\(VersionPrefix\)[0-9]+\.[0-9]+\.[0-9]+\<
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+        PROJECT_FILE_PATH: src/Eliot.UELib.csproj
+        VERSION_STATIC: ${{ github.ref_name }}
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+
+    - name: Publish Eliot.UELib to GitHub
+      uses: actions/upload-artifact@v4
+      with:
+        name: Eliot.UELib
+        path: ${{ steps.nuget.outputs.PACKAGE_PATH }}/${{ steps.nuget.outputs.PACKAGE_NAME }}
+
+  release:
+    runs-on: ubuntu
+    permissions:
+      packages: write
+      contents: read
+    steps:
+    - name: Create a Release
+      uses: elgohr/Github-Release-Action@v5
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        title: ${{ github.ref_name }}

@@ -1,13 +1,30 @@
-# [1.5.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.5.1)
+#
+
+## [1.6.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.6.0)
+
+Notable changes:
+
+* 5ef6d04a Support for Tom Clancy's EndWar
+* cbbfff3e Support for Gigantic: Rampage Edition (thanks to @HyenaCoding)
+* 139254a9 Support for Borderlands: Game of the Year Enhanced; and fixed regression #55 of Borderlands and Battleborn.
+* 98dbf0bf Improved support for Duke Nukem Forever (thanks to @DaZombieKiller)
+* 88a5b619 Improved support for Rocket League #54
+* 8e3053c7 Fixed regression [Batman series support](https://github.com/UE-Explorer/UE-Explorer/issues/63)
+
+* d04d8b13 Fixed fallback for deprecated ClassName so that "UE Explorer" can pickup content again.
+* 5ac20221 Fixed #36; various T3D archetype fixes.
+* 84b46eed Fixed T3D syntax ouput from "object end" to "end object"
+
+## [1.5.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.5.1)
 
 * Fixed regression #74; The deprecated `UnrealConfig.CookedPlatform` field was ignored, which is still relevant for legacy-code.
 * Updated auto-detected builds for Infinity Blade's series
 
-# [1.5.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.5.0)
+## [1.5.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.5.0)
 
 * 1ef135d Improved support for A Hat in Time (UE3), contributed by @Un-Drew
 
-# [1.4.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.4.0)
+## [1.4.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.4.0)
 
 Notable changes that affect UnrealScript output:
 
@@ -48,7 +65,7 @@ Notable changes that affect various data structures:
 
 **Support for the data types listed above have only been implemented for the standard structure that Epic Games uses**
 
-# [1.3.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.3.1)
+## [1.3.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.3.1)
 
 Notable changes back-ported from 'develop' version 1.4.0:
 
@@ -62,7 +79,7 @@ Notable changes back-ported from 'develop' version 1.4.0:
 
 * 42783b16 Added the capability to override the interpreted version for packages of builds that are auto-detected.
 
-# [1.3.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.3.0.0)
+## [1.3.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.3.0.0)
 
 Notable changes:
 

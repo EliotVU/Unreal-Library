@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace UELib.Core
 {
@@ -14,14 +16,28 @@ namespace UELib.Core
                 BeginDeserializing();
             }
 
+            string output = $"// Reference: {GetReferencePath()}\r\n";
+
             if (ImportTable != null)
             {
-                return $"// Cannot decompile import {Name}";
+                return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile an imported object";
             }
 
-            Debug.Assert(Class != null);
-            string output = $"begin object name={Name} class={Class.Name}" +
-                            "\r\n";
+            output += UDecompilingState.Tabs;
+            output += $"begin object name={Name}";
+            // If null then we have a new sub-object (not an override)
+            if (Archetype == null)
+            {
+                Debug.Assert(Class != null);
+                output += $" class={Class.GetReferencePath()}";
+            }
+            else
+            {
+                // Commented out, too noisy but useful.
+                //output += $" /*archetype={Archetype.GetReferencePath()}*/";
+            }
+            output += "\r\n";
+
             UDecompilingState.AddTabs(1);
             try
             {
@@ -32,9 +48,8 @@ namespace UELib.Core
                 UDecompilingState.RemoveTabs(1);
             }
 
-            return $"{output}{UDecompilingState.Tabs}object end" +
-                   $"\r\n{UDecompilingState.Tabs}" +
-                   $"// Reference: {Class.Name}'{GetOuterGroup()}'";
+            return $"{output}" +
+                   $"{UDecompilingState.Tabs}end object";
         }
 
         public virtual string FormatHeader()
@@ -45,25 +60,52 @@ namespace UELib.Core
         protected string DecompileProperties()
         {
             if (Properties == null || Properties.Count == 0)
-                return UDecompilingState.Tabs + "// This object has no properties!\r\n";
+                return string.Empty;
 
-            var output = string.Empty;
-            for (var i = 0; i < Properties.Count; ++i)
+            string output = string.Empty;
+            
+            // HACK: Start with a fresh scope.
+            var oldState = UDecompilingState.s_inlinedSubObjects;
+            UDecompilingState.s_inlinedSubObjects = new Dictionary<UObject, bool>();
+
+            try
             {
-                //output += $"{UDecompilingState.Tabs}// {Properties[i].Type}\r\n";
-                string propOutput = Properties[i].Decompile();
-
-                // This is the first element of a static array
-                if (i + 1 < Properties.Count
-                    && Properties[i + 1].Name == Properties[i].Name
-                    && Properties[i].ArrayIndex <= 0
-                    && Properties[i + 1].ArrayIndex > 0)
+                string propertiesText = string.Empty;
+                for (int i = 0; i < Properties.Count; ++i)
                 {
-                    propOutput = propOutput.Insert(Properties[i].Name.Length, "[0]");
+                    //output += $"{UDecompilingState.Tabs}// {Properties[i].Type}\r\n";
+                    string propertyText = Properties[i].Decompile();
+
+                    // This is the first element of a static array
+                    if (i + 1 < Properties.Count
+                        && Properties[i + 1].Name == Properties[i].Name
+                        && Properties[i].ArrayIndex <= 0
+                        && Properties[i + 1].ArrayIndex > 0)
+                    {
+                        propertyText = propertyText.Insert(Properties[i].Name.Length, "[0]");
+                    }
+
+                    propertiesText += $"{UDecompilingState.Tabs}{propertyText}\r\n";
                 }
 
-                // FORMAT: 'DEBUG[TAB /* 0xPOSITION */] TABS propertyOutput + NEWLINE
-                output += UDecompilingState.Tabs + propOutput + "\r\n";
+                // HACK: Inline sub-objects that we could not inline directly, such as in an array or struct.
+                // This will still miss sub-objects that have no reference.
+                var missingSubObjects = UDecompilingState.s_inlinedSubObjects
+                    .Where((k, v) => k.Value == false)
+                    .Select(k => k.Key);
+                foreach (var obj in missingSubObjects)
+                {
+                    obj.BeginDeserializing();
+
+                    string objectText = obj.Decompile();
+                    output += $"{UDecompilingState.Tabs}{objectText}\r\n";
+                }
+
+                output += propertiesText;
+            }
+            finally
+            {
+                UDecompilingState.s_inlinedSubObjects = oldState;
             }
 
             return output;

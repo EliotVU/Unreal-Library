@@ -474,15 +474,15 @@ namespace UELib.Core
                                     break;
 
                                 case DefaultParameterToken _:
-                                {
-                                    do
                                     {
-                                        ++CurrentTokenIndex;
-                                    } while (!(CurrentToken is EndParmValueToken));
+                                        do
+                                        {
+                                            ++CurrentTokenIndex;
+                                        } while (!(CurrentToken is EndParmValueToken));
 
-                                    ++CurrentTokenIndex; // EndParmValueToken
-                                    break;
-                                }
+                                        ++CurrentTokenIndex; // EndParmValueToken
+                                        break;
+                                    }
 
                                 default:
                                     // Can be true e.g a function with optionals but no default values
@@ -490,6 +490,9 @@ namespace UELib.Core
                                     break;
                             }
                         }
+
+                        // The decompiler expects to start with a -1 index
+                        --CurrentTokenIndex;
                     }
 #endif
                     while (CurrentTokenIndex + 1 < DeserializedTokens.Count)

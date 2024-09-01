@@ -14,7 +14,7 @@ namespace Eliot.UELib.Test.upk.Builds
     public class PackageTestsAA2
     {
         // Testing the "Arcade" packages only
-        private static readonly string PackagesPath = Packages.Packages_Path;
+        private static readonly string PackagesPath = Packages.PackageFilesPath;
         private static readonly string NoEncryptionCorePackagePath = Path.Join(PackagesPath, "(V128_032,Encrypted)AAA_2_6_Core.u");
         private static readonly string EncryptedCorePackagePath = Path.Join(PackagesPath, "(V128_032,Encrypted)AAA_2_6_Core.u");
 

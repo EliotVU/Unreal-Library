@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -131,8 +132,10 @@ namespace UELib.Core
                     case PropertyType.ArrayProperty:
                         var arrayField = (UArrayProperty)property;
                         Debug.Assert(arrayField != null, "arrayField != null");
+
+                        // May be null if deserialization failed
                         var arrayInnerField = arrayField.InnerProperty;
-                        if (arrayInnerField.Type == PropertyType.StructProperty)
+                        if (arrayInnerField?.Type == PropertyType.StructProperty)
                         {
                             outer = ((UStructProperty)arrayInnerField).Struct;
                         }
@@ -502,9 +505,20 @@ namespace UELib.Core
                     break;
 
                 case PropertyType.BoolProperty:
-                    BoolValue = _Buffer.Version >= (uint)PackageObjectLegacyVersion.BoolValueToByteForBoolPropertyTag
-                        ? _Buffer.ReadByte() > 0
-                        : _Buffer.ReadInt32() > 0;
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.BoolValueToByteForBoolPropertyTag
+#if BORDERLANDS
+                        // GOTYE didn't apply this upgrade, but did the EnumName update? ...
+                        && _Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE
+#endif
+                        )
+                    {
+                        BoolValue = _Buffer.ReadByte() > 0;
+                    }
+                    else
+                    {
+                        BoolValue = _Buffer.ReadInt32() > 0;
+                    }
+
                     Record(nameof(BoolValue), BoolValue);
                     break;
 
@@ -601,7 +615,7 @@ namespace UELib.Core
 
                 case PropertyType.StrProperty:
                 {
-                    string value = _Buffer.ReadText();
+                    string value = _Buffer.ReadString();
                     Record(nameof(value), value);
                     propertyValue = PropertyDisplay.FormatLiteral(value);
                     break;
@@ -614,7 +628,24 @@ namespace UELib.Core
                     propertyValue = $"\"{value}\"";
                     break;
                 }
+#if GIGANTIC
+                case PropertyType.JsonRefProperty:
+                {
+                    var jsonObjectName = _Buffer.ReadNameReference();
+                    var jsonObject = _Buffer.ReadObject<UObject>();
 
+                    if (jsonObject == null)
+                    {
+                        propertyValue = "none";
+                        break;
+                    }
+
+                    // !!! Could be null for imports
+                    //Contract.Assert(jsonObject.Class != null);
+                    propertyValue = $"JsonRef<{jsonObject.GetClassName()}>'{jsonObjectName}'";
+                    break;
+                }
+#endif
                 case PropertyType.IntProperty:
                 {
                     int value = _Buffer.ReadInt32();
@@ -679,44 +710,57 @@ namespace UELib.Core
                 {
                     var constantObject = _Buffer.ReadObject();
                     Record(nameof(constantObject), constantObject);
-                    if (constantObject != null)
-                    {
-                        var inline = false;
-                        // If true, object is an archetype or subobject.
-                        if (constantObject.Outer == _Container &&
-                            (deserializeFlags & DeserializeFlags.WithinStruct) == 0)
-                        {
-                            // Unknown objects are only deserialized on demand.
-                            constantObject.BeginDeserializing();
-                            if (constantObject.Properties != null && constantObject.Properties.Count > 0)
-                            {
-                                inline = true;
-                                propertyValue = constantObject.Decompile() + "\r\n" + UDecompilingState.Tabs;
-
-                                _TempFlags |= DoNotAppendName;
-                                if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
-                                {
-                                    _TempFlags |= ReplaceNameMarker;
-                                    propertyValue += $"%ARRAYNAME%={constantObject.Name}";
-                                }
-                                else
-                                {
-                                    propertyValue += $"{Name}={constantObject.Name}";
-                                }
-                            }
-                        }
-
-                        if (!inline)
-                            // =CLASS'Package.Group(s)+.Name'
-                        {
-                            propertyValue = PropertyDisplay.FormatLiteral(constantObject);
-                        }
-                    }
-                    else
+                    if (constantObject == null)
                     {
                         // =none
                         propertyValue = "none";
+                        break;
                     }
+
+                    Debug.Assert(UDecompilingState.s_inlinedSubObjects != null, "UDecompilingState.s_inlinedSubObjects != null");
+
+                    bool isPendingInline =
+                        UDecompilingState.s_inlinedSubObjects.TryGetValue(constantObject, out bool isInlined);
+                    // If the object is part of the current container, then it probably was an inlined declaration.
+                    bool shouldInline = constantObject.Outer == _Container
+                                     && !isPendingInline
+                                     && !isInlined;
+                    if (shouldInline)
+                    {
+                        if ((deserializeFlags & DeserializeFlags.WithinStruct) == 0)
+                        {
+                            UDecompilingState.s_inlinedSubObjects.Add(constantObject, true);
+                            
+                            // Unknown objects are only deserialized on demand.
+                            constantObject.BeginDeserializing();
+                            
+                            propertyValue = constantObject.Decompile() + "\r\n";
+
+                            _TempFlags |= DoNotAppendName;
+                            if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
+                            {
+                                _TempFlags |= ReplaceNameMarker;
+                                propertyValue += $"{UDecompilingState.Tabs}%ARRAYNAME%={constantObject.Name}";
+
+                                break;
+                            }
+
+                            propertyValue += $"{UDecompilingState.Tabs}{Name}={constantObject.Name}";
+
+                            break;
+                        }
+
+                        // Within a struct, to be inlined later on!
+                        UDecompilingState.s_inlinedSubObjects.Add(constantObject, false);
+                        propertyValue = $"{Name}={constantObject.Name}";
+                        
+                        break;
+                    }
+
+                    // Use shorthand for inlined objects.
+                    propertyValue = isInlined
+                        ? constantObject.Name
+                        : PropertyDisplay.FormatLiteral(constantObject);
 
                     break;
                 }

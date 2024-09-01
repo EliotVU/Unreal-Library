@@ -8,15 +8,15 @@ Its main purpose is to decompile the UnrealScript byte-code to its original sour
 
 It accomplishes this by reading the necessary Unreal data classes such as:
 
-    UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState, UClass, 
+    UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState, UClass,
     UTextBuffer, UMetaData, UPackage
 
 Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
 
 Additionally UELib is also capable of deserializing of many more data classes such as:
 
-    UFont, USound, UPalette, UTexture, 
-    UTexture2D, UTexture2DDynamic, UTexture2DComposite, UTexture3D, 
+    UFont, USound, UPalette, UTexture,
+    UTexture2D, UTexture2DDynamic, UTexture2DComposite, UTexture3D,
     UTextureCube, UTextureFlipBook, UTextureMovie
     UPrimitive, UPolys
 
@@ -28,9 +28,10 @@ Install using either:
 
 * Package Manager:
 
-``` cmd
+```cmd
     Install-Package Eliot.UELib
 ```
+
 * NuGet: <https://www.nuget.org/packages/Eliot.UELib>
 
 * Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
@@ -42,9 +43,9 @@ Install using either:
     var package = UnrealLoader.LoadPackage(@"C:\Path\Package.upk", System.IO.FileAccess.Read);
     Console.WriteLine($"Version: {package.Summary.Version}");
 
-    // Necessary if working with packages that have been cooked for a console platform, and IF the build was not properly auto-detected. 
+    // Necessary if working with packages that have been cooked for a console platform, and IF the build was not properly auto-detected.
     // package.CookerPlatform = BuildPlatform.Console;
-    
+
     // Initializes the registered classes, constructs and deserializes(loads) the package objects.
     package.InitializePackage();
 
@@ -76,7 +77,7 @@ If you're looking to modify the library for the sole purpose of modding [UE Expl
 This is a table of games that are confirmed to be compatible with the current state of UELib, the table is sorted by Package-Version.
 
 | Name                  | Engine:Branch    | Package/Licensee    | Support State     |
-| --------------------- | ---------------- | ------------------- | -----------------
+| --------------------- | ---------------- | ------------------- | ----------------- |
 | Unreal | 100-226 | 61/000 | |
 | [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | 219 | 61/000 | |
 | X-COM: Alliance | 200-220 | 61/000 | Bad output at the start of functions (BeginFunctionToken) |
@@ -90,7 +91,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Duke Nukem Forever (2001) | 613 | 68/002 | UStruct offsets are off leading to bad output code |
 | Rune | 400 | 69/000 | |
 | Unrealty | 405 | 69/000 | |
-| X-COM: Enforcer | 420 | 69/000 | | 
+| X-COM: Enforcer | 420 | 69/000 | |
 | Tactical Ops: Assault on Terror | 436 | 69/000 | |
 | Star Trek: Deep Space Nine: The Fallen | 338 | 73/000 | |
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | |
@@ -130,6 +131,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
 |     |     |     |     |
+| Tom Clancy's EndWar | Unknown | 329/000 | |
 | Roboblitz | 2306 | 369/006 |     |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
 | Frontlines: Fuel of War | 2917 | 433/052 | Poor output of functions |
@@ -166,9 +168,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Infinity Blade 1 | 7595 | 788/001 | Console |
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     |
 | Tribes: Ascend | 7748 | 805/Unknown |     |
-| Tony Hawk's Pro Skater HD | |
+| Tony Hawk's Pro Skater HD | | | |
 | Rock of Ages | 7748 | 805/000 |     |
-| Batman: Arkham City | 7748 | 805/101 | | 
+| Batman: Arkham City | 7748 | 805/101 | |
 | Batman: Arkham Origins | 7748 | 807/138 | Not verified |
 | Sanctum | 7876 | 810/000 |     |
 | AntiChamber | 7977 | 812/000 |     |
@@ -177,7 +179,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Gears of War 3 | 8653 | 828/000 | |
 | Quantum Conundrum | 8623 | 832/32870 | |
 | Borderlands | 4871 | Unknown |  |
-| Borderlands 2 | 8623/023 | 832/056 | |
+| Borderlands 2 | 8623/0023 | 832/056 | |
+| Borderlands: Game of the Year Enhanced | 5001/0001 | 832/058 | |
 | Remember Me | 8623 | 832/021 |     |
 | The Haunted: Hells Reach | 8788 | 841/000 |     |
 | Asura's Wrath | 8788 | 841/000 | -zlib; platform needs to be set to console. |
@@ -197,14 +200,16 @@ This is a table of games that are confirmed to be compatible with the current st
 | Chivalry: Medieval Warfare | 10246 | 860/000 | |
 | Hawken | 10681 | 860/004 | |
 | Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) |
-| Styx: Master of Shadows | 10499 | 860/004 | | 
+| Styx: Master of Shadows | 10499 | 860/004 | |
 | Batman: Arkham Knight | | 863/32995 | Not verified  |
+| Gigantic: Rampage Edition | 19100 | 867/010 | |
 | Infinity Blade 3 | | 868/000 | Console |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
+| [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) |
 | Bombshell | 11767 | 870/000 | |
 | Orcs Must Die! Unchained | 20430 | 870/000 | |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
-| [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported)
+| Battleborn | 8623/1055 | 874/078 | |
 | A Hat in Time | 12097 | 877-893/005 | |
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Soldier Front 2 | 6712 | 904/009 |     |
@@ -229,8 +234,8 @@ Do you know a game that is compatible but is not listed here? Click on the top r
 
 ## Special thanks to
 
-  * Epic Games for [UDN: Packages](http://www.hypercoop.tk/infobase/archive/unrealtech/Packages.htm) (general package format)
-  * [Antonio Cordero Balcazar](https://github.com/acorderob) for [UTPT](https://www.acordero.org/projects/unreal-tournament-package-tool) (game support) and documentation (format)
-  * [Dmitry Jemerov](https://github.com/yole) for [unhood](https://github.com/yole/unhood) (early UE3 format)
-  * [Konstantin Nosov](https://github.com/gildor2) for providing help and [UE Viewer](http://www.gildor.org/en/projects/umodel) (game support)
-  * [Contributors](https://github.com/EliotVU/Unreal-Library/graphs/contributors)
+* Epic Games for [UDN: Packages](http://www.hypercoop.tk/infobase/archive/unrealtech/Packages.htm) (general package format)
+* [Antonio Cordero Balcazar](https://github.com/acorderob) for [UTPT](https://www.acordero.org/projects/unreal-tournament-package-tool) (game support) and documentation (format)
+* [Dmitry Jemerov](https://github.com/yole) for [unhood](https://github.com/yole/unhood) (early UE3 format)
+* [Konstantin Nosov](https://github.com/gildor2) for providing help and [UE Viewer](http://www.gildor.org/en/projects/umodel) (game support)
+* [Contributors](https://github.com/EliotVU/Unreal-Library/graphs/contributors)
