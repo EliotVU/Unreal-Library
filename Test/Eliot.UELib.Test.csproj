@@ -1,29 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
-
-    <Configurations>Debug;Release;UnitTest</Configurations>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE;AA2</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRACE;AA2</DefineConstants>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='UnitTest|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE;AA2</DefineConstants>
-  </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>$(DefineConstants)TRACE;AA2</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRACE;AA2</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="upk\TestUC2.u" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
@@ -33,11 +22,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\src\Eliot.UELib.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Packages.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -50,7 +37,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Update="Packages.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
@@ -61,7 +47,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
   <ItemGroup>
     <None Update="upk\TestUC2\TestUC2.u">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
