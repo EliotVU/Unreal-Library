@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UELib.Core;
@@ -98,8 +99,8 @@ namespace UELib.UnrealScript
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatLiteral(UObject input)
         {
-            return input != null 
-                ? input.GetReferencePath() 
+            return input != null
+                ? input.GetReferencePath()
                 : "none";
         }
 
@@ -116,17 +117,26 @@ namespace UELib.UnrealScript
                    $"{FormatExport(input.Y)}," +
                    $"{FormatExport(input.Z)}";
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatOffset(short input)
         {
             return $"{input:X3}h";
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatOffset(int input)
         {
             return $"{input:X4}h";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatT3DElementAccess(string index, uint version)
+        {
+            // FIXME: version
+            return version >= 100
+                ? $"[{index}]"
+                : $"({index})";
         }
     }
 }

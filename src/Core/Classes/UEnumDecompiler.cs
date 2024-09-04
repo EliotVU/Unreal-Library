@@ -27,19 +27,30 @@ namespace UELib.Core
 
         private string FormatNames()
         {
-            var output = string.Empty;
+            string output = string.Empty;
             UDecompilingState.AddTabs(1);
-            for (var index = 0; index < Names.Count; index++)
+
+            for (int index = 0; index < Names.Count; index++)
             {
-                var enumName = Names[index];
-                output += "\r\n" + UDecompilingState.Tabs + enumName;
+                var enumTagName = Names[index];
+                string enumTagText = enumTagName.ToString();
+
                 if (index != Names.Count - 1)
                 {
-                    output += ",";
+                    enumTagText += ",";
                 }
+
+                if (!UnrealConfig.SuppressComments)
+                {
+                    enumTagText = enumTagText.PadRight(32, ' ');
+                    enumTagText += $"// {index}";
+                }
+
+                output += "\r\n" + UDecompilingState.Tabs + enumTagText;
             }
 
             UDecompilingState.RemoveTabs(1);
+
             return output;
         }
     }
