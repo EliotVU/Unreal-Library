@@ -1,5 +1,11 @@
 #
 
+## [1.6.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.6.1)
+
+* Added .NET Standard 2.0 as a target framework, when targeting this standard any code releated to WinForms will be excluded (This will be deprecated in its entirety with UELib 2.0)
+* Added a comment to enum tags to display its value.
+* Fixed the decompilation output of an element access expression (in a T3D context) for UE1 based games: Changed `Element[0]=Value` to `Element(0)=Value`
+
 ## [1.6.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.6.0)
 
 Notable changes:
