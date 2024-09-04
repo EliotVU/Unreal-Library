@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -82,7 +83,7 @@ namespace UELib.Core
                         && Properties[i].ArrayIndex <= 0
                         && Properties[i + 1].ArrayIndex > 0)
                     {
-                        propertyText = propertyText.Insert(Properties[i].Name.Length, "[0]");
+                        propertyText = propertyText.Insert(Properties[i].Name.Length, PropertyDisplay.FormatT3DElementAccess("0", _Buffer.Version));
                     }
 
                     propertiesText += $"{UDecompilingState.Tabs}{propertyText}\r\n";
