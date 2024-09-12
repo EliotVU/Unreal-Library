@@ -83,7 +83,7 @@ namespace UELib.Core
                         && Properties[i].ArrayIndex <= 0
                         && Properties[i + 1].ArrayIndex > 0)
                     {
-                        propertyText = propertyText.Insert(Properties[i].Name.Length, PropertyDisplay.FormatT3DElementAccess("0", _Buffer.Version));
+                        propertyText = propertyText.Insert(Properties[i].Name.Length, PropertyDisplay.FormatT3DElementAccess("0", Package.Version));
                     }
 
                     propertiesText += $"{UDecompilingState.Tabs}{propertyText}\r\n";

@@ -90,7 +90,7 @@ namespace UELib.Core
 
             string expr = name;
             return ArrayIndex > 0
-                ? $"{expr}{PropertyDisplay.FormatT3DElementAccess(ArrayIndex.ToString(), _Buffer.Version)}={value}"
+                ? $"{expr}{PropertyDisplay.FormatT3DElementAccess(ArrayIndex.ToString(), _Container.Package.Version)}={value}"
                 : $"{expr}={value}";
         }
 
