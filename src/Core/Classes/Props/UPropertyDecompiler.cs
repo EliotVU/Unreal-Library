@@ -370,7 +370,7 @@ namespace UELib.Core
                 }
 
                 // Properties flagged with automated, automatically get those flags added by the compiler.
-                if (Package.Version == 128 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Automated) != 0)
+                if (Package.Build == BuildGeneration.UE2_5 && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Automated) != 0)
                 {
                     output += "automated ";
                     copyFlags &= ~((ulong)Flags.PropertyFlagsLO.Automated
@@ -494,8 +494,8 @@ namespace UELib.Core
                     copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Localized;
                 }
 
-                // FIXME: Is this exclusively UT2004?
-                if (Package.Version == 128)
+                // Assuming UE2.5 (introduced with UT2004 but is also used in SG1)
+                if (Package.Build == BuildGeneration.UE2_5)
                 {
                     if (HasPropertyFlag(Flags.PropertyFlagsLO.Cache))
                     {

@@ -307,6 +307,14 @@ namespace UELib
                 [Build(129, 3, BuildGeneration.UE2)] LSGame,
 
                 /// <summary>
+                /// Stargate SG-1: The Alliance
+                /// 
+                /// 130/004
+                /// </summary>
+                [Build(130, 4, BuildGeneration.UE2_5)]
+                SG1_TA,
+
+                /// <summary>
                 /// BioShock 1 & 2
                 /// 
                 /// 130:143/056:059
