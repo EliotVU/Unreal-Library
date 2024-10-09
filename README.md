@@ -123,6 +123,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Shark Tale | 2226 | 129/003 | |
 | Lemony Snicket's A Series of Unfortunate Events | 2226 | 129/003 | |
 | Swat 4 | 2226:Vengeance | 129/027 | |
+| Stargate SG1: The Alliance | 4180 | 130/004 | |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | |
 | Bioshock | 2226:Vengeance | 130-141/056 | |
 | Bioshock 2 | 2226:Vengeance | 143/059 | |
