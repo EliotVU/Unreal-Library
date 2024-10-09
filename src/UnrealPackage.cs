@@ -23,7 +23,8 @@ namespace UELib
     using Core;
     using Decoding;
     using Branch.UE2.DVS;
-    using UELib.Branch.UE3.RL;
+    using Branch.UE3.RL;
+    using Branch.UE3.SFX;
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -311,8 +312,7 @@ namespace UELib
                 /// 
                 /// 130/004
                 /// </summary>
-                [Build(130, 4, BuildGeneration.UE2_5)]
-                SG1_TA,
+                [Build(130, 4, BuildGeneration.UE2_5)] SG1_TA,
 
                 /// <summary>
                 /// BioShock 1 & 2
@@ -345,8 +345,7 @@ namespace UELib
                 /// 
                 /// 369/006
                 /// </summary>
-                [Build(329, 0)]
-                [OverridePackageVersion((uint)PackageObjectLegacyVersion.AddedInterfacesFeature)]
+                [Build(329, 0)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.AddedInterfacesFeature)]
                 EndWar,
 
                 /// <summary>
@@ -491,6 +490,34 @@ namespace UELib
                 /// 648/6405
                 /// </summary>
                 [Build(648, 6405)] DCUO,
+
+                /// <summary>
+                /// Mass Effect: Legendary Edition
+                ///
+                /// 684/171
+                /// Engine: 6383
+                /// Cooker: 65643
+                /// </summary>
+                [Build(391, 0092, BuildGeneration.SFX)] // Xenon
+                [Build(491, 1008, BuildGeneration.SFX)] // PC
+                [Build(684, 0153, BuildGeneration.SFX)] // PS3
+                [Build(684, 0171, BuildGeneration.SFX)] // LE
+                [BuildEngineBranch(typeof(EngineBranchSFX))]
+                ME1,
+
+                [Build(512, 0130, BuildGeneration.SFX)] // Demo
+                [Build(513, 0130, BuildGeneration.SFX)] // PC
+                [Build(684, 0150, BuildGeneration.SFX)] // PS3
+                [Build(684, 0168, BuildGeneration.SFX)] // LE
+                [BuildEngineBranch(typeof(EngineBranchSFX))]
+                ME2,
+
+                [Build(684, 0185, BuildGeneration.SFX)] // Demo
+                [Build(684, 0194, BuildGeneration.SFX)] // PC
+                [Build(845, 0194, BuildGeneration.SFX)] // Wii
+                [Build(685, 0205, BuildGeneration.SFX)] // LE
+                [BuildEngineBranch(typeof(EngineBranchSFX))]
+                ME3,
 
                 /// <summary>
                 /// Dungeon Defenders 2
@@ -892,8 +919,16 @@ namespace UELib
             public int EngineVersion;
             public int CookerVersion;
 
-            [Obsolete] private const int VCompression = 334;
             public uint CompressionFlags;
+
+            /// <summary>
+            /// A list of compressed chunks in the package.
+            /// The package should be considered compressed if any.
+            ///
+            /// If <see cref="CompressionFlags"/> equals 0 then the list will be cleared on <see cref="UnrealPackage.Deserialize"/>
+            /// 
+            /// Will be null if not deserialized (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.CompressionAdded"/>)
+            /// </summary>
             public UArray<CompressedChunk> CompressedChunks;
 
             [Obsolete] private const int VPackageSource = 482;
@@ -1083,6 +1118,24 @@ namespace UELib
                     stream.Read(out int vUnknown);
                 }
 #endif
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX)
+                {
+                    // Untested, but seen in the reverse-engineered assembly...
+                    if ((int)PackageFlags < 0)
+                    {
+                        // ... virtual call (didn't reverse)
+                    }
+
+                    if (PackageFlags.HasFlag(PackageFlag.Cooked) &&
+                        stream.LicenseeVersion >= 194 &&
+                        stream.LicenseeVersion != 1008)
+                    {
+                        // SFXPatch Version (according to a localized string that references the same global constant)
+                        int v94 = stream.ReadInt32();
+                    }
+                }
+#endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
 #if UE4
@@ -1123,7 +1176,9 @@ namespace UELib
                 {
                     HeritageCount = stream.ReadInt32();
                     Contract.Assert(HeritageCount > 0);
+
                     HeritageOffset = stream.ReadInt32();
+
                     return;
                 }
 
@@ -1183,6 +1238,7 @@ namespace UELib
                 {
                     // ThumbnailTableOffset? But if so, the partial-upgrade must have skipped @AdditionalPackagesToCook
                     stream.Skip(4);
+
                     return;
                 }
 #endif
@@ -1201,7 +1257,9 @@ namespace UELib
 #if SPELLBORN
                 if (stream.Package.Build == GameBuild.BuildName.Spellborn
                     && stream.Version >= 148)
+                {
                     goto skipGuid;
+                }
 #endif
                 stream.ReadStruct(out Guid);
                 Console.WriteLine("GUID:" + Guid);
@@ -1290,23 +1348,71 @@ namespace UELib
                     CookerVersion = stream.ReadInt32();
                     Console.WriteLine("CookerVersion:" + CookerVersion);
                 }
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX)
+                {
+                    // Appears to be similar to a PackageFileEngineVersion
 
+                    if (stream.LicenseeVersion >= 16 && stream.LicenseeVersion < 136)
+                    {
+                        stream.Read(out int _);
+                    }
+
+                    if (stream.LicenseeVersion >= 32 && stream.LicenseeVersion < 136)
+                    {
+                        stream.Read(out int _);
+                    }
+
+                    if (stream.LicenseeVersion >= 35 && stream.LicenseeVersion < 113)
+                    {
+                        stream.ReadMap(out UMap<string, UArray<string>> branch);
+                        Console.WriteLine("Branch:" + branch);
+                    }
+
+                    if (stream.LicenseeVersion >= 37)
+                    {
+                        // Compiler-Constant ? 1
+                        stream.Read(out int _);
+
+                        // Compiler-Constant changelist? 1376256 (Mass Effect 1: LE)
+                        stream.Read(out int _);
+                    }
+
+                    if (stream.LicenseeVersion >= 39 && stream.LicenseeVersion < 136)
+                    {
+                        stream.Read(out int _);
+                    }
+                }
+#endif
                 // Read compressed info?
-                if (stream.Version >= VCompression)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.CompressionAdded)
                 {
                     CompressionFlags = stream.ReadUInt32();
                     Console.WriteLine("CompressionFlags:" + CompressionFlags);
+
                     stream.ReadArray(out CompressedChunks);
                 }
 
+                // SFX reads 392?
                 if (stream.Version >= VPackageSource)
                 {
                     PackageSource = stream.ReadUInt32();
                     Console.WriteLine("PackageSource:" + PackageSource);
                 }
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX)
+                {
+                    if (stream.LicenseeVersion >= 44 && stream.LicenseeVersion < 136)
+                    {
+                        stream.Read(out int _);
+                    }
+                }
+#endif
 #if UE4
                 if (stream.UE4Version > 0)
+                {
                     return;
+                }
 #endif
                 if (stream.Version >= VAdditionalPackagesToCook)
                 {
@@ -1347,6 +1453,7 @@ namespace UELib
                 {
                     // FIXME: Package format is being deserialized incorrectly and fails here.
                     stream.ReadUInt32();
+
                     return;
                 }
 #endif
@@ -1470,19 +1577,19 @@ namespace UELib
         /// List of unique unreal names.
         /// </summary>
         [PublicAPI]
-        public List<UNameTableItem> Names { get; private set; }
+        public List<UNameTableItem> Names { get; private set; } = new List<UNameTableItem>();
 
         /// <summary>
         /// List of info about exported objects.
         /// </summary>
         [PublicAPI]
-        public List<UExportTableItem> Exports { get; private set; }
+        public List<UExportTableItem> Exports { get; private set; } = new List<UExportTableItem>();
 
         /// <summary>
         /// List of info about imported objects.
         /// </summary>
         [PublicAPI]
-        public List<UImportTableItem> Imports { get; private set; }
+        public List<UImportTableItem> Imports { get; private set; } = new List<UImportTableItem>();
 
         /// <summary>
         /// List of info about dependency objects.
@@ -1502,7 +1609,7 @@ namespace UELib
         /// Includes Exports and Imports!.
         /// </summary>
         [PublicAPI]
-        public List<UObject> Objects { get; private set; }
+        public List<UObject> Objects { get; private set; } = new List<UObject>();
 
         [PublicAPI] public NativesTablePackage NTLPackage;
 

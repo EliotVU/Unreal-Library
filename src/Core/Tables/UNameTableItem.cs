@@ -16,14 +16,14 @@ namespace UELib
             get => _Name;
             set => _Name = value;
         }
-        private string _Name;
+        internal string _Name;
 
         public ulong Flags
         {
             get => _Flags;
             set => _Flags = value;
         }
-        private ulong _Flags;
+        internal ulong _Flags;
 
         public ushort NonCasePreservingHash;
         public ushort CasePreservingHash;

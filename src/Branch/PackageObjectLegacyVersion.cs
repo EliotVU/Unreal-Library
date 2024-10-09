@@ -159,6 +159,8 @@
 
         NetObjectCountAdded = 322,
 
+        CompressionAdded = 334,
+
         NumberAddedToName = 343,
 
         // FIXME: Version 374-491; Delegate source type changed from Name to Object

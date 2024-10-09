@@ -967,6 +967,18 @@ namespace UELib
             }
         }
 
+        public static void ReadMap(this IUnrealStream stream, out UMap<string, UArray<string>> map)
+        {
+            int c = stream.ReadLength();
+            map = new UMap<string, UArray<string>>(c);
+            for (int i = 0; i < c; ++i)
+            {
+                Read(stream, out UName key);
+                ReadArray(stream, out UArray<string> value);
+                map.Add(key, value);
+            }
+        }
+
         public static void ReadMap(this IUnrealStream stream, out UMap<UObject, UName> map)
         {
             int c = stream.ReadLength();
