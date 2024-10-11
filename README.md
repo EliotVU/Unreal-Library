@@ -205,6 +205,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Gigantic: Rampage Edition | 19100 | 867/010 | |
 | Infinity Blade 3 | | 868/000 | Console |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
+| Outlast | 12046 | 868/003 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) |
 | Bombshell | 11767 | 870/000 | |
 | Orcs Must Die! Unchained | 20430 | 870/000 | |
