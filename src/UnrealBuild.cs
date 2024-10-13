@@ -119,8 +119,25 @@ namespace UELib
 
     public enum BuildPlatform
     {
+        /// <summary>
+        /// Unknown, an auto-detection algorithm will be performed to determine the platform.
+        /// </summary>
         Undetermined,
+
+        /// <summary>
+        /// The package is optimized for PC.
+        /// 
+        /// Auto-detected if the package is located within a directory named "CookedPC"
+        /// </summary>
         PC,
+
+        /// <summary>
+        /// The package is optimized for console.
+        /// All editor-data is assumed to have been stripped out.
+        /// This may also even be true for some pc games, such as Mass Effect: LE
+        /// 
+        /// Auto-detected if the package is located within a directory named "CookedPCConsole"
+        /// </summary>
         Console
     }
 

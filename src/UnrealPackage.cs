@@ -500,21 +500,21 @@ namespace UELib
                 /// </summary>
                 [Build(391, 0092, BuildGeneration.SFX)] // Xenon
                 [Build(491, 1008, BuildGeneration.SFX)] // PC
-                [Build(684, 0153, BuildGeneration.SFX)] // PS3
-                [Build(684, 0171, BuildGeneration.SFX)] // LE
+                [Build(684, 0153, BuildFlags.ConsoleCooked, BuildGeneration.SFX)] // PS3
+                [Build(684, 0171, BuildFlags.ConsoleCooked, BuildGeneration.SFX)] // LE
                 [BuildEngineBranch(typeof(EngineBranchSFX))]
                 ME1,
 
                 [Build(512, 0130, BuildGeneration.SFX)] // Demo
                 [Build(513, 0130, BuildGeneration.SFX)] // PC
-                [Build(684, 0150, BuildGeneration.SFX)] // PS3
+                [Build(684, 0150, BuildFlags.ConsoleCooked, BuildGeneration.SFX)] // PS3
                 [Build(684, 0168, BuildGeneration.SFX)] // LE
                 [BuildEngineBranch(typeof(EngineBranchSFX))]
                 ME2,
 
                 [Build(684, 0185, BuildGeneration.SFX)] // Demo
                 [Build(684, 0194, BuildGeneration.SFX)] // PC
-                [Build(845, 0194, BuildGeneration.SFX)] // Wii
+                [Build(845, 0194, BuildFlags.ConsoleCooked, BuildGeneration.SFX)] // Wii
                 [Build(685, 0205, BuildGeneration.SFX)] // LE
                 [BuildEngineBranch(typeof(EngineBranchSFX))]
                 ME3,
@@ -964,9 +964,50 @@ namespace UELib
                 if (package.Build == null)
                 {
                     package.Build = new GameBuild(package);
+
                     if (package.Build.Flags.HasFlag(BuildFlags.ConsoleCooked))
                     {
                         package.CookerPlatform = BuildPlatform.Console;
+                    }
+                }
+
+                if (package.CookerPlatform == BuildPlatform.Undetermined)
+                {
+                    if (string.Compare(
+                            package.PackageDirectory,
+                            "CookedPC",
+                            StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        package.CookerPlatform = BuildPlatform.PC;
+                    }
+                    // file may also end in .pcc
+                    else if (string.Compare(
+                                 package.PackageDirectory,
+                                 "CookedPCConsole",
+                                 StringComparison.OrdinalIgnoreCase
+                             ) == 0)
+                    {
+                        package.CookerPlatform = BuildPlatform.Console;
+                    }
+                    else if (string.Compare(
+                                 package.PackageDirectory,
+                                 "CookedPCServer",
+                                 StringComparison.OrdinalIgnoreCase
+                             ) == 0)
+                    {
+                        package.CookerPlatform = BuildPlatform.Console;
+                    }
+                    else if (string.Compare(
+                                 package.PackageDirectory,
+                                 "CookedXenon",
+                                 StringComparison.OrdinalIgnoreCase
+                             ) == 0)
+                    {
+                        package.CookerPlatform = BuildPlatform.Console;
+                    }
+                    else if (Path.GetExtension(package.FullPackageName) == ".xxx")
+                    {
+                        // ... fully compressed
                     }
                 }
 

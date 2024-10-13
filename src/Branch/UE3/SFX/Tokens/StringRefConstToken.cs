@@ -7,17 +7,21 @@ namespace UELib.Branch.UE3.SFX.Tokens
     [ExprToken(ExprToken.StringConst)]
     public class StringRefConstToken : UStruct.UByteCodeDecompiler.Token
     {
-        public int Value;
-        
+        /// <summary>
+        /// Index to the string in a Tlk file.
+        /// </summary>
+        public int Index;
+
         public override void Deserialize(IUnrealStream stream)
         {
-            stream.Read(out Value);
+            stream.Read(out Index);
             Decompiler.AlignSize(sizeof(int));
         }
 
         public override string Decompile()
         {
-            return base.Decompile();
+            // FIXME: pseudo syntax
+            return $"strref[{Index}]";
         }
     }
 }

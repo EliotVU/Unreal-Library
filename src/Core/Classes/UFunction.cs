@@ -144,6 +144,10 @@ namespace UELib.Core
                 // Cooked and stripped, but FriendlyName still remains
                 || Package.Build == UnrealPackage.GameBuild.BuildName.MKKE
 #endif
+#if MASS_EFFECT
+                // Cooked and stripped, but FriendlyName still remains
+                || Package.Build == BuildGeneration.SFX
+#endif
                )
             {
                 FriendlyName = _Buffer.ReadNameReference();

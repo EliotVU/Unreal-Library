@@ -520,6 +520,22 @@ namespace UELib.Core
                         DLLBindName = _Buffer.ReadNameReference();
                         Record(nameof(DLLBindName), DLLBindName);
                     }
+#if MASS_EFFECT
+                    if (Package.Build == BuildGeneration.SFX)
+                    {
+                        if (_Buffer.LicenseeVersion - 138u < 15)
+                        {
+                            _Buffer.Read(out int v40);
+                            Record(nameof(v40), v40);
+                        }
+
+                        if (_Buffer.LicenseeVersion >= 139)
+                        {
+                            _Buffer.Read(out int v1ec);
+                            Record(nameof(v1ec), v1ec);
+                        }
+                    }
+#endif
 #if REMEMBERME
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
                     {

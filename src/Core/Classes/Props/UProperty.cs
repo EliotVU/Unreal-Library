@@ -152,7 +152,12 @@ namespace UELib.Core
                 Record(nameof(deusFlags), deusFlags);
             }
 #endif
-            if (!Package.IsConsoleCooked())
+            if (!Package.IsConsoleCooked()
+#if MASS_EFFECT
+                // M1:LE is cooked for "WindowsConsole" yet retains this data.
+                || Package.Build == BuildGeneration.SFX
+#endif
+               )
             {
                 // FIXME: UE4 version
                 if (_Buffer.UE4Version < 160)
