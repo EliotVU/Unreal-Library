@@ -305,7 +305,7 @@ namespace UELib
                 : ReadCompactIndex();
 
         [Obsolete]
-        public long ReadNameIndex() => (uint)ReadNameIndex(out int n) | ((long)n << 32);
+        // HACK: Specific builds logic should be displaced by a specialized stream.
 
         public int ReadNameIndex(out int num)
         {
@@ -313,6 +313,9 @@ namespace UELib
             if (Archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
 #if BIOSHOCK
                 || Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
+#endif
+#if SHADOW_STRIKE
+                || Archive.Package.Build == BuildGeneration.ShadowStrike
 #endif
                )
             {
