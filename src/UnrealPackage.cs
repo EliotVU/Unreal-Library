@@ -323,6 +323,14 @@ namespace UELib
                 BioShock,
 
                 /// <summary>
+                /// Men of Valor
+                /// 
+                /// 137/000
+                /// </summary>
+                [Build(137, 0u, BuildGeneration.UE2_5)]
+                MOV,
+
+                /// <summary>
                 /// Duke Nukem Forever
                 ///
                 /// 156/036

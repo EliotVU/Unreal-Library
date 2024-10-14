@@ -97,12 +97,15 @@ namespace UELib.Core
                 Record(nameof(aa2FixedPack), aa2FixedPack);
             }
 #endif
-#if XIII || DNF
+#if XIII || DNF || MOV
+            // TODO: (UE2X) Version 131 ArrayDim size changed from DWORD to WORD
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                Package.Build == UnrealPackage.GameBuild.BuildName.DNF ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.MOV)
             {
                 ArrayDim = _Buffer.ReadInt16();
                 Record(nameof(ArrayDim), ArrayDim);
+                
                 goto skipArrayDim;
             }
 #endif
@@ -159,6 +162,7 @@ namespace UELib.Core
 #endif
                )
             {
+                // TODO: Not serialized if XENON (UE2X)
                 // FIXME: UE4 version
                 if (_Buffer.UE4Version < 160)
                 {
@@ -197,6 +201,7 @@ namespace UELib.Core
             {
                 RepNotifyFuncName = _Buffer.ReadNameReference();
                 Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
+                
                 return;
             }
 #endif
@@ -255,13 +260,21 @@ namespace UELib.Core
                  (Package.Build == BuildGeneration.UE2_5
                   || Package.Build == BuildGeneration.AGP
                   || Package.Build == BuildGeneration.Flesh))
-                // No property flag
+                // No property flag check
+#if VENGEANCE
                 || Package.Build == BuildGeneration.Vengeance
+#endif
+#if MOV
+                // No property flag check
+                || Package.Build == UnrealPackage.GameBuild.BuildName.MOV
+#endif
 #if LSGAME
+                // No property flag check
                 || (Package.Build == UnrealPackage.GameBuild.BuildName.LSGame &&
                     Package.LicenseeVersion >= 3)
 #endif
 #if DEVASTATION
+                // No property flag check
                 || Package.Build == UnrealPackage.GameBuild.BuildName.Devastation
 #endif
                )
