@@ -144,6 +144,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Stargate Worlds | 3004 | 486/007 |     |
 | Gears of War | 3329 | 490/009 | |
 | Mass Effect (Windows) | 3240 | 491/1008(~112) | PC |
+| Robert Ludlum's The Bourne Conspiracy | | 511/039 | |
+| Transformers: War for Cybertron | | 511/144,145 | PC, PS3, Xenon |
 | Unreal Tournament 3 | 3809 | 512/000 | |
 | Mirrors Edge | 3716 | 536/043 |     |
 | Alpha Protocol | 3857 | 539/091 |     |
@@ -197,6 +199,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | DmC: Devil May Cry | 8916 | 845/004 | |
 | XCOM: Enemy Unknown | 8916 | 845/059 | |
 | Gears of War: Judgement | 10566 | 846/000 |     |
+| Transformers: Fall of Cybertron | 846(~587)/181 | |
+| Deadpool | 846(~587)/181 | |
 | InMomentum | 8980 | 848/000 |     |
 | [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
 | Deadlight | 9375 | 854/000 |     |
