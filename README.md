@@ -135,12 +135,14 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 | Tom Clancy's EndWar | Unknown | 329/000 | |
 | Roboblitz | 2306 | 369/006 |     |
+| Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
 | Frontlines: Fuel of War | 2917 | 433/052 | Poor output of functions |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
 | Mortal Kombat Komplete Edition | 2605 | 472/046 |     |
 | Stargate Worlds | 3004 | 486/007 |     |
 | Gears of War | 3329 | 490/009 | |
+| Mass Effect (Windows) | 3240 | 491/1008(~112) | PC |
 | Unreal Tournament 3 | 3809 | 512/000 | |
 | Mirrors Edge | 3716 | 536/043 |     |
 | Alpha Protocol | 3857 | 539/091 |     |
@@ -160,6 +162,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Blacklight: Tango Down | 6165 | 673/002 | |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | |
 | Dungeon Defenders | 6262 | 678/002 | |
+| Mass Effect 3 (Windows) | 6383 | 684/194 | PC (platform must be set to `Console`) |
+| Mass Effect: Legendary Edition (Windows) | 6383 | 684/171 | PC (platform must be set to `Console`) |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |

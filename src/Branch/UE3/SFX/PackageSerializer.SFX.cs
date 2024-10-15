@@ -22,6 +22,7 @@ namespace UELib.Branch.UE3.SFX
             stream.Write(item._Flags);
         }
 
+        // FIXME: Fails on Mass Effect 2 (513, 0130)
         public override void Deserialize(IUnrealStream stream, UNameTableItem item)
         {
             stream.Read(out item._Name);

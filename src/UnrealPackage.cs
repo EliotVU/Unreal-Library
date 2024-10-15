@@ -536,7 +536,7 @@ namespace UELib
                 ME2,
 
                 [Build(684, 0185, BuildGeneration.SFX)] // Demo
-                [Build(684, 0194, BuildGeneration.SFX)] // PC
+                [Build(684, 0194, BuildFlags.ConsoleCooked, BuildGeneration.SFX)] // PC
                 [Build(845, 0194, BuildFlags.ConsoleCooked, BuildGeneration.SFX)] // Wii
                 [Build(685, 0205, BuildGeneration.SFX)] // LE
                 [BuildEngineBranch(typeof(EngineBranchSFX))]
