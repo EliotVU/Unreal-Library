@@ -127,6 +127,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Stargate SG1: The Alliance | 4180 | 130/004 | |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | |
 | Bioshock | 2226:Vengeance | 130-141/056 | |
+| Men of Valor | 926 | 137/000 | PC |
 | Bioshock 2 | 2226:Vengeance | 143/059 | |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) |
 | The Chronicles of Spellborn | 3323 | 159/029 | |
