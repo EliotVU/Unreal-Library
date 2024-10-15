@@ -111,6 +111,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Devastation | 600-? | 118-120/004-008 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
+| Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
 | America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 |
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 |
