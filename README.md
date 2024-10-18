@@ -224,7 +224,6 @@ This is a table of games that are confirmed to be compatible with the current st
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | 10508 | Unknown |     |
-| Outlast | 12046 | Unknown |     |
 | Sherlock Holmes: Crimes and Punishments | 10897 | Unknown | |
 | Alien Rage | 7255 | Unknown |     |
 
