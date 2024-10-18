@@ -1,23 +1,24 @@
-﻿namespace UELib.Branch
+using System.Runtime.CompilerServices;
+
+namespace UELib.Branch
 {
     public enum PackageObjectLegacyVersion
     {
         Undefined = 0,
 
         /// <summary>
-        /// FIXME: Version 61 is the lowest package version I know that supports StateFlags.
+        ///     FIXME: Version 61 is the lowest package version I know that supports StateFlags.
         /// </summary>
         AddedStateFlagsToUState = 61,
 
         /// <summary>
-        /// This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.
-        /// 
-        /// FIXME: Version, generally not accessible in Unreal Engine 1 except for some, so we'll map the tokens for v62.
+        ///     This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.
+        ///     FIXME: Version, generally not accessible in Unreal Engine 1 except for some, so we'll map the tokens for v62.
         /// </summary>
         DynamicArrayTokensAdded = 62,
 
         /// <summary>
-        /// Mixed changes.
+        ///     Mixed changes.
         /// </summary>
         Release62 = 62,
         ReturnExpressionAddedToReturnToken = 62,
@@ -25,14 +26,14 @@
         LazyArraySkipCountChangedToSkipOffset = 62,
 
         /// <summary>
-        /// Mixed changes.
+        ///     Mixed changes.
         /// </summary>
         Release64 = 64,
 
         CharRemapAddedToUFont = 69,
 
         /// <summary>
-        /// FIXME: Unknown version.
+        ///     FIXME: Unknown version.
         /// </summary>
         CastStringSizeTokenDeprecated = 70,
 
@@ -44,7 +45,7 @@
         DynamicArrayInsertTokenAdded = 95,
 
         /// <summary>
-        /// FIXME: Version, set 95 (Deus Ex: IW)
+        ///     FIXME: Version, set 95 (Deus Ex: IW)
         /// </summary>
         PrimitiveCastTokenAdded = 95,
 
@@ -67,9 +68,8 @@
         CompactIndexDeprecated = 178,
 
         /// <summary>
-        /// Present in all released UE3 games (starting with RoboBlitz).
-        /// 
-        /// FIXME: Unknown version.
+        ///     Present in all released UE3 games (starting with RoboBlitz).
+        ///     FIXME: Unknown version.
         /// </summary>
         IsLocalAddedToDelegateFunctionToken = 181,
 
@@ -109,7 +109,7 @@
         AddedFuncMapToUState = 220,
 
         /// <summary>
-        /// And ComponentMap
+        ///     And ComponentMap
         /// </summary>
         ArchetypeAddedToExports = 220,
 
@@ -144,7 +144,7 @@
         InterfaceClassesDeprecated = 288,
 
         /// <summary>
-        /// Some properties like SizeX, SizeY, Format have been displaced to ScriptProperties.
+        ///     Some properties like SizeX, SizeY, Format have been displaced to ScriptProperties.
         /// </summary>
         DisplacedUTextureProperties = 297,
 
@@ -166,16 +166,45 @@
         // FIXME: Version 374-491; Delegate source type changed from Name to Object
         ChangedDelegateSourceFromNameToObject = 376,
 
+        [Discardable] GameGOW = 374,
+
+        /// <summary>
+        ///     Not attested in (GoW v374, oldest attest (v421)
+        ///     FIXME: Version
+        /// </summary>
+        SkipSizeAddedToArrayFindTokenIntrinsics = GameGOW + 1,
+
+        /// <summary>
+        ///     Not attested in GoW (v374), oldest attest (v421)
+        ///     FIXME: Unknown version
+        /// </summary>
+        StructReferenceAddedToStructMember = GameGOW + 1,
+
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
 
-        // FIXME: Version, not attested in (RoboBlitz v369, but attested in GoW v490).
-        SkipSizeAddedToArrayFindTokenIntrinsics = 400,
-
         AddedArrayEnumToUProperty = 401,
 
-        // FIXME: Version, not attested in (GoW v490)
-        SkipSizeAddedToArrayTokenIntrinsics = 491,
+        /// <summary>
+        ///     Oldest attest MOHA (v421), but not MKKE (v472, non standard)
+        ///     FIXME: Unknown version
+        /// </summary>
+        IsCopyAddedToStructMember = GameGOW + 1,
+
+        [Discardable] GameFFOW = 433,
+
+        /// <summary>
+        ///     Oldest attest FFOW (v433), but not MKKE (v472, non standard)
+        ///     FIXME: Unknown version
+        /// </summary>
+        IsModificationAddedToStructMember = GameFFOW,
+
+        [Discardable] GameGOWPC = 490,
+
+        /// <summary>
+        ///     FIXME: Version, not attested in (GoW v490)
+        /// </summary>
+        SkipSizeAddedToArrayTokenIntrinsics = GameGOWPC + 1,
 
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
@@ -183,7 +212,7 @@
         ComponentMapDeprecated = 543,
 
         /// <summary>
-        /// Added with <see cref="ClassGuidDeprecated"/>
+        ///     Added with <see cref="ClassGuidDeprecated" />
         /// </summary>
         ClassPlatformFlagsDeprecated = 547,
 
@@ -223,6 +252,6 @@
         AddedNativeClassNameToUClass = 813,
 
         AddedATITCToUTexture2D = 857,
-        AddedETCToUTexture2D = 864,
+        AddedETCToUTexture2D = 864
     }
 }
