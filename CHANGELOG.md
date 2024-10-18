@@ -1,5 +1,14 @@
 #
 
+## [1.7.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.7.0)
+
+* 0ff0ed96 Added .NET Standard 2.1 and .NET 8.0 as framework targets.
+* 48b427f1 Support for Mass Effect: Legendary Edition
+* 83c7ecfe Support for Men of Valor
+* a226a6c7 Support for Tom Clancy's Splinter Cell: Double Agent (Offline Mode)
+* 660c0c28 Support for Stargate SG-1: The Alliance
+* 1dd24dc5 Improved support for Frontlines: Fuel of War
+
 ## [1.6.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.6.1)
 
 * Added .NET Standard 2.0 as a target framework, when targeting this standard any code releated to WinForms will be excluded (This will be deprecated in its entirety with UELib 2.0)
