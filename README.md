@@ -1,5 +1,6 @@
-[![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
+![Platform](https://img.shields.io/badge/platform-.NET-blue.svg?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)
 
 # UELib
 
@@ -20,19 +21,15 @@ Additionally UELib is also capable of deserializing of many more data classes su
     UTextureCube, UTextureFlipBook, UTextureMovie
     UPrimitive, UPolys
 
-## How to use
-
-To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) (The library will move to .NET 6 or higher at version 2.0)
-
-Install using either:
-
-* Package Manager:
+## Install
 
 ```cmd
     Install-Package Eliot.UELib
 ```
 
-* NuGet: <https://www.nuget.org/packages/Eliot.UELib>
+| Module | Version | License | 
+|---|---|---|
+| <img src="https://img.shields.io/badge/UELib-brightgreen.svg?style=for-the-badge" /> | [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib?label=Version&logo=nuget&style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/) | ![GitHub](https://img.shields.io/github/license/EliotVU/Unreal-Library.svg?style=for-the-badge) |
 
 * Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
 
