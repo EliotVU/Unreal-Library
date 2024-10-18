@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using UELib.Annotations;
+using UELib.Branch;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -14,7 +14,7 @@ namespace UELib.Core
             {
                 public UProperty Property;
                 public ushort PropertyType;
-                
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // A.?
@@ -23,7 +23,7 @@ namespace UELib.Core
                     // SkipSize
                     stream.ReadUInt16();
                     Decompiler.AlignSize(sizeof(ushort));
-                    
+
 
                     // Doesn't seem to exist in APB
                     // Definitely not in UT3(512), APB, CrimeCraft, GoW2, MoonBase and Singularity.
@@ -95,7 +95,14 @@ namespace UELib.Core
             public class StructMemberToken : Token
             {
                 public UField Property;
-                [CanBeNull] public UStruct Struct;
+
+                /// <summary>
+                /// Will be null if not deserialized (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.StructReferenceAddedToStructMember"/>)
+                /// </summary>
+                public UStruct Struct;
+
+                public byte IsCopy;
+                public byte IsModification;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -110,28 +117,29 @@ namespace UELib.Core
                         Debug.Assert(Struct != null);
                     }
 #endif
-                    // TODO: Corrigate version. Definitely didn't exist in Roboblitz(369), first seen in MOHA(421).
-                    if (stream.Version > 374)
+                    if (stream.Version >= (int)PackageObjectLegacyVersion.StructReferenceAddedToStructMember)
                     {
                         Struct = stream.ReadObject<UStruct>();
                         Decompiler.AlignObjectSize();
                         Debug.Assert(Struct != null);
+                    }
 #if MKKE
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE)
-                        {
-                            goto skipToNext;
-                        }
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE)
+                    {
+                        goto skipToNext;
+                    }
 #endif
+                    if (stream.Version >= (int)PackageObjectLegacyVersion.IsCopyAddedToStructMember)
+                    {
                         // Copy?
-                        stream.ReadByte();
+                        IsCopy = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 
-                    // TODO: Corrigate version. Definitely didn't exist in MKKE(472), first seen in FFOW(433).
-                    if (stream.Version >= 433)
+                    if (stream.Version >= (int)PackageObjectLegacyVersion.IsModificationAddedToStructMember)
                     {
                         // Modification?
-                        stream.ReadByte();
+                        IsModification = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
 

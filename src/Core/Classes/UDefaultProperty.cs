@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using UELib.Annotations;
 using UELib.Branch;
@@ -646,6 +647,25 @@ namespace UELib.Core
                         // !!! Could be null for imports
                         //Contract.Assert(jsonObject.Class != null);
                         propertyValue = $"JsonRef<{jsonObject.GetClassName()}>'{jsonObjectName}'";
+                        break;
+                    }
+#endif
+#if MASS_EFFECT
+                case PropertyType.StringRefProperty:
+                    {
+                        _Buffer.Read(out int index);
+                        Record(nameof(index), index);
+
+                        propertyValue = PropertyDisplay.FormatLiteral(index);
+                        break;
+                    }
+                
+                case PropertyType.BioMask4Property:
+                    {
+                        _Buffer.Read(out byte value);
+                        Record(nameof(value), value);
+
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
                         break;
                     }
 #endif

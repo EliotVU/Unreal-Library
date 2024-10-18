@@ -42,7 +42,12 @@ namespace UELib.Flags
         {
             return (_Flags & flags) != 0;
         }
-
+        
+        public static explicit operator int(UnrealFlags<TEnum> flags)
+        {
+            return (int)flags._Flags;
+        }
+        
         public static explicit operator uint(UnrealFlags<TEnum> flags)
         {
             return (uint)flags._Flags;

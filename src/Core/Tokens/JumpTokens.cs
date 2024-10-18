@@ -84,7 +84,7 @@ namespace UELib.Core
             {
                 public bool MarkedAsSwitchBreak;
                 public NestManager.NestEnd LinkedIfNest;
-                public ushort CodeOffset { get; private set; }
+                public ushort CodeOffset;
 
                 public override void Deserialize(IUnrealStream stream)
                 {

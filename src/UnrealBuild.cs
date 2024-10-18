@@ -18,7 +18,7 @@ namespace UELib
         UE1,
 
         /// <summary>
-        /// Modified version for Harry Potter's Unreal Engine 1
+        /// Modified version for Harry Potter's Unreal Engine 1.
         /// </summary>
         HP,
 
@@ -30,10 +30,20 @@ namespace UELib
         UE2,
 
         /// <summary>
-        /// Heavily modified Unreal Engine 2 by Ion Storm for Thief: Deadly Shadows
+        /// Heavily modified Unreal Engine 2 by Ion Storm for Thief: Deadly Shadows.
         /// </summary>
         Flesh,
 
+        /// <summary>
+        /// Unreal Engine 2 based, offline version for the Splinter Cell series.
+        /// </summary>
+        SCX,
+
+        /// <summary>
+        /// Unreal Engine 2 based, online version for the Splinter Cell series.
+        /// </summary>
+        ShadowStrike,
+        
         /// <summary>
         /// Unreal Engine 2 with some early UE3 upgrades.
         /// </summary>
@@ -50,14 +60,14 @@ namespace UELib
         Vengeance,
 
         /// <summary>
-        /// Heavily modified Unreal Engine 2.5 for Splinter Cell
+        /// Heavily modified Unreal Engine 2.5 for Splinter Cell.
         ///
         /// Not yet supported.
         /// </summary>
         Lead,
 
         /// <summary>
-        /// Modified Unreal Engine 2 for Xbox e.g. Unreal Championship 2: The Liandri Conflict
+        /// Modified Unreal Engine 2 for Xbox e.g. Unreal Championship 2: The Liandri Conflict.
         /// </summary>
         UE2X,
 
@@ -69,16 +79,21 @@ namespace UELib
         UE3,
 
         /// <summary>
+        /// A modified Unreal Engine 3 for the Mass Effect series.
+        /// </summary>
+        SFX,
+        
+        /// <summary>
         /// Rocksteady Studios
         ///
-        /// Heavily modified Unreal Engine 3 for the Arkham series
+        /// Heavily modified Unreal Engine 3 for the Arkham series.
         /// </summary>
         RSS,
 
         /// <summary>
         /// High Moon Studios
         ///
-        /// Heavily modified Unreal Engine 3 for Transformers and Deadpool etc
+        /// Heavily modified Unreal Engine 3 for Transformers and Deadpool etc.
         /// </summary>
         HMS,
 
@@ -114,8 +129,25 @@ namespace UELib
 
     public enum BuildPlatform
     {
+        /// <summary>
+        /// Unknown, an auto-detection algorithm will be performed to determine the platform.
+        /// </summary>
         Undetermined,
+
+        /// <summary>
+        /// The package is optimized for PC.
+        /// 
+        /// Auto-detected if the package is located within a directory named "CookedPC"
+        /// </summary>
         PC,
+
+        /// <summary>
+        /// The package is optimized for console.
+        /// All editor-data is assumed to have been stripped out.
+        /// This may also even be true for some pc games, such as Mass Effect: LE
+        /// 
+        /// Auto-detected if the package is located within a directory named "CookedPCConsole"
+        /// </summary>
         Console
     }
 

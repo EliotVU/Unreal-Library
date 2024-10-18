@@ -305,7 +305,7 @@ namespace UELib
                 : ReadCompactIndex();
 
         [Obsolete]
-        public long ReadNameIndex() => (uint)ReadNameIndex(out int n) | ((long)n << 32);
+        // HACK: Specific builds logic should be displaced by a specialized stream.
 
         public int ReadNameIndex(out int num)
         {
@@ -313,6 +313,9 @@ namespace UELib
             if (Archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
 #if BIOSHOCK
                 || Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
+#endif
+#if SHADOW_STRIKE
+                || Archive.Package.Build == BuildGeneration.ShadowStrike
 #endif
                )
             {
@@ -964,6 +967,18 @@ namespace UELib
                 Read(stream, out UName key);
                 Read(stream, out TValue value);
                 map.Add((TKey)key, value);
+            }
+        }
+
+        public static void ReadMap(this IUnrealStream stream, out UMap<string, UArray<string>> map)
+        {
+            int c = stream.ReadLength();
+            map = new UMap<string, UArray<string>>(c);
+            for (int i = 0; i < c; ++i)
+            {
+                Read(stream, out UName key);
+                ReadArray(stream, out UArray<string> value);
+                map.Add(key, value);
             }
         }
 

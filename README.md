@@ -1,5 +1,6 @@
-[![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
+![Platform](https://img.shields.io/badge/platform-.NET-blue.svg?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)
 
 # UELib
 
@@ -20,19 +21,15 @@ Additionally UELib is also capable of deserializing of many more data classes su
     UTextureCube, UTextureFlipBook, UTextureMovie
     UPrimitive, UPolys
 
-## How to use
-
-To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) (The library will move to .NET 6 or higher at version 2.0)
-
-Install using either:
-
-* Package Manager:
+## Install
 
 ```cmd
     Install-Package Eliot.UELib
 ```
 
-* NuGet: <https://www.nuget.org/packages/Eliot.UELib>
+| Module | Version | License | 
+|---|---|---|
+| <img src="https://img.shields.io/badge/UELib-brightgreen.svg?style=for-the-badge" /> | [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib?label=Version&logo=nuget&style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/) | ![GitHub](https://img.shields.io/github/license/EliotVU/Unreal-Library.svg?style=for-the-badge) |
 
 * Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
 
@@ -106,6 +103,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | XIII | 829 | 100/058 |     |
 | Postal 2: Paradise Lost | 1417 | 118/002 | |
 | Tom Clancy's Splinter Cell | 829 | 100/017 | |
+| Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX | (PC) Offline mode version |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Devastation | 600-? | 118-120/004-008 | |
@@ -124,8 +122,10 @@ This is a table of games that are confirmed to be compatible with the current st
 | Shark Tale | 2226 | 129/003 | |
 | Lemony Snicket's A Series of Unfortunate Events | 2226 | 129/003 | |
 | Swat 4 | 2226:Vengeance | 129/027 | |
+| Stargate SG1: The Alliance | 4180 | 130/004 | |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | |
 | Bioshock | 2226:Vengeance | 130-141/056 | |
+| Men of Valor | 926 | 137/000 | PC |
 | Bioshock 2 | 2226:Vengeance | 143/059 | |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) |
 | The Chronicles of Spellborn | 3323 | 159/029 | |
@@ -134,12 +134,16 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 | Tom Clancy's EndWar | Unknown | 329/000 | |
 | Roboblitz | 2306 | 369/006 |     |
+| Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
-| Frontlines: Fuel of War | 2917 | 433/052 | Poor output of functions |
+| Frontlines: Fuel of War | 2917 | 433/052 | |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
 | Mortal Kombat Komplete Edition | 2605 | 472/046 |     |
 | Stargate Worlds | 3004 | 486/007 |     |
 | Gears of War | 3329 | 490/009 | |
+| Mass Effect (Windows) | 3240 | 491/1008(~112) | PC |
+| Robert Ludlum's The Bourne Conspiracy | | 511/039 | |
+| Transformers: War for Cybertron | | 511/144,145 | PC, PS3, Xenon |
 | Unreal Tournament 3 | 3809 | 512/000 | |
 | Mirrors Edge | 3716 | 536/043 |     |
 | Alpha Protocol | 3857 | 539/091 |     |
@@ -159,6 +163,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Blacklight: Tango Down | 6165 | 673/002 | |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | |
 | Dungeon Defenders | 6262 | 678/002 | |
+| Mass Effect 3 (Windows) | 6383 | 684/194 | PC (platform must be set to `Console`) |
+| Mass Effect: Legendary Edition (Windows) | 6383 | 684/171 | PC (platform must be set to `Console`) |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |
@@ -191,6 +197,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | DmC: Devil May Cry | 8916 | 845/004 | |
 | XCOM: Enemy Unknown | 8916 | 845/059 | |
 | Gears of War: Judgement | 10566 | 846/000 |     |
+| Transformers: Fall of Cybertron | 846(~587)/181 | |
+| Deadpool | 846(~587)/181 | |
 | InMomentum | 8980 | 848/000 |     |
 | [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
 | Deadlight | 9375 | 854/000 |     |

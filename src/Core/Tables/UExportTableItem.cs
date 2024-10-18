@@ -315,7 +315,7 @@ namespace UELib
 
         public override string ToString()
         {
-            return $"{ObjectName}({Index}{1})";
+            return $"{ObjectName}({Index + 1})";
         }
 
         [Obsolete("Use ToString()")]
@@ -326,7 +326,7 @@ namespace UELib
 
         public static explicit operator int(UExportTableItem item)
         {
-            return item.Index;
+            return (item.Index + 1);
         }
     }
 }

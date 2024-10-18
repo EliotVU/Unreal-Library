@@ -169,7 +169,12 @@ namespace UELib.Core
             // UT2004 reports version 26, and BioShock version 2
             if ((Package.Build == BuildGeneration.UE2_5 && _Buffer.LicenseeVersion >= 26) ||
                 (Package.Build == BuildGeneration.AGP && _Buffer.LicenseeVersion >= 17) ||
-                (Package.Build == BuildGeneration.Vengeance && _Buffer.LicenseeVersion >= 2))
+                (Package.Build == BuildGeneration.Vengeance && _Buffer.LicenseeVersion >= 2)
+#if SG1
+                // Same offset and version check as CppText (120) probably an incorrectly back-ported feature.
+                || (Package.Build == UnrealPackage.GameBuild.BuildName.SG1_TA && _Buffer.Version >= 120)
+#endif
+               )
             {
                 StructFlags = _Buffer.ReadUInt32();
                 Record(nameof(StructFlags), (StructFlags)StructFlags);

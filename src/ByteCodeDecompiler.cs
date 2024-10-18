@@ -337,6 +337,7 @@ namespace UELib.Core
             }
 
             private NestManager _Nester;
+            public NestManager Nester => _Nester;
 
             // Checks if we're currently within a nest of type nestType in any stack!
             private NestManager.Nest IsWithinNest(NestManager.Nest.NestType nestType)

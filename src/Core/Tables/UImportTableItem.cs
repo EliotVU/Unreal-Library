@@ -65,7 +65,7 @@ namespace UELib
 
         public static explicit operator int(UImportTableItem item)
         {
-            return -item.Index;
+            return -(item.Index + 1);
         }
     }
 }
