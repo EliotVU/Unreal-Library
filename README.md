@@ -1,5 +1,6 @@
-[![Nuget](https://img.shields.io/nuget/dt/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
 [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib?style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/)
+![Platform](https://img.shields.io/badge/platform-.NET-blue.svg?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)
 
 # UELib
 
@@ -20,19 +21,15 @@ Additionally UELib is also capable of deserializing of many more data classes su
     UTextureCube, UTextureFlipBook, UTextureMovie
     UPrimitive, UPolys
 
-## How to use
-
-To use this library you will need [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) (The library will move to .NET 6 or higher at version 2.0)
-
-Install using either:
-
-* Package Manager:
+## Install
 
 ```cmd
     Install-Package Eliot.UELib
 ```
 
-* NuGet: <https://www.nuget.org/packages/Eliot.UELib>
+| Module | Version | License | 
+|---|---|---|
+| <img src="https://img.shields.io/badge/UELib-brightgreen.svg?style=for-the-badge" /> | [![Nuget](https://img.shields.io/nuget/v/Eliot.UELib?label=Version&logo=nuget&style=for-the-badge)](https://www.nuget.org/packages/Eliot.UELib/) | ![GitHub](https://img.shields.io/github/license/EliotVU/Unreal-Library.svg?style=for-the-badge) |
 
 * Usage: See the [documentation](https://github.com/EliotVU/Unreal-Library/wiki/Usage) for more examples.
 
@@ -112,6 +109,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Devastation | 600-? | 118-120/004-008 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
+| Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
 | America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 |
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 |
@@ -138,7 +136,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Roboblitz | 2306 | 369/006 |     |
 | Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
-| Frontlines: Fuel of War | 2917 | 433/052 | Poor output of functions |
+| Frontlines: Fuel of War | 2917 | 433/052 | |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
 | Mortal Kombat Komplete Edition | 2605 | 472/046 |     |
 | Stargate Worlds | 3004 | 486/007 |     |
@@ -216,6 +214,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Gigantic: Rampage Edition | 19100 | 867/010 | |
 | Infinity Blade 3 | | 868/000 | Console |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
+| Outlast | 12046 | 868/003 | |
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) |
 | Bombshell | 11767 | 870/000 | |
 | Orcs Must Die! Unchained | 20430 | 870/000 | |

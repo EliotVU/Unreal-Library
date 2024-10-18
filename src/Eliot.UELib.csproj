@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <DefineConstants>DECOMPILE;BINARYMETADATA;UE1;UE2;UE3;UE4;VENGEANCE;SWAT4;UNREAL2;INFINITYBLADE;BORDERLANDS2;GOW2;APB;SPECIALFORCE2;XIII;SINGULARITY;THIEF_DS;DEUSEX_IW;BORDERLANDS;MIRRORSEDGE;BIOSHOCK;HAWKEN;UT;DISHONORED;REMEMBERME;ALPHAPROTOCOL;VANGUARD;TERA;MKKE;TRANSFORMERS;XCOM2;DD2;DCUO;AA2;SPELLBORN;BATMAN;MOH;ROCKETLEAGUE;DNF;LSGAME;UNDYING;HP;DEVASTATION;BATTLEBORN;SPLINTERCELL;AHIT;GIGANTIC;ENDWAR;SG1;MASS_EFFECT;MOV</DefineConstants>
-    <TargetFrameworks>net48;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net48;netstandard2.0;netstandard2.1;net8.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <RootNamespace>UELib</RootNamespace>
     <Install>true</Install>
@@ -70,7 +70,7 @@
   <PropertyGroup>
     <AssemblyName>Eliot.UELib</AssemblyName>
     <PackageId>$(AssemblyName)</PackageId>
-    <Version>$(VersionPrefix)1.6.2</Version>
+    <Version>$(VersionPrefix)1.7.0</Version>
     <Authors>EliotVU</Authors>
     <Title>$(AssemblyName)</Title>
     <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>

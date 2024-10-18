@@ -383,7 +383,14 @@ namespace UELib
                 /// 
                 /// 421/011
                 /// </summary>
-                [Build(421, 11)] MOHA,
+                [Build(421, 11)] MoHA,
+
+                /// <summary>
+                /// Frontlines: Fuel of War
+                ///
+                /// 433/052
+                /// </summary>
+                [Build(433, 52)] FFoW,
 
                 /// <summary>
                 /// 472/046
@@ -467,7 +474,7 @@ namespace UELib
                 /// 581/058
                 /// </summary>
                 [Build(581, 58, BuildFlags.ConsoleCooked)] [BuildEngineBranch(typeof(EngineBranchMOH))]
-                MOH,
+                MoH,
 
                 /// <summary>
                 /// Borderlands
