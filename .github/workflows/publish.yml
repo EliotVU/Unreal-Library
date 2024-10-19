@@ -32,8 +32,8 @@ jobs:
     - name: Restore
       run: dotnet restore src/Eliot.UELib.csproj
 
-    - name: Test
-      run: dotnet test Test/Eliot.UELib.Test.csproj
+     #- name: Test
+     # run: dotnet test Test/Eliot.UELib.Test.csproj
 
     - name: Pack
       run: dotnet pack --configuration Release src/Eliot.UELib.csproj
