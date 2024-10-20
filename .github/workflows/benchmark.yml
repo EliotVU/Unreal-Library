@@ -18,6 +18,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+
       - name: Run benchmark
         run: cd Benchmark && dotnet run -c Release --exporters json
 
@@ -26,6 +27,6 @@ jobs:
         with:
           name: Benchmark.Net Benchmark
           tool: 'benchmarkdotnet'
-          output-file-path: Benchmark/BenchmarkDotNet.Artifacts/results/Benchmarks-report-full-compressed.json
+          output-file-path: Benchmark/BenchmarkDotNet.Artifacts/results/Eliot.UELib.Benchmark.Benchmarks-report-full-compressed.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
