@@ -1,6 +1,5 @@
 name: Benchmark
 on:
-  workflow_dispatch:
   push:
     branches:
       - master
@@ -20,7 +19,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Run benchmark
-        run: cd Benchmark && dotnet run -c Release --exporters json
+        run: cd Benchmark && dotnet run -c Release --exporters json --filter '*'
 
       - name: Store benchmark results
         uses: rhysd/github-action-benchmark@v1
@@ -30,3 +29,5 @@ jobs:
           output-file-path: Benchmark/BenchmarkDotNet.Artifacts/results/Eliot.UELib.Benchmark.Benchmarks-report-full-compressed.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
+          alert-threshold: '200%'
+          comment-on-alert: true
