@@ -24,18 +24,25 @@ namespace UELib.Core
                 return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile an imported object";
             }
 
+            // FIXME: Won't be detected, an UnknownObject might be a UComponent.
+            if (this is UComponent uComponent)
+            {
+                output += $"{UDecompilingState.Tabs}// TemplateOwnerClass: {PropertyDisplay.FormatLiteral(uComponent.TemplateOwnerClass)}\r\n";
+                output += $"{UDecompilingState.Tabs}// TemplateOwnerName: {PropertyDisplay.FormatLiteral(uComponent.TemplateName)}\r\n";
+            }
+
+            if (Archetype != null)
+            {
+                output += $"{UDecompilingState.Tabs}// Archetype: {PropertyDisplay.FormatLiteral(Archetype)}\r\n";
+            }
+
             output += UDecompilingState.Tabs;
-            output += $"begin object name={Name}";
+            output += $"begin object name=\"{Name}\"";
             // If null then we have a new sub-object (not an override)
             if (Archetype == null)
             {
                 Debug.Assert(Class != null);
                 output += $" class={Class.GetReferencePath()}";
-            }
-            else
-            {
-                // Commented out, too noisy but useful.
-                //output += $" /*archetype={Archetype.GetReferencePath()}*/";
             }
             output += "\r\n";
 
