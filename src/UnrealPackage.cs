@@ -26,6 +26,7 @@ namespace UELib
     using Branch.UE3.RL;
     using Branch.UE3.SFX;
     using Branch.UE2.ShadowStrike;
+    using System.Text;
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -377,6 +378,13 @@ namespace UELib
                 /// 369/006
                 /// </summary>
                 [Build(369, 6)] RoboBlitz,
+
+                /// <summary>
+                /// Stranglehold
+                ///
+                /// 375/025
+                /// </summary>
+                [Build(375, 25, BuildGeneration.Midway3)] Stranglehold,
 
                 /// <summary>
                 /// Medal of Honor: Airborne
@@ -1142,6 +1150,8 @@ namespace UELib
                 Version &= 0xFFFFU;
                 Console.WriteLine("Package Version:" + Version + "/" + LicenseeVersion);
 
+                Contract.Assert(Version != 0, "Bad package version 0!");
+
                 SetupBuild(stream.Package);
                 Debug.Assert(stream.Package.Build != null);
                 Console.WriteLine("Build:" + stream.Package.Build);
@@ -1173,7 +1183,23 @@ namespace UELib
                     HeaderSize = stream.ReadInt32();
                     Console.WriteLine("Header Size: " + HeaderSize);
                 }
+#if MIDWAY
+                if (stream.Package.Build == BuildGeneration.Midway3 &&
+                    stream.LicenseeVersion >= 2)
+                {
+                    stream.Read(out int abbrev);
 
+                    string codename = Encoding.UTF8.GetString(BitConverter.GetBytes(abbrev));
+                    Console.WriteLine($"Midway game codename: {codename}");
+
+                    stream.Read(out int customVersion);
+
+                    if (customVersion >= 256)
+                    {
+                        stream.Read(out int _);
+                    }
+                }
+#endif
                 if (stream.Version >= VFolderName)
                 {
                     FolderName = stream.ReadString();
@@ -1268,7 +1294,13 @@ namespace UELib
 
                     return;
                 }
-
+#if MIDWAY
+                if (stream.Package.Build == GameBuild.BuildName.Stranglehold &&
+                    stream.Version >= 375)
+                {
+                    stream.Read(out int _);
+                }
+#endif
                 if (stream.Version >= VDependsOffset)
                 {
                     DependsOffset = stream.ReadInt32();

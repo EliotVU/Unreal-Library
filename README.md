@@ -134,6 +134,7 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 | Tom Clancy's EndWar | Unknown | 329/000 | |
 | Roboblitz | 2306 | 369/006 |     |
+| Stranglehold | 2605 | 375/025 | |
 | Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
 | Frontlines: Fuel of War | 2917 | 433/052 | |

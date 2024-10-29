@@ -162,23 +162,27 @@ namespace UELib.Branch
         CompressionAdded = 334,
 
         NumberAddedToName = 343,
-
-        // FIXME: Version 374-491; Delegate source type changed from Name to Object
-        ChangedDelegateSourceFromNameToObject = 376,
-
-        [Discardable] GameGOW = 374,
+        
+        [Discardable] GameGOW = 374, // Engine Version: 2451
+        [Discardable] GameStranglehold = 375, // Engine Version: 2605
 
         /// <summary>
-        ///     Not attested in (GoW v374, oldest attest (v421)
+        ///     Possibly attested first with Stranglehold (v375)
+        ///     FIXME: Version 375-491; Delegate source type changed from Name to Object
+        /// </summary>
+        ChangedDelegateSourceFromNameToObject = GameStranglehold,
+
+        /// <summary>
+        ///     Not attested in GoW v374), oldest attests (v375,v421)
         ///     FIXME: Version
         /// </summary>
         SkipSizeAddedToArrayFindTokenIntrinsics = GameGOW + 1,
 
         /// <summary>
-        ///     Not attested in GoW (v374), oldest attest (v421)
+        ///     Not attested in GoW (v374), oldest attests (v375,v421)
         ///     FIXME: Unknown version
         /// </summary>
-        StructReferenceAddedToStructMember = GameGOW + 1,
+        StructReferenceAddedToStructMember = GameStranglehold,
 
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
@@ -189,9 +193,9 @@ namespace UELib.Branch
         ///     Oldest attest MOHA (v421), but not MKKE (v472, non standard)
         ///     FIXME: Unknown version
         /// </summary>
-        IsCopyAddedToStructMember = GameGOW + 1,
+        IsCopyAddedToStructMember = GameStranglehold + 1,
 
-        [Discardable] GameFFOW = 433,
+        [Discardable] GameFFOW = 433, // Engine Version: 2917
 
         /// <summary>
         ///     Oldest attest FFOW (v433), but not MKKE (v472, non standard)
