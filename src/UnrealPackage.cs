@@ -2162,7 +2162,7 @@ namespace UELib
             foreach (var exportedType in exportedTypes)
             {
                 object[] attributes = exportedType.GetCustomAttributes(typeof(UnrealRegisterClassAttribute), false);
-                if (attributes.Length == 1) AddClassType(exportedType.Name.Substring(1), exportedType);
+                if (attributes.Length == 1) TryAddClassType(exportedType.Name.Substring(1), exportedType);
             }
         }
 
@@ -2238,13 +2238,13 @@ namespace UELib
         [Obsolete]
         public void RegisterClass(string className, Type classObject)
         {
-            AddClassType(className, classObject);
+            TryAddClassType(className, classObject);
         }
 
         [PublicAPI]
-        public void AddClassType(string className, Type classObject)
+        public bool TryAddClassType(string className, Type classObject)
         {
-            _ClassTypes.Add(className.ToLower(), classObject);
+            return _ClassTypes.TryAdd(className.ToLower(), classObject);
         }
 
         [PublicAPI]
