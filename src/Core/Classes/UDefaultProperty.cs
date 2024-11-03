@@ -499,7 +499,7 @@ namespace UELib.Core
                     break;
 
                 case PropertyType.ByteProperty:
-                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag)
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag && _Buffer.Package.Build.Generation != BuildGeneration.RSS)
                     {
                         _Buffer.Read(out _TypeData.EnumName);
                         Record(nameof(_TypeData.EnumName), _TypeData.EnumName);
