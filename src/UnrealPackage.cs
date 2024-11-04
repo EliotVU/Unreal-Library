@@ -2244,7 +2244,7 @@ namespace UELib
         [PublicAPI]
         public void AddClassType(string className, Type classObject)
         {
-            _ClassTypes.Add(className.ToLower(), classObject);
+            _ClassTypes[className.ToLower()] = classObject;
         }
 
         [PublicAPI]
