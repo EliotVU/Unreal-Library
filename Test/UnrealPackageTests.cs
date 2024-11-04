@@ -10,6 +10,31 @@ namespace Eliot.UELib.Test
     [TestClass]
     public class UnrealPackageTests
     {
+        public class MyUModel : UModel;
+        
+        [TestMethod]
+        public void TestClassTypeOverride()
+        {
+            using var stream = UnrealPackageUtilities.CreateTempPackageStream();
+            using var linker = new UnrealPackage(stream);
+            
+            Assert.IsTrue(linker.GetClassType("Model") == typeof(UnknownObject));
+            linker.AddClassType("Model", typeof(MyUModel));
+            Assert.IsTrue(linker.GetClassType("Model") == typeof(MyUModel));
+            linker.InitializePackage(UnrealPackage.InitFlags.RegisterClasses);
+            Assert.IsTrue(linker.GetClassType("Model") == typeof(UModel));
+
+            using var stream2 = UnrealPackageUtilities.CreateTempPackageStream();
+            using var linker2 = new UnrealPackage(stream2);
+
+            // Swapped order...
+            Assert.IsTrue(linker2.GetClassType("Model") == typeof(UnknownObject));
+            linker2.InitializePackage(UnrealPackage.InitFlags.RegisterClasses);
+            Assert.IsTrue(linker2.GetClassType("Model") == typeof(UModel));
+            linker2.AddClassType("Model", typeof(MyUModel));
+            Assert.IsTrue(linker2.GetClassType("Model") == typeof(MyUModel));
+        }
+        
         internal static void AssertTestClass(UnrealPackage linker)
         {
             var testClass = linker.FindObject<UClass>("Test");
