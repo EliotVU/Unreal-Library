@@ -222,10 +222,10 @@ This is a table of games that are confirmed to be compatible with the current st
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | Battleborn | 8623/1055 | 874/078 | |
 | A Hat in Time | 12097 | 877-893/005 | |
+| Blue Estate The Game | 10246 | 893/000 | |
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | 10508 | Unknown |     |
-| Outlast | 12046 | Unknown |     |
 | Sherlock Holmes: Crimes and Punishments | 10897 | Unknown | |
 | Alien Rage | 7255 | Unknown |     |
 

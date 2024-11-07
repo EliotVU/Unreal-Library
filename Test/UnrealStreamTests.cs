@@ -12,16 +12,6 @@ namespace Eliot.UELib.Test
     [TestClass]
     public class UnrealStreamTests
     {
-        // HACK: Ugly workaround the issues with UPackageStream
-        private static UPackageStream CreateTempStream()
-        {
-            string tempFilePath = Path.Join(Path.GetTempFileName());
-            File.WriteAllBytes(tempFilePath, BitConverter.GetBytes(UnrealPackage.Signature));
-
-            var stream = new UPackageStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
-            return stream;
-        }
-
         [DataTestMethod]
         [DataRow(PackageObjectLegacyVersion.Undefined, 1, +0b0000000000000000000000100001)]
         [DataRow(PackageObjectLegacyVersion.Undefined, 1, -0b0000000000000000000000100001)]
@@ -32,7 +22,7 @@ namespace Eliot.UELib.Test
         [DataRow(PackageObjectLegacyVersion.CompactIndexDeprecated, 4, int.MaxValue)]
         public void SerializeCompactIndex(PackageObjectLegacyVersion version, int count, int compactIndex)
         {
-            using var stream = CreateTempStream();
+            using var stream = UnrealPackageUtilities.CreateTempPackageStream();
             using var linker = new UnrealPackage(stream);
             linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
@@ -65,7 +55,7 @@ namespace Eliot.UELib.Test
         [DataRow(PackageObjectLegacyVersion.Undefined, "语言处理")]
         public void SerializeString(PackageObjectLegacyVersion version, string text)
         {
-            using var stream = CreateTempStream();
+            using var stream = UnrealPackageUtilities.CreateTempPackageStream();
             using var linker = new UnrealPackage(stream);
             linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
@@ -86,7 +76,7 @@ namespace Eliot.UELib.Test
         [TestMethod]
         public void SerializeStruct()
         {
-            using var stream = CreateTempStream();
+            using var stream = UnrealPackageUtilities.CreateTempPackageStream();
             using var linker = new UnrealPackage(stream);
             linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary();
@@ -113,7 +103,7 @@ namespace Eliot.UELib.Test
         [TestMethod]
         public void SerializeStructMarshal()
         {
-            using var stream = CreateTempStream();
+            using var stream = UnrealPackageUtilities.CreateTempPackageStream();
             using var linker = new UnrealPackage(stream);
             linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary();
@@ -156,7 +146,7 @@ namespace Eliot.UELib.Test
         [DataRow(PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData)]
         public void SerializeBulkData(PackageObjectLegacyVersion version)
         {
-            using var stream = CreateTempStream();
+            using var stream = UnrealPackageUtilities.CreateTempPackageStream();
             using var linker = new UnrealPackage(stream);
             linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
@@ -192,7 +182,7 @@ namespace Eliot.UELib.Test
         [DataRow(PackageObjectLegacyVersion.VerticalOffsetAddedToUFont)]
         public void SerializeDataTypes(PackageObjectLegacyVersion version)
         {
-            using var stream = CreateTempStream();
+            using var stream = UnrealPackageUtilities.CreateTempPackageStream();
             using var linker = new UnrealPackage(stream);
             linker.Build = new UnrealPackage.GameBuild(linker);
             linker.Summary = new UnrealPackage.PackageFileSummary
