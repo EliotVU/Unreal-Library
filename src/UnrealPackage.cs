@@ -456,10 +456,10 @@ namespace UELib
                 /// <summary>
                 /// Batman: Arkham Asylum
                 /// 
-                /// 576/021
-                /// No Special support, but there's no harm in recognizing this build.
+                /// 576/021 (Missing most changes guarded by <see cref="BuildGeneration.RSS"/>)
                 /// </summary>
-                [Build(576, 21)] Batman1,
+                [Build(576, 21)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                Batman1,
 
                 /// <summary>
                 /// 576/100
