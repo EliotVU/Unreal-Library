@@ -544,7 +544,7 @@ namespace UELib.Core
                         : string.Empty;
                     string statementFormat = statementType != string.Empty
                         ? $"{statementType} if({statementCode})"
-                        : $"if({statementCode}";
+                        : $"if({statementCode})";
                     output.Append(statementFormat);
 
                     UDecompilingState.AddTab();
