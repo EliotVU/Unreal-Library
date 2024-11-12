@@ -1,5 +1,14 @@
 #
 
+## [1.8.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.8.0)
+
+* 89401543 Support for Stranglehold
+* 6c89b66a Improved support for Batman series
+* 4222595f Improved support for Borderlands: GOTYE
+* 6c89b66a Fixed bad decompilation of intrinsic array function calls under certain circumstances.
+* 8ba153b3 Fixed missing ')' in a replication statement
+* 3eab0cba #92 Fixed issue with overriding a class type when initializing a package.
+
 ## [1.7.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.7.0)
 
 * 0ff0ed96 Added .NET Standard 2.1 and .NET 8.0 as framework targets.
