@@ -499,7 +499,11 @@ namespace UELib.Core
                     break;
 
                 case PropertyType.ByteProperty:
-                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag)
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag
+#if BATMAN
+                        && _Buffer.Package.Build.Generation != BuildGeneration.RSS
+#endif
+                       )
                     {
                         _Buffer.Read(out _TypeData.EnumName);
                         Record(nameof(_TypeData.EnumName), _TypeData.EnumName);
@@ -659,7 +663,7 @@ namespace UELib.Core
                         propertyValue = PropertyDisplay.FormatLiteral(index);
                         break;
                     }
-                
+
                 case PropertyType.BioMask4Property:
                     {
                         _Buffer.Read(out byte value);
@@ -1069,7 +1073,8 @@ namespace UELib.Core
                             string tagExpr = tag.Name;
                             if (tag.ArrayIndex > 0)
                             {
-                                tagExpr += PropertyDisplay.FormatT3DElementAccess(tag.ArrayIndex.ToString(), _Buffer.Version);
+                                tagExpr += PropertyDisplay.FormatT3DElementAccess(tag.ArrayIndex.ToString(),
+                                    _Buffer.Version);
                             }
 
                             propertyValue += $"{tagExpr}={tag.Value}";
@@ -1154,7 +1159,7 @@ namespace UELib.Core
                             for (var i = 0; i < arraySize; ++i)
                             {
                                 string elementAccessText =
-                                        PropertyDisplay.FormatT3DElementAccess(i.ToString(), _Buffer.Version);
+                                    PropertyDisplay.FormatT3DElementAccess(i.ToString(), _Buffer.Version);
                                 string elementValue = DeserializeDefaultPropertyValue(arrayType, ref deserializeFlags);
                                 if ((_TempFlags & ReplaceNameMarker) != 0)
                                 {

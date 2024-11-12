@@ -170,7 +170,11 @@ namespace UELib.Core
                     Record(nameof(CategoryName), CategoryName);
                 }
 
-                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty)
+                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty
+#if MIDWAY
+                    || Package.Build == UnrealPackage.GameBuild.BuildName.Stranglehold
+#endif
+                    )
                 {
                     ArrayEnum = _Buffer.ReadObject<UEnum>();
                     Record(nameof(ArrayEnum), ArrayEnum);

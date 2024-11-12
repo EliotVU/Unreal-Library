@@ -1,4 +1,5 @@
-﻿using UELib.Branch;
+﻿using UELib.Annotations;
+using UELib.Branch;
 
 namespace UELib.Core
 {
@@ -6,7 +7,7 @@ namespace UELib.Core
     [BuildGeneration(BuildGeneration.UE3)]
     public class UComponent : UObject
     {
-        public UClass TemplateOwnerClass;
+        [CanBeNull] public UClass TemplateOwnerClass;
         public UName TemplateName;
         
         public UComponent()

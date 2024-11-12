@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0</TargetFrameworks>
+    <LangVersion>12.0</LangVersion>
     <OutputType>Exe</OutputType>
     <RootNamespace>UELib.CLI</RootNamespace>
     <PublishUrl>publish\</PublishUrl>
@@ -23,17 +24,4 @@
   <ItemGroup>
     <ProjectReference Include="..\src\Eliot.UELib.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.8">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4.8 %28x86 and x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <PropertyGroup />
 </Project>

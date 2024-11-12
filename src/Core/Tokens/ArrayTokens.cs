@@ -1,4 +1,5 @@
-﻿using UELib.Branch;
+﻿using System.IO;
+using UELib.Branch;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -145,6 +146,13 @@ namespace UELib.Core
                     Decompiler._CanAddSemicolon = true;
                     string context = DecompileNext();
                     string param1 = DecompileNext();
+
+                    if (Package.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    {
+                        // EndParms
+                        AssertSkipCurrentToken<EndFunctionParmsToken>();
+                    }
+
                     return $"{context}.{functionName}({param1})";
                 }
 
@@ -154,6 +162,13 @@ namespace UELib.Core
                     string context = DecompileNext();
                     string param1 = DecompileNext();
                     string param2 = DecompileNext();
+
+                    if (Package.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    {
+                        // EndParms
+                        AssertSkipCurrentToken<EndFunctionParmsToken>();
+                    }
+
                     return $"{context}.{functionName}({param1}, {param2})";
                 }
             }
@@ -203,6 +218,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.DynArrayAdd)]
             public class DynamicArrayAddToken : DynamicArrayMethodToken
             {
+                // Ugly copy, but this is the only array token that always has EndParms regardless of engine version.
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // Array
@@ -217,9 +233,16 @@ namespace UELib.Core
                     Decompiler.DeserializeDebugToken();
                 }
 
+                // Ugly copy, but this is the only array token that always has EndParms regardless of engine version.
                 public override string Decompile()
                 {
-                    return DecompileOneParamMethod("Add");
+                    Decompiler._CanAddSemicolon = true;
+                    string context = DecompileNext();
+                    string param1 = DecompileNext();
+
+                    AssertSkipCurrentToken<EndFunctionParmsToken>();
+
+                    return $"{context}.Add({param1})";
                 }
             }
 

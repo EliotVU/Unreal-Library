@@ -26,6 +26,7 @@ namespace UELib
     using Branch.UE3.RL;
     using Branch.UE3.SFX;
     using Branch.UE2.ShadowStrike;
+    using System.Text;
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -379,6 +380,13 @@ namespace UELib
                 [Build(369, 6)] RoboBlitz,
 
                 /// <summary>
+                /// Stranglehold
+                ///
+                /// 375/025
+                /// </summary>
+                [Build(375, 25, BuildGeneration.Midway3)] Stranglehold,
+
+                /// <summary>
                 /// Medal of Honor: Airborne
                 /// 
                 /// 421/011
@@ -456,10 +464,10 @@ namespace UELib
                 /// <summary>
                 /// Batman: Arkham Asylum
                 /// 
-                /// 576/021
-                /// No Special support, but there's no harm in recognizing this build.
+                /// 576/021 (Missing most changes guarded by <see cref="BuildGeneration.RSS"/>)
                 /// </summary>
-                [Build(576, 21)] Batman1,
+                [Build(576, 21)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                Batman1,
 
                 /// <summary>
                 /// 576/100
@@ -1142,6 +1150,8 @@ namespace UELib
                 Version &= 0xFFFFU;
                 Console.WriteLine("Package Version:" + Version + "/" + LicenseeVersion);
 
+                Contract.Assert(Version != 0, "Bad package version 0!");
+
                 SetupBuild(stream.Package);
                 Debug.Assert(stream.Package.Build != null);
                 Console.WriteLine("Build:" + stream.Package.Build);
@@ -1173,7 +1183,23 @@ namespace UELib
                     HeaderSize = stream.ReadInt32();
                     Console.WriteLine("Header Size: " + HeaderSize);
                 }
+#if MIDWAY
+                if (stream.Package.Build == BuildGeneration.Midway3 &&
+                    stream.LicenseeVersion >= 2)
+                {
+                    stream.Read(out int abbrev);
 
+                    string codename = Encoding.UTF8.GetString(BitConverter.GetBytes(abbrev));
+                    Console.WriteLine($"Midway game codename: {codename}");
+
+                    stream.Read(out int customVersion);
+
+                    if (customVersion >= 256)
+                    {
+                        stream.Read(out int _);
+                    }
+                }
+#endif
                 if (stream.Version >= VFolderName)
                 {
                     FolderName = stream.ReadString();
@@ -1268,7 +1294,13 @@ namespace UELib
 
                     return;
                 }
-
+#if MIDWAY
+                if (stream.Package.Build == GameBuild.BuildName.Stranglehold &&
+                    stream.Version >= 375)
+                {
+                    stream.Read(out int _);
+                }
+#endif
                 if (stream.Version >= VDependsOffset)
                 {
                     DependsOffset = stream.ReadInt32();
@@ -2244,7 +2276,7 @@ namespace UELib
         [PublicAPI]
         public void AddClassType(string className, Type classObject)
         {
-            _ClassTypes.Add(className.ToLower(), classObject);
+            _ClassTypes[className.ToLower()] = classObject;
         }
 
         [PublicAPI]

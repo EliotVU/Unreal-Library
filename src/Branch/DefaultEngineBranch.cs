@@ -378,6 +378,10 @@ namespace UELib.Branch
 
                     tokenMap[0x5B] = typeof(ByteConstToken);
                     break;
+
+                case UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE:
+                    tokenMap[0x5B] = typeof(BLVariableToken);
+                    break;
 #endif
 #if BIOSHOCK
                 case UnrealPackage.GameBuild.BuildName.BioShock:

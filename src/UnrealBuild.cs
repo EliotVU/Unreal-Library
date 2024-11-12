@@ -100,9 +100,16 @@ namespace UELib
         /// <summary>
         /// Gearbox Software
         ///
-        /// Modified Unreal Engine 3 for Borderlands
+        /// Modified Unreal Engine 3 for Borderlands.
         /// </summary>
         GB,
+
+        /// <summary>
+        /// Midway
+        ///
+        /// Modified Unreal Engine3 for Midway games.
+        /// </summary>
+        Midway3,
 
         /// <summary>
         /// Unreal Engine 4

@@ -1,4 +1,4 @@
-name: Build .NET Framework and Publish to NuGet
+name: Build .NET and Publish
 
 on:
   workflow_dispatch:
@@ -8,25 +8,39 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2019
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        dotnet: [ '8.0.x' ]
     permissions:
       packages: write
       contents: read
     steps:
     - uses: actions/checkout@v4
-      
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
-      
-    - name: Setup NuGet
-      uses: NuGet/setup-nuget@v2
-      
-    - name: Restore dependencies
-      run: nuget restore src/Eliot.UELib.csproj
-      
+    
+    - name: Setup
+      uses: actions/setup-dotnet@v4
+      with: 
+        dotnet-version: ${{ matrix.dotnet }}
+            
+    - name: Install
+      run: dotnet restore src/Eliot.UELib.csproj
+
     - name: Build
-      run: msbuild src/Eliot.UELib.csproj -t:rebuild -property:Configuration=Release
-      
+      run: dotnet build src/Eliot.UELib.csproj
+
+    - name: Restore
+      run: dotnet restore src/Eliot.UELib.csproj
+
+     #- name: Test
+     # run: dotnet test Test/Eliot.UELib.Test.csproj
+
+    - name: Pack
+      run: dotnet pack --configuration Release src/Eliot.UELib.csproj
+
+    #- name: Push
+    #  run: dotnet nuget push src/Eliot.UELib.csproj -k ${{ secrets.NUGET_API_KEY }}} -s https://api.nuget.org/v3/index.json
+
     - name: Publish Eliot.UELib to NuGet
       id: nuget
       uses: alirezanet/publish-nuget@v3.1.0
