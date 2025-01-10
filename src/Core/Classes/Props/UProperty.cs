@@ -73,7 +73,7 @@ namespace UELib.Core
         {
             base.Deserialize();
 #if SPLINTERCELL
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.SC1 &&
+            if (Package.Build == BuildGeneration.SC &&
                 _Buffer.LicenseeVersion >= 15)
             {
                 ArrayDim = _Buffer.ReadUInt16();
@@ -84,6 +84,14 @@ namespace UELib.Core
 
                 _Buffer.Read(out CategoryName);
                 Record(nameof(CategoryName), CategoryName);
+
+                // FIXME: Unconditional, probably introduced with SC2
+                if (Package.Build == UnrealPackage.GameBuild.BuildName.SC3)
+                {
+                    // Music? Some kind of alternative to category name
+                    _Buffer.Read(out UName v68);
+                    Record(nameof(v68), v68);
+                }
 
                 return;
             }
