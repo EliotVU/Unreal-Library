@@ -1062,6 +1062,9 @@ namespace UELib
         public static void Read(this IUnrealStream stream, out UArray<UName> array) => ReadArray(stream, out array);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UArray<string> array) => ReadArray(stream, out array);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
             where TKey : UName
             where TValue : UObject =>
