@@ -10,6 +10,7 @@ using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
+using UELib.Branch.UE2.SC;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
@@ -220,12 +221,25 @@ namespace UELib
                 /// </summary>
                 [Build(99, 117, 5u, 8u)] UT2003,
 
-                [Build(100, 17)] SC1,
+                /// <summary>
+                /// Tom Clancy's Splinter Cell
+                ///
+                /// 100/017
+                /// </summary>
+                [Build(100, 17, BuildGeneration.SC)] SC1,
 
                 /// <summary>
                 /// 100/058
                 /// </summary>
                 [Build(100, 58)] XIII,
+
+                /// <summary>
+                /// Tom Clancy's Splinter Cell: Chaos Theory
+                ///
+                /// 100/120
+                /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchSC))]
+                [Build(100, 120, BuildGeneration.SC)] SC3,
 
                 /// <summary>
                 /// 110/2609
@@ -1159,6 +1173,14 @@ namespace UELib
                 SetupBranch(stream.Package);
                 Debug.Assert(stream.Package.Branch != null);
                 Console.WriteLine("Branch:" + stream.Package.Branch);
+#if SPLINTERCELL
+                // SC3
+                if (stream.Package.Build == BuildGeneration.SC &&
+                    stream.LicenseeVersion >= 83)
+                {
+                    stream.Read(out int v08);
+                }
+#endif
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -1285,7 +1307,7 @@ namespace UELib
                     string scSaveInfo = stream.ReadText();
                 }
 #endif
-                if (stream.Version < 68)
+                if (stream.Version < 68) 
                 {
                     HeritageCount = stream.ReadInt32();
                     Contract.Assert(HeritageCount > 0);
@@ -1315,10 +1337,10 @@ namespace UELib
                 }
 #endif
 #if SPLINTERCELL
-                if (stream.Package.Build == GameBuild.BuildName.SC1 &&
+                if (stream.Package.Build == BuildGeneration.SC &&
                     stream.LicenseeVersion >= 12)
                 {
-                    // compiled-constant: 0xff0adde
+                    // compiled-constant: SC1: 0xff0adde, SC3: DE AD F0 0F
                     stream.Read(out int uStack_10c);
 
                     // An FString converted to an FArray? Concatenating appUserName, appComputerName, appBaseDir, and appTimestamp.

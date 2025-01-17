@@ -45,6 +45,69 @@ namespace UELib.Core
         {
             base.Deserialize();
 
+#if SPLINTERCELL
+            if (Package.Build == BuildGeneration.SC)
+            {
+                // Always 0x0100BB00 but the first four digits appear to increment by 1 per object;
+                // -- BB00 is always the same for all sounds, but differs per package.
+                _Buffer.Read(out uint v30);
+                Record(nameof(v30), v30);
+
+                if (_Buffer.LicenseeVersion < 31)
+                {
+                    _Buffer.Read(out int v04);
+                    Record(nameof(v04), v04);
+
+                    _Buffer.Read(out string v1c);
+                    Record(nameof(v1c), v1c);
+                }
+
+                if (_Buffer.LicenseeVersion >= 72)
+                {
+                    // 0xFFFFFFFF
+                    _Buffer.Read(out int v38);
+                    Record(nameof(v38), v38);
+                }
+
+                if (_Buffer.LicenseeVersion >= 98)
+                {
+                    _Buffer.Read(out UObject v3c);
+                    Record(nameof(v3c), v3c);
+                }
+
+                if (_Buffer.LicenseeVersion >= 117)
+                {
+                    _Buffer.Read(out int v44);
+                    Record(nameof(v44), v44);
+                }
+
+                if (_Buffer.LicenseeVersion >= 81)
+                {
+                    // bBinData?
+                    _Buffer.Read(out bool v40);
+                    Record(nameof(v40), v40);
+
+                    // Relative path to the sound's .bin file
+                    _Buffer.Read(out string v48);
+                    Record(nameof(v48), v48);
+
+                    // No native serialization, maybe as a ScriptProperty
+                    // bLipsyncData?
+                    bool v4c = false;
+                    if (v40 && v4c)
+                    {
+                        // lip-sync data path
+                        _Buffer.Read(out string dataPath);
+                        Record(nameof(dataPath), dataPath);
+                    }
+                }
+
+                if (_Buffer.LicenseeVersion > 0)
+                {
+                    return;
+                }
+            }
+#endif
             FileType = _Buffer.ReadNameReference();
             Record(nameof(FileType), FileType);
 #if HP
