@@ -35,11 +35,6 @@ namespace UELib
         Flesh,
 
         /// <summary>
-        /// Unreal Engine 2 based, Splinter Cell series 1,4
-        /// </summary>
-        SC,
-
-        /// <summary>
         /// Unreal Engine 2 based, offline version for the Splinter Cell series.
         /// </summary>
         SCX,

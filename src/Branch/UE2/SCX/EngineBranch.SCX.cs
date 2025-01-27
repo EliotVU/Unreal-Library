@@ -1,8 +1,8 @@
-﻿namespace UELib.Branch.UE2.SC
+﻿namespace UELib.Branch.UE2.SCX
 {
-    public class EngineBranchSC : DefaultEngineBranch
+    public class EngineBranchSCX : DefaultEngineBranch
     {
-        public EngineBranchSC(BuildGeneration generation) : base(BuildGeneration.UE2)
+        public EngineBranchSCX(BuildGeneration generation) : base(BuildGeneration.UE2)
         {
         }
 
@@ -14,7 +14,7 @@
                 return;
             }
 
-            SetupSerializer<PackageSerializerSC>();
+            SetupSerializer<PackageSerializerSCX>();
         }
     }
 }

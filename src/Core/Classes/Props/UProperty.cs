@@ -72,10 +72,11 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-#if SPLINTERCELL
-            if (Package.Build == BuildGeneration.SC &&
+#if SPLINTERCELLX
+            if (Package.Build == BuildGeneration.SCX &&
                 _Buffer.LicenseeVersion >= 15)
             {
+                // 32bit => 16bit
                 ArrayDim = _Buffer.ReadUInt16();
                 Record(nameof(ArrayDim), ArrayDim);
 
@@ -85,8 +86,8 @@ namespace UELib.Core
                 _Buffer.Read(out CategoryName);
                 Record(nameof(CategoryName), CategoryName);
 
-                // FIXME: Unconditional, probably introduced with SC2
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.SC3)
+                // FIXME: Unknown version, attested without a version check since SC3 and SC4.
+                if (_Buffer.LicenseeVersion > 17) // 17 = newer than SC1
                 {
                     // Music? Some kind of alternative to category name
                     _Buffer.Read(out UName v68);

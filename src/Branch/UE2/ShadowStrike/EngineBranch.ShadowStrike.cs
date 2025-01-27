@@ -13,13 +13,18 @@ namespace UELib.Branch.UE2.ShadowStrike
         {
             var tokenMap = base.BuildTokenMap(linker);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.SC_DA_Online)
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.SCDA_Online)
             {
                 // TODO: All tokens
                 tokenMap[0x28] = typeof(UStruct.UByteCodeDecompiler.NativeParameterToken);
             }
 
             return tokenMap;
+        }
+
+        protected override void SetupSerializer(UnrealPackage linker)
+        {
+            SetupSerializer<PackageSerializerShadowStrike>();
         }
     }
 }

@@ -215,9 +215,9 @@ namespace UELib.Core
                 Record(nameof(transformersEndLine), transformersEndLine);
             }
 #endif
-#if SPLINTERCELL
+#if SPLINTERCELLX
             // Probably a backport mistake, this should appear before Line and TextPos
-            if (Package.Build == BuildGeneration.SC &&
+            if (Package.Build == BuildGeneration.SCX &&
                 _Buffer.LicenseeVersion >= 39)
             {
                 CppText = _Buffer.ReadObject<UTextBuffer>();

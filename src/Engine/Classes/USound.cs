@@ -45,19 +45,24 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-#if SPLINTERCELL
-            if (Package.Build == BuildGeneration.SC)
+#if SPLINTERCELLX
+            if (Package.Build == BuildGeneration.SCX)
             {
                 // Always 0x0100BB00 but the first four digits appear to increment by 1 per object;
                 // -- BB00 is always the same for all sounds, but differs per package.
+                // Probably representing SoundFlags
                 _Buffer.Read(out uint v30);
                 Record(nameof(v30), v30);
 
                 if (_Buffer.LicenseeVersion < 31)
                 {
-                    _Buffer.Read(out int v04);
+                    // bBinData?
+                    // same as v40
+                    _Buffer.Read(out bool v04);
                     Record(nameof(v04), v04);
 
+                    // Relative path to the sound's .bin file
+                    // same as v48
                     _Buffer.Read(out string v1c);
                     Record(nameof(v1c), v1c);
                 }

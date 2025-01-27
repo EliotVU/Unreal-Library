@@ -310,12 +310,15 @@ namespace UELib
         public int ReadNameIndex(out int num)
         {
             int index = ReadIndex();
+#if SHADOWSTRIKE
+            if (Archive.Package.Build == BuildGeneration.ShadowStrike)
+            {
+                int externalIndex = ReadIndex();
+            }
+#endif
             if (Archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
 #if BIOSHOCK
                 || Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
-#endif
-#if SHADOW_STRIKE
-                || Archive.Package.Build == BuildGeneration.ShadowStrike
 #endif
                )
             {
