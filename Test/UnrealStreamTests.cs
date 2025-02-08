@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
@@ -66,10 +67,22 @@ namespace Eliot.UELib.Test
             using var writer = new UnrealWriter(stream, stream);
             writer.Seek(sizeof(int), SeekOrigin.Begin);
             writer.WriteString(text);
+            if (text.Any(c => c >= 127))
+            {
+                writer.WriteUnicode(text);
+            }
+            else
+            {
+                writer.WriteAnsi(text);
+            }
 
             using var reader = new UnrealReader(stream, stream);
             stream.Seek(sizeof(int), SeekOrigin.Begin);
             string readString = reader.ReadString();
+            Assert.AreEqual(text, readString);
+            readString = text.Any(c => c >= 127) 
+                ? reader.ReadUnicode() 
+                : reader.ReadAnsi();
             Assert.AreEqual(text, readString);
         }
 

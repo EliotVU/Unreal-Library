@@ -73,7 +73,7 @@ namespace Eliot.UELib.Benchmark
 
         public void Skip(int bytes)
         {
-            throw new NotImplementedException();
+            Position += bytes;
         }
 
         public long Position
@@ -91,6 +91,15 @@ namespace Eliot.UELib.Benchmark
         public long Seek(long offset, SeekOrigin origin)
         {
             return BaseStream.Seek(offset, origin);
+        }
+
+        public IUnrealStream Record(string name, object? value)
+        {
+            return this;
+        }
+
+        public void ConformRecordPosition()
+        {
         }
     }
 }
