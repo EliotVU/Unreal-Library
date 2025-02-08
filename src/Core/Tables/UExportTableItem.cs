@@ -4,6 +4,8 @@ using System.IO;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core;
+using UELib.Flags;
+using UELib.Services;
 
 namespace UELib
 {
@@ -12,6 +14,9 @@ namespace UELib
     /// </summary>
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
+        /// <summary>
+        /// Displaced with <see cref="PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits"/>
+        /// </summary>
         [Obsolete] public const int VObjectFlagsToULONG = 195;
 
         #region Serialized Members
@@ -38,6 +43,7 @@ namespace UELib
 
         private int _TemplateIndex;
 
+        [BuildGeneration(BuildGeneration.UE4)]
         public int TemplateIndex
         {
             get => _TemplateIndex;
@@ -48,6 +54,7 @@ namespace UELib
 
         private int _ArchetypeIndex;
 
+        [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
         public int ArchetypeIndex
         {
             get => _ArchetypeIndex;
@@ -90,75 +97,241 @@ namespace UELib
         }
 
         /// <summary>
-        /// Object flags, such as Public, Protected and Private.
-        /// 32bit aligned.
+        /// The <see cref="ObjectFlagsLO"/> such as Public, Protected and Private.
         /// </summary>
         public ulong ObjectFlags;
 
         /// <summary>
-        /// Object size in bytes.
+        /// The object size in bytes.
         /// </summary>
         public int SerialSize;
 
         /// <summary>
-        /// Object offset in bytes. Starting from the beginning of a file.
+        /// The object offset in bytes. Starting from the beginning of a file.
         /// </summary>
         public int SerialOffset;
 
-        public uint ExportFlags;
+        /// <summary>
+        /// The export flags to describe how this object was added to the export table.
+        /// </summary>
+        [BuildGeneration(BuildGeneration.UE3)] public uint ExportFlags;
 
         /// <summary>
         /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.ArchetypeAddedToExports"/>
         /// or higher than <see cref="PackageObjectLegacyVersion.ComponentMapDeprecated"/>
         /// </summary>
-        public UMap<UName, int> ComponentMap;
+        [BuildGeneration(BuildGeneration.UE3)] public UMap<UName, int> ComponentMap;
 
-        //public List<int> NetObjects;
+        /// <summary>
+        /// The count of net objects for each generation <see cref="UGenerationTableItem.NetObjectCount"/> in this (exported) package.
+        /// 
+        /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/>
+        /// </summary>
+        [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
+        public UArray<int> GenerationNetObjectCount;
 
+        /// <summary>
+        /// The <see cref="UnrealPackage.PackageFileSummary.Guid"/> of the package that this object was exported from.
+        /// </summary>
+        [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
         public UGuid PackageGuid;
-        public uint PackageFlags;
 
-        public bool IsNotForServer;
-        public bool IsNotForClient;
-        public bool IsForcedExport;
-        public bool IsNotForEditorGame;
-        public bool IsAsset;
+        /// <summary>
+        /// The <see cref="UnrealPackage.PackageFileSummary.PackageFlags"/> of the package that this object was exported from.
+        /// </summary>
+        [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
+        public uint PackageFlags;
+        //public UnrealFlags<PackageFlag> PackageFlags;
+
+        [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForServer;
+        [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForClient;
+        [BuildGeneration(BuildGeneration.UE4)] public bool IsForcedExport;
+        [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForEditorGame;
+        [BuildGeneration(BuildGeneration.UE4)] public bool IsAsset;
 
         #endregion
 
-        // @Warning - Only supports Official builds.
         public void Serialize(IUnrealStream stream)
         {
-            stream.Write(_ClassIndex);
-            stream.Write(_SuperIndex);
+            stream.WriteIndex(_ClassIndex);
+            stream.WriteIndex(_SuperIndex);
             stream.Write(_OuterIndex);
+#if BIOSHOCK
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+                stream.Version >= 132)
+            {
+                LibServices.LogService.SilentException(
+                    new NotSupportedException("Missing an integer at " + stream.Position));
+                // Unknown meaning and persisted, cannot re-construct!
+                //stream.Write(0);
+
+                // Assuming we are overriding...
+                stream.Skip(sizeof(int));
+            }
+#endif
             stream.Write(_ObjectName);
             if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
             {
-                _ArchetypeIndex = stream.ReadInt32();
+                // Not using write index here because it's been deprecated for this version.
+                stream.Write(_ArchetypeIndex);
             }
+#if BATMAN
+            if (stream.Package.Build == BuildGeneration.RSS)
+            {
+                LibServices.LogService.SilentException(
+                    new NotSupportedException("Missing an integer at " + stream.Position));
+                // Assuming we are overriding...
+                stream.Skip(sizeof(int));
+            }
+#endif
+#if BIOSHOCK
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+                stream.LicenseeVersion >= 40)
+            {
+                stream.Write(ObjectFlags);
 
+                goto streamSerialSize;
+            }
+#endif
             stream.Write(stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits
                 ? ObjectFlags
                 : (uint)ObjectFlags);
+
+        streamSerialSize:
             stream.WriteIndex(SerialSize); // Assumes SerialSize has been updated to @Object's buffer size.
             if (SerialSize > 0 || stream.Version >= (uint)PackageObjectLegacyVersion.SerialSizeConditionRemoved)
             {
+#if ROCKETLEAGUE
+                // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
+
+                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                    stream.LicenseeVersion >= 22)
+                {
+                    stream.Write((long)SerialOffset);
+
+                    goto streamExportFlags;
+                }
+#endif
                 // SerialOffset has to be set and written after this object has been serialized.
                 stream.WriteIndex(SerialOffset); // Assumes the same as @SerialSize comment.
             }
 
-            // TODO: Continue.
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+#if BIOSHOCK
+            // Overlaps with Tribes: Vengeance (130)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+                stream.Version >= 130)
             {
-                throw new NotSupportedException();
+                stream.Skip(sizeof(int));
+            }
+#endif
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+            {
+                return;
+            }
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
+#if ALPHAPROTOCOL
+                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
+#endif
+#if TRANSFORMERS
+                && (stream.Package.Build != BuildGeneration.HMS ||
+                    stream.LicenseeVersion < 37)
+#endif
+               )
+            {
+                if (ComponentMap == null)
+                {
+                    stream.Write(0);
+                }
+                else
+                {
+                    stream.Write(ComponentMap.Count);
+                    foreach (var keyValuePair in ComponentMap)
+                    {
+                        stream.Write(keyValuePair.Key);
+                        stream.Write(keyValuePair.Value);
+                    }
+                }
+            }
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ExportFlagsAddedToExports)
+            {
+                return;
+            }
+
+        streamExportFlags:
+            stream.Write(ExportFlags);
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded)
+            {
+                return;
+            }
+
+#if TRANSFORMERS
+            if (stream.Package.Build == BuildGeneration.HMS &&
+                stream.LicenseeVersion >= 116)
+            {
+                LibServices.LogService.SilentException(
+                    new NotSupportedException("Missing a byte at " + stream.Position));
+
+                const byte flag = 0;
+                stream.Write(flag);
+
+                if (flag == 0)
+                {
+                    return;
+                }
+            }
+#endif
+#if BIOSHOCK
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite)
+            {
+                LibServices.LogService.SilentException(new NotSupportedException("Missing data at " + stream.Position));
+
+                uint unk = 0;
+                stream.Write(unk);
+
+                if (unk != 1)
+                {
+                    return;
+                }
+
+                uint flags = 0;
+                stream.Write(flags);
+
+                if ((flags & 1) != 0x0)
+                {
+                    // Perhaps PackageNetObjectCount?
+                    stream.Write((uint)0);
+                }
+
+                // Some kind of guid, maybe package?
+                stream.Write(PackageGuid);
+                stream.Write((uint)PackageFlags); // 01000020
+
+                return;
+            }
+#endif
+#if MKKE
+            if (stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
+            {
+#endif
+                stream.WriteArray(GenerationNetObjectCount);
+#if MKKE
+            }
+#endif
+            stream.Write(PackageGuid);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports)
+            {
+                stream.Write((uint)PackageFlags);
             }
         }
 
         public void Deserialize(IUnrealStream stream)
         {
-            _ClassIndex = stream.ReadObjectIndex();
-            _SuperIndex = stream.ReadObjectIndex();
+            _ClassIndex = stream.ReadIndex();
+            _SuperIndex = stream.ReadIndex();
             _OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 #if BIOSHOCK
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
@@ -185,6 +358,7 @@ namespace UELib
                 stream.LicenseeVersion >= 40)
             {
                 ObjectFlags = stream.ReadUInt64();
+
                 goto streamSerialSize;
             }
 #endif
@@ -205,6 +379,7 @@ namespace UELib
                     stream.LicenseeVersion >= 22)
                 {
                     SerialOffset = (int)stream.ReadInt64();
+
                     goto streamExportFlags;
                 }
 #endif
@@ -219,7 +394,9 @@ namespace UELib
             }
 #endif
             if (stream.Version < (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+            {
                 return;
+            }
 
             if (stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
 #if ALPHAPROTOCOL
@@ -242,12 +419,17 @@ namespace UELib
             }
 
             if (stream.Version < (uint)PackageObjectLegacyVersion.ExportFlagsAddedToExports)
+            {
                 return;
+            }
 
         streamExportFlags:
             ExportFlags = stream.ReadUInt32();
             if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded)
+            {
                 return;
+            }
+
 #if TRANSFORMERS
             if (stream.Package.Build == BuildGeneration.HMS &&
                 stream.LicenseeVersion >= 116)
@@ -263,17 +445,21 @@ namespace UELib
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite)
             {
                 uint unk = stream.ReadUInt32();
-                if (unk == 1)
+                if (unk != 1)
                 {
-                    uint flags = stream.ReadUInt32();
-                    if ((flags & 1) != 0x0)
-                    {
-                        stream.ReadUInt32();
-                    }
-
-                    stream.Skip(16); // guid
-                    stream.ReadUInt32(); // 01000020
+                    return;
                 }
+
+                uint flags = stream.ReadUInt32();
+                if ((flags & 1) != 0x0)
+                {
+                    // NetObjectCount?
+                    stream.ReadUInt32();
+                }
+
+                // Some kind of guid, maybe package?
+                stream.ReadStruct(out PackageGuid);
+                stream.Read(out PackageFlags); // 01000020
 
                 return;
             }
@@ -282,15 +468,15 @@ namespace UELib
             if (stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
             {
 #endif
-                int netObjectCount = stream.ReadInt32();
-                stream.Skip(netObjectCount * 4);
+                stream.ReadArray(out GenerationNetObjectCount);
 #if MKKE
             }
 #endif
-            stream.Skip(16); // Package guid
-            if (stream.Version > 486) // 475?  486(> Stargate Worlds)
+            stream.ReadStruct(out PackageGuid);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports)
             {
-                stream.Skip(4); // Package flags
+                stream.Read(out PackageFlags);
             }
         }
 

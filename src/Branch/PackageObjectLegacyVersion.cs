@@ -203,6 +203,12 @@ namespace UELib.Branch
         /// </summary>
         IsModificationAddedToStructMember = GameFFOW,
 
+        /// <summary>
+        ///     Maybe 475? however is not attested in 486(> Stargate Worlds)
+        ///     FIXME: Unknown version
+        /// </summary>
+        PackageFlagsAddedToExports = 487,
+
         [Discardable] GameGOWPC = 490,
 
         /// <summary>

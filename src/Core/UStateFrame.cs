@@ -1,5 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using UELib.Branch;
+using UELib.Services;
 
 namespace UELib.Core
 {
@@ -50,6 +52,13 @@ namespace UELib.Core
                 ? LatentAction
                 : (ushort)LatentAction
             );
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
+                stream.LicenseeVersion >= 25)
+            {
+                LibServices.LogService.SilentException(new NotSupportedException("Unknown data"));
+                stream.Write((uint)0);
+            }
+            
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
                 stream.Write(ref StateStack);
             if (Node != null) stream.Write(Offset);
