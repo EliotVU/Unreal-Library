@@ -23,7 +23,7 @@ namespace Eliot.UELib.Test
             var flagsMap = new ulong[(int)PackageFlag.Max];
             flagsMap[(int)PackageFlag.AllowDownload] = (ulong)DefaultEngineBranch.PackageFlagsDefault.AllowDownload;
             flagsMap[(int)PackageFlag.ServerSideOnly] = (ulong)DefaultEngineBranch.PackageFlagsDefault.ServerSideOnly;
-            var flags = new UnrealFlags<PackageFlag>(serializedFlags, ref flagsMap);
+            var flags = new UnrealFlags<PackageFlag>(serializedFlags, flagsMap);
 
             // Verify mapped flags
             Assert.IsTrue(flags.HasFlag(PackageFlag.AllowDownload));

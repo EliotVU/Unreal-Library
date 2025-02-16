@@ -10,17 +10,11 @@ using UELib.Services;
 namespace UELib
 {
     /// <summary>
-    /// An export table entry, represents a @UObject export within a package.
+    /// An exported resource to assist with the re-construction of any <see cref="UObject"/>
+    /// It describes the name of the object and the objects it's dependent on.
     /// </summary>
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
-        /// <summary>
-        /// Displaced with <see cref="PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits"/>
-        /// </summary>
-        [Obsolete] public const int VObjectFlagsToULONG = 195;
-
-        #region Serialized Members
-
         private int _ClassIndex;
 
         public int ClassIndex
@@ -63,41 +57,8 @@ namespace UELib
 
         [CanBeNull] public UObjectTableItem Archetype => Owner.GetIndexTable(_ArchetypeIndex);
 
-        [Obsolete("Use Class"), Browsable(false)]
-        public UObjectTableItem ClassTable => Owner.GetIndexTable(_ClassIndex);
-
-        [Obsolete] protected override int __ClassIndex => _ClassIndex;
-
-        [Obsolete] [NotNull] protected override string __ClassName => Class?.ObjectName ?? "Class";
-
-        [Obsolete("Use Super"), Browsable(false)]
-        public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
-
-        [Obsolete("Use Super?.ObjectName"), Browsable(false)]
-        public string SuperName
-        {
-            get
-            {
-                var table = SuperTable;
-                return table != null ? table.ObjectName : string.Empty;
-            }
-        }
-
-        [Obsolete("Use Archetype"), Browsable(false)]
-        public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(_ArchetypeIndex);
-
-        [Obsolete("Use Archetype?.ObjectName"), Browsable(false)]
-        public string ArchetypeName
-        {
-            get
-            {
-                var table = ArchetypeTable;
-                return table != null ? table.ObjectName : string.Empty;
-            }
-        }
-
         /// <summary>
-        /// The <see cref="ObjectFlagsLO"/> such as Public, Protected and Private.
+        /// The object flags <see cref="ObjectFlagsLO"/>
         /// </summary>
         public ulong ObjectFlags;
 
@@ -114,13 +75,15 @@ namespace UELib
         /// <summary>
         /// The export flags to describe how this object was added to the export table.
         /// </summary>
-        [BuildGeneration(BuildGeneration.UE3)] public uint ExportFlags;
+        [BuildGeneration(BuildGeneration.UE3)]
+        public uint ExportFlags;
 
         /// <summary>
         /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.ArchetypeAddedToExports"/>
         /// or higher than <see cref="PackageObjectLegacyVersion.ComponentMapDeprecated"/>
         /// </summary>
-        [BuildGeneration(BuildGeneration.UE3)] public UMap<UName, int> ComponentMap;
+        [BuildGeneration(BuildGeneration.UE3)]
+        public UMap<UName, int> ComponentMap;
 
         /// <summary>
         /// The count of net objects for each generation <see cref="UGenerationTableItem.NetObjectCount"/> in this (exported) package.
@@ -149,8 +112,12 @@ namespace UELib
         [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForEditorGame;
         [BuildGeneration(BuildGeneration.UE4)] public bool IsAsset;
 
-        #endregion
-
+        /// <summary>
+        /// Serializes the export to a stream.
+        /// 
+        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UExportTableItem)"/>
+        /// </summary>
+        /// <param name="stream">The output stream</param>
         public void Serialize(IUnrealStream stream)
         {
             stream.WriteIndex(_ClassIndex);
@@ -162,9 +129,6 @@ namespace UELib
             {
                 LibServices.LogService.SilentException(
                     new NotSupportedException("Missing an integer at " + stream.Position));
-                // Unknown meaning and persisted, cannot re-construct!
-                //stream.Write(0);
-
                 // Assuming we are overriding...
                 stream.Skip(sizeof(int));
             }
@@ -221,6 +185,8 @@ namespace UELib
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.Version >= 130)
             {
+                LibServices.LogService.SilentException(
+                    new NotSupportedException("Missing an integer at " + stream.Position));
                 stream.Skip(sizeof(int));
             }
 #endif
@@ -301,12 +267,12 @@ namespace UELib
 
                 if ((flags & 1) != 0x0)
                 {
-                    // Perhaps PackageNetObjectCount?
+                    // Perhaps GenerationNetObjectCount?
                     stream.Write((uint)0);
                 }
 
                 // Some kind of guid, maybe package?
-                stream.Write(PackageGuid);
+                stream.Write(ref PackageGuid);
                 stream.Write((uint)PackageFlags); // 01000020
 
                 return;
@@ -320,7 +286,7 @@ namespace UELib
 #if MKKE
             }
 #endif
-            stream.Write(PackageGuid);
+            stream.Write(ref PackageGuid);
 
             if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports)
             {
@@ -328,6 +294,12 @@ namespace UELib
             }
         }
 
+        /// <summary>
+        /// Deserializes the export from a stream.
+        /// 
+        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UExportTableItem)"/>
+        /// </summary>
+        /// <param name="stream">The input stream</param>
         public void Deserialize(IUnrealStream stream)
         {
             _ClassIndex = stream.ReadIndex();
@@ -408,9 +380,9 @@ namespace UELib
 #endif
                )
             {
-                stream.Read(out int c);
-                ComponentMap = new UMap<UName, int>(c);
-                for (int i = 0; i < c; ++i)
+                stream.Read(out int componentCount);
+                ComponentMap = new UMap<UName, int>(componentCount);
+                for (int i = 0; i < componentCount; ++i)
                 {
                     stream.Read(out UName key);
                     stream.Read(out int value);
@@ -480,6 +452,67 @@ namespace UELib
             }
         }
 
+        public override string GetReferencePath()
+        {
+            return Class != null
+                ? $"{Class.ObjectName}'{GetPath()}'"
+                : $"Class'{GetPath()}'";
+        }
+        
+        public static explicit operator int(UExportTableItem item)
+        {
+            return item.Index + 1;
+        }
+        
+        public override string ToString()
+        {
+            return $"{ObjectName}({Index + 1})";
+        }
+
+        /// <summary>
+        /// Displaced with <see cref="PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits"/>
+        /// </summary>
+        [Obsolete] public const int VObjectFlagsToULONG = 195;
+
+        [Obsolete("Use Class"), Browsable(false)]
+        public UObjectTableItem ClassTable => Owner.GetIndexTable(_ClassIndex);
+
+        [Obsolete] protected override int __ClassIndex => _ClassIndex;
+
+        [Obsolete] [NotNull] protected override string __ClassName => Class?.ObjectName ?? "Class";
+
+        [Obsolete("Use Super"), Browsable(false)]
+        public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
+
+        [Obsolete("Use Super?.ObjectName"), Browsable(false)]
+        public string SuperName
+        {
+            get
+            {
+                var table = SuperTable;
+                return table != null ? table.ObjectName : string.Empty;
+            }
+        }
+
+        [Obsolete("Use Archetype"), Browsable(false)]
+        public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(_ArchetypeIndex);
+
+        [Obsolete("Use Archetype?.ObjectName"), Browsable(false)]
+        public string ArchetypeName
+        {
+            get
+            {
+                var table = ArchetypeTable;
+                return table != null ? table.ObjectName : string.Empty;
+            }
+        }
+
+        [Obsolete("Use ToString()")]
+        public string ToString(bool v)
+        {
+            return ToString();
+        }
+
         [Obsolete] private long _ObjectFlagsOffset;
 
         /// <summary>
@@ -490,29 +523,6 @@ namespace UELib
         {
             Owner.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);
             Owner.Stream.Writer.Write((uint)ObjectFlags);
-        }
-
-        public override string GetReferencePath()
-        {
-            return Class != null
-                ? $"{Class.ObjectName}'{GetPath()}'"
-                : $"Class'{GetPath()}'";
-        }
-
-        public override string ToString()
-        {
-            return $"{ObjectName}({Index + 1})";
-        }
-
-        [Obsolete("Use ToString()")]
-        public string ToString(bool v)
-        {
-            return ToString();
-        }
-
-        public static explicit operator int(UExportTableItem item)
-        {
-            return (item.Index + 1);
         }
     }
 }

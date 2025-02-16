@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.ComTypes;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
+using UELib.Services;
+using UELib.Types;
 
 namespace UELib.Core
 {
@@ -27,7 +31,7 @@ namespace UELib.Core
     /// Instances of this class are deserialized from the exports table entries.
     /// </summary>
     [UnrealRegisterClass]
-    public partial class UObject : object, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
+    public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
         /// <summary>
         /// The package this object resists in.
@@ -99,14 +103,18 @@ namespace UELib.Core
         /// </summary>
         [CanBeNull] public UStateFrame StateFrame;
 
-        #endregion
+        [BuildGeneration(BuildGeneration.UE4)]
+        public UGuid ObjectGuid;
 
-        #region General Members
+        #endregion
 
         [Flags]
         public enum ObjectState : byte
         {
-            Deserialied = 0x01,
+            [Obsolete("Use Deserialized")]
+            Deserialied = Deserialized,
+
+            Deserialized = 0x01,
             Errorlized = 0x02,
             Deserializing = 0x04
         }
@@ -123,10 +131,18 @@ namespace UELib.Core
 
         public BinaryMetaData BinaryMetaData { get; private set; }
 
-        #endregion
-
         #region Constructors
 
+        public virtual void Deserialize(IUnrealStream stream)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual void Serialize(IUnrealStream stream)
+        {
+            throw new NotImplementedException();
+        }
+        
         /// <summary>
         /// Notifies this object instance to make a copy of this object's data from the Owner.Stream and then start deserializing this instance.
         /// </summary>
@@ -141,7 +157,7 @@ namespace UELib.Core
             // e.g. None.
             if (ExportTable.SerialSize == 0)
             {
-                DeserializationState |= ObjectState.Deserialied;
+                DeserializationState |= ObjectState.Deserialized;
                 return;
             }
 
@@ -163,20 +179,19 @@ namespace UELib.Core
                     Deserialize();
                 }
 
-                DeserializationState |= ObjectState.Deserialied;
+                DeserializationState |= ObjectState.Deserialized;
 #if STRICT
                 Debug.Assert(Buffer.Position == Buffer.Length);
 #endif
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
                 ThrownException =
-                    new UnrealException($"Couldn't deserialize object {GetReferencePath()}", e);
+                    new UnrealException($"Couldn't deserialize object {GetReferencePath()} as {GetType()}", exception);
                 ExceptionPosition = _Buffer?.Position ?? -1;
                 DeserializationState |= ObjectState.Errorlized;
 
-                Console.Error.WriteLine($"\r\n> Object deserialization error for {GetReferencePath()} as {GetType()}" +
-                                        $"\r\n> Exception: {ThrownException}");
+                LibServices.LogService.SilentException(ThrownException);
             }
             finally
             {
@@ -342,27 +357,27 @@ namespace UELib.Core
                     // HACK: Ugly work around for unregistered component classes...
                     // Simply for checking for the parent's class is not reliable without importing objects.
                     case UnknownObject _ when _Buffer.Length >= 12 && Archetype != null && IsTemplate():
+                    {
+                        long backupPosition = _Buffer.Position;
+
+                        var fakeComponent = new UComponent();
+                        try
                         {
-                            long backupPosition = _Buffer.Position;
-                            
-                            var fakeComponent = new UComponent();
-                            try
-                            {
-                                DeserializeTemplate(fakeComponent);
-                            }
-                            catch (InvalidCastException exception)
-                            {
-                                Console.Error.WriteLine("Failed attempt to interpret object as a template {0}",
-                                    exception);
-
-                                _Buffer.Position = backupPosition;
-                                _Buffer.ConformRecordPosition();
-
-                                // ISSUE: If the above recorded any data, the data will not be undone.
-                            }
-
-                            break;
+                            DeserializeTemplate(fakeComponent);
                         }
+                        catch (InvalidCastException exception)
+                        {
+                            LibServices.LogService.SilentException(
+                                new Exception("Failed attempt to interpret object as a template {0}", exception));
+
+                            _Buffer.Position = backupPosition;
+                            _Buffer.ConformRecordPosition();
+
+                            // ISSUE: If the above recorded any data, the data will not be undone.
+                        }
+
+                        break;
+                    }
                 }
             }
 
@@ -673,14 +688,14 @@ namespace UELib.Core
             return visitor.Visit(this);
         }
 
-        public static explicit operator int(UObject obj)
+        public static explicit operator int([CanBeNull] UObject obj)
         {
             return obj?._ObjectIndex ?? 0;
         }
 
-        public static explicit operator string(UObject obj)
+        public static explicit operator string([CanBeNull] UObject obj)
         {
-            return obj?.Name;
+            return obj?.Name ?? "none";
         }
 
         /// <summary>

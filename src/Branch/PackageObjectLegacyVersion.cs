@@ -30,6 +30,8 @@ namespace UELib.Branch
         /// </summary>
         Release64 = 64,
 
+        HeritageTableDeprecated = 68,
+
         CharRemapAddedToUFont = 69,
 
         /// <summary>
@@ -121,8 +123,10 @@ namespace UELib.Branch
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
 
+        AddedEngineVersion = 245,
         ExportFlagsAddedToExports = 247,
         ComponentClassBridgeMapDeprecated = 248,
+        AddedTotalHeaderSize = 249,
         SerialSizeConditionRemoved = 249,
 
         // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
@@ -138,8 +142,11 @@ namespace UELib.Branch
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
 
+        AddedFolderName = 269,
+
         ComponentGuidDeprecated = 273,
         ClassGuidDeprecated = 276,
+        AddedCookerVersion = 277,
 
         InterfaceClassesDeprecated = 288,
 
@@ -162,7 +169,7 @@ namespace UELib.Branch
         CompressionAdded = 334,
 
         NumberAddedToName = 343,
-        
+
         [Discardable] GameGOW = 374, // Engine Version: 2451
         [Discardable] GameStranglehold = 375, // Engine Version: 2605
 
@@ -184,16 +191,18 @@ namespace UELib.Branch
         /// </summary>
         StructReferenceAddedToStructMember = GameStranglehold,
 
-        // 417 according to the GoW client
-        LightingChannelsAddedToPoly = 417,
-
-        AddedArrayEnumToUProperty = 401,
-
         /// <summary>
         ///     Oldest attest MOHA (v421), but not MKKE (v472, non standard)
         ///     FIXME: Unknown version
         /// </summary>
         IsCopyAddedToStructMember = GameStranglehold + 1,
+
+        AddedArrayEnumToUProperty = 401,
+
+        AddedDependsTable = 415,
+
+        // 417 according to the GoW client
+        LightingChannelsAddedToPoly = 417,
 
         [Discardable] GameFFOW = 433, // Engine Version: 2917
 
@@ -202,6 +211,8 @@ namespace UELib.Branch
         ///     FIXME: Unknown version
         /// </summary>
         IsModificationAddedToStructMember = GameFFOW,
+
+        AddedPackageSource = 482,
 
         /// <summary>
         ///     Maybe 475? however is not attested in 486(> Stargate Worlds)
@@ -216,8 +227,11 @@ namespace UELib.Branch
         /// </summary>
         SkipSizeAddedToArrayTokenIntrinsics = GameGOWPC + 1,
 
+
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
+
+        AddedAdditionalPackagesToCook = 516,
 
         ComponentMapDeprecated = 543,
 
@@ -230,11 +244,15 @@ namespace UELib.Branch
 
         AddedTextureFileCacheGuidToTexture2D = 567,
 
+        AddedThumbnailTable = 584,
+
         LightmassAdded = 600,
 
         AddedDontSortCategoriesToUClass = 603,
 
         UProcBuildingReferenceAddedToPoly = 606,
+
+        AddedImportExportGuidsTable = 623,
 
         EnumNameAddedToBytePropertyTag = 633,
 
@@ -258,10 +276,15 @@ namespace UELib.Branch
         ForceScriptOrderAddedToUClass = 749,
         SuperReferenceMovedToUStruct = 756,
 
+        AddedTextureAllocations = 767,
+
         AddedClassGroupsToUClass = 789,
         AddedNativeClassNameToUClass = 813,
 
         AddedATITCToUTexture2D = 857,
-        AddedETCToUTexture2D = 864
+        AddedETCToUTexture2D = 864,
+        
+        Next,
+        HighestVersion = Next - 1,
     }
 }

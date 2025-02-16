@@ -9,12 +9,12 @@ using UELib.Core;
 namespace UELib
 {
     /// <summary>
-    /// An internal implementation for the Export and Import table classes.
+    /// An object resource describing the object data that is common to <seealso cref="UExportTableItem"/> and <seealso cref="UImportTableItem"/>
     /// </summary>
     public abstract class UObjectTableItem : UTableItem, IBuffered, IComparable<string>
     {
         /// <summary>
-        /// Reference to the UnrealPackage this object resists in
+        /// The package this object resource belongs to. Not to be confused with <see cref="UPackage"/> for that consider <seealso cref="OuterIndex"/>
         /// </summary>
         public UnrealPackage Owner;
 
@@ -23,11 +23,10 @@ namespace UELib
         ///
         /// Only valid if Owner != null and Owner is fully serialized or on demand.
         /// </summary>
-        public UObject Object;
-
-        #region Serialized Members
+        [CanBeNull] public UObject Object;
 
         protected UName _ObjectName;
+
         public UName ObjectName
         {
             get => _ObjectName;
@@ -35,40 +34,14 @@ namespace UELib
         }
 
         protected int _OuterIndex;
+
         public int OuterIndex
         {
             get => _OuterIndex;
             set => _OuterIndex = value;
         }
 
-        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
-        [Obsolete("Use UExportTableItem.Class"), Browsable(false)] public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
-        [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
         public UObjectTableItem Outer => Owner.GetIndexTable(_OuterIndex);
-
-        [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
-        public string OuterName
-        {
-            get
-            {
-                var table = OuterTable;
-                return table != null ? table._ObjectName : string.Empty;
-            }
-        }
-
-        [Obsolete("Use UExportTableItem.ClassIndex"), Browsable(false)]
-        public int ClassIndex => __ClassIndex;
-
-        [Obsolete]
-        protected virtual int __ClassIndex => 0;
-
-        [Obsolete("Use Class?.ObjectName or UImportTableItem.ClassName"), Browsable(false)]
-        public string ClassName => __ClassName;
-
-        [Obsolete]
-        protected virtual string __ClassName => "";
-
-        #endregion
 
         public IEnumerable<UObjectTableItem> EnumerateOuter()
         {
@@ -84,7 +57,8 @@ namespace UELib
         /// <returns>Full path of object e.g. "Core.Object.Vector"</returns>
         public string GetPath()
         {
-            string group = EnumerateOuter().Aggregate(string.Empty, (current, outer) => $"{outer.ObjectName}.{current}");
+            string group = EnumerateOuter()
+                .Aggregate(string.Empty, (current, outer) => $"{outer.ObjectName}.{current}");
             return $"{group}{ObjectName}";
         }
 
@@ -146,5 +120,34 @@ namespace UELib
         {
             return string.Compare(ObjectName.ToString(), other, StringComparison.Ordinal);
         }
+
+        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
+
+        [Obsolete("Use UExportTableItem.Class"), Browsable(false)]
+        public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
+
+        [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
+
+        [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
+        public string OuterName
+        {
+            get
+            {
+                var table = OuterTable;
+                return table != null ? table._ObjectName : string.Empty;
+            }
+        }
+
+        [Obsolete("Use UExportTableItem.ClassIndex"), Browsable(false)]
+        public int ClassIndex => __ClassIndex;
+
+        [Obsolete]
+        protected virtual int __ClassIndex => 0;
+
+        [Obsolete("Use Class?.ObjectName or UImportTableItem.ClassName"), Browsable(false)]
+        public string ClassName => __ClassName;
+
+        [Obsolete]
+        protected virtual string __ClassName => "";
     }
 }

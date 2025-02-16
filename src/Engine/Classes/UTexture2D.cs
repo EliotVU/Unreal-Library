@@ -12,7 +12,7 @@ namespace UELib.Engine
     {
         public uint SizeX, SizeY;
 
-        public UArray<MipMap2D> Mips;
+        public new UArray<MipMap2D> Mips;
         
         /// <summary>
         /// PVR Texture Compression

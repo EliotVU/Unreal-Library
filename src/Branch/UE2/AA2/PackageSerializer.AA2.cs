@@ -57,7 +57,7 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Serialize(IUnrealStream stream, UImportTableItem item)
         {
-            stream.Write(item.PackageName);
+            stream.Write(item.ClassPackageName);
             stream.Write(item.ClassName);
 
             LibServices.LogService.SilentException(
@@ -71,7 +71,7 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Deserialize(IUnrealStream stream, UImportTableItem item)
         {
-            item.PackageName = stream.ReadNameReference();
+            item.ClassPackageName = stream.ReadNameReference();
             item.ClassName = stream.ReadNameReference();
             byte unkByte = stream.ReadByte();
             Debug.WriteLine(unkByte, "unkByte");

@@ -27,12 +27,6 @@ namespace UELib
             set => _NetObjectCount = value;
         }
 
-        [Obsolete] public object ExportsCount => ExportCount;
-        [Obsolete] public object NamesCount => NameCount;
-        [Obsolete] public object NetObjectsCount => NetObjectCount;
-        
-        [Obsolete] public const int VNetObjectsCount = 322;
-
         public void Serialize(IUnrealStream stream)
         {
             stream.Write(_ExportCount);
@@ -54,5 +48,10 @@ namespace UELib
                 stream.Read(out _NetObjectCount);
             }
         }
+
+        [Obsolete] public object ExportsCount => ExportCount;
+        [Obsolete] public object NamesCount => NameCount;
+        [Obsolete] public object NetObjectsCount => NetObjectCount;
+        [Obsolete] public const int VNetObjectsCount = 322;
     }
 }

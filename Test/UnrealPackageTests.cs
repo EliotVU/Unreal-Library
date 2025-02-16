@@ -126,7 +126,7 @@ namespace Eliot.UELib.Test
         internal static void AssertObjectDeserialization(UObject obj)
         {
             obj.BeginDeserializing();
-            Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialied, obj.GetReferencePath());
+            Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialized, obj.GetReferencePath());
         }
 
         internal static void AssertTokenType<T>(UStruct.UByteCodeDecompiler.Token token)

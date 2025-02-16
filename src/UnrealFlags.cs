@@ -15,7 +15,7 @@ namespace UELib.Flags
             set => _Flags = value;
         }
 
-        public UnrealFlags(ulong flags, ref ulong[] flagsMap)
+        public UnrealFlags(ulong flags, ulong[] flagsMap)
         {
             _Flags = flags;
             _FlagsMap = flagsMap;

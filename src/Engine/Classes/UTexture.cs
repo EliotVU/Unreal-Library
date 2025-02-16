@@ -6,8 +6,10 @@ namespace UELib.Engine
 {
     /// <summary>
     ///     Implements UTexture/Engine.Texture
+    ///     Displaced with UE3 by <see cref="UTexture2D"/>
     /// </summary>
     [UnrealRegisterClass]
+    [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2)]
     public class UTexture : UBitmapMaterial
     {
         public bool HasComp;

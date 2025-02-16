@@ -4,22 +4,34 @@ using UELib.Core;
 namespace UELib
 {
     /// <summary>
-    /// An import table entry, represents a @UObject import within a package.
+    /// An imported resource to assist with the linking of any <see cref="UObject"/>
+    /// It describes the name of the object, its class name, and the package containing that class.
     /// </summary>
     public sealed class UImportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
-        #region Serialized Members
+        private UName _ClassPackageName;
 
-        private UName _PackageName;
+        /// <summary>
+        /// The name of the package that contains the export for the <see cref="ClassName"/>.
+        /// </summary>
+        public UName ClassPackageName
+        {
+            get => _ClassPackageName;
+            set => _ClassPackageName = value;
+        }
 
+        [Obsolete("Renamed to ClassPackageName")]
         public UName PackageName
         {
-            get => _PackageName;
-            set => _PackageName = value;
+            get => _ClassPackageName;
+            set => _ClassPackageName = value;
         }
 
         private UName _ClassName;
 
+        /// <summary>
+        /// The name of the class excluding the prefix "U"
+        /// </summary>
         public UName ClassName
         {
             get => _ClassName;
@@ -29,22 +41,32 @@ namespace UELib
         [Obsolete] protected override string __ClassName => _ClassName;
         [Obsolete] protected override int __ClassIndex => (int)_ClassName;
 
-        #endregion
-
+        /// <summary>
+        /// Serializes the import to a stream.
+        /// 
+        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UImportTableItem)"/>
+        /// </summary>
+        /// <param name="stream">The output stream</param>
         public void Serialize(IUnrealStream stream)
         {
-            stream.Write(_PackageName);
+            stream.Write(_ClassPackageName);
             stream.Write(_ClassName);
             stream.Write(_OuterIndex); // Always an ordinary integer
             stream.Write(_ObjectName);
         }
 
+        /// <summary>
+        /// Deserializes the import from a stream.
+        /// 
+        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Deserialize(IUnrealStream, UImportTableItem)"/>
+        /// </summary>
+        /// <param name="stream">The input stream</param>
         public void Deserialize(IUnrealStream stream)
         {
-            _PackageName = stream.ReadNameReference();
-            _ClassName = stream.ReadNameReference();
-            _OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
-            _ObjectName = stream.ReadNameReference();
+            stream.Read(out _ClassPackageName);
+            stream.Read(out _ClassName);
+            stream.Read(out _OuterIndex); // ObjectIndex, though always written as 32bits regardless of build.
+            stream.Read(out _ObjectName);
         }
 
         public override string GetReferencePath()

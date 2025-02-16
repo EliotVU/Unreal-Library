@@ -60,7 +60,7 @@ namespace UELib.Core
             }
             
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
-                stream.Write(ref StateStack);
+                stream.Write(StateStack);
             if (Node != null) stream.Write(Offset);
         }
 

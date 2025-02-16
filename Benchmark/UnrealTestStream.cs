@@ -9,7 +9,8 @@ namespace Eliot.UELib.Benchmark
 {
     public class UnrealTestArchive : IUnrealArchive
     {
-        public UnrealTestArchive(UnrealPackage package, uint version, uint licenseeVersion = 0, uint ue4Version = 0, bool bigEndianCode = false)
+        public UnrealTestArchive(UnrealPackage package, uint version, uint licenseeVersion = 0, uint ue4Version = 0,
+            bool bigEndianCode = false)
         {
             Package = package;
             Version = version;
@@ -24,7 +25,7 @@ namespace Eliot.UELib.Benchmark
         public uint UE4Version { get; }
         public bool BigEndianCode { get; }
     }
-    
+
     /// Hackish workaround for the issue with UPackageStream requiring a file and path, so that we can perform stream tests without a package.
     public class UnrealTestStream : UnrealReader, IUnrealStream
     {
@@ -56,7 +57,7 @@ namespace Eliot.UELib.Benchmark
             throw new NotImplementedException();
         }
 
-        public new int ReadNameIndex()
+        public int ReadNameIndex()
         {
             throw new NotImplementedException();
         }
@@ -67,6 +68,11 @@ namespace Eliot.UELib.Benchmark
         }
 
         public string ParseName(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WriteName(in UName value)
         {
             throw new NotImplementedException();
         }
@@ -86,6 +92,21 @@ namespace Eliot.UELib.Benchmark
         {
             get => Position;
             set => Position = value;
+        }
+
+        public T ReadObject<T>() where T : UObject
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WriteObject<T>(T value) where T : UObject
+        {
+            throw new NotImplementedException();
+        }
+
+        public new UName ReadName()
+        {
+            return base.ReadName();
         }
 
         public long Seek(long offset, SeekOrigin origin)

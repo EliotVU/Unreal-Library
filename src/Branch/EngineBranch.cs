@@ -111,24 +111,55 @@ namespace UELib.Branch
         }
 
         /// <summary>
+        /// Called right after the <see cref="UnrealPackage.PackageFileSummary"/> has been serialized.
+        /// </summary>
+        /// <param name="linker"></param>
+        /// <param name="stream">the output stream.</param>
+        /// <param name="summary">A reference to the deserialized summary.</param>
+        public virtual void PostSerializeSummary(UnrealPackage linker,
+            IUnrealStream stream,
+            ref UnrealPackage.PackageFileSummary summary)
+        {
+            if (Serializer == null)
+            {
+                SetupSerializer(linker);
+            }
+
+            stream.Serializer = Serializer;
+        }
+        
+        /// <summary>
         /// Called right after the <see cref="UnrealPackage.PackageFileSummary"/> has been deserialized.
         /// </summary>
         /// <param name="linker"></param>
-        /// <param name="stream">The open stream that deserialized the summary.</param>
+        /// <param name="stream">the input stream.</param>
         /// <param name="summary">A reference to the deserialized summary.</param>
         public virtual void PostDeserializeSummary(UnrealPackage linker,
             IUnrealStream stream,
             ref UnrealPackage.PackageFileSummary summary)
         {
-            SetupSerializer(linker);
+            if (Serializer == null)
+            {
+                SetupSerializer(linker);
+            }
+
             stream.Serializer = Serializer;
         }
-
+        
+        /// <summary>
+        /// Called right after the package's tables (Names, Imports, and Exports, etc) have been serialized.
+        /// </summary>
+        /// <param name="linker"></param>
+        /// <param name="stream">the output stream.</param>
+        public virtual void PostSerializePackage(UnrealPackage linker, IUnrealStream stream)
+        {
+        }
+        
         /// <summary>
         /// Called right after the package's tables (Names, Imports, and Exports, etc) have been deserialized.
         /// </summary>
         /// <param name="linker"></param>
-        /// <param name="stream">The open stream that deserialized the package's summary and tables.</param>
+        /// <param name="stream">the input stream.</param>
         public virtual void PostDeserializePackage(UnrealPackage linker, IUnrealStream stream)
         {
         }

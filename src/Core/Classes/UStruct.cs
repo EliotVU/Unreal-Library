@@ -161,7 +161,7 @@ namespace UELib.Core
             if (Package.Build == BuildGeneration.Vengeance &&
                 _Buffer.LicenseeVersion >= 29)
             {
-                int vengeanceUnknownObject = _Buffer.ReadObjectIndex();
+                var vengeanceUnknownObject = _Buffer.ReadObject();
                 Record(nameof(vengeanceUnknownObject), vengeanceUnknownObject);
             }
 #endif
