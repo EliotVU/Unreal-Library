@@ -8,14 +8,19 @@ namespace UELib.Core
     {
         public UBox BoundingBox;
         public USphere BoundingSphere;
-        
+
+        public UPrimitive()
+        {
+            ShouldDeserializeOnDemand = true;
+        }
+
         protected override void Deserialize()
         {
             base.Deserialize();
 
             _Buffer.ReadStruct(out BoundingBox);
             Record(nameof(BoundingBox), BoundingBox);
-            
+
             _Buffer.ReadStruct(out BoundingSphere);
             Record(nameof(BoundingSphere), BoundingSphere);
         }

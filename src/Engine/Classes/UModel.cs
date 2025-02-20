@@ -10,13 +10,7 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UModel : UPrimitive
     {
-        [Output]
-        public UPolys Polys;
-        
-        public UModel()
-        {
-            ShouldDeserializeOnDemand = true;
-        }
+        [Output] public UPolys Polys;
 
         protected override void Deserialize()
         {

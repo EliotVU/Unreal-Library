@@ -13,11 +13,65 @@ namespace UELib.Engine
     }
 
     /// <summary>
-    ///     Implements UAudioComponent/Engine.AudioComponent
+    ///     Implements UExponentialHeightFogComponent/Engine.ExponentialHeightFogComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UAudioComponent : UActorComponent
+    public class UExponentialHeightFogComponent : UActorComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UHeadTrackingComponent/Engine.HeadTrackingComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UHeadTrackingComponent : UActorComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UHeightFogComponent/Engine.HeightFogComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UHeightFogComponent : UActorComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UImageReflectionComponent/Engine.ImageReflectionComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UImageReflectionComponent : UActorComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements URadialBlurComponent/Engine.RadialBlurComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class URadialBlurComponent : UActorComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UWindDirectionalSourceComponent/Engine.WindDirectionalSourceComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UWindDirectionalSourceComponent : UActorComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UWindPointSourceComponent/Engine.WindPointSourceComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UWindPointSourceComponent : UWindDirectionalSourceComponent
     {
     }
 }
