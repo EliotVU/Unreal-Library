@@ -71,12 +71,12 @@
   <PropertyGroup>
     <AssemblyName>Eliot.UELib</AssemblyName>
     <PackageId>$(AssemblyName)</PackageId>
-    <Version>$(VersionPrefix)1.8.0</Version>
+    <Version>$(VersionPrefix)1.8.1</Version>
     <Authors>EliotVU</Authors>
     <Title>$(AssemblyName)</Title>
     <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>
     <PackageTags>UnrealEngine;UnrealScript;Decompiler;UPK;Exporter;Bytecode</PackageTags>
-    <Copyright>2009-2024 Eliot van Uytfanghe. All rights reserved.</Copyright>
+    <Copyright>2009-2025 Eliot van Uytfanghe. All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/EliotVU/Unreal-Library</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/EliotVU/Unreal-Library</RepositoryUrl>
