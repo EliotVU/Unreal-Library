@@ -103,7 +103,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | XIII | 829 | 100/058 |     |
 | Postal 2: Paradise Lost | 1417 | 118/002 | |
 | Tom Clancy's Splinter Cell | 829 | 100/017 | |
-| Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX | (PC) Offline mode version |
+| Tom Clancy's Splinter Cell: Chaos Theory | 829 | 100/120:SCX, 175/000:ShadowStrike | (PC) demo version, Versus mode not supported |
+| Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX, 275/000:ShadowStrike | (PC) Offline mode version, Online mode not supported |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Devastation | 600-? | 118-120/004-008 | |

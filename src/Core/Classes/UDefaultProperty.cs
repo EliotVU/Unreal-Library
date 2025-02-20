@@ -1131,6 +1131,14 @@ namespace UELib.Core
                             }
                         }
 
+                        // Hardcoded fix for InterpCurve and InterpCurvePoint.
+                        if (arrayType == PropertyType.None
+                            && (deserializeFlags & DeserializeFlags.WithinStruct) != 0
+                            && string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
+                        {
+                            arrayType = PropertyType.StructProperty;
+                        }
+
                         if (arrayType == PropertyType.None)
                         {
                             propertyValue = "/* Array type was not detected. */";
@@ -1140,11 +1148,6 @@ namespace UELib.Core
                         deserializeFlags |= DeserializeFlags.WithinArray;
                         if ((deserializeFlags & DeserializeFlags.WithinStruct) != 0)
                         {
-                            // Hardcoded fix for InterpCurve and InterpCurvePoint.
-                            if (string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
-                            {
-                                arrayType = PropertyType.StructProperty;
-                            }
 
                             for (var i = 0; i < arraySize; ++i)
                             {

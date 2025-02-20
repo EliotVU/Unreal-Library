@@ -215,6 +215,15 @@ namespace UELib.Core
                 Record(nameof(transformersEndLine), transformersEndLine);
             }
 #endif
+#if SPLINTERCELLX
+            // Probably a backport mistake, this should appear before Line and TextPos
+            if (Package.Build == BuildGeneration.SCX &&
+                _Buffer.LicenseeVersion >= 39)
+            {
+                CppText = _Buffer.ReadObject<UTextBuffer>();
+                Record(nameof(CppText), CppText);
+            }
+#endif
         serializeByteCode:
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);

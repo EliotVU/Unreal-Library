@@ -310,12 +310,15 @@ namespace UELib
         public int ReadNameIndex(out int num)
         {
             int index = ReadIndex();
+#if SHADOWSTRIKE
+            if (Archive.Package.Build == BuildGeneration.ShadowStrike)
+            {
+                int externalIndex = ReadIndex();
+            }
+#endif
             if (Archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
 #if BIOSHOCK
                 || Archive.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock
-#endif
-#if SHADOW_STRIKE
-                || Archive.Package.Build == BuildGeneration.ShadowStrike
 #endif
                )
             {
@@ -1060,6 +1063,9 @@ namespace UELib
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UArray<UName> array) => ReadArray(stream, out array);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UArray<string> array) => ReadArray(stream, out array);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)

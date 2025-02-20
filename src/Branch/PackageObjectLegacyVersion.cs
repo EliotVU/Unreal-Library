@@ -143,6 +143,8 @@ namespace UELib.Branch
 
         InterfaceClassesDeprecated = 288,
 
+        AddedConvexVolumes = 294,
+
         /// <summary>
         ///     Some properties like SizeX, SizeY, Format have been displaced to ScriptProperties.
         /// </summary>

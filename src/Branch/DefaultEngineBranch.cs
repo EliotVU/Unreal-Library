@@ -374,7 +374,8 @@ namespace UELib.Branch
                     tokenMap[0x4E] = typeof(LocalVariableToken<byte>);
                     tokenMap[0x4F] = typeof(LocalVariableToken<bool>);
                     tokenMap[0x50] = typeof(LocalVariableToken<UObject>);
-                    tokenMap[0x51] = typeof(LocalVariableToken<dynamic>);
+                    // FIXME: Wrong, is there really even a dynamic type???
+                    //tokenMap[0x51] = typeof(LocalVariableToken<dynamic>);
 
                     tokenMap[0x5B] = typeof(ByteConstToken);
                     break;

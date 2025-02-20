@@ -10,6 +10,7 @@ using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
+using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
@@ -220,12 +221,33 @@ namespace UELib
                 /// </summary>
                 [Build(99, 117, 5u, 8u)] UT2003,
 
-                [Build(100, 17)] SC1,
+                /// <summary>
+                /// Tom Clancy's Splinter Cell
+                ///
+                /// 100/017
+                /// </summary>
+                [Build(100, 17, BuildGeneration.SCX)] SC,
 
                 /// <summary>
                 /// 100/058
                 /// </summary>
                 [Build(100, 58)] XIII,
+
+                /// <summary>
+                /// Tom Clancy's Splinter Cell: Chaos Theory - Demo
+                ///
+                /// 100/120
+                /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchSCX))] [Build(100, 120, BuildGeneration.SCX)]
+                SCCT_Demo,
+
+                /// <summary>
+                /// Tom Clancy's Splinter Cell: Double Agent - Offline
+                ///
+                /// 100/167
+                /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchSCX))] [Build(100, 167, BuildGeneration.SCX)]
+                SCDA_Offline,
 
                 /// <summary>
                 /// 110/2609
@@ -350,19 +372,26 @@ namespace UELib
                 [Build(159, 29u, BuildGeneration.UE2_5)]
                 Spellborn,
 
-                [Build(100, 167, BuildGeneration.SCX)]
-                SC_DA_Offline,
+                /// <summary>
+                /// Tom Clancy's Splinter Cell: Chaos Theory - Versus
+                ///
+                /// 175/000
+                /// </summary>
+                [Build(175, 0, BuildGeneration.ShadowStrike)]
+                [BuildEngineBranch(typeof(EngineBranchShadowStrike))]
+                [OverridePackageVersion(120, 175)]
+                SCCT_Versus,
 
                 /// <summary>
-                /// Tom Clancy's Splinter Cell: Double Agent
+                /// Tom Clancy's Splinter Cell: Double Agent - Online
                 ///
                 /// 275/000
-                /// Overriden to version 120, so we can pickup the CppText property in UStruct (although this might be a ProcessedText reference)
+                /// Overriden to version 120, so we can pick up the CppText property in UStruct (although this might be a ProcessedText reference)
                 /// </summary>
                 [Build(275, 0, BuildGeneration.ShadowStrike)]
                 [BuildEngineBranch(typeof(EngineBranchShadowStrike))]
-                [OverridePackageVersion(120)]
-                SC_DA_Online,
+                [OverridePackageVersion(120, 275)]
+                SCDA_Online,
 
                 /// <summary>
                 /// EndWar
@@ -384,7 +413,8 @@ namespace UELib
                 ///
                 /// 375/025
                 /// </summary>
-                [Build(375, 25, BuildGeneration.Midway3)] Stranglehold,
+                [Build(375, 25, BuildGeneration.Midway3)]
+                Stranglehold,
 
                 /// <summary>
                 /// Medal of Honor: Airborne
@@ -1159,6 +1189,14 @@ namespace UELib
                 SetupBranch(stream.Package);
                 Debug.Assert(stream.Package.Branch != null);
                 Console.WriteLine("Branch:" + stream.Package.Branch);
+#if SPLINTERCELLX
+                // Starting with SC3
+                if (stream.Package.Build == BuildGeneration.SCX &&
+                    stream.LicenseeVersion >= 83)
+                {
+                    stream.Read(out int v08);
+                }
+#endif
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -1204,14 +1242,7 @@ namespace UELib
                 {
                     FolderName = stream.ReadString();
                 }
-#if SHADOW_STRIKE
-                if (stream.Package.Build == BuildGeneration.SCX &&
-                    stream.LicenseeVersion >= 83)
-                {
-                    // reads 0
-                    int scInt32 = stream.ReadInt32();
-                }
-#endif
+
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
 #if HAWKEN || GIGANTIC
@@ -1275,16 +1306,7 @@ namespace UELib
                                   + " Exports Count:" + ExportCount + " Exports Offset:" + ExportOffset
                                   + " Imports Count:" + ImportCount + " Imports Offset:" + ImportOffset
                 );
-#if SHADOW_STRIKE
-                // No version check, not serialized for DA_Online.
-                if (stream.Package.Build == BuildGeneration.SCX)
-                {
-                    int scInt32_2 = stream.ReadInt32();
-                    Debug.Assert(scInt32_2 == 0xff0adde);
-                    
-                    string scSaveInfo = stream.ReadText();
-                }
-#endif
+
                 if (stream.Version < 68)
                 {
                     HeritageCount = stream.ReadInt32();
@@ -1314,11 +1336,11 @@ namespace UELib
                     Console.WriteLine("Unknown:" + unknown);
                 }
 #endif
-#if SPLINTERCELL
-                if (stream.Package.Build == GameBuild.BuildName.SC1 &&
+#if SPLINTERCELLX
+                if (stream.Package.Build == BuildGeneration.SCX &&
                     stream.LicenseeVersion >= 12)
                 {
-                    // compiled-constant: 0xff0adde
+                    // compiled-constant: SC1: 0xff0adde, SC3: DE AD F0 0F
                     stream.Read(out int uStack_10c);
 
                     // An FString converted to an FArray? Concatenating appUserName, appComputerName, appBaseDir, and appTimestamp.
