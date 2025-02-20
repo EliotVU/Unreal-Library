@@ -1,5 +1,11 @@
 #
 
+## [1.8.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.8.1)
+
+* Fixed and improved support for Template/UComponent objects (UE3)
+* d3968286 Fixed support for Borderlands 2 (bad token)
+* 655dd279 Fixed support for SCX and ShadowStrike based games.
+
 ## [1.8.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.8.0)
 
 * 89401543 Support for Stranglehold
