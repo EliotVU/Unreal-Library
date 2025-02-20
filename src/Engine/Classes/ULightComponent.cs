@@ -1,4 +1,5 @@
 ﻿using UELib.Branch;
+using UELib.Core;
 
 namespace UELib.Engine
 {
@@ -9,8 +10,22 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class ULightComponent : UActorComponent
     {
-        // TODO: InclusionConvexVolumes, ExclusionConvexVolumes
-        protected override void Deserialize() => base.Deserialize();
+        public UArray<UConvexVolume> InclusionConvexVolumes;
+        public UArray<UConvexVolume> ExclusionConvexVolumes;
+
+        protected override void Deserialize()
+        {
+            base.Deserialize();
+
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedConvexVolumes)
+            {
+                _Buffer.ReadArray(out InclusionConvexVolumes);
+                Record(nameof(InclusionConvexVolumes), InclusionConvexVolumes);
+
+                _Buffer.ReadArray(out ExclusionConvexVolumes);
+                Record(nameof(ExclusionConvexVolumes), ExclusionConvexVolumes);
+            }
+        }
     }
 
     /// <summary>
