@@ -283,17 +283,23 @@ namespace UELib.Core
             _Buffer.Read(out component.TemplateOwnerClass);
             Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate())
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate(ObjectFlagsHO.PropertiesObject))
             {
                 _Buffer.Read(out component.TemplateName);
                 Record(nameof(component.TemplateName), component.TemplateName);
             }
         }
 
-        public bool IsTemplate()
+        /// <summary>
+        /// Checks if the object is a template.
+        /// An object is considered a template if either it is an object containing the defaults of a <seealso cref="UClass"/> or an archetype.
+        /// 
+        /// FIXME: The <seealso cref="ObjectFlagsHO.ArchetypeObject"/> flag check was added later (Not checked for in GoW), no known version.
+        /// </summary>
+        /// <param name="templateFlags"></param>
+        /// <returns>true if the object is a template.</returns>
+        public bool IsTemplate(ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject)
         {
-            // The ObjectFlagsHO.ArchetypeObject flag check was added later (Not checked for in GoW), no known version.
-            const ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject;
             return HasObjectFlag(templateFlags) || EnumerateOuter().Any(obj => obj.HasObjectFlag(templateFlags));
         }
 
@@ -341,16 +347,18 @@ namespace UELib.Core
 
                     // HACK: Ugly work around for unregistered component classes...
                     // Simply for checking for the parent's class is not reliable without importing objects.
-                    case UnknownObject _ when _Buffer.Length >= 12 && Archetype != null && IsTemplate():
+                    case UnknownObject _ when _Buffer.Length >= 12
+                                              && IsTemplate()
+                                              && Class!.Name.EndsWith("Component"):
                         {
                             long backupPosition = _Buffer.Position;
-                            
+
                             var fakeComponent = new UComponent();
                             try
                             {
                                 DeserializeTemplate(fakeComponent);
                             }
-                            catch (InvalidCastException exception)
+                            catch (Exception exception)
                             {
                                 Console.Error.WriteLine("Failed attempt to interpret object as a template {0}",
                                     exception);
