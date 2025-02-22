@@ -195,7 +195,7 @@ namespace UELib.Core
                 Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
                 Record(nameof(TextPos), TextPos);
-                // Version < 200 (EndWar)
+                // Version < 200 (EndWar, R6 Vegas)
                 //var MinAlignment = _Buffer.ReadInt32();
                 //Record(nameof(MinAlignment), MinAlignment);
             }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -309,7 +310,19 @@ namespace UELib
 
         public int ReadNameIndex(out int num)
         {
-            int index = ReadIndex();
+            int index;
+#if R6
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                // Some changes were made with licensee version 71, but I couldn't make much sense of it.
+                index = ReadInt32();
+                num = (index >> 18) - 1;
+
+                // only the 18 lower bits are used.
+                return index & 0x3FFFF;
+            }
+#endif
+            index = ReadIndex();
 #if SHADOWSTRIKE
             if (Archive.Package.Build == BuildGeneration.ShadowStrike)
             {

@@ -15,6 +15,7 @@ using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
 using UELib.Branch.UE3.MOH;
+using UELib.Branch.UE3.R6;
 using UELib.Branch.UE3.RSS;
 using UELib.Branch.UE4;
 using UELib.Flags;
@@ -381,6 +382,18 @@ namespace UELib
                 [BuildEngineBranch(typeof(EngineBranchShadowStrike))]
                 [OverridePackageVersion(120, 175)]
                 SCCT_Versus,
+
+                /// <summary>
+                /// Tom Clancy's Rainbow Six: Vegas
+                /// 
+                /// 241/066-071
+                ///
+                /// extensions: [.u, .upk, .uxx, .rmpc, .uppc, .rm3, .up3, .rsm]
+                /// </summary>
+                [Build(241, 66u)]
+                [Build(241, 71u)] // Vegas 2
+                [BuildEngineBranch(typeof(EngineBranchKeller))]
+                R6Vegas,
 
                 /// <summary>
                 /// Tom Clancy's Splinter Cell: Double Agent - Online
@@ -1195,6 +1208,26 @@ namespace UELib
                     stream.LicenseeVersion >= 83)
                 {
                     stream.Read(out int v08);
+                }
+#endif
+#if R6
+                if (stream.Package.Build == GameBuild.BuildName.R6Vegas)
+                {
+                    if (stream.LicenseeVersion >= 48)
+                    {
+                        // always zero
+                        stream.Read(out int v08);
+                    }
+
+                    if (stream.LicenseeVersion >= 49)
+                    {
+                        // it appears next to the LicenseeVersion, so it's probably an internal version
+                        // always 14, but 15 for V2
+                        stream.Read(out int v0C);
+
+                        // Let's assume it's the cooker version (it has the same offset as GoW 2006, which has cooker version 32)
+                        CookerVersion = v0C;
+                    }
                 }
 #endif
 #if BIOSHOCK

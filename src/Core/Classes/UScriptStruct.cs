@@ -11,8 +11,8 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            // FIXME: Version
-            if (_Buffer.Version >= 223)
+            // FIXME: Version 241 because it does not exist in R6 Vegas, nor EndWar 222
+            if (_Buffer.Version > 241)
             {
                 StructFlags = _Buffer.ReadUInt32();
                 Record(nameof(StructFlags), (StructFlags)StructFlags);
