@@ -16,6 +16,7 @@ namespace UELib.Branch.UE3.SFX
             if (stream.LicenseeVersion >= 102)
             {
                 stream.Write((uint)item._Flags);
+
                 return;
             }
 
@@ -33,7 +34,9 @@ namespace UELib.Branch.UE3.SFX
 
             if (stream.LicenseeVersion >= 102)
             {
-                stream.Read(out item._Flags);
+                stream.Read(out uint flags);
+                item._Flags = flags;
+
                 return;
             }
             
