@@ -201,7 +201,14 @@ namespace UELib.Core
                 _Buffer.ReadStruct(out ClassGuid);
                 Record(nameof(ClassGuid), ClassGuid);
             }
-
+#if R6
+            // No version check
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                _Buffer.ReadArray(out UArray<UName> v100);
+                Record(nameof(v100), v100);
+            }
+#endif
         skipClassGuid:
 
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDependenciesDeprecated)

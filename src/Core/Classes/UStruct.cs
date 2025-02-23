@@ -195,7 +195,7 @@ namespace UELib.Core
                 Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
                 Record(nameof(TextPos), TextPos);
-                // Version >= UE3 && Version < 200 (RoboHordes, EndWar)
+                // Version >= UE3 && Version < 200 (RoboHordes, EndWar, R6Vegas)
                 //var MinAlignment = _Buffer.ReadInt32();
                 //Record(nameof(MinAlignment), MinAlignment);
             }
