@@ -163,6 +163,34 @@ namespace UELib.Engine
                     stream.Read(out Ruleset);
                 }
             }
+#if R6
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                if (stream.LicenseeVersion >= 18)
+                {
+                    stream.Read(out UObject v8c);
+                }
+                else if (stream.LicenseeVersion < 39)
+                {
+                    stream.Read(out UObject v30);
+                }
+
+                if (stream.LicenseeVersion < 17 || stream.LicenseeVersion >= 40)
+                {
+                    stream.Read(out UObject v90);
+                }
+
+                if (stream.LicenseeVersion == 23)
+                {
+                    stream.Read(out UArray<UObject> v10);
+                }
+
+                if (stream.LicenseeVersion >= 24)
+                {
+                    stream.Read(out UArray<UPlane> v80);
+                }
+            }
+#endif
         }
 
         public void Serialize(IUnrealStream stream)

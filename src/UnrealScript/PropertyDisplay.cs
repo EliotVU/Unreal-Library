@@ -55,6 +55,12 @@ namespace UELib.UnrealScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatLiteral(bool input)
+        {
+            return input ? "true" : "false";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatLiteral(short input)
         {
             return input.ToString("D", CultureInfo.InvariantCulture);

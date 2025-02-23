@@ -1,46 +1,40 @@
-﻿using UELib.Annotations;
+﻿using System.Diagnostics.Contracts;
+using System.Text;
+using UELib.Annotations;
 
-namespace UELib.Branch.UE3.SFX
+namespace UELib.Branch.UE3.R6
 {
     [UsedImplicitly]
-    public class PackageSerializerSFX : PackageSerializerBase
+    public class PackageSerializerKeller : PackageSerializerBase
     {
         public override void Serialize(IUnrealStream stream, UNameTableItem item)
         {
-            stream.Write(item._Name);
-            if (stream.LicenseeVersion >= 142 && stream.LicenseeVersion != 1008)
+            if (stream.LicenseeVersion < 71)
             {
-                return;
-            }
-
-            if (stream.LicenseeVersion >= 102)
-            {
-                stream.Write((uint)item._Flags);
+                item.Serialize(stream);
 
                 return;
             }
 
-            stream.Write(item._Flags);
+            byte[] buffer = Encoding.UTF8.GetBytes(item.Name);
+            Contract.Assert(buffer.Length <= 0xFF);
+            stream.Write((byte)buffer.Length);
+            stream.Write(buffer, 0, buffer.Length);
         }
 
-        // FIXME: Fails on Mass Effect 2 (513, 0130)
         public override void Deserialize(IUnrealStream stream, UNameTableItem item)
         {
-            stream.Read(out item._Name);
-            if (stream.LicenseeVersion >= 142 && stream.LicenseeVersion != 1008)
+            if (stream.LicenseeVersion < 71)
             {
-                return;
-            }
-
-            if (stream.LicenseeVersion >= 102)
-            {
-                stream.Read(out uint flags);
-                item._Flags = flags;
+                item.Deserialize(stream);
 
                 return;
             }
-            
-            stream.Read(out item._Flags);
+
+            byte[] buffer;
+            stream.Read(out byte length);
+            stream.Read(buffer = new byte[length], 0, length);
+            item.Name = new string(Encoding.UTF8.GetChars(buffer));
         }
 
         public override void Serialize(IUnrealStream stream, UImportTableItem item)

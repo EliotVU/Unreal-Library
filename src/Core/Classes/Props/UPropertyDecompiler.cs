@@ -2,6 +2,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using UELib.Branch;
 using UELib.UnrealScript;
 
 namespace UELib.Core
@@ -130,8 +131,8 @@ namespace UELib.Core
             if (Outer is UFunction && (PropertyFlags & (ulong)Flags.PropertyFlagsLO.Parm) != 0)
             {
                 copyFlags &= ~(ulong)Flags.PropertyFlagsLO.Parm;
-                // Possible since UE3
-                if (Package.Version > 300)
+                // Oldest attestation for R6 v241
+                if (Package.Version > (uint)PackageObjectLegacyVersion.UE3)
                 {
                     if ((PropertyFlags & (ulong)Flags.PropertyFlagsLO.Const) != 0)
                     {

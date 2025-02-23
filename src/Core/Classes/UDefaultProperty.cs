@@ -309,7 +309,7 @@ namespace UELib.Core
         /// <returns>True if this is the last tag.</returns>
         private bool DeserializeNextTag()
         {
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.UE3)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.RefactoredPropertyTags)
             {
                 return DeserializeTagUE1();
             }
@@ -704,8 +704,8 @@ namespace UELib.Core
 
                 case PropertyType.ByteProperty:
                     {
-                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag &&
-                            Size == 8)
+                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag
+                            && Size != 1)
                         {
                             string enumTagName = _Buffer.ReadName();
                             Record(nameof(enumTagName), enumTagName);
