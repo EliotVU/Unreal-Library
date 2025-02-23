@@ -134,6 +134,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
 |     |     |     |     |
+| RoboHordes | Unknown | 198-200/000 | |
+| Tom Clancy's Rainbow Six: Vegas | Unknown | 241/066 | |
+| Tom Clancy's Rainbow Six: Vegas 2 | Unknown | 241/071 | |
 | Tom Clancy's EndWar | Unknown | 329/000 | |
 | Roboblitz | 2306 | 369/006 |     |
 | Stranglehold | 2605 | 375/025 | |
