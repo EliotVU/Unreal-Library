@@ -195,7 +195,7 @@ namespace UELib.Core
                 Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
                 Record(nameof(TextPos), TextPos);
-                // Version < 200 (EndWar)
+                // Version >= UE3 && Version < 200 (RoboHordes, EndWar)
                 //var MinAlignment = _Buffer.ReadInt32();
                 //Record(nameof(MinAlignment), MinAlignment);
             }
@@ -241,27 +241,33 @@ namespace UELib.Core
             ScriptOffset = _Buffer.Position;
 
             // Code Statements
-            if (DataScriptSize <= 0)
-                return;
-
-            ByteCodeManager = new UByteCodeDecompiler(this);
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
+            if (DataScriptSize > 0)
             {
-                _Buffer.Skip(DataScriptSize);
-            }
-            else
-            {
-                ByteCodeManager.Deserialize();
-            }
+                ByteCodeManager = new UByteCodeDecompiler(this);
+                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
+                {
+                    _Buffer.Skip(DataScriptSize);
+                }
+                else
+                {
+                    ByteCodeManager.Deserialize();
+                }
 
-            _Buffer.ConformRecordPosition();
-            ScriptSize = (int)(_Buffer.Position - ScriptOffset);
+                _Buffer.ConformRecordPosition();
+                ScriptSize = (int)(_Buffer.Position - ScriptOffset);
+            }
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
                 //_Buffer.ReadByte();
             }
 #endif
+            // StructDefaults in RoboHordes (200)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3
+                && GetType() == typeof(UStruct))
+            {
+                DeserializeProperties();
+            }
         }
 
         protected override bool CanDisposeBuffer()

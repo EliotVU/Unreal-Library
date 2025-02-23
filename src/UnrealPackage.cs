@@ -398,7 +398,7 @@ namespace UELib
                 /// 
                 /// 369/006
                 /// </summary>
-                [Build(329, 0)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.AddedInterfacesFeature)]
+                [Build(329, 0)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.RefactoredPropertyTags)]
                 EndWar,
 
                 /// <summary>

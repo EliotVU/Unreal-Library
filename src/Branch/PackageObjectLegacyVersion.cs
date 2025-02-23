@@ -57,7 +57,10 @@ namespace UELib.Branch
         AddedCppTextToUStruct = 120,
         FontPagesDisplaced = 122,
 
-        // FIXME: Version
+        // FIXME: Version 138? Cheating with 160 to avoid issues with DNF and Spellborn
+        AddedFuncMapToUState = 160,
+
+        // FIXME: Version 138? Cheating with 160 to avoid issues with DNF and Spellborn
         MovedFriendlyNameToUFunction = 160,
 
         // The estimated version changes that came after the latest known UE2 build.
@@ -73,9 +76,6 @@ namespace UELib.Branch
         /// </summary>
         IsLocalAddedToDelegateFunctionToken = 181,
 
-        // FIXME: Version, added somewhere between 186 ... 230
-        AddedStateStackToUStateFrame = 187,
-
         // FIXME: Version 128-178
         AddedDelegateSourceToUDelegateProperty = 185,
 
@@ -85,16 +85,31 @@ namespace UELib.Branch
         // FIXME: Version
         RangeConstTokenDeprecated = UE3,
 
-        // FIXME: Version
+        // FIXME: Version 118?
         FastSerializeStructs = UE3,
 
         // FIXME: Version
         EnumTagNameAddedToBytePropertyTag = UE3,
 
+        // FIXME: Version
+        DisplacedHideCategories = UE3,
+
+        /// <summary>
+        /// FIXME: Version
+        /// No version check in RoboHordes (200)
+        /// 
+        /// Deprecated with <seealso cref="ComponentMapDeprecated"/>
+        /// </summary>
+        AddedComponentMapToExports = UE3,
+
+        // Added somewhere between 186 ... 230
+        // 189 according to RoboHordes
+        AddedStateStackToUStateFrame = 189,
+
         ObjectFlagsSizeExpandedTo64Bits = 195,
 
-        // FIXME: Version, def not <= 178, found in GoW but no version check, so this approximation should do :)
-        TemplateDataAddedToUComponent = 200,
+        // FIXME: Version, def not <= 178, not found in RoboHordes (198,200), but found in GoW without a version check, so this approximation should do :)
+        TemplateDataAddedToUComponent = 201,
 
         // 208 according to EndWar
         PackageImportsDeprecated = 208,
@@ -105,21 +120,28 @@ namespace UELib.Branch
         // 219 according to EndWar
         DisplacedScriptPropertiesWithClassDefaultObject = 219,
 
-        // FIXME: Version
-        AddedFuncMapToUState = 220,
-
-        /// <summary>
-        ///     And ComponentMap
-        /// </summary>
         ArchetypeAddedToExports = 220,
 
-        PropertyFlagsSizeExpandedTo64Bits = 220,
+        /// <summary>
+        /// FIXME: Version
+        /// No version check in all of RoboHordes (200), EndWar (223), and R6Vegas (241)
+        /// </summary>
+        PropertyFlagsSizeExpandedTo64Bits = UE3,
 
         // 222 according to EndWar
         AddedInterfacesFeature = 222,
 
+        // 223 according to EndWar
+        RefactoredPropertyTags = 223,
+
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
+
+        /// <summary>
+        /// FIXME: Version
+        /// Not attested with EndWar (223) and R6Vegas (241)
+        /// </summary>
+        AddedStructFlagsToScriptStruct = 242,
 
         ExportFlagsAddedToExports = 247,
         ComponentClassBridgeMapDeprecated = 248,
@@ -258,6 +280,6 @@ namespace UELib.Branch
         AddedNativeClassNameToUClass = 813,
 
         AddedATITCToUTexture2D = 857,
-        AddedETCToUTexture2D = 864
+        AddedETCToUTexture2D = 864,
     }
 }
