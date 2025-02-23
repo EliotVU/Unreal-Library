@@ -1,3 +1,4 @@
+using UELib.Branch;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -11,8 +12,7 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            // FIXME: Version
-            if (_Buffer.Version >= 223)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedStructFlagsToScriptStruct)
             {
                 StructFlags = _Buffer.ReadUInt32();
                 Record(nameof(StructFlags), (StructFlags)StructFlags);

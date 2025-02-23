@@ -262,8 +262,8 @@ namespace UELib.Core
 
                 if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedHideCategoriesToUClass)
                 {
-                    // FIXME: >= version
-                    if (_Buffer.Version >= 178
+                    // FIXME: Clean up
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.DisplacedHideCategories
                         && isHideCategoriesOldOrder
                         && !Package.IsConsoleCooked()
                         && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked)
@@ -357,8 +357,8 @@ namespace UELib.Core
                             DontSortCategories = DeserializeGroup("DontSortCategories");
                         }
 
-                        // FIXME: Added in v99, removed in ~220?
-                        if (_Buffer.Version < 220 || !isHideCategoriesOldOrder)
+                        // FIXME: Clean up
+                        if (_Buffer.Version < (uint)PackageObjectLegacyVersion.DisplacedHideCategories || !isHideCategoriesOldOrder)
                         {
                             HideCategories = DeserializeGroup("HideCategories");
                         }

@@ -218,10 +218,8 @@ namespace UELib
                 stream.Skip(sizeof(int));
             }
 #endif
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
-                return;
-
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports &&
+                stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
 #if ALPHAPROTOCOL
                 && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
 #endif

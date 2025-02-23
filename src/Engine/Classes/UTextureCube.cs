@@ -22,7 +22,7 @@ namespace UELib.Engine
                 _Buffer.Read(out SizeY);
                 Record(nameof(SizeY), SizeY);
 
-                _Buffer.Read(out int format);
+                _Buffer.Read(out byte format);
                 Format = (TextureFormat)format;
                 Record(nameof(Format), Format);
 
