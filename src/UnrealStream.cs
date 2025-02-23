@@ -38,16 +38,16 @@ namespace UELib
 
         // HACK: To be deprecated, but for now we need this to help us retrieve the absolute position when serializing within an UObject's buffer.
         long AbsolutePosition { get; set; }
-        
+
         // We need to virtualize this so we can override the logic to track where objects are read.
         T ReadObject<T>() where T : UObject;
-        
+
         // We need to virtualize this so we can override the logic to track where objects are written.
         void WriteObject<T>(T value) where T : UObject;
 
         // We need to virtualize this so we can override the logic to track where names are read.
         UName ReadName();
-        
+
         // We need to virtualize this so we can override the logic to track where names are written.
         void WriteName(in UName value);
 
@@ -371,7 +371,7 @@ namespace UELib
         {
             int index = ReadIndex();
             int number = -1;
-            
+
 #if SHADOWSTRIKE
             if (Archive.Package.Build == BuildGeneration.ShadowStrike)
             {
@@ -695,6 +695,7 @@ namespace UELib
 
         [Obsolete("Displaced")]
         public long LastPosition { get; set; }
+
         public UnrealPackage Package { get; }
 
         public uint Version => Package.Version;
@@ -1191,7 +1192,7 @@ namespace UELib
             item = new T();
             item.Deserialize(stream);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<T>(this IUnrealStream stream, out UBulkData<T> value)
             where T : unmanaged =>
@@ -1317,7 +1318,7 @@ namespace UELib
             WriteIndex(stream, array.Count);
             Write(stream, array.ToArray());
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteArray(this IUnrealStream stream, [CanBeNull] in UArray<string> array)
         {
@@ -1335,12 +1336,13 @@ namespace UELib
             }
         }
 
-        public static void Write(this IUnrealStream stream, in IUnrealSerializableClass item) => item.Serialize(stream);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write<T>(this IUnrealStream stream, ref T item)
+            where T : struct, IUnrealSerializableClass => item.Serialize(stream);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteStruct<T>(this IUnrealStream stream, ref T item)
-            where T : struct, IUnrealSerializableClass =>
-            item.Serialize(stream);
+            where T : struct, IUnrealSerializableClass => item.Serialize(stream);
 
         public static unsafe void WriteStructMarshal<T>(this IUnrealStream stream, ref T item)
             where T : unmanaged, IUnrealAtomicStruct
@@ -1378,15 +1380,15 @@ namespace UELib
         public static void Write<T>(this IUnrealStream stream, ref UBulkData<T> value)
             where T : unmanaged =>
             WriteStruct(stream, ref value);
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(this IUnrealStream stream, UObject obj) => stream.WriteObject(obj);
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write<T>(this IUnrealStream stream, UArray<T> array)
             where T : IUnrealSerializableClass =>
             WriteArray(stream, in array);
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write<T>(this IUnrealStream stream, ref UArray<T> array)
             where T : IUnrealSerializableClass =>

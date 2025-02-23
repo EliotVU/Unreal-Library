@@ -107,7 +107,7 @@ namespace UELib.Engine
             public void Serialize(IUnrealStream stream)
             {
                 stream.Write(Texture);
-                stream.Write(ref Characters);
+                stream.Write(Characters);
             }
         }
 
