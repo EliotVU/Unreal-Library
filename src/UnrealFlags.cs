@@ -540,6 +540,7 @@ namespace UELib.Flags
         SafeReplace         = 0x00000040U,
 
         NoExport            = 0x00000100U,
+        NoUserCreate        = 0x00000200U,
         Placeable           = 0x00000200U,
         PerObjectConfig     = 0x00000400U,
         NativeReplication   = 0x00000800U,
