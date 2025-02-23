@@ -161,7 +161,7 @@ namespace UELib.Branch.UE3.GIGANTIC.Core.Classes
                     break;
 
                 case MoJsonValueTypes.MO_JSON_BOOL:
-                    str.Append(Value.Bool.Data);
+                    str.Append(PropertyDisplay.FormatLiteral(Value.Bool.Data));
                     break;
 
                 case MoJsonValueTypes.MO_JSON_ARRAY:
