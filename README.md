@@ -173,6 +173,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Mass Effect: Legendary Edition (Windows) | 6383 | 684/171 | PC (platform must be set to `Console`) |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
+| Game of Thrones | 6829 | 727/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |
 | Bulletstorm | 7052 | 742/029 | |
 | Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | |
