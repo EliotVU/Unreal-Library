@@ -121,6 +121,9 @@
     <value>/Samples/</value>
     <comment>Path to directory with all known .upk files that are compatible (no errors on load).</comment>
   </data>
+  <data name="R6Vegas2Path" xml:space="preserve">
+    <value>PATH_TO_R6VEGAS2</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="TestUC2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>upk\TestUC2\TestUC2.u;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

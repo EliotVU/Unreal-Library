@@ -842,6 +842,13 @@ namespace UELib
                 }
             }
 
+            public GameBuild(BuildName name, BuildGeneration generation, Type engineBranchType)
+            {
+                Name = name;
+                Generation = generation;
+                EngineBranchType = engineBranchType;
+            }
+
             [CanBeNull]
             private FieldInfo FindBuildInfo(UnrealPackage linker, [CanBeNull] out BuildAttribute buildAttribute)
             {
@@ -1832,6 +1839,11 @@ namespace UELib
             // File Type
             // Signature is tested in UPackageStream
             IsBigEndianEncoded = stream.BigEndianCode;
+        }
+
+        public UnrealPackage(GameBuild build)
+        {
+            Build = build;
         }
 
         public void Serialize(IUnrealStream stream)

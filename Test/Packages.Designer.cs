@@ -70,6 +70,15 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to C:\Program Files (x86)\DODI-Repacks\Tom Clancys Rainbow Six Vegas Collection\Tom Clancy&apos;s Rainbow Six Vegas 2\.
+        /// </summary>
+        public static string R6Vegas2Path {
+            get {
+                return ResourceManager.GetString("R6Vegas2Path", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         public static byte[] TestUC2 {
