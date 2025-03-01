@@ -7,7 +7,7 @@ namespace UELib.Branch.UE3.HUXLEY
     public class EngineBranchHuxley : DefaultEngineBranch
     {
         [Flags]
-        public enum PackageFlagHuxley : uint
+        public enum PackageFlags : uint
         {
             UseCrypt = 0x8000000
         }
@@ -20,7 +20,7 @@ namespace UELib.Branch.UE3.HUXLEY
         {
             base.PostDeserializeSummary(linker, stream, ref summary);
 
-            if (summary.PackageFlags.HasFlags((uint)PackageFlagHuxley.UseCrypt))
+            if (summary.PackageFlags.HasFlags((uint)PackageFlags.UseCrypt))
             {
                 stream.Decoder = linker.Summary.LicenseeVersion >= 23
                     ? new CryptoDecoderHuxley(linker.PackageName)
