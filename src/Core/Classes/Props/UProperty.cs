@@ -223,6 +223,13 @@ namespace UELib.Core
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
             }
+#if HUXLEY
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            {
+                var unknown = _Buffer.ReadObject();
+                Record(nameof(unknown), unknown);
+            }
+#endif
 #if R6
             if (Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {

@@ -14,6 +14,7 @@ using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
+using UELib.Branch.UE3.HUXLEY;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.R6;
 using UELib.Branch.UE3.RSS;
@@ -455,6 +456,15 @@ namespace UELib
                 /// 490/009
                 /// </summary>
                 [Build(490, 9)] GoW1,
+
+                /// <summary>
+                /// Huxley
+                /// 
+                /// 496/023
+                /// </summary>
+                [Build(496, 23)]
+                [BuildEngineBranch(typeof(EngineBranchHuxley))]
+                Huxley,
 
                 [Build(511, 039, BuildGeneration.HMS)] // The Bourne Conspiracy
                 [Build(511, 145, BuildGeneration.HMS)] // Transformers: War for Cybertron (PC version)
@@ -1248,6 +1258,21 @@ namespace UELib
                     stream.Skip(4);
                 }
 #endif
+#if HUXLEY
+                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                {
+                    if (LicenseeVersion >= 8)
+                    {
+                        int HUXSignature = stream.ReadInt32();
+                        Contract.Assert(HUXSignature != 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
+                    }
+
+                    if (LicenseeVersion >= 17)
+                    {
+                        int Unknown = stream.ReadInt32();
+                    }
+                }
+#endif
                 if (stream.Version >= VHeaderSize)
                 {
                     // Offset to the first class(not object) in the package.
@@ -1340,7 +1365,11 @@ namespace UELib
                                   + " Imports Count:" + ImportCount + " Imports Offset:" + ImportOffset
                 );
 
-                if (stream.Version < 68)
+                if (stream.Version < 68
+#if HUXLEY
+                    && stream.Package.Build != GameBuild.BuildName.Huxley
+#endif
+                    )
                 {
                     HeritageCount = stream.ReadInt32();
                     Contract.Assert(HeritageCount > 0);
@@ -1400,6 +1429,9 @@ namespace UELib
 #if BORDERLANDS
                     && stream.Package.Build != GameBuild.BuildName.Borderlands_GOTYE
 #endif
+#if HUXLEY
+                    && stream.Package.Build != GameBuild.BuildName.Huxley
+#endif
                    )
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
@@ -1421,7 +1453,11 @@ namespace UELib
                 if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
                     stream.Skip(4);
 #endif
-                if (stream.Version >= VThumbnailTableOffset)
+                if (stream.Version >= VThumbnailTableOffset
+#if HUXLEY
+                    && stream.Package.Build != GameBuild.BuildName.Huxley
+#endif
+                    )
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
                 }
@@ -1584,6 +1620,12 @@ namespace UELib
 #endif
 #if UE4
                 if (stream.UE4Version > 0)
+                {
+                    return;
+                }
+#endif
+#if HUXLEY
+                if (stream.Package.Build == GameBuild.BuildName.Huxley)
                 {
                     return;
                 }

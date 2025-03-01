@@ -182,10 +182,14 @@ namespace UELib
             if (length > 0) // ANSI
             {
                 byte[] chars = new byte[size];
+#if HUXLEY
+                BaseStream.Read(chars, 0, chars.Length);
+#else
                 for (int i = 0; i < chars.Length; ++i)
                 {
                     BaseStream.Read(chars, i, 1);
                 }
+#endif
 
                 return chars[size - 1] == '\0'
                     ? Encoding.ASCII.GetString(chars, 0, chars.Length - 1)
@@ -194,6 +198,14 @@ namespace UELib
 
             if (length < 0) // UNICODE
             {
+#if HUXLEY
+                byte[] chars = new byte[size * 2];
+                BaseStream.Read(chars, 0, chars.Length);
+
+                return chars[(size * 2) - 2] == '\0' && chars[(size * 2) - 1] == '\0'
+                    ? Encoding.Unicode.GetString(chars, 0, chars.Length - 2)
+                    : Encoding.Unicode.GetString(chars, 0, chars.Length);
+#else
                 char[] chars = new char[size];
                 for (int i = 0; i < chars.Length; ++i)
                 {
@@ -204,6 +216,7 @@ namespace UELib
                 return chars[size - 1] == '\0'
                     ? new string(chars, 0, chars.Length - 1)
                     : new string(chars);
+#endif
             }
 
             return string.Empty;
@@ -603,7 +616,13 @@ namespace UELib
 
         public override int Read(byte[] buffer, int index, int count)
         {
+#if HUXLEY
+            long p = Position;
+#endif
             int r = base.Read(buffer, index, count);
+#if HUXLEY
+            Decoder?.DecodeRead(p, buffer, index, count);
+#endif
             if (BigEndianCode && r > 1)
             {
                 Array.Reverse(buffer, 0, r);

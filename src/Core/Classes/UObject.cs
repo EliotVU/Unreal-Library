@@ -192,9 +192,16 @@ namespace UELib.Core
             //Console.WriteLine( "Init buffer for {0}", (string)this );
             var buffer = new byte[ExportTable.SerialSize];
             _Buffer = new UObjectRecordStream(Package.Stream, buffer);
+#if HUXLEY
+            _Buffer.Decoder = Package.Stream.Decoder;
 
+            Package.Stream.Decoder = null;
+#endif
             // Bypass the terrible and slow endian reverse call
             int read = Package.Stream.EndianAgnosticRead(buffer, 0, ExportTable.SerialSize);
+#if HUXLEY
+            Package.Stream.Decoder = _Buffer.Decoder;
+#endif
             Contract.Assert(ExportTable.SerialOffset + ExportTable.SerialSize <= Package.Stream.Length,
                 "Exceeded file's length");
             //Debug.Assert(read == ExportTable.SerialSize, $"Incomplete read; expected a total bytes of {ExportTable.SerialSize} but got {read}");

@@ -218,6 +218,15 @@ namespace UELib
                 stream.Skip(sizeof(int));
             }
 #endif
+#if HUXLEY
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            {
+                if (stream.LicenseeVersion >= 22)
+                {
+                    int SerialSize2 = stream.ReadInt32();
+                }
+            }
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports &&
                 stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
 #if ALPHAPROTOCOL
@@ -286,7 +295,11 @@ namespace UELib
             }
 #endif
             stream.Skip(16); // Package guid
+#if HUXLEY
+            if (stream.Version >= 475)
+#else
             if (stream.Version > 486) // 475?  486(> Stargate Worlds)
+#endif
             {
                 stream.Skip(4); // Package flags
             }
