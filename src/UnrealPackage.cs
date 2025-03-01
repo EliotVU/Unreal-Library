@@ -1263,13 +1263,13 @@ namespace UELib
                 {
                     if (LicenseeVersion >= 8)
                     {
-                        int HUXSignature = stream.ReadInt32();
-                        Contract.Assert(HUXSignature != 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
+                        int huxleySignature = stream.ReadInt32();
+                        Contract.Assert(huxleySignature != 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
                     }
 
                     if (LicenseeVersion >= 17)
                     {
-                        int Unknown = stream.ReadInt32();
+                        int unk = stream.ReadInt32();
                     }
                 }
 #endif
@@ -1365,11 +1365,7 @@ namespace UELib
                                   + " Imports Count:" + ImportCount + " Imports Offset:" + ImportOffset
                 );
 
-                if (stream.Version < 68
-#if HUXLEY
-                    && stream.Package.Build != GameBuild.BuildName.Huxley
-#endif
-                    )
+                if (stream.Version < 68)
                 {
                     HeritageCount = stream.ReadInt32();
                     Contract.Assert(HeritageCount > 0);
@@ -1429,9 +1425,6 @@ namespace UELib
 #if BORDERLANDS
                     && stream.Package.Build != GameBuild.BuildName.Borderlands_GOTYE
 #endif
-#if HUXLEY
-                    && stream.Package.Build != GameBuild.BuildName.Huxley
-#endif
                    )
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
@@ -1453,11 +1446,7 @@ namespace UELib
                 if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
                     stream.Skip(4);
 #endif
-                if (stream.Version >= VThumbnailTableOffset
-#if HUXLEY
-                    && stream.Package.Build != GameBuild.BuildName.Huxley
-#endif
-                    )
+                if (stream.Version >= VThumbnailTableOffset)
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
                 }
@@ -1620,12 +1609,6 @@ namespace UELib
 #endif
 #if UE4
                 if (stream.UE4Version > 0)
-                {
-                    return;
-                }
-#endif
-#if HUXLEY
-                if (stream.Package.Build == GameBuild.BuildName.Huxley)
                 {
                     return;
                 }
