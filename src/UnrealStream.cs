@@ -166,6 +166,10 @@ namespace UELib
     {
         private readonly byte[] _IndexBuffer = new byte[5];
 
+        // Allow bulk reading of strings if the package is not big endian encoded.
+        // Generally this is the case for most packages, but some games have big endian encoded packages, where a string is serialized per byte.
+        private bool CanBulkRead => Archive.BigEndianCode == false; // Must get, because this is not initialized before the constructor initiation.
+
         // Dirty hack to implement crypto-reading, pending overhaul ;)
         public UnrealReader(IUnrealArchive archive, Stream baseStream) : base(baseStream) => Archive = archive;
 
@@ -182,14 +186,18 @@ namespace UELib
             if (length > 0) // ANSI
             {
                 byte[] chars = new byte[size];
-#if HUXLEY
-                BaseStream.Read(chars, 0, chars.Length);
-#else
-                for (int i = 0; i < chars.Length; ++i)
+
+                if (CanBulkRead)
                 {
-                    BaseStream.Read(chars, i, 1);
+                    BaseStream.Read(chars, 0, chars.Length);
                 }
-#endif
+                else
+                {
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        BaseStream.Read(chars, i, 1);
+                    }
+                }
 
                 return chars[size - 1] == '\0'
                     ? Encoding.ASCII.GetString(chars, 0, chars.Length - 1)
@@ -198,25 +206,28 @@ namespace UELib
 
             if (length < 0) // UNICODE
             {
-#if HUXLEY
-                byte[] chars = new byte[size * 2];
-                BaseStream.Read(chars, 0, chars.Length);
-
-                return chars[(size * 2) - 2] == '\0' && chars[(size * 2) - 1] == '\0'
-                    ? Encoding.Unicode.GetString(chars, 0, chars.Length - 2)
-                    : Encoding.Unicode.GetString(chars, 0, chars.Length);
-#else
-                char[] chars = new char[size];
-                for (int i = 0; i < chars.Length; ++i)
+                if (CanBulkRead)
                 {
-                    char w = (char)ReadInt16();
-                    chars[i] = w;
-                }
+                    byte[] chars = new byte[size * 2];
+                    BaseStream.Read(chars, 0, chars.Length);
 
-                return chars[size - 1] == '\0'
-                    ? new string(chars, 0, chars.Length - 1)
-                    : new string(chars);
-#endif
+                    return chars[(size * 2) - 2] == '\0' && chars[(size * 2) - 1] == '\0'
+                        ? Encoding.Unicode.GetString(chars, 0, chars.Length - 2)
+                        : Encoding.Unicode.GetString(chars, 0, chars.Length);
+                }
+                else
+                {
+                    char[] chars = new char[size];
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        char w = (char)ReadInt16();
+                        chars[i] = w;
+                    }
+
+                    return chars[size - 1] == '\0'
+                        ? new string(chars, 0, chars.Length - 1)
+                        : new string(chars);
+                }
             }
 
             return string.Empty;
