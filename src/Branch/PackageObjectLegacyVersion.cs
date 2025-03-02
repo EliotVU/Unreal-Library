@@ -228,11 +228,12 @@ namespace UELib.Branch
         IsModificationAddedToStructMember = GameFFOW,
 
         [Discardable] GameGOWPC = 490,
+        [Discardable] GameHuxley = 496,
 
         /// <summary>
-        ///     FIXME: Version, not attested in (GoW v490)
+        ///     FIXME: Version, not attested in (Huxley v496)
         /// </summary>
-        SkipSizeAddedToArrayTokenIntrinsics = GameGOWPC + 1,
+        SkipSizeAddedToArrayTokenIntrinsics = GameHuxley + 1,
 
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
