@@ -190,12 +190,19 @@ namespace UELib
                 stream.Skip(sizeof(int));
             }
 #endif
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+#if HUXLEY
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {
-                return;
+                if (stream.LicenseeVersion >= 22)
+                {
+                    LibServices.LogService.SilentException(
+                        new NotSupportedException("Missing an integer at " + stream.Position));
+                    stream.Write(SerialSize);
+                }
             }
-
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports &&
+                stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
 #if ALPHAPROTOCOL
                 && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
 #endif
@@ -365,12 +372,17 @@ namespace UELib
                 stream.Skip(sizeof(int));
             }
 #endif
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+#if HUXLEY
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {
-                return;
+                if (stream.LicenseeVersion >= 22)
+                {
+                    stream.Read(out int serialSize2);
+                }
             }
-
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports &&
+                stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
 #if ALPHAPROTOCOL
                 && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
 #endif
@@ -458,12 +470,12 @@ namespace UELib
                 ? $"{Class.ObjectName}'{GetPath()}'"
                 : $"Class'{GetPath()}'";
         }
-        
+
         public static explicit operator int(UExportTableItem item)
         {
             return item.Index + 1;
         }
-        
+
         public override string ToString()
         {
             return $"{ObjectName}({Index + 1})";
@@ -479,7 +491,7 @@ namespace UELib
 
         [Obsolete] protected override int __ClassIndex => _ClassIndex;
 
-        [Obsolete] [NotNull] protected override string __ClassName => Class?.ObjectName ?? "Class";
+        [Obsolete][NotNull] protected override string __ClassName => Class?.ObjectName ?? "Class";
 
         [Obsolete("Use Super"), Browsable(false)]
         public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);

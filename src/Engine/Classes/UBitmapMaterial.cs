@@ -31,11 +31,6 @@ namespace UELib.Engine
         public TextureFormat Format;
         [CanBeNull] public UPalette Palette;
 
-        public UBitmapMaterial()
-        {
-            ShouldDeserializeOnDemand = true;
-        }
-
         protected override void Deserialize()
         {
             base.Deserialize();

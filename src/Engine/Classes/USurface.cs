@@ -10,5 +10,9 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class USurface : UObject, IUnrealViewable
     {
+        public USurface()
+        {
+            ShouldDeserializeOnDemand = true;
+        }
     }
 }

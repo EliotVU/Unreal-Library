@@ -101,15 +101,16 @@ This is a table of games that are confirmed to be compatible with the current st
 |     |     |     |     |
 |     |     |     |     |
 | XIII | 829 | 100/058 |     |
-| Postal 2: Paradise Lost | 1417 | 118/002 | |
 | Tom Clancy's Splinter Cell | 829 | 100/017 | |
 | Tom Clancy's Splinter Cell: Chaos Theory | 829 | 100/120:SCX, 175/000:ShadowStrike | (PC) demo version, Versus mode not supported |
 | Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX, 275/000:ShadowStrike | (PC) Offline mode version, Online mode not supported |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | |
+| Postal 2: Paradise Lost | 1417 | 118/002 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
 | Devastation | 600-? | 118-120/004-008 | |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled |
+| Desert Thunder | 2226 | 126/000 | |
 | Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | |
 | America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 |
@@ -133,6 +134,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
 |     |     |     |     |
+| RoboHordes | Unknown | 198-200/000 | |
+| Tom Clancy's Rainbow Six: Vegas | Unknown | 241/066 | |
+| Tom Clancy's Rainbow Six: Vegas 2 | Unknown | 241/071 | |
 | Tom Clancy's EndWar | Unknown | 329/000 | |
 | Roboblitz | 2306 | 369/006 |     |
 | Stranglehold | 2605 | 375/025 | |
@@ -169,6 +173,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Mass Effect: Legendary Edition (Windows) | 6383 | 684/171 | PC (platform must be set to `Console`) |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
+| Game of Thrones | 6829 | 727/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |
 | Bulletstorm | 7052 | 742/029 | |
 | Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | |

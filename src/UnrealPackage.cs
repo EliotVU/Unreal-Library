@@ -14,7 +14,9 @@ using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
+using UELib.Branch.UE3.HUXLEY;
 using UELib.Branch.UE3.MOH;
+using UELib.Branch.UE3.R6;
 using UELib.Branch.UE3.RSS;
 using UELib.Branch.UE4;
 using UELib.Flags;
@@ -238,7 +240,8 @@ namespace UELib
                 ///
                 /// 100/120
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchSCX))] [Build(100, 120, BuildGeneration.SCX)]
+                [BuildEngineBranch(typeof(EngineBranchSCX))]
+                [Build(100, 120, BuildGeneration.SCX)]
                 SCCT_Demo,
 
                 /// <summary>
@@ -246,7 +249,8 @@ namespace UELib
                 ///
                 /// 100/167
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchSCX))] [Build(100, 167, BuildGeneration.SCX)]
+                [BuildEngineBranch(typeof(EngineBranchSCX))]
+                [Build(100, 167, BuildGeneration.SCX)]
                 SCDA_Offline,
 
                 /// <summary>
@@ -257,7 +261,8 @@ namespace UELib
                 /// <summary>
                 /// 118:120/004:008
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchDVS))] [Build(118, 120, 4u, 8u)]
+                [BuildEngineBranch(typeof(EngineBranchDVS))]
+                [Build(118, 120, 4u, 8u)]
                 Devastation,
 
                 /// <summary>
@@ -290,13 +295,16 @@ namespace UELib
                 /// 
                 /// For now we have three AA2 versions defined here to help us distinguish the byte-code token map.
                 /// </summary>
-                [Build(128, 32u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                [Build(128, 32u, BuildGeneration.AGP)]
+                [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_5,
 
-                [Build(128, 32u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                [Build(128, 32u, BuildGeneration.AGP)]
+                [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_6,
 
-                [Build(128, 33u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                [Build(128, 33u, BuildGeneration.AGP)]
+                [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_8,
 
                 /// <summary>
@@ -359,7 +367,8 @@ namespace UELib
                 ///
                 /// 156/036
                 /// </summary>
-                [Build(156, 36u, BuildGeneration.UE2)] [BuildEngineBranch(typeof(EngineBranchDNF))]
+                [Build(156, 36u, BuildGeneration.UE2)]
+                [BuildEngineBranch(typeof(EngineBranchDNF))]
                 DNF,
 
                 /// <summary>
@@ -383,6 +392,18 @@ namespace UELib
                 SCCT_Versus,
 
                 /// <summary>
+                /// Tom Clancy's Rainbow Six: Vegas
+                /// 
+                /// 241/066-071
+                ///
+                /// extensions: [.u, .upk, .uxx, .rmpc, .uppc, .rm3, .up3, .rsm]
+                /// </summary>
+                [Build(241, 66u)]
+                [Build(241, 71u)] // Vegas 2
+                [BuildEngineBranch(typeof(EngineBranchKeller))]
+                R6Vegas,
+
+                /// <summary>
                 /// Tom Clancy's Splinter Cell: Double Agent - Online
                 ///
                 /// 275/000
@@ -398,7 +419,8 @@ namespace UELib
                 /// 
                 /// 369/006
                 /// </summary>
-                [Build(329, 0)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.AddedInterfacesFeature)]
+                [Build(329, 0)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.RefactoredPropertyTags)]
                 EndWar,
 
                 /// <summary>
@@ -437,11 +459,28 @@ namespace UELib
                 MKKE,
 
                 /// <summary>
+                /// Stargate Worlds
+                /// 
+                /// 486/007
+                /// </summary>
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports - 1)] // Missing the "PackageFlags" change from version 475
+                [Build(486, 7)] SGW,
+
+                /// <summary>
                 /// Gears of War
                 /// 
                 /// 490/009
                 /// </summary>
                 [Build(490, 9)] GoW1,
+
+                /// <summary>
+                /// Huxley
+                /// 
+                /// 496/023
+                /// </summary>
+                [Build(496, 23)]
+                [BuildEngineBranch(typeof(EngineBranchHuxley))]
+                Huxley,
 
                 [Build(511, 039, BuildGeneration.HMS)] // The Bourne Conspiracy
                 [Build(511, 145, BuildGeneration.HMS)] // Transformers: War for Cybertron (PC version)
@@ -474,7 +513,8 @@ namespace UELib
                 /// 
                 /// 547/028:032
                 /// </summary>
-                [Build(547, 547, 28u, 32u)] [BuildEngineBranch(typeof(EngineBranchAPB))]
+                [Build(547, 547, 28u, 32u)]
+                [BuildEngineBranch(typeof(EngineBranchAPB))]
                 APB,
 
                 /// <summary>
@@ -496,7 +536,8 @@ namespace UELib
                 /// 
                 /// 576/021 (Missing most changes guarded by <see cref="BuildGeneration.RSS"/>)
                 /// </summary>
-                [Build(576, 21)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(576, 21)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman1,
 
                 /// <summary>
@@ -511,7 +552,8 @@ namespace UELib
                 /// XenonCooked is required to read the Xbox 360 packages.
                 /// 581/058
                 /// </summary>
-                [Build(581, 58, BuildFlags.ConsoleCooked)] [BuildEngineBranch(typeof(EngineBranchMOH))]
+                [Build(581, 58, BuildFlags.ConsoleCooked)]
+                [BuildEngineBranch(typeof(EngineBranchMOH))]
                 MoH,
 
                 /// <summary>
@@ -533,7 +575,8 @@ namespace UELib
                 /// Appears to be missing (v623:ExportGuids, v767:TextureAllocations, and v673:FPropertyTag's BoolValue change).
                 /// Presume at least v832 from Borderlands 2 
                 /// </summary>
-                [Build(594, 58, BuildGeneration.GB)] [OverridePackageVersion(832)]
+                [Build(594, 58, BuildGeneration.GB)]
+                [OverridePackageVersion(832)]
                 Borderlands_GOTYE,
 
                 /// <summary>
@@ -592,14 +635,16 @@ namespace UELib
                 ///
                 /// 687-688/111-117
                 /// </summary>
-                [Build(687, 688, 111, 117)] [BuildEngineBranch(typeof(EngineBranchDD2))]
+                [Build(687, 688, 111, 117)]
+                [BuildEngineBranch(typeof(EngineBranchDD2))]
                 DD2,
 
                 /// <summary>
                 /// BioShock Infinite
                 /// 727/075 (partially upgraded to 756 or higher)
                 /// </summary>
-                [Build(727, 75)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)]
+                [Build(727, 75)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)]
                 Bioshock_Infinite,
 
                 /// <summary>
@@ -642,7 +687,8 @@ namespace UELib
                 /// <summary>
                 /// 842-864/001
                 /// </summary>
-                [Build(842, 1, BuildFlags.ConsoleCooked)] [Build(864, 1, BuildFlags.ConsoleCooked)]
+                [Build(842, 1, BuildFlags.ConsoleCooked)]
+                [Build(864, 1, BuildFlags.ConsoleCooked)]
                 InfinityBlade2,
 
                 // Cannot auto-detect, ambiguous with UDK-2015-01-29
@@ -673,7 +719,8 @@ namespace UELib
                 /// Transformers: Fall of Cybertron
                 /// 846/181
                 /// </summary>
-                [Build(846, 181, BuildGeneration.HMS)] [OverridePackageVersion(587)]
+                [Build(846, 181, BuildGeneration.HMS)]
+                [OverridePackageVersion(587)]
                 Transformers3,
 
                 /// <summary>
@@ -686,7 +733,8 @@ namespace UELib
                 /// 
                 /// 805/101
                 /// </summary>
-                [Build(805, 101, BuildGeneration.RSS)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(805, 101, BuildGeneration.RSS)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman2,
 
                 /// <summary>
@@ -703,7 +751,8 @@ namespace UELib
                 /// <summary>
                 /// 807/104
                 /// </summary>
-                [Build(807, 104, BuildGeneration.RSS)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(807, 104, BuildGeneration.RSS)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3MP,
 
                 /// <summary>
@@ -721,7 +770,8 @@ namespace UELib
                 /// 
                 /// 867/008:010
                 /// </summary>
-                [Build(867, 867, 8u, 10u)] [BuildEngineBranch(typeof(EngineBranchGigantic))]
+                [Build(867, 867, 8u, 10u)]
+                [BuildEngineBranch(typeof(EngineBranchGigantic))]
                 Gigantic,
 
                 /// <summary>
@@ -730,7 +780,8 @@ namespace UELib
                 /// 867/009:032
                 /// Requires third-party decompression and decryption
                 /// </summary>
-                [Build(867, 868, 9u, 32u)] [BuildEngineBranch(typeof(EngineBranchRL))]
+                [Build(867, 868, 9u, 32u)]
+                [BuildEngineBranch(typeof(EngineBranchRL))]
                 RocketLeague,
 
                 /// <summary>
@@ -1121,7 +1172,7 @@ namespace UELib
                 {
                     stream.Write(Tag);
                 }
-                
+
                 if (LegacyVersion < 0)
                 {
 #if UE4
@@ -1188,6 +1239,22 @@ namespace UELib
                     if (stream.LicenseeVersion >= 181) stream.Skip(16);
 
                     stream.Skip(4);
+                }
+#endif
+#if HUXLEY
+                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                {
+                    if (LicenseeVersion >= 8)
+                    {
+                        stream.Write(0xFEFEFEFE);
+                    }
+
+                    if (LicenseeVersion >= 17)
+                    {
+                        throw new NotSupportedException("This package version is not supported!");
+
+                        stream.Skip(4);
+                    }
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTotalHeaderSize)
@@ -1304,6 +1371,23 @@ namespace UELib
 
                     // An FString converted to an FArray? Concatenating appUserName, appComputerName, appBaseDir, and appTimestamp.
                     //stream.ReadArray(out UArray<byte> iStack_fc);
+                }
+#endif
+#if R6
+                if (stream.Package.Build == GameBuild.BuildName.R6Vegas)
+                {
+                    if (stream.LicenseeVersion >= 48)
+                    {
+                        // always zero
+                        stream.Write(0);
+                    }
+
+                    if (stream.LicenseeVersion >= 49)
+                    {
+                        // it appears next to the LicenseeVersion, so it's probably an internal version
+                        // always 14, but 15 for V2, probably the cooker version.
+                        stream.Write(CookerVersion);
+                    }
                 }
 #endif
                 if (stream.UE4Version >= 384)
@@ -1674,6 +1758,26 @@ namespace UELib
                     stream.Read(out int v08);
                 }
 #endif
+#if R6
+                if (stream.Package.Build == GameBuild.BuildName.R6Vegas)
+                {
+                    if (stream.LicenseeVersion >= 48)
+                    {
+                        // always zero
+                        stream.Read(out int v08);
+                    }
+
+                    if (stream.LicenseeVersion >= 49)
+                    {
+                        // it appears next to the LicenseeVersion, so it's probably an internal version
+                        // always 14, but 15 for V2
+                        stream.Read(out int v0C);
+
+                        // Let's assume it's the cooker version (it has the same offset as GoW 2006, which has cooker version 32)
+                        CookerVersion = v0C;
+                    }
+                }
+#endif
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -1690,6 +1794,21 @@ namespace UELib
                     if (stream.LicenseeVersion >= 181) stream.Skip(16);
 
                     stream.Skip(4);
+                }
+#endif
+#if HUXLEY
+                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                {
+                    if (LicenseeVersion >= 8)
+                    {
+                        int huxleySignature = stream.ReadInt32();
+                        Contract.Assert(huxleySignature != 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
+                    }
+
+                    if (LicenseeVersion >= 17)
+                    {
+                        int unk = stream.ReadInt32();
+                    }
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTotalHeaderSize)
@@ -2689,12 +2808,12 @@ namespace UELib
 
             BinaryMetaData.AddField(nameof(Names), Names, Summary.NameOffset, stream.Position - Summary.NameOffset);
 #if SPELLBORN
-            // WTF were they thinking? Change DRFORTHEWIN to None
-            if (Build == GameBuild.BuildName.Spellborn
-                && Names[0].Name == "DRFORTHEWIN")
-                Names[0].Name = "None";
-            // False??
-            //Debug.Assert(stream.Position == Summary.ImportsOffset);
+                // WTF were they thinking? Change DRFORTHEWIN to None
+                if (Build == GameBuild.BuildName.Spellborn
+                    && Names[0].Name == "DRFORTHEWIN")
+                    Names[0].Name = "None";
+                // False??
+                //Debug.Assert(stream.Position == Summary.ImportsOffset);
 #endif
         }
 
@@ -3368,10 +3487,9 @@ namespace UELib
 
         public byte[] CopyBuffer()
         {
-            var buff = new byte[HeaderSize];
+            byte[] buff = new byte[Summary.HeaderSize];
             Stream.Seek(0, SeekOrigin.Begin);
-            Stream.Read(buff, 0, HeaderSize);
-            if (Stream.BigEndianCode) Array.Reverse(buff);
+            Stream.EndianAgnosticRead(buff, 0, Summary.HeaderSize);
 
             return buff;
         }

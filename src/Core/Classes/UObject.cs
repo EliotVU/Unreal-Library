@@ -2,17 +2,14 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
 using UELib.Services;
-using UELib.Types;
 
 namespace UELib.Core
 {
@@ -122,7 +119,6 @@ namespace UELib.Core
         public ObjectState DeserializationState;
         public Exception ThrownException;
         public long ExceptionPosition;
-        public UGuid ObjectGuid;
 
         /// <summary>
         /// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
@@ -142,7 +138,7 @@ namespace UELib.Core
         {
             throw new NotImplementedException();
         }
-        
+
         /// <summary>
         /// Notifies this object instance to make a copy of this object's data from the Owner.Stream and then start deserializing this instance.
         /// </summary>
@@ -202,17 +198,42 @@ namespace UELib.Core
 
         private void InitBuffer()
         {
-            Package.Stream.Seek(ExportTable.SerialOffset, SeekOrigin.Begin);
+            InitBuffer(Package.Stream);
+        }
 
-            //Console.WriteLine( "Init buffer for {0}", (string)this );
-            var buffer = new byte[ExportTable.SerialSize];
-            _Buffer = new UObjectRecordStream(Package.Stream, buffer);
+        private void InitBuffer(UPackageStream stream)
+        {
+            long objectOffset = ExportTable.SerialOffset;
+            int objectSize = ExportTable.SerialSize;
 
-            // Bypass the terrible and slow endian reverse call
-            int read = Package.Stream.EndianAgnosticRead(buffer, 0, ExportTable.SerialSize);
-            Contract.Assert(ExportTable.SerialOffset + ExportTable.SerialSize <= Package.Stream.Length,
-                "Exceeded file's length");
-            //Debug.Assert(read == ExportTable.SerialSize, $"Incomplete read; expected a total bytes of {ExportTable.SerialSize} but got {read}");
+            byte[] buffer = new byte[objectSize];
+            int byteCount;
+
+            // Make an object stream with a decoder as the base stream.
+            if (stream.Decoder != null)
+            {
+                var decoder = stream.Decoder;
+                // Read without decoding, because the encryption may be affected by the read count. e.g. "Huxley"
+                stream.Decoder = null;
+                // Bypass the terrible and slow endian reverse call
+                stream.Seek(objectOffset, SeekOrigin.Begin);
+                byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
+                stream.Decoder = decoder;
+
+                var baseStream = new MemoryDecoderStream(stream.Decoder, buffer, objectOffset);
+                _Buffer = new UObjectRecordStream(stream, baseStream);
+            }
+            else
+            {
+                // Bypass the terrible and slow endian reverse call
+                stream.Seek(objectOffset, SeekOrigin.Begin);
+                byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
+
+                _Buffer = new UObjectRecordStream(stream, buffer);
+            }
+
+            Contract.Assert(byteCount == objectSize,
+                $"Incomplete read; expected a total bytes of {objectSize} but got {byteCount}");
         }
 
         internal void EnsureBuffer()
@@ -231,7 +252,7 @@ namespace UELib.Core
             if (_Buffer == null || (DeserializationState & ObjectState.Deserializing) != 0)
                 return;
 
-            _Buffer.DisposeBuffer();
+            _Buffer.Dispose();
             _Buffer = null;
             //Console.WriteLine( "Disposed" );
         }
@@ -298,17 +319,23 @@ namespace UELib.Core
             _Buffer.Read(out component.TemplateOwnerClass);
             Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate())
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate(ObjectFlagsHO.PropertiesObject))
             {
                 _Buffer.Read(out component.TemplateName);
                 Record(nameof(component.TemplateName), component.TemplateName);
             }
         }
 
-        public bool IsTemplate()
+        /// <summary>
+        /// Checks if the object is a template.
+        /// An object is considered a template if either it is an object containing the defaults of a <seealso cref="UClass"/> or an archetype.
+        /// 
+        /// FIXME: The <seealso cref="ObjectFlagsHO.ArchetypeObject"/> flag check was added later (Not checked for in GoW), no known version.
+        /// </summary>
+        /// <param name="templateFlags"></param>
+        /// <returns>true if the object is a template.</returns>
+        public bool IsTemplate(ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject)
         {
-            // The ObjectFlagsHO.ArchetypeObject flag check was added later (Not checked for in GoW), no known version.
-            const ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject;
             return HasObjectFlag(templateFlags) || EnumerateOuter().Any(obj => obj.HasObjectFlag(templateFlags));
         }
 
@@ -356,28 +383,31 @@ namespace UELib.Core
 
                     // HACK: Ugly work around for unregistered component classes...
                     // Simply for checking for the parent's class is not reliable without importing objects.
-                    case UnknownObject _ when _Buffer.Length >= 12 && Archetype != null && IsTemplate():
-                    {
-                        long backupPosition = _Buffer.Position;
-
-                        var fakeComponent = new UComponent();
-                        try
+                    case UnknownObject _ when _Buffer.Length >= 12
+                                              && IsTemplate()
+                                              && Class!.Name.EndsWith("Component"):
                         {
-                            DeserializeTemplate(fakeComponent);
+                            long backupPosition = _Buffer.Position;
+
+                            var fakeComponent = new UComponent();
+                            try
+                            {
+                                DeserializeTemplate(fakeComponent);
+                            }
+                            catch (Exception exception)
+                            {
+                                LibServices.LogService.SilentException(
+                                    new Exception("Failed attempt to interpret object as a template {0}", exception));
+
+
+                                _Buffer.Position = backupPosition;
+                                _Buffer.ConformRecordPosition();
+
+                                // ISSUE: If the above recorded any data, the data will not be undone.
+                            }
+
+                            break;
                         }
-                        catch (InvalidCastException exception)
-                        {
-                            LibServices.LogService.SilentException(
-                                new Exception("Failed attempt to interpret object as a template {0}", exception));
-
-                            _Buffer.Position = backupPosition;
-                            _Buffer.ConformRecordPosition();
-
-                            // ISSUE: If the above recorded any data, the data will not be undone.
-                        }
-
-                        break;
-                    }
                 }
             }
 
@@ -688,7 +718,7 @@ namespace UELib.Core
             return visitor.Visit(this);
         }
 
-        public static explicit operator int([CanBeNull] UObject obj)
+        public static explicit operator int(UObject obj)
         {
             return obj?._ObjectIndex ?? 0;
         }

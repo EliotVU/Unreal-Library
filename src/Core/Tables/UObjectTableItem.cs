@@ -14,7 +14,7 @@ namespace UELib
     public abstract class UObjectTableItem : UTableItem, IBuffered, IComparable<string>
     {
         /// <summary>
-        /// The package this object resource belongs to. Not to be confused with <see cref="UPackage"/> for that consider <seealso cref="OuterIndex"/>
+        /// Reference to the UnrealPackage this object resists in
         /// </summary>
         public UnrealPackage Owner;
 
@@ -57,8 +57,7 @@ namespace UELib
         /// <returns>Full path of object e.g. "Core.Object.Vector"</returns>
         public string GetPath()
         {
-            string group = EnumerateOuter()
-                .Aggregate(string.Empty, (current, outer) => $"{outer.ObjectName}.{current}");
+            string group = EnumerateOuter().Aggregate(string.Empty, (current, outer) => $"{outer.ObjectName}.{current}");
             return $"{group}{ObjectName}";
         }
 
@@ -78,13 +77,9 @@ namespace UELib
 
         public virtual byte[] CopyBuffer()
         {
-            var buff = new byte[Size];
+            byte[] buff = new byte[Size];
             Owner.Stream.Seek(Offset, SeekOrigin.Begin);
-            Owner.Stream.Read(buff, 0, Size);
-            if (Owner.Stream.BigEndianCode)
-            {
-                Array.Reverse(buff);
-            }
+            Owner.Stream.EndianAgnosticRead(buff, 0, Size);
 
             return buff;
         }

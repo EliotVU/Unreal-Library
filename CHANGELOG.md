@@ -1,5 +1,21 @@
 #
 
+## [1.9.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.9.0)
+
+* ad530643 Support for Tom Clancy's Rainbow Six: Vegas
+* ad530643 Support for Tom Clancy's Rainbow Six: Vegas 2
+* 2979a15b Support for early UE3 packages including:
+  * RoboHordes
+* e1879b89 Support for deserialization and decompilation for Gigantic's UJsonNodeRoot and UMoJsonObject #102
+* Fixed minor issues with early UE3 games affecting:
+  * Tom Clancy's EndWar
+
+## [1.8.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.8.1)
+
+* Fixed and improved support for Template/UComponent objects (UE3)
+* d3968286 Fixed support for Borderlands 2 (bad token)
+* 655dd279 Fixed support for SCX and ShadowStrike based games.
+
 ## [1.8.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.8.0)
 
 * 89401543 Support for Stranglehold

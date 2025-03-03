@@ -29,12 +29,13 @@ namespace UELib.Core
             LatentAction = stream.Version < (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
                 ? stream.ReadUInt32()
                 : stream.ReadUInt16();
+#if DNF
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                 stream.LicenseeVersion >= 25)
             {
                 uint dnfUInt32 = stream.ReadUInt32();
             }
-
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
                 stream.ReadArray(out StateStack);
             if (Node != null) Offset = stream.ReadIndex();
@@ -52,13 +53,14 @@ namespace UELib.Core
                 ? LatentAction
                 : (ushort)LatentAction
             );
+#if DNF
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                 stream.LicenseeVersion >= 25)
             {
                 LibServices.LogService.SilentException(new NotSupportedException("Unknown data"));
                 stream.Write((uint)0);
             }
-            
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
                 stream.Write(StateStack);
             if (Node != null) stream.Write(Offset);

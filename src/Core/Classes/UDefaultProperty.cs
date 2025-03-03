@@ -309,7 +309,7 @@ namespace UELib.Core
         /// <returns>True if this is the last tag.</returns>
         private bool DeserializeNextTag()
         {
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.UE3)
+            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.RefactoredPropertyTags)
             {
                 return DeserializeTagUE1();
             }
@@ -704,8 +704,8 @@ namespace UELib.Core
 
                 case PropertyType.ByteProperty:
                     {
-                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag &&
-                            Size == 8)
+                        if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag
+                            && Size != 1)
                         {
                             string enumTagName = _Buffer.ReadName();
                             Record(nameof(enumTagName), enumTagName);
@@ -1131,6 +1131,14 @@ namespace UELib.Core
                             }
                         }
 
+                        // Hardcoded fix for InterpCurve and InterpCurvePoint.
+                        if (arrayType == PropertyType.None
+                            && (deserializeFlags & DeserializeFlags.WithinStruct) != 0
+                            && string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
+                        {
+                            arrayType = PropertyType.StructProperty;
+                        }
+
                         if (arrayType == PropertyType.None)
                         {
                             propertyValue = "/* Array type was not detected. */";
@@ -1140,11 +1148,6 @@ namespace UELib.Core
                         deserializeFlags |= DeserializeFlags.WithinArray;
                         if ((deserializeFlags & DeserializeFlags.WithinStruct) != 0)
                         {
-                            // Hardcoded fix for InterpCurve and InterpCurvePoint.
-                            if (string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
-                            {
-                                arrayType = PropertyType.StructProperty;
-                            }
 
                             for (var i = 0; i < arraySize; ++i)
                             {

@@ -127,7 +127,7 @@ namespace UELib.Branch
 
             stream.Serializer = Serializer;
         }
-        
+
         /// <summary>
         /// Called right after the <see cref="UnrealPackage.PackageFileSummary"/> has been deserialized.
         /// </summary>
@@ -145,7 +145,7 @@ namespace UELib.Branch
 
             stream.Serializer = Serializer;
         }
-        
+
         /// <summary>
         /// Called right after the package's tables (Names, Imports, and Exports, etc) have been serialized.
         /// </summary>
@@ -154,7 +154,7 @@ namespace UELib.Branch
         public virtual void PostSerializePackage(UnrealPackage linker, IUnrealStream stream)
         {
         }
-        
+
         /// <summary>
         /// Called right after the package's tables (Names, Imports, and Exports, etc) have been deserialized.
         /// </summary>

@@ -201,7 +201,14 @@ namespace UELib.Core
                 _Buffer.ReadStruct(out ClassGuid);
                 Record(nameof(ClassGuid), ClassGuid);
             }
-
+#if R6
+            // No version check
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                _Buffer.ReadArray(out UArray<UName> v100);
+                Record(nameof(v100), v100);
+            }
+#endif
         skipClassGuid:
 
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDependenciesDeprecated)
@@ -262,8 +269,8 @@ namespace UELib.Core
 
                 if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedHideCategoriesToUClass)
                 {
-                    // FIXME: >= version
-                    if (_Buffer.Version >= 178
+                    // FIXME: Clean up
+                    if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.DisplacedHideCategories
                         && isHideCategoriesOldOrder
                         && !Package.IsConsoleCooked()
                         && !Package.Build.Flags.HasFlag(BuildFlags.XenonCooked)
@@ -357,8 +364,8 @@ namespace UELib.Core
                             DontSortCategories = DeserializeGroup("DontSortCategories");
                         }
 
-                        // FIXME: Added in v99, removed in ~220?
-                        if (_Buffer.Version < 220 || !isHideCategoriesOldOrder)
+                        // FIXME: Clean up
+                        if (_Buffer.Version < (uint)PackageObjectLegacyVersion.DisplacedHideCategories || !isHideCategoriesOldOrder)
                         {
                             HideCategories = DeserializeGroup("HideCategories");
                         }

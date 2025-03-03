@@ -20,7 +20,7 @@ namespace UELib.Engine
             }
         }
     }
-    
+
     /// <summary>
     ///     Implements USpriteComponent/Engine.SpriteComponent
     /// </summary>
@@ -155,12 +155,121 @@ namespace UELib.Engine
     public class UParticleSystemComponent : UPrimitiveComponent
     {
     }
+
     /// <summary>
     ///     Implements UCascadeParticleSystemComponent/Engine.CascadeParticleSystemComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
     public class UCascadeParticleSystemComponent : UParticleSystemComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UFluidInfluenceComponent/Engine.FluidInfluenceComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UFluidInfluenceComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UFluidSurfaceComponent/Engine.FluidSurfaceComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UFluidSurfaceComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UImageReflectionShadowPlaneComponent/Engine.ImageReflectionShadowPlaneComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UImageReflectionShadowPlaneComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements ULandscapeComponent/Engine.LandscapeComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class ULandscapeComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements ULandscapeHeightfieldCollisionComponent/Engine.LandscapeHeightfieldCollisionComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class ULandscapeHeightfieldCollisionComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements ULensFlareComponent/Engine.LensFlareComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class ULensFlareComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements USpeedTreeComponent/Engine.SpeedTreeComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class USpeedTreeComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements USplineComponent/Engine.SplineComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class USplineComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements USplineComponentSimplified/Engine.SplineComponentSimplified
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class USplineComponentSimplified : USplineComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements UTerrainComponent/Engine.TerrainComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UTerrainComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements URB_ConstraintDrawComponent/Engine.RB_ConstraintDrawComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class URB_ConstraintDrawComponent : UPrimitiveComponent
+    {
+    }
+
+    /// <summary>
+    ///     Implements URB_RadialImpulseComponent/Engine.RB_RadialImpulseComponent
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class URB_RadialImpulseComponent : UPrimitiveComponent
     {
     }
 }

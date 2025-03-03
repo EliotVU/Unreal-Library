@@ -9,8 +9,7 @@ namespace Eliot.UELib.Benchmark
 {
     public class UnrealTestArchive : IUnrealArchive
     {
-        public UnrealTestArchive(UnrealPackage package, uint version, uint licenseeVersion = 0, uint ue4Version = 0,
-            bool bigEndianCode = false)
+        public UnrealTestArchive(UnrealPackage package, uint version, uint licenseeVersion = 0, uint ue4Version = 0, bool bigEndianCode = false)
         {
             Package = package;
             Version = version;
@@ -57,7 +56,7 @@ namespace Eliot.UELib.Benchmark
             throw new NotImplementedException();
         }
 
-        public int ReadNameIndex()
+        public new int ReadNameIndex()
         {
             throw new NotImplementedException();
         }

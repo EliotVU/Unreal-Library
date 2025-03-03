@@ -10,7 +10,7 @@ namespace Eliot.UELib.Benchmark
         private readonly byte[] _ArchiveData = new byte[20];
         private readonly IUnrealStream _Stream;
 
-        private UColor _Color = new(128, 64, 32, 0);
+        private UColor _Color = new UColor(128, 64, 32, 0);
         private readonly long _ColorPosition;
 
         private int _CompactIndex1 = 0x40 - 1;
@@ -24,7 +24,7 @@ namespace Eliot.UELib.Benchmark
         public UnrealStreamBenchmark()
         {
             var baseStream = new MemoryStream(_ArchiveData);
-            var testArchive = new UnrealTestArchive(null!, 100);
+            var testArchive = new UnrealTestArchive(null, 100);
             _Stream = new UnrealTestStream(testArchive, baseStream);
 
             _CompactIndexPosition1 = _Stream.Position;
@@ -103,7 +103,7 @@ namespace Eliot.UELib.Benchmark
         public void ReadColor()
         {
             _Stream.Position = _ColorPosition;
-            _Stream.ReadStruct(out _Color);
+            _Stream.ReadStruct(_Color);
         }
 
         [Benchmark]

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -28,8 +29,11 @@ namespace UELib
     {
         UnrealPackage Package { get; }
 
-        [Obsolete("To be deprecated")] UnrealReader UR { get; }
-        [Obsolete("To be deprecated")] UnrealWriter UW { get; }
+        [Obsolete("To be deprecated; ideally we want to pass the UnrealReader directly to the Deserialize methods.")]
+        UnrealReader UR { get; }
+
+        [Obsolete("To be deprecated; ideally we want to pass the UnrealWriter directly to the Serialize methods.")]
+        UnrealWriter UW { get; }
 
         [CanBeNull] IBufferDecoder Decoder { get; set; }
         IPackageSerializer Serializer { get; set; }
@@ -59,16 +63,16 @@ namespace UELib
         public IUnrealStream Record(string name, [CanBeNull] object value);
         public void ConformRecordPosition();
 
-        [Obsolete("Use ReadObject")]
+        [Obsolete("Use ReadObject or ReadIndex instead")]
         int ReadObjectIndex();
 
         [Obsolete("Use ReadObject")]
         UObject ParseObject(int index);
 
-        [Obsolete("use ReadName")]
+        [Obsolete("use ReadName instead")]
         int ReadNameIndex();
 
-        [Obsolete("use ReadName")]
+        [Obsolete("use ReadName instead")]
         int ReadNameIndex(out int num);
 
         [Obsolete("Use ReadName")]
@@ -83,7 +87,7 @@ namespace UELib
 
         public IUnrealArchive Archive { get; private set; }
 
-        [Obsolete("Use WriteString")]
+        [Obsolete("See WriteString")]
         public void WriteText(string s) => WriteString(s);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -185,6 +189,14 @@ namespace UELib
         /// </summary>
         public void WriteName(in UName value)
         {
+#if R6
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                Write(value.Index | ((value.Number + 1) << 18));
+
+                return;
+            }
+#endif
             WriteIndex(value.Index);
 
 #if SHADOWSTRIKE
@@ -223,6 +235,10 @@ namespace UELib
     {
         private readonly byte[] _IndexBuffer = new byte[5];
 
+        // Allow bulk reading of strings if the package is not big endian encoded.
+        // Generally this is the case for most packages, but some games have big endian encoded packages, where a string is serialized per byte.
+        private bool CanBulkRead => Archive.BigEndianCode == false; // Must get, because this is not initialized before the constructor initiation.
+
         // Dirty hack to implement crypto-reading, pending overhaul ;)
         public UnrealReader(IUnrealArchive archive, Stream baseStream) : base(baseStream) => Archive = archive;
 
@@ -239,9 +255,17 @@ namespace UELib
             if (length > 0) // ANSI
             {
                 byte[] chars = new byte[size];
-                for (int i = 0; i < chars.Length; ++i)
+
+                if (CanBulkRead)
                 {
-                    BaseStream.Read(chars, i, 1);
+                    BaseStream.Read(chars, 0, chars.Length);
+                }
+                else
+                {
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        BaseStream.Read(chars, i, 1);
+                    }
                 }
 
                 return chars[size - 1] == '\0'
@@ -251,16 +275,28 @@ namespace UELib
 
             if (length < 0) // UNICODE
             {
-                char[] chars = new char[size];
-                for (int i = 0; i < chars.Length; ++i)
+                if (CanBulkRead)
                 {
-                    char w = (char)ReadInt16();
-                    chars[i] = w;
-                }
+                    byte[] chars = new byte[size * 2];
+                    BaseStream.Read(chars, 0, chars.Length);
 
-                return chars[size - 1] == '\0'
-                    ? new string(chars, 0, chars.Length - 1)
-                    : new string(chars);
+                    return chars[(size * 2) - 2] == '\0' && chars[(size * 2) - 1] == '\0'
+                        ? Encoding.Unicode.GetString(chars, 0, chars.Length - 2)
+                        : Encoding.Unicode.GetString(chars, 0, chars.Length);
+                }
+                else
+                {
+                    char[] chars = new char[size];
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        char w = (char)ReadInt16();
+                        chars[i] = w;
+                    }
+
+                    return chars[size - 1] == '\0'
+                        ? new string(chars, 0, chars.Length - 1)
+                        : new string(chars);
+                }
             }
 
             return string.Empty;
@@ -282,7 +318,7 @@ namespace UELib
             return ReadString(unfixedSize);
         }
 
-        [Obsolete("Use ReadString")]
+        [Obsolete("See ReadString")]
         public string ReadText() => ReadString();
 
         public string ReadAnsi()
@@ -369,8 +405,21 @@ namespace UELib
         /// <returns>A unique UName representing the number and index to a <seealso cref="UNameTableItem"/></returns>
         public UName ReadName()
         {
-            int index = ReadIndex();
-            int number = -1;
+            int index, number;
+#if R6
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                // Some changes were made with licensee version 71, but I couldn't make much sense of it.
+                index = ReadInt32();
+                number = (index >> 18) - 1;
+                index &= 0x3FFFF;
+
+                // only the 18 lower bits are used.
+                return new UName(Archive.Package.Names[index], number);
+            }
+#endif
+            index = ReadIndex();
+            number = -1;
 
 #if SHADOWSTRIKE
             if (Archive.Package.Build == BuildGeneration.ShadowStrike)
@@ -387,15 +436,27 @@ namespace UELib
                 number = ReadInt32() - 1;
             }
 
-            var nameEntry = Archive.Package.Names[index];
-            return new UName(nameEntry, number);
+            return new UName(Archive.Package.Names[index], number);
         }
 
         [Obsolete]
         // HACK: Specific builds logic should be displaced by a specialized stream.
+
         public int ReadNameIndex(out int num)
         {
-            int index = ReadIndex();
+            int index;
+#if R6
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                // Some changes were made with licensee version 71, but I couldn't make much sense of it.
+                index = ReadInt32();
+                num = (index >> 18) - 1;
+
+                // only the 18 lower bits are used.
+                return index & 0x3FFFF;
+            }
+#endif
+            index = ReadIndex();
 #if SHADOWSTRIKE
             if (Archive.Package.Build == BuildGeneration.ShadowStrike)
             {
@@ -467,6 +528,46 @@ namespace UELib
         }
     }
 
+    /// <summary>
+    ///     A big endian encoded stream that reverses the buffer after read or before write.
+    /// </summary>
+    internal sealed class BigEndianEncodedStream(Stream baseStream) : Stream
+    {
+        public override void Flush() => baseStream.Flush();
+
+        public override long Seek(long offset, SeekOrigin origin) => baseStream.Seek(offset, origin);
+        public override void SetLength(long value) => baseStream.SetLength(value);
+
+        public override int Read(byte[] buffer, int index, int count)
+        {
+            int byteCount = baseStream.Read(buffer, index, count);
+
+            // Reverse every read (FIXME: SLOW)
+            Array.Reverse(buffer, 0, byteCount);
+
+            return byteCount;
+        }
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            // Reverse every read (FIXME: SLOW)
+            Array.Reverse(buffer, 0, buffer.Length);
+
+            baseStream.Write(buffer, offset, count);
+        }
+
+        public override bool CanRead => baseStream.CanRead;
+        public override bool CanSeek => baseStream.CanSeek;
+        public override bool CanWrite => baseStream.CanWrite;
+        public override long Length => baseStream.Length;
+        public override long Position
+        {
+            get => baseStream.Position;
+            set => baseStream.Position = value;
+        }
+
+        protected override void Dispose(bool disposing) => baseStream.Dispose();
+    }
+
     public class UPackageFileStream : FileStream
     {
         protected UPackageFileStream(string path, FileMode mode, FileAccess access, FileShare share) : base(path, mode,
@@ -480,9 +581,9 @@ namespace UELib
         public override int Read(byte[] buffer, int index, int count)
         {
             long p = Position;
-            int length = base.Read(buffer, index, count);
+            int byteCount = base.Read(buffer, index, count);
             Decoder?.DecodeRead(p, buffer, index, count);
-            return length;
+            return byteCount;
         }
 
         public override int ReadByte()
@@ -507,8 +608,6 @@ namespace UELib
         public UPackageStream(string path, FileMode mode, FileAccess access) : base(path, mode, access,
             FileShare.ReadWrite)
         {
-            Reader = null;
-            Writer = null;
             InitBuffer();
         }
 
@@ -516,6 +615,7 @@ namespace UELib
 
         internal UnrealWriter Writer { get; set; }
 
+        [Obsolete]
         public long LastPosition { get; set; }
 
         public bool IsChunked => Package.CompressedChunks != null && Package.CompressedChunks.Any();
@@ -539,13 +639,14 @@ namespace UELib
 
         public override int Read(byte[] buffer, int index, int count)
         {
-            int length = base.Read(buffer, index, count);
-            if (BigEndianCode && length > 1)
+            int byteCount = base.Read(buffer, index, count);
+
+            if (BigEndianCode && byteCount > 1)
             {
-                Array.Reverse(buffer, 0, length);
+                Array.Reverse(buffer, 0, byteCount);
             }
 
-            return length;
+            return byteCount;
         }
 
         public IUnrealStream Record(string name, object value)
@@ -595,7 +696,7 @@ namespace UELib
             Writer.WriteName(value);
         }
 
-        public void Skip(int bytes) => Position += bytes;
+        public void Skip(int byteCount) => Position += byteCount;
 
         private void InitBuffer()
         {
@@ -622,7 +723,8 @@ namespace UELib
             Decoder?.PreDecode(this);
 
             byte[] bytes = new byte[4];
-            base.Read(bytes, 0, 4);
+            int byteCount = base.Read(bytes, 0, 4);
+            Contract.Assert(byteCount == 4);
             uint readSignature = BitConverter.ToUInt32(bytes, 0);
             if (readSignature == UnrealPackage.Signature_BigEndian)
             {
@@ -648,11 +750,10 @@ namespace UELib
             return length;
         }
 
-        public new byte ReadByte() => (byte)base.ReadByte();
-
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
+
             if (disposing)
             {
                 Reader = null;
@@ -661,36 +762,71 @@ namespace UELib
         }
     }
 
-    public class UObjectStream : MemoryStream, IUnrealStream
+    /// <summary>
+    ///    A stream that decodes the buffer on read.
+    /// </summary>
+    /// <param name="decoder">the input decoder.</param>
+    /// <param name="buffer">the buffer to decode.</param>
+    /// <param name="originPosition">the position in the package.</param>
+    public sealed class MemoryDecoderStream(IBufferDecoder decoder, byte[] buffer, long originPosition)
+        : MemoryStream(buffer, false)
     {
-        private readonly long _ObjectPositionInPackage;
+        public override int Read(byte[] buffer, int index, int count)
+        {
+            long firstBytePosition = originPosition + Position;
+            int byteCount = base.Read(buffer, index, count);
 
+            // Decode the buffer, pass the position, because some games encrypt the buffer with the position.
+            decoder.DecodeRead(firstBytePosition, buffer, index, count);
+
+            return byteCount;
+        }
+    }
+
+    public class UObjectStream : IUnrealStream
+    {
+        private readonly Stream _BaseStream;
+
+        private readonly long _ObjectPositionInPackage;
         private long _PeekStartPosition;
 
-        public UObjectStream(IUnrealStream stream)
+        [Obsolete("A buffer is necessary", true)]
+        public UObjectStream(IUnrealStream packageStream)
         {
-            _ObjectPositionInPackage = stream.Position;
-
-            Writer = null;
-            Reader = null;
-            Package = stream.Package;
-            InitBuffer();
+            throw new NotImplementedException();
         }
 
-        public UObjectStream(IUnrealStream str, byte[] buffer) : base(buffer, true)
+        public UObjectStream(IUnrealStream packageStream, Stream baseStream)
         {
-            _ObjectPositionInPackage = str.Position;
+            Package = packageStream.Package;
+            _ObjectPositionInPackage = packageStream.Position;
 
-            Writer = null;
-            Reader = null;
-            Package = str.Package;
-            InitBuffer();
+            if (packageStream.BigEndianCode)
+            {
+                baseStream = new BigEndianEncodedStream(baseStream);
+            }
+
+            if (baseStream.CanRead)
+            {
+                Reader = new UnrealReader(this, baseStream);
+            }
+
+            if (baseStream.CanWrite)
+            {
+                Writer = new UnrealWriter(this, baseStream);
+            }
+
+            _BaseStream = baseStream;
+        }
+
+        public UObjectStream(IUnrealStream packageStream, byte[] buffer)
+            : this(packageStream, new MemoryStream(buffer, false))
+        {
         }
 
         public string Name => Package.Stream.Name;
 
         private UnrealReader Reader { get; set; }
-
         private UnrealWriter Writer { get; set; }
 
         [Obsolete("Displaced")]
@@ -702,11 +838,27 @@ namespace UELib
         public uint LicenseeVersion => Package.LicenseeVersion;
         public uint UE4Version => Package.Summary.UE4Version;
 
+        [Obsolete]
         public IBufferDecoder Decoder { get; set; }
         public IPackageSerializer Serializer { get; set; }
         UnrealReader IUnrealStream.UR => Reader;
         UnrealWriter IUnrealStream.UW => Writer;
 
+        public long Position
+        {
+            get => _BaseStream.Position;
+            set => _BaseStream.Position = value;
+        }
+
+        public long Length
+        {
+            get => _BaseStream.Length;
+            set => _BaseStream.SetLength(value);
+        }
+
+        /// <summary>
+        ///    The position inclusive of the object offset in the package.
+        /// </summary>
         public long AbsolutePosition
         {
             get => Position + _ObjectPositionInPackage;
@@ -715,15 +867,13 @@ namespace UELib
 
         public bool BigEndianCode => Package.Stream.BigEndianCode;
 
-        public override int Read(byte[] buffer, int index, int count)
+        // We need this implementation to keep the interface extensions working.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Read(byte[] buffer, int index, int count)
         {
-            int r = base.Read(buffer, index, count);
-            if (BigEndianCode && r > 1)
-            {
-                Array.Reverse(buffer, 0, r);
-            }
+            int byteCount = Reader.Read(buffer, index, count);
 
-            return r;
+            return byteCount;
         }
 
         public virtual IUnrealStream Record(string name, object value)
@@ -734,6 +884,9 @@ namespace UELib
         public void ConformRecordPosition()
         {
         }
+
+        public long Seek(long offset, SeekOrigin origin) => _BaseStream.Seek(offset, origin);
+        public void Close() => _BaseStream.Close();
 
         [Obsolete]
         public int ReadObjectIndex() => Reader.ReadIndex();
@@ -772,23 +925,8 @@ namespace UELib
             Writer.WriteName(value);
         }
 
-        public void Skip(int bytes) => Position += bytes;
-
-        private void InitBuffer()
-        {
-            if (CanRead && Reader == null)
-            {
-                Reader = new UnrealReader(this, this);
-            }
-
-            if (CanWrite && Writer == null)
-            {
-                Writer = new UnrealWriter(this, this);
-            }
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public new byte ReadByte() => Reader.ReadByte();
+        public void Skip(int byteCount) => Position += byteCount;
 
         /// <summary>
         ///     Start peeking, without advancing the stream position.
@@ -806,8 +944,18 @@ namespace UELib
         /// </summary>
         public void EndPeek() => Position = _PeekStartPosition;
 
+        /// <summary>
+        /// </summary>
+        [Obsolete("Use Dispose directly")]
         internal void DisposeBuffer()
         {
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            _BaseStream.Dispose();
+
             if (Reader != null)
             {
                 Reader.Dispose();
@@ -827,10 +975,17 @@ namespace UELib
 #if BINARYMETADATA
         private long _LastRecordPosition;
 #endif
-        public UObjectRecordStream(IUnrealStream stream, byte[] buffer) : base(stream, buffer) =>
-            BinaryMetaData = new BinaryMetaData();
+        public UObjectRecordStream(IUnrealStream packageStream, byte[] buffer)
+            : base(packageStream, buffer)
+        {
+        }
+
+        public UObjectRecordStream(IUnrealStream packageStream, MemoryStream baseStream)
+            : base(packageStream, baseStream)
+        {
+        }
 #if BINARYMETADATA
-        public BinaryMetaData BinaryMetaData { get; }
+        public BinaryMetaData BinaryMetaData { get; } = new();
 
         /// <summary>
         ///     TODO: Move this feature into a stream.
@@ -861,12 +1016,7 @@ namespace UELib
     public static class UnrealStreamImplementations
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte ReadByte(this IUnrealStream stream)
-        {
-            byte[] buffer = new byte[1];
-            stream.Read(buffer, 0, 1);
-            return buffer[0];
-        }
+        public static byte ReadByte(this IUnrealStream stream) => stream.UR.ReadByte();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort ReadUShort(this IUnrealStream stream) => stream.UR.ReadUInt16();
@@ -907,7 +1057,7 @@ namespace UELib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool ReadBool(this IUnrealStream stream)
         {
-            int value = stream.ReadInt32();
+            int value = stream.UR.ReadInt32();
             Debug.Assert(value <= 1, $"Unexpected value '{value}' for a boolean");
             return Convert.ToBoolean(value);
         }
@@ -976,12 +1126,17 @@ namespace UELib
             item.Deserialize(stream);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ReadStruct<T>(this IUnrealStream stream, T item)
+            where T : struct, IUnrealDeserializableClass =>
+            item.Deserialize(stream);
+
         public static unsafe void ReadStructMarshal<T>(this IUnrealStream stream, out T item)
             where T : unmanaged, IUnrealAtomicStruct
         {
             int structSize = sizeof(T);
             byte[] data = new byte[structSize];
-            stream.Read(data, 0, structSize);
+            stream.UR.Read(data, 0, structSize);
             fixed (byte* ptr = &data[0])
             {
                 item = *(T*)ptr;
@@ -1003,7 +1158,7 @@ namespace UELib
             int structSize = sizeof(T);
             array = new UArray<T>(count);
             byte[] data = new byte[structSize * count];
-            stream.Read(data, 0, structSize * count);
+            stream.UR.Read(data, 0, structSize * count);
 
             for (int i = 0; i < count; ++i)
             {
@@ -1018,11 +1173,12 @@ namespace UELib
         public static void ReadArray(this IUnrealStream stream, out UArray<byte> array)
         {
             int c = stream.ReadLength();
-            var data = new byte[c];
-            stream.Read(data, 0, c);
-            // FIXME: Surely this could be done much faster!
             array = new UArray<byte>(c);
-            array.AddRange(data);
+            for (int i = 0; i < c; ++i)
+            {
+                stream.Read(out byte element);
+                array.Add(element);
+            }
         }
 
         public static void ReadArray(this IUnrealStream stream, out UArray<int> array)
@@ -1156,7 +1312,7 @@ namespace UELib
             stream.Package.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
             Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
 
-            ulong flags = stream.ReadUInt32();
+            ulong flags = stream.UR.ReadUInt32();
             return new UnrealFlags<TEnum>(flags, enumMap);
         }
 
@@ -1170,7 +1326,7 @@ namespace UELib
             stream.Package.Branch.EnumFlagsMap.TryGetValue(typeof(TEnum), out ulong[] enumMap);
             Debug.Assert(enumMap != null, nameof(enumMap) + " != null");
 
-            ulong flags = stream.ReadUInt64();
+            ulong flags = stream.UR.ReadUInt64();
             return new UnrealFlags<TEnum>(flags, enumMap);
         }
 
@@ -1202,7 +1358,7 @@ namespace UELib
         public static void Read(this IUnrealStream stream, out UObject value) => value = ReadObject<UObject>(stream);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out string value) => value = stream.ReadString();
+        public static void Read(this IUnrealStream stream, out string value) => value = stream.UR.ReadString();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UName value) => value = ReadNameReference(stream);
@@ -1231,31 +1387,31 @@ namespace UELib
         public static void Read(this IUnrealStream stream, out UMap<ushort, ushort> map) => ReadMap(stream, out map);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, byte[] data) => stream.Read(data, 0, data.Length);
+        public static void Read(this IUnrealStream stream, byte[] data) => stream.UR.Read(data, 0, data.Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out byte value) => value = stream.ReadByte();
+        public static void Read(this IUnrealStream stream, out byte value) => value = stream.UR.ReadByte();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out short value) => value = stream.ReadInt16();
+        public static void Read(this IUnrealStream stream, out short value) => value = stream.UR.ReadInt16();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out ushort value) => value = stream.ReadUInt16();
+        public static void Read(this IUnrealStream stream, out ushort value) => value = stream.UR.ReadUInt16();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out int value) => value = stream.ReadInt32();
+        public static void Read(this IUnrealStream stream, out int value) => value = stream.UR.ReadInt32();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out uint value) => value = stream.ReadUInt32();
+        public static void Read(this IUnrealStream stream, out uint value) => value = stream.UR.ReadUInt32();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out long value) => value = stream.ReadInt64();
+        public static void Read(this IUnrealStream stream, out long value) => value = stream.UR.ReadInt64();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out ulong value) => value = stream.ReadUInt64();
+        public static void Read(this IUnrealStream stream, out ulong value) => value = stream.UR.ReadUInt64();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Read(this IUnrealStream stream, out float value) => value = stream.ReadFloat();
+        public static void Read(this IUnrealStream stream, out float value) => value = stream.UR.ReadSingle();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out bool value) => value = ReadBool(stream);
@@ -1358,8 +1514,7 @@ namespace UELib
                     Unsafe.CopyBlock(dataPtr, ptr, (uint)structSize);
                 }
             }
-
-            stream.Write(data, 0, data.Length);
+            stream.UW.Write(data, 0, data.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1368,7 +1523,7 @@ namespace UELib
             item.Serialize(stream);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Write(this IUnrealStream stream, byte[] data) => stream.Write(data, 0, data.Length);
+        public static void Write(this IUnrealStream stream, byte[] data) => stream.UW.Write(data, 0, data.Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write(this IUnrealStream stream, string value) => stream.UW.WriteString(value);

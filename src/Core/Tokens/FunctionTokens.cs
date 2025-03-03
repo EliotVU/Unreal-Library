@@ -240,14 +240,14 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-#if UE3Proto
-                    // FIXME: Version
-                    if (stream.Version >= 178 && stream.Version < 200)
+                    // FIXME: Version, seen in EndWar (222) and R6Vegas (v241), gone at least since RoboBlitz (369)
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.UE3 &&
+                        stream.Version <= 241)
                     {
                         byte isSuper = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
                     }
-#endif
+
                     FunctionName = DeserializeFunctionName(stream);
                     DeserializeCall(stream);
                 }
