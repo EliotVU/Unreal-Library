@@ -187,17 +187,42 @@ namespace UELib.Core
 
         private void InitBuffer()
         {
-            Package.Stream.Seek(ExportTable.SerialOffset, SeekOrigin.Begin);
+            InitBuffer(Package.Stream);
+        }
 
-            //Console.WriteLine( "Init buffer for {0}", (string)this );
-            var buffer = new byte[ExportTable.SerialSize];
-            _Buffer = new UObjectRecordStream(Package.Stream, buffer);
+        private void InitBuffer(UPackageStream stream)
+        {
+            long objectOffset = ExportTable.SerialOffset;
+            int objectSize = ExportTable.SerialSize;
 
-            // Bypass the terrible and slow endian reverse call
-            int read = Package.Stream.EndianAgnosticRead(buffer, 0, ExportTable.SerialSize);
-            Contract.Assert(ExportTable.SerialOffset + ExportTable.SerialSize <= Package.Stream.Length,
-                "Exceeded file's length");
-            //Debug.Assert(read == ExportTable.SerialSize, $"Incomplete read; expected a total bytes of {ExportTable.SerialSize} but got {read}");
+            byte[] buffer = new byte[objectSize];
+            int byteCount;
+
+            // Make an object stream with a decoder as the base stream.
+            if (stream.Decoder != null)
+            {
+                var decoder = stream.Decoder;
+                // Read without decoding, because the encryption may be affected by the read count. e.g. "Huxley"
+                stream.Decoder = null;
+                // Bypass the terrible and slow endian reverse call
+                stream.Seek(objectOffset, SeekOrigin.Begin);
+                byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
+                stream.Decoder = decoder;
+
+                var baseStream = new MemoryDecoderStream(stream.Decoder, buffer, objectOffset);
+                _Buffer = new UObjectRecordStream(stream, baseStream);
+            }
+            else
+            {
+                // Bypass the terrible and slow endian reverse call
+                stream.Seek(objectOffset, SeekOrigin.Begin);
+                byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
+
+                _Buffer = new UObjectRecordStream(stream, buffer);
+            }
+
+            Contract.Assert(byteCount == objectSize,
+                $"Incomplete read; expected a total bytes of {objectSize} but got {byteCount}");
         }
 
         internal void EnsureBuffer()
@@ -216,7 +241,7 @@ namespace UELib.Core
             if (_Buffer == null || (DeserializationState & ObjectState.Deserializing) != 0)
                 return;
 
-            _Buffer.DisposeBuffer();
+            _Buffer.Dispose();
             _Buffer = null;
             //Console.WriteLine( "Disposed" );
         }

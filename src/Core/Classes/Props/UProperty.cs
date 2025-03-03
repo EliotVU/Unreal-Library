@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
@@ -223,6 +224,14 @@ namespace UELib.Core
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
             }
+#if HUXLEY
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            {
+                // A property linked to the "Core.Object.LazyLoadPropertyInfo" struct.
+                var partLoadInfoProperty = _Buffer.ReadObject();
+                Record(nameof(partLoadInfoProperty), partLoadInfoProperty);
+            }
+#endif
 #if R6
             if (Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {

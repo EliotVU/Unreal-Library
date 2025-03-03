@@ -104,13 +104,9 @@ namespace UELib
 
         public virtual byte[] CopyBuffer()
         {
-            var buff = new byte[Size];
+            byte[] buff = new byte[Size];
             Owner.Stream.Seek(Offset, SeekOrigin.Begin);
-            Owner.Stream.Read(buff, 0, Size);
-            if (Owner.Stream.BigEndianCode)
-            {
-                Array.Reverse(buff);
-            }
+            Owner.Stream.EndianAgnosticRead(buff, 0, Size);
 
             return buff;
         }

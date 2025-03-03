@@ -14,6 +14,7 @@ using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
+using UELib.Branch.UE3.HUXLEY;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.R6;
 using UELib.Branch.UE3.RSS;
@@ -455,6 +456,15 @@ namespace UELib
                 /// 490/009
                 /// </summary>
                 [Build(490, 9)] GoW1,
+
+                /// <summary>
+                /// Huxley
+                /// 
+                /// 496/023
+                /// </summary>
+                [Build(496, 23)]
+                [BuildEngineBranch(typeof(EngineBranchHuxley))]
+                Huxley,
 
                 [Build(511, 039, BuildGeneration.HMS)] // The Bourne Conspiracy
                 [Build(511, 145, BuildGeneration.HMS)] // Transformers: War for Cybertron (PC version)
@@ -1246,6 +1256,21 @@ namespace UELib
                     if (stream.LicenseeVersion >= 181) stream.Skip(16);
 
                     stream.Skip(4);
+                }
+#endif
+#if HUXLEY
+                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                {
+                    if (LicenseeVersion >= 8)
+                    {
+                        int huxleySignature = stream.ReadInt32();
+                        Contract.Assert(huxleySignature != 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
+                    }
+
+                    if (LicenseeVersion >= 17)
+                    {
+                        int unk = stream.ReadInt32();
+                    }
                 }
 #endif
                 if (stream.Version >= VHeaderSize)
@@ -2560,10 +2585,9 @@ namespace UELib
 
         public byte[] CopyBuffer()
         {
-            var buff = new byte[HeaderSize];
+            byte[] buff = new byte[Summary.HeaderSize];
             Stream.Seek(0, SeekOrigin.Begin);
-            Stream.Read(buff, 0, HeaderSize);
-            if (Stream.BigEndianCode) Array.Reverse(buff);
+            Stream.EndianAgnosticRead(buff, 0, Summary.HeaderSize);
 
             return buff;
         }
