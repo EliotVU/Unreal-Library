@@ -2585,10 +2585,9 @@ namespace UELib
 
         public byte[] CopyBuffer()
         {
-            var buff = new byte[HeaderSize];
+            byte[] buff = new byte[Summary.HeaderSize];
             Stream.Seek(0, SeekOrigin.Begin);
-            Stream.Read(buff, 0, HeaderSize);
-            if (Stream.BigEndianCode) Array.Reverse(buff);
+            Stream.EndianAgnosticRead(buff, 0, Summary.HeaderSize);
 
             return buff;
         }

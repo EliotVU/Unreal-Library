@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
@@ -226,8 +227,9 @@ namespace UELib.Core
 #if HUXLEY
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {
-                var unknown = _Buffer.ReadObject();
-                Record(nameof(unknown), unknown);
+                // A property linked to the "Core.Object.LazyLoadPropertyInfo" struct.
+                var partLoadInfoProperty = _Buffer.ReadObject();
+                Record(nameof(partLoadInfoProperty), partLoadInfoProperty);
             }
 #endif
 #if R6
