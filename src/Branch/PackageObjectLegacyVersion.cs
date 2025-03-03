@@ -227,6 +227,11 @@ namespace UELib.Branch
         /// </summary>
         IsModificationAddedToStructMember = GameFFOW,
 
+        /// <summary>
+        ///     Invalid for Stargate Worlds.
+        /// </summary>
+        PackageFlagsAddedToExports = 475,
+
         [Discardable] GameGOWPC = 490,
         [Discardable] GameHuxley = 496,
 

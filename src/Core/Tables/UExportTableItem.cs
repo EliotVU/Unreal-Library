@@ -295,11 +295,8 @@ namespace UELib
             }
 #endif
             stream.Skip(16); // Package guid
-#if HUXLEY
-            if (stream.Version >= 475)
-#else
-            if (stream.Version > 486) // 475?  486(> Stargate Worlds)
-#endif
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports)
             {
                 stream.Skip(4); // Package flags
             }
