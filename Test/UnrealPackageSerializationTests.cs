@@ -16,7 +16,7 @@ namespace Eliot.UELib.Test;
 public class UnrealPackageSerializationTests
 {
     [DataTestMethod]
-    [DataRow(PackageObjectLegacyVersion.Release64 - 1)]
+    [DataRow(PackageObjectLegacyVersion.LowestVersion)]
     [DataRow(PackageObjectLegacyVersion.Release64)]
     [DataRow(PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)]
     [DataRow(PackageObjectLegacyVersion.HighestVersion)]
@@ -100,7 +100,7 @@ public class UnrealPackageSerializationTests
     }
 
     [DataTestMethod]
-    //[DataRow(PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits - 1)]
+    [DataRow(PackageObjectLegacyVersion.LowestVersion)]
     [DataRow(PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)]
     [DataRow(PackageObjectLegacyVersion.ArchetypeAddedToExports)]
     [DataRow(PackageObjectLegacyVersion.ExportFlagsAddedToExports)]
@@ -128,6 +128,7 @@ public class UnrealPackageSerializationTests
         linker.Exports.AddRange(sourcePackage.Exports);
 
         var sizes = new long[sourcePackage.Exports.Count];
+        var flags = new ulong[sourcePackage.Exports.Count];
 
         stream.Position = 0;
         sourcePackage.Exports.ForEach(exp =>
@@ -135,6 +136,7 @@ public class UnrealPackageSerializationTests
             long p = stream.Position;
             exp.Serialize(stream);
             sizes[exp.Index] = stream.Position - p;
+            flags[exp.Index] = exp.ObjectFlags;
         });
         long endPosition = stream.Position;
         stream.Position = 0;
@@ -143,11 +145,22 @@ public class UnrealPackageSerializationTests
             long p = stream.Position;
             exp.Deserialize(stream);
             Assert.AreEqual(sizes[exp.Index], stream.Position - p);
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
+            {
+                Assert.AreEqual(flags[exp.Index], exp.ObjectFlags);
+            }
+            else
+            {
+                Assert.AreEqual((uint)flags[exp.Index], (uint)exp.ObjectFlags);
+            }
         });
         Assert.AreEqual(endPosition, stream.Position);
     }
 
     [DataTestMethod]
+    [DataRow(PackageObjectLegacyVersion.LowestVersion)] // Heritages test
+    [DataRow(PackageObjectLegacyVersion.HeritageTableDeprecated)] // Generations test
+    [DataRow(PackageObjectLegacyVersion.AddedDependsTable)]
     [DataRow(PackageObjectLegacyVersion.AddedAdditionalPackagesToCook)]
     [DataRow(PackageObjectLegacyVersion.AddedThumbnailTable)]
     [DataRow(PackageObjectLegacyVersion.AddedImportExportGuidsTable)]
@@ -167,8 +180,6 @@ public class UnrealPackageSerializationTests
             Version = (uint)version
         };
 
-        // Copy the entire package to the temp stream (minus objects)
-        tempStream.Position = 0;
         // Version is serialized from the summary instead of the stream version.
         sourcePackage.Summary.Version = tempPackage.Version;
         sourcePackage.Summary.LicenseeVersion = tempPackage.LicenseeVersion;
@@ -183,6 +194,8 @@ public class UnrealPackageSerializationTests
         sourcePackage.Summary.ImportExportGuidsOffset = 0;
         sourcePackage.Summary.ThumbnailTableOffset = 0;
 
+        // Copy the entire package to the temp stream (minus objects)
+        tempStream.Position = 0;
         sourcePackage.Serialize(tempStream);
         long endPosition = tempStream.Position;
 

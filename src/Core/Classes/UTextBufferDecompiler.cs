@@ -6,7 +6,7 @@
         {
             if (ShouldDeserializeOnDemand)
             {
-                BeginDeserializing();
+                Load();
             }
 
             var output = string.Empty;

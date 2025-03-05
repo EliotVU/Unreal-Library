@@ -39,7 +39,7 @@ namespace Eliot.UELib.Test.upk.Builds
             Assert.IsNotNull(funcGetItemName);
             
             Debug.WriteLine($"Testing Object: {funcGetItemName.GetReferencePath()}");
-            funcGetItemName.BeginDeserializing();
+            funcGetItemName.Load();
             Assert.IsNull(funcGetItemName.ThrownException, "Function 'GetItemName' had thrown an exception during its deserialization process");
             
             funcGetItemName.Decompile();

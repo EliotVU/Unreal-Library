@@ -244,7 +244,7 @@ namespace UELib.Core
         {
             if (Default != null && Default != this)
             {
-                Default.BeginDeserializing();
+                Default.Load();
                 Properties = Default.Properties;
             }
 

@@ -32,6 +32,16 @@ namespace UELib
     using Branch.UE2.ShadowStrike;
     using System.Text;
 
+    public class ObjectEventArgs : EventArgs
+    {
+        public UObject ObjectRef { get; }
+
+        public ObjectEventArgs(UObject objectRef)
+        {
+            ObjectRef = objectRef;
+        }
+    }
+
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
     /// event of a new added UELib.Core.UObject.
@@ -1032,13 +1042,21 @@ namespace UELib
             public int HeritageCount, HeritageOffset;
 
             /// <summary>
-            /// List of heritages. UE1 way of defining generations.
+            /// Table of package guids. early UE1 way of defining generations.
+            /// 
+            /// Null if (<see cref="Version"/> &gt;= <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
             /// </summary>
             public UArray<UGuid> Heritages;
 
             public int DependsOffset;
 
             public UGuid Guid;
+
+            /// <summary>
+            /// Table of package generations.
+            /// 
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
+            /// </summary>
             public UArray<UGenerationTableItem> Generations;
 
             private PackageFileEngineVersion PackageEngineVersion;
@@ -1060,12 +1078,15 @@ namespace UELib
             ///
             /// If <see cref="CompressionFlags"/> equals 0 then the list will be cleared on <see cref="UnrealPackage.Deserialize"/>
             /// 
-            /// Will be null if not deserialized (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.CompressionAdded"/>)
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.CompressionAdded"/>)
             /// </summary>
             public UArray<CompressedChunk> CompressedChunks;
 
             public uint PackageSource;
 
+            /// <summary>
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.AddedAdditionalPackagesToCook"/>)
+            /// </summary>
             public UArray<string> AdditionalPackagesToCook;
 
             public int ImportExportGuidsOffset;
@@ -1270,9 +1291,15 @@ namespace UELib
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedFolderName)
                 {
+                    if (FolderName == string.Empty)
+                    {
+                        FolderName = "None";
+                    }
+
                     stream.Write(FolderName);
                 }
 
+                // version >= 34
                 stream.Write((uint)PackageFlags);
 
 #if HAWKEN || GIGANTIC
@@ -1333,7 +1360,11 @@ namespace UELib
 
                 if (stream.Version < (uint)PackageObjectLegacyVersion.HeritageTableDeprecated)
                 {
-                    Contract.Assert(HeritageCount > 0, "A heritage count is required.");
+                    if (Heritages == null || Heritages.Count == 0)
+                    {
+                        HeritageCount = 1;
+                        Heritages = new UArray<UGuid>(HeritageCount) { Guid };
+                    }
 
                     stream.Write(HeritageCount);
                     stream.Write(HeritageOffset);
@@ -1462,7 +1493,14 @@ namespace UELib
                     goto skipGenerations;
                 }
 #endif
-                Contract.Assert(Generations.Count >= 0, "A generation count is required.");
+                if (Generations == null || Generations.Count == 0)
+                {
+                    Generations = new UArray<UGenerationTableItem>(1)
+                    {
+                        new() { ExportCount = ExportCount, NameCount = NameCount, NetObjectCount = 0 }
+                    };
+                }
+
                 stream.Write(Generations.Count);
 #if APB
                 // Guid, however only serialized for the first generation item.
@@ -1673,7 +1711,7 @@ namespace UELib
                 {
                     stream.Read(out Tag);
                 }
-                
+
                 const short maxLegacyVersion = -7;
 
                 // Read as one variable due Big Endian Encoding.       
@@ -1839,6 +1877,7 @@ namespace UELib
                     FolderName = stream.ReadString();
                 }
 
+                // version >= 34
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
 #if HAWKEN || GIGANTIC
@@ -2266,56 +2305,28 @@ namespace UELib
         /// </summary>
         public static ushort OverrideLicenseeVersion;
 
-        /// <summary>
-        /// The bitflags of this package.
-        /// </summary>
         [Obsolete("See Summary.PackageFlags")] public uint PackageFlags;
 
-        /// <summary>
-        /// Size of the Header. Basically points to the first Object in the package.
-        /// </summary>
         [Obsolete("See Summary.HeaderSize")]
         public int HeaderSize => Summary.HeaderSize;
 
-        /// <summary>
-        /// The group the package is associated with in the Content Browser.
-        /// </summary>
         [Obsolete("See Summary.FolderName")] public string Group;
 
-        /// <summary>
-        /// The guid of this package. Used to test if the package on a client is equal to the one on a server.
-        /// </summary>
         [Obsolete("See Summary.Guid")]
         public string GUID => Summary.Guid.ToString();
 
-        /// <summary>
-        /// List of package generations.
-        /// </summary>
         [Obsolete("See Summary.Generations")]
         public UArray<UGenerationTableItem> Generations => Summary.Generations;
 
-        /// <summary>
-        /// The Engine version the package was created with.
-        /// </summary>
         [Obsolete("See Summary.EngineVersion")]
         public int EngineVersion => Summary.EngineVersion;
 
-        /// <summary>
-        /// The Cooker version the package was cooked with.
-        /// </summary>
         [Obsolete("See Summary.CookerVersion")]
         public int CookerVersion => Summary.CookerVersion;
 
-        /// <summary>
-        /// The type of compression the package is compressed with.
-        /// </summary>
         [Obsolete("See Summary.CompressionFlags")]
         public uint CompressionFlags => Summary.CompressionFlags;
 
-        /// <summary>
-        /// List of compressed chunks throughout the package.
-        /// Null if package version less is than <see cref="VCompression" />
-        /// </summary>
         [Obsolete("See Summary.CompressedChunks")]
         public UArray<CompressedChunk> CompressedChunks => Summary.CompressedChunks;
 
@@ -2337,7 +2348,7 @@ namespace UELib
         /// <summary>
         /// A map of export to import indexes for each export.
         /// </summary>
-        public List<UArray<int>> Dependencies { get; private set; } = [];
+        public List<UArray<UPackageIndex>> Dependencies { get; private set; } = [];
 
         public struct ULevelGuid : IUnrealSerializableClass
         {
@@ -2358,7 +2369,7 @@ namespace UELib
         }
 
         public UArray<ULevelGuid> ImportGuids { get; private set; } = [];
-        public UMap<UGuid, int> ExportGuids { get; private set; } = new();
+        public UMap<UGuid, UPackageIndex> ExportGuids { get; private set; } = new();
 
         public UArray<UObjectThumbnailTableItem> ObjectThumbnails { get; private set; } = [];
 
@@ -2436,24 +2447,10 @@ namespace UELib
             Debug.Assert(stream.Serializer != null,
                 "IUnrealStream.Serializer cannot be null. Did you forget to initialize the Serializer in PostSerializeSummary?");
 
-            if (Summary.CompressedChunks?.Count > 0 && Summary.CompressionFlags != 0)
+            if (Summary.CompressedChunks?.Count > 0 &&
+                Summary.CompressionFlags != 0)
             {
                 throw new NotImplementedException("Cannot serialize compressed package data.");
-            }
-
-            if (Names.Count > 0)
-            {
-                if (Summary.NameOffset != 0)
-                {
-                    Contract.Assert(stream.Position < Summary.NameOffset);
-                    stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
-                }
-
-                SerializeNames(stream);
-            }
-            else
-            {
-                Summary.NameOffset = 0;
             }
 
             if (Summary.Heritages?.Count > 0
@@ -2469,7 +2466,24 @@ namespace UELib
             }
             else
             {
+                Summary.HeritageCount = 0;
                 Summary.HeritageOffset = 0;
+            }
+
+            if (Names.Count > 0)
+            {
+                if (Summary.NameOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.NameOffset);
+                    stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
+                }
+
+                SerializeNames(stream);
+            }
+            else
+            {
+                Summary.NameCount = 0;
+                Summary.NameOffset = 0;
             }
 
             if (Imports.Count > 0)
@@ -2484,6 +2498,7 @@ namespace UELib
             }
             else
             {
+                Summary.ImportCount = 0;
                 Summary.ImportOffset = 0;
             }
 
@@ -2499,6 +2514,7 @@ namespace UELib
             }
             else
             {
+                Summary.ExportCount = 0;
                 Summary.ExportOffset = 0;
             }
 
@@ -2532,11 +2548,14 @@ namespace UELib
             }
             else
             {
+                Summary.ImportGuidsCount = 0;
+                Summary.ExportGuidsCount = 0;
                 Summary.ImportExportGuidsOffset = 0;
             }
-            
+
             // The count is at the offset, so we have to serialize this regardless of the thumbnail count.
-            if (ObjectThumbnails.Count > 0 && stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
+            if (ObjectThumbnails.Count > 0
+                && stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
             {
                 if (Summary.ThumbnailTableOffset != 0)
                 {
@@ -2551,6 +2570,25 @@ namespace UELib
                 Summary.ThumbnailTableOffset = 0;
             }
 
+            if (stream.UE4Version >= 384)
+            {
+                throw new NotSupportedException("Cannot yet serialize UE4 StringAssetReferences");
+            }
+            else
+            {
+                Summary.StringAssetReferencesCount = 0;
+                Summary.StringAssetReferencesOffset = 0;
+            }
+
+            if (stream.UE4Version >= 510)
+            {
+                throw new NotSupportedException("Cannot yet serialize UE4 SearchableNames");
+            }
+            else
+            {
+                Summary.SearchableNamesOffset = 0;
+            }
+
             Branch.PostSerializePackage(stream.Package, stream);
             Summary.HeaderSize = (int)stream.Position;
         }
@@ -2561,6 +2599,8 @@ namespace UELib
         /// <param name="stream">the input stream.</param>
         public void Deserialize(IUnrealStream stream)
         {
+            BinaryMetaData.Fields.Clear();
+            
             // Reset all previously-deserialized data if any.
             uint tag = Summary.Tag;
             Summary = new PackageFileSummary
@@ -2589,6 +2629,13 @@ namespace UELib
                 // Flags 0? Let's pretend that we no longer possess any chunks.
                 Summary.CompressedChunks.Clear();
             }
+
+            // Read the heritages
+            if (Summary.HeritageCount > 0)
+            {
+                stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
+                DeserializeHeritages(stream);
+            }
 #if TERA
             if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
 #endif
@@ -2597,13 +2644,6 @@ namespace UELib
             {
                 stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
                 DeserializeNames(stream);
-            }
-
-            // Read the heritages
-            if (Summary.HeritageCount > 0)
-            {
-                stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
-                DeserializeHeritages(stream);
             }
 
             // Read the imports
@@ -2629,14 +2669,10 @@ namespace UELib
                 {
                     DeserializeDependencies(stream);
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
                     // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
-                    Console.Error.WriteLine("Couldn't parse DependenciesTable");
-                    Console.Error.WriteLine(ex.ToString());
-#if STRICT
-                    throw new UnrealException("Couldn't parse DependenciesTable", ex);
-#endif
+                    LibServices.LogService.SilentException(new UnrealException("Couldn't parse DependenciesTable", exception));
                 }
             }
 
@@ -2649,14 +2685,10 @@ namespace UELib
                 {
                     DeserializeImportExportGuids(stream);
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
                     // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
-                    Console.Error.WriteLine("Couldn't parse ImportExportGuidsTable");
-                    Console.Error.WriteLine(ex.ToString());
-#if STRICT
-                    throw new UnrealException("Couldn't parse ImportExportGuidsTable", ex);
-#endif
+                    LibServices.LogService.SilentException(new UnrealException("Couldn't parse ImportExportGuidsTable", exception));
                 }
             }
 
@@ -2669,19 +2701,15 @@ namespace UELib
                 {
                     DeserializeThumbnails(stream);
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
                     // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
-                    Console.Error.WriteLine("Couldn't parse ThumbnailTable");
-                    Console.Error.WriteLine(ex.ToString());
-#if STRICT
-                    throw new UnrealException("Couldn't parse ThumbnailTable", ex);
-#endif
+                    LibServices.LogService.SilentException(new UnrealException("Couldn't parse ThumbnailTable", exception));
                 }
             }
 
             Branch.PostDeserializePackage(stream.Package, stream);
-            
+
             if (Summary.HeaderSize == 0)
             {
                 Summary.HeaderSize = (int)stream.Position;
@@ -2710,10 +2738,14 @@ namespace UELib
             }
 #endif
             Contract.Assert(dependsCount <= Dependencies.Count);
-            for (var exportIndex = 0; exportIndex < dependsCount; ++exportIndex)
+            for (int exportIndex = 0; exportIndex < dependsCount; ++exportIndex)
             {
                 var imports = Dependencies[exportIndex];
-                stream.WriteArray(imports);
+                stream.Write(imports.Count);
+                foreach (var packageIndex in imports)
+                {
+                    stream.Write((int)packageIndex);
+                }
             }
         }
 
@@ -2727,10 +2759,17 @@ namespace UELib
                 dependsCount = stream.ReadInt32();
             }
 #endif
-            Dependencies = new List<UArray<int>>(dependsCount);
-            for (var exportIndex = 0; exportIndex < dependsCount; ++exportIndex)
+            Dependencies = new List<UArray<UPackageIndex>>(dependsCount);
+            for (int exportIndex = 0; exportIndex < dependsCount; ++exportIndex)
             {
-                stream.ReadArray(out UArray<int> importIndexes);
+                stream.Read(out int c);
+                var importIndexes = new UArray<UPackageIndex>(c);
+                for (int i = 0; i < c; ++i)
+                {
+                    stream.Read(out int packageIndex);
+                    importIndexes.Add(packageIndex);
+                }
+                
                 Dependencies.Add(importIndexes);
             }
 
@@ -2757,6 +2796,11 @@ namespace UELib
         private void DeserializeHeritages(IUnrealStream stream)
         {
             stream.ReadArray(out Summary.Heritages, Summary.HeritageCount);
+
+            if (Summary.Heritages.Count > 0)
+            {
+                Summary.Guid = Summary.Heritages.Last();
+            }
 
             BinaryMetaData.AddField(nameof(Summary.Heritages), Summary.Heritages, Summary.HeritageOffset,
                 stream.Position - Summary.HeritageOffset);
@@ -2808,12 +2852,12 @@ namespace UELib
 
             BinaryMetaData.AddField(nameof(Names), Names, Summary.NameOffset, stream.Position - Summary.NameOffset);
 #if SPELLBORN
-                // WTF were they thinking? Change DRFORTHEWIN to None
-                if (Build == GameBuild.BuildName.Spellborn
-                    && Names[0].Name == "DRFORTHEWIN")
-                    Names[0].Name = "None";
-                // False??
-                //Debug.Assert(stream.Position == Summary.ImportsOffset);
+            // WTF were they thinking? Change DRFORTHEWIN to None
+            if (Build == GameBuild.BuildName.Spellborn
+                && Names[0].Name == "DRFORTHEWIN")
+                Names[0].Name = "None";
+            // False??
+            //Debug.Assert(stream.Position == Summary.ImportsOffset);
 #endif
         }
 
@@ -2895,6 +2939,51 @@ namespace UELib
                 stream.Position - Summary.ExportOffset);
         }
 
+        private void SerializeImportExportGuids(IUnrealStream stream)
+        {
+            Summary.ImportExportGuidsOffset = (int)stream.Position;
+
+            Summary.ImportGuidsCount = ImportGuids.Count;
+            foreach (var importGuid in ImportGuids)
+            {
+                var guid = importGuid;
+                stream.Write(ref guid);
+            }
+
+            Summary.ExportGuidsCount = ExportGuids.Count;
+            foreach (var exportGuid in ExportGuids)
+            {
+                var guidKey = exportGuid.Key;
+                stream.Write(ref guidKey);
+                stream.Write((int)exportGuid.Value);
+            }
+        }
+
+        private void DeserializeImportExportGuids(IUnrealStream stream)
+        {
+            ImportGuids = new UArray<ULevelGuid>(Summary.ImportGuidsCount);
+            for (var i = 0; i < Summary.ImportGuidsCount; ++i)
+            {
+                stream.ReadStruct(out ULevelGuid importGuid);
+                ImportGuids[i] = importGuid;
+            }
+
+            ExportGuids = new UMap<UGuid, UPackageIndex>(Summary.ExportGuidsCount);
+            for (var i = 0; i < Summary.ExportGuidsCount; ++i)
+            {
+                stream.ReadStruct(out UGuid objectGuid);
+                stream.Read(out int exportIndex);
+
+                ExportGuids.Add(objectGuid, exportIndex);
+            }
+
+            if (stream.Position != Summary.ImportExportGuidsOffset)
+            {
+                BinaryMetaData.AddField("ImportExportGuids", null, Summary.ImportExportGuidsOffset,
+                    stream.Position - Summary.ImportExportGuidsOffset);
+            }
+        }
+
         private void SerializeThumbnails(IUnrealStream stream)
         {
             // If true then we are writing a new package, otherwise just overwrite existing data.
@@ -2934,51 +3023,6 @@ namespace UELib
 
             BinaryMetaData.AddField("Thumbnails", null, Summary.ThumbnailTableOffset,
                 stream.Position - Summary.ThumbnailTableOffset);
-        }
-
-        private void SerializeImportExportGuids(IUnrealStream stream)
-        {
-            Summary.ImportExportGuidsOffset = (int)stream.Position;
-
-            Summary.ImportGuidsCount = ImportGuids.Count;
-            foreach (var importGuid in ImportGuids)
-            {
-                var guid = importGuid;
-                stream.Write(ref guid);
-            }
-
-            Summary.ExportGuidsCount = ExportGuids.Count;
-            foreach (var exportGuid in ExportGuids)
-            {
-                var guidKey = exportGuid.Key;
-                stream.Write(ref guidKey);
-                stream.Write(exportGuid.Value);
-            }
-        }
-
-        private void DeserializeImportExportGuids(IUnrealStream stream)
-        {
-            ImportGuids = new UArray<ULevelGuid>(Summary.ImportGuidsCount);
-            for (var i = 0; i < Summary.ImportGuidsCount; ++i)
-            {
-                stream.ReadStruct(out ULevelGuid importGuid);
-                ImportGuids[i] = importGuid;
-            }
-
-            ExportGuids = new UMap<UGuid, int>(Summary.ExportGuidsCount);
-            for (var i = 0; i < Summary.ExportGuidsCount; ++i)
-            {
-                stream.ReadStruct(out UGuid objectGuid);
-                stream.Read(out int exportIndex); // TODO: Map to new index!
-
-                ExportGuids.Add(objectGuid, exportIndex);
-            }
-
-            if (stream.Position != Summary.ImportExportGuidsOffset)
-            {
-                BinaryMetaData.AddField("ImportExportGuids", null, Summary.ImportExportGuidsOffset,
-                    stream.Position - Summary.ImportExportGuidsOffset);
-            }
         }
 
         /// <summary>
@@ -3121,26 +3165,28 @@ namespace UELib
         /// </summary>
         private void ConstructObjects()
         {
-            Objects = new List<UObject>();
+            Objects = new List<UObject>(Imports.Count + Exports.Count);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Construct));
-            foreach (var exp in Exports)
-                try
-                {
-                    CreateObject(exp);
-                }
-                catch (Exception exc)
-                {
-                    throw new UnrealException("couldn't create export object for " + exp, exc);
-                }
-
             foreach (var imp in Imports)
                 try
                 {
+                    if (imp.Object != null) continue;
                     CreateObject(imp);
                 }
                 catch (Exception exc)
                 {
                     throw new UnrealException("couldn't create import object for " + imp, exc);
+                }
+
+            foreach (var exp in Exports)
+                try
+                {
+                    if (exp.Object != null) continue;
+                    CreateObject(exp);
+                }
+                catch (Exception exc)
+                {
+                    throw new UnrealException("couldn't create export object for " + exp, exc);
                 }
         }
 
@@ -3155,7 +3201,7 @@ namespace UELib
             {
                 if (!(exp.Object is UnknownObject || exp.Object.ShouldDeserializeOnDemand))
                     //Console.WriteLine( "Deserializing object:" + exp.ObjectName );
-                    exp.Object.BeginDeserializing();
+                    exp.Object.Load();
 
                 OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
             }
@@ -3198,19 +3244,28 @@ namespace UELib
         #region Methods
 
         // Create pseudo objects for imports so that we have non-null references to imports.
-        private void CreateObject(UImportTableItem item)
+        private UObject CreateObject(UImportTableItem import)
         {
-            var classType = GetClassType(item.ClassName);
-            item.Object = (UObject)Activator.CreateInstance(classType);
-            AddObject(item.Object, item);
+            var classType = GetClassType(import.ClassName);
+            var obj = (UObject)Activator.CreateInstance(classType);
+            Debug.Assert(obj != null);
+            obj.ObjectFlags = (ulong)ObjectFlagsLO.Public;
+            obj.Package = this;
+            obj.PackageIndex = -(import.Index + 1);
+            obj.Table = import;
+            import.Object = obj;
+
+            AddToObjects(obj);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+
+            return obj;
         }
 
-        private void CreateObject(UExportTableItem item)
+        private UObject CreateObject(UExportTableItem export)
         {
-            var objectClass = item.Class;
+            var objectClass = export.Class;
             var classType = GetClassType(objectClass != null ? objectClass.ObjectName : "Class");
-            // Try one of the "super" classes for unregistered classes.
+        // Try one of the "super" classes for unregistered classes.
         loop:
             if (objectClass != null && classType == typeof(UnknownObject))
             {
@@ -3234,17 +3289,23 @@ namespace UELib
                 }
             }
 
-            item.Object = (UObject)Activator.CreateInstance(classType);
-            AddObject(item.Object, item);
+            var obj = (UObject)Activator.CreateInstance(classType);
+            Debug.Assert(obj != null);
+            obj.ObjectFlags = export.ObjectFlags;
+            obj.Package = this;
+            obj.PackageIndex = export.Index + 1;
+            obj.Table = export;
+            export.Object = obj;
+
+            AddToObjects(obj);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+
+            return obj;
         }
 
-        private void AddObject(UObject obj, UObjectTableItem table)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddToObjects(UObject obj)
         {
-            table.Object = obj;
-            obj.Package = this;
-            obj.Table = table;
-
             Objects.Add(obj);
             NotifyObjectAdded?.Invoke(this, new ObjectEventArgs(obj));
         }
@@ -3260,7 +3321,7 @@ namespace UELib
             Stream.Writer.Write(PackageFlags);
         }
 
-        [Obsolete]
+        [Obsolete("Use AddClassType")]
         public void RegisterClass(string className, Type classObject)
         {
             AddClassType(className, classObject);
@@ -3283,55 +3344,69 @@ namespace UELib
             return _ClassTypes.ContainsKey(className.ToLower());
         }
 
-        [Obsolete]
+        [Obsolete("Use HasClassType")]
         public bool IsRegisteredClass(string className)
         {
             return HasClassType(className);
         }
 
-        /// <summary>
-        /// Returns an Object that resides at the specified ObjectIndex.
-        ///
-        /// if index is positive an exported Object will be returned.
-        /// if index is negative an imported Object will be returned.
-        /// if index is zero null will be returned.
-        /// </summary>
-        public UObject GetIndexObject(int objectIndex)
-        {
-            return objectIndex < 0
-                ? Imports[-objectIndex - 1].Object
-                : objectIndex > 0
-                    ? Exports[objectIndex - 1].Object
-                    : null;
-        }
+        [Obsolete("Use IndexToObject")]
+        public UObject? GetIndexObject(int packageIndex) => IndexToObject<UObject>(packageIndex);
 
-        public string GetIndexObjectName(int objectIndex)
-        {
-            return GetIndexTable(objectIndex).ObjectName;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UObject? IndexToObject(int packageIndex) => IndexToObject<UObject>(packageIndex);
 
         /// <summary>
-        /// Returns a name that resides at the specified NameIndex.
+        /// Returns a <see cref="UObject"/> from a package index.
         /// </summary>
+        public T? IndexToObject<T>(int packageIndex)
+            where T : UObject
+        {
+            switch (packageIndex)
+            {
+                case < 0:
+                    {
+                        var import = Imports[-packageIndex - 1];
+                        return (T?)import.Object ?? (T)CreateObject(import);
+                    }
+
+                case > 0:
+                    {
+                        var export = Exports[packageIndex - 1];
+                        return (T?)export.Object ?? (T)CreateObject(export);
+                    }
+
+                default:
+                    return null;
+            }
+        }
+
+        [Obsolete]
+        public string GetIndexObjectName(int packageIndex)
+        {
+            return IndexToObjectResource(packageIndex)!.ObjectName;
+        }
+
+        [Obsolete]
         public string GetIndexName(int nameIndex)
         {
             return Names[nameIndex].Name;
         }
 
+        [Obsolete("Use IndexToObjectResource")]
+        public UObjectTableItem? GetIndexTable(int packageIndex) => IndexToObjectResource(packageIndex);
+
         /// <summary>
-        /// Returns an UnrealTable that resides at the specified TableIndex.
-        ///
-        /// if index is positive an ExportTable will be returned.
-        /// if index is negative an ImportTable will be returned.
-        /// if index is zero null will be returned.
+        /// Returns a <see cref="UObjectTableItem"/> from a package index.
         /// </summary>
-        public UObjectTableItem GetIndexTable(int tableIndex)
+        public UObjectTableItem? IndexToObjectResource(int packageIndex)
         {
-            return tableIndex < 0
-                ? Imports[-tableIndex - 1]
-                : tableIndex > 0
-                    ? (UObjectTableItem)Exports[tableIndex - 1]
-                    : null;
+            return packageIndex switch
+            {
+                < 0 => Imports[-packageIndex - 1],
+                > 0 => Exports[packageIndex - 1],
+                _ => null
+            };
         }
 
         [Obsolete("See below")]

@@ -25,9 +25,11 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
+            // version >= 40
             int num = _Buffer.ReadInt32();
             Record(nameof(num), num);
 
+            // version >= 40
             int max = _Buffer.ReadInt32();
             Record(nameof(max), max);
 

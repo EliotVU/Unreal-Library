@@ -15,47 +15,49 @@ namespace UELib
     /// </summary>
     public sealed class UExportTableItem : UObjectTableItem, IUnrealSerializableClass
     {
-        private int _ClassIndex;
+        private UPackageIndex _ClassIndex;
 
-        public int ClassIndex
+        public UPackageIndex ClassIndex
         {
             get => _ClassIndex;
             set => _ClassIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Class => Owner.GetIndexTable(ClassIndex);
+        [CanBeNull] public UObjectTableItem Class => Owner.IndexToObjectResource(ClassIndex);
 
-        private int _SuperIndex;
+        private UPackageIndex _SuperIndex;
 
-        public int SuperIndex
+        public UPackageIndex SuperIndex
         {
             get => _SuperIndex;
             set => _SuperIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Super => Owner.GetIndexTable(_SuperIndex);
+        [CanBeNull] public UObjectTableItem Super => Owner.IndexToObjectResource(_SuperIndex);
 
-        private int _TemplateIndex;
+        private UPackageIndex _TemplateIndex;
 
         [BuildGeneration(BuildGeneration.UE4)]
-        public int TemplateIndex
+        public UPackageIndex TemplateIndex
         {
             get => _TemplateIndex;
             set => _TemplateIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Template => Owner.GetIndexTable(_TemplateIndex);
+        [BuildGeneration(BuildGeneration.UE4)]
+        [CanBeNull] public UObjectTableItem Template => Owner.IndexToObjectResource(_TemplateIndex);
 
-        private int _ArchetypeIndex;
+        private UPackageIndex _ArchetypeIndex;
 
         [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
-        public int ArchetypeIndex
+        public UPackageIndex ArchetypeIndex
         {
             get => _ArchetypeIndex;
             set => _ArchetypeIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Archetype => Owner.GetIndexTable(_ArchetypeIndex);
+        [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
+        [CanBeNull] public UObjectTableItem Archetype => Owner.IndexToObjectResource(_ArchetypeIndex);
 
         /// <summary>
         /// The object flags <see cref="ObjectFlagsLO"/>
@@ -83,7 +85,7 @@ namespace UELib
         /// or higher than <see cref="PackageObjectLegacyVersion.ComponentMapDeprecated"/>
         /// </summary>
         [BuildGeneration(BuildGeneration.UE3)]
-        public UMap<UName, int> ComponentMap;
+        public UMap<UName, UPackageIndex> ComponentMap;
 
         /// <summary>
         /// The count of net objects for each generation <see cref="UGenerationTableItem.NetObjectCount"/> in this (exported) package.
@@ -120,9 +122,10 @@ namespace UELib
         /// <param name="stream">The output stream</param>
         public void Serialize(IUnrealStream stream)
         {
-            stream.WriteIndex(_ClassIndex);
-            stream.WriteIndex(_SuperIndex);
-            stream.Write(_OuterIndex);
+            stream.Write(_ClassIndex);
+            stream.Write(_SuperIndex);
+            // version >= 50
+            stream.Write((int)_OuterIndex); // Never serialize it as an index, it must be written as 32 bits regardless of build.
 #if BIOSHOCK
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.Version >= 132)
@@ -137,7 +140,7 @@ namespace UELib
             if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
             {
                 // Not using write index here because it's been deprecated for this version.
-                stream.Write(_ArchetypeIndex);
+                stream.Write((int)_ArchetypeIndex);
             }
 #if BATMAN
             if (stream.Package.Build == BuildGeneration.RSS)
@@ -157,29 +160,34 @@ namespace UELib
                 goto streamSerialSize;
             }
 #endif
-            stream.Write(stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits
-                ? ObjectFlags
-                : (uint)ObjectFlags);
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
+            {
+                ulong shiftedFlags = (ObjectFlags >> 32) | (ObjectFlags << 32);
+                stream.Write(shiftedFlags);
+            }
+            else
+            {
+                stream.Write((uint)ObjectFlags);
+            }
 
         streamSerialSize:
             stream.WriteIndex(SerialSize); // Assumes SerialSize has been updated to @Object's buffer size.
+#if ROCKETLEAGUE
+            // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
+
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                stream.LicenseeVersion >= 22)
+            {
+                stream.Write((long)SerialOffset);
+
+                goto streamExportFlags;
+            }
+#endif
             if (SerialSize > 0 || stream.Version >= (uint)PackageObjectLegacyVersion.SerialSizeConditionRemoved)
             {
-#if ROCKETLEAGUE
-                // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
-
-                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
-                    stream.LicenseeVersion >= 22)
-                {
-                    stream.Write((long)SerialOffset);
-
-                    goto streamExportFlags;
-                }
-#endif
                 // SerialOffset has to be set and written after this object has been serialized.
                 stream.WriteIndex(SerialOffset); // Assumes the same as @SerialSize comment.
             }
-
 #if BIOSHOCK
             // Overlaps with Tribes: Vengeance (130)
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
@@ -222,7 +230,7 @@ namespace UELib
                     foreach (var keyValuePair in ComponentMap)
                     {
                         stream.Write(keyValuePair.Key);
-                        stream.Write(keyValuePair.Value);
+                        stream.Write((int)keyValuePair.Value);
                     }
                 }
             }
@@ -239,7 +247,6 @@ namespace UELib
             {
                 return;
             }
-
 #if TRANSFORMERS
             if (stream.Package.Build == BuildGeneration.HMS &&
                 stream.LicenseeVersion >= 116)
@@ -309,8 +316,9 @@ namespace UELib
         /// <param name="stream">The input stream</param>
         public void Deserialize(IUnrealStream stream)
         {
-            _ClassIndex = stream.ReadIndex();
-            _SuperIndex = stream.ReadIndex();
+            stream.Read(out _ClassIndex);
+            stream.Read(out _SuperIndex);
+            // version >= 50
             _OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
 #if BIOSHOCK
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
@@ -349,19 +357,19 @@ namespace UELib
 
         streamSerialSize:
             SerialSize = stream.ReadIndex();
+#if ROCKETLEAGUE
+            // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
+
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                stream.LicenseeVersion >= 22)
+            {
+                SerialOffset = (int)stream.ReadInt64();
+
+                goto streamExportFlags;
+            }
+#endif
             if (SerialSize > 0 || stream.Version >= (uint)PackageObjectLegacyVersion.SerialSizeConditionRemoved)
             {
-#if ROCKETLEAGUE
-                // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
-
-                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
-                    stream.LicenseeVersion >= 22)
-                {
-                    SerialOffset = (int)stream.ReadInt64();
-
-                    goto streamExportFlags;
-                }
-#endif
                 SerialOffset = stream.ReadIndex();
             }
 #if BIOSHOCK
@@ -393,7 +401,7 @@ namespace UELib
                )
             {
                 stream.Read(out int componentCount);
-                ComponentMap = new UMap<UName, int>(componentCount);
+                ComponentMap = new UMap<UName, UPackageIndex>(componentCount);
                 for (int i = 0; i < componentCount; ++i)
                 {
                     stream.Read(out UName key);
@@ -413,7 +421,6 @@ namespace UELib
             {
                 return;
             }
-
 #if TRANSFORMERS
             if (stream.Package.Build == BuildGeneration.HMS &&
                 stream.LicenseeVersion >= 116)
@@ -487,14 +494,14 @@ namespace UELib
         [Obsolete] public const int VObjectFlagsToULONG = 195;
 
         [Obsolete("Use Class"), Browsable(false)]
-        public UObjectTableItem ClassTable => Owner.GetIndexTable(_ClassIndex);
+        public UObjectTableItem ClassTable => Owner.IndexToObjectResource(_ClassIndex);
 
         [Obsolete] protected override int __ClassIndex => _ClassIndex;
 
         [Obsolete][NotNull] protected override string __ClassName => Class?.ObjectName ?? "Class";
 
         [Obsolete("Use Super"), Browsable(false)]
-        public UObjectTableItem SuperTable => Owner.GetIndexTable(_SuperIndex);
+        public UObjectTableItem SuperTable => Owner.IndexToObjectResource(_SuperIndex);
 
         [Obsolete("Use Super?.ObjectName"), Browsable(false)]
         public string SuperName
@@ -507,7 +514,7 @@ namespace UELib
         }
 
         [Obsolete("Use Archetype"), Browsable(false)]
-        public UObjectTableItem ArchetypeTable => Owner.GetIndexTable(_ArchetypeIndex);
+        public UObjectTableItem ArchetypeTable => Owner.IndexToObjectResource(_ArchetypeIndex);
 
         [Obsolete("Use Archetype?.ObjectName"), Browsable(false)]
         public string ArchetypeName

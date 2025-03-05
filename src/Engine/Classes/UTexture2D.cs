@@ -86,7 +86,7 @@ namespace UELib.Engine
             }
         }
 
-        public struct MipMap2D : IUnrealDeserializableClass
+        public struct MipMap2D : IUnrealSerializableClass
         {
             public UBulkData<byte> Data;
             public uint SizeX;

@@ -66,7 +66,7 @@ namespace UELib.Branch.UE2.AA2
 
             //stream.Write((byte)0);
             stream.Write(item.ObjectName);
-            stream.Write(item.OuterIndex);
+            stream.Write((int)item.OuterIndex);
         }
 
         public override void Deserialize(IUnrealStream stream, UImportTableItem item)
@@ -88,7 +88,7 @@ namespace UELib.Branch.UE2.AA2
             stream.Skip(4);
 
             stream.WriteIndex(item.ClassIndex);
-            stream.Write(item.OuterIndex);
+            stream.Write((int)item.OuterIndex);
             stream.Write(~(uint)item.ObjectFlags);
             stream.Write(item.ObjectName);
             stream.WriteIndex(item.SerialSize );

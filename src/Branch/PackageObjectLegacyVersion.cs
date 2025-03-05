@@ -7,9 +7,9 @@ namespace UELib.Branch
         Undefined = 0,
 
         /// <summary>
-        ///     FIXME: Version 61 is the lowest package version I know that supports StateFlags.
+        /// The lowest version that is supported.
         /// </summary>
-        AddedStateFlagsToUState = 61,
+        LowestVersion = 61,
 
         /// <summary>
         ///     This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.

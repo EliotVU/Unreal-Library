@@ -663,13 +663,13 @@ namespace UELib
         public int ReadObjectIndex() => Reader.ReadIndex();
 
         [Obsolete]
-        public UObject ParseObject(int index) => Package.GetIndexObject(index);
+        public UObject ParseObject(int index) => Package.IndexToObject(index);
 
         [Obsolete]
         public int ReadNameIndex() => Reader.ReadNameIndex(out int _);
 
         [Obsolete]
-        public string ParseName(int index) => Package.GetIndexName(index);
+        public string ParseName(int index) => Package.Names[index].Name;
 
         [Obsolete]
         public int ReadNameIndex(out int num) => Reader.ReadNameIndex(out num);
@@ -678,7 +678,7 @@ namespace UELib
         public T ReadObject<T>() where T : UObject
         {
             int index = Reader.ReadIndex();
-            return (T)Package.GetIndexObject(index);
+            return (T)Package.IndexToObject(index);
         }
 
         public void WriteObject<T>([CanBeNull] T value) where T : UObject
@@ -785,7 +785,7 @@ namespace UELib
 
     public class UObjectStream : IUnrealStream
     {
-        private readonly Stream _BaseStream;
+        public readonly Stream BaseStream;
 
         private readonly long _ObjectPositionInPackage;
         private long _PeekStartPosition;
@@ -816,7 +816,7 @@ namespace UELib
                 Writer = new UnrealWriter(this, baseStream);
             }
 
-            _BaseStream = baseStream;
+            BaseStream = baseStream;
         }
 
         public UObjectStream(IUnrealStream packageStream, byte[] buffer)
@@ -846,14 +846,14 @@ namespace UELib
 
         public long Position
         {
-            get => _BaseStream.Position;
-            set => _BaseStream.Position = value;
+            get => BaseStream.Position;
+            set => BaseStream.Position = value;
         }
 
         public long Length
         {
-            get => _BaseStream.Length;
-            set => _BaseStream.SetLength(value);
+            get => BaseStream.Length;
+            set => BaseStream.SetLength(value);
         }
 
         /// <summary>
@@ -885,20 +885,20 @@ namespace UELib
         {
         }
 
-        public long Seek(long offset, SeekOrigin origin) => _BaseStream.Seek(offset, origin);
-        public void Close() => _BaseStream.Close();
+        public long Seek(long offset, SeekOrigin origin) => BaseStream.Seek(offset, origin);
+        public void Close() => BaseStream.Close();
 
         [Obsolete]
         public int ReadObjectIndex() => Reader.ReadIndex();
 
         [Obsolete]
-        public UObject ParseObject(int index) => Package.GetIndexObject(index);
+        public UObject ParseObject(int index) => Package.IndexToObject(index);
 
         [Obsolete]
         public int ReadNameIndex() => Reader.ReadNameIndex(out int _);
 
         [Obsolete]
-        public string ParseName(int index) => Package.GetIndexName(index);
+        public string ParseName(int index) => Package.Names[index].Name;
 
         [Obsolete]
         public int ReadNameIndex(out int num) => Reader.ReadNameIndex(out num);
@@ -907,7 +907,7 @@ namespace UELib
         public T ReadObject<T>() where T : UObject
         {
             int index = Reader.ReadIndex();
-            return (T?)Package.GetIndexObject(index);
+            return (T?)Package.IndexToObject(index);
         }
 
         public void WriteObject<T>([CanBeNull] T value) where T : UObject
@@ -954,7 +954,7 @@ namespace UELib
 
         public void Dispose()
         {
-            _BaseStream.Dispose();
+            BaseStream.Dispose();
 
             if (Reader != null)
             {
@@ -1338,6 +1338,9 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UPackageIndex value) => value = stream.UR.ReadIndex();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<T>(this IUnrealStream stream, out T value)
             where T : UObject =>
             value = ReadObject<T>(stream);
@@ -1491,6 +1494,9 @@ namespace UELib
                 stream.Write(element);
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(this IUnrealStream stream, in UPackageIndex value) => stream.UW.WriteIndex(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Write<T>(this IUnrealStream stream, ref T item)

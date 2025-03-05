@@ -21,11 +21,14 @@ namespace UELib.Core
 
         public void Deserialize(IUnrealStream stream)
         {
+            // version >= 51
             Node = stream.ReadObject<UStruct>();
+            // version >= 51
             StateNode = stream.ReadObject<UState>();
             ProbeMask = stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved
                 ? stream.ReadUInt64()
                 : stream.ReadUInt32();
+            // version >= 55
             LatentAction = stream.Version < (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
                 ? stream.ReadUInt32()
                 : stream.ReadUInt16();
@@ -43,12 +46,15 @@ namespace UELib.Core
 
         public void Serialize(IUnrealStream stream)
         {
+            // version >= 51
             stream.Write(Node);
+            // version >= 51
             stream.Write(StateNode);
             stream.Write(stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved
                 ? ProbeMask
                 : (uint)ProbeMask
             );
+            // version >= 55
             stream.Write(stream.Version < (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
                 ? LatentAction
                 : (ushort)LatentAction

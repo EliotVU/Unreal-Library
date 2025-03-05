@@ -99,7 +99,7 @@ namespace Eliot.UELib.Test
             Assert.IsNotNull(testClass);
 
             var defaults = testClass.Default ?? testClass;
-            defaults.BeginDeserializing();
+            defaults.Load();
             Assert.IsNotNull(defaults.Properties);
 
             return defaults;
@@ -125,7 +125,7 @@ namespace Eliot.UELib.Test
 
         internal static void AssertObjectDeserialization(UObject obj)
         {
-            obj.BeginDeserializing();
+            obj.Load();
             Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialized, obj.GetReferencePath());
         }
 

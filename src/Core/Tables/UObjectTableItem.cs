@@ -33,15 +33,15 @@ namespace UELib
             set => _ObjectName = value;
         }
 
-        protected int _OuterIndex;
+        protected UPackageIndex _OuterIndex;
 
-        public int OuterIndex
+        public UPackageIndex OuterIndex
         {
             get => _OuterIndex;
             set => _OuterIndex = value;
         }
 
-        public UObjectTableItem Outer => Owner.GetIndexTable(_OuterIndex);
+        public UObjectTableItem Outer => Owner.IndexToObjectResource(_OuterIndex);
 
         public IEnumerable<UObjectTableItem> EnumerateOuter()
         {
@@ -119,9 +119,9 @@ namespace UELib
         [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
 
         [Obsolete("Use UExportTableItem.Class"), Browsable(false)]
-        public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
+        public UObjectTableItem ClassTable => Owner.IndexToObjectResource(ClassIndex);
 
-        [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
+        [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.IndexToObjectResource(OuterIndex);
 
         [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
         public string OuterName

@@ -85,7 +85,7 @@ namespace Eliot.UELib.Test.upk.Builds
                 {
                     if (obj.DeserializationState == 0)
                     {
-                        obj.BeginDeserializing();
+                        obj.Load();
                     }
 
                     return obj;

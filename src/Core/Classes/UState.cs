@@ -91,23 +91,20 @@ namespace UELib.Core
             LabelTableOffset = _Buffer.ReadUInt16();
             Record(nameof(LabelTableOffset), LabelTableOffset);
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedStateFlagsToUState)
-            {
 #if BORDERLANDS2 || TRANSFORMERS || BATMAN
-                // FIXME:Temp fix
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
-                    Package.Build == BuildGeneration.HMS ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-                {
-                    _StateFlags = _Buffer.ReadUShort();
-                    goto skipStateFlags;
-                }
-#endif
-                _StateFlags = _Buffer.ReadUInt32();
-            skipStateFlags:
-                Record(nameof(_StateFlags), (StateFlags)_StateFlags);
+            // FIXME:Temp fix
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                Package.Build == BuildGeneration.HMS ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                _StateFlags = _Buffer.ReadUShort();
+                goto skipStateFlags;
             }
+#endif
+            _StateFlags = _Buffer.ReadUInt32();
+        skipStateFlags:
+            Record(nameof(_StateFlags), (StateFlags)_StateFlags);
 #if TRANSFORMERS
             if (Package.Build == BuildGeneration.HMS)
             {

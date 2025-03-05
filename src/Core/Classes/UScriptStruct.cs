@@ -18,7 +18,7 @@ namespace UELib.Core
                 Record(nameof(StructFlags), (StructFlags)StructFlags);
             }
 
-            DeserializeProperties();
+            DeserializeProperties(_Buffer);
         }
 
         #endregion

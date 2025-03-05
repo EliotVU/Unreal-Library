@@ -51,7 +51,8 @@ namespace UELib
         {
             stream.Write(_ClassPackageName);
             stream.Write(_ClassName);
-            stream.Write(_OuterIndex); // Always an ordinary integer
+            // version >= 50
+            stream.Write((int)_OuterIndex); // Always an ordinary integer
             stream.Write(_ObjectName);
         }
 
@@ -65,7 +66,9 @@ namespace UELib
         {
             stream.Read(out _ClassPackageName);
             stream.Read(out _ClassName);
-            stream.Read(out _OuterIndex); // ObjectIndex, though always written as 32bits regardless of build.
+            // version >= 50
+            stream.Read(out int outerIndex); // ObjectIndex, though always written as 32bits regardless of build.
+            _OuterIndex = outerIndex;
             stream.Read(out _ObjectName);
         }
 

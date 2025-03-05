@@ -71,7 +71,7 @@ namespace UELib.Core
                 StorageSize = ElementCount * elementSize;
                 StorageOffset = stream.AbsolutePosition;
 
-                stream.AbsolutePosition += StorageSize;
+                stream.Position += StorageSize;
                 return;
             }
 

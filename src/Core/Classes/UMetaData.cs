@@ -109,7 +109,7 @@ namespace UELib.Core
         public override string Decompile()
         {
             // UE3 Debug
-            BeginDeserializing();
+            Load();
             if (_Fields == null)
             {
                 return "";
