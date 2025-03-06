@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -15,13 +16,14 @@ namespace UELib.Core
             if (HasInitializedNodes)
                 return;
 
+            node.ImageKey = GetImageName();
+            node.SelectedImageKey = node.ImageKey;
             node.ToolTipText = FormatHeader();
+
             InitNodes(node);
             AddChildren(node);
             PostAddChildren(node);
 
-            node.ImageKey = GetImageName();
-            node.SelectedImageKey = node.ImageKey;
             HasInitializedNodes = true;
         }
 
@@ -37,10 +39,8 @@ namespace UELib.Core
         protected virtual void InitNodes(TreeNode node)
         {
             _ParentNode = AddSectionNode(node, nameof(UObject));
-            var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{UnrealMethods.FlagToString(_ObjectFlags)}");
-            flagNode.ToolTipText = UnrealMethods.FlagsListToString(
-                UnrealMethods.FlagsToList(typeof(Flags.ObjectFlagsLO), typeof(Flags.ObjectFlagsHO), _ObjectFlags)
-            );
+            var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{UnrealMethods.FlagToString((ulong)ObjectFlags)}");
+            flagNode.ToolTipText = ObjectFlags.ToString();
 
             AddTextNode(_ParentNode, $"Size:{ExportTable.SerialSize}");
             AddTextNode(_ParentNode, $"Offset:{ExportTable.SerialOffset}");
@@ -113,17 +113,18 @@ namespace UELib.Core
         (
             TreeNode parentNode,
             string title,
-            IList<T> objects,
+            [CanBeNull] IEnumerable<T> objects,
             string imageName = "TreeView"
         ) where T : UObject
         {
-            if (objects == null || !objects.Any())
+            var children = objects?.ToList();
+            if (children == null || !children.Any())
                 return null;
 
             var listNode = new ObjectListNode(imageName) { Text = title };
-            foreach (var obj in objects)
+            foreach (var child in children)
             {
-                AddObjectNode(listNode, obj, obj.GetType().Name);
+                AddObjectNode(listNode, child, child.GetImageName());
             }
 
             parentNode.Nodes.Add(listNode);

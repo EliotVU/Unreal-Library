@@ -31,9 +31,10 @@ namespace UELib.Branch
         /// See <see cref="DefaultEngineBranch"/> for an implementation.
         /// This field is essential to <seealso cref="UnrealStreamImplementations.ReadFlags32"/>
         /// </summary>
-        public readonly Dictionary<Type, ulong[]> EnumFlagsMap = new Dictionary<Type, ulong[]>();
+        public readonly Dictionary<Type, ulong[]> EnumFlagsMap = new();
 
         protected readonly ulong[] PackageFlags = new ulong[(int)Flags.PackageFlag.Max];
+        protected readonly ulong[] ObjectFlags = new ulong[(int)Flags.ObjectFlag.Max];
 
         public EngineBranch()
         {
