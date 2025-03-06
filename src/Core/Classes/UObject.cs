@@ -20,18 +20,10 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
-        private ulong _ObjectFlags;
-
         /// <summary>
         /// The object flags.
-        ///
-        /// TODO: Public when ObjectFlagsLO have been normalized.
         /// </summary>
-        internal ulong ObjectFlags
-        {
-            get => _ObjectFlags;
-            set => _ObjectFlags = value;
-        }
+        public UnrealFlags<ObjectFlag> ObjectFlags { get; set; }
 
         /// <summary>
         /// The object package.
@@ -100,7 +92,7 @@ namespace UELib.Core
         public DefaultPropertiesCollection Properties { get; protected set; }
 
         /// <summary>
-        /// Serialized if object is marked with <see cref="ObjectFlagsLO.HasStack" />.
+        /// Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
         /// </summary>
         [CanBeNull] public UStateFrame StateFrame;
 
@@ -230,7 +222,7 @@ namespace UELib.Core
 
             try
             {
-                if (HasObjectFlag(ObjectFlagsHO.PropertiesObject)
+                if (ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject)
                     // Just in-case we have passed an overlapped object flag in UE2 or older packages.
                     && _Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
                 {
@@ -375,7 +367,7 @@ namespace UELib.Core
             stream.Read(out component.TemplateOwnerClass);
             stream.Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
 
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate(ObjectFlagsHO.PropertiesObject))
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate(ObjectFlag.ClassDefaultObject))
             {
                 stream.Read(out component.TemplateName);
                 stream.Record(nameof(component.TemplateName), component.TemplateName);
@@ -385,14 +377,12 @@ namespace UELib.Core
         /// <summary>
         /// Checks if the object is a template.
         /// An object is considered a template if either it is an object containing the defaults of a <seealso cref="UClass"/> or an archetype.
-        /// 
-        /// FIXME: The <seealso cref="ObjectFlagsHO.ArchetypeObject"/> flag check was added later (Not checked for in GoW), no known version.
         /// </summary>
         /// <param name="templateFlags"></param>
         /// <returns>true if the object is a template.</returns>
-        public bool IsTemplate(ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject)
+        public bool IsTemplate(ObjectFlag templateFlag = ObjectFlag.TemplateObject)
         {
-            return HasObjectFlag(templateFlags) || EnumerateOuter().Any(obj => obj.HasObjectFlag(templateFlags));
+            return ObjectFlags.HasFlag(templateFlag) || EnumerateOuter().Any(obj => obj.ObjectFlags.HasFlag(templateFlag));
         }
 
         public virtual void Deserialize(IUnrealStream stream)
@@ -426,7 +416,7 @@ namespace UELib.Core
             }
 #endif
             // This appears to be serialized for templates of classes like AmbientSoundNonLoop
-            if (HasObjectFlag(ObjectFlagsLO.HasStack))
+            if (ObjectFlags.HasFlag(ObjectFlag.HasStack))
             {
                 _Buffer.ReadClass(out StateFrame);
                 _Buffer.Record(nameof(StateFrame), StateFrame);
@@ -543,50 +533,31 @@ namespace UELib.Core
 
         #endregion
 
-        /// <summary>
-        /// Checks if the object contains the specified @flag or one of the specified flags.
-        ///
-        /// Checks the lower bits of ObjectFlags.
-        /// </summary>
-        /// <param name="flag">The flag(s) to compare to.</param>
-        /// <returns>Whether it contained one of the specified flags.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete]
         public bool HasObjectFlag(ObjectFlagsLO flag)
         {
-            return (_ObjectFlags & (ulong)flag) != 0;
+            return (ObjectFlags & (ulong)flag) != 0;
         }
 
-        /// <summary>
-        /// Checks if the object contains the specified @flag or one of the specified flags.
-        ///
-        /// Checks the higher bits of ObjectFlags.
-        /// </summary>
-        /// <param name="flag">The flag(s) to compare to.</param>
-        /// <returns>Whether it contained one of the specified flags.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete]
         public bool HasObjectFlag(ObjectFlagsHO flag)
         {
-            return (_ObjectFlags & ((ulong)flag << 32)) != 0;
+            return (ObjectFlags & ((ulong)flag << 32)) != 0;
         }
 
         public bool IsPublic()
         {
-            return (_ObjectFlags & (ulong)ObjectFlagsLO.Public) != 0;
+            return ObjectFlags.HasFlag(ObjectFlag.Public);
         }
 
         public bool IsProtected()
         {
-            // Protected was shifted to the higher order in later UE3 builds
-            return HasObjectFlag(ObjectFlagsHO.Protected)
-                   || (_ObjectFlags & (
-                       (ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected))
-                   == ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected);
+            return ObjectFlags.HasFlag(ObjectFlag.Protected);
         }
 
         public bool IsPrivate()
         {
-            return (_ObjectFlags & ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Private)) !=
-                   (ulong)ObjectFlagsLO.Public;
+            return ObjectFlags.HasFlag(ObjectFlag.Final) || !ObjectFlags.HasFlag(ObjectFlag.Public);
         }
 
         /// <summary>

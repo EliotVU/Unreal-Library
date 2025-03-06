@@ -162,8 +162,16 @@ namespace UELib
 #endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
             {
-                ulong shiftedFlags = (ObjectFlags >> 32) | (ObjectFlags << 32);
-                stream.Write(shiftedFlags);
+                if (stream.BigEndianCode)
+                {
+                    ulong shiftedFlags = (ObjectFlags << 32) | (ObjectFlags >> 32);
+                    stream.Write(shiftedFlags);
+                }
+                else
+                {
+                    ulong shiftedFlags = (ObjectFlags >> 32) | (ObjectFlags << 32);
+                    stream.Write(shiftedFlags);
+                }
             }
             else
             {
@@ -349,10 +357,21 @@ namespace UELib
                 goto streamSerialSize;
             }
 #endif
-            ObjectFlags = stream.ReadUInt32();
             if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
             {
-                ObjectFlags = (ObjectFlags << 32) | stream.ReadUInt32();
+                ObjectFlags = stream.ReadUInt64();
+                if (stream.BigEndianCode)
+                {
+                    ObjectFlags = (ObjectFlags << 32) | (ObjectFlags >> 32);
+                }
+                else
+                {
+                    ObjectFlags = (ObjectFlags >> 32) | (ObjectFlags << 32);
+                }
+            }
+            else
+            {
+                ObjectFlags = stream.ReadUInt32();
             }
 
         streamSerialSize:

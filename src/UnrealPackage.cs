@@ -3249,7 +3249,7 @@ namespace UELib
             var classType = GetClassType(import.ClassName);
             var obj = (UObject)Activator.CreateInstance(classType);
             Debug.Assert(obj != null);
-            obj.ObjectFlags = (ulong)ObjectFlagsLO.Public;
+            obj.ObjectFlags = new UnrealFlags<ObjectFlag>(Branch.EnumFlagsMap[typeof(ObjectFlag)], ObjectFlag.Public);
             obj.Package = this;
             obj.PackageIndex = -(import.Index + 1);
             obj.Table = import;
@@ -3291,7 +3291,7 @@ namespace UELib
 
             var obj = (UObject)Activator.CreateInstance(classType);
             Debug.Assert(obj != null);
-            obj.ObjectFlags = export.ObjectFlags;
+            obj.ObjectFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
             obj.Package = this;
             obj.PackageIndex = export.Index + 1;
             obj.Table = export;

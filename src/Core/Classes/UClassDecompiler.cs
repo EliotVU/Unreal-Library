@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -199,7 +200,7 @@ namespace UELib.Core
                 }
             }
 
-            if (HasObjectFlag(Flags.ObjectFlagsLO.Native))
+            if (ObjectFlags.HasFlag(ObjectFlag.Native))
             {
                 output += "\r\n\t" + FormatNative();
                 if (NativeClassName.Length != 0)

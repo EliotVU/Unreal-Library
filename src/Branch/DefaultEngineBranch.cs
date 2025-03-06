@@ -128,36 +128,97 @@ namespace UELib.Branch
         public override void Setup(UnrealPackage linker)
         {
             SetupEnumPackageFlags(linker);
+            SetupEnumObjectFlags(linker);
+
             EnumFlagsMap.Add(typeof(PackageFlag), PackageFlags);
+            EnumFlagsMap.Add(typeof(ObjectFlag), ObjectFlags);
         }
 
         protected virtual void SetupEnumPackageFlags(UnrealPackage linker)
         {
-            PackageFlags[(int)Flags.PackageFlag.AllowDownload] = (uint)PackageFlagsDefault.AllowDownload;
-            PackageFlags[(int)Flags.PackageFlag.ClientOptional] = (uint)PackageFlagsDefault.ClientOptional;
-            PackageFlags[(int)Flags.PackageFlag.ServerSideOnly] = (uint)PackageFlagsDefault.ServerSideOnly;
+            PackageFlags[(int)PackageFlag.AllowDownload] = (uint)PackageFlagsDefault.AllowDownload;
+            PackageFlags[(int)PackageFlag.ClientOptional] = (uint)PackageFlagsDefault.ClientOptional;
+            PackageFlags[(int)PackageFlag.ServerSideOnly] = (uint)PackageFlagsDefault.ServerSideOnly;
 #if UE1
             // FIXME: Version
             if (linker.Version > 61 && linker.Version <= 69) // <= UT99
-                PackageFlags[(int)Flags.PackageFlag.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
+                PackageFlags[(int)PackageFlag.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
 #endif
 #if UE2
             if (linker.Build == BuildGeneration.UE2_5)
-                PackageFlags[(int)Flags.PackageFlag.Official] = (uint)PackageFlagsUE2.Official;
+                PackageFlags[(int)PackageFlag.Official] = (uint)PackageFlagsUE2.Official;
 #endif
 #if UE3
             // Map the new PackageFlags, but the version is nothing but a guess!
             if (linker.Version >= 180)
             {
-                if (linker.Version >= UnrealPackage.PackageFileSummary.VCookerVersion)
-                    PackageFlags[(int)Flags.PackageFlag.Cooked] = (uint)PackageFlagsUE3.Cooked;
+                if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedCookerVersion)
+                    PackageFlags[(int)PackageFlag.Cooked] = (uint)PackageFlagsUE3.Cooked;
 
-                PackageFlags[(int)Flags.PackageFlag.ContainsMap] = (uint)PackageFlagsUE3.ContainsMap;
-                PackageFlags[(int)Flags.PackageFlag.ContainsDebugData] = (uint)PackageFlagsUE3.ContainsDebugData;
-                PackageFlags[(int)Flags.PackageFlag.ContainsScript] = (uint)PackageFlagsUE3.ContainsScript;
-                PackageFlags[(int)Flags.PackageFlag.StrippedSource] = (uint)PackageFlagsUE3.StrippedSource;
+                PackageFlags[(int)PackageFlag.ContainsMap] = (uint)PackageFlagsUE3.ContainsMap;
+                PackageFlags[(int)PackageFlag.ContainsDebugData] = (uint)PackageFlagsUE3.ContainsDebugData;
+                PackageFlags[(int)PackageFlag.ContainsScript] = (uint)PackageFlagsUE3.ContainsScript;
+                PackageFlags[(int)PackageFlag.StrippedSource] = (uint)PackageFlagsUE3.StrippedSource;
             }
 #endif
+        }
+
+        protected virtual void SetupEnumObjectFlags(UnrealPackage linker)
+        {
+            ObjectFlags[(int)ObjectFlag.Transactional] = (uint)ObjectFlagsLO.Transactional;
+
+            // version >= 48
+            ObjectFlags[(int)ObjectFlag.HasStack] = (uint)ObjectFlagsLO.HasStack;
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.Release62)
+            {
+                ObjectFlags[(int)ObjectFlag.Standalone] = (uint)ObjectFlagsLO.Standalone;
+                ObjectFlags[(int)ObjectFlag.Public] = (uint)ObjectFlagsLO.Public;
+            }
+
+            ObjectFlags[(int)ObjectFlag.LoadForClient] = (uint)ObjectFlagsLO.LoadForClient;
+            ObjectFlags[(int)ObjectFlag.LoadForServer] = (uint)ObjectFlagsLO.LoadForServer;
+            ObjectFlags[(int)ObjectFlag.LoadForEditor] = (uint)ObjectFlagsLO.LoadForEdit;
+            ObjectFlags[(int)ObjectFlag.NotForClient] = (uint)ObjectFlagsLO.NotForClient;
+            ObjectFlags[(int)ObjectFlag.NotForServer] = (uint)ObjectFlagsLO.NotForServer;
+            ObjectFlags[(int)ObjectFlag.NotForEditor] = (uint)ObjectFlagsLO.NotForEdit;
+
+            ObjectFlags[(int)ObjectFlag.Native] = (uint)ObjectFlagsLO.Native;
+            ObjectFlags[(int)ObjectFlag.Transient] = (uint)ObjectFlagsLO.Transient;
+
+            // UE2? Let's just restrict it to anything after UT99
+            if (linker.Version > 69)
+            {
+                // New flags with UE2
+                ObjectFlags[(int)ObjectFlag.Protected] = (uint)ObjectFlagsLO.Protected;
+                ObjectFlags[(int)ObjectFlag.Final] = (uint)ObjectFlagsLO.Final;
+                ObjectFlags[(int)ObjectFlag.PerObjectLocalized] = (uint)ObjectFlagsLO.PerObjectLocalized;
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
+            {
+                // Shifted from 0x800 to 0x100 and moved to higher bits.
+                ObjectFlags[(int)ObjectFlag.Protected] = (ulong)ObjectFlagsHO.Protected << 32;
+                // Deprecated
+                ObjectFlags[(int)ObjectFlag.Final] = 0x00;
+                // Same bits but moved to higher bits.
+                ObjectFlags[(int)ObjectFlag.PerObjectLocalized] = (ulong)ObjectFlagsHO.PerObjectLocalized << 32;
+            }
+
+            // Could be earlier, but we'll just assume it's introduced with the separating of a class's defaults.
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.DisplacedScriptPropertiesWithClassDefaultObject)
+            {
+                ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = (ulong)ObjectFlagsHO.PropertiesObject << 32;
+                ObjectFlags[(int)ObjectFlag.TemplateObject] = ObjectFlags[(int)ObjectFlag.ClassDefaultObject];
+            }
+
+            // Assumption
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+            {
+                ObjectFlags[(int)ObjectFlag.ArchetypeObject] = (ulong)ObjectFlagsHO.ArchetypeObject << 32;
+                // FIXME: The flag check was added later (Not checked for in GoW), no known version.
+                ObjectFlags[(int)ObjectFlag.TemplateObject] |= ObjectFlags[(int)ObjectFlag.ArchetypeObject];
+            }
         }
 
         protected override void SetupSerializer(UnrealPackage linker)
@@ -352,7 +413,7 @@ namespace UELib.Branch
                     tokenMap[0x40] = typeof(DynamicArrayInsertToken);
                     tokenMap[0x41] = typeof(DynamicArrayRemoveToken);
                 }
-                
+
                 tokenMap[0x42] = typeof(DebugInfoToken);
                 tokenMap[0x43] = typeof(DelegateFunctionToken);
                 tokenMap[0x44] = typeof(DelegatePropertyToken);
