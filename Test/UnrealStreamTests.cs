@@ -14,12 +14,12 @@ namespace Eliot.UELib.Test
     public class UnrealStreamTests
     {
         [DataTestMethod]
-        [DataRow(PackageObjectLegacyVersion.Undefined, 1, +0b0000000000000000000000100001)]
-        [DataRow(PackageObjectLegacyVersion.Undefined, 1, -0b0000000000000000000000100001)]
-        [DataRow(PackageObjectLegacyVersion.Undefined, 2, +0b0000000000000001000001100001)]
-        [DataRow(PackageObjectLegacyVersion.Undefined, 3, +0b0000000010000011000001100001)]
-        [DataRow(PackageObjectLegacyVersion.Undefined, 4, +0b0100000110000011000001100001)]
-        [DataRow(PackageObjectLegacyVersion.Undefined, 5, +0b1100000110000011000001100001)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 1, +0b0000000000000000000000100101)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 1, -0b0000000000000000000000100101)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 2, +0b0000000000000001000001100101)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 3, +0b0000000010000011000001100101)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 4, +0b0100000110000011000001100101)]
+        [DataRow(PackageObjectLegacyVersion.Undefined, 5, +0b1100000110000011000001100101)]
         [DataRow(PackageObjectLegacyVersion.CompactIndexDeprecated, 4, int.MaxValue)]
         public void SerializeCompactIndex(PackageObjectLegacyVersion version, int count, int compactIndex)
         {

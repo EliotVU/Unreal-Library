@@ -154,13 +154,13 @@ namespace UELib
                 {
                     index >>= 7;
                     byte b2 = (byte)(index < 0x80 ? index : (index & 0x7F) + 0x80);
-                    _IndexBuffer[2] = b1;
+                    _IndexBuffer[2] = b2;
                     BaseStream.Write(_IndexBuffer, 2, 1);
                     if ((b2 & 0x80) != 0)
                     {
                         index >>= 7;
                         byte b3 = (byte)(index < 0x80 ? index : (index & 0x7F) + 0x80);
-                        _IndexBuffer[3] = b1;
+                        _IndexBuffer[3] = b3;
                         BaseStream.Write(_IndexBuffer, 3, 1);
                         if ((b3 & 0x80) != 0)
                         {
