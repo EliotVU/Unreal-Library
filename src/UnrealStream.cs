@@ -801,7 +801,7 @@ namespace UELib
         public UObjectStream(IUnrealStream packageStream, Stream baseStream)
         {
             Package = packageStream.Package;
-            _ObjectPositionInPackage = packageStream.Position;
+            _ObjectPositionInPackage = packageStream.Position - baseStream.Length;
 
             if (packageStream.BigEndianCode)
             {
