@@ -174,18 +174,18 @@ namespace UELib.Core
                 return;
             }
 
+            _Buffer?.Close();
+            _Buffer = LoadStream<T>(Package.Stream);
+#if BINARYMETADATA
+            if (_Buffer is UObjectRecordStream recordStream)
+            {
+                BinaryMetaData = recordStream.BinaryMetaData;
+            }
+#endif
             try
             {
-                _Buffer?.Close();
-
                 DeserializationState |= ObjectState.Deserializing;
-                _Buffer = Load<T>(Package.Stream);
-#if BINARYMETADATA
-                if (_Buffer is UObjectRecordStream recordStream)
-                {
-                    BinaryMetaData = recordStream.BinaryMetaData;
-                }
-#endif
+                Load(_Buffer);
                 DeserializationState |= ObjectState.Deserialized;
             }
             catch (DeserializationException exception) // Only catch a deserialization error, not a stream loading error etc.
@@ -193,7 +193,7 @@ namespace UELib.Core
                 DeserializationState |= ObjectState.Errorlized;
 
                 ThrownException = exception;
-                ExceptionPosition = _Buffer?.Position ?? -1;
+                ExceptionPosition = _Buffer.Position;
 
                 LibServices.LogService.SilentException(ThrownException);
             }
@@ -204,21 +204,16 @@ namespace UELib.Core
             }
         }
 
-
         /// <summary>
-        /// Loads the object data from the package stream.
-        ///
-        /// Does not dispose the buffer after deserialization.
+        /// Loads the object data using a particular object stream.
         /// </summary>
-        /// <param name="packageStream">the input package stream.</param>
-        /// <returns>the loaded object stream.</returns>
-        public T Load<T>(UPackageStream packageStream)
-            where T : UObjectStream
+        /// <param name="stream">the input object stream.</param>
+        /// <exception cref="DeserializationException">Thrown if any exception occurs during the deserialization process.</exception>
+        public void Load(UObjectStream stream)
         {
-            var objectStream = LoadStream<T>(packageStream);
-
+            // Necessary to keep the "Deserialize" implementations working.
             var buffer = _Buffer;
-            _Buffer = objectStream;
+            _Buffer = stream;
 
             try
             {
@@ -226,12 +221,15 @@ namespace UELib.Core
                     // Just in-case we have passed an overlapped object flag in UE2 or older packages.
                     && _Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
                 {
-                    DeserializeClassDefault(objectStream);
+                    DeserializeClassDefault(stream);
                 }
                 else
                 {
-                    Deserialize(objectStream);
+                    Deserialize(stream);
                 }
+#if STRICT
+                Debug.Assert(Buffer.Position == Buffer.Length);
+#endif
             }
             catch (Exception exception)
             {
@@ -244,9 +242,19 @@ namespace UELib.Core
             {
                 _Buffer = buffer;
             }
-#if STRICT
-            Debug.Assert(Buffer.Position == Buffer.Length);
-#endif
+        }
+
+        /// <summary>
+        /// Loads the object data from the package stream.
+        /// </summary>
+        /// <param name="packageStream">the input package stream.</param>
+        /// <returns>the loaded object stream.</returns>
+        public T Load<T>(UPackageStream packageStream)
+            where T : UObjectStream
+        {
+            var objectStream = LoadStream<T>(packageStream);
+            Load(objectStream);
+
             return objectStream;
         }
 
