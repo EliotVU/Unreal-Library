@@ -234,8 +234,6 @@ namespace UELib
     /// </summary>
     public class UnrealReader : BinaryReader
     {
-        private static readonly Encoding s_ansiEncoding = Encoding.GetEncoding("windows-1251");
-
         private readonly byte[] _IndexBuffer = new byte[5];
 
         // Allow bulk reading of strings if the package is not big endian encoded.
@@ -284,8 +282,8 @@ namespace UELib
                 }
 
                 return chars[size - 1] == '\0'
-                    ? s_ansiEncoding.GetString(chars, 0, chars.Length - 1)
-                    : s_ansiEncoding.GetString(chars, 0, chars.Length);
+                    ? Encoding.ASCII.GetString(chars, 0, chars.Length - 1)
+                    : Encoding.ASCII.GetString(chars, 0, chars.Length);
             }
 
             if (length < 0) // UNICODE
@@ -364,7 +362,7 @@ namespace UELib
                 goto nextChar;
             }
 
-            string s = s_ansiEncoding.GetString(strBytes.ToArray());
+            string s = Encoding.ASCII.GetString(strBytes.ToArray());
             return s;
         }
 
