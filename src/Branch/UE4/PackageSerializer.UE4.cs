@@ -1,12 +1,12 @@
-﻿using System.Diagnostics;
-using UELib.Core;
+﻿using System;
+using System.Diagnostics;
 
 namespace UELib.Branch.UE4
 {
     public class PackageSerializerUE4 : IPackageSerializer
     {
         private const int MaxNameLengthUE4 = 1024;
-        
+
         public void Serialize(IUnrealStream stream, IUnrealSerializableClass obj)
         {
             obj.Serialize(stream);
@@ -30,8 +30,9 @@ namespace UELib.Branch.UE4
         public void Deserialize(IUnrealStream stream, UNameTableItem item)
         {
             item.Name = stream.ReadString();
-            Debug.Assert(item.Name.Length <= MaxNameLengthUE4, "Maximum name length exceeded! Possible corrupt or unsupported package.");
-            
+            Debug.Assert(item.Name.Length <= MaxNameLengthUE4,
+                "Maximum name length exceeded! Possible corrupt or unsupported package.");
+
             if (stream.UE4Version < 504) return;
             item.NonCasePreservingHash = stream.ReadUInt16();
             item.CasePreservingHash = stream.ReadUInt16();
@@ -49,7 +50,7 @@ namespace UELib.Branch.UE4
 
         public void Serialize(IUnrealStream stream, UExportTableItem item)
         {
-            item.Serialize(stream);
+            throw new NotSupportedException();
         }
 
         public void Deserialize(IUnrealStream stream, UExportTableItem item)
@@ -80,11 +81,11 @@ namespace UELib.Branch.UE4
             item.IsNotForClient = stream.ReadInt32() > 0;
             if (stream.UE4Version < 196)
             {
-                stream.ReadArray(out UArray<int> generationNetObjectCount);
+                stream.ReadArray(out item.GenerationNetObjectCount);
             }
 
             stream.ReadStruct(out item.PackageGuid);
-            item.PackageFlags = stream.ReadUInt32();
+            stream.Read(out item.PackageFlags);
             if (stream.UE4Version >= 365) item.IsNotForEditorGame = stream.ReadInt32() > 0;
             if (stream.UE4Version >= 485) item.IsAsset = stream.ReadInt32() > 0;
             if (stream.UE4Version >= 507)

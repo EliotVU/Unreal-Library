@@ -37,7 +37,8 @@ namespace UELib.Core
         private UStruct _Outer;
         private bool _RecordingEnabled = true;
 
-        private UObjectRecordStream _Buffer => (UObjectRecordStream)_Container.Buffer;
+        // Temporary solution, needed so we can lazy-load the property value.
+        private UObjectStream _Buffer { get; set; }
 
         internal long _TagPosition { get; set; }
         internal long _PropertyValuePosition { get; set; }
@@ -55,7 +56,7 @@ namespace UELib.Core
         {
             _TempFlags = 0x00;
             string value;
-            _Container.EnsureBuffer();
+            _Buffer = _Container.LoadBuffer();
             try
             {
                 value = DeserializeValue();
@@ -221,6 +222,9 @@ namespace UELib.Core
         {
             _Container = owner;
             _Outer = (outer ?? _Container as UStruct) ?? _Container.Outer as UStruct;
+
+            Debug.Assert(owner.Buffer != null);
+            _Buffer = owner.Buffer;
         }
 
         private int DeserializePackedSize(byte sizePack)
@@ -553,7 +557,7 @@ namespace UELib.Core
         {
             if (_Buffer == null)
             {
-                _Container.EnsureBuffer();
+                _Container.LoadBuffer();
                 if (_Buffer == null)
                 {
                     throw new DeserializationException("_Buffer is not initialized!");
@@ -760,7 +764,7 @@ namespace UELib.Core
                                 UDecompilingState.s_inlinedSubObjects.Add(constantObject, true);
 
                                 // Unknown objects are only deserialized on demand.
-                                constantObject.BeginDeserializing();
+                                constantObject.Load();
 
                                 propertyValue = constantObject.Decompile() + "\r\n";
 

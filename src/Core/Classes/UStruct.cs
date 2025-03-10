@@ -266,7 +266,7 @@ namespace UELib.Core
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3
                 && GetType() == typeof(UStruct))
             {
-                DeserializeProperties();
+                DeserializeProperties(_Buffer);
             }
         }
 

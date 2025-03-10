@@ -77,9 +77,11 @@ namespace UELib.Core
 
             public abstract class ComparisonToken : Token
             {
+                public UObject Object;
+                
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadObjectIndex();
+                    stream.Read(out Object);
                     Decompiler.AlignObjectSize();
 
                     DeserializeNext();

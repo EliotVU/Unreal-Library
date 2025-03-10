@@ -12,5 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\src\Eliot.UELib.csproj" />
+    <ProjectReference Include="..\Test\Eliot.UELib.Test.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Samples\TestUC3.u">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

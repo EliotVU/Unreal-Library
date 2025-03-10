@@ -70,7 +70,7 @@ namespace Eliot.UELib.Test.upk
             void AssertFunctionDelegateTokens(UnrealPackage linker)
             {
                 var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens");
-                delegateTokensFunc.BeginDeserializing();
+                delegateTokensFunc.Load();
 
                 var script = delegateTokensFunc.ByteCodeManager;
                 script.Deserialize();

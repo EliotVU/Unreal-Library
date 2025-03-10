@@ -121,7 +121,7 @@ namespace UELib.Core
                 ScriptPosition = 0;
                 try
                 {
-                    _Container.EnsureBuffer();
+                    _Container.LoadBuffer();
                     _Buffer = _Container.Buffer;
                     _Buffer.Seek(_Container.ScriptOffset, SeekOrigin.Begin);
                     int scriptSize = _Container.ByteScriptSize;

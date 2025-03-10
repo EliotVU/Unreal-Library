@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -199,7 +200,7 @@ namespace UELib.Core
                 }
             }
 
-            if (HasObjectFlag(Flags.ObjectFlagsLO.Native))
+            if (ObjectFlags.HasFlag(ObjectFlag.Native))
             {
                 output += "\r\n\t" + FormatNative();
                 if (NativeClassName.Length != 0)
@@ -321,19 +322,21 @@ namespace UELib.Core
                     }
                     else
                     {
-                        output += $"\r\n\tnotplaceable";
+                        output += "\r\n\tnotplaceable";
                     }
                 }
                 else
 #endif
                 {
-                    if ((ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0)
+                    if (Package.Version >= PlaceableVersion)
                     {
-                        output += Package.Version >= PlaceableVersion ? "\r\n\tplaceable" : "\r\n\tusercreate";
+                        output += (ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0 
+                            ? "\r\n\tplaceable" 
+                            : "\r\n\tnotplaceable";
                     }
-                    else
+                    else if ((ClassFlags & (uint)Flags.ClassFlags.NoUserCreate) != 0)
                     {
-                        output += Package.Version >= PlaceableVersion ? "\r\n\tnotplaceable" : "\r\n\tnousercreate";
+                        output += "\r\n\tnousercreate";
                     }
                 }
             }

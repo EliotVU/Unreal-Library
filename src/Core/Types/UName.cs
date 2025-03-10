@@ -47,6 +47,17 @@ namespace UELib.Core
             _Number = Numeric;
         }
 
+        // FIXME: Ugly hack for writing purposes
+        public UName(int index, int number = Numeric)
+        {
+            var nameEntry = new UNameTableItem
+            {
+                Index = index
+            };
+            _NameItem = nameEntry;
+            _Number = Numeric;
+        }
+
         public bool IsNone()
         {
             return _NameItem.Name.Equals(None, StringComparison.OrdinalIgnoreCase);

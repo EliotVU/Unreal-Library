@@ -27,7 +27,15 @@ namespace UELib.Core
             public void Serialize(IUnrealStream stream)
             {
                 stream.Write(Class);
+#if DNF
+                // No specified version
+                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                {
+                    goto skipDeep;
+                }
+#endif
                 stream.Write(IsDeep);
+            skipDeep:
                 stream.Write(ScriptTextCRC);
             }
 
@@ -686,7 +694,7 @@ namespace UELib.Core
             }
             else
             {
-                DeserializeProperties();
+                DeserializeProperties(_Buffer);
             }
 #if ROCKETLEAGUE
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague)

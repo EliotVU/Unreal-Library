@@ -4,7 +4,7 @@ using UELib;
 
 namespace Eliot.UELib.Test
 {
-    internal static class UnrealPackageUtilities
+    public static class UnrealPackageUtilities
     {
         // HACK: Ugly workaround the issues with UPackageStream
         public static UPackageStream CreateTempPackageStream()

@@ -9,30 +9,31 @@ using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
+using UELib.Services;
 
 namespace UELib.Core
 {
-    public class ObjectEventArgs : EventArgs
-    {
-        public UObject ObjectRef { get; }
-
-        public ObjectEventArgs(UObject objectRef)
-        {
-            ObjectRef = objectRef;
-        }
-    }
-
     /// <summary>
     /// Represents the Unreal class Core.UObject.
     /// Instances of this class are deserialized from the exports table entries.
     /// </summary>
     [UnrealRegisterClass]
-    public partial class UObject : object, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
+    public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
         /// <summary>
-        /// The package this object resists in.
+        /// The object flags.
+        /// </summary>
+        public UnrealFlags<ObjectFlag> ObjectFlags { get; set; }
+
+        /// <summary>
+        /// The object package.
         /// </summary>
         public UnrealPackage Package { get; internal set; }
+
+        /// <summary>
+        /// The object resource index in the <see cref="Package"/>.
+        /// </summary>
+        public UPackageIndex PackageIndex { get; internal set; }
 
         public UObjectTableItem Table { get; internal set; }
 
@@ -48,37 +49,33 @@ namespace UELib.Core
         [CanBeNull]
         [Output(OutputSlot.Parameter)]
         public UObject Class => ExportTable != null
-            ? Package.GetIndexObject(ExportTable.ClassIndex)
+            ? Package.IndexToObject(ExportTable.ClassIndex)
             : null;
 
         /// <summary>
         /// [Package.Group:Outer].Object
         /// </summary>
         [CanBeNull]
-        public UObject Outer => Package.GetIndexObject(Table.OuterIndex);
+        public UObject Outer => Package.IndexToObject(Table.OuterIndex);
 
         [CanBeNull]
         public UObject Archetype => ExportTable != null
-            ? Package.GetIndexObject(ExportTable.ArchetypeIndex)
+            ? Package.IndexToObject(ExportTable.ArchetypeIndex)
             : null;
 
-        /// <summary>
-        /// The object's index represented as a table index.
-        /// </summary>
-        private int _ObjectIndex => Table is UExportTableItem
-            ? Table.Index + 1
-            : -(Table.Index + 1);
+        [Obsolete("Displaced by PackageIndex")]
+        private int _ObjectIndex => PackageIndex;
 
-        /// <summary>
-        /// The object's flags.
-        /// </summary>
-        private ulong _ObjectFlags => ExportTable?.ObjectFlags ?? 0;
-
-        [Output(OutputSlot.Parameter)] public string Name => Table.ObjectName;
+        [Output(OutputSlot.Parameter)]
+        public string Name
+        {
+            get => Table.ObjectName;
+            set => Table.ObjectName = new UName(value);
+        }
 
         #region Serialized Members
 
-        protected UObjectRecordStream _Buffer;
+        protected UObjectStream _Buffer;
 
         /// <summary>
         /// Copy of the Object bytes
@@ -95,26 +92,45 @@ namespace UELib.Core
         public DefaultPropertiesCollection Properties { get; protected set; }
 
         /// <summary>
-        /// Serialized if object is marked with <see cref="ObjectFlagsLO.HasStack" />.
+        /// Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
         /// </summary>
         [CanBeNull] public UStateFrame StateFrame;
 
-        #endregion
+        [BuildGeneration(BuildGeneration.UE4)]
+        public UGuid ObjectGuid;
 
-        #region General Members
+        #endregion
 
         [Flags]
         public enum ObjectState : byte
         {
-            Deserialied = 0x01,
+            [Obsolete("Use Deserialized")]
+            Deserialied = Deserialized,
+
+            Deserialized = 0x01,
             Errorlized = 0x02,
             Deserializing = 0x04
         }
 
         public ObjectState DeserializationState;
-        public Exception ThrownException;
+        [CanBeNull] public Exception ThrownException;
         public long ExceptionPosition;
-        public UGuid ObjectGuid;
+
+        public UObject()
+        {
+
+        }
+
+        public UObject(UnrealPackage package, UPackageIndex packageIndex) : this()
+        {
+            Package = package;
+            PackageIndex = packageIndex;
+
+            if (packageIndex)
+            {
+                Table = package.IndexToObjectResource(packageIndex);
+            }
+        }
 
         /// <summary>
         /// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
@@ -123,14 +139,26 @@ namespace UELib.Core
 
         public BinaryMetaData BinaryMetaData { get; private set; }
 
-        #endregion
-
         #region Constructors
 
-        /// <summary>
-        /// Notifies this object instance to make a copy of this object's data from the Owner.Stream and then start deserializing this instance.
-        /// </summary>
+        [Obsolete("Use Load<UObjectRecordStream>() instead.")]
         public void BeginDeserializing()
+        {
+            Load<UObjectRecordStream>();
+        }
+
+        public void Load()
+        {
+            Load<UObjectStream>();
+        }
+
+        /// <summary>
+        /// Loads the object data from the object's package stream using a particular object stream.
+        ///
+        /// Disposes the buffer after deserialization, unless the object has script properties.
+        /// </summary>
+        public void Load<T>()
+            where T : UObjectStream
         {
             // Imported objects cannot be deserialized!
             if (ImportTable != null)
@@ -141,42 +169,33 @@ namespace UELib.Core
             // e.g. None.
             if (ExportTable.SerialSize == 0)
             {
-                DeserializationState |= ObjectState.Deserialied;
+                DeserializationState |= ObjectState.Deserialized;
+
                 return;
             }
 
-            InitBuffer();
+            _Buffer?.Close();
+            _Buffer = LoadStream<T>(Package.Stream);
+#if BINARYMETADATA
+            if (_Buffer is UObjectRecordStream recordStream)
+            {
+                BinaryMetaData = recordStream.BinaryMetaData;
+            }
+#endif
             try
             {
-#if BINARYMETADATA
-                BinaryMetaData = _Buffer.BinaryMetaData;
-#endif
                 DeserializationState |= ObjectState.Deserializing;
-                if (HasObjectFlag(ObjectFlagsHO.PropertiesObject)
-                    // Just in-case we have passed an overlapped object flag in UE2 or older packages.
-                    && _Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
-                {
-                    DeserializeClassDefault();
-                }
-                else
-                {
-                    Deserialize();
-                }
-
-                DeserializationState |= ObjectState.Deserialied;
-#if STRICT
-                Debug.Assert(Buffer.Position == Buffer.Length);
-#endif
+                Load(_Buffer);
+                DeserializationState |= ObjectState.Deserialized;
             }
-            catch (Exception e)
+            catch (DeserializationException exception) // Only catch a deserialization error, not a stream loading error etc.
             {
-                ThrownException =
-                    new UnrealException($"Couldn't deserialize object {GetReferencePath()}", e);
-                ExceptionPosition = _Buffer?.Position ?? -1;
                 DeserializationState |= ObjectState.Errorlized;
 
-                Console.Error.WriteLine($"\r\n> Object deserialization error for {GetReferencePath()} as {GetType()}" +
-                                        $"\r\n> Exception: {ThrownException}");
+                ThrownException = exception;
+                ExceptionPosition = _Buffer.Position;
+
+                LibServices.LogService.SilentException(ThrownException);
             }
             finally
             {
@@ -185,13 +204,64 @@ namespace UELib.Core
             }
         }
 
-        private void InitBuffer()
+        /// <summary>
+        /// Loads the object data using a particular object stream.
+        /// </summary>
+        /// <param name="stream">the input object stream.</param>
+        /// <exception cref="DeserializationException">Thrown if any exception occurs during the deserialization process.</exception>
+        public void Load(UObjectStream stream)
         {
-            InitBuffer(Package.Stream);
+            // Necessary to keep the "Deserialize" implementations working.
+            var buffer = _Buffer;
+            _Buffer = stream;
+
+            try
+            {
+                if (ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject)
+                    // Just in-case we have passed an overlapped object flag in UE2 or older packages.
+                    && _Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
+                {
+                    DeserializeClassDefault(stream);
+                }
+                else
+                {
+                    Deserialize(stream);
+                }
+#if STRICT
+                Debug.Assert(Buffer.Position == Buffer.Length);
+#endif
+            }
+            catch (Exception exception)
+            {
+                throw new DeserializationException(
+                    $"Couldn't load object {GetReferencePath()} as type {GetType()} due thrown exception {exception}",
+                    exception
+                );
+            }
+            finally
+            {
+                _Buffer = buffer;
+            }
         }
 
-        private void InitBuffer(UPackageStream stream)
+        /// <summary>
+        /// Loads the object data from the package stream.
+        /// </summary>
+        /// <param name="packageStream">the input package stream.</param>
+        /// <returns>the loaded object stream.</returns>
+        public T Load<T>(UPackageStream packageStream)
+            where T : UObjectStream
         {
+            var objectStream = LoadStream<T>(packageStream);
+            Load(objectStream);
+
+            return objectStream;
+        }
+
+        public T LoadStream<T>(UPackageStream stream)
+            where T : UObjectStream
+        {
+            T objectStream;
             long objectOffset = ExportTable.SerialOffset;
             int objectSize = ExportTable.SerialSize;
 
@@ -210,7 +280,7 @@ namespace UELib.Core
                 stream.Decoder = decoder;
 
                 var baseStream = new MemoryDecoderStream(stream.Decoder, buffer, objectOffset);
-                _Buffer = new UObjectRecordStream(stream, baseStream);
+                objectStream = (T)Activator.CreateInstance(typeof(T), stream, baseStream);
             }
             else
             {
@@ -218,24 +288,22 @@ namespace UELib.Core
                 stream.Seek(objectOffset, SeekOrigin.Begin);
                 byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
 
-                _Buffer = new UObjectRecordStream(stream, buffer);
+                objectStream = (T)Activator.CreateInstance(typeof(T), stream, buffer);
             }
 
             Contract.Assert(byteCount == objectSize,
                 $"Incomplete read; expected a total bytes of {objectSize} but got {byteCount}");
+
+            return objectStream;
         }
 
-        internal void EnsureBuffer()
+        internal UObjectStream LoadBuffer()
         {
-            //Console.WriteLine( "Ensure buffer for {0}", (string)this );
-            if (_Buffer == null)
-                InitBuffer();
+            return _Buffer ??= LoadStream<UObjectStream>(Package.Stream);
         }
 
         internal void MaybeDisposeBuffer()
         {
-            //Console.WriteLine( "Disposing buffer for {0}", (string)this );
-
             // Do not dispose while deserializing!
             // For example DecompileDefaultProperties or DecompileScript, may dispose the buffer in certain situations!
             if (_Buffer == null || (DeserializationState & ObjectState.Deserializing) != 0)
@@ -243,7 +311,6 @@ namespace UELib.Core
 
             _Buffer.Dispose();
             _Buffer = null;
-            //Console.WriteLine( "Disposed" );
         }
 
         protected virtual bool CanDisposeBuffer()
@@ -257,75 +324,83 @@ namespace UELib.Core
         protected void VengeanceDeserializeHeader(IUnrealStream stream, ref (int a, int b) header)
         {
             header.a = stream.ReadInt32();
-            Record("A:Vengeance", header.a);
+            stream.Record("A:Vengeance", header.a);
             header.b = stream.ReadInt32();
-            Record("B:Vengeance", header.b);
+            stream.Record("B:Vengeance", header.b);
             switch (header.a)
             {
                 case 2:
                     header.a = stream.ReadInt32();
-                    Record("C:Vengeance", header.a);
+                    stream.Record("C:Vengeance", header.a);
                     break;
 
                 case 3:
                     int c = stream.ReadInt32();
-                    Record("C:Vengeance", c);
+                    stream.Record("C:Vengeance", c);
                     break;
             }
         }
 #endif
-        private void DeserializeNetIndex()
+        private void DeserializeNetIndex(IUnrealStream stream)
         {
 #if MKKE || BATMAN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
+                stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
                 return;
             }
 #endif
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded ||
-                _Buffer.UE4Version >= 196)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded ||
+                stream.UE4Version >= 196)
             {
                 return;
             }
 
-            _Buffer.Read(out NetIndex);
-            Record(nameof(NetIndex), NetIndex);
+            stream.Read(out NetIndex);
+            stream.Record(nameof(NetIndex), NetIndex);
         }
 
         /// <summary>
         /// Special route for objects that are acting as the ClassDefault for a class
         /// i.e. a class like PrimitiveComponent is accompanied by an instance DEFAULT_PrimitiveComponent of the same class.
         /// </summary>
-        private void DeserializeClassDefault()
+        private void DeserializeClassDefault(IUnrealStream stream)
         {
-            DeserializeNetIndex();
-            DeserializeProperties();
+            DeserializeNetIndex(stream);
+            DeserializeProperties(stream);
         }
 
-        private void DeserializeTemplate(UComponent component)
+        private void DeserializeTemplate(IUnrealStream stream, UComponent component)
         {
-            _Buffer.Read(out component.TemplateOwnerClass);
-            Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
+            stream.Read(out component.TemplateOwnerClass);
+            stream.Record(nameof(component.TemplateOwnerClass), component.TemplateOwnerClass);
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate(ObjectFlagsHO.PropertiesObject))
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName || IsTemplate(ObjectFlag.ClassDefaultObject))
             {
-                _Buffer.Read(out component.TemplateName);
-                Record(nameof(component.TemplateName), component.TemplateName);
+                stream.Read(out component.TemplateName);
+                stream.Record(nameof(component.TemplateName), component.TemplateName);
             }
         }
 
         /// <summary>
         /// Checks if the object is a template.
         /// An object is considered a template if either it is an object containing the defaults of a <seealso cref="UClass"/> or an archetype.
-        /// 
-        /// FIXME: The <seealso cref="ObjectFlagsHO.ArchetypeObject"/> flag check was added later (Not checked for in GoW), no known version.
         /// </summary>
         /// <param name="templateFlags"></param>
         /// <returns>true if the object is a template.</returns>
-        public bool IsTemplate(ObjectFlagsHO templateFlags = ObjectFlagsHO.PropertiesObject | ObjectFlagsHO.ArchetypeObject)
+        public bool IsTemplate(ObjectFlag templateFlag = ObjectFlag.TemplateObject)
         {
-            return HasObjectFlag(templateFlags) || EnumerateOuter().Any(obj => obj.HasObjectFlag(templateFlags));
+            return ObjectFlags.HasFlag(templateFlag) || EnumerateOuter().Any(obj => obj.ObjectFlags.HasFlag(templateFlag));
+        }
+
+        public virtual void Deserialize(IUnrealStream stream)
+        {
+            Deserialize();
+        }
+
+        public virtual void Serialize(IUnrealStream stream)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -349,10 +424,10 @@ namespace UELib.Core
             }
 #endif
             // This appears to be serialized for templates of classes like AmbientSoundNonLoop
-            if (HasObjectFlag(ObjectFlagsLO.HasStack))
+            if (ObjectFlags.HasFlag(ObjectFlag.HasStack))
             {
                 _Buffer.ReadClass(out StateFrame);
-                Record(nameof(StateFrame), StateFrame);
+                _Buffer.Record(nameof(StateFrame), StateFrame);
             }
 #if MKKE || BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
@@ -367,7 +442,7 @@ namespace UELib.Core
                 switch (this)
                 {
                     case UComponent component:
-                        DeserializeTemplate(component);
+                        DeserializeTemplate(_Buffer, component);
                         break;
 
                     // HACK: Ugly work around for unregistered component classes...
@@ -381,12 +456,13 @@ namespace UELib.Core
                             var fakeComponent = new UComponent();
                             try
                             {
-                                DeserializeTemplate(fakeComponent);
+                                DeserializeTemplate(_Buffer, fakeComponent);
                             }
                             catch (Exception exception)
                             {
-                                Console.Error.WriteLine("Failed attempt to interpret object as a template {0}",
-                                    exception);
+                                LibServices.LogService.SilentException(
+                                    new Exception("Failed attempt to interpret object as a template {0}", exception));
+
 
                                 _Buffer.Position = backupPosition;
                                 _Buffer.ConformRecordPosition();
@@ -401,19 +477,19 @@ namespace UELib.Core
 
         skipNetIndex:
 
-            DeserializeNetIndex();
+            DeserializeNetIndex(_Buffer);
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
             if (Package.Build == BuildGeneration.Flesh && GetType() != typeof(UnknownObject))
             {
                 // var native private const int ObjectInternalPropertyHash[1];
                 int thiefLinkDataObjectCount = _Buffer.ReadInt32();
-                Record(nameof(thiefLinkDataObjectCount), thiefLinkDataObjectCount);
+                _Buffer.Record(nameof(thiefLinkDataObjectCount), thiefLinkDataObjectCount);
                 for (int i = 0; i < thiefLinkDataObjectCount; i++)
                 {
                     // These probably contain the missing UFields.
                     var thiefLinkDataObject = _Buffer.ReadObject();
-                    Record(nameof(thiefLinkDataObject), thiefLinkDataObject);
+                    _Buffer.Record(nameof(thiefLinkDataObject), thiefLinkDataObject);
                 }
 
                 if (ExportTable.ClassIndex != 0)
@@ -428,16 +504,16 @@ namespace UELib.Core
                 return;
             }
 
-            DeserializeProperties();
+            DeserializeProperties(_Buffer);
 #if UE4
             if (_Buffer.UE4Version > 0)
             {
                 bool shouldSerializeGuid = _Buffer.ReadInt32() > 0;
-                Record(nameof(shouldSerializeGuid), shouldSerializeGuid);
+                _Buffer.Record(nameof(shouldSerializeGuid), shouldSerializeGuid);
                 if (shouldSerializeGuid)
                 {
                     _Buffer.ReadStruct(out ObjectGuid);
-                    Record(nameof(ObjectGuid), ObjectGuid);
+                    _Buffer.Record(nameof(ObjectGuid), ObjectGuid);
                 }
             }
 #endif
@@ -446,7 +522,8 @@ namespace UELib.Core
         /// <summary>
         /// Tries to read all properties that resides in this object instance.
         /// </summary>
-        protected void DeserializeProperties()
+        /// <param name="stream"></param>
+        protected void DeserializeProperties(IUnrealStream stream)
         {
             Default = this;
             Properties = new DefaultPropertiesCollection();
@@ -464,50 +541,31 @@ namespace UELib.Core
 
         #endregion
 
-        /// <summary>
-        /// Checks if the object contains the specified @flag or one of the specified flags.
-        ///
-        /// Checks the lower bits of ObjectFlags.
-        /// </summary>
-        /// <param name="flag">The flag(s) to compare to.</param>
-        /// <returns>Whether it contained one of the specified flags.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete]
         public bool HasObjectFlag(ObjectFlagsLO flag)
         {
-            return (_ObjectFlags & (ulong)flag) != 0;
+            return (ObjectFlags & (ulong)flag) != 0;
         }
 
-        /// <summary>
-        /// Checks if the object contains the specified @flag or one of the specified flags.
-        ///
-        /// Checks the higher bits of ObjectFlags.
-        /// </summary>
-        /// <param name="flag">The flag(s) to compare to.</param>
-        /// <returns>Whether it contained one of the specified flags.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete]
         public bool HasObjectFlag(ObjectFlagsHO flag)
         {
-            return (_ObjectFlags & ((ulong)flag << 32)) != 0;
+            return (ObjectFlags & ((ulong)flag << 32)) != 0;
         }
 
         public bool IsPublic()
         {
-            return (_ObjectFlags & (ulong)ObjectFlagsLO.Public) != 0;
+            return ObjectFlags.HasFlag(ObjectFlag.Public);
         }
 
         public bool IsProtected()
         {
-            // Protected was shifted to the higher order in later UE3 builds
-            return HasObjectFlag(ObjectFlagsHO.Protected)
-                   || (_ObjectFlags & (
-                       (ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected))
-                   == ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Protected);
+            return ObjectFlags.HasFlag(ObjectFlag.Protected);
         }
 
         public bool IsPrivate()
         {
-            return (_ObjectFlags & ((ulong)ObjectFlagsLO.Public | (ulong)ObjectFlagsLO.Private)) !=
-                   (ulong)ObjectFlagsLO.Public;
+            return ObjectFlags.HasFlag(ObjectFlag.Final) || !ObjectFlags.HasFlag(ObjectFlag.Public);
         }
 
         /// <summary>
@@ -586,7 +644,7 @@ namespace UELib.Core
         [Obsolete("To be deprecated", true)]
         protected UObject GetIndexObject(int index)
         {
-            return Package.GetIndexObject(index);
+            return Package.IndexToObject(index);
         }
 
         #region IBuffered
@@ -672,7 +730,8 @@ namespace UELib.Core
 
         public override int GetHashCode()
         {
-            return _ObjectIndex;
+            // ReSharper disable once NonReadonlyMemberInGetHashCode
+            return PackageIndex;
         }
 
         public void Dispose()
@@ -706,14 +765,19 @@ namespace UELib.Core
             return visitor.Visit(this);
         }
 
-        public static explicit operator int(UObject obj)
+        public static implicit operator UPackageIndex([CanBeNull] UObject obj)
         {
-            return obj?._ObjectIndex ?? 0;
+            return obj?.PackageIndex ?? 0;
         }
 
-        public static explicit operator string(UObject obj)
+        public static explicit operator int([CanBeNull] UObject obj)
         {
-            return obj?.Name;
+            return obj?.PackageIndex ?? 0;
+        }
+
+        public static explicit operator string([CanBeNull] UObject obj)
+        {
+            return obj?.Name ?? "none";
         }
 
         /// <summary>

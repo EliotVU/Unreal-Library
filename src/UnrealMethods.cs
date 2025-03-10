@@ -25,26 +25,17 @@ namespace UELib
     [Serializable]
     public class DeserializationException : UnrealException
     {
-        [NonSerialized] private readonly string _Output;
-
-        public DeserializationException()
+        public DeserializationException(string message) : base(message)
         {
-            _Output = "DeserializationException";
         }
 
-        public DeserializationException(string output) : base(output)
+        public DeserializationException(string message, Exception innerException) : base(message, innerException)
         {
-            _Output = output;
-        }
-
-        public override string ToString()
-        {
-            return _Output + "\r\n" + base.ToString();
         }
     }
 
-    [Serializable]
-    public class DecompilingCastException : DeserializationException
+    [Obsolete]
+    public class DecompilingCastException : UnrealException
     {
     }
 

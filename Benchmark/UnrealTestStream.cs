@@ -24,7 +24,7 @@ namespace Eliot.UELib.Benchmark
         public uint UE4Version { get; }
         public bool BigEndianCode { get; }
     }
-    
+
     /// Hackish workaround for the issue with UPackageStream requiring a file and path, so that we can perform stream tests without a package.
     public class UnrealTestStream : UnrealReader, IUnrealStream
     {
@@ -71,9 +71,14 @@ namespace Eliot.UELib.Benchmark
             throw new NotImplementedException();
         }
 
-        public void Skip(int bytes)
+        public void WriteName(in UName value)
         {
             throw new NotImplementedException();
+        }
+
+        public void Skip(int bytes)
+        {
+            Position += bytes;
         }
 
         public long Position
@@ -88,9 +93,33 @@ namespace Eliot.UELib.Benchmark
             set => Position = value;
         }
 
+        public T ReadObject<T>() where T : UObject
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WriteObject<T>(T value) where T : UObject
+        {
+            throw new NotImplementedException();
+        }
+
+        public new UName ReadName()
+        {
+            return base.ReadName();
+        }
+
         public long Seek(long offset, SeekOrigin origin)
         {
             return BaseStream.Seek(offset, origin);
+        }
+
+        public IUnrealStream Record(string name, object? value)
+        {
+            return this;
+        }
+
+        public void ConformRecordPosition()
+        {
         }
     }
 }

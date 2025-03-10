@@ -7,9 +7,9 @@ namespace UELib.Branch
         Undefined = 0,
 
         /// <summary>
-        ///     FIXME: Version 61 is the lowest package version I know that supports StateFlags.
+        /// The lowest version that is supported.
         /// </summary>
-        AddedStateFlagsToUState = 61,
+        LowestVersion = 61,
 
         /// <summary>
         ///     This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.
@@ -29,6 +29,8 @@ namespace UELib.Branch
         ///     Mixed changes.
         /// </summary>
         Release64 = 64,
+
+        HeritageTableDeprecated = 68,
 
         CharRemapAddedToUFont = 69,
 
@@ -120,13 +122,12 @@ namespace UELib.Branch
         // 219 according to EndWar
         DisplacedScriptPropertiesWithClassDefaultObject = 219,
 
+        /// <summary>
+        ///     And ComponentMap
+        /// </summary>
         ArchetypeAddedToExports = 220,
 
-        /// <summary>
-        /// FIXME: Version
-        /// No version check in all of RoboHordes (200), EndWar (223), and R6Vegas (241)
-        /// </summary>
-        PropertyFlagsSizeExpandedTo64Bits = UE3,
+        PropertyFlagsSizeExpandedTo64Bits = 220,
 
         // 222 according to EndWar
         AddedInterfacesFeature = 222,
@@ -142,15 +143,17 @@ namespace UELib.Branch
         /// Not attested with EndWar (223) and R6Vegas (241)
         /// </summary>
         AddedStructFlagsToScriptStruct = 242,
+        AddedEngineVersion = 245,
 
         ExportFlagsAddedToExports = 247,
         ComponentClassBridgeMapDeprecated = 248,
+        AddedTotalHeaderSize = 249,
         SerialSizeConditionRemoved = 249,
 
         // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
         LazyLoaderFlagsAddedToLazyArray = 251,
         StorageSizeAddedToLazyArray = 254,
-        L8AddedToLazyArray = 260,
+        PackageNameAddedToLazyArray = 260,
         LazyArrayReplacedWithBulkData = 266,
 
         ComponentTemplatesDeprecated = 267,
@@ -160,8 +163,11 @@ namespace UELib.Branch
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
 
+        AddedFolderName = 269,
+
         ComponentGuidDeprecated = 273,
         ClassGuidDeprecated = 276,
+        AddedCookerVersion = 277,
 
         InterfaceClassesDeprecated = 288,
 
@@ -186,7 +192,7 @@ namespace UELib.Branch
         CompressionAdded = 334,
 
         NumberAddedToName = 343,
-        
+
         [Discardable] GameGOW = 374, // Engine Version: 2451
         [Discardable] GameStranglehold = 375, // Engine Version: 2605
 
@@ -208,16 +214,18 @@ namespace UELib.Branch
         /// </summary>
         StructReferenceAddedToStructMember = GameStranglehold,
 
-        // 417 according to the GoW client
-        LightingChannelsAddedToPoly = 417,
-
-        AddedArrayEnumToUProperty = 401,
-
         /// <summary>
         ///     Oldest attest MOHA (v421), but not MKKE (v472, non standard)
         ///     FIXME: Unknown version
         /// </summary>
         IsCopyAddedToStructMember = GameStranglehold + 1,
+
+        AddedArrayEnumToUProperty = 401,
+
+        AddedDependsTable = 415,
+
+        // 417 according to the GoW client
+        LightingChannelsAddedToPoly = 417,
 
         [Discardable] GameFFOW = 433, // Engine Version: 2917
 
@@ -226,6 +234,8 @@ namespace UELib.Branch
         ///     FIXME: Unknown version
         /// </summary>
         IsModificationAddedToStructMember = GameFFOW,
+
+        AddedPackageSource = 482,
 
         /// <summary>
         ///     Invalid for Stargate Worlds.
@@ -243,6 +253,8 @@ namespace UELib.Branch
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
 
+        AddedAdditionalPackagesToCook = 516,
+
         ComponentMapDeprecated = 543,
 
         /// <summary>
@@ -254,11 +266,15 @@ namespace UELib.Branch
 
         AddedTextureFileCacheGuidToTexture2D = 567,
 
+        AddedThumbnailTable = 584,
+
         LightmassAdded = 600,
 
         AddedDontSortCategoriesToUClass = 603,
 
         UProcBuildingReferenceAddedToPoly = 606,
+
+        AddedImportExportGuidsTable = 623,
 
         EnumNameAddedToBytePropertyTag = 633,
 
@@ -282,10 +298,15 @@ namespace UELib.Branch
         ForceScriptOrderAddedToUClass = 749,
         SuperReferenceMovedToUStruct = 756,
 
+        AddedTextureAllocations = 767,
+
         AddedClassGroupsToUClass = 789,
         AddedNativeClassNameToUClass = 813,
 
         AddedATITCToUTexture2D = 857,
         AddedETCToUTexture2D = 864,
+
+        Next,
+        HighestVersion = Next - 1,
     }
 }

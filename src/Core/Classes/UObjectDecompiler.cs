@@ -14,7 +14,7 @@ namespace UELib.Core
         {
             if (ShouldDeserializeOnDemand)
             {
-                BeginDeserializing();
+                Load();
             }
 
             string output = $"// Reference: {GetReferencePath()}\r\n";
@@ -103,7 +103,7 @@ namespace UELib.Core
                     .Select(k => k.Key);
                 foreach (var obj in missingSubObjects)
                 {
-                    obj.BeginDeserializing();
+                    obj.Load();
 
                     string objectText = obj.Decompile();
                     output += $"{UDecompilingState.Tabs}{objectText}\r\n";
