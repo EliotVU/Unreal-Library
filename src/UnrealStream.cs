@@ -5,6 +5,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using UELib.Annotations;
 using UELib.Branch;
@@ -234,7 +235,7 @@ namespace UELib
     public class UnrealReader : BinaryReader
     {
         private static readonly Encoding s_ansiEncoding = Encoding.GetEncoding("windows-1251");
-        
+
         private readonly byte[] _IndexBuffer = new byte[5];
 
         // Allow bulk reading of strings if the package is not big endian encoded.
@@ -257,7 +258,19 @@ namespace UELib
             if (length > 0) // ANSI
             {
                 byte[] chars = new byte[size];
-
+#if SHADOWSTRIKE
+                // Ugly, re-factor when we have a versioned UnrealReader stream.
+                // We could bulk read this and then step back to decrypt, but that's a bit of a hassle.
+                if (Archive.Package.Build == BuildGeneration.ShadowStrike && Archive.LicenseeVersion >= 175)
+                {
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        BaseStream.Read(chars, i, 1);
+                        chars[i] ^= (byte)(((IUnrealStream)Archive).AbsolutePosition - 1);
+                    }
+                }
+                else
+#endif
                 if (CanBulkRead)
                 {
                     BaseStream.Read(chars, 0, chars.Length);
@@ -277,6 +290,23 @@ namespace UELib
 
             if (length < 0) // UNICODE
             {
+#if SHADOWSTRIKE
+                // Ugly, re-factor when we have a versioned UnrealReader stream.
+                // We could bulk read this and then step back to decrypt, but that's a bit of a hassle.
+                if (Archive.Package.Build == BuildGeneration.ShadowStrike && Archive.LicenseeVersion >= 175)
+                {
+                    char[] chars = new char[size];
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        char w = (char)ReadInt16();
+                        chars[i] = (char)(w ^ (short)(((IUnrealStream)Archive).AbsolutePosition - 1));
+                    }
+
+                    return chars[size - 1] == '\0'
+                        ? new string(chars, 0, chars.Length - 1)
+                        : new string(chars);
+                }
+#endif
                 if (CanBulkRead)
                 {
                     byte[] chars = new byte[size * 2];
