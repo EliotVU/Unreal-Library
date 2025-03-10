@@ -153,7 +153,7 @@ namespace UELib.Branch
         // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
         LazyLoaderFlagsAddedToLazyArray = 251,
         StorageSizeAddedToLazyArray = 254,
-        L8AddedToLazyArray = 260,
+        PackageNameAddedToLazyArray = 260,
         LazyArrayReplacedWithBulkData = 266,
 
         ComponentTemplatesDeprecated = 267,

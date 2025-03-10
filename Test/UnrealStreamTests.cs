@@ -151,7 +151,7 @@ namespace Eliot.UELib.Test
         }
 
         [DataTestMethod]
-        [DataRow(PackageObjectLegacyVersion.Undefined)]
+        [DataRow(PackageObjectLegacyVersion.LowestVersion)]
         [DataRow(PackageObjectLegacyVersion.LazyArraySkipCountChangedToSkipOffset)]
         [DataRow(PackageObjectLegacyVersion.LazyLoaderFlagsAddedToLazyArray)]
         [DataRow(PackageObjectLegacyVersion.StorageSizeAddedToLazyArray)]
@@ -188,6 +188,7 @@ namespace Eliot.UELib.Test
             readBulkData.LoadData(stream);
             Assert.IsNotNull(readBulkData.ElementData);
             Assert.AreEqual(bulkData.ElementData.Length, readBulkData.ElementData.Length);
+            CollectionAssert.AreEqual(bulkData.ElementData, readBulkData.ElementData);
         }
 
         [DataTestMethod]
