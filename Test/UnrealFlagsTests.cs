@@ -42,6 +42,8 @@ public class UnrealFlagsTests
             flags.GetFlags(PackageFlag.AllowDownload, PackageFlag.ServerSideOnly),
             flagsMap[(int)PackageFlag.AllowDownload] | flagsMap[(int)PackageFlag.ServerSideOnly]
         );
+
+        Assert.AreEqual(serializedFlags, (ulong)flags);
     }
 
     [TestMethod]

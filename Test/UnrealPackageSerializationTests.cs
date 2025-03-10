@@ -101,6 +101,8 @@ public class UnrealPackageSerializationTests
 
     [DataTestMethod]
     [DataRow(PackageObjectLegacyVersion.LowestVersion)]
+    [DataRow(PackageObjectLegacyVersion.CompactIndexDeprecated)]
+    [DataRow(PackageObjectLegacyVersion.NumberAddedToName)]
     [DataRow(PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)]
     [DataRow(PackageObjectLegacyVersion.ArchetypeAddedToExports)]
     [DataRow(PackageObjectLegacyVersion.ExportFlagsAddedToExports)]

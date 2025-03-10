@@ -246,13 +246,14 @@ namespace UELib
                 [Build(100, 58)] XIII,
 
                 /// <summary>
-                /// Tom Clancy's Splinter Cell: Chaos Theory - Demo
+                /// Tom Clancy's Splinter Cell: Chaos Theory
                 ///
-                /// 100/120
+                /// 100/120:124
                 /// </summary>
                 [BuildEngineBranch(typeof(EngineBranchSCX))]
-                [Build(100, 120, BuildGeneration.SCX)]
-                SCCT_Demo,
+                [Build(100, 120, BuildGeneration.SCX)] // Demo
+                [Build(100, 124, BuildGeneration.SCX)]
+                SCCT_Offline,
 
                 /// <summary>
                 /// Tom Clancy's Splinter Cell: Double Agent - Offline

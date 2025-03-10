@@ -146,9 +146,7 @@ namespace UELib.Flags
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator ulong(UnrealFlags<TEnum> flags)
         {
-            // Allows the compiler to optimize this better.
-            return Unsafe.As<UnrealFlags<TEnum>, ulong>(ref flags);
-            //return flags._RawValue;
+            return flags._RawValue;
         }
 
         /// <summary>
@@ -166,7 +164,7 @@ namespace UELib.Flags
         {
             Debug.Assert(FlagsMap != null);
 
-            for (var flagIndex = 0; flagIndex < flagsMap.Length; ++flagIndex)
+            for (var flagIndex = 0; flagIndex < flagsMap.Length - 1; ++flagIndex)
             {
                 if (flagsMap[flagIndex] != 0 && HasFlag(flagsMap, flagIndex))
                     yield return flagIndex;
@@ -183,11 +181,30 @@ namespace UELib.Flags
         {
             var stringBuilder = new StringBuilder();
             var values = Enum.GetValues(typeof(TEnum));
-            for (var i = 0; i < values.Length; i++)
+            ulong flags = _RawValue;
+            for (int i = 0; i < values.Length - 1; i++)
             {
-                if (!HasFlag(i)) continue;
-                string n = Enum.GetName(typeof(TEnum), i);
-                stringBuilder.Append($"{n};");
+                ulong flag = _RawValue & GetFlag(i);
+                if (flag == 0)
+                {
+                    continue;
+                }
+
+                flags &= ~(_RawValue & flag); // remove all matching bits.
+                string name = Enum.GetName(typeof(TEnum), i);
+                stringBuilder.Append($"0x{flag:X}:{name};");
+            }
+
+            // Remaining flags
+            for (int i = 0; flags != 0; ++i, flags >>= 1)
+            {
+                if ((flags & 1) == 0)
+                {
+                    continue;
+                }
+
+                ulong flag = (1ul << i) & _RawValue;
+                stringBuilder.Append($"0x{flag:X};");
             }
 
             return stringBuilder.ToString();

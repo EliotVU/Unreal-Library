@@ -5,6 +5,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using UELib.Annotations;
 using UELib.Branch;
@@ -154,13 +155,13 @@ namespace UELib
                 {
                     index >>= 7;
                     byte b2 = (byte)(index < 0x80 ? index : (index & 0x7F) + 0x80);
-                    _IndexBuffer[2] = b1;
+                    _IndexBuffer[2] = b2;
                     BaseStream.Write(_IndexBuffer, 2, 1);
                     if ((b2 & 0x80) != 0)
                     {
                         index >>= 7;
                         byte b3 = (byte)(index < 0x80 ? index : (index & 0x7F) + 0x80);
-                        _IndexBuffer[3] = b1;
+                        _IndexBuffer[3] = b3;
                         BaseStream.Write(_IndexBuffer, 3, 1);
                         if ((b3 & 0x80) != 0)
                         {
@@ -233,6 +234,8 @@ namespace UELib
     /// </summary>
     public class UnrealReader : BinaryReader
     {
+        private static readonly Encoding s_ansiEncoding = Encoding.GetEncoding("windows-1251");
+
         private readonly byte[] _IndexBuffer = new byte[5];
 
         // Allow bulk reading of strings if the package is not big endian encoded.
@@ -255,7 +258,19 @@ namespace UELib
             if (length > 0) // ANSI
             {
                 byte[] chars = new byte[size];
-
+#if SHADOWSTRIKE
+                // Ugly, re-factor when we have a versioned UnrealReader stream.
+                // We could bulk read this and then step back to decrypt, but that's a bit of a hassle.
+                if (Archive.Package.Build == BuildGeneration.ShadowStrike && Archive.LicenseeVersion >= 175)
+                {
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        BaseStream.Read(chars, i, 1);
+                        chars[i] ^= (byte)(((IUnrealStream)Archive).AbsolutePosition - 1);
+                    }
+                }
+                else
+#endif
                 if (CanBulkRead)
                 {
                     BaseStream.Read(chars, 0, chars.Length);
@@ -269,12 +284,29 @@ namespace UELib
                 }
 
                 return chars[size - 1] == '\0'
-                    ? Encoding.ASCII.GetString(chars, 0, chars.Length - 1)
-                    : Encoding.ASCII.GetString(chars, 0, chars.Length);
+                    ? s_ansiEncoding.GetString(chars, 0, chars.Length - 1)
+                    : s_ansiEncoding.GetString(chars, 0, chars.Length);
             }
 
             if (length < 0) // UNICODE
             {
+#if SHADOWSTRIKE
+                // Ugly, re-factor when we have a versioned UnrealReader stream.
+                // We could bulk read this and then step back to decrypt, but that's a bit of a hassle.
+                if (Archive.Package.Build == BuildGeneration.ShadowStrike && Archive.LicenseeVersion >= 175)
+                {
+                    char[] chars = new char[size];
+                    for (int i = 0; i < chars.Length; ++i)
+                    {
+                        char w = (char)ReadInt16();
+                        chars[i] = (char)(w ^ (short)(((IUnrealStream)Archive).AbsolutePosition - 1));
+                    }
+
+                    return chars[size - 1] == '\0'
+                        ? new string(chars, 0, chars.Length - 1)
+                        : new string(chars);
+                }
+#endif
                 if (CanBulkRead)
                 {
                     byte[] chars = new byte[size * 2];
@@ -332,7 +364,7 @@ namespace UELib
                 goto nextChar;
             }
 
-            string s = Encoding.UTF8.GetString(strBytes.ToArray());
+            string s = s_ansiEncoding.GetString(strBytes.ToArray());
             return s;
         }
 
@@ -799,7 +831,7 @@ namespace UELib
         public UObjectStream(IUnrealStream packageStream, Stream baseStream)
         {
             Package = packageStream.Package;
-            _ObjectPositionInPackage = packageStream.Position;
+            _ObjectPositionInPackage = packageStream.Position - baseStream.Length;
 
             if (packageStream.BigEndianCode)
             {
