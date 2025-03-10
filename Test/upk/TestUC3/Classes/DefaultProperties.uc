@@ -34,6 +34,13 @@ var Matrix Matrix;
 
 var array<bool> BoolArray;
 
+var enum EEnum
+{
+	EEnum1,
+	EEnum2,
+	EEnum3
+} Enum;
+
 delegate OnDelegate();
 private function InternalOnDelegate();
 
@@ -81,4 +88,6 @@ defaultproperties
     BoolArray(1)=false
 
     OnDelegate=DefaultProperties.InternalOnDelegate
+
+	Enum=EEnum.EEnum2
 }

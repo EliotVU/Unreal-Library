@@ -32,6 +32,8 @@ var Box Box;
 var Matrix Matrix;
 var pointer Pointer;
 
+var array<byte> ByteArray;
+
 delegate OnDelegate();
 private function InternalOnDelegate();
 
@@ -72,4 +74,9 @@ defaultproperties
 //    end object
     OnDelegate=DefaultProperties.InternalOnDelegate
     //Delegate=__DefaultProperties.InternalOnDelegate
+
+    ByteArray(0)=1
+    ByteArray(2)=1
+
+    BaseByteArray(2)=2
 }

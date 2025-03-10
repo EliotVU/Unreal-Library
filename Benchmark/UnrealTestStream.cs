@@ -37,7 +37,7 @@ namespace Eliot.UELib.Benchmark
         public UnrealReader UR { get; }
         public UnrealWriter UW { get; }
 
-        public IBufferDecoder Decoder { get; set; }
+        public IBufferDecoder? Decoder { get; set; }
         public IPackageSerializer Serializer { get; set; }
 
         public UnrealTestStream(IUnrealArchive archive, Stream baseStream) : base(archive, baseStream)
@@ -56,7 +56,7 @@ namespace Eliot.UELib.Benchmark
             throw new NotImplementedException();
         }
 
-        public new int ReadNameIndex()
+        public int ReadNameIndex()
         {
             throw new NotImplementedException();
         }
