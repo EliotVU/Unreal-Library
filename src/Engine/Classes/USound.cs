@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using UELib.Branch;
 
 namespace UELib.Core
@@ -33,11 +34,14 @@ namespace UELib.Core
 
         public bool CanExport()
         {
-            return RawData.StorageSize != -1;
+            return Package.Stream != null && RawData.StorageSize != -1;
         }
 
         public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
         {
+            var stream = Package.Stream;
+            RawData.LoadData(stream);
+            Contract.Assert(RawData.ElementData is { Length: > 0 }, "No sound data.");
             exportStream.Write(RawData.ElementData, 0, RawData.ElementData.Length);
         }
 
