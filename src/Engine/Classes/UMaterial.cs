@@ -16,6 +16,13 @@
                 Record(nameof(textureType), textureType);
             }
 #endif
+#if RM
+            if (_Buffer.LicenseeVersion >= 3)
+            {
+                _Buffer.Read(out byte v34);
+                Record(nameof(v34), v34);
+            }
+#endif
         }
     }
 }

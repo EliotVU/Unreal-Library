@@ -327,6 +327,15 @@ namespace UELib
                 [Build(128, 129, 34u, 35u, BuildGeneration.UE2_5)]
                 Vanguard_SOH,
 
+                /// <summary>
+                /// Shadow Ops: Red Mercury
+                ///
+                /// 129/010
+                /// extensions: [.sfr, .u, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx]
+                /// </summary>
+                [Build(129, 010u, BuildGeneration.UE2)]
+                RM,
+
                 // IrrationalGames/Vengeance - 129:143/027:059
 
                 /// <summary>
