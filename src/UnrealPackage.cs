@@ -691,9 +691,13 @@ namespace UELib
                 [Build(832, 21)] RememberMe,
 
                 /// <summary>
-                /// 832/046
+                /// Borderlands 2
+                /// 
+                /// 832/046, 895/046
                 /// </summary>
-                [Build(832, 46)] Borderlands2,
+                [Build(832, 46)]
+                [Build(895, 46)] // VR
+                Borderlands2,
 
                 /// <summary>
                 /// 842-864/001
