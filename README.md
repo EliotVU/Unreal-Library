@@ -211,6 +211,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
 | Deadlight | 9375 | 854/000 |     |
 | Land of the Dead | 9375 | 854/000 |     |
+| Borderlands Legends | 9505 | 859/000 | iOS; platform needs to be set to console |
 | Ravaged | 9641 | 859/000 |     |
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
