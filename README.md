@@ -118,6 +118,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory: Battery | 3369 | 128/029? | |
+| Shadow Ops: Red Mercury | 2110 | 129/010 | UTexture type is not supported |
 | Vanguard: Saga of Heroes | Unknown | 129/035 | |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) |
 | Shrek 2 | 2226 | 129 | |
