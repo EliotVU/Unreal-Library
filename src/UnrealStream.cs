@@ -633,7 +633,7 @@ namespace UELib
         }
     }
 
-    public class UPackageStream : UPackageFileStream, IUnrealStream, IUnrealArchive
+    public class UPackageStream : UPackageFileStream, IUnrealStream
     {
         public UPackageStream(string path, FileMode mode, FileAccess access) : base(path, mode, access,
             FileShare.ReadWrite)
@@ -1000,6 +1000,7 @@ namespace UELib
         }
     }
 
+    // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class UObjectRecordStream : UObjectStream
     {
 #if BINARYMETADATA

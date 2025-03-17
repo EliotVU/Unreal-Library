@@ -6,7 +6,7 @@ namespace UELib.Core;
 ///     Implements FTwoVectors/UObject.TwoVectors
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public struct UTwoVectors : IUnrealSerializableClass, IUnrealAtomicStruct
+public record struct UTwoVectors : IUnrealSerializableClass, IUnrealAtomicStruct
 {
     public UVector V1, V2;
 

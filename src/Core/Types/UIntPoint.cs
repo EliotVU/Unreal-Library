@@ -6,8 +6,8 @@ namespace UELib.Core;
 /// <summary>
 ///     Implements FIntPoint/UObject.IntPoint
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
-public struct UIntPoint : IUnrealSerializableClass, IUnrealAtomicStruct
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+public record struct UIntPoint : IUnrealSerializableClass, IUnrealAtomicStruct
 {
     public float X, Y;
 

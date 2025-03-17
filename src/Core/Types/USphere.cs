@@ -9,7 +9,7 @@ namespace UELib.Core
     ///     Cannot be serialized in bulk due the addition of the "W" field.
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct USphere : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct USphere : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float W, X, Y, Z;
 

@@ -7,7 +7,7 @@ namespace UELib.Core
     ///     Implements FMatrix/UObject.Matrix
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 16)]
-    public struct UMatrix : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UMatrix : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public readonly float[,] M = new float[4, 4];
 
