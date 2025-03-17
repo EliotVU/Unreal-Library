@@ -159,6 +159,8 @@ namespace UELib.Core
             // Imported objects cannot be deserialized!
             if (ImportTable != null)
             {
+                LibServices.Debug("Attempted to load import {0}", GetReferencePath());
+
                 return;
             }
 
@@ -168,6 +170,29 @@ namespace UELib.Core
                 DeserializationState |= ObjectState.Deserialized;
 
                 return;
+            }
+
+            if (DeserializationState.HasFlag(ObjectState.Deserializing))
+            {
+                LibServices.LogService.SilentException(new DeserializationException("The object is already being deserialized."));
+
+                return;
+            }
+
+            LibServices.Debug("Loading {0}", GetReferencePath());
+
+            try
+            {
+                // Load the parent first, if it exists.
+                // We need this to properly link up tagged properties.
+                if (this is UStruct && Package.IndexToObject(ExportTable.SuperIndex) != null)
+                {
+                    LibServices.Debug("Loaded super struct {0}", ExportTable.Super);
+                }
+            }
+            catch (DeserializationException exception)
+            {
+                LibServices.LogService.SilentException(new DeserializationException("Couldn't deserialize dependencies", exception));
             }
 
             _Buffer?.Close();
@@ -708,6 +733,7 @@ namespace UELib.Core
             _Buffer.Record(varName, varObject);
         }
 
+        [Obsolete]
         protected void AssertEOS(int size, string testSubject = "")
         {
             if (size > _Buffer.Length - _Buffer.Position)
