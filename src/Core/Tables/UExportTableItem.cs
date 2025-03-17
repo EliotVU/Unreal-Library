@@ -173,7 +173,7 @@ namespace UELib
                 _ArchetypeIndex = stream.ReadInt32();
             }
 #if BATMAN
-            if (stream.Package.Build == BuildGeneration.RSS)
+            if (stream.Package.Build == BuildGeneration.RSS && stream.LicenseeVersion > 21)
             {
                 stream.Skip(sizeof(int));
             }
