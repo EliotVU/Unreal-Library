@@ -519,7 +519,7 @@ namespace UELib
                 /// 
                 /// 576/021 (Missing most changes guarded by <see cref="BuildGeneration.RSS"/>)
                 /// </summary>
-                [Build(576, 21)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(576, 21, BuildGeneration.RSS)] [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman1,
 
                 /// <summary>
