@@ -1554,7 +1554,7 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteClass<T>(this IUnrealStream stream, ref T item)
+        public static void WriteClass<T>(this IUnrealStream stream, T item)
             where T : class, IUnrealSerializableClass, new() =>
             item.Serialize(stream);
 

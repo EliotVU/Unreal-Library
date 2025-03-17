@@ -6,10 +6,10 @@ namespace UELib.Core
     /// <summary>
     ///     Implements FMatrix/UObject.Matrix
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    [StructLayout(LayoutKind.Sequential, Pack = 16)]
     public struct UMatrix : IUnrealSerializableClass, IUnrealAtomicStruct
     {
-        public float[,] M;
+        public readonly float[,] M = new float[4, 4];
 
         public UMatrix(float[,] m)
         {

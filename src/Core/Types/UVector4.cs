@@ -6,7 +6,7 @@ namespace UELib.Core
     /// <summary>
     ///     Implements FVector4/UObject.Vector4
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    [StructLayout(LayoutKind.Sequential, Pack = 16)]
     public struct UVector4 : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float X, Y, Z, W;
