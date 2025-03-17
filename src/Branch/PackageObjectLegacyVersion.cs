@@ -55,6 +55,7 @@ namespace UELib.Branch
 
         LightMapScaleAddedToPoly = 106,
 
+        SerializeStructTags = 118,
         KerningAddedToUFont = 119,
         AddedCppTextToUStruct = 120,
         FontPagesDisplaced = 122,
@@ -168,6 +169,16 @@ namespace UELib.Branch
         ComponentGuidDeprecated = 273,
         ClassGuidDeprecated = 276,
         AddedCookerVersion = 277,
+
+        /// <summary>
+        ///     Structs marked with 'Immutable' should use binary serialization.
+        /// </summary>
+        AddedImmutableStructs = 278,
+
+        /// <summary>
+        ///    Structs that extend a struct marked with 'Immutable' should not use binary serialization.
+        /// </summary>
+        StructsShouldNotInheritImmutable = 279,
 
         InterfaceClassesDeprecated = 288,
 

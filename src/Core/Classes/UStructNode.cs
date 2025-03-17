@@ -1,5 +1,6 @@
 ﻿#if Forms
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace UELib.Core
@@ -37,12 +38,7 @@ namespace UELib.Core
                 AddObjectNode(node, ProcessedText, nameof(UObject));
             }
 
-            var children = new List<UObject>();
-            for (var child = Children; child != null; child = child.NextField)
-            {
-                children.Insert(0, child);
-            }
-            AddObjectListNode(node, "Children", children, nameof(UObject));
+            AddObjectListNode(node, "Children", EnumerateFields().Reverse(), nameof(UObject));
             AddObjectListNode(node, "Constants", Constants, nameof(UConst));
             AddObjectListNode(node, "Enumerations", Enums, nameof(UEnum));
             AddObjectListNode(node, "Structures", Structs, nameof(UStruct));

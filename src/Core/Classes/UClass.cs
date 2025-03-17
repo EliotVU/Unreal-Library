@@ -57,7 +57,7 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        private ulong ClassFlags { get; set; }
+        public UnrealFlags<ClassFlag> ClassFlags;
 
         public UGuid ClassGuid;
         public UClass Within { get; private set; }
@@ -180,8 +180,8 @@ namespace UELib.Core
                 Record(nameof(FuncMap), FuncMap);
             }
 #endif
-            ClassFlags = _Buffer.ReadUInt32();
-            Record(nameof(ClassFlags), (ClassFlags)ClassFlags);
+            _Buffer.Read(out ClassFlags);
+            Record(nameof(ClassFlags), ClassFlags);
 #if ROCKETLEAGUE
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                 _Buffer.LicenseeVersion >= 1)
@@ -323,7 +323,6 @@ namespace UELib.Core
                         Record("Implements.Count", interfacesCount);
                         if (interfacesCount > 0)
                         {
-                            AssertEOS(interfacesCount * 8, "Implemented");
                             ImplementedInterfaces = new List<int>(interfacesCount);
                             for (int i = 0; i < interfacesCount; ++i)
                             {
@@ -739,11 +738,13 @@ namespace UELib.Core
             return groupList;
         }
 
+        [Obsolete("Use ClassFlags directly")]
         public bool HasClassFlag(ClassFlags flag)
         {
             return (ClassFlags & (uint)flag) != 0;
         }
 
+        [Obsolete("Use ClassFlags directly")]
         public bool HasClassFlag(uint flag)
         {
             return (ClassFlags & flag) != 0;

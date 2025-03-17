@@ -50,14 +50,14 @@ namespace UELib.Flags
             int index = Unsafe.As<TEnum, int>(ref flagIndex);
             return GetFlag(index);
         }
-        
+
         private ulong GetFlag(int flagIndex)
         {
             Debug.Assert(FlagsMap != null);
-            
+
             return GetFlag(FlagsMap, flagIndex);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ulong GetFlag(ulong[] flagsMap, int flagIndex)
         {
@@ -262,10 +262,6 @@ namespace UELib.Flags
     [Flags]
     public enum PackageFlags : uint
     {
-        // 028A0009 : A cooked and compressed package
-        // 00280009 : A cooked package
-        // 00020001 : A ordinary package
-
         /// <summary>
         /// UEX: Whether clients are allowed to download the package from the server.
         /// UE4: Displaced by "NewlyCreated"
@@ -576,6 +572,50 @@ namespace UELib.Flags
     /// <summary>
     /// Flags describing an instance of any <see cref="Core.UFunction"/>.
     /// </summary>
+    public enum FunctionFlag
+    {
+        Final,
+        Defined,
+        Iterator,
+        Latent,
+        PreOperator,
+        Singular,
+        Net,
+        NetReliable,
+        Simulated,
+        Exec,
+        Native,
+        Event,
+        Operator,
+        Static,
+
+        NoExport,
+        Const,
+        Invariant,
+
+        Public,
+        Private,
+        Protected,
+
+        Delegate,
+        NetServer,
+        NetClient,
+
+        HasOutParms,
+        HasOptionalParms,
+        HasDefaults,
+
+        DLLImport,
+        K2Call,
+        K2Override,
+        K2Pure,
+
+        Max,
+    }
+
+    /// <summary>
+    /// Flags describing an instance of any <see cref="Core.UFunction"/>.
+    /// </summary>
     [Flags]
     public enum FunctionFlags : ulong
     {
@@ -593,7 +633,7 @@ namespace UELib.Flags
         Event               = 0x00000800U,
         Operator            = 0x00001000U,
         Static              = 0x00002000U,
-        
+
         /// <summary>
         /// NoExport
         /// UE3 (~V300): Indicates whether we have optional parameters, including optional expression data.
@@ -603,10 +643,10 @@ namespace UELib.Flags
 
         Const               = 0x00008000U,
         Invariant           = 0x00010000U,
-        
+
         // UE2 additions
         // =============
-        
+
         Public              = 0x00020000U,
         Private             = 0x00040000U,
         Protected           = 0x00080000U,
@@ -615,7 +655,7 @@ namespace UELib.Flags
         // Generated/Constructor?
         VG_Unk1             = 0x00200000U,
         VG_Overloaded       = 0x00800000U,
-#endif      
+#endif
         /// <summary>
         /// UE2: Multicast (Replicated to all relevant clients)
         /// UE3: Function is replicated to relevant client.
@@ -627,7 +667,7 @@ namespace UELib.Flags
         OutParameters       = 0x00400000U,
         ScriptStructs       = 0x00800000U,
         NetClient           = 0x01000000U,
-        
+
         /// <summary>
         /// UE2: Unknown
         /// UE3 (V655)
@@ -643,6 +683,307 @@ namespace UELib.Flags
         AHIT_Optional       = 0x10000000U,
         AHIT_EditorOnly     = 0x20000000U,
 #endif
+    }
+
+    /// <summary>
+    /// Flags describing an instance of any <see cref="Core.UProperty"/>.
+    /// </summary>
+    public enum PropertyFlag
+    {
+        /// <summary>
+        /// The property is a parameter of a function.
+        /// </summary>
+        Parm,
+
+        /// <summary>
+        /// The property is marked with the parameter modifier 'Optional'
+        /// </summary>
+        OptionalParm,
+
+        /// <summary>
+        /// The property is marked with the parameter modifier 'Out'
+        /// </summary>
+        OutParm,
+
+        /// <summary>
+        /// The property is marked with the parameter modifier 'Skip'
+        /// </summary>
+        SkipParm,
+
+        /// <summary>
+        /// The property is marked with the parameter modifier 'Coerce'
+        /// </summary>
+        CoerceParm,
+
+        /// <summary>
+        /// The property is the auto-generated return parameter of a function.
+        /// </summary>
+        ReturnParm,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Const'
+        /// </summary>
+        Const,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Input'
+        /// </summary>
+        Input,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Init'
+        /// </summary>
+        AlwaysInit,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Instanced' and the referenced object should be exported to T3D markup.
+        ///
+        /// Should also apply the flag <seealso cref="EditInline"/>
+        /// </summary>
+        ExportObject,
+
+        /// <summary>
+        /// The property is marked for replication, and has an associated script offset.
+        /// </summary>
+        Net,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Native'
+        /// </summary>
+        Native,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Config'
+        /// </summary>
+        Config,
+
+        /// <summary>
+        /// The property is marked with the modifier 'GlobalConfig'
+        ///
+        /// Should also apply the flag <seealso cref="Config"/>
+        /// </summary>
+        GlobalConfig,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Localized'
+        ///
+        /// Should also apply the flag <seealso cref="Const"/> for UE3.
+        /// </summary>
+        Localized,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Travel'
+        /// </summary>
+        Travel,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Transient' and should not be serialized.
+        /// </summary>
+        Transient,
+
+        /// <summary>
+        /// The property is marked with the modifier 'DuplicateTransient' and the referenced object should be created anew when copied.
+        /// 
+        /// Introduced with UE3, (Not marked in UE2)
+        /// </summary>
+        DuplicateTransient,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Deprecated' and should not be serialized.
+        /// 
+        /// Introduced with UE2
+        /// </summary>
+        Deprecated,
+
+        /// <summary>
+        /// The property is marked with the modifier 'NoExport' and should not be exported to the header file.
+        /// </summary>
+        NoExport,
+
+        /// <summary>
+        /// The property is marked with the modifier 'NoImport' and should not be import from a T3D markup.
+        /// </summary>
+        NoImport,
+
+        /// <summary>
+        /// The property is marked with the modifier 'NoClear' and should not be allowed to be cleared in the editor.
+        /// </summary>
+        NoClear,
+
+        /// <summary>
+        /// The property has a reference to a <see cref="Core.UComponent"/> derivative, or to a struct with components.
+        /// In older builds this may have meant the property is marked with the modifier 'Component'.
+        ///
+        /// Should also apply the flag <seealso cref="ExportObject"/>
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        Component,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Archetype' and has a reference to an archetype <see cref="Core.UComponent"/> derivative.
+        ///
+        /// Introduced with UE3
+        /// </summary>
+        Archetype,
+
+        /// <summary>
+        /// The property should have an associated button in the editor.
+        /// var button MyButton;
+        ///
+        /// Deprecated with UE3
+        /// </summary>
+        Button,
+
+        /// <summary>
+        /// The property has an associated tooltip string.
+        ///
+        /// Introduced sporadically with UE2 and deprecated with UE3
+        /// </summary>
+        CommentString,
+
+        /// <summary>
+        /// The property is marked with the modifier 'DataBinding'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        DataBinding,
+
+        /// <summary>
+        /// The property is marked with the modifier 'SerializeText'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        SerializeText,
+
+        /// <summary>
+        /// The property is declared as an editable property in the editor and has an associated <see cref="Core.UProperty.CategoryName"/>
+        /// </summary>
+        Editable,
+
+        EditConst,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditConstArray'
+        ///
+        /// Introduced with UE2?
+        /// </summary>
+        EditConstArray,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditFixedSize'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        EditFixedSize,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditInline'
+        /// </summary>
+        EditInline,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditInlineUse'
+        ///
+        /// Should also apply the flag <seealso cref="EditInline"/>
+        /// </summary>
+        EditInlineUse,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditInlineNotify'
+        ///
+        /// Should also apply the flag <seealso cref="EditInline"/>
+        /// </summary>
+        EditInlineNotify,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditTextBox'
+        /// </summary>
+        EditTextBox,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditHide'
+        /// </summary>
+        EditHide,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EdFindable'
+        /// </summary>
+        EdFindable,
+
+        /// <summary>
+        /// The property is marked with the modifier 'EditorOnly'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        EditorOnly,
+
+        /// <summary>
+        /// The property is marked with the modifier 'RepNotify'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        RepNotify,
+
+        /// <summary>
+        /// The property is marked with the modifier 'RepRetry'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        RepRetry,
+
+        /// <summary>
+        /// The property is marked with the modifier 'Interp'
+        ///
+        /// Should also apply the flag <seealso cref="Editable"/>
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        Interp,
+
+        /// <summary>
+        /// The property is marked with the modifier 'NonTransactional'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        NonTransactional,
+
+        /// <summary>
+        /// The property is marked with the modifier 'NotForConsole'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        NotForConsole,
+
+        /// <summary>
+        /// The property is marked with the modifier 'PrivateWrite'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        PrivateWrite,
+
+        /// <summary>
+        /// The property is marked with the modifier 'ProtectedWrite'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        ProtectedWrite,
+
+        /// <summary>
+        /// The property is marked with the modifier 'CrossLevelPassive'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        CrossLevelPassive,
+
+        /// <summary>
+        /// The property is marked with the modifier 'CrossLevelActive'
+        /// 
+        /// Introduced with UE3
+        /// </summary>
+        CrossLevelActive,
+
+        Max,
     }
 
     /// <summary>
@@ -692,6 +1033,8 @@ namespace UELib.Flags
         EditConst           = 0x00020000U,      // ReadOnly in UnrealEd
 
         GlobalConfig        = 0x00040000U,
+        NetAlways           = 0x00080000U,      // <= 61
+
         /// <summary>
         /// The property is a component.
         ///
@@ -795,6 +1138,18 @@ namespace UELib.Flags
     /// <summary>
     /// Flags describing an instance of any <see cref="Core.UState"/>.
     /// </summary>
+    public enum StateFlag
+    {
+        Editable,
+        Auto,
+        Simulated,
+
+        Max,
+    }
+
+    /// <summary>
+    /// Flags describing an instance of any <see cref="Core.UState"/>.
+    /// </summary>
     [Flags]
     public enum StateFlags : uint
     {
@@ -803,12 +1158,57 @@ namespace UELib.Flags
         Simulated           = 0x00000004U,
     }
 
+    /// <summary>  
+    /// Flags describing an instance of any <see cref="Core.UClass"/>.  
+    /// </summary>  
+    public enum ClassFlag
+    {
+        /// <summary>
+        /// The class is internal only (has no UnrealScript counter-part)
+        /// </summary>
+        Intrinsic,
+        RuntimeStatic,
+        Parsed,
+        Compiled,
+
+        HasInstancedProps,
+        HasComponents,
+        HasCrossLevelRefs,
+
+        Abstract,
+        SafeReplace,
+        Config,
+        Transient,
+        Localized,
+        Interface,
+
+        NoExport,
+        NoUserCreate,
+
+        Placeable,
+        NativeReplication,
+        EditInlineNew,
+        CollapseCategories,
+        ExportStructs,
+        HideDropDown,
+        Hidden,
+        Deprecated,
+        Exported,
+        NativeOnly,
+
+        PerObjectConfig,
+        PerObjectLocalized,
+
+        Max
+    }
+
     /// <summary>
     /// Flags describing an instance of any <see cref="Core.UClass"/>.
     /// </summary>
     [Flags]
     public enum ClassFlags : ulong
     {
+        [Obsolete]
         None                = 0x00000000U,
         Abstract            = 0x00000001U,
         Compiled            = 0x00000002U,
@@ -849,10 +1249,8 @@ namespace UELib.Flags
         AHIT_AlwaysLoaded   = 0x00008000U,
         AHIT_IterOptimized  = 0x00010000U,
 #endif
-        /// <summary>
-        /// Removed with UE3
-        /// </summary>
         Instanced           = 0x00200000U,
+        HasInstancedRefs    = 0x00200000,
 
         /// <summary>
         /// The class is marked with the modifier 'HideDropDown'
@@ -919,9 +1317,6 @@ namespace UELib.Flags
         /// </summary>
         Exported            = 0x04000000U,
 
-        /// <summary>
-        /// The class is internal only (has no UnrealScript counter-part)
-        /// </summary>
         Intrinsic           = 0x10000000U,
 
         /// <summary>
@@ -937,6 +1332,26 @@ namespace UELib.Flags
         /// Introduced at some point during UE3
         /// </summary>
         PerObjectLocalized  = 0x40000000U,
+        HasCrossLevelRefs   = 0x80000000U,
+    }
+
+    /// <summary>
+    /// Flags describing an instance of any <see cref="Core.UStruct"/> and <see cref="Core.UScriptStruct"/>.
+    /// </summary>
+    public enum StructFlag
+    {
+        Native,
+        Export,
+
+        HasComponents,
+        Transient,
+        Atomic,
+        Immutable,
+        StrictConfig,
+        ImmutableWhenCooked,
+        AtomicWhenCooked,
+
+        Max,
     }
 
     /// <summary>
@@ -947,6 +1362,7 @@ namespace UELib.Flags
     {
         Native              = 0x00000001U,
         Export              = 0x00000002U,
+
         Long                = 0x00000004U,      // @Redefined(UE3, HasComponents)
         Init                = 0x00000008U,      // @Redefined(UE3, Transient)
 

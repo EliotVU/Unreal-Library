@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core.Tokens;
 using UELib.Flags;
+using UELib.Types;
 
 namespace UELib.Core
 {
@@ -26,7 +29,8 @@ namespace UELib.Core
         public int Line;
         public int TextPos;
 
-        protected uint StructFlags { get; set; }
+        public UnrealFlags<StructFlag> StructFlags;
+
         [CanBeNull] protected UField Children { get; private set; }
         protected int DataScriptSize { get; private set; }
         private int ByteScriptSize { get; set; }
@@ -176,8 +180,8 @@ namespace UELib.Core
 #endif
                )
             {
-                StructFlags = _Buffer.ReadUInt32();
-                Record(nameof(StructFlags), (StructFlags)StructFlags);
+                _Buffer.Read(out StructFlags);
+                Record(nameof(StructFlags), StructFlags);
             }
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance &&
@@ -343,6 +347,38 @@ namespace UELib.Core
             }
         }
 
+        public IEnumerable<T> EnumerateFields<T>()
+            where T : UField
+        {
+            for (var field = Children; field != null; field = field.NextField)
+            {
+                if (field is T tField)
+                {
+                    yield return tField;
+                }
+            }
+        }
+
+        [CanBeNull]
+        public T FindProperty<T>(UName name)
+            where T : UProperty
+        {
+            UProperty property = null;
+
+            foreach (var super in EnumerateSuper(this))
+            {
+                foreach (var field in super.EnumerateFields<T>())
+                {
+                    // FIXME: UName
+                    if (field.Table.ObjectName == name)
+                    {
+                        return field;
+                    }
+                }
+            }
+
+            return null;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TokenFactory GetTokenFactory()
@@ -350,7 +386,7 @@ namespace UELib.Core
             return Package.Branch.GetTokenFactory(Package);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use StructFlags directly")]
         public bool HasStructFlag(StructFlags flag)
         {
             return (StructFlags & (uint)flag) != 0;

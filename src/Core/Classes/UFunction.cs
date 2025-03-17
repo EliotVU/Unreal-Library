@@ -18,11 +18,10 @@ namespace UELib.Core
 
         public byte OperPrecedence { get; private set; }
 
-        /// <value>
-        /// 32bit in UE2
-        /// 64bit in UE3
-        /// </value>
-        private ulong FunctionFlags { get; set; }
+        /// <summary>
+        /// The function flags.
+        /// </summary>
+        public UnrealFlags<FunctionFlag> FunctionFlags;
 
         public ushort RepOffset { get; private set; }
 
@@ -56,8 +55,8 @@ namespace UELib.Core
 #if UE4
             if (_Buffer.UE4Version > 0)
             {
-                FunctionFlags = _Buffer.ReadUInt32();
-                Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+                _Buffer.Read(out FunctionFlags);
+                Record(nameof(FunctionFlags), FunctionFlags);
                 if (HasFunctionFlag(Flags.FunctionFlags.Net))
                 {
                     RepOffset = _Buffer.ReadUShort();
@@ -96,14 +95,12 @@ namespace UELib.Core
             // FIXME: version
             if (_Buffer.Package.Build == BuildGeneration.HMS)
             {
-                FunctionFlags = _Buffer.ReadUInt64();
-                Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+                FunctionFlags = _Buffer.ReadFlags64<FunctionFlag>();
 
                 goto skipFunctionFlags;
             }
 #endif
-            FunctionFlags = _Buffer.ReadUInt32();
-            Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+            _Buffer.Read(out FunctionFlags);
 #if ROCKETLEAGUE
             // Disassembled code shows two calls to ByteOrderSerialize, might be a different variable not sure.
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
@@ -113,10 +110,11 @@ namespace UELib.Core
                 uint v134 = _Buffer.ReadUInt32();
                 Record(nameof(v134), v134);
 
-                FunctionFlags |= ((ulong)v134 << 32);
+                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)v134 << 32);
             }
 #endif
         skipFunctionFlags:
+            Record(nameof(FunctionFlags), FunctionFlags);
             if (HasFunctionFlag(Flags.FunctionFlags.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
@@ -177,11 +175,13 @@ namespace UELib.Core
 
         #region Methods
 
+        [Obsolete("Use FunctionFlags directly")]
         public bool HasFunctionFlag(uint flag)
         {
             return ((uint)FunctionFlags & flag) != 0;
         }
 
+        [Obsolete("Use FunctionFlags directly")]
         public bool HasFunctionFlag(FunctionFlags flag)
         {
             return ((uint)FunctionFlags & (uint)flag) != 0;

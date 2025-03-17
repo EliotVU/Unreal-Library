@@ -129,9 +129,19 @@ namespace UELib.Branch
         {
             SetupEnumPackageFlags(linker);
             SetupEnumObjectFlags(linker);
+            SetupEnumPropertyFlags(linker);
+            SetupEnumStructFlags(linker);
+            SetupEnumFunctionFlags(linker);
+            SetupEnumStateFlags(linker);
+            SetupEnumClassFlags(linker);
 
             EnumFlagsMap.Add(typeof(PackageFlag), PackageFlags);
             EnumFlagsMap.Add(typeof(ObjectFlag), ObjectFlags);
+            EnumFlagsMap.Add(typeof(PropertyFlag), PropertyFlags);
+            EnumFlagsMap.Add(typeof(StructFlag), StructFlags);
+            EnumFlagsMap.Add(typeof(FunctionFlag), FunctionFlags);
+            EnumFlagsMap.Add(typeof(StateFlag), StateFlags);
+            EnumFlagsMap.Add(typeof(ClassFlag), ClassFlags);
         }
 
         protected virtual void SetupEnumPackageFlags(UnrealPackage linker)
@@ -218,6 +228,341 @@ namespace UELib.Branch
                 ObjectFlags[(int)ObjectFlag.ArchetypeObject] = (ulong)ObjectFlagsHO.ArchetypeObject << 32;
                 // FIXME: The flag check was added later (Not checked for in GoW), no known version.
                 ObjectFlags[(int)ObjectFlag.TemplateObject] |= ObjectFlags[(int)ObjectFlag.ArchetypeObject];
+            }
+        }
+
+        protected virtual void SetupEnumPropertyFlags(UnrealPackage linker)
+        {
+            PropertyFlags[(int)PropertyFlag.Editable] = (ulong)PropertyFlagsLO.Editable;
+            PropertyFlags[(int)PropertyFlag.Input] = (ulong)PropertyFlagsLO.Input;
+            PropertyFlags[(int)PropertyFlag.ExportObject] = (ulong)PropertyFlagsLO.ExportObject;
+            PropertyFlags[(int)PropertyFlag.OptionalParm] = (ulong)PropertyFlagsLO.OptionalParm;
+            PropertyFlags[(int)PropertyFlag.Parm] = (ulong)PropertyFlagsLO.Parm;
+            PropertyFlags[(int)PropertyFlag.OutParm] = (ulong)PropertyFlagsLO.OutParm;
+            PropertyFlags[(int)PropertyFlag.SkipParm] = (ulong)PropertyFlagsLO.SkipParm;
+            PropertyFlags[(int)PropertyFlag.ReturnParm] = (ulong)PropertyFlagsLO.ReturnParm;
+            PropertyFlags[(int)PropertyFlag.CoerceParm] = (ulong)PropertyFlagsLO.CoerceParm;
+            PropertyFlags[(int)PropertyFlag.Net] = (ulong)PropertyFlagsLO.Net;
+            PropertyFlags[(int)PropertyFlag.Const] = (ulong)PropertyFlagsLO.Const;
+
+            PropertyFlags[(int)PropertyFlag.Native] = (ulong)PropertyFlagsLO.Native;
+            PropertyFlags[(int)PropertyFlag.Transient] = (ulong)PropertyFlagsLO.Transient;
+            PropertyFlags[(int)PropertyFlag.Config] = (ulong)PropertyFlagsLO.Config;
+            PropertyFlags[(int)PropertyFlag.Localized] = (ulong)PropertyFlagsLO.Localized;
+            PropertyFlags[(int)PropertyFlag.Travel] = (ulong)PropertyFlagsLO.Travel;
+            PropertyFlags[(int)PropertyFlag.GlobalConfig] = (ulong)PropertyFlagsLO.GlobalConfig;
+            // Not functional
+            PropertyFlags[(int)PropertyFlag.DuplicateTransient] = (ulong)PropertyFlagsLO.New;
+
+            if (linker.Version > 68)
+            {
+                PropertyFlags[(int)PropertyFlag.NoExport] = (ulong)PropertyFlagsLO.NoExport;
+                PropertyFlags[(int)PropertyFlag.EditConst] = (ulong)PropertyFlagsLO.EditConst;
+                PropertyFlags[(int)PropertyFlag.EditInline] = (ulong)PropertyFlagsLO.EditInline;
+                PropertyFlags[(int)PropertyFlag.EdFindable] = (ulong)PropertyFlagsLO.EdFindable;
+                PropertyFlags[(int)PropertyFlag.EditInlineUse] = (ulong)PropertyFlagsLO.EditInlineUse;
+                PropertyFlags[(int)PropertyFlag.Deprecated] = (ulong)PropertyFlagsLO.Deprecated;
+            }
+
+            if (linker.Version > 68)
+            {
+                // between GoW and UT3
+                if (linker.Version > 225)
+                {
+                    // Displaced EditConstArray
+                    PropertyFlags[(int)PropertyFlag.EditFixedSize] = (ulong)PropertyFlagsLO.EditFixedSize;
+                }
+                else
+                {
+                    // UE2? ConstRef in earlier versions
+                    PropertyFlags[(int)PropertyFlag.EditConstArray] = (ulong)PropertyFlagsLO.EditConstArray;
+                }
+            }
+
+            if (linker.Version > 68 && linker.Version < (uint)PackageObjectLegacyVersion.UE3)
+            {
+                // Overlaps with 'Cache' ( > 120)
+                PropertyFlags[(int)PropertyFlag.Button] = (ulong)PropertyFlagsLO.Button;
+
+                // UE1, UE2, removed with UC2?
+                PropertyFlags[(int)PropertyFlag.CommentString] = (ulong)PropertyFlagsLO.EditorData;
+
+                // << OnDemand?
+
+                // UE2
+                PropertyFlags[(int)PropertyFlag.EditInlineNotify] = (ulong)PropertyFlagsLO.EditInlineNotify;
+            }
+
+            // > UT2003, added between 121-128 removed between 159-178
+            if (linker.Version > 120 && linker.Version < (uint)PackageObjectLegacyVersion.UE3)
+            {
+                // Automated
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.UE3)
+            {
+                PropertyFlags[(int)PropertyFlag.Component] = (ulong)PropertyFlagsLO.Component;
+
+                // Replaced OnDemand
+                PropertyFlags[(int)PropertyFlag.AlwaysInit] = (ulong)PropertyFlagsLO.Init;
+                // Replaced CommentString
+                PropertyFlags[(int)PropertyFlag.NoClear] = (ulong)PropertyFlagsLO.NoClear;
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits)
+            {
+                PropertyFlags[(int)PropertyFlag.RepNotify] = (ulong)PropertyFlagsHO.RepNotify << 32;
+                PropertyFlags[(int)PropertyFlag.Interp] = (ulong)PropertyFlagsHO.Interp << 32;
+                PropertyFlags[(int)PropertyFlag.NonTransactional] = (ulong)PropertyFlagsHO.NonTransactional << 32;
+            }
+
+            // Most Gow-UT3
+            if (linker.Version > 225)
+            {
+                PropertyFlags[(int)PropertyFlag.EditorOnly] = (ulong)PropertyFlagsHO.EditorOnly << 32;
+                PropertyFlags[(int)PropertyFlag.NotForConsole] = (ulong)PropertyFlagsHO.NotForConsole << 32;
+                PropertyFlags[(int)PropertyFlag.RepRetry] = (ulong)PropertyFlagsHO.RepRetry << 32;
+
+                PropertyFlags[(int)PropertyFlag.NoImport] = (ulong)PropertyFlagsLO.NoImport;
+
+                // Replaced New
+                PropertyFlags[(int)PropertyFlag.DuplicateTransient] = (ulong)PropertyFlagsLO.DuplicateTransient;
+
+                // Replaced EditInlineNotify
+                PropertyFlags[(int)PropertyFlag.DataBinding] = (ulong)PropertyFlagsLO.DataBinding;
+
+                PropertyFlags[(int)PropertyFlag.SerializeText] = (ulong)PropertyFlagsLO.SerializeText;
+
+                PropertyFlags[(int)PropertyFlag.PrivateWrite] = (ulong)PropertyFlagsHO.PrivateWrite << 32;
+                PropertyFlags[(int)PropertyFlag.ProtectedWrite] = (ulong)PropertyFlagsHO.ProtectedWrite << 32;
+
+                // Maybe post UT3 (512), need to double-check.
+
+                PropertyFlags[(int)PropertyFlag.Archetype] = (ulong)PropertyFlagsHO.Archetype << 32;
+
+                PropertyFlags[(int)PropertyFlag.EditHide] = (ulong)PropertyFlagsHO.EditHide << 32;
+                PropertyFlags[(int)PropertyFlag.EditTextBox] = (ulong)PropertyFlagsHO.EditTextBox << 32;
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable)
+            {
+                PropertyFlags[(int)PropertyFlag.CrossLevelPassive] = (ulong)PropertyFlagsHO.CrossLevelPassive << 32;
+                PropertyFlags[(int)PropertyFlag.CrossLevelActive] = (ulong)PropertyFlagsHO.CrossLevelActive << 32;
+            }
+        }
+
+        protected virtual void SetupEnumStructFlags(UnrealPackage linker)
+        {
+            StructFlags[(int)StructFlag.Native] = (ulong)Flags.StructFlags.Native;
+            StructFlags[(int)StructFlag.Export] = (ulong)Flags.StructFlags.Export;
+
+            // FIXME: Just an estimation.
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports)
+            {
+                StructFlags[(int)StructFlag.HasComponents] = (ulong)Flags.StructFlags.HasComponents;
+            }
+
+            // FIXME: Just an estimation.
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedStructFlagsToScriptStruct)
+            {
+                StructFlags[(int)StructFlag.Transient] = (ulong)Flags.StructFlags.Transient;
+            }
+
+            // FIXME: Just a guess, it's sort of related.
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.DisplacedScriptPropertiesWithClassDefaultObject)
+            {
+                StructFlags[(int)StructFlag.Atomic] = (ulong)Flags.StructFlags.Atomic;
+            }
+
+            // Assuming that the serialization logic is added together with the introduction of the flag.
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedImmutableStructs)
+            {
+                StructFlags[(int)StructFlag.Immutable] = (ulong)Flags.StructFlags.Immutable;
+            }
+
+            // FIXME: Added way after cooking was introduced...
+            if (linker.Version > 375)
+            {
+                StructFlags[(int)StructFlag.AtomicWhenCooked] = (ulong)Flags.StructFlags.AtomicWhenCooked;
+                StructFlags[(int)StructFlag.ImmutableWhenCooked] = (ulong)Flags.StructFlags.ImmutableWhenCooked;
+            }
+        }
+
+        protected virtual void SetupEnumFunctionFlags(UnrealPackage linker)
+        {
+            // UE1+ Flags
+            FunctionFlags[(int)FunctionFlag.Final] = (ulong)Flags.FunctionFlags.Final;
+            FunctionFlags[(int)FunctionFlag.Defined] = (ulong)Flags.FunctionFlags.Defined;
+            FunctionFlags[(int)FunctionFlag.Iterator] = (ulong)Flags.FunctionFlags.Iterator;
+            FunctionFlags[(int)FunctionFlag.Latent] = (ulong)Flags.FunctionFlags.Latent;
+            FunctionFlags[(int)FunctionFlag.PreOperator] = (ulong)Flags.FunctionFlags.PreOperator;
+            FunctionFlags[(int)FunctionFlag.Singular] = (ulong)Flags.FunctionFlags.Singular;
+            FunctionFlags[(int)FunctionFlag.Net] = (ulong)Flags.FunctionFlags.Net;
+            FunctionFlags[(int)FunctionFlag.NetReliable] = (ulong)Flags.FunctionFlags.NetReliable;
+            FunctionFlags[(int)FunctionFlag.Simulated] = (ulong)Flags.FunctionFlags.Simulated;
+            FunctionFlags[(int)FunctionFlag.Exec] = (ulong)Flags.FunctionFlags.Exec;
+            FunctionFlags[(int)FunctionFlag.Native] = (ulong)Flags.FunctionFlags.Native;
+            FunctionFlags[(int)FunctionFlag.Event] = (ulong)Flags.FunctionFlags.Event;
+            FunctionFlags[(int)FunctionFlag.Operator] = (ulong)Flags.FunctionFlags.Operator;
+            FunctionFlags[(int)FunctionFlag.Static] = (ulong)Flags.FunctionFlags.Static;
+            // <= 61
+
+            if (linker.Version > 61 && linker.Version < 187)
+            {
+                // Deprecated, replaced later by OptionalParms
+                FunctionFlags[(int)FunctionFlag.NoExport] = (ulong)Flags.FunctionFlags.NoExport;
+            }
+
+            // 62-68 Flags
+            if (linker.Version > 61)
+            {
+                FunctionFlags[(int)FunctionFlag.Const] = (ulong)Flags.FunctionFlags.Const; // Modifier in UE3
+            }
+
+            if (linker.Version > 61 && linker.Version < 187)
+            {
+                FunctionFlags[(int)FunctionFlag.Invariant] = (ulong)Flags.FunctionFlags.Invariant;
+            }
+
+            // UE2+? skip ahead of at least UT99
+            if (linker.Version > 69)
+            {
+                // Missing in U1, UT99
+                FunctionFlags[(int)FunctionFlag.Public] = (ulong)Flags.FunctionFlags.Public;
+                FunctionFlags[(int)FunctionFlag.Private] = (ulong)Flags.FunctionFlags.Private;
+                FunctionFlags[(int)FunctionFlag.Protected] = (ulong)Flags.FunctionFlags.Protected;
+
+                FunctionFlags[(int)FunctionFlag.Delegate] = (ulong)Flags.FunctionFlags.Delegate;
+            }
+
+            // Missing in UT2003, appears with UT2004.
+            if (linker.Version > 120)
+            {
+                // DebugOnly in UC2 (seen in other games as well, like XII)
+                // UC2 has this flag as 0x00400000
+                FunctionFlags[(int)FunctionFlag.NetServer] = (ulong)Flags.FunctionFlags.NetServer;
+            }
+
+            if (linker.Version > 225)
+            {
+                FunctionFlags[(int)FunctionFlag.HasOptionalParms] = (ulong)Flags.FunctionFlags.OptionalParameters;
+            }
+
+            if (linker.Version > 186)
+            {
+                // UC2 has this flag as 0x00800000
+                FunctionFlags[(int)FunctionFlag.HasOutParms] = (ulong)Flags.FunctionFlags.OutParameters;
+                FunctionFlags[(int)FunctionFlag.HasDefaults] = (ulong)Flags.FunctionFlags.ScriptStructs;
+                FunctionFlags[(int)FunctionFlag.NetClient] = (ulong)Flags.FunctionFlags.NetClient;
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature)
+            {
+                FunctionFlags[(int)FunctionFlag.DLLImport] = (ulong)Flags.FunctionFlags.DLLImport;
+
+                // Added with late UDK
+                FunctionFlags[(int)FunctionFlag.K2Call] = (ulong)Flags.FunctionFlags.K2Call;
+                FunctionFlags[(int)FunctionFlag.K2Override] = (ulong)Flags.FunctionFlags.K2Override;
+                FunctionFlags[(int)FunctionFlag.K2Pure] = (ulong)Flags.FunctionFlags.K2Pure;
+            }
+        }
+
+        protected virtual void SetupEnumStateFlags(UnrealPackage linker)
+        {
+            // p.s . Seems like these may be unnecessary.
+            StateFlags[(int)StateFlag.Auto] = (ulong)Flags.StateFlags.Auto;
+            StateFlags[(int)StateFlag.Editable] = (ulong)Flags.StateFlags.Editable;
+            StateFlags[(int)StateFlag.Simulated] = (ulong)Flags.StateFlags.Simulated;
+        }
+
+        protected virtual void SetupEnumClassFlags(UnrealPackage linker)
+        {
+            ClassFlags[(int)ClassFlag.Abstract] = (ulong)Flags.ClassFlags.Abstract;
+            ClassFlags[(int)ClassFlag.Compiled] = (ulong)Flags.ClassFlags.Compiled;
+            ClassFlags[(int)ClassFlag.Config] = (ulong)Flags.ClassFlags.Config;
+            ClassFlags[(int)ClassFlag.Transient] = (ulong)Flags.ClassFlags.Transient;
+            ClassFlags[(int)ClassFlag.Parsed] = (ulong)Flags.ClassFlags.Parsed;
+            ClassFlags[(int)ClassFlag.Localized] = (ulong)Flags.ClassFlags.Localized;
+            ClassFlags[(int)ClassFlag.SafeReplace] = (ulong)Flags.ClassFlags.SafeReplace;
+
+            if (linker.Version > 61)
+            {
+                if (linker.Version < 225)
+                {
+                    ClassFlags[(int)ClassFlag.RuntimeStatic] = (ulong)Flags.ClassFlags.RuntimeStatic;
+                }
+
+                ClassFlags[(int)ClassFlag.NoExport] = (ulong)Flags.ClassFlags.NoExport;
+                // << NoUserCreate
+                ClassFlags[(int)ClassFlag.PerObjectConfig] = (ulong)Flags.ClassFlags.PerObjectConfig;
+                ClassFlags[(int)ClassFlag.NativeReplication] = (ulong)Flags.ClassFlags.NativeReplication;
+            }
+
+            if (linker.Version > 68)
+            {
+                // Replaced NoUserCreate
+                ClassFlags[(int)ClassFlag.Placeable] = (ulong)Flags.ClassFlags.Placeable;
+
+                ClassFlags[(int)ClassFlag.EditInlineNew] = (ulong)Flags.ClassFlags.EditInlineNew;
+                ClassFlags[(int)ClassFlag.CollapseCategories] = (ulong)Flags.ClassFlags.CollapseCategories;
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedInterfacesFeature)
+            {
+                ClassFlags[(int)ClassFlag.Interface] = (ulong)Flags.ClassFlags.Interface;
+            }
+            else if (linker.Version > 68)
+            {
+                // See also Exported below, but that has existed before the interface feature.
+                ClassFlags[(int)ClassFlag.ExportStructs] = (ulong)Flags.ClassFlags.ExportStructs;
+            }
+
+            if (linker.Version > 69)
+            {
+                // UE2+ Doesn't appear in early UE3, but re-appears in later UE3 builds.
+                ClassFlags[(int)ClassFlag.HasInstancedProps] = (ulong)Flags.ClassFlags.Instanced;
+            }
+            else if (linker.Version > 61)
+            {
+                ClassFlags[(int)ClassFlag.NoUserCreate] = (ulong)Flags.ClassFlags.NoUserCreate;
+            }
+
+            // > UT2003
+            if (linker.Version > 120 && linker.Version < (uint)PackageObjectLegacyVersion.UE3)
+            {
+                // Might also be UT2 only...
+                ClassFlags[(int)ClassFlag.HideDropDown] = (ulong)Flags.ClassFlags.HideDropDown;
+
+                // << UT2 CacheExempt
+                // << UT2 ParseConfig
+                // << UT2 Cache
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.UE3)
+            {
+                ClassFlags[(int)ClassFlag.HasComponents] = (ulong)Flags.ClassFlags.HasComponents;
+                ClassFlags[(int)ClassFlag.Hidden] = (ulong)Flags.ClassFlags.Hidden;
+                // UC2 has this flag as 0x00400000
+                ClassFlags[(int)ClassFlag.Deprecated] = (ulong)Flags.ClassFlags.Deprecated;
+                ClassFlags[(int)ClassFlag.HideDropDown] = (ulong)Flags.ClassFlags.HideDropDown2;
+                ClassFlags[(int)ClassFlag.Exported] = (ulong)Flags.ClassFlags.Exported;
+            }
+
+            if (linker.Version > 186)
+            {
+                ClassFlags[(int)ClassFlag.Intrinsic] = (ulong)Flags.ClassFlags.Intrinsic;
+                // << ComponentClass, displaced with ArchetypeObject and ClassDefaultObject flags.
+            }
+
+            if (linker.Version > 225)
+            {
+                ClassFlags[(int)ClassFlag.NativeOnly] = (ulong)Flags.ClassFlags.NativeOnly;
+                ClassFlags[(int)ClassFlag.PerObjectLocalized] = (ulong)Flags.ClassFlags.PerObjectLocalized;
+            }
+
+            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable)
+            {
+                ClassFlags[(int)ClassFlag.HasCrossLevelRefs] = (ulong)Flags.ClassFlags.HasCrossLevelRefs;
             }
         }
 
@@ -514,7 +859,7 @@ namespace UELib.Branch
 #if UE3
         protected void UnshiftTokens3(TokenMap tokenMap)
         {
-            // EatString -> EatReturnValueToken
+            // EatString -> EatReturnValueToken (also in UC2)
             tokenMap[0x0E] = typeof(EatReturnValueToken);
 
             tokenMap[0x15] = typeof(EndParmValueToken);
@@ -538,6 +883,7 @@ namespace UELib.Branch
             tokenMap[0x45] = typeof(ConditionalToken);
             tokenMap[0x46] = typeof(DynamicArrayFindToken);
             tokenMap[0x47] = typeof(DynamicArrayFindStructToken);
+            // UC2 has this bytecode as 0x49
             tokenMap[0x48] = typeof(OutVariableToken);
             tokenMap[0x49] = typeof(DefaultParameterToken);
             // FIXME: added post GoW
