@@ -4,18 +4,48 @@ using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Core;
+using UELib.Engine;
 using static Eliot.UELib.Test.UnrealPackageTests;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
-namespace Eliot.UELib.Test.upk
+namespace Eliot.UELib.Test.UPK.Builds
 {
+    /// <summary>
+    /// Use the UT2004 build to test compatibility with UE2 (Might actually be testing for UE2.5)
+    /// </summary>
     [TestClass]
-    public class UE3PackageContentTests
+    public class PackagetTestsUT2004
     {
         public static UnrealPackage GetScriptPackageLinker()
         {
-            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk",
-                "TestUC3", "TestUC3.u");
+            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "UPK",
+                "TestUC2", "TestUC2.u");
+            var linker = UnrealLoader.LoadPackage(packagePath);
+            Assert.IsNotNull(linker);
+            return linker;
+        }
+
+        public static UnrealPackage GetMapPackageLinker(string fileName)
+        {
+            string packagePath = Path.Join(Packages.UT2004Path, "Maps", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+            
+            var linker = UnrealLoader.LoadPackage(packagePath);
+            Assert.IsNotNull(linker);
+            return linker;
+        }
+
+        public static UnrealPackage GetMaterialPackageLinker(string fileName)
+        {
+            string packagePath = Path.Join(Packages.UT2004Path, "Textures", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+            
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
             return linker;
@@ -39,24 +69,27 @@ namespace Eliot.UELib.Test.upk
                     "0.0123457");
                 AssertPropertyTagFormat(defaults, "NameProperty",
                     "\"Name\"");
-                //UnrealPackageTests.AssertPropertyTagFormat(defaults, "String",
-                //    "\"String_\\\"\\\\0abf\\\\n\\\\rtv\"");
+                AssertPropertyTagFormat(defaults, "String",
+                    "\"String_\\\"\\\\0abfnrtv\"");
                 AssertPropertyTagFormat(defaults, "Vector",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
-                AssertPropertyTagFormat(defaults, "Vector4",
-                    "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
-                AssertPropertyTagFormat(defaults, "Vector2D",
-                    "(X=1.0000000,Y=2.0000000)");
-                AssertPropertyTagFormat(defaults, "Rotator",
-                    "(Pitch=180,Yaw=90,Roll=45)");
-                AssertPropertyTagFormat(defaults, "Quat",
-                    "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
                 AssertPropertyTagFormat(defaults, "Plane",
                     "(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)");
+                AssertPropertyTagFormat(defaults, "Rotator",
+                    "(Pitch=180,Yaw=90,Roll=45)");
+                AssertPropertyTagFormat(defaults, "Coords",
+                    "(Origin=(X=0.2000000,Y=0.4000000,Z=1.0000000)," +
+                    "XAxis=(X=1.0000000,Y=0.0000000,Z=0.0000000)," +
+                    "YAxis=(X=0.0000000,Y=1.0000000,Z=0.0000000)," +
+                    "ZAxis=(X=0.0000000,Y=0.0000000,Z=1.0000000))");
+                AssertPropertyTagFormat(defaults, "Quat",
+                    "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
+                AssertPropertyTagFormat(defaults, "Range",
+                    "(Min=80.0000000,Max=40.0000000)");
+                AssertPropertyTagFormat(defaults, "Scale",
+                    "(Scale=(X=1.0000000,Y=2.0000000,Z=3.0000000),SheerRate=5.0000000,SheerAxis=6)");
                 AssertPropertyTagFormat(defaults, "Color",
                     "(R=80,G=40,B=20,A=160)");
-                AssertPropertyTagFormat(defaults, "LinearColor",
-                    "(R=0.2000000,G=0.4000000,B=0.6000000,A=0.8000000)");
                 AssertPropertyTagFormat(defaults, "Box",
                     "(Min=(X=0.0000000,Y=1.0000000,Z=2.0000000)," +
                     "Max=(X=0.0000000,Y=2.0000000,Z=1.0000000),IsValid=1)");
@@ -73,7 +106,6 @@ namespace Eliot.UELib.Test.upk
                 delegateTokensFunc.Load();
 
                 var script = delegateTokensFunc.ByteCodeManager;
-                script.Deserialize();
                 script.CurrentTokenIndex = -1;
 
                 // OnDelegate();
@@ -93,46 +125,6 @@ namespace Eliot.UELib.Test.upk
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
 
-                // if (OnDelegate == InstanceDelegate);
-                AssertTokens(script,
-                    typeof(JumpIfNotToken),
-                    typeof(DelegateCmpEqToken),
-                    typeof(InstanceVariableToken),
-                    typeof(InstanceVariableToken),
-                    typeof(EndFunctionParmsToken));
-
-                // if (OnDelegate != InstanceDelegate);
-                AssertTokens(script,
-                    typeof(JumpIfNotToken),
-                    typeof(DelegateCmpNeToken),
-                    typeof(InstanceVariableToken),
-                    typeof(InstanceVariableToken),
-                    typeof(EndFunctionParmsToken));
-
-                // if (OnDelegate == InternalOnDelegate);
-                AssertTokens(script,
-                    typeof(JumpIfNotToken),
-                    typeof(DelegateFunctionCmpEqToken),
-                    typeof(InstanceVariableToken),
-                    typeof(InstanceDelegateToken),
-                    typeof(EndFunctionParmsToken));
-
-                // if (OnDelegate != InternalOnDelegate);
-                AssertTokens(script,
-                    typeof(JumpIfNotToken),
-                    typeof(DelegateFunctionCmpNeToken),
-                    typeof(InstanceVariableToken),
-                    typeof(InstanceDelegateToken),
-                    typeof(EndFunctionParmsToken));
-
-                // if (OnDelegate == none);
-                AssertTokens(script,
-                    typeof(JumpIfNotToken),
-                    typeof(DelegateCmpEqToken),
-                    typeof(InstanceVariableToken),
-                    typeof(EmptyDelegateToken),
-                    typeof(EndFunctionParmsToken));
-
                 // (return)
                 AssertTokens(script,
                     typeof(ReturnToken),
@@ -145,6 +137,11 @@ namespace Eliot.UELib.Test.upk
             using var linker = GetScriptPackageLinker();
             Assert.IsNotNull(linker);
             linker.InitializePackage();
+
+            var exports = linker.Objects
+                .Where(obj => (int)obj > 0)
+                .ToList();
+
             AssertTestClass(linker);
 
             var tokensClass = linker.FindObject<UClass>("ExprTokens");
@@ -154,6 +151,36 @@ namespace Eliot.UELib.Test.upk
             AssertFunctionDelegateTokens(linker);
             AssertScriptDecompile(tokensClass);
             AssertDefaults(linker);
+            AssertExportsOfType<UClass>(exports);
+        }
+
+        [TestMethod]
+        public void TestMapContent()
+        {
+            using var linker = GetMapPackageLinker("DM-Rankin.ut2");
+            linker.InitializePackage();
+
+            var exports = linker.Objects
+                .Where(obj => (int)obj > 0)
+                .ToList();
+
+            AssertExportsOfType<USound>(exports);
+            AssertExportsOfType<UPolys>(exports);
+        }
+
+        [TestMethod]
+        public void TestMaterialContent()
+        {
+            using var linker = GetMaterialPackageLinker("2k4Fonts.utx");
+            linker.InitializePackage();
+
+            var exports = linker.Objects
+                .Where(obj => (int)obj > 0)
+                .ToList();
+
+            AssertExportsOfType<UFont>(exports);
+            AssertExportsOfType<UPalette>(exports);
+            AssertExportsOfType<UTexture>(exports);
         }
     }
 }

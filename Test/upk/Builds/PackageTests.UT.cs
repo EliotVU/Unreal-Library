@@ -6,17 +6,32 @@ using UELib;
 using UELib.Core;
 using UELib.Engine;
 using static Eliot.UELib.Test.UnrealPackageTests;
-using static UELib.Core.UStruct.UByteCodeDecompiler;
 
-namespace Eliot.UELib.Test.upk
+namespace Eliot.UELib.Test.UPK.Builds
 {
+    /// <summary>
+    /// Use the UT99 build to test compatibility with UE1.
+    /// </summary>
     [TestClass]
-    public class UE2PackageContentTests
+    public class PackageTestsUT
     {
         public static UnrealPackage GetScriptPackageLinker()
         {
-            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk",
-                "TestUC2", "TestUC2.u");
+            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "UPK",
+                "TestUC1", "TestUC1.u");
+            var linker = UnrealLoader.LoadPackage(packagePath);
+            Assert.IsNotNull(linker);
+            return linker;
+        }
+
+        public static UnrealPackage GetMusicPackageLinker(string fileName)
+        {
+            string packagePath = Path.Join(Packages.UT99Path, "Music", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+            
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
             return linker;
@@ -24,7 +39,12 @@ namespace Eliot.UELib.Test.upk
 
         public static UnrealPackage GetMapPackageLinker(string fileName)
         {
-            string packagePath = Path.Join(Packages.UE2MapFilesPath, fileName);
+            string packagePath = Path.Join(Packages.UT99Path, "Maps", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+            
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
             return linker;
@@ -32,7 +52,12 @@ namespace Eliot.UELib.Test.upk
 
         public static UnrealPackage GetMaterialPackageLinker(string fileName)
         {
-            string packagePath = Path.Join(Packages.UE2MaterialFilesPath, fileName);
+            string packagePath = Path.Join(Packages.UT99Path, "Textures", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+            
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
             return linker;
@@ -57,75 +82,24 @@ namespace Eliot.UELib.Test.upk
                 AssertPropertyTagFormat(defaults, "NameProperty",
                     "\"Name\"");
                 AssertPropertyTagFormat(defaults, "String",
-                    "\"String_\\\"\\\\0abfnrtv\"");
+                    """
+                    "String_\""
+                    """);
                 AssertPropertyTagFormat(defaults, "Vector",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Plane",
                     "(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)");
                 AssertPropertyTagFormat(defaults, "Rotator",
                     "(Pitch=180,Yaw=90,Roll=45)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Coords",
                     "(Origin=(X=0.2000000,Y=0.4000000,Z=1.0000000)," +
                     "XAxis=(X=1.0000000,Y=0.0000000,Z=0.0000000)," +
                     "YAxis=(X=0.0000000,Y=1.0000000,Z=0.0000000)," +
                     "ZAxis=(X=0.0000000,Y=0.0000000,Z=1.0000000))");
-                // Not atomic!
-                AssertPropertyTagFormat(defaults, "Quat",
-                    "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
-                // Not atomic!
-                AssertPropertyTagFormat(defaults, "Range",
-                    "(Min=80.0000000,Max=40.0000000)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Scale",
                     "(Scale=(X=1.0000000,Y=2.0000000,Z=3.0000000),SheerRate=5.0000000,SheerAxis=6)");
                 AssertPropertyTagFormat(defaults, "Color",
                     "(R=80,G=40,B=20,A=160)");
-                // Not atomic!
-                AssertPropertyTagFormat(defaults, "Box",
-                    "(Min=(X=0.0000000,Y=1.0000000,Z=2.0000000)," +
-                    "Max=(X=0.0000000,Y=2.0000000,Z=1.0000000),IsValid=1)");
-                // Not atomic!
-                AssertPropertyTagFormat(defaults, "Matrix",
-                    "(XPlane=(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)," +
-                    "YPlane=(W=4.0000000,X=5.0000000,Y=6.0000000,Z=7.0000000)," +
-                    "ZPlane=(W=8.0000000,X=9.0000000,Y=10.0000000,Z=11.0000000)," +
-                    "WPlane=(W=12.0000000,X=13.0000000,Y=14.0000000,Z=15.0000000))");
-            }
-
-            void AssertFunctionDelegateTokens(UnrealPackage linker)
-            {
-                var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens");
-                delegateTokensFunc.Load();
-
-                var script = delegateTokensFunc.ByteCodeManager;
-                script.CurrentTokenIndex = -1;
-
-                // OnDelegate();
-                AssertTokens(script,
-                    typeof(DelegateFunctionToken),
-                    typeof(EndFunctionParmsToken));
-
-                // OnDelegate = InternalOnDelegate;
-                AssertTokens(script,
-                    typeof(LetDelegateToken),
-                    typeof(InstanceVariableToken),
-                    typeof(DelegatePropertyToken));
-
-                // OnDelegate = none;
-                AssertTokens(script,
-                    typeof(LetDelegateToken),
-                    typeof(InstanceVariableToken),
-                    typeof(DelegatePropertyToken));
-
-                // (return)
-                AssertTokens(script,
-                    typeof(ReturnToken),
-                    typeof(NothingToken),
-                    typeof(EndOfScriptToken));
-
-                Assert.AreEqual(script.DeserializedTokens.Last(), script.CurrentToken);
             }
 
             using var linker = GetScriptPackageLinker();
@@ -136,36 +110,45 @@ namespace Eliot.UELib.Test.upk
                 .Where(obj => (int)obj > 0)
                 .ToList();
 
-            AssertTestClass(linker);
-
             var tokensClass = linker.FindObject<UClass>("ExprTokens");
             Assert.IsNotNull(tokensClass);
 
             // Test a series of expected tokens
-            AssertFunctionDelegateTokens(linker);
             AssertScriptDecompile(tokensClass);
             AssertDefaults(linker);
             AssertExportsOfType<UClass>(exports);
         }
 
         [TestMethod]
-        public void TestMapContent()
+        public void TestMusicContent()
         {
-            using var linker = GetMapPackageLinker("DM-Rankin.ut2");
+            using var linker = GetMusicPackageLinker("Foregone.umx");
             linker.InitializePackage();
 
             var exports = linker.Objects
                 .Where(obj => (int)obj > 0)
                 .ToList();
 
-            AssertExportsOfType<USound>(exports);
+            AssertExportsOfType<UMusic>(exports);
+        }
+
+        [TestMethod]
+        public void TestMapContent()
+        {
+            using var linker = GetMapPackageLinker("DM-Phobos.unr");
+            linker.InitializePackage();
+
+            var exports = linker.Objects
+                .Where(obj => (int)obj > 0)
+                .ToList();
+
             AssertExportsOfType<UPolys>(exports);
         }
 
         [TestMethod]
         public void TestMaterialContent()
         {
-            using var linker = GetMaterialPackageLinker("2k4Fonts.utx");
+            using var linker = GetMaterialPackageLinker("UWindowFonts.utx");
             linker.InitializePackage();
 
             var exports = linker.Objects

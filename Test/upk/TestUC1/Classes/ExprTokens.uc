@@ -6,7 +6,7 @@ var int InstanceInt;
 
 static final preoperator bool \ ( string v ) { return true; }
 
-function AllExprTokens()
+function AllCasts()
 {
 	local byte localByte;
 	local int localInt;
@@ -36,7 +36,7 @@ function AllExprTokens()
 	assert (\"BoolToInt" && int(localBool) == 0); 
 	assert (\"BoolToFloat" && float(localBool) == 0.0); 
 	assert (\"BoolToString" && string(localBool) == "false"); 
-	assert (\"BoolToButton" && button(localBool) == ""); // Alias 
+	// assert (\"BoolToButton" && button(localBool) == ""); // Alias 
 
 	// FloatToX
 	assert (\"FloatToByte" && byte(localFloat) == 0); 
@@ -73,11 +73,6 @@ function AllExprTokens()
 	assert (\"RotatorToBool" && bool(localRotator) == false); 
 	assert (\"RotatorToVector" && Vector(localRotator) == vect(0,0,0)); 
 	assert (\"RotatorToString" && string(localRotator) == "(Pitch=0,Yaw=0,Roll=0)");
-
-    // This emits EX_PointerConst, however this crashes the compiler because the byte code is not serialized.
-    // instancePointer = 1;
-
-    // assert (int(instancePointer) == 0);
 }
 
 function VarTokens()
@@ -87,15 +82,4 @@ function VarTokens()
 	assert (\"LocalVariable" && localInt == 0);
 	assert (\"InstanceVariable" && InstanceInt == 0);
 	assert (\"DefaultVariable" && default.InstanceInt == 0);
-}
-
-delegate OnDelegate();
-private function InternalOnDelegate();
-
-// OnDelegate gets internally redirected to property __OnDelegate__Delegate
-function DelegateTokens()
-{
-    OnDelegate();
-    OnDelegate = InternalOnDelegate;
-    OnDelegate = none;
 }
