@@ -9,51 +9,45 @@ namespace UELib.Core
     [StructLayout(LayoutKind.Sequential, Pack = 16)]
     public record struct UMatrix : IUnrealSerializableClass, IUnrealAtomicStruct
     {
-        public readonly float[,] M = new float[4, 4];
-
-        public UMatrix(float[,] m)
-        {
-            M = m;
-        }
+        public UPlane M1, M2, M3, M4;
 
         public UMatrix(ref UPlane x, ref UPlane y, ref UPlane z, ref UPlane w)
         {
-            M = new float[4, 4];
-            M[0, 0] = x.X; M[0, 1] = x.Y; M[0, 2] = x.Z; M[0, 3] = x.W;
-            M[1, 0] = y.X; M[1, 1] = y.Y; M[1, 2] = y.Z; M[1, 3] = y.W;
-            M[2, 0] = z.X; M[2, 1] = z.Y; M[2, 2] = z.Z; M[2, 3] = z.W;
-            M[3, 0] = w.X; M[3, 1] = w.Y; M[3, 2] = w.Z; M[3, 3] = w.W;
+            M1 = x;
+            M2 = y;
+            M3 = z;
+            M4 = w;
         }
 
         public void Deserialize(IUnrealStream stream)
         {
-            stream.Read(out M[0, 0]); stream.Read(out M[0, 1]); stream.Read(out M[0, 2]); stream.Read(out M[0, 3]);
-            stream.Read(out M[1, 0]); stream.Read(out M[1, 1]); stream.Read(out M[1, 2]); stream.Read(out M[1, 3]);
-            stream.Read(out M[2, 0]); stream.Read(out M[2, 1]); stream.Read(out M[2, 2]); stream.Read(out M[2, 3]);
-            stream.Read(out M[3, 0]); stream.Read(out M[3, 1]); stream.Read(out M[3, 2]); stream.Read(out M[3, 3]);
+            stream.ReadStruct(out M1);
+            stream.ReadStruct(out M2);
+            stream.ReadStruct(out M3);
+            stream.ReadStruct(out M4);
         }
 
         public void Serialize(IUnrealStream stream)
         {
-            stream.Write(M[0, 0]); stream.Write(M[0, 1]); stream.Write(M[0, 2]); stream.Write(M[0, 3]);
-            stream.Write(M[1, 0]); stream.Write(M[1, 1]); stream.Write(M[1, 2]); stream.Write(M[1, 3]);
-            stream.Write(M[2, 0]); stream.Write(M[2, 1]); stream.Write(M[2, 2]); stream.Write(M[2, 3]);
-            stream.Write(M[3, 0]); stream.Write(M[3, 1]); stream.Write(M[3, 2]); stream.Write(M[3, 3]);
+            stream.WriteStruct(ref M1);
+            stream.WriteStruct(ref M2);
+            stream.WriteStruct(ref M3);
+            stream.WriteStruct(ref M4);
         }
 
-        //public static unsafe explicit operator Matrix4x4(UMatrix u)
-        //{
-        //    return *(Matrix4x4*)&u;
-        //}
+        public static unsafe explicit operator Matrix4x4(UMatrix u)
+        {
+            return *(Matrix4x4*)&u;
+        }
 
-        //public static unsafe explicit operator UMatrix(Matrix4x4 m)
-        //{
-        //    return *(UMatrix*)&m;
-        //}
+        public static unsafe explicit operator UMatrix(Matrix4x4 m)
+        {
+            return *(UMatrix*)&m;
+        }
 
-        //public override int GetHashCode()
-        //{
-        //    return ((Matrix4x4)this).GetHashCode();
-        //}
+        public override int GetHashCode()
+        {
+            return ((Matrix4x4)this).GetHashCode();
+        }
     }
 }
