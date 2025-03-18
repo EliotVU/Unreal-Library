@@ -23,7 +23,7 @@ namespace UELib.Core
         /// </summary>
         public UnrealFlags<FunctionFlag> FunctionFlags;
 
-        public ushort RepOffset { get; private set; }
+        public ushort RepOffset { get; set; }
 
         public bool RepReliable => HasFunctionFlag(Flags.FunctionFlags.NetReliable);
 

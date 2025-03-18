@@ -20,6 +20,9 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
+        [Output(OutputSlot.Parameter)]
+        public UName Name { get; set; }
+
         /// <summary>
         /// The object flags.
         /// </summary>
@@ -65,13 +68,6 @@ namespace UELib.Core
 
         [Obsolete("Displaced by PackageIndex")]
         private int _ObjectIndex => PackageIndex;
-
-        [Output(OutputSlot.Parameter)]
-        public string Name
-        {
-            get => Table.ObjectName;
-            set => Table.ObjectName = new UName(value);
-        }
 
         #region Serialized Members
 
@@ -224,9 +220,12 @@ namespace UELib.Core
             }
             finally
             {
+
                 DeserializationState &= ~ObjectState.Deserializing;
                 MaybeDisposeBuffer();
             }
+
+            LibServices.Debug("Loaded {0}", GetReferencePath());
         }
 
         /// <summary>
@@ -244,7 +243,7 @@ namespace UELib.Core
             {
                 if (ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject)
                     // Just in-case we have passed an overlapped object flag in UE2 or older packages.
-                    && _Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
+                    && stream.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
                 {
                     DeserializeClassDefault(stream);
                 }
@@ -474,7 +473,7 @@ namespace UELib.Core
                     // Simply for checking for the parent's class is not reliable without importing objects.
                     case UnknownObject _ when _Buffer.Length >= 12
                                               && IsTemplate()
-                                              && Class!.Name.EndsWith("Component"):
+                                              && ((string)Class!.Name).EndsWith("Component"):
                         {
                             long backupPosition = _Buffer.Position;
 
@@ -535,6 +534,7 @@ namespace UELib.Core
             {
                 bool shouldSerializeGuid = _Buffer.ReadInt32() > 0;
                 _Buffer.Record(nameof(shouldSerializeGuid), shouldSerializeGuid);
+
                 if (shouldSerializeGuid)
                 {
                     _Buffer.ReadStruct(out ObjectGuid);
