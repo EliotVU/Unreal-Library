@@ -1003,36 +1003,6 @@ namespace UELib
         /// </summary>
         public BuildPlatform CookerPlatform;
 
-        public struct PackageFileEngineVersion : IUnrealSerializableClass
-        {
-            public uint Major, Minor, Patch;
-            public uint Changelist;
-            public string Branch;
-
-            public void Deserialize(IUnrealStream stream)
-            {
-                Major = stream.ReadUInt16();
-                Minor = stream.ReadUInt16();
-                Patch = stream.ReadUInt16();
-                Changelist = stream.ReadUInt32();
-                Branch = stream.ReadString();
-            }
-
-            public void Serialize(IUnrealStream stream)
-            {
-                stream.Write(Major);
-                stream.Write(Minor);
-                stream.Write(Patch);
-                stream.Write(Changelist);
-                stream.Write(Branch);
-            }
-
-            public override string ToString()
-            {
-                return $"{Major}.{Minor}.{Patch}";
-            }
-        }
-
         public struct PackageFileSummary : IUnrealSerializableClass
         {
             public uint Tag;
@@ -1118,6 +1088,11 @@ namespace UELib
             public int ExportGuidsCount;
 
             public int ThumbnailTableOffset;
+
+            /// <summary>
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.AddedTextureAllocations"/>)
+            /// </summary>
+            public UArray<PackageTextureType> TextureAllocations;
 
             public int GatherableTextDataCount;
             public int GatherableTextDataOffset;
@@ -1704,20 +1679,7 @@ namespace UELib
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTextureAllocations)
                 {
-                    // TextureAllocations, TextureTypes
-                    stream.Write(0);
-
-                    // FIXME: Write this struct out so we can serialize it as well!
-                    //for (var i = 0; i < count; i++)
-                    //{
-                    //    stream.ReadInt32();
-                    //    stream.ReadInt32();
-                    //    stream.ReadInt32();
-                    //    stream.ReadUInt32();
-                    //    stream.ReadUInt32();
-                    //    int count2 = stream.ReadInt32();
-                    //    stream.Skip(count2 * 4);
-                    //}
+                    stream.WriteArray(TextureAllocations);
                 }
 #if ROCKETLEAGUE
                 if (stream.Package.Build == GameBuild.BuildName.RocketLeague
@@ -1878,7 +1840,7 @@ namespace UELib
                     if (LicenseeVersion >= 8)
                     {
                         int huxleySignature = stream.ReadInt32();
-                        Contract.Assert(huxleySignature != 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
+                        Contract.Assert(huxleySignature == 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
                     }
 
                     if (LicenseeVersion >= 17)
@@ -2304,18 +2266,7 @@ namespace UELib
                 {
                     try
                     {
-                        // TextureAllocations, TextureTypes
-                        int count = stream.ReadInt32();
-                        for (var i = 0; i < count; i++)
-                        {
-                            stream.ReadInt32();
-                            stream.ReadInt32();
-                            stream.ReadInt32();
-                            stream.ReadUInt32();
-                            stream.ReadUInt32();
-                            int count2 = stream.ReadInt32();
-                            stream.Skip(count2 * 4);
-                        }
+                        stream.ReadArray(out TextureAllocations);
                     }
                     catch (Exception exception)
                     {
@@ -2414,29 +2365,11 @@ namespace UELib
         public List<UImportTableItem> Imports { get; private set; } = [];
 
         /// <summary>
-        /// A map of export to import indexes for each export.
+        /// A map of export to import indices for each export.
         /// </summary>
         public List<UArray<UPackageIndex>> Dependencies { get; private set; } = [];
 
-        public struct ULevelGuid : IUnrealSerializableClass
-        {
-            public string LevelName;
-            public UArray<UGuid> ObjectGuids;
-
-            public void Deserialize(IUnrealStream stream)
-            {
-                stream.Read(out LevelName);
-                stream.ReadArray(out ObjectGuids);
-            }
-
-            public void Serialize(IUnrealStream stream)
-            {
-                stream.Write(LevelName);
-                stream.WriteArray(ObjectGuids);
-            }
-        }
-
-        public UArray<ULevelGuid> ImportGuids { get; private set; } = [];
+        public UArray<PackageLevelGuid> ImportGuids { get; private set; } = [];
         public UMap<UGuid, UPackageIndex> ExportGuids { get; private set; } = new();
 
         public UArray<UObjectThumbnailTableItem> ObjectThumbnails { get; private set; } = [];
@@ -2668,7 +2601,7 @@ namespace UELib
         public void Deserialize(IUnrealStream stream)
         {
             BinaryMetaData.Fields.Clear();
-            
+
             // Reset all previously-deserialized data if any.
             uint tag = Summary.Tag;
             Summary = new PackageFileSummary
@@ -2837,7 +2770,7 @@ namespace UELib
                     stream.Read(out int packageIndex);
                     importIndexes.Add(packageIndex);
                 }
-                
+
                 Dependencies.Add(importIndexes);
             }
 
@@ -3029,10 +2962,10 @@ namespace UELib
 
         private void DeserializeImportExportGuids(IUnrealStream stream)
         {
-            ImportGuids = new UArray<ULevelGuid>(Summary.ImportGuidsCount);
+            ImportGuids = new UArray<PackageLevelGuid>(Summary.ImportGuidsCount);
             for (var i = 0; i < Summary.ImportGuidsCount; ++i)
             {
-                stream.ReadStruct(out ULevelGuid importGuid);
+                stream.ReadStruct(out PackageLevelGuid importGuid);
                 ImportGuids[i] = importGuid;
             }
 
@@ -3233,6 +3166,8 @@ namespace UELib
         /// </summary>
         private void ConstructObjects()
         {
+            LibServices.Debug("Constructing all package objects", PackageName);
+
             Objects = new List<UObject>(Imports.Count + Exports.Count);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Construct));
             foreach (var imp in Imports)
@@ -3269,9 +3204,13 @@ namespace UELib
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Deserialize));
             foreach (var exp in Exports)
             {
-                if (!(exp.Object is UnknownObject || exp.Object.ShouldDeserializeOnDemand))
-                    //Console.WriteLine( "Deserializing object:" + exp.ObjectName );
-                    exp.Object.Load();
+                if (exp.Object is not UnknownObject)
+                {
+                    if (exp.Object!.DeserializationState == 0 && !exp.Object.ShouldDeserializeOnDemand)
+                    {
+                        exp.Object.Load();
+                    }
+                }
 
                 OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
             }
@@ -3289,7 +3228,7 @@ namespace UELib
             foreach (var exp in Exports)
                 try
                 {
-                    if (!(exp.Object is UnknownObject)) exp.Object.PostInitialize();
+                    if (!(exp.Object is UnknownObject)) exp.Object!.PostInitialize();
                 }
                 catch (InvalidCastException)
                 {
