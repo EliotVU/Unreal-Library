@@ -38,7 +38,7 @@ namespace UELib.Core
 
         [CanBeNull] public UName RepNotifyFuncName;
 
-        public ushort RepOffset { get; private set; }
+        public ushort RepOffset { get; set; }
 
         public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
 

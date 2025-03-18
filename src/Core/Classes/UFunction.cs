@@ -24,7 +24,7 @@ namespace UELib.Core
         /// </value>
         private ulong FunctionFlags { get; set; }
 
-        public ushort RepOffset { get; private set; }
+        public ushort RepOffset { get; set; }
 
         public bool RepReliable => HasFunctionFlag(Flags.FunctionFlags.NetReliable);
 

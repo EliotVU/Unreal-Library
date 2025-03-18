@@ -3263,6 +3263,8 @@ namespace UELib
         /// </summary>
         private void DeserializeObjects()
         {
+            LibServices.Debug("Loading all package objects", PackageName);
+
             // Only exports should be deserialized and PostInitialized!
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Deserialize));
             foreach (var exp in Exports)
@@ -3280,6 +3282,8 @@ namespace UELib
         /// </summary>
         private void LinkObjects()
         {
+            LibServices.Debug("Linking all package objects", PackageName);
+
             // Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Link));
             foreach (var exp in Exports)
@@ -3317,6 +3321,7 @@ namespace UELib
             var classType = GetClassType(import.ClassName);
             var obj = (UObject)Activator.CreateInstance(classType);
             Debug.Assert(obj != null);
+            obj.Name = import.ObjectName;
             obj.ObjectFlags = new UnrealFlags<ObjectFlag>(Branch.EnumFlagsMap[typeof(ObjectFlag)], ObjectFlag.Public);
             obj.Package = this;
             obj.PackageIndex = -(import.Index + 1);
@@ -3359,6 +3364,7 @@ namespace UELib
 
             var obj = (UObject)Activator.CreateInstance(classType);
             Debug.Assert(obj != null);
+            obj.Name = export.ObjectName;
             obj.ObjectFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
             obj.Package = this;
             obj.PackageIndex = export.Index + 1;

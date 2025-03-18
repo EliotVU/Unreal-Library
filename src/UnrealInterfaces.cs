@@ -139,8 +139,8 @@ namespace UELib
     /// </summary>
     public interface IUnrealNetObject
     {
-        string Name { get; }
-        ushort RepOffset { get; }
+        UName Name { get; set; }
+        ushort RepOffset { get; set; }
         bool RepReliable { get; }
         uint RepKey { get; }
     }
