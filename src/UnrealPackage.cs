@@ -1167,6 +1167,14 @@ namespace UELib
                     {
                         package.CookerPlatform = BuildPlatform.Console;
                     }
+                    else if (string.Compare(
+                                 package.PackageDirectory,
+                                 "CookedIPhone",
+                                 StringComparison.OrdinalIgnoreCase
+                             ) == 0)
+                    {
+                        package.CookerPlatform = BuildPlatform.Console;
+                    }
                     else if (Path.GetExtension(package.FullPackageName) == ".xxx")
                     {
                         // ... fully compressed
