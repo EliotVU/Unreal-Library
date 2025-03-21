@@ -10,14 +10,15 @@
         {
             base.Deserialize();
 #if UNREAL2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
             {
                 _Buffer.Read(out byte textureType);
                 Record(nameof(textureType), textureType);
             }
 #endif
 #if RM
-            if (_Buffer.LicenseeVersion >= 3)
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RM &&
+                _Buffer.LicenseeVersion >= 3)
             {
                 _Buffer.Read(out byte v34);
                 Record(nameof(v34), v34);
