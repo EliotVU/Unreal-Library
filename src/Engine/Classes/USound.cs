@@ -187,8 +187,9 @@ namespace UELib.Core
                 && _Buffer.LicenseeVersion >= 6
                 && _Buffer.LicenseeVersion < 8)
             {
-                _Buffer.Read(out int l14);
-                Record(nameof(l14), l14);
+                // l14
+                Likelihood = _Buffer.ReadFloat();
+                Record(nameof(Likelihood), Likelihood);
             }
 #endif
 #if UT
@@ -230,4 +231,11 @@ namespace UELib.Core
 #endif
         }
     }
+
+    /// <summary>
+    ///     Implements UMusic/Engine.Music
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE1)]
+    public class UMusic : USound;
 }
