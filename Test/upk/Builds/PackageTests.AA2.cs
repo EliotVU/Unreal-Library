@@ -8,7 +8,7 @@ using UELib;
 using UELib.Branch.UE2.AA2;
 using UELib.Core;
 
-namespace Eliot.UELib.Test.upk.Builds
+namespace Eliot.UELib.Test.UPK.Builds
 {
     [TestClass]
     public class PackageTestsAA2
@@ -24,8 +24,7 @@ namespace Eliot.UELib.Test.upk.Builds
             // Skip test if the dev is not in possess of this game.
             if (!Directory.Exists(PackagesPath))
             {
-                Console.Error.Write($"Couldn't find packages path '{PackagesPath}'");
-                return;
+                Assert.Inconclusive($"Couldn't find packages path '{PackagesPath}'");
             }
 
             using var linker = UnrealLoader.LoadPackage(NoEncryptionCorePackagePath, UnrealPackage.GameBuild.BuildName.AA2_2_6);
@@ -51,8 +50,7 @@ namespace Eliot.UELib.Test.upk.Builds
             // Skip test if the dev is not in possess of this game.
             if (!Directory.Exists(PackagesPath))
             {
-                Console.Error.Write($"Couldn't find packages path '{PackagesPath}'");
-                return;
+                Assert.Inconclusive($"Couldn't find packages path '{PackagesPath}'");
             }
 
             using var linker = UnrealLoader.LoadPackage(EncryptedCorePackagePath, UnrealPackage.GameBuild.BuildName.AA2_2_6);

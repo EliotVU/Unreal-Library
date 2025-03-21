@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Core;
 
-namespace Eliot.UELib.Test.upk.Builds
+namespace Eliot.UELib.Test.UPK.Builds
 {
     [TestClass]
     public class PackageTestsAll
@@ -23,8 +23,7 @@ namespace Eliot.UELib.Test.upk.Builds
             // Skip test if the dev is not in possess of this game.
             if (!Directory.Exists(s_packagesPath))
             {
-                Console.Error.Write($"Couldn't find packages path '{s_packagesPath}'");
-                return;
+                Assert.Inconclusive($"Couldn't find packages path '{s_packagesPath}'");
             }
 
             UnrealConfig.SuppressSignature = true;

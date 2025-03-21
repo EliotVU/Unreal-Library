@@ -1,8 +1,8 @@
 @echo off
 
-set projn=__TestUC2__Temp
+set projn=__TestUC1__Temp
 set workDir=%cd%
-set RootDir="C:\UT2004"
+set RootDir="C:\UnrealTournament"
 set UCCDir="%RootDir%\System"
 set ScriptDir="%RootDir%\"
 set DestDir="%RootDir%\System"
@@ -20,4 +20,4 @@ del "%DestDir%\%projn%.u"
 
 cd "%UCCDir%"
 ucc.exe editor.MakeCommandlet -EXPORTCACHE -SHOWDEP -ini="%workDir%\make.ini"
-xcopy "%DestDir%\%projn%.u" "%workDir%\TestUC2.u" /f /y /r
+xcopy "%DestDir%\%projn%.u" "%workDir%\TestUC1.u" /f /y /r
