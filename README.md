@@ -149,7 +149,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Stargate Worlds | 3004 | 486/007 |     |
 | Gears of War | 3329 | 490/009 | |
 | Mass Effect (Windows) | 3240 | 491/1008(~112) | PC |
-| Huxley | 3240 | 496/023 | Contributed by @EDITzDev |
+| Huxley | 3240 | 496/016-023 | Contributed by @EDITzDev |
 | Robert Ludlum's The Bourne Conspiracy | | 511/039 | |
 | Transformers: War for Cybertron | | 511/144,145 | PC, PS3, Xenon |
 | Unreal Tournament 3 | 3809 | 512/000 | |

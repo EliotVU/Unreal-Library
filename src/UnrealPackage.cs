@@ -496,9 +496,9 @@ namespace UELib
                 /// <summary>
                 /// Huxley
                 /// 
-                /// 496/023
+                /// 496/016:023
                 /// </summary>
-                [Build(496, 23)]
+                [Build(496, 496, 16, 23)]
                 [BuildEngineBranch(typeof(EngineBranchHuxley))]
                 Huxley,
 
