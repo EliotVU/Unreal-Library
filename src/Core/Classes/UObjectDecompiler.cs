@@ -42,7 +42,8 @@ namespace UELib.Core
             if (Archetype == null)
             {
                 Debug.Assert(Class != null);
-                output += $" class={Class.GetReferencePath()}";
+                // ! UE2 compiler does not properly parse a typed reference path, so instead output the qualified identifier loosely.
+                output += $" class={Class.GetPath()}";
             }
             output += "\r\n";
 
