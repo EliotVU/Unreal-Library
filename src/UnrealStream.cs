@@ -437,8 +437,9 @@ namespace UELib
         public UName ReadName()
         {
             int index, number;
-#if R6
-            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+#if R6 || LEAD
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas ||
+                Archive.Package.Build == BuildGeneration.Lead)
             {
                 // Some changes were made with licensee version 71, but I couldn't make much sense of it.
                 index = ReadInt32();
@@ -476,8 +477,9 @@ namespace UELib
         public int ReadNameIndex(out int num)
         {
             int index;
-#if R6
-            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+#if R6 || LEAD
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas ||
+                Archive.Package.Build == BuildGeneration.Lead)
             {
                 // Some changes were made with licensee version 71, but I couldn't make much sense of it.
                 index = ReadInt32();

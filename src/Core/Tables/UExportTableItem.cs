@@ -160,6 +160,15 @@ namespace UELib
                 goto streamSerialSize;
             }
 #endif
+#if LEAD
+            if (stream.Package.Build == BuildGeneration.Lead &&
+                stream.LicenseeVersion >= 93)
+            {
+                stream.Write(ObjectFlags);
+
+                goto streamSerialSize;
+            }
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
             {
                 if (stream.BigEndianCode)
@@ -351,6 +360,15 @@ namespace UELib
             // Like UE3 but without the shifting of flags
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.LicenseeVersion >= 40)
+            {
+                ObjectFlags = stream.ReadUInt64();
+
+                goto streamSerialSize;
+            }
+#endif
+#if LEAD
+            if (stream.Package.Build == BuildGeneration.Lead &&
+                stream.LicenseeVersion >= 93)
             {
                 ObjectFlags = stream.ReadUInt64();
 

@@ -10,6 +10,7 @@ using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
+using UELib.Branch.UE2.Lead;
 using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
@@ -263,6 +264,15 @@ namespace UELib
                 [BuildEngineBranch(typeof(EngineBranchSCX))]
                 [Build(100, 167, BuildGeneration.SCX)]
                 SCDA_Offline,
+
+                /// <summary>
+                /// Tom Clancy's Splinter Cell: Blacklist
+                ///
+                /// 102/116
+                /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchLead))]
+                [Build(102, 116, BuildGeneration.Lead)]
+                SCBL,
 
                 /// <summary>
                 /// 110/2609
@@ -1838,6 +1848,12 @@ namespace UELib
                     }
                 }
 #endif
+#if LEAD
+                if (stream.Package.Build == BuildGeneration.Lead)
+                {
+                    stream.Read(out int v08);
+                }
+#endif
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -2008,6 +2024,24 @@ namespace UELib
 
                     // An FString converted to an FArray? Concatenating appUserName, appComputerName, appBaseDir, and appTimestamp.
                     stream.ReadArray(out UArray<byte> iStack_fc);
+                }
+#endif
+#if LEAD
+                if (stream.Package.Build == BuildGeneration.Lead &&
+                    stream.LicenseeVersion >= 48)
+                {
+                    // Probably a new table, with v2c representing the count and v30 representing the offset.
+                    stream.Read(out int v2c);
+                    stream.Read(out int v30); // FileEndOffset, used in a loop that invokes a similar procedure as the names table.
+                    Contract.Assert(v30 == stream.Length);
+                    // v2c = 0 if v30 < ExportOffset
+                    
+                    if (stream.LicenseeVersion >= 85)
+                    {
+                        stream.Read(out int v08); // same offset as the variable that is serialized before 'PackageFlags'.
+                    }
+
+                    goto skipGuid;
                 }
 #endif
                 if (stream.UE4Version >= 384)
