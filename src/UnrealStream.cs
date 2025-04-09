@@ -40,6 +40,7 @@ namespace UELib
         IPackageSerializer Serializer { get; set; }
 
         long Position { get; set; }
+        long Length { get; }
 
         // HACK: To be deprecated, but for now we need this to help us retrieve the absolute position when serializing within an UObject's buffer.
         long AbsolutePosition { get; set; }
@@ -1409,6 +1410,9 @@ namespace UELib
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UArray<string> array) => ReadArray(stream, out array);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UArray<int> array) => ReadArray(stream, out array);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)

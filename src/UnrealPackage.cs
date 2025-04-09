@@ -1930,6 +1930,7 @@ namespace UELib
 #endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
+                Contract.Assert(NameOffset < stream.Length);
 #if UE4
                 if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
                 {
@@ -1940,10 +1941,12 @@ namespace UELib
                 {
                     GatherableTextDataCount = stream.ReadInt32();
                     GatherableTextDataOffset = stream.ReadInt32();
+                    Contract.Assert(GatherableTextDataOffset < stream.Length);
                 }
 #endif
                 ExportCount = stream.ReadInt32();
                 ExportOffset = stream.ReadInt32();
+                Contract.Assert(ExportOffset < stream.Length);
 #if APB
                 if (stream.Package.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 28)
@@ -1958,6 +1961,7 @@ namespace UELib
 #endif
                 ImportCount = stream.ReadInt32();
                 ImportOffset = stream.ReadInt32();
+                Contract.Assert(ImportOffset < stream.Length);
 
                 Console.WriteLine("Names Count:" + NameCount + " Names Offset:" + NameOffset
                                   + " Exports Count:" + ExportCount + " Exports Offset:" + ExportOffset
@@ -1970,6 +1974,7 @@ namespace UELib
                     Contract.Assert(HeritageCount > 0);
 
                     HeritageOffset = stream.ReadInt32();
+                    Contract.Assert(HeritageOffset < stream.Length);
 
                     return;
                 }
@@ -1983,6 +1988,7 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDependsTable)
                 {
                     DependsOffset = stream.ReadInt32();
+                    Debug.Assert(DependsOffset < stream.Length);
                 }
 #if THIEF_DS || DEUSEX_IW
                 if (stream.Package.Build == GameBuild.BuildName.Thief_DS ||
@@ -2008,11 +2014,13 @@ namespace UELib
                 {
                     StringAssetReferencesCount = stream.ReadInt32();
                     StringAssetReferencesOffset = stream.ReadInt32();
+                    Contract.Assert(StringAssetReferencesOffset < stream.Length);
                 }
 
                 if (stream.UE4Version >= 510)
                 {
                     SearchableNamesOffset = stream.ReadInt32();
+                    Contract.Assert(SearchableNamesOffset < stream.Length);
                 }
 
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable &&
@@ -2027,6 +2035,8 @@ namespace UELib
                    )
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
+                    Debug.Assert(ImportExportGuidsOffset < stream.Length);
+
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();
                 }
@@ -2048,6 +2058,7 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
+                    Debug.Assert(ThumbnailTableOffset < stream.Length);
                 }
 #if MKKE
                 if (stream.Package.Build == GameBuild.BuildName.MKKE) stream.Skip(4);
@@ -2286,6 +2297,7 @@ namespace UELib
                     int garbageSize = stream.ReadInt32();
                     Debug.WriteLine(garbageSize, "GarbageSize");
                     int compressedChunkInfoOffset = stream.ReadInt32();
+                    Debug.Assert(compressedChunkInfoOffset < stream.Length);
                     Debug.WriteLine(compressedChunkInfoOffset, "CompressedChunkInfoOffset");
                     int lastBlockSize = stream.ReadInt32();
                     Debug.WriteLine(lastBlockSize, "LastBlockSize");

@@ -445,6 +445,11 @@ public class UnrealPackageSerializationTests
                 set => baseStream.Position = value;
             }
 
+            public long Length
+            {
+                get => baseStream.Length;
+            }
+
             public long AbsolutePosition
             {
                 get => baseStream.AbsolutePosition;
