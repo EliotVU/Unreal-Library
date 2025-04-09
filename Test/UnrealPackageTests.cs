@@ -114,18 +114,30 @@ namespace Eliot.UELib.Test
             Assert.AreEqual(expectedFormat, colorValue, $"tag '{tagName}'");
         }
 
-        internal static void AssertExportsOfType<T>(IEnumerable<UObject> exports)
+        internal static void AssertExportsOfType<T>(IEnumerable<UObject> objects)
             where T : UObject
         {
-            var textures = exports.OfType<T>()
+            var textures = objects.OfType<T>()
                 .ToList();
             Assert.IsTrue(textures.Any());
             textures.ForEach(AssertObjectDeserialization);
         }
-
+        
+        internal static void AssertExports(IEnumerable<UObject> objects)
+        {
+            var compatibleExports = objects.Where(exp => exp is not UnknownObject)
+                .ToList();
+            Assert.IsTrue(compatibleExports.Any());
+            compatibleExports.ForEach(AssertObjectDeserialization);
+        }
+        
         internal static void AssertObjectDeserialization(UObject obj)
         {
-            obj.Load();
+            if (obj.DeserializationState == 0)
+            {
+                obj.Load();
+            }
+
             Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialized, obj.GetReferencePath());
         }
 

@@ -127,4 +127,7 @@
   <data name="UT2004Path" xml:space="preserve">
     <value>C:\UT2004</value>
   </data>
+  <data name="UnrealEngineGamesPath" xml:space="preserve">
+    <value>D:\Games\Unreal Engine\</value>
+  </data>
 </root>

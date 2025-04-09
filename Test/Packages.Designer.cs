@@ -70,6 +70,15 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to D:\Games\Unreal Engine\.
+        /// </summary>
+        public static string UnrealEngineGamesPath {
+            get {
+                return ResourceManager.GetString("UnrealEngineGamesPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to C:\UT2004.
         /// </summary>
         public static string UT2004Path {
