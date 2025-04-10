@@ -7,7 +7,7 @@ namespace UELib.Core
     ///     Implements FVector/UObject.Vector
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UVector : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UVector : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float X, Y, Z;
 
@@ -45,11 +45,6 @@ namespace UELib.Core
         public override int GetHashCode()
         {
             return ((Vector3)this).GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return $"vect({X:F},{Y:F},{Z:F})";
         }
     }
 }

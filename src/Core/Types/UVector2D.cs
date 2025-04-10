@@ -7,7 +7,7 @@ namespace UELib.Core
     ///     Implements FVector2D/UObject.Vector2D or FPoint (<=UE2)
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UVector2D : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UVector2D : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float X, Y;
 

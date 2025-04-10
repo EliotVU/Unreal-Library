@@ -5,8 +5,8 @@ namespace UELib.Core
     /// <summary>
     ///     Implements FBox/UObject.Box
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct UBox : IUnrealSerializableClass, IUnrealAtomicStruct
+    [StructLayout(LayoutKind.Sequential, Pack = 1)] // Must pack as 1 for the marshaller to read the correct amount of storage bytes.
+    public record struct UBox : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public UVector Min, Max;
         public byte IsValid;

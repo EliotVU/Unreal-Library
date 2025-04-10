@@ -11,9 +11,8 @@ namespace UELib.Core
 
             if (GetType() == typeof(UState))
             {
-                var stateFlagsNode = AddTextNode(_ParentNode, $"State Flags:{UnrealMethods.FlagToString(_StateFlags)}");
-                stateFlagsNode.ToolTipText =
-                    UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.StateFlags), _StateFlags));
+                var stateFlagsNode = AddTextNode(_ParentNode, $"State Flags:{UnrealMethods.FlagToString(StateFlags)}");
+                stateFlagsNode.ToolTipText = StateFlags.ToString();
             }
 
             base.InitNodes(_ParentNode);

@@ -80,7 +80,7 @@ namespace UELib
     /// <summary>
     /// Represents data of a loaded unreal package.
     /// </summary>
-    public sealed class UnrealPackage : IDisposable, IBinaryData
+    public sealed partial class UnrealPackage : IDisposable, IBinaryData
     {
         #region General Members
 

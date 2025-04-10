@@ -32,6 +32,37 @@ var Box Box;
 var Matrix Matrix;
 var pointer Pointer;
 
+var array<byte> ByteArray;
+
+var enum EEnum
+{
+	EEnum1,
+	EEnum2,
+	EEnum3
+} Enum;
+
+var struct sStruct
+{
+	// Test all unique types in a struct
+	var byte Byte;
+	var int Int;
+	var float Float;
+	var name NameProperty;
+	var string String;
+	var Object Object;
+	var Class<DefaultProperties> MetaClass;
+	var byte ByteFixedArray[2];
+	var Object.Vector Vector;
+	var array<byte> ByteArray;
+	var EEnum Enum;
+
+	// Test struct within struct.
+	var struct sStruct2
+	{
+		var byte Byte;
+	} Struct2;
+} Struct;
+
 delegate OnDelegate();
 private function InternalOnDelegate();
 
@@ -72,4 +103,12 @@ defaultproperties
 //    end object
     OnDelegate=DefaultProperties.InternalOnDelegate
     //Delegate=__DefaultProperties.InternalOnDelegate
+
+    ByteArray(0)=1
+    ByteArray(2)=1
+
+    BaseByteArray(2)=2
+
+	Enum=1
+	Struct=(Struct2=(Byte=1),Byte=1,Int=1,Float=1.0,NameProperty=Name,String="String",Object=Class'DefaultProperties',MetaClass=Class'DefaultProperties',Vector=(X=1.0,Y=2.0,Z=3.0),Enum=EEnum2)
 }

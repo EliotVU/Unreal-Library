@@ -24,7 +24,7 @@ namespace UELib.Core
 
         public ushort ElementSize { get; private set; }
 
-        public ulong PropertyFlags { get; private set; }
+        public UnrealFlags<PropertyFlag> PropertyFlags;
 
 #if XCOM2
         [CanBeNull] public UName ConfigName;
@@ -81,8 +81,8 @@ namespace UELib.Core
                 ArrayDim = _Buffer.ReadUInt16();
                 Record(nameof(ArrayDim), ArrayDim);
 
-                PropertyFlags = _Buffer.ReadUInt32();
-                Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
+                _Buffer.Read(out PropertyFlags);
+                Record(nameof(PropertyFlags), PropertyFlags);
 
                 _Buffer.Read(out CategoryName);
                 Record(nameof(CategoryName), CategoryName);
@@ -115,7 +115,7 @@ namespace UELib.Core
             {
                 ArrayDim = _Buffer.ReadInt16();
                 Record(nameof(ArrayDim), ArrayDim);
-                
+
                 goto skipArrayDim;
             }
 #endif
@@ -130,26 +130,26 @@ namespace UELib.Core
             //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
             //    $"Bad array dimension {ArrayDim & 0x0000FFFFU} for property ${GetReferencePath()}");
 
-            PropertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
+            var propertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
-            Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
 #if BATMAN
             if (Package.Build == BuildGeneration.RSS)
             {
                 if (_Buffer.LicenseeVersion >= 101)
                 {
-                    PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
-                    Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
+                    propertyFlags = (propertyFlags & 0xFFFF0000) >> 24;
                 }
 
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
                 {
-                    PropertyFlags = (PropertyFlags & ~(PropertyFlags >> 2 & 1)) |
-                                    ((ulong)PropertyFlagsLO.Net * (PropertyFlags >> 2 & 1));
+                    propertyFlags = (propertyFlags & ~(propertyFlags >> 2 & 1)) |
+                                    ((ulong)PropertyFlagsLO.Net * (propertyFlags >> 2 & 1));
                 }
             }
 #endif
+            PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+            Record(nameof(PropertyFlags), PropertyFlags);
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {
@@ -215,7 +215,7 @@ namespace UELib.Core
             {
                 RepNotifyFuncName = _Buffer.ReadNameReference();
                 Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
-                
+
                 return;
             }
 #endif
@@ -346,20 +346,23 @@ namespace UELib.Core
             return true;
         }
 
-#endregion
+        #endregion
 
         #region Methods
 
+        [Obsolete("Use PropertyFlags directly")]
         public bool HasPropertyFlag(uint flag)
         {
             return ((uint)PropertyFlags & flag) != 0;
         }
 
+        [Obsolete("Use PropertyFlags directly")]
         public bool HasPropertyFlag(PropertyFlagsLO flag)
         {
             return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;
         }
 
+        [Obsolete("Use PropertyFlags directly")]
         public bool HasPropertyFlag(PropertyFlagsHO flag)
         {
             return ((PropertyFlags >> 32) & (uint)flag) != 0;

@@ -6,8 +6,8 @@ namespace UELib.Core
     /// <summary>
     ///     Implements FMatrix/UObject.Matrix
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UMatrix : IUnrealSerializableClass, IUnrealAtomicStruct
+    [StructLayout(LayoutKind.Sequential, Pack = 16)]
+    public record struct UMatrix : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public UPlane M1, M2, M3, M4;
 

@@ -6,7 +6,7 @@ namespace UELib.Core
     ///     Implements FRangeVector/UObject.RangeVector
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public struct URangeVector : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct URangeVector : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public URange X, Y, Z;
 

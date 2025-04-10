@@ -6,7 +6,7 @@ namespace UELib.Core
     ///     Implements FColor/UObject.Color
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public struct UColor : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UColor : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         // The order may change based on compile-time constants.
 
