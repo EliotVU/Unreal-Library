@@ -12,7 +12,8 @@ namespace UELib.Engine
     {
         public bool HasComp;
 
-        [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)] [CanBeNull]
+        [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)]
+        [CanBeNull]
         public UArray<LegacyMipMap> Mips;
 
         [BuildGeneration(BuildGeneration.UE3)]
@@ -25,6 +26,13 @@ namespace UELib.Engine
             // This kind of data was moved to UTexture2D
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3)
             {
+#if BORDERLANDS2 || BATTLEBORN
+                if (this is not UTexture2D && (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn))
+                {
+                    return;
+                }
+#endif
                 _Buffer.Read(out SourceArt);
                 Record(nameof(SourceArt), SourceArt);
                 return;

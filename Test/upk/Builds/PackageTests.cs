@@ -28,12 +28,20 @@ namespace Eliot.UELib.Test.UPK.Builds
             BuildName.Borderlands2,
             BuildPlatform.PC
         )]
+        [DataRow(@"Borderlands2\",
+            BuildName.Borderlands2,
+            BuildPlatform.PC
+        )]
         [DataRow(@"Borderlands Legends\",
             BuildName.Default,
             BuildPlatform.Console
         )]
         [DataRow(@"BorderlandsGOTY\",
             BuildName.Borderlands_GOTYE,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Battleborn\",
+            BuildName.Battleborn,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"Bulletstorm\",

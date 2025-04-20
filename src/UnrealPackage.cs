@@ -19,19 +19,20 @@ using UELib.Branch.UE3.HUXLEY;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.R6;
 using UELib.Branch.UE3.RSS;
+using UELib.Branch.UE3.Willow;
 using UELib.Branch.UE4;
 using UELib.Flags;
 using UELib.Services;
 
 namespace UELib
 {
-    using Core;
-    using Decoding;
+    using System.Text;
     using Branch.UE2.DVS;
+    using Branch.UE2.ShadowStrike;
     using Branch.UE3.RL;
     using Branch.UE3.SFX;
-    using Branch.UE2.ShadowStrike;
-    using System.Text;
+    using Core;
+    using Decoding;
 
     public class ObjectEventArgs : EventArgs
     {
@@ -716,6 +717,7 @@ namespace UELib
                 /// </summary>
                 [Build(832, 46)]
                 [Build(895, 46)] // VR
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
                 Borderlands2,
 
                 /// <summary>
@@ -825,6 +827,7 @@ namespace UELib
                 ///
                 /// EngineVersion and CookerVersion are packed with the respective Licensee version.
                 /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
                 [Build(874, 78u)] Battleborn,
 
                 /// <summary>
@@ -1919,7 +1922,7 @@ namespace UELib
                 {
                     GatherableTextDataCount = stream.ReadInt32();
                     GatherableTextDataOffset = stream.ReadInt32();
-                    Contract.Assert(GatherableTextDataOffset < stream.Length);
+                    Contract.Assert(GatherableTextDataOffset <= HeaderSize);
                 }
 #endif
                 ExportCount = stream.ReadInt32();
@@ -1966,7 +1969,7 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDependsTable)
                 {
                     DependsOffset = stream.ReadInt32();
-                    Debug.Assert(DependsOffset < stream.Length);
+                    Debug.Assert(DependsOffset <= HeaderSize); // May be equal when there are no items.
                 }
 #if THIEF_DS || DEUSEX_IW
                 if (stream.Package.Build == GameBuild.BuildName.Thief_DS ||
@@ -2010,13 +2013,13 @@ namespace UELib
                 {
                     StringAssetReferencesCount = stream.ReadInt32();
                     StringAssetReferencesOffset = stream.ReadInt32();
-                    Contract.Assert(StringAssetReferencesOffset < stream.Length);
+                    Contract.Assert(StringAssetReferencesOffset <= HeaderSize);
                 }
 
                 if (stream.UE4Version >= 510)
                 {
                     SearchableNamesOffset = stream.ReadInt32();
-                    Contract.Assert(SearchableNamesOffset < stream.Length);
+                    Contract.Assert(SearchableNamesOffset <= HeaderSize);
                 }
 
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable &&
@@ -2031,7 +2034,7 @@ namespace UELib
                    )
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
-                    Debug.Assert(ImportExportGuidsOffset < stream.Length);
+                    Debug.Assert(ImportExportGuidsOffset <= HeaderSize);
 
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();
@@ -2054,7 +2057,7 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
-                    Debug.Assert(ThumbnailTableOffset < stream.Length);
+                    Debug.Assert(ThumbnailTableOffset <= HeaderSize);
                 }
 #if MKKE
                 if (stream.Package.Build == GameBuild.BuildName.MKKE) stream.Skip(4);

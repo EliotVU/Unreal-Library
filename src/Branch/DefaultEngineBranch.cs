@@ -1,6 +1,6 @@
 ﻿using System;
 using UELib.Branch.UE2.VG.Tokens;
-using UELib.Branch.UE3.BL2.Tokens;
+using UELib.Branch.UE3.Willow.Tokens;
 using UELib.Core;
 using UELib.Core.Tokens;
 using UELib.Flags;
@@ -772,20 +772,7 @@ namespace UELib.Branch
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (linker.Build.Name)
             {
-#if BORDERLANDS2
-                case UnrealPackage.GameBuild.BuildName.Battleborn:
-                case UnrealPackage.GameBuild.BuildName.Borderlands2:
-                    tokenMap[0x4C] = typeof(LocalVariableToken<int>);
-                    tokenMap[0x4D] = typeof(LocalVariableToken<float>);
-                    tokenMap[0x4E] = typeof(LocalVariableToken<byte>);
-                    tokenMap[0x4F] = typeof(LocalVariableToken<bool>);
-                    tokenMap[0x50] = typeof(LocalVariableToken<UObject>);
-                    // FIXME: Wrong, is there really even a dynamic type???
-                    //tokenMap[0x51] = typeof(LocalVariableToken<dynamic>);
-
-                    tokenMap[0x5B] = typeof(ByteConstToken);
-                    break;
-
+#if BORDERLANDS
                 case UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE:
                     tokenMap[0x5B] = typeof(BLVariableToken);
                     break;

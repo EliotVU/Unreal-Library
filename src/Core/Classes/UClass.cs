@@ -564,12 +564,13 @@ namespace UELib.Core
                     }
 #endif
 #if BORDERLANDS2 || BATTLEBORN
-                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                        Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn
+                    if ((Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                         Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn) &&
+                        _Buffer.LicenseeVersion >= 45
                        )
                     {
-                        byte unknownByte = _Buffer.ReadByte();
-                        Record("Unknown:Borderlands2", unknownByte);
+                        _Buffer.Read(out byte v1cc); // usually 0x01, sometimes 0x02?
+                        _Buffer.Record("v1cc", v1cc);
                     }
 #endif
                 }

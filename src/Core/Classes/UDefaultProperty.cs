@@ -1250,7 +1250,16 @@ namespace UELib.Core
                         propertyValue = PropertyDisplay.FormatLiteral(offset);
                         break;
                     }
+#if BORDERLANDS2 || BATTLEBORN
+                case PropertyType.ByteAttributeProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
 
+                case PropertyType.IntAttributeProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
+
+                case PropertyType.FloatAttributeProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+#endif
                 default:
                     throw new Exception($"Unsupported property tag type {Type}");
             }
