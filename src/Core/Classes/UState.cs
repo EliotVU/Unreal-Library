@@ -90,8 +90,9 @@ namespace UELib.Core
 
 #if BORDERLANDS2 || TRANSFORMERS || BATMAN
             // FIXME:Temp fix
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+            if ((Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                 Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                 _Buffer.LicenseeVersion >= 18) ||
                 Package.Build == BuildGeneration.HMS ||
                 Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
