@@ -252,9 +252,8 @@ namespace UELib.Core
                 {
                     Deserialize(stream);
                 }
-#if STRICT
-                Debug.Assert(Buffer.Position == Buffer.Length);
-#endif
+
+                LibServices.LogService.SilentAssert(Buffer.Position == Buffer.Length, $"Trailing data for object {GetReferencePath()}");
             }
             catch (Exception exception)
             {
