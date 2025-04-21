@@ -25,7 +25,7 @@ namespace UELib.Core
 
         public ushort RepOffset { get; set; }
 
-        public bool RepReliable => HasFunctionFlag(Flags.FunctionFlags.NetReliable);
+        public bool RepReliable => FunctionFlags.HasFlag(FunctionFlag.NetReliable);
 
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
@@ -33,8 +33,11 @@ namespace UELib.Core
 
         #region Script Members
 
-        public List<UProperty> Params { get; private set; }
-        public UProperty ReturnProperty { get; private set; }
+        [Obsolete]
+        public IEnumerable<UProperty> Params => EnumerateFields<UProperty>().Where(prop => prop.IsParm());
+
+        public UProperty ReturnProperty => EnumerateFields<UProperty>()
+            .FirstOrDefault(prop => prop.PropertyFlags.HasFlag(PropertyFlag.ReturnParm));
 
         #endregion
 
@@ -57,7 +60,7 @@ namespace UELib.Core
             {
                 _Buffer.Read(out FunctionFlags);
                 Record(nameof(FunctionFlags), FunctionFlags);
-                if (HasFunctionFlag(Flags.FunctionFlags.Net))
+                if (FunctionFlags.HasFlag(FunctionFlag.Net))
                 {
                     RepOffset = _Buffer.ReadUShort();
                     Record(nameof(RepOffset), RepOffset);
@@ -115,7 +118,7 @@ namespace UELib.Core
 #endif
         skipFunctionFlags:
             Record(nameof(FunctionFlags), FunctionFlags);
-            if (HasFunctionFlag(Flags.FunctionFlags.Net))
+            if (FunctionFlags.HasFlag(FunctionFlag.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
@@ -159,18 +162,6 @@ namespace UELib.Core
             }
         }
 
-        protected override void FindChildren()
-        {
-            base.FindChildren();
-            Params = new List<UProperty>();
-            foreach (var property in Variables)
-            {
-                if (property.HasPropertyFlag(PropertyFlagsLO.ReturnParm)) ReturnProperty = property;
-
-                if (property.IsParm()) Params.Add(property);
-            }
-        }
-
         #endregion
 
         #region Methods
@@ -187,9 +178,14 @@ namespace UELib.Core
             return ((uint)FunctionFlags & (uint)flag) != 0;
         }
 
+        internal bool HasFunctionFlag(FunctionFlag flagIndex)
+        {
+            return FunctionFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(FunctionFlag)], flagIndex);
+        }
+
         public bool IsOperator()
         {
-            return HasFunctionFlag(Flags.FunctionFlags.Operator);
+            return FunctionFlags.HasFlag(FunctionFlag.Operator);
         }
 
         public bool IsPost()
@@ -199,7 +195,7 @@ namespace UELib.Core
 
         public bool IsPre()
         {
-            return IsOperator() && HasFunctionFlag(Flags.FunctionFlags.PreOperator);
+            return IsOperator() && FunctionFlags.HasFlag(FunctionFlag.PreOperator);
         }
 
         public bool IsDelegate()
@@ -216,7 +212,9 @@ namespace UELib.Core
             // FIXME: Deprecate version check, and re-map the function flags using the EngineBranch class approach.
             return Package.Version > 300
                    && ByteCodeManager != null
-                   && Params?.Any() == true
+                   && EnumerateFields<UProperty>()
+                       ?.Where(prop => prop.PropertyFlags.HasFlag(PropertyFlag.Parm))
+                       .Any() == true
                 // Not available for older packages.
                 // && HasFunctionFlag(Flags.FunctionFlags.OptionalParameters);
                 ;

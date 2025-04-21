@@ -135,7 +135,8 @@ namespace UELib.Core
 
         #region Script Members
 
-        public IList<UState> States { get; protected set; }
+        [Obsolete]
+        public IEnumerable<UState> States => EnumerateFields<UState>();
 
         #endregion
 
@@ -706,15 +707,6 @@ namespace UELib.Core
 #endif
         }
 
-        protected override void FindChildren()
-        {
-            base.FindChildren();
-            States = new List<UState>();
-            for (var child = Children; child != null; child = child.NextField)
-                if (child.IsClassType("State"))
-                    States.Insert(0, (UState)child);
-        }
-
         #endregion
 
         #region Methods
@@ -749,6 +741,11 @@ namespace UELib.Core
         public bool HasClassFlag(uint flag)
         {
             return (ClassFlags & flag) != 0;
+        }
+
+        internal bool HasClassFlag(ClassFlag flagIndex)
+        {
+            return ClassFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(ClassFlag)], flagIndex);
         }
 
         public bool IsClassInterface()

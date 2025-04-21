@@ -50,7 +50,8 @@ namespace UELib.Core
 
         #region Script Members
 
-        public IList<UFunction> Functions { get; private set; }
+        [Obsolete]
+        public IEnumerable<UFunction> Functions => EnumerateFields<UFunction>();
 
         #endregion
         
@@ -120,23 +121,15 @@ namespace UELib.Core
             Record(nameof(FuncMap), FuncMap);
         }
 
-        protected override void FindChildren()
-        {
-            base.FindChildren();
-            Functions = new List<UFunction>();
-            for (var child = Children; child != null; child = child.NextField)
-            {
-                if (child.IsClassType("Function"))
-                {
-                    Functions.Insert(0, (UFunction)child);
-                }
-            }
-        }
-
         [Obsolete("Use StateFlags directly.")]
         public bool HasStateFlag(StateFlags flag) => (StateFlags & (uint)flag) != 0;
 
         [Obsolete("Use StateFlags directly.")]
         public bool HasStateFlag(uint flag) => (StateFlags & flag) != 0;
+
+        internal bool HasStateFlag(StateFlag flagIndex)
+        {
+            return StateFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(StateFlag)], flagIndex);
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿#if Forms
-using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -12,9 +11,8 @@ namespace UELib.Core
             _ParentNode = AddSectionNode(node, nameof(UStruct));
             if (IsPureStruct())
             {
-                var sFlagsNode = AddTextNode(_ParentNode, $"Struct Flags:{UnrealMethods.FlagToString(StructFlags)}");
-                sFlagsNode.ToolTipText =
-                    UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.StructFlags), StructFlags));
+                var sFlagsNode = AddTextNode(_ParentNode, $"Struct Flags:{(ulong)StructFlags:X8}");
+                sFlagsNode.ToolTipText = StructFlags.ToString();
             }
 
             AddTextNode(_ParentNode, $"Script Size:{DataScriptSize}");
@@ -39,13 +37,13 @@ namespace UELib.Core
             }
 
             AddObjectListNode(node, "Children", EnumerateFields().Reverse(), nameof(UObject));
-            AddObjectListNode(node, "Constants", Constants, nameof(UConst));
-            AddObjectListNode(node, "Enumerations", Enums, nameof(UEnum));
-            AddObjectListNode(node, "Structures", Structs, nameof(UStruct));
+            AddObjectListNode(node, "Constants", EnumerateFields<UConst>().Reverse(), nameof(UConst));
+            AddObjectListNode(node, "Enumerations", EnumerateFields<UEnum>().Reverse(), nameof(UEnum));
+            AddObjectListNode(node, "Structures", EnumerateFields<UStruct>().Where(field => field.IsPureStruct()).Reverse(), nameof(UStruct));
             // Not if the upper class is a function; UFunction adds locals and parameters instead
             if (GetType() != typeof(UFunction))
             {
-                AddObjectListNode(node, "Variables", Variables, nameof(UProperty));
+                AddObjectListNode(node, "Variables", EnumerateFields<UProperty>(), nameof(UProperty));
             }
         }
 

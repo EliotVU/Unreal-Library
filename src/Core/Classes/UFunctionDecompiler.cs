@@ -256,7 +256,7 @@ namespace UELib.Core
         {
             var output = string.Empty;
             // static function (string?:) Name(Parms)...
-            if (HasFunctionFlag(Flags.FunctionFlags.Native))
+            if (FunctionFlags.HasFlag(FunctionFlag.Native))
             {
                 // Output native declaration.
                 output = $"// Export U{Outer.Name}::exec{Name}(FFrame&, void* const)\r\n{UDecompilingState.Tabs}";
@@ -269,7 +269,7 @@ namespace UELib.Core
 
             output += comment +
                       FormatFlags() + returnCode + FriendlyName + FormatParms();
-            if (HasFunctionFlag(Flags.FunctionFlags.Const))
+            if (FunctionFlags.HasFlag(FunctionFlag.Const))
             {
                 output += " const";
             }
@@ -279,10 +279,16 @@ namespace UELib.Core
 
         private string FormatParms()
         {
-            if (Params == null || !Params.Any())
-                return "()";
+            var parms = EnumerateFields<UProperty>()
+                .Where(field => field.IsParm() && !field.PropertyFlags.HasFlag(PropertyFlag.ReturnParm))
+                .ToList();
 
-            bool hasOptionalData = HasOptionalParamData();
+            if (parms.Count == 0)
+            {
+                return "()";
+            }
+
+            bool hasOptionalData = ByteCodeManager != null && HasOptionalParamData();
             if (hasOptionalData)
             {
                 // Ensure a sound ByteCodeManager
@@ -292,11 +298,10 @@ namespace UELib.Core
             }
 
             var output = string.Empty;
-            var parameters = Params.Where(parm => parm != ReturnProperty).ToList();
-            foreach (var parm in parameters)
+            foreach (var parm in parms)
             {
                 string parmCode = parm.Decompile();
-                if (hasOptionalData && parm.HasPropertyFlag(PropertyFlagsLO.OptionalParm))
+                if (hasOptionalData && parm.PropertyFlags.HasFlag(PropertyFlag.OptionalParm))
                 {
                     // Look for an assignment.
                     var defaultToken = ByteCodeManager.NextToken;
@@ -307,7 +312,7 @@ namespace UELib.Core
                     }
                 }
 
-                if (parm != parameters.Last())
+                if (parm != parms.Last())
                 {
                     output += $"{parmCode}, ";
                     continue;

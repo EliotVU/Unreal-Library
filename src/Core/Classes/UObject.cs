@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using UELib.Branch;
+using UELib.Engine;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
 using UELib.Services;
@@ -576,6 +577,11 @@ namespace UELib.Core
         public bool HasObjectFlag(ObjectFlagsHO flag)
         {
             return (ObjectFlags & ((ulong)flag << 32)) != 0;
+        }
+
+        internal bool HasObjectFlag(ObjectFlag flagIndex)
+        {
+            return ObjectFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)], flagIndex);
         }
 
         public bool IsPublic()

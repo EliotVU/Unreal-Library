@@ -462,9 +462,9 @@ namespace UELib.Core
                         && DeserializedTokens.Count > 0)
                     {
                         CurrentTokenIndex = 0;
-                        foreach (var parm in func.Params)
+                        foreach (var parm in func.EnumerateFields<UProperty>().Where(field => field.IsParm()))
                         {
-                            if (!parm.HasPropertyFlag(PropertyFlagsLO.OptionalParm))
+                            if (!parm.PropertyFlags.HasFlag(PropertyFlag.OptionalParm))
                                 continue;
 
                             // Skip NothingToken (No default value) and DefaultParameterToken (up to EndParmValueToken)

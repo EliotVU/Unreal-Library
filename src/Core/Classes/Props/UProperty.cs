@@ -219,7 +219,7 @@ namespace UELib.Core
                 return;
             }
 #endif
-            if (HasPropertyFlag(PropertyFlagsLO.Net))
+            if (PropertyFlags.HasFlag(PropertyFlag.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
@@ -287,7 +287,7 @@ namespace UELib.Core
 #endif
             // Appears to be a UE2.5 feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
-            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) &&
+            if ((PropertyFlags.HasFlag(PropertyFlag.CommentString) &&
                  (Package.Build == BuildGeneration.UE2_5
                   || Package.Build == BuildGeneration.AGP
                   || Package.Build == BuildGeneration.Flesh))
@@ -365,12 +365,17 @@ namespace UELib.Core
         [Obsolete("Use PropertyFlags directly")]
         public bool HasPropertyFlag(PropertyFlagsHO flag)
         {
-            return ((PropertyFlags >> 32) & (uint)flag) != 0;
+            return (PropertyFlags & ((ulong)flag << 32)) != 0;
+        }
+
+        internal bool HasPropertyFlag(PropertyFlag flagIndex)
+        {
+            return PropertyFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(PropertyFlag)], flagIndex);
         }
 
         public bool IsParm()
         {
-            return HasPropertyFlag(PropertyFlagsLO.Parm);
+            return PropertyFlags.HasFlag(PropertyFlag.Parm);
         }
 
         public virtual string GetFriendlyInnerType()

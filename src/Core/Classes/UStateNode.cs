@@ -1,4 +1,5 @@
 ﻿#if Forms
+using System.Linq;
 using System.Windows.Forms;
 
 namespace UELib.Core
@@ -11,7 +12,7 @@ namespace UELib.Core
 
             if (GetType() == typeof(UState))
             {
-                var stateFlagsNode = AddTextNode(_ParentNode, $"State Flags:{UnrealMethods.FlagToString(StateFlags)}");
+                var stateFlagsNode = AddTextNode(_ParentNode, $"State Flags:{(ulong)StateFlags:X8}");
                 stateFlagsNode.ToolTipText = StateFlags.ToString();
             }
 
@@ -21,7 +22,7 @@ namespace UELib.Core
         protected override void AddChildren(TreeNode node)
         {
             base.AddChildren(node);
-            AddObjectListNode(node, "Functions", Functions, nameof(UFunction));
+            AddObjectListNode(node, "Functions", EnumerateFields<UFunction>().Reverse(), nameof(UFunction));
         }
     }
 }
