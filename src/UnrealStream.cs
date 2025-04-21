@@ -1226,6 +1226,39 @@ namespace UELib
             }
         }
 
+        public static void ReadArray(this IUnrealStream stream, out UArray<uint> array)
+        {
+            int c = stream.ReadLength();
+            array = new UArray<uint>(c);
+            for (int i = 0; i < c; ++i)
+            {
+                stream.Read(out uint element);
+                array.Add(element);
+            }
+        }
+
+        public static void ReadArray(this IUnrealStream stream, out UArray<ushort> array)
+        {
+            int c = stream.ReadLength();
+            array = new UArray<ushort>(c);
+            for (int i = 0; i < c; ++i)
+            {
+                stream.Read(out ushort element);
+                array.Add(element);
+            }
+        }
+
+        public static void ReadArray(this IUnrealStream stream, out UArray<short> array)
+        {
+            int c = stream.ReadLength();
+            array = new UArray<short>(c);
+            for (int i = 0; i < c; ++i)
+            {
+                stream.Read(out short element);
+                array.Add(element);
+            }
+        }
+
         public static void ReadArray(this IUnrealStream stream, out UArray<float> array)
         {
             int c = stream.ReadLength();
@@ -1415,7 +1448,16 @@ namespace UELib
         public static void Read(this IUnrealStream stream, out UArray<string> array) => ReadArray(stream, out array);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UArray<uint> array) => ReadArray(stream, out array);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read(this IUnrealStream stream, out UArray<int> array) => ReadArray(stream, out array);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UArray<short> array) => ReadArray(stream, out array);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Read(this IUnrealStream stream, out UArray<ushort> array) => ReadArray(stream, out array);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Read<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
@@ -1557,6 +1599,7 @@ namespace UELib
                     Unsafe.CopyBlock(dataPtr, ptr, (uint)structSize);
                 }
             }
+
             stream.UW.Write(data, 0, data.Length);
         }
 
@@ -1591,6 +1634,9 @@ namespace UELib
         public static void Write<T>(this IUnrealStream stream, ref UArray<T> array)
             where T : IUnrealSerializableClass =>
             WriteArray(stream, in array);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Write(this IUnrealStream stream, in UArray<int> array) => WriteArray(stream, in array);
 
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         //public static void Write<T>(this IUnrealStream stream, ref T item)
