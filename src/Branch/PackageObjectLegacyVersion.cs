@@ -200,6 +200,8 @@ namespace UELib.Branch
 
         NetObjectCountAdded = 322,
 
+        AddedXenonSoundData = 327,
+
         CompressionAdded = 334,
 
         NumberAddedToName = 343,
@@ -231,12 +233,24 @@ namespace UELib.Branch
         /// </summary>
         IsCopyAddedToStructMember = GameStranglehold + 1,
 
+        AddedPS3SoundData = 376,
+
+        /// <summary>
+        /// And deprecated FileType from USoundNodeWave.
+        /// </summary>
+        AddedPCSoundData = 380,
+
+        AddedChannelsSoundInfo = 385,
+        AddedChannelCountSoundInfo = 390,
+
         AddedArrayEnumToUProperty = 401,
 
         AddedDependsTable = 415,
 
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
+
+        DisplacedSoundChannelProperties = 420,
 
         [Discardable] GameFFOW = 433, // Engine Version: 2917
 
@@ -278,6 +292,9 @@ namespace UELib.Branch
         AddedTextureFileCacheGuidToTexture2D = 567,
 
         AddedThumbnailTable = 584,
+
+        AddedDingoSoundData = 593,
+        AddedOrbisSoundData = 594,
 
         LightmassAdded = 600,
 
@@ -321,6 +338,9 @@ namespace UELib.Branch
         // 829 according to Borderlands2
         RemovedConvexVolumes = 829,
 
+        AddedWiiUSoundData = 845,
+        AddedIPhoneSoundData = 851,
+        AddedFlashSoundData = 854,
         AddedATITCToUTexture2D = 857,
         AddedETCToUTexture2D = 864,
 
