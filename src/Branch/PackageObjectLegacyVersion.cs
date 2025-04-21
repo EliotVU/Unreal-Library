@@ -285,6 +285,8 @@ namespace UELib.Branch
 
         UProcBuildingReferenceAddedToPoly = 606,
 
+        AddedDominantLightShadowMapToDominantDirectionalLightComponent = 617,
+
         AddedImportExportGuidsTable = 623,
 
         EnumNameAddedToBytePropertyTag = 633,
@@ -303,6 +305,8 @@ namespace UELib.Branch
 
         BoolValueToByteForBoolPropertyTag = 673,
 
+        AddedDominantLightShadowMapToUDominantSpotLightComponent = 682,
+
         AddedPVRTCToUTexture2D = 674,
 
         ProbeMaskReducedAndIgnoreMaskRemoved = 691,
@@ -313,6 +317,9 @@ namespace UELib.Branch
 
         AddedClassGroupsToUClass = 789,
         AddedNativeClassNameToUClass = 813,
+
+        // 829 according to Borderlands2
+        RemovedConvexVolumes = 829,
 
         AddedATITCToUTexture2D = 857,
         AddedETCToUTexture2D = 864,
