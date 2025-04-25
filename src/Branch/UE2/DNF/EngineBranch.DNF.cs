@@ -1,17 +1,24 @@
-﻿using static UELib.Core.UStruct.UByteCodeDecompiler;
-using UELib.Core.Tokens;
+﻿using System;
+using System.Diagnostics;
+using UELib.Annotations;
 using UELib.Branch.UE2.DNF.Tokens;
 using UELib.Core;
+using UELib.Core.Tokens;
+using UELib.Flags;
 using UELib.Tokens;
-using System.Diagnostics;
-using System;
-using UELib.Annotations;
+using static UELib.Core.UStruct.UByteCodeDecompiler;
 
 namespace UELib.Branch.UE2.DNF
 {
     [Build(UnrealPackage.GameBuild.BuildName.DNF)]
     public class EngineBranchDNF : DefaultEngineBranch
     {
+        [Flags]
+        public enum FunctionFlags : uint
+        {
+            Delegate = 0x400000, // 0x00100000U << 2
+        }
+
         public EngineBranchDNF(BuildGeneration generation) : base(generation)
         {
         }
@@ -25,9 +32,15 @@ namespace UELib.Branch.UE2.DNF
             }
         }
 
-        protected TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override void SetupEnumFunctionFlags(UnrealPackage linker)
         {
-            return new TokenMap(0x80)
+            base.SetupEnumFunctionFlags(linker);
+
+            base.FunctionFlags[(ulong)FunctionFlag.Delegate] = (ulong)FunctionFlags.Delegate;
+        }
+
+        protected TokenMap BuildTokenMap(UnrealPackage linker) =>
+            new(0x80)
             {
                 { 0x00, typeof(LocalVariableToken) },
                 { 0x01, typeof(InstanceVariableToken) },
@@ -158,9 +171,8 @@ namespace UELib.Branch.UE2.DNF
                 { 0x7C, typeof(BadToken) },
                 { 0x7D, typeof(BadToken) },
                 { 0x7E, typeof(BadToken) },
-                { 0x7F, typeof(BadToken) },
+                { 0x7F, typeof(BadToken) }
             };
-        }
 
         protected override void SetupTokenFactory(UnrealPackage linker)
         {
@@ -170,9 +182,9 @@ namespace UELib.Branch.UE2.DNF
             // Undo downgrade, now this raises the question, which byte-code is set for DelegateToString if there is one?
             tokenMap[(byte)CastToken.DelegateToString] = typeof(DynamicArrayLengthToken);
             SetupTokenFactory<TokenFactory>(
-                tokenMap, 
-                TokenFactory.FromPackage(linker.NTLPackage), 
-                0x80, 
+                tokenMap,
+                TokenFactory.FromPackage(linker.NTLPackage),
+                0x80,
                 0x90);
         }
     }

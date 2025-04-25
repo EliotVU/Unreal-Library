@@ -200,11 +200,7 @@ namespace UELib.Core
 
         public bool IsDelegate()
         {
-#if DNF
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
-                return HasFunctionFlag(0x400000);
-#endif
-            return HasFunctionFlag(Flags.FunctionFlags.Delegate);
+            return FunctionFlags.HasFlag(FunctionFlag.Delegate);
         }
 
         public bool HasOptionalParamData()
