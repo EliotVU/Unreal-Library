@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using UELib.Annotations;
 using UELib.Branch;
+using UELib.Services;
 using UELib.Types;
 using UELib.UnrealScript;
 
@@ -61,10 +60,11 @@ namespace UELib.Core
             {
                 value = DeserializeValue();
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                Console.Error.WriteLine($"Exception thrown: {ex} in {nameof(Decompile)}");
-                value = $"/* ERROR: {ex.GetType()} */";
+                value = $"/* ERROR: {exception.GetType()} */";
+
+                LibServices.LogService.SilentException(exception);
             }
             finally
             {
@@ -73,7 +73,7 @@ namespace UELib.Core
 
             // Array or Inlined object
             if ((_TempFlags & DoNotAppendName) != 0)
-                // The tag handles the name etc on its own.
+            // The tag handles the name etc on its own.
             {
                 return value;
             }
@@ -363,6 +363,7 @@ namespace UELib.Core
 
             Size = DeserializePackedSize((byte)(info & InfoSizeMask));
             Record(nameof(Size), Size);
+            Debug.Assert(Size >= 0);
 
             // TypeData
             switch (Type)
@@ -400,6 +401,7 @@ namespace UELib.Core
 
             Size = _Buffer.ReadInt32();
             Record(nameof(Size), Size);
+            Debug.Assert(Size >= 0);
 
             ArrayIndex = _Buffer.ReadInt32();
             Record(nameof(ArrayIndex), ArrayIndex);
@@ -478,6 +480,7 @@ namespace UELib.Core
 
             Size = _Buffer.ReadInt32();
             Record(nameof(Size), Size);
+            Debug.Assert(Size >= 0);
 
             ArrayIndex = _Buffer.ReadInt32();
             Record(nameof(ArrayIndex), ArrayIndex);
@@ -574,18 +577,20 @@ namespace UELib.Core
             {
                 return DeserializeDefaultPropertyValue(type, ref deserializeFlags);
             }
-            catch (EndOfStreamException e)
+            catch (EndOfStreamException)
             {
                 // Abort decompilation
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
                 Console.Error.WriteLine(
                     $"\r\n> PropertyTag value deserialization error for {_Container.GetPath()}.{Name}" +
-                    $"\r\n Exception: {ex}");
+                    $"\r\n Exception: {exception}");
 
-                return $"/* ERROR: {ex.GetType()} */";
+                LibServices.LogService.SilentException(exception);
+
+                return $"/* ERROR: {exception.GetType()} */";
             }
         }
 
@@ -709,12 +714,12 @@ namespace UELib.Core
                 case PropertyType.ByteProperty:
                     {
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag
-                            && Size != 1)
+                            // Cannot compare size with 1 because this byte value may be part of a struct.
+                            && _Buffer.Position + 1 != _PropertyValuePosition + Size)
                         {
                             string enumTagName = _Buffer.ReadName();
                             Record(nameof(enumTagName), enumTagName);
-                            propertyValue = _Buffer.Version >=
-                                            (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag
+                            propertyValue = _TypeData.EnumName != null
                                 ? $"{_TypeData.EnumName}.{enumTagName}"
                                 : enumTagName;
                         }

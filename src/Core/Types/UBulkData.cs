@@ -62,6 +62,11 @@ namespace UELib.Core
                 return;
             }
 
+            if (Flags.HasFlag(BulkDataFlags.StoreOnlyPayload))
+            {
+                return;
+            }
+
             Debug.Assert(stream.AbsolutePosition == StorageOffset);
             // Skip the ElementData
             stream.AbsolutePosition = StorageOffset + StorageSize;
@@ -194,6 +199,12 @@ namespace UELib.Core
 
             if (Flags.HasFlag(BulkDataFlags.StoreInSeparateFile))
             {
+                return;
+            }
+
+            if (Flags.HasFlag(BulkDataFlags.StoreOnlyPayload))
+            {
+                // TODO: Write to the end of file, or change the flags and write it right here.
                 return;
             }
 

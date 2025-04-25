@@ -1838,7 +1838,7 @@ namespace UELib
                 {
                     if (LicenseeVersion >= 8)
                     {
-                        int huxleySignature = stream.ReadInt32();
+                        uint huxleySignature = stream.ReadUInt32();
                         Contract.Assert(huxleySignature == 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
                     }
 
@@ -1996,7 +1996,7 @@ namespace UELib
                     stream.Read(out int v30); // FileEndOffset, used in a loop that invokes a similar procedure as the names table.
                     Contract.Assert(v30 == stream.Length);
                     // v2c = 0 if v30 < ExportOffset
-                    
+
                     if (stream.LicenseeVersion >= 85)
                     {
                         stream.Read(out int v08); // same offset as the variable that is serialized before 'PackageFlags'.
@@ -2418,6 +2418,13 @@ namespace UELib
             var pkg = new UnrealPackage(stream);
             pkg.Deserialize(stream);
             return pkg;
+        }
+
+        private UPackage GetRootPackage(string filePath)
+        {
+            string packageName = Path.GetFileNameWithoutExtension(filePath);
+            return FindObject<UPackage>(packageName)
+                   ?? CreateObject<UPackage>(new UName(packageName), new UnrealFlags<ObjectFlag>(0));
         }
 
         /// <summary>

@@ -49,6 +49,15 @@ namespace UELib.Core
             }
         }
 
+        public IEnumerable<T> EnumerateSuper<T>() where T : UStruct
+        {
+            for (var super = Super; super != null; super = super.Super)
+            {
+                yield return (T)super;
+            }
+        }
+
+
         public IEnumerable<UStruct> EnumerateSuper(UStruct super)
         {
             for (; super != null; super = super.Super)

@@ -578,7 +578,7 @@ namespace UELib
         public void WriteObjectFlags()
         {
             Owner.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);
-            Owner.Stream.Writer.Write((uint)ObjectFlags);
+            Owner.Stream.Write((uint)ObjectFlags);
         }
     }
 }

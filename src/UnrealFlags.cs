@@ -9,7 +9,7 @@ namespace UELib.Flags
     public struct UnrealFlags<TEnum> : IEquatable<ulong>
         where TEnum : Enum
     {
-        private ulong _RawValue;
+        private readonly ulong _RawValue;
 
         public readonly ulong[] FlagsMap;
 
@@ -91,9 +91,7 @@ namespace UELib.Flags
 
         private bool HasFlag(int flagIndex)
         {
-            Debug.Assert(FlagsMap != null);
-
-            return HasFlag(FlagsMap, flagIndex);
+            return FlagsMap != null && HasFlag(FlagsMap, flagIndex);
         }
 
         private bool HasFlag(ulong[] flagsMap, int flagIndex)
@@ -108,9 +106,7 @@ namespace UELib.Flags
         /// <param name="flagIndex">the flag index that resolves to the actual flags.</param>
         public bool HasFlag(TEnum flagIndex)
         {
-            Debug.Assert(FlagsMap != null);
-
-            return HasFlag(FlagsMap, flagIndex);
+            return FlagsMap != null && HasFlag(FlagsMap, flagIndex);
         }
 
         public bool HasFlag(ulong[] flagsMap, TEnum flagIndex)

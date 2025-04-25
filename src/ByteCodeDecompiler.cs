@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core.Tokens;
 using UELib.Flags;
+using UELib.Services;
 using UELib.Tokens;
 
 namespace UELib.Core
 {
     using System.Linq;
     using System.Text;
-    using UELib.Branch.UE3.RSS.Tokens;
 
     public partial class UStruct
     {
@@ -43,12 +42,12 @@ namespace UELib.Core
             public UByteCodeDecompiler(UStruct container)
             {
                 _Container = container;
-                
+
                 _Package = container.Package;
                 Debug.Assert(_Package != null);
                 _TokenFactory = container.GetTokenFactory();
                 Debug.Assert(_TokenFactory != null);
-                
+
                 SetupMemorySizes();
             }
 
@@ -121,8 +120,7 @@ namespace UELib.Core
                 ScriptPosition = 0;
                 try
                 {
-                    _Container.LoadBuffer();
-                    _Buffer = _Container.Buffer;
+                    _Buffer = _Container.LoadBuffer();
                     _Buffer.Seek(_Container.ScriptOffset, SeekOrigin.Begin);
                     int scriptSize = _Container.ByteScriptSize;
                     while (ScriptPosition < scriptSize)
@@ -130,17 +128,26 @@ namespace UELib.Core
                         {
                             DeserializeNext();
                         }
-                        catch (EndOfStreamException error)
+                        catch (StackOverflowException exception)
                         {
-                            Console.Error.WriteLine("Couldn't backup from this error! Decompiling aborted!");
+                            LibServices.Debug("Failed to deserialize token at position:" + ScriptPosition);
+                            LibServices.LogService.SilentException(exception);
+
                             break;
                         }
-                        catch (SystemException e)
+                        catch (EndOfStreamException exception)
                         {
-                            Console.WriteLine("Object:" + _Container.Name);
-                            Console.WriteLine("Failed to deserialize token at position:" + ScriptPosition);
-                            Console.WriteLine("Exception:" + e.Message);
-                            Console.WriteLine("Stack:" + e.StackTrace);
+                            LibServices.Debug("Failed to deserialize token at position:" + ScriptPosition);
+                            LibServices.LogService.SilentException(exception);
+
+                            break;
+                        }
+                        catch (Exception exception)
+                        {
+                            LibServices.Debug("Failed to deserialize token at position:" + ScriptPosition);
+                            LibServices.LogService.SilentException(exception);
+
+                            break;
                         }
                 }
                 finally
@@ -153,7 +160,7 @@ namespace UELib.Core
             {
                 // Sometimes we may end up at the end of a script
                 // -- and by coincidence pickup a DebugInfo byte-code outside of the script-boundary.
-                if (ScriptPosition+sizeof(byte)+sizeof(int) >= _Container.ByteScriptSize) return;
+                if (ScriptPosition + sizeof(byte) + sizeof(int) >= _Container.ByteScriptSize) return;
 
                 long p = _Buffer.Position;
                 byte opCode = _Buffer.ReadByte();
@@ -166,7 +173,7 @@ namespace UELib.Core
                 }
 
                 int version = 0;
-                
+
                 var tokenType = _TokenFactory.GetTokenTypeFromOpCode(opCode);
                 if (tokenType == typeof(DebugInfoToken))
                 {
@@ -217,14 +224,14 @@ namespace UELib.Core
                 token.Size = (short)(ScriptPosition - scriptPosition);
                 token.StorageSize = (short)(_Buffer.Position - _Container.ScriptOffset - token.StoragePosition);
                 token.PostDeserialized();
-                
+
                 return token;
             }
             #endregion
 
 #if DECOMPILE
 
-#region Decompile
+            #region Decompile
 
             public class NestManager
             {
@@ -525,13 +532,10 @@ namespace UELib.Core
 #endif
                                 }
                             }
-                            catch (EndOfStreamException)
+                            catch (Exception exception)
                             {
-                                break;
-                            }
-                            catch (Exception e)
-                            {
-                                output.Append($"// ({e.GetType().Name})");
+                                output.Append($"// ({exception.GetType().Name})");
+                                LibServices.LogService.SilentException(exception);
                             }
 
                             try
@@ -549,15 +553,11 @@ namespace UELib.Core
                                     }
                                 }
                             }
-                            catch (EndOfStreamException)
-                            {
-                                break;
-                            }
-                            catch (Exception e)
+                            catch (Exception exception)
                             {
                                 output.AppendLine("\r\n"
                                                   + UDecompilingState.Tabs + "/* Statement decompilation error: "
-                                                  + e.Message);
+                                                  + exception.Message);
 
                                 UDecompilingState.AddTab();
                                 string tokensOutput = FormatAndDecompileTokens(tokenBeginIndex, tokenEndIndex);
@@ -570,6 +570,8 @@ namespace UELib.Core
                                                   + "*/");
 
                                 tokenOutput = "/*@Error*/";
+
+                                LibServices.LogService.SilentException(exception);
                             }
                             finally
                             {
@@ -692,13 +694,15 @@ namespace UELib.Core
                                 spewOutput = true;
                             }
                         }
-                        catch (Exception e)
+                        catch (Exception exception)
                         {
                             output.Append("\r\n" + UDecompilingState.Tabs + "// Failed to format nests!:"
-                                          + e + "\r\n"
+                                          + exception + "\r\n"
                                           + UDecompilingState.Tabs + "// " + _Nester.Nests.Count + " & "
                                           + _Nester.Nests[_Nester.Nests.Count - 1]);
                             spewOutput = true;
+
+                            LibServices.LogService.SilentException(exception);
                         }
                     }
 
@@ -707,22 +711,26 @@ namespace UELib.Core
                         // Decompile remaining nests
                         output.Append(DecompileNests(true));
                     }
-                    catch (Exception e)
+                    catch (Exception exception)
                     {
                         output.Append("\r\n" + UDecompilingState.Tabs
-                                             + "// Failed to format remaining nests!:" + e + "\r\n"
+                                             + "// Failed to format remaining nests!:" + exception + "\r\n"
                                              + UDecompilingState.Tabs + "// " + _Nester.Nests.Count + " & "
                                              + _Nester.Nests[_Nester.Nests.Count - 1]);
+
+                        LibServices.LogService.SilentException(exception);
                     }
                 }
-                catch (Exception e)
+                catch (Exception exception)
                 {
                     output.Append(UDecompilingState.Tabs);
                     output.AppendLine("// Cannot recover from this decompilation error.");
                     output.Append(UDecompilingState.Tabs);
-                    output.AppendLine($"// Error: {FormatTabs(e.Message)}");
+                    output.AppendLine($"// Error: {FormatTabs(exception.Message)}");
                     output.Append(UDecompilingState.Tabs);
                     output.AppendLine($"// Token Index: {CurrentTokenIndex} / {DeserializedTokens.Count}");
+
+                    LibServices.LogService.SilentException(exception);
                 }
                 finally
                 {
@@ -756,10 +764,10 @@ namespace UELib.Core
                         output += "\r\n" + UDecompilingState.Tabs +
                                   $"{FormatTokenInfo(t)} << {t.Decompile()}";
                     }
-                    catch (Exception e)
+                    catch (Exception exception)
                     {
                         output += "\r\n" + UDecompilingState.Tabs +
-                                  $"{FormatTokenInfo(t)} << {e.GetType().FullName}";
+                                  $"{FormatTokenInfo(t)} << {exception.GetType().FullName}";
                         try
                         {
                             output += "\r\n" + UDecompilingState.Tabs + "(";
@@ -774,6 +782,8 @@ namespace UELib.Core
                         {
                             i += CurrentTokenIndex - beginIndex;
                         }
+
+                        LibServices.LogService.SilentException(exception);
                     }
                 }
 
@@ -883,9 +893,9 @@ namespace UELib.Core
                 return output;
             }
 
-#endregion
+            #endregion
 
-#region Disassemble
+            #region Disassemble
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
             public string Disassemble()
@@ -893,7 +903,7 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-#endregion
+            #endregion
 
 #endif
         }

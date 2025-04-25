@@ -111,8 +111,8 @@ namespace UELib.Branch
 
         ObjectFlagsSizeExpandedTo64Bits = 195,
 
-        // FIXME: Version, def not <= 178, not found in RoboHordes (198,200), but found in GoW without a version check, so this approximation should do :)
-        TemplateDataAddedToUComponent = 201,
+        // 196 according to EndWar and R6 Vegas
+        AddedComponentGuid = 196,
 
         // 208 according to EndWar
         PackageImportsDeprecated = 208,
@@ -128,13 +128,18 @@ namespace UELib.Branch
         /// </summary>
         ArchetypeAddedToExports = 220,
 
-        PropertyFlagsSizeExpandedTo64Bits = 220,
+        // 220, but doesn't appear to be true for RoboHordes(198,200)
+        PropertyFlagsSizeExpandedTo64Bits = 190,
 
         // 222 according to EndWar
         AddedInterfacesFeature = 222,
 
         // 223 according to EndWar
         RefactoredPropertyTags = 223,
+
+        // FIXME: Version, def not <= 178, not found in RoboHordes (198,200), but found in GoW without a version check, so this approximation should do :)
+        // Set to 224 to skip EndWar (223)
+        TemplateDataAddedToUComponent = 224,
 
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,

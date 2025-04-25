@@ -14,7 +14,8 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ComponentGuidDeprecated)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedComponentGuid &&
+                _Buffer.Version < (uint)PackageObjectLegacyVersion.ComponentGuidDeprecated)
             {
                 _Buffer.ReadStruct(out UGuid guid);
             }

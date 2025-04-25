@@ -19,7 +19,7 @@ namespace UELib.Core
 
             string output = $"// Reference: {GetReferencePath()}\r\n";
 
-            if (ImportTable != null)
+            if ((int)this < 0)
             {
                 return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile an imported object";
             }

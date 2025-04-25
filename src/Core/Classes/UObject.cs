@@ -249,9 +249,7 @@ namespace UELib.Core
 
             try
             {
-                if (ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject)
-                    // Just in-case we have passed an overlapped object flag in UE2 or older packages.
-                    && stream.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
+                if (ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject))
                 {
                     DeserializeClassDefault(stream);
                 }
@@ -260,7 +258,7 @@ namespace UELib.Core
                     Deserialize(stream);
                 }
 
-                LibServices.LogService.SilentAssert(Buffer.Position == Buffer.Length, $"Trailing data for object {GetReferencePath()}");
+                LibServices.LogService.SilentAssert(_Buffer.Position == _Buffer.Length, $"Trailing data for object {GetReferencePath()}");
             }
             catch (Exception exception)
             {
