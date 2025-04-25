@@ -5,9 +5,8 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using UELib.Annotations;
+using System.Runtime.InteropServices.ComTypes;
 using UELib.Branch;
-using UELib.Engine;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
 using UELib.Services;
@@ -21,6 +20,9 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
+        /// <summary>
+        /// The object name.
+        /// </summary>
         [Output(OutputSlot.Parameter)]
         public UName Name { get; set; }
 
@@ -45,25 +47,30 @@ namespace UELib.Core
 
         public UImportTableItem ImportTable => Table as UImportTableItem;
 
+        [Obsolete("Pending deprecation")]
         public UNameTableItem NameTable => Table.ObjectTable;
 
         /// <summary>
-        /// The internal represented class in UnrealScript.
+        /// The object class, as represented internally in UnrealScript.
+        ///
+        /// Null for imports and UClass objects.
         /// </summary>
-        [CanBeNull]
         [Output(OutputSlot.Parameter)]
-        public UObject Class => ExportTable != null
-            ? Package.IndexToObject(ExportTable.ClassIndex)
-            : null;
+        public UClass? Class { get; set; }
 
         /// <summary>
-        /// [Package.Group:Outer].Object
+        /// The object outer.
+        ///
+        /// e.g. <example>`Core.Object.Vector.X` where `Vector` is the outer of property `X`</example>
+        ///
+        /// Null for imports with no outer.
         /// </summary>
-        [CanBeNull]
-        public UObject Outer => Package.IndexToObject(Table.OuterIndex);
+        public UObject? Outer { get; set; }
 
-        [CanBeNull]
-        public UObject Archetype => ExportTable != null
+        /// <summary>
+        /// The object archetype.
+        /// </summary>
+        public UObject? Archetype => ExportTable != null
             ? Package.IndexToObject(ExportTable.ArchetypeIndex)
             : null;
 
@@ -74,14 +81,14 @@ namespace UELib.Core
 
         protected UObjectStream _Buffer;
 
-        /// <summary>
-        /// Copy of the Object bytes
-        /// </summary>
-        public UObjectStream Buffer => _Buffer;
+        public UObjectStream? Buffer => _Buffer;
 
+        /// <summary>
+        /// Serialized if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/> or UE4Version is equal or greater than 196
+        /// </summary>
         public int NetIndex = -1;
 
-        [CanBeNull] public UObject Default { get; protected set; }
+        public UObject? Default { get; protected set; }
 
         /// <summary>
         /// Object Properties e.g. SubObjects or/and DefaultProperties
@@ -91,7 +98,7 @@ namespace UELib.Core
         /// <summary>
         /// Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
         /// </summary>
-        [CanBeNull] public UStateFrame StateFrame;
+        public UStateFrame? StateFrame;
 
         [BuildGeneration(BuildGeneration.UE4)]
         public UGuid ObjectGuid;
@@ -110,7 +117,7 @@ namespace UELib.Core
         }
 
         public ObjectState DeserializationState;
-        [CanBeNull] public Exception ThrownException;
+        public Exception? ThrownException;
         public long ExceptionPosition;
 
         public UObject()
@@ -158,7 +165,7 @@ namespace UELib.Core
             where T : UObjectStream
         {
             // Imported objects cannot be deserialized!
-            if (ImportTable != null)
+            if ((int)this < 0)
             {
                 LibServices.Debug("Attempted to load import {0}", GetReferencePath());
 
@@ -367,6 +374,11 @@ namespace UELib.Core
 #endif
         private void DeserializeNetIndex(IUnrealStream stream)
         {
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded ||
+                stream.UE4Version >= 196)
+            {
+                return;
+            }
 #if MKKE || BATMAN
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
                 stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
@@ -374,12 +386,6 @@ namespace UELib.Core
                 return;
             }
 #endif
-            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded ||
-                stream.UE4Version >= 196)
-            {
-                return;
-            }
-
             stream.Read(out NetIndex);
             stream.Record(nameof(NetIndex), NetIndex);
         }
@@ -453,13 +459,7 @@ namespace UELib.Core
                 _Buffer.ReadClass(out StateFrame);
                 _Buffer.Record(nameof(StateFrame), StateFrame);
             }
-#if MKKE || BATMAN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-            {
-                goto skipNetIndex;
-            }
-#endif
+
             // No version check found in the GoW PC client
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.TemplateDataAddedToUComponent)
             {
@@ -498,8 +498,6 @@ namespace UELib.Core
                         }
                 }
             }
-
-        skipNetIndex:
 
             DeserializeNetIndex(_Buffer);
 #if THIEF_DS || DEUSEX_IW
@@ -796,17 +794,17 @@ namespace UELib.Core
             return visitor.Visit(this);
         }
 
-        public static implicit operator UPackageIndex([CanBeNull] UObject obj)
+        public static implicit operator UPackageIndex(UObject? obj)
         {
             return obj?.PackageIndex ?? 0;
         }
 
-        public static explicit operator int([CanBeNull] UObject obj)
+        public static explicit operator int(UObject? obj)
         {
             return obj?.PackageIndex ?? 0;
         }
 
-        public static explicit operator string([CanBeNull] UObject obj)
+        public static explicit operator string(UObject? obj)
         {
             return obj?.Name ?? "none";
         }

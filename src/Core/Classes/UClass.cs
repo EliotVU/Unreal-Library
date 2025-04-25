@@ -594,8 +594,7 @@ namespace UELib.Core
                 if (!string.IsNullOrEmpty(thiefClassVisibleName)
                     && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
-                    var nameEntry = new UNameTableItem() { Name = thiefClassVisibleName };
-                    NameTable.Name = nameEntry;
+                    Name = new UName(thiefClassVisibleName);
                 }
             }
 #endif

@@ -83,19 +83,13 @@ namespace UELib
     /// </summary>
     public sealed partial class UnrealPackage : IDisposable, IBinaryData
     {
-        #region General Members
+        public const uint Signature = UnrealFile.Signature;
+        public const uint Signature_BigEndian = UnrealFile.BigEndianSignature;
 
-        public BinaryMetaData BinaryMetaData { get; } = new();
+        public readonly UPackage RootPackage;
 
         // Reference to the stream used when reading this package
         public UPackageStream Stream;
-
-        /// <summary>
-        /// The signature of a 'Unreal Package'.
-        /// </summary>
-        public const uint Signature = 0x9E2A83C1;
-
-        public const uint Signature_BigEndian = 0xC1832A9E;
 
         /// <summary>
         /// The full name of this package including directory.
@@ -103,12 +97,10 @@ namespace UELib
         private readonly string _FullPackageName = "UnrealPackage";
 
         public string FullPackageName => _FullPackageName;
-
         public string PackageName => Path.GetFileNameWithoutExtension(_FullPackageName);
-
         public string PackageDirectory => Path.GetDirectoryName(_FullPackageName);
 
-        #endregion
+        public BinaryMetaData BinaryMetaData { get; } = new();
 
         // TODO: Move to UnrealBuild.cs
         public sealed class GameBuild : object
@@ -1024,6 +1016,9 @@ namespace UELib
 
             public UnrealFlags<PackageFlag> PackageFlags;
 
+            /// <summary>
+            /// The size of the package header, including the tables.
+            /// </summary>
             public int HeaderSize;
 
             /// <summary>
@@ -1123,8 +1118,9 @@ namespace UELib
 
                 if (package.CookerPlatform == BuildPlatform.Undetermined)
                 {
+                    string packageFolderName = new DirectoryInfo(package.PackageDirectory).Name;
                     if (string.Compare(
-                            package.PackageDirectory,
+                            packageFolderName,
                             "CookedPC",
                             StringComparison.OrdinalIgnoreCase) == 0)
                     {
@@ -1132,15 +1128,15 @@ namespace UELib
                     }
                     // file may also end in .pcc
                     else if (string.Compare(
-                                 package.PackageDirectory,
+                                 packageFolderName,
                                  "CookedPCConsole",
                                  StringComparison.OrdinalIgnoreCase
                              ) == 0)
                     {
-                        package.CookerPlatform = BuildPlatform.Console;
+                        package.CookerPlatform = BuildPlatform.PC;
                     }
                     else if (string.Compare(
-                                 package.PackageDirectory,
+                                 packageFolderName,
                                  "CookedPCServer",
                                  StringComparison.OrdinalIgnoreCase
                              ) == 0)
@@ -1148,7 +1144,7 @@ namespace UELib
                         package.CookerPlatform = BuildPlatform.Console;
                     }
                     else if (string.Compare(
-                                 package.PackageDirectory,
+                                 packageFolderName,
                                  "CookedXenon",
                                  StringComparison.OrdinalIgnoreCase
                              ) == 0)
@@ -1156,7 +1152,7 @@ namespace UELib
                         package.CookerPlatform = BuildPlatform.Console;
                     }
                     else if (string.Compare(
-                                 package.PackageDirectory,
+                                 packageFolderName,
                                  "CookedIPhone",
                                  StringComparison.OrdinalIgnoreCase
                              ) == 0)
@@ -2436,11 +2432,22 @@ namespace UELib
 
             // File Type
             // Signature is tested in UPackageStream
+            RootPackage = GetRootPackage(_FullPackageName);
             IsBigEndianEncoded = stream.BigEndianCode;
+
         }
 
         /// <summary>
-        /// Serializes the packages header to a stream starting after the signature (first 4 bytes).
+        /// Serializes the package header to the stream.
+        /// </summary>
+        public void Serialize()
+        {
+            Contract.Assert(Stream != null);
+            Serialize(Stream);
+        }
+
+        /// <summary>
+        /// Serializes the package header to the output stream.
         /// </summary>
         /// <param name="stream">the output stream.</param>
         public void Serialize(IUnrealStream stream)
@@ -2598,7 +2605,16 @@ namespace UELib
         }
 
         /// <summary>
-        /// Deserializes the packages header from a stream starting after the signature (first 4 bytes).
+        /// Deserializes the package header from the stream.
+        /// </summary>
+        public void Deserialize()
+        {
+            Contract.Assert(Stream != null);
+            Deserialize(Stream);
+        }
+
+        /// <summary>
+        /// Deserializes the package header from the input stream.
         /// </summary>
         /// <param name="stream">the input stream.</param>
         public void Deserialize(IUnrealStream stream)
@@ -3233,10 +3249,6 @@ namespace UELib
                 {
                     if (!(exp.Object is UnknownObject)) exp.Object!.PostInitialize();
                 }
-                catch (InvalidCastException)
-                {
-                    Console.WriteLine("InvalidCastException occurred on object: " + exp.Object);
-                }
                 finally
                 {
                     OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
@@ -3260,6 +3272,11 @@ namespace UELib
         // Create pseudo objects for imports so that we have non-null references to imports.
         private UObject CreateObject(UImportTableItem import)
         {
+            if (import.Object != null)
+            {
+                return import.Object;
+            }
+
             var classType = GetClassType(import.ClassName);
             var obj = (UObject)Activator.CreateInstance(classType);
             Debug.Assert(obj != null);
@@ -3268,6 +3285,8 @@ namespace UELib
             obj.Package = this;
             obj.PackageIndex = -(import.Index + 1);
             obj.Table = import;
+            obj.Class = null; // FindObject<UClass> ?? StaticClass
+            obj.Outer = IndexToObject(import.OuterIndex); // ?? ClassPackage
             import.Object = obj;
 
             AddToObjects(obj);
@@ -3278,40 +3297,69 @@ namespace UELib
 
         private UObject CreateObject(UExportTableItem export)
         {
-            var objectClass = export.Class;
-            var classType = GetClassType(objectClass != null ? objectClass.ObjectName : "Class");
-        // Try one of the "super" classes for unregistered classes.
-        loop:
-            if (objectClass != null && classType == typeof(UnknownObject))
+            Debug.Assert(export.Object == null);
+
+            var objName = export.ObjectName;
+            var objSuper = IndexToObject<UStruct>(export.SuperIndex);
+
+            var objOuter = IndexToObject<UObject>(export.OuterIndex);
+            if (objOuter == null && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
             {
-                switch (objectClass)
-                {
-                    case UExportTableItem classExp:
-                        var super = classExp.Super;
-                        switch (super)
-                        {
-                            //case UImportTableItem superImport:
-                            //    CreateObject(superImport);
-                            //    return;
+                var pkg = FindObject<UPackage>(objName) ?? CreateObject<UPackage>(objName);
+                export.Object = pkg;
 
-                            case UExportTableItem superExport:
-                                objectClass = superExport;
-                                classType = GetClassType(objectClass.ObjectName);
-                                goto loop;
-                        }
-
-                        break;
-                }
+                return pkg;
             }
 
-            var obj = (UObject)Activator.CreateInstance(classType);
+            var objClass = IndexToObject<UClass>(export.ClassIndex);
+
+            var internalClassType = GetClassType(objClass != null ? objClass.Name : "Class");
+            if (objClass != null && internalClassType == typeof(UnknownObject) && (int)objClass > 0)
+            {
+                // Try one of the "super" classes for unregistered classes.
+                internalClassType = objClass
+                    .EnumerateSuper<UClass>()
+                    .Select(cls => GetClassType(cls.Name))
+                    .FirstOrDefault() ?? typeof(UnknownObject);
+            }
+
+            var obj = (UObject)Activator.CreateInstance(internalClassType);
             Debug.Assert(obj != null);
-            obj.Name = export.ObjectName;
+            obj.Name = objName;
             obj.ObjectFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
             obj.Package = this;
             obj.PackageIndex = export.Index + 1;
             obj.Table = export;
+            obj.Class = objClass; // ?? StaticClass
+            obj.Outer = objOuter ?? RootPackage;
+
+            if (obj is UStruct uStruct)
+            {
+                uStruct.Super = objSuper;
+            }
+
             export.Object = obj;
+
+            AddToObjects(obj);
+            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+
+            return obj;
+        }
+
+        private T CreateObject<T>(UName objectName) where T : UObject
+        {
+            return CreateObject<T>(objectName, new UnrealFlags<ObjectFlag>());
+        }
+
+        private T CreateObject<T>(UName objectName, UnrealFlags<ObjectFlag> objectFlags) where T : UObject
+        {
+            var obj = (T)Activator.CreateInstance(typeof(T));
+            Debug.Assert(obj != null);
+            obj.ObjectFlags = objectFlags;
+            obj.Package = this;
+            obj.PackageIndex = 0;
+            obj.Table = null;
+            obj.Name = objectName;
 
             AddToObjects(obj);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
@@ -3326,15 +3374,11 @@ namespace UELib
             NotifyObjectAdded?.Invoke(this, new ObjectEventArgs(obj));
         }
 
-        /// <summary>
-        /// Writes the present PackageFlags to disk. HardCoded!
-        /// Only supports UT2004.
-        /// </summary>
-        [Obsolete]
+        [Obsolete("Use Summary.Serialize")]
         public void WritePackageFlags()
         {
             Stream.Position = 8;
-            Stream.Writer.Write(PackageFlags);
+            Stream.Write(PackageFlags);
         }
 
         [Obsolete("Use AddClassType")]
@@ -3452,24 +3496,38 @@ namespace UELib
             }
 
             string[] groups = objectGroup.Split('.');
-            UObject lastObj = null;
-            for (var i = 0; i < groups.Length; ++i)
+            string objectName = groups.LastOrDefault();
+            if (objectName == null)
             {
-                var obj = Objects.Find(o =>
-                    string.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0 && o.Outer == lastObj);
-                if (obj != null)
-                {
-                    lastObj = obj;
-                }
-                else
-                {
-                    lastObj = Objects.Find(o =>
-                        string.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0);
-                    break;
-                }
+                return null;
             }
 
-            return lastObj;
+            groups = groups.Take(groups.Length - 1).ToArray();
+            var foundObj = Objects.Find(obj =>
+            {
+                if (string.Compare(obj.Name, objectName, StringComparison.OrdinalIgnoreCase) != 0)
+                {
+                    return false;
+                }
+
+                var outer = obj.Outer;
+                foreach (string group in groups)
+                {
+                    if (outer == null)
+                    {
+                        return false;
+                    }
+
+                    if (string.Compare(outer.Name, group, StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        outer = outer.Outer;
+                    }
+                }
+
+                return true;
+            });
+
+            return foundObj;
         }
 
         /// <summary>
