@@ -617,6 +617,8 @@ namespace UELib
                 ShadowComplex,
 
                 /// <summary>
+                /// The Exiled Realm of Arborea
+                /// 
                 /// 610/014
                 /// </summary>
                 [Build(610, 14)] Tera,
@@ -1474,17 +1476,17 @@ namespace UELib
                     throw new NotSupportedException("This package version is not supported!");
                 }
 #endif
+#if TERA
+                if (stream.Package.Build == GameBuild.BuildName.Tera)
+                {
+                    goto skipThumbnailTableOffset;
+                }
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
                 {
                     stream.Write(ThumbnailTableOffset);
                 }
-#if MKKE
-                if (stream.Package.Build == GameBuild.BuildName.MKKE)
-                {
-                    throw new NotSupportedException("This package version is not supported!");
-                    //stream.Skip(4);
-                }
-#endif
+            skipThumbnailTableOffset:
 #if SPELLBORN
                 if (stream.Package.Build == GameBuild.BuildName.Spellborn
                     && stream.Version >= 148)
@@ -1494,9 +1496,6 @@ namespace UELib
 #endif
                 stream.WriteStruct(ref Guid);
             skipGuid:
-#if TERA
-                if (stream.Package.Build == GameBuild.BuildName.Tera) stream.Position -= 4;
-#endif
 #if MKKE
                 if (stream.Package.Build == GameBuild.BuildName.MKKE)
                 {
@@ -2054,14 +2053,19 @@ namespace UELib
                 if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
                     stream.Skip(4);
 #endif
+#if TERA
+                if (stream.Package.Build == GameBuild.BuildName.Tera)
+                {
+                    goto skipThumbnailTableOffset;
+                }
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
                     Debug.Assert(ThumbnailTableOffset <= HeaderSize);
                 }
-#if MKKE
-                if (stream.Package.Build == GameBuild.BuildName.MKKE) stream.Skip(4);
-#endif
+            skipThumbnailTableOffset:
+
 #if SPELLBORN
                 if (stream.Package.Build == GameBuild.BuildName.Spellborn
                     && stream.Version >= 148)
@@ -2072,9 +2076,6 @@ namespace UELib
                 stream.ReadStruct(out Guid);
                 Console.WriteLine("GUID:" + Guid);
             skipGuid:
-#if TERA
-                if (stream.Package.Build == GameBuild.BuildName.Tera) stream.Position -= 4;
-#endif
 #if MKKE
                 if (stream.Package.Build == GameBuild.BuildName.MKKE)
                 {

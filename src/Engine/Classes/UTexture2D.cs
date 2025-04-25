@@ -51,6 +51,13 @@ namespace UELib.Engine
                 Format = (TextureFormat)format;
                 Record(nameof(Format), Format);
             }
+#if TERA
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Tera)
+            {
+                // TODO: Not yet supported.
+                return;
+            }
+#endif
 #if BORDERLANDS
             if (_Buffer.Package.Build == BuildGeneration.GB &&
                 _Buffer.LicenseeVersion >= 55)
