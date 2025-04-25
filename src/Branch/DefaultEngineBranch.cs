@@ -229,6 +229,15 @@ namespace UELib.Branch
                 // FIXME: The flag check was added later (Not checked for in GoW), no known version.
                 ObjectFlags[(int)ObjectFlag.TemplateObject] |= ObjectFlags[(int)ObjectFlag.ArchetypeObject];
             }
+#if BULLETSTORM
+            // FIXME: Figure out if this is only specific to Bulletstorm or if it is a general UE3 thing.
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm)
+            {
+                ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = 0x80UL << 32; // (same bit as Batman Ak)
+                ObjectFlags[(int)ObjectFlag.ArchetypeObject] = 0x100UL << 32; // assumed to come next after ClassDefaultObject.
+                ObjectFlags[(int)ObjectFlag.TemplateObject] = ObjectFlags[(int)ObjectFlag.ClassDefaultObject] | ObjectFlags[(int)ObjectFlag.ArchetypeObject];
+            }
+#endif
         }
 
         protected virtual void SetupEnumPropertyFlags(UnrealPackage linker)
@@ -772,11 +781,6 @@ namespace UELib.Branch
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (linker.Build.Name)
             {
-#if BORDERLANDS
-                case UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE:
-                    tokenMap[0x5B] = typeof(BLVariableToken);
-                    break;
-#endif
 #if BIOSHOCK
                 case UnrealPackage.GameBuild.BuildName.BioShock:
                     tokenMap[0x49] = typeof(LogFunctionToken);

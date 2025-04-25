@@ -674,10 +674,11 @@ namespace UELib
                 Bioshock_Infinite,
 
                 /// <summary>
+                /// Bulletstorm
+                /// 
                 /// 742/029
                 /// </summary>
-                [Build(742, 29, BuildFlags.ConsoleCooked)]
-                BulletStorm,
+                [Build(742, 29)] Bulletstorm,
 
                 /// <summary>
                 /// 801/030

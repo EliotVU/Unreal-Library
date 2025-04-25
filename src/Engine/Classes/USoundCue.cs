@@ -43,7 +43,13 @@ namespace UELib.Core
         public override void Serialize(IUnrealStream stream)
         {
             base.Serialize(stream);
-
+#if BULLETSTORM
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm)
+            {
+                // Not supported yet.
+                return;
+            }
+#endif
             if (EditorData == null)
             {
                 stream.Write(0);
@@ -63,7 +69,13 @@ namespace UELib.Core
         public override void Deserialize(IUnrealStream stream)
         {
             base.Deserialize(stream);
-
+#if BULLETSTORM
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm)
+            {
+                // Not supported yet.
+                return;
+            }
+#endif
             int c = stream.ReadInt32();
             EditorData = new UMap<UObject, NodeEditorData>(c);
             for (int i = 0; i < c; ++i)
