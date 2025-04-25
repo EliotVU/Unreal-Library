@@ -283,6 +283,7 @@ namespace UELib
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
                 /// 
                 /// 118/011:014
+                /// extensions: [.rsm, .u, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx]
                 /// </summary>
                 [Build(118, 118, 11u, 14u)] R6RS,
 
@@ -587,6 +588,7 @@ namespace UELib
                 /// Includes back-ported features from UDK
                 /// </summary>
                 [Build(584, 584, 57, 58, BuildGeneration.GB)]
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
                 Borderlands,
 
                 /// <summary>
@@ -600,6 +602,7 @@ namespace UELib
                 /// </summary>
                 [Build(594, 58, BuildGeneration.GB)]
                 [OverridePackageVersion(832)]
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
                 Borderlands_GOTYE,
 
                 /// <summary>

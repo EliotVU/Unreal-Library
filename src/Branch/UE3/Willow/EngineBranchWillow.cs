@@ -23,17 +23,33 @@ namespace UELib.Branch.UE3.Willow
         {
             base.PostDeserializePackage(linker, stream);
 
-            // BL2 classes
-            linker.AddClassType("ByteAttributeProperty", typeof(UByteAttributeProperty));
-            linker.AddClassType("FloatAttributeProperty", typeof(UFloatAttributeProperty));
-            linker.AddClassType("IntAttributeProperty", typeof(UIntAttributeProperty));
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            {
+                linker.AddClassType("ByteAttributeProperty", typeof(UByteAttributeProperty));
+                linker.AddClassType("FloatAttributeProperty", typeof(UFloatAttributeProperty));
+                linker.AddClassType("IntAttributeProperty", typeof(UIntAttributeProperty));
+            }
         }
 
         protected override TokenMap BuildTokenMap(UnrealPackage linker)
         {
             var tokenMap = base.BuildTokenMap(linker);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+            {
+                // Replaces DynamicArraySortToken
+                tokenMap[0x59] = typeof(AttributeVariableToken);
+                // Replaces FilterEditorOnlyToken
+                tokenMap[0x5A] = typeof(LetAttributeToken);
+            }
+            else if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE)
+            {
+                tokenMap[0x5B] = typeof(AttributeVariableToken);
+                tokenMap[0x5C] = typeof(LetAttributeToken);
+            }
+            else if (
+                linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
                 linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
                 tokenMap[0x4C] = typeof(LocalVariableToken<int>);
@@ -43,8 +59,6 @@ namespace UELib.Branch.UE3.Willow
                 tokenMap[0x50] = typeof(LocalVariableToken<UObject>);
                 // FIXME: Wrong, is there really even a dynamic type???
                 //tokenMap[0x51] = typeof(LocalVariableToken<dynamic>);
-
-                tokenMap[0x5B] = typeof(UStruct.UByteCodeDecompiler.ByteConstToken); // not attested in BL2
 
                 // Same serialization route as 0x0, 0x1, 0x2, 0x20 and 0x48
                 tokenMap[0x5E] = typeof(AttributeVariableToken);
