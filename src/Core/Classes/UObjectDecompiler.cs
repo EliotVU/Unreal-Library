@@ -101,7 +101,8 @@ namespace UELib.Core
                 // This will still miss sub-objects that have no reference.
                 var missingSubObjects = UDecompilingState.s_inlinedSubObjects
                     .Where((k, v) => k.Value == false)
-                    .Select(k => k.Key);
+                    .Select(k => k.Key)
+                    .ToList();
                 foreach (var obj in missingSubObjects)
                 {
                     obj.Load();

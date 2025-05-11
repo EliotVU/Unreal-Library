@@ -13,7 +13,19 @@ namespace UELib.Engine
         protected override void Deserialize()
         {
             base.Deserialize();
-
+#if R6
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas &&
+                _Buffer.LicenseeVersion >= 50)
+            {
+                _Buffer.Read(out int v1B4);
+                for (int i = 0; i < v1B4; i++)
+                {
+                    _Buffer.ReadStruct(out UGuid v0); // LightGuid?
+                    _Buffer.ReadArray(out UArray<ushort> v24); // LightShadowMap?
+                    _Buffer.Read(out uint v20);
+                }
+            }
+#endif
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedComponentGuid &&
                 _Buffer.Version < (uint)PackageObjectLegacyVersion.ComponentGuidDeprecated)
             {

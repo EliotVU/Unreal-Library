@@ -568,7 +568,12 @@ namespace UELib.Core
             }
 
             _Buffer.Seek(_PropertyValuePosition, SeekOrigin.Begin);
-            return TryDeserializeDefaultPropertyValue(Type, ref deserializeFlags);
+            string output = TryDeserializeDefaultPropertyValue(Type, ref deserializeFlags);
+
+            LibServices.LogService.SilentAssert(_Buffer.Position == _PropertyValuePosition + Size,
+                $"PropertyTag value deserialization error for '{Name}: {_Buffer.Position} != {_PropertyValuePosition + Size}");
+
+            return output;
         }
 
         private string TryDeserializeDefaultPropertyValue(PropertyType type, ref DeserializeFlags deserializeFlags)
@@ -584,11 +589,7 @@ namespace UELib.Core
             }
             catch (Exception exception)
             {
-                Console.Error.WriteLine(
-                    $"\r\n> PropertyTag value deserialization error for {_Container.GetPath()}.{Name}" +
-                    $"\r\n Exception: {exception}");
-
-                LibServices.LogService.SilentException(exception);
+                LibServices.LogService.SilentException(new DeserializationException($"PropertyTag value deserialization error for '{Name}", exception));
 
                 return $"/* ERROR: {exception.GetType()} */";
             }
@@ -714,6 +715,7 @@ namespace UELib.Core
                 case PropertyType.ByteProperty:
                     {
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag
+                            && Type == PropertyType.ByteProperty
                             // Cannot compare size with 1 because this byte value may be part of a struct.
                             && _Buffer.Position + 1 != _PropertyValuePosition + Size)
                         {
@@ -1264,6 +1266,10 @@ namespace UELib.Core
 
                 case PropertyType.FloatAttributeProperty:
                     return DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+#endif
+#if BULLETSTORM
+                case PropertyType.CppCopyStructProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.StructProperty, ref deserializeFlags);
 #endif
                 default:
                     throw new Exception($"Unsupported property tag type {Type}");

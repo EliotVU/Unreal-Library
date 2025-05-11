@@ -245,8 +245,11 @@ namespace UELib
                 /// 100/120:124
                 /// </summary>
                 [BuildEngineBranch(typeof(EngineBranchSCX))]
+                [Build(100, 022, BuildGeneration.SCX)] // Legacy UWindowFonts.utx
+                [Build(100, 099, BuildGeneration.SCX)] // Legacy 00_Training_NPC_TEX_fb.utx
                 [Build(100, 120, BuildGeneration.SCX)] // Demo
-                [Build(100, 124, BuildGeneration.SCX)]
+                [Build(100, 122, BuildGeneration.SCX)] // > Coop_Agents_Dlg.uax
+                [Build(100, 124, BuildGeneration.SCX)] // Full
                 SCCT_Offline,
 
                 /// <summary>
@@ -409,15 +412,21 @@ namespace UELib
                 /// Tom Clancy's Splinter Cell: Chaos Theory - Versus
                 ///
                 /// 175/000
+                /// The 'Epic' version likely represents the internal engine version.
+                /// extensions: [.u, .usa, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx, .sdc]
                 /// </summary>
-                [Build(175, 0, BuildGeneration.ShadowStrike)]
+                [Build(175, 000, BuildGeneration.ShadowStrike)] // non dynamic-pc.umd files
+                [Build(232, 070, BuildGeneration.ShadowStrike)] // Coop_Char_Voices.uax
+                [Build(382, 100, BuildGeneration.ShadowStrike)] // 00_Training_COOP_TEX.utx
+                [Build(442, 118, BuildGeneration.ShadowStrike)] // 00_Training_NPC_TEX.utx
+                [Build(466, 120, BuildGeneration.ShadowStrike)] // COOP_MAIN_VILAIN_TEX.utx
                 [BuildEngineBranch(typeof(EngineBranchShadowStrike))]
                 [OverridePackageVersion(120, 175)]
                 SCCT_Versus,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six: Vegas
-                /// 
+                ///
                 /// 241/066-071
                 ///
                 /// extensions: [.u, .upk, .uxx, .rmpc, .uppc, .rm3, .up3, .rsm]
@@ -432,15 +441,20 @@ namespace UELib
                 ///
                 /// 275/000
                 /// Overriden to version 120, so we can pick up the CppText property in UStruct (although this might be a ProcessedText reference)
+                /// extensions: [.u, .usa, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx, .upx, .ute, .uvt, .bsm, .sds]
                 /// </summary>
-                [Build(275, 0, BuildGeneration.ShadowStrike)]
+                [Build(249, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(260, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(264, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(272, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(275, 0, BuildGeneration.ShadowStrike)] // Scripts
                 [BuildEngineBranch(typeof(EngineBranchShadowStrike))]
                 [OverridePackageVersion(120, 275)]
                 SCDA_Online,
 
                 /// <summary>
                 /// EndWar
-                /// 
+                ///
                 /// 369/006
                 /// </summary>
                 [Build(329, 0)]
@@ -449,7 +463,7 @@ namespace UELib
 
                 /// <summary>
                 /// Standard
-                /// 
+                ///
                 /// 369/006
                 /// </summary>
                 [Build(369, 6)] RoboBlitz,
@@ -464,7 +478,7 @@ namespace UELib
 
                 /// <summary>
                 /// Medal of Honor: Airborne
-                /// 
+                ///
                 /// 421/011
                 /// </summary>
                 [Build(421, 11)] MoHA,
@@ -484,7 +498,7 @@ namespace UELib
 
                 /// <summary>
                 /// Stargate Worlds
-                /// 
+                ///
                 /// 486/007
                 /// </summary>
                 [OverridePackageVersion((uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports - 1)] // Missing the "PackageFlags" change from version 475
@@ -492,14 +506,14 @@ namespace UELib
 
                 /// <summary>
                 /// Gears of War
-                /// 
+                ///
                 /// 490/009
                 /// </summary>
                 [Build(490, 9)] GoW1,
 
                 /// <summary>
                 /// Huxley
-                /// 
+                ///
                 /// 496/016:023
                 /// </summary>
                 [Build(496, 496, 16, 23)]
@@ -534,7 +548,7 @@ namespace UELib
 
                 /// <summary>
                 /// APB: All Points Bulletin & APB: Reloaded
-                /// 
+                ///
                 /// 547/028:032
                 /// </summary>
                 [Build(547, 547, 28u, 32u)]
@@ -543,7 +557,7 @@ namespace UELib
 
                 /// <summary>
                 /// Standard, Gears of War 2
-                /// 
+                ///
                 /// 575/000
                 /// Xenon is enabled here, because the package is missing editor data, the editor data of UStruct is however still serialized.
                 /// </summary>
@@ -557,7 +571,7 @@ namespace UELib
 
                 /// <summary>
                 /// Batman: Arkham Asylum
-                /// 
+                ///
                 /// 576/021 (Missing most changes guarded by <see cref="BuildGeneration.RSS"/>)
                 /// </summary>
                 [Build(576, 21)]
@@ -582,7 +596,7 @@ namespace UELib
 
                 /// <summary>
                 /// Borderlands
-                /// 
+                ///
                 /// 584/057-058
                 ///
                 /// Includes back-ported features from UDK
@@ -593,12 +607,12 @@ namespace UELib
 
                 /// <summary>
                 /// Borderlands Game of the Year Enhanced
-                /// 
+                ///
                 /// 594/058
-                /// 
+                ///
                 /// Includes back-ported features from UDK of at least v813 (NativeClassGroup)
                 /// Appears to be missing (v623:ExportGuids, v767:TextureAllocations, and v673:FPropertyTag's BoolValue change).
-                /// Presume at least v832 from Borderlands 2 
+                /// Presume at least v832 from Borderlands 2
                 /// </summary>
                 [Build(594, 58, BuildGeneration.GB)]
                 [OverridePackageVersion(832)]
@@ -618,14 +632,14 @@ namespace UELib
 
                 /// <summary>
                 /// The Exiled Realm of Arborea
-                /// 
+                ///
                 /// 610/014
                 /// </summary>
                 [Build(610, 14)] Tera,
 
                 /// <summary>
                 /// DC Universe Online
-                /// 
+                ///
                 /// 648/6405
                 /// </summary>
                 [Build(648, 6405)] DCUO,
@@ -677,10 +691,11 @@ namespace UELib
 
                 /// <summary>
                 /// Bulletstorm
-                /// 
+                ///
                 /// 742/029
                 /// </summary>
-                [Build(742, 29)] Bulletstorm,
+                [Build(742, 29)]
+                Bulletstorm,
 
                 /// <summary>
                 /// 801/030
@@ -697,7 +712,7 @@ namespace UELib
 
                 /// <summary>
                 /// Standard, Gears of War 3
-                /// 
+                ///
                 /// 828/000
                 /// </summary>
                 [Build(828, 0, BuildFlags.ConsoleCooked)]
@@ -710,7 +725,7 @@ namespace UELib
 
                 /// <summary>
                 /// Borderlands 2
-                /// 
+                ///
                 /// 832/046, 895/046
                 /// </summary>
                 [Build(832, 46)]
@@ -737,14 +752,14 @@ namespace UELib
 
                 /// <summary>
                 /// XCom
-                /// 
+                ///
                 /// 845/059
                 /// </summary>
                 [Build(845, 59)] XCOM_EU,
 
                 /// <summary>
                 /// XCom 2: War of The Chosen
-                /// 
+                ///
                 /// 845/120
                 /// </summary>
                 [Build(845, 120)] XCOM2WotC,
@@ -764,7 +779,7 @@ namespace UELib
 
                 /// <summary>
                 /// Batman: Arkham City
-                /// 
+                ///
                 /// 805/101
                 /// </summary>
                 [Build(805, 101, BuildGeneration.RSS)]
@@ -801,7 +816,7 @@ namespace UELib
 
                 /// <summary>
                 /// Gigantic: Rampage Edition
-                /// 
+                ///
                 /// 867/008:010
                 /// </summary>
                 [Build(867, 867, 8u, 10u)]
@@ -810,7 +825,7 @@ namespace UELib
 
                 /// <summary>
                 /// Rocket League
-                /// 
+                ///
                 /// 867/009:032
                 /// Requires third-party decompression and decryption
                 /// </summary>
@@ -830,16 +845,24 @@ namespace UELib
 
                 /// <summary>
                 /// A Hat in Time
-                /// 
+                ///
                 /// 877:893/005
-                /// 
+                ///
                 /// The earliest available version with any custom specifiers is 1.0 (877) - Un-Drew.
                 /// </summary>
                 [Build(877, 893, 5, 5)] AHIT,
 
                 /// <summary>
+                /// Bulletstorm: Full Clip Edition
+                ///
+                /// 8887/041
+                /// </summary>
+                [Build(887, 41)]
+                Bulletstorm_FCE,
+
+                /// <summary>
                 /// Special Force 2
-                /// 
+                ///
                 /// 904/009 (Non-standard version, actual Epic version might be 692 or higher)
                 /// </summary>
                 [Build(904, 904, 09u, 014u)]
@@ -1012,7 +1035,7 @@ namespace UELib
 
             /// <summary>
             /// Legacy file version if the package was serialized with UE4 or UE5.
-            /// 
+            ///
             /// 0 if the file was serialized with UE3 or earlier.
             /// </summary>
             public int LegacyVersion;
@@ -1041,7 +1064,7 @@ namespace UELib
 
             /// <summary>
             /// Table of package guids. early UE1 way of defining generations.
-            /// 
+            ///
             /// Null if (<see cref="Version"/> &gt;= <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
             /// </summary>
             public UArray<UGuid> Heritages;
@@ -1052,7 +1075,7 @@ namespace UELib
 
             /// <summary>
             /// Table of package generations.
-            /// 
+            ///
             /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
             /// </summary>
             public UArray<UGenerationTableItem> Generations;
@@ -1075,7 +1098,7 @@ namespace UELib
             /// The package should be considered compressed if any.
             ///
             /// If <see cref="CompressionFlags"/> equals 0 then the list will be cleared on <see cref="UnrealPackage.Deserialize"/>
-            /// 
+            ///
             /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.CompressionAdded"/>)
             /// </summary>
             public UArray<CompressedChunk> CompressedChunks;
@@ -1710,7 +1733,7 @@ namespace UELib
 
                 const short maxLegacyVersion = -7;
 
-                // Read as one variable due Big Endian Encoding.       
+                // Read as one variable due Big Endian Encoding.
                 int legacyVersion = stream.ReadInt32();
                 // FIXME: >= -7 is true for the game Quantum
                 if (legacyVersion < 0 && legacyVersion >= maxLegacyVersion)
@@ -1731,7 +1754,7 @@ namespace UELib
                     // Ancient, probably no longer in production files? Other than some UE4 assets found in the first public release
                     if (UE4Version >= 138 && UE4Version < 142)
                     {
-                        stream.Skip(8); // CookedVersion, CookedLicenseeVersion   
+                        stream.Skip(8); // CookedVersion, CookedLicenseeVersion
                     }
 
                     if (legacyVersion <= -2)
@@ -2284,12 +2307,11 @@ namespace UELib
                     && PackageFlags.HasFlag(PackageFlag.Cooked))
                 {
                     int garbageSize = stream.ReadInt32();
-                    Debug.WriteLine(garbageSize, "GarbageSize");
+
                     int compressedChunkInfoOffset = stream.ReadInt32();
                     Debug.Assert(compressedChunkInfoOffset < stream.Length);
-                    Debug.WriteLine(compressedChunkInfoOffset, "CompressedChunkInfoOffset");
+
                     int lastBlockSize = stream.ReadInt32();
-                    Debug.WriteLine(lastBlockSize, "LastBlockSize");
                     Debug.Assert(stream.Position == NameOffset, "There is more data before the NameTable");
                     // Data after this is encrypted
                 }
@@ -3544,7 +3566,7 @@ namespace UELib
 
         /// <summary>
         /// If true, the package won't have any editor data such as HideCategories, ScriptText etc.
-        /// 
+        ///
         /// However this condition is not only determined by the package flags property.
         /// Thus it is necessary to explicitly indicate this state.
         /// </summary>

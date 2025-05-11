@@ -71,7 +71,13 @@ namespace UELib.Engine
                 _Buffer.Read(out Kerning);
                 Record(nameof(Kerning), Kerning);
             }
-
+#if DNF
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                // Not yet supported.
+                return;
+            }
+#endif
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.CharRemapAddedToUFont)
             {
                 _Buffer.Read(out CharRemap);

@@ -1,6 +1,5 @@
 ﻿using System;
 using UELib.Branch.UE2.VG.Tokens;
-using UELib.Branch.UE3.Willow.Tokens;
 using UELib.Core;
 using UELib.Core.Tokens;
 using UELib.Flags;
@@ -900,5 +899,15 @@ namespace UELib.Branch
             tokenMap[0x5A] = typeof(FilterEditorOnlyToken);
         }
 #endif
+        public override void PostDeserializePackage(UnrealPackage linker, IUnrealStream stream)
+        {
+            base.PostDeserializePackage(linker, stream);
+#if BULLETSTORM
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm_FCE)
+            {
+                linker.AddClassType("CppCopyStructProperty", typeof(UStructProperty));
+            }
+#endif
+        }
     }
 }
