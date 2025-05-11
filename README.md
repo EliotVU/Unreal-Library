@@ -142,7 +142,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Roboblitz | 2306 | 369/006 |     |
 | Stranglehold | 2605 | 375/025 | |
 | Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon |
-| Warmonger: Operation Downtown Destruction | 2859 | 419|003 | |
+| Warmonger: Operation Downtown Destruction | 2859 | 419/003 | |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
 | Frontlines: Fuel of War | 2917 | 433/052 | |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
