@@ -3716,11 +3716,7 @@ namespace UELib
                 Objects = null;
             }
 
-            if (Stream == null)
-                return;
-
-            Stream.Close();
-            Stream = null;
+            Stream?.Dispose();
         }
 
         #endregion

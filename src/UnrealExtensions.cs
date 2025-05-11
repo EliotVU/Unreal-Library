@@ -20,7 +20,7 @@ namespace UELib
         };
 
         public static readonly string[] Other = { ".md5", ".usa", ".ums", ".rsa", ".sav" };
-        public static readonly string[] Mod = { ".umod", ".ut2mod", ".ut4mod" };
+        public static readonly string[] Mod = { ".umod", ".ut2mod", ".ut4mod", ".umd" };
 
         public static readonly string[] Common = { ".u", ".upk", ".xxx", ".umap", ".uasset" };
         public static readonly string[] Legacy =
