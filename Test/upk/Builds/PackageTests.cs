@@ -204,12 +204,13 @@ namespace Eliot.UELib.Test.Builds
                     {
                         Console.WriteLine($@"Validating '{filePath}'");
 
-                        using var stream = new UPackageStream(filePath, FileMode.Open, FileAccess.Read);
-                        using var linker = new UnrealPackage(stream)
+                        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        using var linker = new UnrealPackage(fileStream, filePath)
                         {
                             BuildTarget = forcedBuild
                         };
-                        linker.Deserialize(stream);
+
+                        linker.Deserialize();
 
                         versions.Add((linker.Summary.Version << 16) | linker.Summary.LicenseeVersion);
 

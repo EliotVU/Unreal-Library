@@ -1,6 +1,5 @@
 ﻿using System;
-
-using UELib.Core;
+using UELib.IO;
 
 namespace UELib.Branch.UE3.HUXLEY
 {
@@ -22,9 +21,12 @@ namespace UELib.Branch.UE3.HUXLEY
 
             if (summary.PackageFlags.HasFlags((uint)PackageFlags.UseCrypt))
             {
-                stream.Decoder = linker.Summary.LicenseeVersion >= 23
+                var decoder = linker.Summary.LicenseeVersion >= 23
                     ? new CryptoDecoderHuxley(linker.PackageName)
                     : new CryptoDecoderHuxley(linker.Summary.Guid.A);
+
+                linker.Archive.Decoder = decoder;
+                linker.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
             }
         }
     }

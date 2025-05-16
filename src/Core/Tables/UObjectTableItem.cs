@@ -79,7 +79,7 @@ namespace UELib
         {
             byte[] buff = new byte[Size];
             Owner.Stream.Seek(Offset, SeekOrigin.Begin);
-            Owner.Stream.EndianAgnosticRead(buff, 0, Size);
+            Owner.Stream.Read(buff, 0, Size);
 
             return buff;
         }

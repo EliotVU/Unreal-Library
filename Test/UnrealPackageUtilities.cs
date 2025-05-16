@@ -1,19 +1,53 @@
 ﻿using System;
 using System.IO;
 using UELib;
+using UELib.Branch;
 
 namespace Eliot.UELib.Test
 {
     public static class UnrealPackageUtilities
     {
-        // HACK: Ugly workaround the issues with UPackageStream
-        public static UPackageStream CreateTempPackageStream()
+        public static FileStream CreateTempPackageStream()
         {
             string tempFilePath = Path.Join(Path.GetTempFileName());
-            File.WriteAllBytes(tempFilePath, BitConverter.GetBytes(UnrealPackage.Signature));
+            var fileStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
 
-            var stream = new UPackageStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite);
-            return stream;
+            return fileStream;
+        }
+
+        public static UnrealPackageArchive CreateTempArchive(PackageObjectLegacyVersion version,
+            ushort licenseeVersion = 0) => CreateTempArchive((uint)version, licenseeVersion);
+        public static UnrealPackageArchive CreateTempArchive(uint version, ushort licenseeVersion = 0)
+        {
+            var fileStream = CreateTempPackageStream();
+
+            var archive = new UnrealPackageArchive(fileStream);
+            var package = archive.Package;
+            package.Build = new UnrealPackage.GameBuild(package);
+            package.Summary = new UnrealPackage.PackageFileSummary
+            {
+                Version = version,
+                LicenseeVersion = licenseeVersion
+            };
+
+            return archive;
+        }
+        
+        public static UnrealPackageArchive CreateMemoryArchive(PackageObjectLegacyVersion version,
+            ushort licenseeVersion = 0) => CreateMemoryArchive((uint)version, licenseeVersion);
+        public static UnrealPackageArchive CreateMemoryArchive(uint version, ushort licenseeVersion = 0)
+        {
+            var memoryStream = new MemoryStream();
+            var archive = new UnrealPackageArchive(memoryStream, "Transient");
+            var package = archive.Package;
+            package.Build = new UnrealPackage.GameBuild(package);
+            package.Summary = new UnrealPackage.PackageFileSummary
+            {
+                Version = version,
+                LicenseeVersion = licenseeVersion
+            };
+
+            return archive;
         }
     }
 }

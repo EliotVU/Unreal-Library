@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using UELib.Branch;
+using UELib.IO;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 

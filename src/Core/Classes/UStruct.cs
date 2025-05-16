@@ -121,7 +121,7 @@ namespace UELib.Core
             // Moved to UFunction in UE3
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
             {
-                FriendlyName = _Buffer.ReadNameReference();
+                FriendlyName = _Buffer.ReadName();
                 Record(nameof(FriendlyName), FriendlyName);
             }
 #if DNF
@@ -146,7 +146,7 @@ namespace UELib.Core
                     byte dnfByte = _Buffer.ReadByte();
                     Record(nameof(dnfByte), dnfByte);
 
-                    var dnfName = _Buffer.ReadNameReference();
+                    var dnfName = _Buffer.ReadName();
                     Record(nameof(dnfName), dnfName);
                 }
 
@@ -168,7 +168,7 @@ namespace UELib.Core
             if (Package.Build == BuildGeneration.Vengeance &&
                 _Buffer.LicenseeVersion >= 29)
             {
-                int vengeanceUnknownObject = _Buffer.ReadObjectIndex();
+                var vengeanceUnknownObject = _Buffer.ReadObject();
                 Record(nameof(vengeanceUnknownObject), vengeanceUnknownObject);
             }
 #endif

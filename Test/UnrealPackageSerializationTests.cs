@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using Eliot.UELib.Test.UPK.Builds;
+using Eliot.UELib.Test.Builds;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Decoding;
+using UELib.IO;
 
 namespace Eliot.UELib.Test;
 
@@ -25,17 +26,12 @@ public class UnrealPackageSerializationTests
         using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
         Assert.IsNotNull(sourcePackage);
 
-        using var stream = UnrealPackageUtilities.CreateTempPackageStream();
-        using var linker = new UnrealPackage(stream);
-        linker.Build = new UnrealPackage.GameBuild(linker);
-        linker.Summary = new UnrealPackage.PackageFileSummary
-        {
-            Version = (uint)version
-        };
-
+        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
+        var package = archive.Package;
+        var stream = archive.Stream;
         // write the script packages content to the temp stream
 
-        linker.Names.AddRange(sourcePackage.Names);
+        package.Names.AddRange(sourcePackage.Names);
 
         var sizes = new long[sourcePackage.Names.Count];
 
@@ -66,14 +62,9 @@ public class UnrealPackageSerializationTests
         using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
         Assert.IsNotNull(sourcePackage);
 
-        using var stream = UnrealPackageUtilities.CreateTempPackageStream();
-        using var linker = new UnrealPackage(stream);
-        linker.Build = new UnrealPackage.GameBuild(linker);
-        linker.Summary = new UnrealPackage.PackageFileSummary
-        {
-            Version = (uint)version
-        };
-
+        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
+        var linker = archive.Package;
+        var stream = archive.Stream;
         // write the script packages content to the temp stream
 
         linker.Names.AddRange(sourcePackage.Names);
@@ -116,14 +107,9 @@ public class UnrealPackageSerializationTests
         using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
         Assert.IsNotNull(sourcePackage);
 
-        using var stream = UnrealPackageUtilities.CreateTempPackageStream();
-        using var linker = new UnrealPackage(stream);
-        linker.Build = new UnrealPackage.GameBuild(linker);
-        linker.Summary = new UnrealPackage.PackageFileSummary
-        {
-            Version = (uint)version
-        };
-
+        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
+        var linker = archive.Package;
+        var stream = archive.Stream;
         // write the script packages content to the temp stream
 
         linker.Names.AddRange(sourcePackage.Names);
@@ -173,18 +159,13 @@ public class UnrealPackageSerializationTests
         using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
         Assert.IsNotNull(sourcePackage);
 
-        // Create a new temporary package to contain a copy of the test package.
-        using var tempStream = UnrealPackageUtilities.CreateTempPackageStream();
-        using var tempPackage = new UnrealPackage(tempStream);
-        tempPackage.Build = new UnrealPackage.GameBuild(tempPackage);
-        tempPackage.Summary = new UnrealPackage.PackageFileSummary
-        {
-            Version = (uint)version
-        };
+        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
+        var linker = archive.Package;
+        var stream = archive.Stream;
 
         // Version is serialized from the summary instead of the stream version.
-        sourcePackage.Summary.Version = tempPackage.Version;
-        sourcePackage.Summary.LicenseeVersion = tempPackage.LicenseeVersion;
+        sourcePackage.Summary.Version = linker.Version;
+        sourcePackage.Summary.LicenseeVersion = linker.LicenseeVersion;
 
         // We expect the offset to CHANGE
         // - so we must set them to 0 to indicate that we don't want to serialize the table data at the last position.
@@ -197,18 +178,18 @@ public class UnrealPackageSerializationTests
         sourcePackage.Summary.ThumbnailTableOffset = 0;
 
         // Copy the entire package to the temp stream (minus objects)
-        tempStream.Position = 0;
-        sourcePackage.Serialize(tempStream);
-        long endPosition = tempStream.Position;
+        stream.Position = 0;
+        sourcePackage.Serialize(stream);
+        long endPosition = stream.Position;
 
         // Now that we know the correct table offsets, re-write it with the correct offsets.
-        tempStream.Position = 0;
-        sourcePackage.Summary.Serialize(tempStream);
+        stream.Position = 0;
+        sourcePackage.Summary.Serialize(stream);
 
         // re-deserialize from our temp copy to see if it all aligns.
-        tempStream.Position = 0;
-        tempPackage.Deserialize(tempStream);
-        Assert.AreEqual(endPosition, tempStream.Position);
+        stream.Position = 0;
+        linker.Deserialize(stream);
+        Assert.AreEqual(endPosition, stream.Position);
     }
 
     [TestMethod]
@@ -218,14 +199,12 @@ public class UnrealPackageSerializationTests
         Assert.IsNotNull(sourcePackage);
 
         // Create a new temporary package to contain a copy of the test package.
-        using var tempStream = UnrealPackageUtilities.CreateTempPackageStream();
-        using var tempPackage = new UnrealPackage(tempStream);
-        tempPackage.Build = new UnrealPackage.GameBuild(tempPackage);
-        tempPackage.Summary = new UnrealPackage.PackageFileSummary
-        {
-            Version = sourcePackage.Version,
-            LicenseeVersion = sourcePackage.LicenseeVersion
-        };
+        using var archive = UnrealPackageUtilities.CreateTempArchive(
+            (PackageObjectLegacyVersion)sourcePackage.Version,
+            sourcePackage.LicenseeVersion
+        );
+        var linker = archive.Package;
+        var stream = archive.Stream;
 
         sourcePackage.InitializePackage();
 
@@ -241,10 +220,10 @@ public class UnrealPackageSerializationTests
         //}
 
         using var packageSaver = new UnrealPackageSaver();
-        using var saveStream = packageSaver.Save(sourcePackage, tempStream);
+        using var saveStream = packageSaver.Save(sourcePackage, stream);
 
-        tempPackage.Deserialize(tempStream);
-        tempPackage.InitializePackage();
+        linker.Deserialize(stream);
+        linker.InitializePackage();
 
         //tempStream.Flush();
     }
@@ -279,7 +258,7 @@ public class UnrealPackageSerializationTests
             sourcePackage.Summary.HeaderSize = 0;
 
             // To be used to save objects (to track the export indexes etc.)
-            var stream = new UnrealSaveStream(this, baseStream);
+            var stream = new UnrealSaveStream(this, sourcePackage.Archive, baseStream);
 
             // This will also re-set the table offsets.
             stream.Position = 0;
@@ -416,21 +395,26 @@ public class UnrealPackageSerializationTests
             //return obj.DeserializationState == UObject.ObjectState.Deserialized;
         }
 
-        internal class UnrealSaveStream(UnrealPackageSaver saver, IUnrealStream baseStream) : IUnrealStream
+        internal class UnrealSaveStream(UnrealPackageSaver saver, UnrealPackageArchive archive, IUnrealStream baseStream) : IUnrealStream
         {
-            public UnrealPackage Package => baseStream.Package;
-            public UnrealReader UR => baseStream.UR;
-            public UnrealWriter UW => baseStream.UW;
+            public UnrealPackage Package => archive.Package;
 
-            public readonly Dictionary<int, UName> HashToNameMap = new(baseStream.Package.Names.Count);
+            UnrealBinaryReader IUnrealStream.UR => Reader;
+            UnrealBinaryWriter IUnrealStream.UW => Writer;
 
-            public readonly Dictionary<UImportTableItem, int> ImportToIndexMap = new(baseStream.Package.Imports.Count);
-            public readonly Dictionary<UExportTableItem, int> ExportToIndexMap = new(baseStream.Package.Exports.Count);
+            private UnrealBinaryReader Reader => baseStream.UR;
+            private UnrealBinaryWriter Writer => baseStream.UW;
 
-            public IBufferDecoder Decoder
+            public readonly Dictionary<int, UName> HashToNameMap = new(archive.Package.Names.Count);
+
+            public readonly Dictionary<UImportTableItem, int> ImportToIndexMap = new(archive.Package.Imports.Count);
+            public readonly Dictionary<UExportTableItem, int> ExportToIndexMap = new(archive.Package.Exports.Count);
+
+            [Obsolete]
+            public IBufferDecoder? Decoder
             {
-                get => baseStream.Decoder;
-                set => baseStream.Decoder = value;
+                get => archive.Decoder;
+                set => archive.Decoder = value;
             }
 
             public IPackageSerializer Serializer
@@ -490,7 +474,7 @@ public class UnrealPackageSerializationTests
                         break;
                 }
 
-                UW.WriteIndex(index);
+                Writer.WriteIndex(index);
             }
 
             public UName ReadName()
@@ -502,7 +486,7 @@ public class UnrealPackageSerializationTests
             {
                 if (HashToNameMap.TryGetValue(value.GetHashCode(), out var name))
                 {
-                    UW.WriteName(name);
+                    Writer.WriteName(name);
                 }
                 else
                 {
@@ -512,33 +496,8 @@ public class UnrealPackageSerializationTests
                     name = new UName(index, value.Number);
                     HashToNameMap.Add(value.GetHashCode(), name);
 
-                    UW.WriteName(name);
+                    Writer.WriteName(name);
                 }
-            }
-
-            public int ReadObjectIndex()
-            {
-                throw new NotImplementedException();
-            }
-
-            public UObject ParseObject(int index)
-            {
-                throw new NotImplementedException();
-            }
-
-            public int ReadNameIndex()
-            {
-                throw new NotImplementedException();
-            }
-
-            public int ReadNameIndex(out int num)
-            {
-                throw new NotImplementedException();
-            }
-
-            public string ParseName(int index)
-            {
-                throw new NotImplementedException();
             }
 
             public void Skip(int bytes)
@@ -551,12 +510,17 @@ public class UnrealPackageSerializationTests
                 return baseStream.Read(buffer, index, count);
             }
 
+            public void Write(byte[] buffer, int index, int count)
+            {
+                throw new NotImplementedException();
+            }
+
             public long Seek(long offset, SeekOrigin origin)
             {
                 return baseStream.Seek(offset, origin);
             }
 
-            public IUnrealStream Record(string name, object value)
+            public IUnrealStream Record(string name, object? value)
             {
                 throw new NotSupportedException("Cannot record data when writing data.");
             }
@@ -569,7 +533,9 @@ public class UnrealPackageSerializationTests
             public uint Version => baseStream.Version;
             public uint LicenseeVersion => baseStream.LicenseeVersion;
             public uint UE4Version => baseStream.UE4Version;
-            public bool BigEndianCode => baseStream.BigEndianCode;
+            public UnrealPackage.GameBuild Build => baseStream.Build;
+            public bool BigEndianCode => Flags.HasFlag(UnrealArchiveFlags.BigEndian);
+            public UnrealArchiveFlags Flags { get; set; }
 
             public void Dispose()
             {

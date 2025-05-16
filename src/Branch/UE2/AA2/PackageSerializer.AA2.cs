@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using UELib.Decoding;
+using UELib.IO;
 using UELib.Services;
 
 namespace UELib.Branch.UE2.AA2
@@ -12,16 +13,18 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Serialize(IUnrealStream stream, UNameTableItem item)
         {
-            if (stream.Decoder is CryptoDecoderAA2)
+            if (stream.Flags.HasFlag(UnrealArchiveFlags.Encoded))
+            {
                 throw new NotSupportedException("Can't serialize encrypted name entries");
-            
+            }
+
             item.Serialize(stream);
         }
 
         // Note: Names are not encrypted in AAA/AAO 2.6 (LicenseeVersion 32)
         public override void Deserialize(IUnrealStream stream, UNameTableItem item)
         {
-            if (!(stream.Decoder is CryptoDecoderAA2))
+            if (!stream.Flags.HasFlag(UnrealArchiveFlags.Encoded))
             {
                 // Fallback to the default implementation
                 item.Deserialize(stream);
@@ -50,7 +53,7 @@ namespace UELib.Branch.UE2.AA2
             // Part of name ?
             int number = stream.ReadIndex();
             //Debug.Assert(number == 0, "Unknown value");
-            
+
             item.Name = name;
             item.Flags = stream.ReadUInt32();
         }
@@ -91,7 +94,7 @@ namespace UELib.Branch.UE2.AA2
             stream.Write((int)item.OuterIndex);
             stream.Write(~(uint)item.ObjectFlags);
             stream.Write(item.ObjectName);
-            stream.WriteIndex(item.SerialSize );
+            stream.WriteIndex(item.SerialSize);
             if (item.SerialSize > 0)
             {
                 stream.WriteIndex(item.SerialOffset);

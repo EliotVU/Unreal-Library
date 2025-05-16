@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.ComTypes;
 using UELib.Branch;
 using UELib.Flags;
+using UELib.IO;
 using UELib.ObjectModel.Annotations;
 using UELib.Services;
 
@@ -278,7 +279,7 @@ namespace UELib.Core
         /// </summary>
         /// <param name="packageStream">the input package stream.</param>
         /// <returns>the loaded object stream.</returns>
-        public T Load<T>(UPackageStream packageStream)
+        public T Load<T>(UnrealPackageStream packageStream)
             where T : UObjectStream
         {
             var objectStream = LoadStream<T>(packageStream);
@@ -287,38 +288,24 @@ namespace UELib.Core
             return objectStream;
         }
 
-        public T LoadStream<T>(UPackageStream stream)
+        public T LoadStream<T>(UnrealPackageStream stream)
             where T : UObjectStream
         {
-            T objectStream;
             long objectOffset = ExportTable.SerialOffset;
             int objectSize = ExportTable.SerialSize;
 
             byte[] buffer = new byte[objectSize];
-            int byteCount;
-
+            stream.Seek(objectOffset, SeekOrigin.Begin);
+            int byteCount = stream.Read(buffer, 0, objectSize);
+            Stream baseStream = new MemoryStream(buffer, 0, objectSize, false, true);
+            var packageArchive = stream.Package.Archive;
             // Make an object stream with a decoder as the base stream.
-            if (stream.Decoder != null)
+            if (stream.Flags.HasFlag(UnrealArchiveFlags.Encoded))
             {
-                var decoder = stream.Decoder;
-                // Read without decoding, because the encryption may be affected by the read count. e.g. "Huxley"
-                stream.Decoder = null;
-                // Bypass the terrible and slow endian reverse call
-                stream.Seek(objectOffset, SeekOrigin.Begin);
-                byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
-                stream.Decoder = decoder;
-
-                var baseStream = new MemoryDecoderStream(stream.Decoder, buffer, objectOffset);
-                objectStream = (T)Activator.CreateInstance(typeof(T), stream, baseStream);
+                baseStream = new EncodedStream(baseStream, packageArchive.Decoder, objectOffset);
             }
-            else
-            {
-                // Bypass the terrible and slow endian reverse call
-                stream.Seek(objectOffset, SeekOrigin.Begin);
-                byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
-
-                objectStream = (T)Activator.CreateInstance(typeof(T), stream, buffer);
-            }
+            
+            var objectStream = (T)Activator.CreateInstance(typeof(T), packageArchive, baseStream, objectOffset);
 
             Contract.Assert(byteCount == objectSize,
                 $"Incomplete read; expected a total bytes of {objectSize} but got {byteCount}");
@@ -694,11 +681,6 @@ namespace UELib.Core
             stream.Seek(offset, SeekOrigin.Begin);
             stream.Read(bytes, 0, size);
             stream.Position = prePosition;
-            // FIXME:
-            if (Package.Stream.BigEndianCode)
-            {
-                Array.Reverse(bytes);
-            }
 
             return bytes;
         }
