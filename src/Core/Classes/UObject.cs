@@ -309,7 +309,7 @@ namespace UELib.Core
                 stream.Decoder = decoder;
 
                 var baseStream = new MemoryDecoderStream(stream.Decoder, buffer, objectOffset);
-                objectStream = (T)Activator.CreateInstance(typeof(T), stream, baseStream);
+                objectStream = (T)Activator.CreateInstance(typeof(T), stream, baseStream, objectOffset);
             }
             else
             {
@@ -317,7 +317,7 @@ namespace UELib.Core
                 stream.Seek(objectOffset, SeekOrigin.Begin);
                 byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
 
-                objectStream = (T)Activator.CreateInstance(typeof(T), stream, buffer);
+                objectStream = (T)Activator.CreateInstance(typeof(T), stream, buffer, objectOffset);
             }
 
             Contract.Assert(byteCount == objectSize,
