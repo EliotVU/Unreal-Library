@@ -82,12 +82,19 @@
     <PackageTags>UnrealEngine;UnrealScript;Decompiler;UPK;Exporter;Bytecode</PackageTags>
     <Copyright>2009-2025 Eliot van Uytfanghe. All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/EliotVU/Unreal-Library</PackageProjectUrl>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/EliotVU/Unreal-Library</RepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/EliotVU/Unreal-Library.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>Eliot.UELib.snk</AssemblyOriginatorKeyFile>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 </Project>
