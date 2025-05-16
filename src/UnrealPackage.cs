@@ -879,7 +879,7 @@ namespace UELib
             public uint? OverrideVersion { get; }
             public ushort? OverrideLicenseeVersion { get; }
 
-            public BuildGeneration Generation { get; }
+            public BuildGeneration Generation { get; internal set; }
             [CanBeNull] public readonly Type EngineBranchType;
 
             [Obsolete("To be deprecated")] public readonly BuildFlags Flags;
@@ -1209,6 +1209,9 @@ namespace UELib
                 {
                     package.Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType,
                         package.Build.Generation);
+
+                    // The branch may override the generation. (Especially in unit-tests this is useful)
+                    package.Build.Generation = package.Branch.Generation;
                 }
                 else if (package.Summary.UE4Version > 0)
                 {

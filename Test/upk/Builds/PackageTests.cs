@@ -31,22 +31,26 @@ namespace Eliot.UELib.Test.Builds
         [DataRow(@"America's Army 2\2_5\",
             BuildName.AA2_2_5,
             BuildPlatform.Undetermined,
-            BuildName.AA2_2_5
+            BuildName.AA2_2_5,
+            BuildGeneration.AGP
         )]
         [DataRow(@"America's Army 2\2_6\", // encrypted
             BuildName.AA2_2_6,
             BuildPlatform.Undetermined,
-            BuildName.AA2_2_6
+            BuildName.AA2_2_6,
+            BuildGeneration.AGP
         )]
         [DataRow(@"America's Army (Arcade)\2_6", // encrypted
             BuildName.AA2_2_6,
             BuildPlatform.Undetermined,
-            BuildName.AA2_2_6
+            BuildName.AA2_2_6,
+            BuildGeneration.AGP
         )]
         [DataRow(@"America's Army (Arcade)\2_8", // encrypted
             BuildName.AA2_2_8,
             BuildPlatform.Undetermined,
-            BuildName.AA2_2_8
+            BuildName.AA2_2_8,
+            BuildGeneration.AGP
         )]
         [DataRow(@"Stargate_SG-1_-_The_Alliance-2005-12-15\",
             BuildName.SG1_TA,
@@ -171,7 +175,8 @@ namespace Eliot.UELib.Test.Builds
             // The expected cooker platform of the package.
             BuildPlatform packagesPlatform = BuildPlatform.Undetermined,
             // The forced build name for the package.
-            BuildName forcedBuild = BuildName.Unset)
+            BuildName forcedBuild = BuildName.Unset,
+            BuildGeneration forcedGeneration = BuildGeneration.Undefined)
         {
             packagesPath = Path.Join(Packages.UnrealEngineGamesPath, packagesPath);
             if (!Directory.Exists(packagesPath))
