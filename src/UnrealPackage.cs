@@ -1132,6 +1132,15 @@ namespace UELib
             public UGuid PersistentGuid;
             public UGuid OwnerPersistentGuid;
 
+            public int AssetRegistryDataOffset;
+            public int BulkDataOffset;
+            public int WorldTileInfoDataOffset;
+
+            public UArray<int> ChunkIdentifiers;
+
+            public int PreloadDependencyCount;
+            public int PreloadDependencyOffset;
+
             private void SetupBuild(UnrealPackage package)
             {
                 // Auto-detect
@@ -1528,6 +1537,19 @@ namespace UELib
                     goto skipGenerations;
                 }
 #endif
+#if UE4
+                if (stream.Package.ContainsEditorData())
+                {
+                    if (stream.UE4Version >= 518)
+                    {
+                        stream.Write(ref PersistentGuid);
+                        if (stream.UE4Version < 520)
+                        {
+                            stream.Write(ref OwnerPersistentGuid);
+                        }
+                    }
+                }
+#endif
                 if (Generations == null || Generations.Count == 0)
                 {
                     Generations = new UArray<UGenerationTableItem>(1)
@@ -1581,18 +1603,6 @@ namespace UELib
                     stream.Write(EngineVersion);
                 }
 #if UE4
-                if (stream.Package.ContainsEditorData())
-                {
-                    if (stream.UE4Version >= 518)
-                    {
-                        stream.Write(ref PersistentGuid);
-                        if (stream.UE4Version < 520)
-                        {
-                            stream.Write(ref OwnerPersistentGuid);
-                        }
-                    }
-                }
-
                 if (stream.UE4Version >= 336)
                 {
                     stream.Write(ref PackageEngineVersion);
@@ -1723,6 +1733,42 @@ namespace UELib
                     //Debug.WriteLine(lastBlockSize, "LastBlockSize");
                     //Debug.Assert(stream.Position == NameOffset, "There is more data before the NameTable");
                     //// Data after this is encrypted
+                }
+#endif
+#if UE4
+                if (stream.UE4Version >= 112)
+                {
+                    stream.Write(AssetRegistryDataOffset);
+                }
+
+                if (stream.UE4Version >= 212)
+                {
+                    stream.Write(BulkDataOffset);
+                }
+
+                if (stream.UE4Version >= 224)
+                {
+                    stream.Write(WorldTileInfoDataOffset);
+                }
+
+                if (stream.UE4Version >= 278)
+                {
+                    ChunkIdentifiers ??= [];
+
+                    if (stream.UE4Version >= 326)
+                    {
+                        stream.Write(ChunkIdentifiers);
+                    }
+                    else
+                    {
+                        stream.Write(ChunkIdentifiers.Count > 0 ? ChunkIdentifiers[0] : 0);
+                    }
+                }
+
+                if (stream.UE4Version >= 507)
+                {
+                    stream.Write(PreloadDependencyCount);
+                    stream.Write(PreloadDependencyOffset);
                 }
 #endif
             }
@@ -2108,6 +2154,23 @@ namespace UELib
                     goto skipGenerations;
                 }
 #endif
+#if UE4
+                if (stream.Package.ContainsEditorData())
+                {
+                    if (stream.UE4Version >= 518)
+                    {
+                        stream.ReadStruct(out PersistentGuid);
+                        if (stream.UE4Version < 520)
+                        {
+                            stream.ReadStruct(out OwnerPersistentGuid);
+                        }
+                    }
+                    else
+                    {
+                        PersistentGuid = Guid;
+                    }
+                }
+#endif
                 int generationCount = stream.ReadInt32();
                 Contract.Assert(generationCount >= 0);
                 Console.WriteLine("Generations Count:" + generationCount);
@@ -2150,18 +2213,6 @@ namespace UELib
                     Console.WriteLine("EngineVersion:" + EngineVersion);
                 }
 #if UE4
-                if (stream.Package.ContainsEditorData())
-                {
-                    if (stream.UE4Version >= 518)
-                    {
-                        stream.ReadStruct(out PersistentGuid);
-                        if (stream.UE4Version < 520)
-                        {
-                            stream.ReadStruct(out OwnerPersistentGuid);
-                        }
-                    }
-                }
-
                 if (stream.UE4Version >= 336)
                 {
                     // EngineVersion
@@ -2317,6 +2368,41 @@ namespace UELib
                     int lastBlockSize = stream.ReadInt32();
                     Debug.Assert(stream.Position == NameOffset, "There is more data before the NameTable");
                     // Data after this is encrypted
+                }
+#endif
+#if UE4
+                if (stream.UE4Version >= 112)
+                {
+                    stream.Read(out AssetRegistryDataOffset);
+                }
+
+                if (stream.UE4Version >= 212)
+                {
+                    stream.Read(out BulkDataOffset);
+                }
+
+                if (stream.UE4Version >= 224)
+                {
+                    stream.Read(out WorldTileInfoDataOffset);
+                }
+
+                if (stream.UE4Version >= 278)
+                {
+                    if (stream.UE4Version >= 326)
+                    {
+                        stream.Read(out ChunkIdentifiers);
+                    }
+                    else
+                    {
+                        stream.Read(out int chunkIdentifier);
+                        ChunkIdentifiers = [chunkIdentifier];
+                    }
+                }
+
+                if (stream.UE4Version >= 507)
+                {
+                    stream.Read(out PreloadDependencyCount);
+                    stream.Read(out PreloadDependencyOffset);
                 }
 #endif
             }

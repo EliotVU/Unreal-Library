@@ -526,9 +526,9 @@ namespace UELib.Core
 
             DeserializeProperties(_Buffer);
 #if UE4
-            if (_Buffer.UE4Version > 0)
+            if (_Buffer.UE4Version > 0 && !ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject))
             {
-                bool shouldSerializeGuid = _Buffer.ReadInt32() > 0;
+                _Buffer.Read(out bool shouldSerializeGuid);
                 _Buffer.Record(nameof(shouldSerializeGuid), shouldSerializeGuid);
 
                 if (shouldSerializeGuid)

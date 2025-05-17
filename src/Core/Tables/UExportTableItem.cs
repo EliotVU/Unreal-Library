@@ -23,7 +23,7 @@ namespace UELib
             set => _ClassIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Class => Owner.IndexToObjectResource(ClassIndex);
+        public UObjectTableItem? Class => Owner.IndexToObjectResource(ClassIndex);
 
         private UPackageIndex _SuperIndex;
 
@@ -33,7 +33,7 @@ namespace UELib
             set => _SuperIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Super => Owner.IndexToObjectResource(_SuperIndex);
+        public UObjectTableItem? Super => Owner.IndexToObjectResource(_SuperIndex);
 
         private UPackageIndex _TemplateIndex;
 
@@ -44,8 +44,7 @@ namespace UELib
             set => _TemplateIndex = value;
         }
 
-        [BuildGeneration(BuildGeneration.UE4)]
-        [CanBeNull] public UObjectTableItem Template => Owner.IndexToObjectResource(_TemplateIndex);
+        [BuildGeneration(BuildGeneration.UE4)] public UObjectTableItem? Template => Owner.IndexToObjectResource(_TemplateIndex);
 
         private UPackageIndex _ArchetypeIndex;
 
@@ -57,7 +56,7 @@ namespace UELib
         }
 
         [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
-        [CanBeNull] public UObjectTableItem Archetype => Owner.IndexToObjectResource(_ArchetypeIndex);
+        public UObjectTableItem? Archetype => Owner.IndexToObjectResource(_ArchetypeIndex);
 
         /// <summary>
         /// The object flags <see cref="ObjectFlagsLO"/>
@@ -113,6 +112,12 @@ namespace UELib
         [BuildGeneration(BuildGeneration.UE4)] public bool IsForcedExport;
         [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForEditorGame;
         [BuildGeneration(BuildGeneration.UE4)] public bool IsAsset;
+
+        [BuildGeneration(BuildGeneration.UE4)] public int FirstExportDependency;
+        [BuildGeneration(BuildGeneration.UE4)] public int SerializationBeforeSerializationDependencies;
+        [BuildGeneration(BuildGeneration.UE4)] public int CreateBeforeSerializationDependencies;
+        [BuildGeneration(BuildGeneration.UE4)] public int SerializationBeforeCreateDependencies;
+        [BuildGeneration(BuildGeneration.UE4)] public int CreateBeforeCreateDependencies;
 
         /// <summary>
         /// Serializes the export to a stream.
