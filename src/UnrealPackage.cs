@@ -6,34 +6,33 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
+using UELib.Branch.UE2.DVS;
 using UELib.Branch.UE2.Lead;
 using UELib.Branch.UE2.SCX;
+using UELib.Branch.UE2.ShadowStrike;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
 using UELib.Branch.UE3.HUXLEY;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.R6;
+using UELib.Branch.UE3.RL;
 using UELib.Branch.UE3.RSS;
+using UELib.Branch.UE3.SFX;
 using UELib.Branch.UE3.Willow;
 using UELib.Branch.UE4;
+using UELib.Core;
+using UELib.Decoding;
 using UELib.Flags;
 using UELib.Services;
 
 namespace UELib
 {
-    using System.Text;
-    using Branch.UE2.DVS;
-    using Branch.UE2.ShadowStrike;
-    using Branch.UE3.RL;
-    using Branch.UE3.SFX;
-    using Core;
-    using Decoding;
-
     public class ObjectEventArgs : EventArgs
     {
         public UObject ObjectRef { get; }
@@ -98,7 +97,7 @@ namespace UELib
 
         public string FullPackageName => _FullPackageName;
         public string PackageName => Path.GetFileNameWithoutExtension(_FullPackageName);
-        public string PackageDirectory => Path.GetDirectoryName(_FullPackageName);
+        public string PackageDirectory => Path.GetDirectoryName(_FullPackageName)!;
 
         public BinaryMetaData BinaryMetaData { get; } = new();
 
@@ -880,7 +879,7 @@ namespace UELib
             public ushort? OverrideLicenseeVersion { get; }
 
             public BuildGeneration Generation { get; internal set; }
-            [CanBeNull] public readonly Type EngineBranchType;
+            public readonly Type? EngineBranchType;
 
             [Obsolete("To be deprecated")] public readonly BuildFlags Flags;
 
@@ -938,8 +937,7 @@ namespace UELib
                 }
             }
 
-            [CanBeNull]
-            private FieldInfo FindBuildInfo(UnrealPackage linker, [CanBeNull] out BuildAttribute buildAttribute)
+            private FieldInfo? FindBuildInfo(UnrealPackage linker, out BuildAttribute? buildAttribute)
             {
                 buildAttribute = null;
 
@@ -3515,7 +3513,6 @@ namespace UELib
             _ClassTypes[className.ToLower()] = classObject;
         }
 
-        [NotNull]
         public Type GetClassType(string className)
         {
             _ClassTypes.TryGetValue(className.ToLower(), out var classType);
@@ -3593,39 +3590,34 @@ namespace UELib
         }
 
         [Obsolete("See below")]
-        public UObject FindObject(string objectName, Type classType, bool checkForSubclass = false)
+        public UObject? FindObject(string objectName, Type classType, bool checkForSubclass = false)
         {
-            var obj = Objects?.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
-                                         (checkForSubclass
-                                             ? o.GetType().IsSubclassOf(classType)
-                                             : o.GetType() == classType));
+            var obj = Objects.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+                                        (checkForSubclass
+                                            ? o.GetType().IsSubclassOf(classType)
+                                            : o.GetType() == classType));
             return obj;
         }
 
-        public T FindObject<T>(string objectName, bool checkForSubclass = false) where T : UObject
+        public T? FindObject<T>(string objectName, bool checkForSubclass = false) where T : UObject
         {
-            var obj = Objects?.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
-                                         (checkForSubclass
-                                             ? o.GetType().IsSubclassOf(typeof(T))
-                                             : o.GetType() == typeof(T)));
-            return obj as T;
+            var obj = Objects.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+                                        (checkForSubclass
+                                            ? o.GetType().IsSubclassOf(typeof(T))
+                                            : o.GetType() == typeof(T)));
+            return (T)obj;
         }
 
-        public UObject FindObjectByGroup(string objectGroup)
+        public UObject? FindObjectByGroup(string objectGroup)
         {
-            if (Objects == null)
-            {
-                return null;
-            }
-
             string[] groups = objectGroup.Split('.');
-            string objectName = groups.LastOrDefault();
+            string? objectName = groups.LastOrDefault();
             if (objectName == null)
             {
                 return null;
             }
 
-            groups = groups.Take(groups.Length - 1).ToArray();
+            groups = groups.Take(groups.Length - 1).Reverse().ToArray();
             var foundObj = Objects.Find(obj =>
             {
                 if (string.Compare(obj.Name, objectName, StringComparison.OrdinalIgnoreCase) != 0)
@@ -3641,10 +3633,12 @@ namespace UELib
                         return false;
                     }
 
-                    if (string.Compare(outer.Name, group, StringComparison.OrdinalIgnoreCase) == 0)
+                    if (string.Compare(outer.Name, group, StringComparison.OrdinalIgnoreCase) != 0)
                     {
-                        outer = outer.Outer;
+                        return false;
                     }
+
+                    outer = outer.Outer;
                 }
 
                 return true;
