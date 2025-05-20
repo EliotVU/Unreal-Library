@@ -48,7 +48,6 @@ namespace UELib.Core
         ///     The deserialized and decompiled output.
         ///     Serves as a temporary workaround, don't rely on it.
         /// </summary>
-        [PublicAPI]
         public string Value { get; private set; }
 
         public string Decompile()
@@ -96,8 +95,7 @@ namespace UELib.Core
                 : $"{expr}={value}";
         }
 
-        [CanBeNull]
-        private T FindProperty<T>(out UStruct outer)
+        private T? FindProperty<T>(out UStruct outer)
             where T : UProperty
         {
             UProperty property = null;
@@ -193,9 +191,9 @@ namespace UELib.Core
 
         private PropertyTypeData _TypeData;
 
-        [CanBeNull] public UName StructName => _TypeData.StructName;
-        [CanBeNull] public UName EnumName => _TypeData.EnumName;
-        [CanBeNull] public UName InnerTypeName => _TypeData.InnerTypeName;
+        public UName? StructName => _TypeData.StructName;
+        public UName? EnumName => _TypeData.EnumName;
+        public UName? InnerTypeName => _TypeData.InnerTypeName;
 
         /// <summary>
         ///     The size in bytes of this tag's value.
@@ -555,7 +553,6 @@ namespace UELib.Core
         ///     Only call after the whole package has been deserialized!
         /// </summary>
         /// <returns>The deserialized value if any.</returns>
-        [PublicAPI]
         public string DeserializeValue(DeserializeFlags deserializeFlags = DeserializeFlags.None)
         {
             if (_Buffer == null)
@@ -1295,14 +1292,12 @@ namespace UELib.Core
     [ComVisible(false)]
     public sealed class DefaultPropertiesCollection : List<UDefaultProperty>
     {
-        [CanBeNull]
-        public UDefaultProperty Find(string name)
+        public UDefaultProperty? Find(string name)
         {
             return Find(prop => prop.Name == name);
         }
 
-        [CanBeNull]
-        public UDefaultProperty Find(UName name)
+        public UDefaultProperty? Find(UName name)
         {
             return Find(prop => prop.Name == name);
         }

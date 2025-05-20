@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.IO;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Flags;
@@ -540,7 +539,7 @@ namespace UELib
 
         [Obsolete] protected override int __ClassIndex => _ClassIndex;
 
-        [Obsolete][NotNull] protected override string __ClassName => Class?.ObjectName ?? "Class";
+        [Obsolete] protected override string __ClassName => Class?.ObjectName ?? "Class";
 
         [Obsolete("Use Super"), Browsable(false)]
         public UObjectTableItem SuperTable => Owner.IndexToObjectResource(_SuperIndex);

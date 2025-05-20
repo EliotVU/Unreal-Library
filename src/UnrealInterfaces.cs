@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using UELib.Annotations;
 using UELib.Core;
 
 namespace UELib
@@ -55,7 +54,7 @@ namespace UELib
     /// </summary>
     public interface IBinaryData : IBuffered
     {
-        [CanBeNull] BinaryMetaData BinaryMetaData { get; }
+        BinaryMetaData? BinaryMetaData { get; }
     }
 
     public interface IContainsTable
@@ -69,7 +68,7 @@ namespace UELib
     public interface IUnrealViewable
     {
     }
-    
+
     public interface IVisitor
     {
         void Visit(IAcceptable visitable);

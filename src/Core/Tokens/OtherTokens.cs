@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using UELib.Annotations;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -168,7 +167,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.EatReturnValue)]
             public class EatReturnValueToken : Token
             {
-                [CanBeNull] public UProperty ReturnValueProperty;
+                public UProperty? ReturnValueProperty;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -319,7 +318,7 @@ namespace UELib.Core
                 public int TextPos;
                 public DebugInfo OpCode = DebugInfo.Unset;
 
-                [CanBeNull] public string OpCodeText;
+                public string? OpCodeText;
 
                 public override void Deserialize(IUnrealStream stream)
                 {

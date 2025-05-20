@@ -1,5 +1,4 @@
-﻿using UELib.Annotations;
-using UELib.Branch;
+﻿using UELib.Branch;
 using UELib.Core;
 
 namespace UELib.Engine
@@ -13,8 +12,7 @@ namespace UELib.Engine
         public bool HasComp;
 
         [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)]
-        [CanBeNull]
-        public UArray<LegacyMipMap> Mips;
+        public UArray<LegacyMipMap>? Mips;
 
         [BuildGeneration(BuildGeneration.UE3)]
         public UBulkData<byte> SourceArt;

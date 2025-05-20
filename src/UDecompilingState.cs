@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UELib.Annotations;
 using UELib.Core;
 
 namespace UELib
@@ -15,7 +14,7 @@ namespace UELib
         ///
         /// Internal because this is a hack patch to fix an issue where each object is inlined for every reference. 
         /// </summary>
-        [CanBeNull] internal static Dictionary<UObject, bool> s_inlinedSubObjects = new Dictionary<UObject, bool>();
+        internal static Dictionary<UObject, bool>? s_inlinedSubObjects = new Dictionary<UObject, bool>();
 
         public static void AddTabs(int count)
         {

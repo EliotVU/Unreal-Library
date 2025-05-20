@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Numerics;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core;
 using UELib.ObjectModel.Annotations;
@@ -14,7 +13,7 @@ namespace UELib.Engine
     [Output("Polygon")]
     public class Poly : IUnrealSerializableClass, IAcceptable
     {
-        [CanBeNull] public UObject Actor;
+        public UObject? Actor;
 
         public int BrushPoly = -1;
 

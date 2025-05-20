@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using UELib.Annotations;
 using UELib.Flags;
 
 namespace UELib
@@ -7,7 +6,6 @@ namespace UELib
     using Core;
 
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-    [PublicAPI]
     public class CompressedChunk : IUnrealSerializableClass
     {
         private long _UncompressedOffset;
@@ -77,7 +75,7 @@ namespace UELib
         }
     }
 
- 	// TODO: Complete implementation
+    // TODO: Complete implementation
     // ReSharper disable once UnusedType.Global
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public struct CompressedChunkHeader : IUnrealSerializableClass

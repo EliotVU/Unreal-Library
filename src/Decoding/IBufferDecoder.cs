@@ -1,8 +1,5 @@
-﻿using UELib.Annotations;
-
-namespace UELib.Decoding
+﻿namespace UELib.Decoding
 {
-    [PublicAPI]
     public interface IBufferDecoder
     {
         void PreDecode(IUnrealStream stream);

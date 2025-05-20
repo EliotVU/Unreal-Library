@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core.Tokens;
 using UELib.Flags;
@@ -19,9 +18,9 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        [CanBeNull] public UTextBuffer ScriptText { get; private set; }
-        [CanBeNull] public UTextBuffer ProcessedText { get; private set; }
-        [CanBeNull] public UTextBuffer CppText { get; private set; }
+        public UTextBuffer? ScriptText { get; private set; }
+        public UTextBuffer? ProcessedText { get; private set; }
+        public UTextBuffer? CppText { get; private set; }
         public UName FriendlyName { get; protected set; }
 
         public int Line;
@@ -29,7 +28,7 @@ namespace UELib.Core
 
         public UnrealFlags<StructFlag> StructFlags;
 
-        [CanBeNull] protected UField Children { get; private set; }
+        protected UField? Children { get; private set; }
         protected int DataScriptSize { get; private set; }
         private int ByteScriptSize { get; set; }
 
@@ -66,7 +65,7 @@ namespace UELib.Core
         public long ScriptOffset { get; private set; }
         public int ScriptSize { get; private set; }
 
-        [CanBeNull] public UByteCodeDecompiler ByteCodeManager;
+        public UByteCodeDecompiler? ByteCodeManager;
 
         #endregion
 
@@ -310,8 +309,7 @@ namespace UELib.Core
             }
         }
 
-        [CanBeNull]
-        public T FindProperty<T>(UName name)
+        public T? FindProperty<T>(UName name)
             where T : UProperty
         {
             UProperty property = null;

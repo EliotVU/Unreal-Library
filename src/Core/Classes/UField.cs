@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using UELib.Annotations;
 using UELib.Branch;
 
 namespace UELib.Core
@@ -12,8 +11,8 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        [CanBeNull] public UStruct Super { get; set; }
-        [CanBeNull] public UField NextField { get; set; }
+        public UStruct? Super { get; set; }
+        public UField? NextField { get; set; }
 
         #endregion
 
@@ -21,7 +20,7 @@ namespace UELib.Core
         /// Initialized by the UMetaData object,
         /// This Meta contains comments and other meta related info that belongs to this instance.
         /// </summary>
-        [CanBeNull] public UMetaData.UFieldData MetaData;
+        public UMetaData.UFieldData? MetaData;
 
         #region Constructors
 

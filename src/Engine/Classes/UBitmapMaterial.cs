@@ -1,6 +1,4 @@
-﻿using UELib.Annotations;
-using UELib.Branch;
-using UELib.Core;
+﻿using UELib.Branch;
 
 namespace UELib.Engine
 {
@@ -29,7 +27,7 @@ namespace UELib.Engine
         };
 
         public TextureFormat Format;
-        [CanBeNull] public UPalette Palette;
+        public UPalette? Palette;
 
         protected override void Deserialize()
         {
@@ -43,7 +41,7 @@ namespace UELib.Engine
                 _Buffer.StartPeek(formatProperty._PropertyValuePosition);
                 _Buffer.Read(out byte index);
                 _Buffer.EndPeek();
-                
+
                 Format = (TextureFormat)index;
             }
 

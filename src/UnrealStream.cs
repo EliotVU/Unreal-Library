@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Decoding;
@@ -36,7 +35,7 @@ namespace UELib
         [Obsolete("To be deprecated; ideally we want to pass the UnrealWriter directly to the Serialize methods.")]
         UnrealWriter UW { get; }
 
-        [CanBeNull] IBufferDecoder Decoder { get; set; }
+        IBufferDecoder? Decoder { get; set; }
         IPackageSerializer Serializer { get; set; }
 
         long Position { get; set; }
@@ -62,7 +61,7 @@ namespace UELib
         int Read(byte[] buffer, int index, int count);
         long Seek(long offset, SeekOrigin origin);
 
-        public IUnrealStream Record(string name, [CanBeNull] object value);
+        public IUnrealStream Record(string name, object? value);
         public void ConformRecordPosition();
 
         [Obsolete("Use ReadObject or ReadIndex instead")]
@@ -636,8 +635,8 @@ namespace UELib
         {
         }
 
-        [CanBeNull] public IBufferDecoder Decoder { get; set; }
-        [CanBeNull] public IPackageSerializer Serializer { get; set; }
+        public IBufferDecoder? Decoder { get; set; }
+        public IPackageSerializer? Serializer { get; set; }
 
         public override int Read(byte[] buffer, int index, int count)
         {
@@ -735,14 +734,13 @@ namespace UELib
         [Obsolete]
         public int ReadNameIndex(out int num) => Reader.ReadNameIndex(out num);
 
-        [CanBeNull]
-        public T ReadObject<T>() where T : UObject
+        public T? ReadObject<T>() where T : UObject
         {
             int index = Reader.ReadIndex();
             return (T)Package.IndexToObject(index);
         }
 
-        public void WriteObject<T>([CanBeNull] T value) where T : UObject
+        public void WriteObject<T>(T? value) where T : UObject
         {
             Writer.WriteIndex((int)value);
         }
@@ -984,14 +982,13 @@ namespace UELib
         [Obsolete]
         public int ReadNameIndex(out int num) => Reader.ReadNameIndex(out num);
 
-        [CanBeNull]
-        public T ReadObject<T>() where T : UObject
+        public T? ReadObject<T>() where T : UObject
         {
             int index = Reader.ReadIndex();
             return (T?)Package.IndexToObject(index);
         }
 
-        public void WriteObject<T>([CanBeNull] T value) where T : UObject
+        public void WriteObject<T>(T? value) where T : UObject
         {
             Writer.WriteIndex((int)value);
         }
@@ -1557,7 +1554,7 @@ namespace UELib
             stream.UW.WriteUnicode(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteArray<T>(this IUnrealStream stream, [CanBeNull] in UArray<T> array)
+        public static void WriteArray<T>(this IUnrealStream stream, in UArray<T>? array)
             where T : IUnrealSerializableClass
         {
             if (array == null)
@@ -1575,7 +1572,7 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteArray(this IUnrealStream stream, [CanBeNull] in UArray<int> array)
+        public static void WriteArray(this IUnrealStream stream, in UArray<int>? array)
         {
             if (array == null)
             {
@@ -1592,7 +1589,7 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteArray(this IUnrealStream stream, [CanBeNull] in UArray<byte> array)
+        public static void WriteArray(this IUnrealStream stream, in UArray<byte>? array)
         {
             if (array == null)
             {
@@ -1606,7 +1603,7 @@ namespace UELib
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteArray(this IUnrealStream stream, [CanBeNull] in UArray<string> array)
+        public static void WriteArray(this IUnrealStream stream, in UArray<string>? array)
         {
             if (array == null)
             {
@@ -1726,7 +1723,7 @@ namespace UELib
         public static void WriteIndex(this IUnrealStream stream, int index) => stream.UW.WriteIndex(index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IUnrealStream Record(this IUnrealStream stream, string name, [CanBeNull] object value) =>
+        public static IUnrealStream Record(this IUnrealStream stream, string name, object? value) =>
             stream.Record(name, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

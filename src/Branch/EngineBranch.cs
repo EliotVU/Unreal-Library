@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UELib.Annotations;
 using UELib.Branch.UE2.DNF;
 using UELib.Core.Tokens;
 using UELib.Decoding;
@@ -20,11 +19,11 @@ namespace UELib.Branch
     {
         public readonly BuildGeneration Generation;
 
-        [CanBeNull] public IBufferDecoder Decoder;
+        public IBufferDecoder? Decoder;
 
         // TODO: Re-factor this as a factory where we can retrieve the correct type-specific serializer.
         public IPackageSerializer Serializer;
-        [CanBeNull] private TokenFactory _TokenFactory;
+        private TokenFactory? _TokenFactory;
 
         /// <summary>
         /// Which flag enums do we need to map?
@@ -106,7 +105,6 @@ namespace UELib.Branch
                 (byte)ExprToken.FirstNative);
         }
 
-        [NotNull]
         public TokenFactory GetTokenFactory(UnrealPackage linker)
         {
             if (_TokenFactory != null) return _TokenFactory;

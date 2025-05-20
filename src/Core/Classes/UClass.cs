@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 
@@ -20,7 +19,7 @@ namespace UELib.Core
         /// </summary>
         public struct Dependency : IUnrealSerializableClass
         {
-            [NotNull] public UClass Class;
+            public UClass Class;
             public bool IsDeep;
             public uint ScriptTextCRC;
 
@@ -62,7 +61,7 @@ namespace UELib.Core
         public UGuid ClassGuid;
         public UClass Within { get; private set; }
         public UName ConfigName { get; private set; }
-        [CanBeNull] public UName DLLBindName;
+        public UName? DLLBindName;
         public string NativeClassName = string.Empty;
         public bool ForceScriptOrder;
 
@@ -129,7 +128,7 @@ namespace UELib.Core
         /// </summary>
         public IList<int> ImplementedInterfaces;
 
-        [CanBeNull] public UArray<UObject> Vengeance_Implements;
+        public UArray<UObject>? Vengeance_Implements;
 
         #endregion
 

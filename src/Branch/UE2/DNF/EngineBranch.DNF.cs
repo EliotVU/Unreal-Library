@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using UELib.Annotations;
 using UELib.Branch.UE2.DNF.Tokens;
 using UELib.Core;
 using UELib.Core.Tokens;
@@ -24,7 +23,7 @@ namespace UELib.Branch.UE2.DNF
         }
 
         [Conditional("DNF")]
-        public static void ConditionalBranchAction([NotNull] EngineBranch branch, Action action)
+        public static void ConditionalBranchAction(EngineBranch branch, Action action)
         {
             if (branch.GetType() == typeof(EngineBranchDNF))
             {

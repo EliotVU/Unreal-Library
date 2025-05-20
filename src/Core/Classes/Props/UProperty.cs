@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.Types;
@@ -27,16 +26,16 @@ namespace UELib.Core
         public UnrealFlags<PropertyFlag> PropertyFlags;
 
 #if XCOM2
-        [CanBeNull] public UName ConfigName;
+        public UName? ConfigName;
 #endif
 
-        [CanBeNull] public UName CategoryName;
+        public UName? CategoryName;
 
         [Obsolete("See CategoryName")] public int CategoryIndex { get; }
 
-        [CanBeNull] public UEnum ArrayEnum { get; private set; }
+        public UEnum? ArrayEnum { get; private set; }
 
-        [CanBeNull] public UName RepNotifyFuncName;
+        public UName? RepNotifyFuncName;
 
         public ushort RepOffset { get; set; }
 
@@ -50,7 +49,7 @@ namespace UELib.Core
         /// 
         /// An original terminating \" character is serialized as a \n character, the string will also end with a newline character.
         /// </summary>
-        [CanBeNull] public string EditorDataText;
+        public string? EditorDataText;
 
         #endregion
 
