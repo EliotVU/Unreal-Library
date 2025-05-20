@@ -96,8 +96,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) |
 | Mobile Forces | 436 | 81-83/000, 69 | |
 | Clive Barker's Undying | 420 | 72-85/000 | Versions 72 to 83 are not auto detected. |
-| Thief: Deadly Shadows | 777:Flesh | 95/133 | LinkedData not supported |
-| Deus Ex: Invisible War | 777:Flesh | 95/069 | LinkedData not supported |
+| Thief: Deadly Shadows | 777:Flesh | 95/133 | Thanks in part to @hanfling; LinkedData not supported |
+| Deus Ex: Invisible War | 777:Flesh | 95/069 | Thanks in part to @hanfling; LinkedData not supported |
 |     |     |     |     |
 |     |     |     |     |
 | XIII | 829 | 100/058 |     |
@@ -118,7 +118,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | |
 | Killing Floor | 3369 | 128/029 | |
 | Battle Territory: Battery | 3369 | 128/029? | |
-| Vanguard: Saga of Heroes | Unknown | 129/035 | |
+| Shadow Ops: Red Mercury | 2110 | 129/010 | |
+| Vanguard: Saga of Heroes | 2226 | 129/035 | |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) |
 | Shrek 2 | 2226 | 129 | |
 | Shark Tale | 2226 | 129/003 | |
@@ -134,6 +135,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
 |     |     |     |     |
+| RoboHordes | Unknown | 198-200/000 | |
+| Tom Clancy's Rainbow Six: Vegas | Unknown | 241/066 | |
+| Tom Clancy's Rainbow Six: Vegas 2 | Unknown | 241/071 | |
 | Tom Clancy's EndWar | Unknown | 329/000 | |
 | Roboblitz | 2306 | 369/006 |     |
 | Stranglehold | 2605 | 375/025 | |
@@ -145,6 +149,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Stargate Worlds | 3004 | 486/007 |     |
 | Gears of War | 3329 | 490/009 | |
 | Mass Effect (Windows) | 3240 | 491/1008(~112) | PC |
+| Huxley | 3240 | 496/016-023 | Contributed by @EDITzDev |
 | Robert Ludlum's The Bourne Conspiracy | | 511/039 | |
 | Transformers: War for Cybertron | | 511/144,145 | PC, PS3, Xenon |
 | Unreal Tournament 3 | 3809 | 512/000 | |
@@ -154,14 +159,14 @@ This is a table of games that are confirmed to be compatible with the current st
 | X-Men Origins: Wolverine | 4206 | 568/101 | Overall quality has not been verified |
 | Gears of War 2 | 4638 | 575/000 | |
 | CrimeCraft | 4701 | 576/005 | |
-| Batman: Arkham Asylum | 4701 | 576/21 | |
+| Batman: Arkham Asylum | 4701 | 576/21 | Contributed by @etkramer |
 | Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes |
 | Singularity | 4869 | 584/126 | |
 | MoonBase Alpha | 4947 | 587/000 | |
 | Saw | Unknown | 584/003 | |
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     |
 | Monday Night Combat | 5697 | 638/000 |     |
-| DC Universe Online | 5859 | 638/6405 |     |
+| DC Universe Online | 5859 | 638/6405 | Contributed by @theFoof |
 | Unreal Development Kit | 5860-12791 | 664-868 | |
 | Blacklight: Tango Down | 6165 | 673/002 | |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | |
@@ -170,6 +175,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Mass Effect: Legendary Edition (Windows) | 6383 | 684/171 | PC (platform must be set to `Console`) |
 | Alice Madness Returns | 6760 | 690/000 |     |
 | The Ball | 6699 | 706/000 | |
+| Game of Thrones | 6829 | 727/000 | |
 | Bioshock Infinite | 6829 | 727/075 |     |
 | Bulletstorm | 7052 | 742/029 | |
 | Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | |
@@ -199,6 +205,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Q.U.B.E | 8916 | 845/000 |     |
 | DmC: Devil May Cry | 8916 | 845/004 | |
 | XCOM: Enemy Unknown | 8916 | 845/059 | |
+| XCOM 2: War of the Chosen | 8916 | 845/120 | Contributed by @robojumper |
 | Gears of War: Judgement | 10566 | 846/000 |     |
 | Transformers: Fall of Cybertron | 846(~587)/181 | |
 | Deadpool | 846(~587)/181 | |
@@ -214,7 +221,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) |
 | Styx: Master of Shadows | 10499 | 860/004 | |
 | Batman: Arkham Knight | | 863/32995 | Not verified  |
-| Gigantic: Rampage Edition | 19100 | 867/010 | |
+| Gigantic: Rampage Edition | 19100 | 867/010 | Contributed by @HyenaCoding |
 | Infinity Blade 3 | | 868/000 | Console |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) |
 | Outlast | 12046 | 868/003 | |
@@ -223,9 +230,10 @@ This is a table of games that are confirmed to be compatible with the current st
 | Orcs Must Die! Unchained | 20430 | 870/000 | |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | Battleborn | 8623/1055 | 874/078 | |
-| A Hat in Time | 12097 | 877-893/005 | |
+| A Hat in Time | 12097 | 877-893/005 | Contributed by @Un-Drew |
 | Blue Estate The Game | 10246 | 893/000 | |
 | Shadow Complex Remastered | 10897 | 893/001 | |
+| Borderlands 2 VR | 8637/0029 | 895/046 | |
 | Soldier Front 2 | 6712 | 904/009 |     |
 | Rise of the Triad | 10508 | Unknown |     |
 | Sherlock Holmes: Crimes and Punishments | 10897 | Unknown | |

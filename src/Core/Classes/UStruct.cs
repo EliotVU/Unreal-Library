@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core.Tokens;
 using UELib.Flags;
@@ -18,16 +18,17 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        [CanBeNull] public UTextBuffer ScriptText { get; private set; }
-        [CanBeNull] public UTextBuffer ProcessedText { get; private set; }
-        [CanBeNull] public UTextBuffer CppText { get; private set; }
+        public UTextBuffer? ScriptText { get; private set; }
+        public UTextBuffer? ProcessedText { get; private set; }
+        public UTextBuffer? CppText { get; private set; }
         public UName FriendlyName { get; protected set; }
 
         public int Line;
         public int TextPos;
 
-        protected uint StructFlags { get; set; }
-        [CanBeNull] protected UField Children { get; private set; }
+        public UnrealFlags<StructFlag> StructFlags;
+
+        protected UField? Children { get; private set; }
         protected int DataScriptSize { get; private set; }
         private int ByteScriptSize { get; set; }
 
@@ -35,15 +36,20 @@ namespace UELib.Core
 
         #region Script Members
 
-        public IList<UConst> Constants { get; private set; }
+        [Obsolete]
+        public IEnumerable<UConst> Constants => EnumerateFields<UConst>();
 
-        public IList<UEnum> Enums { get; private set; }
+        [Obsolete]
+        public IEnumerable<UEnum> Enums => EnumerateFields<UEnum>();
 
-        public IList<UStruct> Structs { get; private set; }
+        [Obsolete]
+        public IEnumerable<UStruct> Structs => EnumerateFields<UStruct>().Where(obj => obj.IsPureStruct());
 
-        public List<UProperty> Variables { get; private set; }
+        [Obsolete]
+        public IEnumerable<UProperty> Variables => EnumerateFields<UProperty>();
 
-        public List<UProperty> Locals { get; private set; }
+        [Obsolete]
+        public IEnumerable<UProperty> Locals => EnumerateFields<UProperty>().Where(prop => !prop.IsParm());
 
         #endregion
 
@@ -59,7 +65,7 @@ namespace UELib.Core
         public long ScriptOffset { get; private set; }
         public int ScriptSize { get; private set; }
 
-        [CanBeNull] public UByteCodeDecompiler ByteCodeManager;
+        public UByteCodeDecompiler? ByteCodeManager;
 
         #endregion
 
@@ -176,8 +182,8 @@ namespace UELib.Core
 #endif
                )
             {
-                StructFlags = _Buffer.ReadUInt32();
-                Record(nameof(StructFlags), (StructFlags)StructFlags);
+                _Buffer.Read(out StructFlags);
+                Record(nameof(StructFlags), StructFlags);
             }
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance &&
@@ -266,7 +272,7 @@ namespace UELib.Core
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3
                 && GetType() == typeof(UStruct))
             {
-                DeserializeProperties();
+                DeserializeProperties(_Buffer);
             }
         }
 
@@ -275,62 +281,10 @@ namespace UELib.Core
             return base.CanDisposeBuffer() && ByteCodeManager == null;
         }
 
-        public override void PostInitialize()
+        [Obsolete("Deprecated", true)]
+        protected void FindChildren()
         {
-            base.PostInitialize();
-            if (Children == null)
-                return;
-
-            try
-            {
-                FindChildren();
-            }
-            catch (InvalidCastException ice)
-            {
-                Console.WriteLine(ice.Message);
-            }
-        }
-
-        [Obsolete("Pending deprecation")]
-        protected virtual void FindChildren()
-        {
-            Constants = new List<UConst>();
-            Enums = new List<UEnum>();
-            Structs = new List<UStruct>();
-            Variables = new List<UProperty>();
-
-            for (var child = Children; child != null; child = child.NextField)
-            {
-                if (child.GetType().IsSubclassOf(typeof(UProperty)))
-                {
-                    Variables.Add((UProperty)child);
-                }
-                else if (child.IsClassType("Const"))
-                {
-                    Constants.Insert(0, (UConst)child);
-                }
-                else if (child.IsClassType("Enum"))
-                {
-                    Enums.Insert(0, (UEnum)child);
-                }
-                else if (child is UStruct && ((UStruct)child).IsPureStruct())
-                {
-                    Structs.Insert(0, (UStruct)child);
-                }
-            }
-
-            // TODO: Introduced since UDK 2011-06+(not sure on exaclty which month).
-            if ((Package.Version >= 805 && GetType() == typeof(UState)) || GetType() == typeof(UFunction))
-            {
-                Locals = new List<UProperty>();
-                foreach (var local in Variables)
-                {
-                    if (!local.IsParm())
-                    {
-                        Locals.Add(local);
-                    }
-                }
-            }
+            throw new NotImplementedException("Use EnumerateFields");
         }
 
         #endregion
@@ -343,6 +297,37 @@ namespace UELib.Core
             }
         }
 
+        public IEnumerable<T> EnumerateFields<T>()
+            where T : UField
+        {
+            for (var field = Children; field != null; field = field.NextField)
+            {
+                if (field is T tField)
+                {
+                    yield return tField;
+                }
+            }
+        }
+
+        public T? FindProperty<T>(UName name)
+            where T : UProperty
+        {
+            UProperty property = null;
+
+            foreach (var super in EnumerateSuper(this))
+            {
+                foreach (var field in super.EnumerateFields<T>())
+                {
+                    // FIXME: UName
+                    if (field.Table.ObjectName == name)
+                    {
+                        return field;
+                    }
+                }
+            }
+
+            return null;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TokenFactory GetTokenFactory()
@@ -350,10 +335,15 @@ namespace UELib.Core
             return Package.Branch.GetTokenFactory(Package);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use StructFlags directly")]
         public bool HasStructFlag(StructFlags flag)
         {
             return (StructFlags & (uint)flag) != 0;
+        }
+
+        internal bool HasStructFlag(StructFlag flagIndex)
+        {
+            return StructFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(StructFlag)], flagIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

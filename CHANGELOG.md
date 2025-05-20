@@ -1,5 +1,38 @@
 #
 
+## [1.10.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.10.0)
+
+* 4578a9be Support for Huxley (thanks to @EDITzDev)
+* Support for Borderlands 2 VR
+* f90109b2 Improved support for Borderlands series (added support for custom property types)
+* e59d8b79 Improved support for Batman series
+* 70ff4596 Improved support for Bulletstorm (and Full Clip Edition)
+* 0b59cff8 Improved support for The Exiled Realm of Arborea
+* Improved support for Shadow Strike (Splinter Cell series) based games
+* Improved support for Shadow Ops: Red Mercury
+* Improved support for {UComponent} class derivatives, this makes it possible to decompile the properties of many more objects
+* Fixed support for America's Army 2 (decryption)
+* b6afca0b Fixed support for UE4 .uasset files (basic)
+
+* Added serialization and deserialization support for ObjectThumbnails and TextureAllocations (data at the end of a PackageFileSummary)
+* Added Support for classes {UMusic, USoundNodeWave, USoundNode, USoundCue} of which its raw data can now be exported.
+
+* Fixed {UPolys} deserialization for cooked packages.
+* Fixed decompilation of class specifier `nousercreate` (previously `notplaceable`)
+* Fixed decompilation of context tokens that affected *UT3* and *Batman: Arkham Asylum* (thanks to @etkramer)
+* Fixed any UObject that had no outer will now have the 'root package' assigned as its outer. i.e. `Object.Vector` will now become `Core.Object.Vector`, likewise for 'forced export' packages that may be embedded in the same package.
+
+API Changes:
+
+Upgraded .NET to 9.0 from 8.0
+
+* a6aad1bc Re-factored `UObject.BeginDeserialization` to `UObject.Load`; this change leads to faster deserialization, because, the recording of deserialized fields is now ignored by default, unless the call to `Load` is called with a type parameter of `UObjectRecordStream`; Additionally, further progress has been made to the re-serialization of package files.
+* 4636bddc, cb4007e0 ObjectFlags, StructFlags, PropertyFlags, FunctionFlags, StateFlags, and ClassFlags have all been re-vised to use the `UnrealFlags` class, meaning the flags are now normalized across different branches, this way we no longer have to adjust flag checks for the game we are decompiling for, instead we map an internal flag to the actual bitmask that the particular game may be using.
+* 350eebb5 `UObject.Name` type has been changed to `UName` from string and can now be assigned to.
+* 00fcb6bc Marked all `IList` properties like Functions, Locals, Parameters etc as obosolete, instead use `EnumerateFields` to iterate a `UStruct`'s fields.
+
+* Not compatible with UE Explorer 1.4.5 (requires some changes)
+
 ## [1.9.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.9.0)
 
 * ad530643 Support for Tom Clancy's Rainbow Six: Vegas

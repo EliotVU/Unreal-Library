@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using UELib.Decoding;
+using UELib.Services;
 
 namespace UELib.Branch.UE2.AA2
 {
@@ -56,12 +57,21 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Serialize(IUnrealStream stream, UImportTableItem item)
         {
-            item.Serialize(stream);
+            stream.Write(item.ClassPackageName);
+            stream.Write(item.ClassName);
+
+            LibServices.LogService.SilentException(
+                new NotSupportedException("Missing a byte at " + stream.Position));
+            stream.Skip(1);
+
+            //stream.Write((byte)0);
+            stream.Write(item.ObjectName);
+            stream.Write((int)item.OuterIndex);
         }
 
         public override void Deserialize(IUnrealStream stream, UImportTableItem item)
         {
-            item.PackageName = stream.ReadNameReference();
+            item.ClassPackageName = stream.ReadNameReference();
             item.ClassName = stream.ReadNameReference();
             byte unkByte = stream.ReadByte();
             Debug.WriteLine(unkByte, "unkByte");
@@ -71,15 +81,29 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Serialize(IUnrealStream stream, UExportTableItem item)
         {
-            throw new NotImplementedException();
+            stream.WriteIndex(item.SuperIndex);
+
+            LibServices.LogService.SilentException(
+                new NotSupportedException("Missing an integer at " + stream.Position));
+            stream.Skip(4);
+
+            stream.WriteIndex(item.ClassIndex);
+            stream.Write((int)item.OuterIndex);
+            stream.Write(~(uint)item.ObjectFlags);
+            stream.Write(item.ObjectName);
+            stream.WriteIndex(item.SerialSize );
+            if (item.SerialSize > 0)
+            {
+                stream.WriteIndex(item.SerialOffset);
+            }
         }
 
         public override void Deserialize(IUnrealStream stream, UExportTableItem item)
         {
-            item.SuperIndex = stream.ReadObjectIndex();
+            item.SuperIndex = stream.ReadIndex();
             int unkInt = stream.ReadInt32();
             Debug.WriteLine(unkInt, "unkInt");
-            item.ClassIndex = stream.ReadObjectIndex();
+            item.ClassIndex = stream.ReadIndex();
             item.OuterIndex = stream.ReadInt32();
             item.ObjectFlags = ~stream.ReadUInt32();
             item.ObjectName = stream.ReadNameReference();

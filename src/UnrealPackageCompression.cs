@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using UELib.Annotations;
 using UELib.Flags;
 
 namespace UELib
@@ -7,7 +6,6 @@ namespace UELib
     using Core;
 
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-    [PublicAPI]
     public class CompressedChunk : IUnrealSerializableClass
     {
         private long _UncompressedOffset;
@@ -77,7 +75,7 @@ namespace UELib
         }
     }
 
- 	// TODO: Complete implementation
+    // TODO: Complete implementation
     // ReSharper disable once UnusedType.Global
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public struct CompressedChunkHeader : IUnrealSerializableClass
@@ -91,8 +89,8 @@ namespace UELib
         {
             stream.Write(Tag);
             stream.Write(ChunkSize);
-            Summary.Serialize(stream);
-            stream.Write(ref Chunks);
+            stream.Write(ref Summary);
+            stream.Write(Chunks);
         }
 
         public void Deserialize(IUnrealStream stream)
@@ -103,9 +101,8 @@ namespace UELib
             {
                 ChunkSize = 0x20000;
             }
-            Summary = new CompressedChunkBlock();
-            Summary.Deserialize(stream);
-            
+            stream.ReadStruct(out Summary);
+
             int chunksCount = (Summary.UncompressedSize + ChunkSize - 1) / ChunkSize;
             stream.ReadArray(out Chunks, chunksCount);
         }

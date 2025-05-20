@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 
@@ -20,14 +19,22 @@ namespace UELib.Core
         /// </summary>
         public struct Dependency : IUnrealSerializableClass
         {
-            [NotNull] public UClass Class;
+            public UClass Class;
             public bool IsDeep;
             public uint ScriptTextCRC;
 
             public void Serialize(IUnrealStream stream)
             {
                 stream.Write(Class);
+#if DNF
+                // No specified version
+                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                {
+                    goto skipDeep;
+                }
+#endif
                 stream.Write(IsDeep);
+            skipDeep:
                 stream.Write(ScriptTextCRC);
             }
 
@@ -49,12 +56,12 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        private ulong ClassFlags { get; set; }
+        public UnrealFlags<ClassFlag> ClassFlags;
 
         public UGuid ClassGuid;
         public UClass Within { get; private set; }
         public UName ConfigName { get; private set; }
-        [CanBeNull] public UName DLLBindName;
+        public UName? DLLBindName;
         public string NativeClassName = string.Empty;
         public bool ForceScriptOrder;
 
@@ -121,13 +128,14 @@ namespace UELib.Core
         /// </summary>
         public IList<int> ImplementedInterfaces;
 
-        [CanBeNull] public UArray<UObject> Vengeance_Implements;
+        public UArray<UObject>? Vengeance_Implements;
 
         #endregion
 
         #region Script Members
 
-        public IList<UState> States { get; protected set; }
+        [Obsolete]
+        public IEnumerable<UState> States => EnumerateFields<UState>();
 
         #endregion
 
@@ -172,8 +180,8 @@ namespace UELib.Core
                 Record(nameof(FuncMap), FuncMap);
             }
 #endif
-            ClassFlags = _Buffer.ReadUInt32();
-            Record(nameof(ClassFlags), (ClassFlags)ClassFlags);
+            _Buffer.Read(out ClassFlags);
+            Record(nameof(ClassFlags), ClassFlags);
 #if ROCKETLEAGUE
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                 _Buffer.LicenseeVersion >= 1)
@@ -315,7 +323,6 @@ namespace UELib.Core
                         Record("Implements.Count", interfacesCount);
                         if (interfacesCount > 0)
                         {
-                            AssertEOS(interfacesCount * 8, "Implemented");
                             ImplementedInterfaces = new List<int>(interfacesCount);
                             for (int i = 0; i < interfacesCount; ++i)
                             {
@@ -557,12 +564,13 @@ namespace UELib.Core
                     }
 #endif
 #if BORDERLANDS2 || BATTLEBORN
-                    if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                        Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn
+                    if ((Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                         Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn) &&
+                        _Buffer.LicenseeVersion >= 45
                        )
                     {
-                        byte unknownByte = _Buffer.ReadByte();
-                        Record("Unknown:Borderlands2", unknownByte);
+                        _Buffer.Read(out byte v1cc); // usually 0x01, sometimes 0x02?
+                        _Buffer.Record("v1cc", v1cc);
                     }
 #endif
                 }
@@ -585,8 +593,7 @@ namespace UELib.Core
                 if (!string.IsNullOrEmpty(thiefClassVisibleName)
                     && Package.Build == UnrealPackage.GameBuild.BuildName.Thief_DS)
                 {
-                    var nameEntry = new UNameTableItem() { Name = thiefClassVisibleName };
-                    NameTable.Name = nameEntry;
+                    Name = new UName(thiefClassVisibleName);
                 }
             }
 #endif
@@ -686,7 +693,7 @@ namespace UELib.Core
             }
             else
             {
-                DeserializeProperties();
+                DeserializeProperties(_Buffer);
             }
 #if ROCKETLEAGUE
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague)
@@ -696,15 +703,6 @@ namespace UELib.Core
                 Record(nameof(v368), v368);
             }
 #endif
-        }
-
-        protected override void FindChildren()
-        {
-            base.FindChildren();
-            States = new List<UState>();
-            for (var child = Children; child != null; child = child.NextField)
-                if (child.IsClassType("State"))
-                    States.Insert(0, (UState)child);
         }
 
         #endregion
@@ -731,14 +729,21 @@ namespace UELib.Core
             return groupList;
         }
 
+        [Obsolete("Use ClassFlags directly")]
         public bool HasClassFlag(ClassFlags flag)
         {
             return (ClassFlags & (uint)flag) != 0;
         }
 
+        [Obsolete("Use ClassFlags directly")]
         public bool HasClassFlag(uint flag)
         {
             return (ClassFlags & flag) != 0;
+        }
+
+        internal bool HasClassFlag(ClassFlag flagIndex)
+        {
+            return ClassFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(ClassFlag)], flagIndex);
         }
 
         public bool IsClassInterface()

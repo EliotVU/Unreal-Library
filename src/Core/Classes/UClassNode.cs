@@ -1,4 +1,5 @@
 ﻿#if Forms
+using System.Linq;
 using System.Windows.Forms;
 
 namespace UELib.Core
@@ -10,10 +11,8 @@ namespace UELib.Core
             _ParentNode = AddSectionNode(node, nameof(UClass));
             AddSimpleObjectNode(_ParentNode, Within, "Within", Within != null ? Within.GetImageName() : "");
 
-            var classFlagsNode = AddTextNode(_ParentNode, $"Class Flags:{UnrealMethods.FlagToString(ClassFlags)}");
-            classFlagsNode.ToolTipText = UnrealMethods.FlagsListToString(
-                UnrealMethods.FlagsToList(typeof(Flags.ClassFlags), ClassFlags)
-            );
+            var classFlagsNode = AddTextNode(_ParentNode, $"Class Flags:{(ulong)ClassFlags:X8}");
+            classFlagsNode.ToolTipText = ClassFlags.ToString();
 
             base.InitNodes(_ParentNode);
         }
@@ -21,7 +20,7 @@ namespace UELib.Core
         protected override void AddChildren(TreeNode node)
         {
             base.AddChildren(node);
-            AddObjectListNode(node, "States", States, nameof(UState));
+            AddObjectListNode(node, "States", EnumerateFields<UState>().Reverse(), nameof(UState));
         }
 
         public override string GetImageName()

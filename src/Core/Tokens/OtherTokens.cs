@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using UELib.Annotations;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -77,9 +76,11 @@ namespace UELib.Core
 
             public abstract class ComparisonToken : Token
             {
+                public UObject Object;
+
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    stream.ReadObjectIndex();
+                    stream.Read(out Object);
                     Decompiler.AlignObjectSize();
 
                     DeserializeNext();
@@ -129,7 +130,7 @@ namespace UELib.Core
                     return output;
                 }
             }
-            
+
             [ExprToken(ExprToken.DelegateCmpNe)]
             public class DelegateCmpNeToken : DelegateComparisonToken
             {
@@ -140,7 +141,7 @@ namespace UELib.Core
                     return output;
                 }
             }
-            
+
             [ExprToken(ExprToken.DelegateFunctionCmpEq)]
             public class DelegateFunctionCmpEqToken : DelegateComparisonToken
             {
@@ -162,19 +163,18 @@ namespace UELib.Core
                     return output;
                 }
             }
-            
+
             [ExprToken(ExprToken.EatReturnValue)]
             public class EatReturnValueToken : Token
             {
-                // Null if version < 200
-                [CanBeNull] public UProperty ReturnValueProperty;
-                
+                public UProperty? ReturnValueProperty;
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // TODO: Correct version, confirmed to at least exist as of the earliest UE3-game v369(Roboblitz).
                     // -- definitely not in the older UE3 builds v186
-                    if (stream.Version < 200) return;
-                    
+                    if (stream.Version < 201) return;
+
                     ReturnValueProperty = stream.ReadObject<UProperty>();
                     Decompiler.AlignObjectSize();
                 }
@@ -184,7 +184,7 @@ namespace UELib.Core
             public class ResizeStringToken : Token
             {
                 public byte Length;
-                
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Length = stream.ReadByte();
@@ -205,7 +205,7 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    for (;;)
+                    for (; ; )
                     {
                         byte elementSize = stream.ReadByte();
                         Decompiler.AlignSize(sizeof(byte));
@@ -317,9 +317,9 @@ namespace UELib.Core
                 public int Line;
                 public int TextPos;
                 public DebugInfo OpCode = DebugInfo.Unset;
-                
-                [CanBeNull] public string OpCodeText;
-                
+
+                public string? OpCodeText;
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Version = stream.ReadInt32();
@@ -362,7 +362,7 @@ namespace UELib.Core
             public class LineNumberToken : Token
             {
                 public ushort Line;
-                
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Line = stream.ReadUInt16();

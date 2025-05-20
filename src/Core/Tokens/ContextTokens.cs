@@ -12,7 +12,8 @@ namespace UELib.Core
             [ExprToken(ExprToken.Context)]
             public class ContextToken : Token
             {
-                public UProperty Property;
+                // Field, because sometimes the property can be a UConst.
+                public UField Property;
                 public ushort PropertyType;
 
                 public override void Deserialize(IUnrealStream stream)
@@ -40,7 +41,8 @@ namespace UELib.Core
                     }
 
                     // FIXME: Thinking of it... this appears to be identical to the changes found in SwitchToken, but the existing versions are different?.
-                    if ((stream.Version >= 512 && !propertyAdded)
+                    // Not attested with UT3(512), first attested with Mirrors Edge (536)
+                    if ((stream.Version > 512 && !propertyAdded)
 #if DNF
                         || stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF
 #endif
@@ -61,6 +63,12 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
+                    if (Property is UConst uConst)
+                    {
+                        Decompiler.PreComment = $"Const:{uConst.Value}";
+                        return $"{DecompileNext()}.{Property.Name}";
+                    }
+
                     return $"{DecompileNext()}.{DecompileNext()}";
                 }
             }

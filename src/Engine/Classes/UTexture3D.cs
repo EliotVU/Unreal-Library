@@ -30,7 +30,7 @@ namespace UELib.Engine
             _Buffer.ReadArray(out Mips);
         }
 
-        public struct MipMap3D : IUnrealDeserializableClass
+        public struct MipMap3D : IUnrealSerializableClass
         {
             public UBulkData<byte> Data;
             public uint SizeX;

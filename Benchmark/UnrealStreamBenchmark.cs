@@ -1,16 +1,18 @@
 ﻿using System.IO;
 using BenchmarkDotNet.Attributes;
+using Eliot.UELib.Test;
 using UELib;
 using UELib.Core;
 
 namespace Eliot.UELib.Benchmark
 {
+    [BenchmarkCategory("UnrealStream")]
     public class UnrealStreamBenchmark
     {
         private readonly byte[] _ArchiveData = new byte[20];
         private readonly IUnrealStream _Stream;
 
-        private UColor _Color = new UColor(128, 64, 32, 0);
+        private UColor _Color = new(128, 64, 32, 0);
         private readonly long _ColorPosition;
 
         private int _CompactIndex1 = 0x40 - 1;

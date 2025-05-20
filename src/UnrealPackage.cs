@@ -6,29 +6,42 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
+using UELib.Branch.UE2.DVS;
+using UELib.Branch.UE2.Lead;
 using UELib.Branch.UE2.SCX;
+using UELib.Branch.UE2.ShadowStrike;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.GIGANTIC;
+using UELib.Branch.UE3.HUXLEY;
 using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.R6;
+using UELib.Branch.UE3.RL;
 using UELib.Branch.UE3.RSS;
+using UELib.Branch.UE3.SFX;
+using UELib.Branch.UE3.Willow;
 using UELib.Branch.UE4;
+using UELib.Core;
+using UELib.Decoding;
 using UELib.Flags;
+using UELib.Services;
 
 namespace UELib
 {
-    using Core;
-    using Decoding;
-    using Branch.UE2.DVS;
-    using Branch.UE3.RL;
-    using Branch.UE3.SFX;
-    using Branch.UE2.ShadowStrike;
-    using System.Text;
+    public class ObjectEventArgs : EventArgs
+    {
+        public UObject ObjectRef { get; }
+
+        public ObjectEventArgs(UObject objectRef)
+        {
+            ObjectRef = objectRef;
+        }
+    }
 
     /// <summary>
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyObjectAdded
@@ -50,7 +63,6 @@ namespace UELib
     /// Represents the method that will handle the UELib.UnrealPackage.NotifyInitializeUpdate
     /// event of a UELib.Core.UObject update.
     /// </summary>
-    [PublicAPI]
     public delegate void NotifyUpdateEvent();
 
     /// <summary>
@@ -68,34 +80,26 @@ namespace UELib
     /// <summary>
     /// Represents data of a loaded unreal package.
     /// </summary>
-    public sealed class UnrealPackage : IDisposable, IBinaryData
+    public sealed partial class UnrealPackage : IDisposable, IBinaryData
     {
-        #region General Members
+        public const uint Signature = UnrealFile.Signature;
+        public const uint Signature_BigEndian = UnrealFile.BigEndianSignature;
 
-        public BinaryMetaData BinaryMetaData { get; } = new BinaryMetaData();
+        public readonly UPackage RootPackage;
 
         // Reference to the stream used when reading this package
         public UPackageStream Stream;
-
-        /// <summary>
-        /// The signature of a 'Unreal Package'.
-        /// </summary>
-        public const uint Signature = 0x9E2A83C1;
-
-        public const uint Signature_BigEndian = 0xC1832A9E;
 
         /// <summary>
         /// The full name of this package including directory.
         /// </summary>
         private readonly string _FullPackageName = "UnrealPackage";
 
-        [PublicAPI] public string FullPackageName => _FullPackageName;
+        public string FullPackageName => _FullPackageName;
+        public string PackageName => Path.GetFileNameWithoutExtension(_FullPackageName);
+        public string PackageDirectory => Path.GetDirectoryName(_FullPackageName)!;
 
-        [PublicAPI] public string PackageName => Path.GetFileNameWithoutExtension(_FullPackageName);
-
-        [PublicAPI] public string PackageDirectory => Path.GetDirectoryName(_FullPackageName);
-
-        #endregion
+        public BinaryMetaData BinaryMetaData { get; } = new();
 
         // TODO: Move to UnrealBuild.cs
         public sealed class GameBuild : object
@@ -235,20 +239,35 @@ namespace UELib
                 [Build(100, 58)] XIII,
 
                 /// <summary>
-                /// Tom Clancy's Splinter Cell: Chaos Theory - Demo
+                /// Tom Clancy's Splinter Cell: Chaos Theory
                 ///
-                /// 100/120
+                /// 100/120:124
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchSCX))] [Build(100, 120, BuildGeneration.SCX)]
-                SCCT_Demo,
+                [BuildEngineBranch(typeof(EngineBranchSCX))]
+                [Build(100, 022, BuildGeneration.SCX)] // Legacy UWindowFonts.utx
+                [Build(100, 099, BuildGeneration.SCX)] // Legacy 00_Training_NPC_TEX_fb.utx
+                [Build(100, 120, BuildGeneration.SCX)] // Demo
+                [Build(100, 122, BuildGeneration.SCX)] // > Coop_Agents_Dlg.uax
+                [Build(100, 124, BuildGeneration.SCX)] // Full
+                SCCT_Offline,
 
                 /// <summary>
                 /// Tom Clancy's Splinter Cell: Double Agent - Offline
                 ///
                 /// 100/167
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchSCX))] [Build(100, 167, BuildGeneration.SCX)]
+                [BuildEngineBranch(typeof(EngineBranchSCX))]
+                [Build(100, 167, BuildGeneration.SCX)]
                 SCDA_Offline,
+
+                /// <summary>
+                /// Tom Clancy's Splinter Cell: Blacklist
+                ///
+                /// 102/116
+                /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchLead))]
+                [Build(102, 116, BuildGeneration.Lead)]
+                SCBL,
 
                 /// <summary>
                 /// 110/2609
@@ -258,13 +277,15 @@ namespace UELib
                 /// <summary>
                 /// 118:120/004:008
                 /// </summary>
-                [BuildEngineBranch(typeof(EngineBranchDVS))] [Build(118, 120, 4u, 8u)]
+                [BuildEngineBranch(typeof(EngineBranchDVS))]
+                [Build(118, 120, 4u, 8u)]
                 Devastation,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
                 /// 
                 /// 118/011:014
+                /// extensions: [.rsm, .u, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx]
                 /// </summary>
                 [Build(118, 118, 11u, 14u)] R6RS,
 
@@ -291,13 +312,16 @@ namespace UELib
                 /// 
                 /// For now we have three AA2 versions defined here to help us distinguish the byte-code token map.
                 /// </summary>
-                [Build(128, 32u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                [Build(128, 32u, BuildGeneration.AGP)]
+                [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_5,
 
-                [Build(128, 32u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                [Build(128, 32u, BuildGeneration.AGP)]
+                [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_6,
 
-                [Build(128, 33u, BuildGeneration.AGP)] [BuildEngineBranch(typeof(EngineBranchAA2))]
+                [Build(128, 33u, BuildGeneration.AGP)]
+                [BuildEngineBranch(typeof(EngineBranchAA2))]
                 AA2_2_8,
 
                 /// <summary>
@@ -308,6 +332,15 @@ namespace UELib
                 /// </summary>
                 [Build(128, 129, 34u, 35u, BuildGeneration.UE2_5)]
                 Vanguard_SOH,
+
+                /// <summary>
+                /// Shadow Ops: Red Mercury
+                ///
+                /// 129/010
+                /// extensions: [.sfr, .u, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx]
+                /// </summary>
+                [Build(129, 010u, BuildGeneration.UE2)]
+                RM,
 
                 // IrrationalGames/Vengeance - 129:143/027:059
 
@@ -360,7 +393,8 @@ namespace UELib
                 ///
                 /// 156/036
                 /// </summary>
-                [Build(156, 36u, BuildGeneration.UE2)] [BuildEngineBranch(typeof(EngineBranchDNF))]
+                [Build(156, 36u, BuildGeneration.UE2)]
+                [BuildEngineBranch(typeof(EngineBranchDNF))]
                 DNF,
 
                 /// <summary>
@@ -377,15 +411,21 @@ namespace UELib
                 /// Tom Clancy's Splinter Cell: Chaos Theory - Versus
                 ///
                 /// 175/000
+                /// The 'Epic' version likely represents the internal engine version.
+                /// extensions: [.u, .usa, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx, .sdc]
                 /// </summary>
-                [Build(175, 0, BuildGeneration.ShadowStrike)]
+                [Build(175, 000, BuildGeneration.ShadowStrike)] // non dynamic-pc.umd files
+                [Build(232, 070, BuildGeneration.ShadowStrike)] // Coop_Char_Voices.uax
+                [Build(382, 100, BuildGeneration.ShadowStrike)] // 00_Training_COOP_TEX.utx
+                [Build(442, 118, BuildGeneration.ShadowStrike)] // 00_Training_NPC_TEX.utx
+                [Build(466, 120, BuildGeneration.ShadowStrike)] // COOP_MAIN_VILAIN_TEX.utx
                 [BuildEngineBranch(typeof(EngineBranchShadowStrike))]
                 [OverridePackageVersion(120, 175)]
                 SCCT_Versus,
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six: Vegas
-                /// 
+                ///
                 /// 241/066-071
                 ///
                 /// extensions: [.u, .upk, .uxx, .rmpc, .uppc, .rm3, .up3, .rsm]
@@ -400,23 +440,29 @@ namespace UELib
                 ///
                 /// 275/000
                 /// Overriden to version 120, so we can pick up the CppText property in UStruct (although this might be a ProcessedText reference)
+                /// extensions: [.u, .usa, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx, .upx, .ute, .uvt, .bsm, .sds]
                 /// </summary>
-                [Build(275, 0, BuildGeneration.ShadowStrike)]
+                [Build(249, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(260, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(264, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(272, 0, BuildGeneration.ShadowStrike)] // Content
+                [Build(275, 0, BuildGeneration.ShadowStrike)] // Scripts
                 [BuildEngineBranch(typeof(EngineBranchShadowStrike))]
                 [OverridePackageVersion(120, 275)]
                 SCDA_Online,
 
                 /// <summary>
                 /// EndWar
-                /// 
+                ///
                 /// 369/006
                 /// </summary>
-                [Build(329, 0)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.RefactoredPropertyTags)]
+                [Build(329, 0)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.RefactoredPropertyTags)]
                 EndWar,
 
                 /// <summary>
                 /// Standard
-                /// 
+                ///
                 /// 369/006
                 /// </summary>
                 [Build(369, 6)] RoboBlitz,
@@ -431,7 +477,7 @@ namespace UELib
 
                 /// <summary>
                 /// Medal of Honor: Airborne
-                /// 
+                ///
                 /// 421/011
                 /// </summary>
                 [Build(421, 11)] MoHA,
@@ -450,11 +496,28 @@ namespace UELib
                 MKKE,
 
                 /// <summary>
+                /// Stargate Worlds
+                ///
+                /// 486/007
+                /// </summary>
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports - 1)] // Missing the "PackageFlags" change from version 475
+                [Build(486, 7)] SGW,
+
+                /// <summary>
                 /// Gears of War
-                /// 
+                ///
                 /// 490/009
                 /// </summary>
                 [Build(490, 9)] GoW1,
+
+                /// <summary>
+                /// Huxley
+                ///
+                /// 496/016:023
+                /// </summary>
+                [Build(496, 496, 16, 23)]
+                [BuildEngineBranch(typeof(EngineBranchHuxley))]
+                Huxley,
 
                 [Build(511, 039, BuildGeneration.HMS)] // The Bourne Conspiracy
                 [Build(511, 145, BuildGeneration.HMS)] // Transformers: War for Cybertron (PC version)
@@ -484,15 +547,16 @@ namespace UELib
 
                 /// <summary>
                 /// APB: All Points Bulletin & APB: Reloaded
-                /// 
+                ///
                 /// 547/028:032
                 /// </summary>
-                [Build(547, 547, 28u, 32u)] [BuildEngineBranch(typeof(EngineBranchAPB))]
+                [Build(547, 547, 28u, 32u)]
+                [BuildEngineBranch(typeof(EngineBranchAPB))]
                 APB,
 
                 /// <summary>
                 /// Standard, Gears of War 2
-                /// 
+                ///
                 /// 575/000
                 /// Xenon is enabled here, because the package is missing editor data, the editor data of UStruct is however still serialized.
                 /// </summary>
@@ -506,10 +570,11 @@ namespace UELib
 
                 /// <summary>
                 /// Batman: Arkham Asylum
-                /// 
+                ///
                 /// 576/021 (Missing most changes guarded by <see cref="BuildGeneration.RSS"/>)
                 /// </summary>
-                [Build(576, 21)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(576, 21)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman1,
 
                 /// <summary>
@@ -524,29 +589,33 @@ namespace UELib
                 /// XenonCooked is required to read the Xbox 360 packages.
                 /// 581/058
                 /// </summary>
-                [Build(581, 58, BuildFlags.ConsoleCooked)] [BuildEngineBranch(typeof(EngineBranchMOH))]
+                [Build(581, 58, BuildFlags.ConsoleCooked)]
+                [BuildEngineBranch(typeof(EngineBranchMOH))]
                 MoH,
 
                 /// <summary>
                 /// Borderlands
-                /// 
+                ///
                 /// 584/057-058
                 ///
                 /// Includes back-ported features from UDK
                 /// </summary>
                 [Build(584, 584, 57, 58, BuildGeneration.GB)]
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
                 Borderlands,
 
                 /// <summary>
                 /// Borderlands Game of the Year Enhanced
-                /// 
+                ///
                 /// 594/058
-                /// 
+                ///
                 /// Includes back-ported features from UDK of at least v813 (NativeClassGroup)
                 /// Appears to be missing (v623:ExportGuids, v767:TextureAllocations, and v673:FPropertyTag's BoolValue change).
-                /// Presume at least v832 from Borderlands 2 
+                /// Presume at least v832 from Borderlands 2
                 /// </summary>
-                [Build(594, 58, BuildGeneration.GB)] [OverridePackageVersion(832)]
+                [Build(594, 58, BuildGeneration.GB)]
+                [OverridePackageVersion(832)]
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
                 Borderlands_GOTYE,
 
                 /// <summary>
@@ -561,13 +630,15 @@ namespace UELib
                 ShadowComplex,
 
                 /// <summary>
+                /// The Exiled Realm of Arborea
+                ///
                 /// 610/014
                 /// </summary>
                 [Build(610, 14)] Tera,
 
                 /// <summary>
                 /// DC Universe Online
-                /// 
+                ///
                 /// 648/6405
                 /// </summary>
                 [Build(648, 6405)] DCUO,
@@ -605,21 +676,25 @@ namespace UELib
                 ///
                 /// 687-688/111-117
                 /// </summary>
-                [Build(687, 688, 111, 117)] [BuildEngineBranch(typeof(EngineBranchDD2))]
+                [Build(687, 688, 111, 117)]
+                [BuildEngineBranch(typeof(EngineBranchDD2))]
                 DD2,
 
                 /// <summary>
                 /// BioShock Infinite
                 /// 727/075 (partially upgraded to 756 or higher)
                 /// </summary>
-                [Build(727, 75)] [OverridePackageVersion((uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)]
+                [Build(727, 75)]
+                [OverridePackageVersion((uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)]
                 Bioshock_Infinite,
 
                 /// <summary>
+                /// Bulletstorm
+                ///
                 /// 742/029
                 /// </summary>
-                [Build(742, 29, BuildFlags.ConsoleCooked)]
-                BulletStorm,
+                [Build(742, 29)]
+                Bulletstorm,
 
                 /// <summary>
                 /// 801/030
@@ -636,7 +711,7 @@ namespace UELib
 
                 /// <summary>
                 /// Standard, Gears of War 3
-                /// 
+                ///
                 /// 828/000
                 /// </summary>
                 [Build(828, 0, BuildFlags.ConsoleCooked)]
@@ -648,14 +723,20 @@ namespace UELib
                 [Build(832, 21)] RememberMe,
 
                 /// <summary>
-                /// 832/046
+                /// Borderlands 2
+                ///
+                /// 832/046, 895/046
                 /// </summary>
-                [Build(832, 46)] Borderlands2,
+                [Build(832, 46)]
+                [Build(895, 46)] // VR
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
+                Borderlands2,
 
                 /// <summary>
                 /// 842-864/001
                 /// </summary>
-                [Build(842, 1, BuildFlags.ConsoleCooked)] [Build(864, 1, BuildFlags.ConsoleCooked)]
+                [Build(842, 1, BuildFlags.ConsoleCooked)]
+                [Build(864, 1, BuildFlags.ConsoleCooked)]
                 InfinityBlade2,
 
                 // Cannot auto-detect, ambiguous with UDK-2015-01-29
@@ -670,14 +751,14 @@ namespace UELib
 
                 /// <summary>
                 /// XCom
-                /// 
+                ///
                 /// 845/059
                 /// </summary>
                 [Build(845, 59)] XCOM_EU,
 
                 /// <summary>
                 /// XCom 2: War of The Chosen
-                /// 
+                ///
                 /// 845/120
                 /// </summary>
                 [Build(845, 120)] XCOM2WotC,
@@ -686,7 +767,8 @@ namespace UELib
                 /// Transformers: Fall of Cybertron
                 /// 846/181
                 /// </summary>
-                [Build(846, 181, BuildGeneration.HMS)] [OverridePackageVersion(587)]
+                [Build(846, 181, BuildGeneration.HMS)]
+                [OverridePackageVersion(587)]
                 Transformers3,
 
                 /// <summary>
@@ -696,10 +778,11 @@ namespace UELib
 
                 /// <summary>
                 /// Batman: Arkham City
-                /// 
+                ///
                 /// 805/101
                 /// </summary>
-                [Build(805, 101, BuildGeneration.RSS)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(805, 101, BuildGeneration.RSS)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman2,
 
                 /// <summary>
@@ -716,7 +799,8 @@ namespace UELib
                 /// <summary>
                 /// 807/104
                 /// </summary>
-                [Build(807, 104, BuildGeneration.RSS)] [BuildEngineBranch(typeof(EngineBranchRSS))]
+                [Build(807, 104, BuildGeneration.RSS)]
+                [BuildEngineBranch(typeof(EngineBranchRSS))]
                 Batman3MP,
 
                 /// <summary>
@@ -731,19 +815,21 @@ namespace UELib
 
                 /// <summary>
                 /// Gigantic: Rampage Edition
-                /// 
+                ///
                 /// 867/008:010
                 /// </summary>
-                [Build(867, 867, 8u, 10u)] [BuildEngineBranch(typeof(EngineBranchGigantic))]
+                [Build(867, 867, 8u, 10u)]
+                [BuildEngineBranch(typeof(EngineBranchGigantic))]
                 Gigantic,
 
                 /// <summary>
                 /// Rocket League
-                /// 
+                ///
                 /// 867/009:032
                 /// Requires third-party decompression and decryption
                 /// </summary>
-                [Build(867, 868, 9u, 32u)] [BuildEngineBranch(typeof(EngineBranchRL))]
+                [Build(867, 868, 9u, 32u)]
+                [BuildEngineBranch(typeof(EngineBranchRL))]
                 RocketLeague,
 
                 /// <summary>
@@ -753,20 +839,29 @@ namespace UELib
                 ///
                 /// EngineVersion and CookerVersion are packed with the respective Licensee version.
                 /// </summary>
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
                 [Build(874, 78u)] Battleborn,
 
                 /// <summary>
                 /// A Hat in Time
-                /// 
+                ///
                 /// 877:893/005
-                /// 
+                ///
                 /// The earliest available version with any custom specifiers is 1.0 (877) - Un-Drew.
                 /// </summary>
                 [Build(877, 893, 5, 5)] AHIT,
 
                 /// <summary>
+                /// Bulletstorm: Full Clip Edition
+                ///
+                /// 8887/041
+                /// </summary>
+                [Build(887, 41)]
+                Bulletstorm_FCE,
+
+                /// <summary>
                 /// Special Force 2
-                /// 
+                ///
                 /// 904/009 (Non-standard version, actual Epic version might be 692 or higher)
                 /// </summary>
                 [Build(904, 904, 09u, 014u)]
@@ -783,8 +878,8 @@ namespace UELib
             public uint? OverrideVersion { get; }
             public ushort? OverrideLicenseeVersion { get; }
 
-            public BuildGeneration Generation { get; }
-            [CanBeNull] public readonly Type EngineBranchType;
+            public BuildGeneration Generation { get; internal set; }
+            public readonly Type? EngineBranchType;
 
             [Obsolete("To be deprecated")] public readonly BuildFlags Flags;
 
@@ -842,8 +937,7 @@ namespace UELib
                 }
             }
 
-            [CanBeNull]
-            private FieldInfo FindBuildInfo(UnrealPackage linker, [CanBeNull] out BuildAttribute buildAttribute)
+            private FieldInfo? FindBuildInfo(UnrealPackage linker, out BuildAttribute? buildAttribute)
             {
                 buildAttribute = null;
 
@@ -931,41 +1025,28 @@ namespace UELib
         /// </summary>
         public BuildPlatform CookerPlatform;
 
-        public struct PackageFileEngineVersion : IUnrealDeserializableClass
-        {
-            public uint Major, Minor, Patch;
-            public uint Changelist;
-            public string Branch;
-
-            public void Deserialize(IUnrealStream stream)
-            {
-                Major = stream.ReadUInt16();
-                Minor = stream.ReadUInt16();
-                Patch = stream.ReadUInt16();
-                Changelist = stream.ReadUInt32();
-                Branch = stream.ReadString();
-            }
-
-            public override string ToString()
-            {
-                return $"{Major}.{Minor}.{Patch}";
-            }
-        }
-
         public struct PackageFileSummary : IUnrealSerializableClass
         {
+            public uint Tag;
             public uint Version;
             public ushort LicenseeVersion;
+
+            /// <summary>
+            /// Legacy file version if the package was serialized with UE4 or UE5.
+            ///
+            /// 0 if the file was serialized with UE3 or earlier.
+            /// </summary>
+            public int LegacyVersion;
 
             public uint UE4Version;
             public uint UE4LicenseeVersion;
 
             public UnrealFlags<PackageFlag> PackageFlags;
 
-            [Obsolete] private const int VHeaderSize = 249;
+            /// <summary>
+            /// The size of the package header, including the tables.
+            /// </summary>
             public int HeaderSize;
-
-            [Obsolete] private const int VFolderName = 269;
 
             /// <summary>
             /// UPK content category e.g. Weapons, Sounds or Meshes.
@@ -980,21 +1061,29 @@ namespace UELib
             public int HeritageCount, HeritageOffset;
 
             /// <summary>
-            /// List of heritages. UE1 way of defining generations.
+            /// Table of package guids. early UE1 way of defining generations.
+            ///
+            /// Null if (<see cref="Version"/> &gt;= <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
             /// </summary>
             public UArray<UGuid> Heritages;
 
-            [Obsolete] private const int VDependsOffset = 415;
             public int DependsOffset;
 
             public UGuid Guid;
+
+            /// <summary>
+            /// Table of package generations.
+            ///
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
+            /// </summary>
             public UArray<UGenerationTableItem> Generations;
 
             private PackageFileEngineVersion PackageEngineVersion;
             private PackageFileEngineVersion PackageCompatibleEngineVersion;
 
-            [Obsolete] private const int VEngineVersion = 245;
-
+            /// <summary>
+            /// Displaced with <see cref="PackageObjectLegacyVersion.AddedCookerVersion"/>
+            /// </summary>
             [Obsolete] public const int VCookerVersion = 277;
 
             public int EngineVersion;
@@ -1007,26 +1096,28 @@ namespace UELib
             /// The package should be considered compressed if any.
             ///
             /// If <see cref="CompressionFlags"/> equals 0 then the list will be cleared on <see cref="UnrealPackage.Deserialize"/>
-            /// 
-            /// Will be null if not deserialized (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.CompressionAdded"/>)
+            ///
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.CompressionAdded"/>)
             /// </summary>
             public UArray<CompressedChunk> CompressedChunks;
 
-            [Obsolete] private const int VPackageSource = 482;
             public uint PackageSource;
 
-            [Obsolete] private const int VAdditionalPackagesToCook = 516;
+            /// <summary>
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.AddedAdditionalPackagesToCook"/>)
+            /// </summary>
             public UArray<string> AdditionalPackagesToCook;
 
-            [Obsolete] private const int VImportExportGuidsOffset = 623;
             public int ImportExportGuidsOffset;
             public int ImportGuidsCount;
             public int ExportGuidsCount;
 
-            [Obsolete] private const int VThumbnailTableOffset = 584;
             public int ThumbnailTableOffset;
 
-            [Obsolete] private const int VTextureAllocations = 767;
+            /// <summary>
+            /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.AddedTextureAllocations"/>)
+            /// </summary>
+            public UArray<PackageTextureType> TextureAllocations;
 
             public int GatherableTextDataCount;
             public int GatherableTextDataOffset;
@@ -1038,6 +1129,15 @@ namespace UELib
 
             public UGuid PersistentGuid;
             public UGuid OwnerPersistentGuid;
+
+            public int AssetRegistryDataOffset;
+            public int BulkDataOffset;
+            public int WorldTileInfoDataOffset;
+
+            public UArray<int> ChunkIdentifiers;
+
+            public int PreloadDependencyCount;
+            public int PreloadDependencyOffset;
 
             private void SetupBuild(UnrealPackage package)
             {
@@ -1054,8 +1154,9 @@ namespace UELib
 
                 if (package.CookerPlatform == BuildPlatform.Undetermined)
                 {
+                    string packageFolderName = new DirectoryInfo(package.PackageDirectory).Name;
                     if (string.Compare(
-                            package.PackageDirectory,
+                            packageFolderName,
                             "CookedPC",
                             StringComparison.OrdinalIgnoreCase) == 0)
                     {
@@ -1063,15 +1164,15 @@ namespace UELib
                     }
                     // file may also end in .pcc
                     else if (string.Compare(
-                                 package.PackageDirectory,
+                                 packageFolderName,
                                  "CookedPCConsole",
                                  StringComparison.OrdinalIgnoreCase
                              ) == 0)
                     {
-                        package.CookerPlatform = BuildPlatform.Console;
+                        package.CookerPlatform = BuildPlatform.PC;
                     }
                     else if (string.Compare(
-                                 package.PackageDirectory,
+                                 packageFolderName,
                                  "CookedPCServer",
                                  StringComparison.OrdinalIgnoreCase
                              ) == 0)
@@ -1079,8 +1180,16 @@ namespace UELib
                         package.CookerPlatform = BuildPlatform.Console;
                     }
                     else if (string.Compare(
-                                 package.PackageDirectory,
+                                 packageFolderName,
                                  "CookedXenon",
+                                 StringComparison.OrdinalIgnoreCase
+                             ) == 0)
+                    {
+                        package.CookerPlatform = BuildPlatform.Console;
+                    }
+                    else if (string.Compare(
+                                 packageFolderName,
+                                 "CookedIPhone",
                                  StringComparison.OrdinalIgnoreCase
                              ) == 0)
                     {
@@ -1107,6 +1216,9 @@ namespace UELib
                 {
                     package.Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType,
                         package.Build.Generation);
+
+                    // The branch may override the generation. (Especially in unit-tests this is useful)
+                    package.Build.Generation = package.Branch.Generation;
                 }
                 else if (package.Summary.UE4Version > 0)
                 {
@@ -1122,18 +1234,558 @@ namespace UELib
 
             public void Serialize(IUnrealStream stream)
             {
-                throw new NotImplementedException();
+                if (stream.Position == 0)
+                {
+                    stream.Write(Tag);
+                }
+
+                if (LegacyVersion < 0)
+                {
+#if UE4
+                    stream.Write(LegacyVersion);
+                    if (LegacyVersion != -4)
+                    {
+                        stream.Write(Version);
+                    }
+
+                    stream.Write(UE4Version);
+                    stream.Write(UE4LicenseeVersion);
+
+                    if (UE4Version >= 138 && UE4Version < 142)
+                    {
+                        stream.Write(0);
+                        stream.Write(0);
+                    }
+
+                    if (LegacyVersion <= -2)
+                    {
+                        throw new NotSupportedException("This version of the Unreal Engine 4 is not supported!");
+                    }
+#else
+                    throw new NotSupportedException("Unreal Engine 4+ package files are not supported!");
+#endif
+                }
+                else
+                {
+                    uint version = Version | (uint)(LicenseeVersion << 16);
+                    stream.Write(version);
+                }
+
+#if SPLINTERCELLX
+                if (stream.Package.Build == BuildGeneration.SCX &&
+                    stream.LicenseeVersion >= 83)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    stream.Skip(4);
+                }
+#endif
+#if BIOSHOCK
+                if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    stream.Skip(4);
+                }
+#endif
+#if MKKE
+                if (stream.Package.Build == GameBuild.BuildName.MKKE)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    stream.Skip(8);
+                }
+#endif
+#if TRANSFORMERS
+                if (stream.Package.Build == BuildGeneration.HMS &&
+                    stream.LicenseeVersion >= 55)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    if (stream.LicenseeVersion >= 181) stream.Skip(16);
+
+                    stream.Skip(4);
+                }
+#endif
+#if HUXLEY
+                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                {
+                    if (LicenseeVersion >= 8)
+                    {
+                        stream.Write(0xFEFEFEFE);
+                    }
+
+                    if (LicenseeVersion >= 17)
+                    {
+                        throw new NotSupportedException("This package version is not supported!");
+
+                        stream.Skip(4);
+                    }
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTotalHeaderSize)
+                {
+                    stream.Write(HeaderSize);
+                }
+#if MIDWAY
+                if (stream.Package.Build == BuildGeneration.Midway3 &&
+                    stream.LicenseeVersion >= 2)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedFolderName)
+                {
+                    if (FolderName == string.Empty)
+                    {
+                        FolderName = "None";
+                    }
+
+                    stream.Write(FolderName);
+                }
+
+                // version >= 34
+                stream.Write((uint)PackageFlags);
+
+#if HAWKEN || GIGANTIC
+                if ((stream.Package.Build == GameBuild.BuildName.Hawken ||
+                     stream.Package.Build == GameBuild.BuildName.Gigantic) &&
+                    stream.LicenseeVersion >= 2)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX)
+                {
+                    // Untested, but seen in the reverse-engineered assembly...
+                    if ((int)PackageFlags < 0)
+                    {
+                        // ... virtual call (didn't reverse)
+                    }
+
+                    if (PackageFlags.HasFlag(PackageFlag.Cooked) &&
+                        stream.LicenseeVersion >= 194 &&
+                        stream.LicenseeVersion != 1008)
+                    {
+                        // SFXPatch Version (according to a localized string that references the same global constant)
+                        throw new NotSupportedException("This package version is not supported!");
+                    }
+                }
+#endif
+                stream.Write(NameCount);
+                stream.Write(NameOffset);
+#if UE4
+                if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
+                {
+                    stream.Write(LocalizationId);
+                }
+
+                if (stream.UE4Version >= 459)
+                {
+                    stream.Write(GatherableTextDataCount);
+                    stream.Write(GatherableTextDataOffset);
+                }
+#endif
+                stream.Write(ExportCount);
+                stream.Write(ExportOffset);
+#if APB
+                if (stream.Package.Build == GameBuild.BuildName.APB &&
+                    stream.LicenseeVersion >= 28)
+                {
+                    if (stream.LicenseeVersion >= 29)
+                    {
+                    }
+
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
+                stream.Write(ImportCount);
+                stream.Write(ImportOffset);
+
+                if (stream.Version < (uint)PackageObjectLegacyVersion.HeritageTableDeprecated)
+                {
+                    if (Heritages == null || Heritages.Count == 0)
+                    {
+                        HeritageCount = 1;
+                        Heritages = new UArray<UGuid>(HeritageCount) { Guid };
+                    }
+
+                    stream.Write(HeritageCount);
+                    stream.Write(HeritageOffset);
+
+                    return;
+                }
+#if MIDWAY
+                if (stream.Package.Build == GameBuild.BuildName.Stranglehold &&
+                    stream.Version >= 375)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                    //stream.Read(out int _);
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDependsTable)
+                {
+                    stream.Write(DependsOffset);
+                }
+#if THIEF_DS || DEUSEX_IW
+                if (stream.Package.Build == GameBuild.BuildName.Thief_DS ||
+                    stream.Package.Build == GameBuild.BuildName.DeusEx_IW)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                    //int unknown = stream.ReadInt32();
+                }
+#endif
+#if SPLINTERCELLX
+                if (stream.Package.Build == BuildGeneration.SCX &&
+                    stream.LicenseeVersion >= 12)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    // compiled-constant: SC1: 0xff0adde, SC3: DE AD F0 0F
+                    //stream.Read(out int uStack_10c);
+
+                    // An FString converted to an FArray? Concatenating appUserName, appComputerName, appBaseDir, and appTimestamp.
+                    //stream.ReadArray(out UArray<byte> iStack_fc);
+                }
+#endif
+#if R6
+                if (stream.Package.Build == GameBuild.BuildName.R6Vegas)
+                {
+                    if (stream.LicenseeVersion >= 48)
+                    {
+                        // always zero
+                        stream.Write(0);
+                    }
+
+                    if (stream.LicenseeVersion >= 49)
+                    {
+                        // it appears next to the LicenseeVersion, so it's probably an internal version
+                        // always 14, but 15 for V2, probably the cooker version.
+                        stream.Write(CookerVersion);
+                    }
+                }
+#endif
+                if (stream.UE4Version >= 384)
+                {
+                    stream.Write(StringAssetReferencesCount);
+                    stream.Write(StringAssetReferencesOffset);
+                }
+
+                if (stream.UE4Version >= 510)
+                {
+                    stream.Write(SearchableNamesOffset);
+                }
+
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable &&
+                    stream.UE4Version == 0
+                    // FIXME: Correct the output version of these games instead.
+#if BIOSHOCK
+                    && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+#endif
+#if BORDERLANDS
+                    && stream.Package.Build != GameBuild.BuildName.Borderlands_GOTYE
+#endif
+                   )
+                {
+                    stream.Write(ImportExportGuidsOffset);
+                    stream.Write(ImportGuidsCount);
+                    stream.Write(ExportGuidsCount);
+                }
+#if TRANSFORMERS
+                if (stream.Package.Build == BuildGeneration.HMS &&
+                    stream.Version >= 535)
+                {
+                    // FIXME: unverified
+                    stream.Write(ThumbnailTableOffset);
+
+                    return;
+                }
+#endif
+#if DD2
+                // No version check found in the .exe
+                if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
+#if TERA
+                if (stream.Package.Build == GameBuild.BuildName.Tera)
+                {
+                    goto skipThumbnailTableOffset;
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
+                {
+                    stream.Write(ThumbnailTableOffset);
+                }
+            skipThumbnailTableOffset:
+#if SPELLBORN
+                if (stream.Package.Build == GameBuild.BuildName.Spellborn
+                    && stream.Version >= 148)
+                {
+                    goto skipGuid;
+                }
+#endif
+                stream.WriteStruct(ref Guid);
+            skipGuid:
+#if MKKE
+                if (stream.Package.Build == GameBuild.BuildName.MKKE)
+                {
+                    goto skipGenerations;
+                }
+#endif
+#if UE4
+                if (stream.Package.ContainsEditorData())
+                {
+                    if (stream.UE4Version >= 518)
+                    {
+                        stream.Write(ref PersistentGuid);
+                        if (stream.UE4Version < 520)
+                        {
+                            stream.Write(ref OwnerPersistentGuid);
+                        }
+                    }
+                }
+#endif
+                if (Generations == null || Generations.Count == 0)
+                {
+                    Generations = new UArray<UGenerationTableItem>(1)
+                    {
+                        new() { ExportCount = ExportCount, NameCount = NameCount, NetObjectCount = 0 }
+                    };
+                }
+
+                stream.Write(Generations.Count);
+#if APB
+                // Guid, however only serialized for the first generation item.
+                if (stream.Package.Build == GameBuild.BuildName.APB &&
+                    stream.LicenseeVersion >= 32)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                    //stream.Skip(16);
+                }
+#endif
+                foreach (var element in Generations)
+                {
+                    element.Serialize(stream);
+                }
+
+            skipGenerations:
+#if DNF
+                if (stream.Package.Build == GameBuild.BuildName.DNF &&
+                    stream.Version >= 151)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    if (PackageFlags.HasFlags(0x20U))
+                    {
+                        //int buildMonth = stream.ReadInt32();
+                        //int buildYear = stream.ReadInt32();
+                        //int buildDay = stream.ReadInt32();
+                        //int buildSeconds = stream.ReadInt32();
+                    }
+
+                    //string dnfString = stream.ReadString();
+
+                    // DLC package
+                    if (PackageFlags.HasFlags(0x80U))
+                    {
+                        // No additional data, just DLC authentication.
+                    }
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedEngineVersion &&
+                    stream.UE4Version == 0)
+                {
+                    stream.Write(EngineVersion);
+                }
+#if UE4
+                if (stream.UE4Version >= 336)
+                {
+                    stream.Write(ref PackageEngineVersion);
+                }
+
+                if (stream.UE4Version >= 444)
+                {
+                    stream.Write(ref PackageCompatibleEngineVersion);
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedCookerVersion &&
+                    stream.UE4Version == 0)
+                {
+                    stream.Write(CookerVersion);
+                }
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    // Appears to be similar to a PackageFileEngineVersion
+
+                    if (stream.LicenseeVersion >= 16 && stream.LicenseeVersion < 136)
+                    {
+                        //stream.Read(out int _);
+                    }
+
+                    if (stream.LicenseeVersion >= 32 && stream.LicenseeVersion < 136)
+                    {
+                        //stream.Read(out int _);
+                    }
+
+                    if (stream.LicenseeVersion >= 35 && stream.LicenseeVersion < 113)
+                    {
+                        //stream.ReadMap(out UMap<string, UArray<string>> branch);
+                    }
+
+                    if (stream.LicenseeVersion >= 37)
+                    {
+                        // Compiler-Constant ? 1
+                        //stream.Read(out int _);
+
+                        // Compiler-Constant changelist? 1376256 (Mass Effect 1: LE)
+                        //stream.Read(out int _);
+                    }
+
+                    if (stream.LicenseeVersion >= 39 && stream.LicenseeVersion < 136)
+                    {
+                        //stream.Read(out int _);
+                    }
+                }
+#endif
+                // Read compressed info?
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.CompressionAdded)
+                {
+                    stream.Write(CompressionFlags);
+                    stream.WriteArray(CompressedChunks);
+                }
+                else
+                {
+                    // When serializing to an older pkg format...
+                    CompressionFlags = 0;
+                    CompressedChunks = null;
+                }
+
+                // SFX reads 392?
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedPackageSource)
+                {
+                    stream.Write(PackageSource);
+                }
+#if MASS_EFFECT
+                if (stream.Package.Build == BuildGeneration.SFX)
+                {
+                    if (stream.LicenseeVersion >= 44 && stream.LicenseeVersion < 136)
+                    {
+                        throw new NotSupportedException("This package version is not supported!");
+                        //stream.Read(out int _);
+                    }
+                }
+#endif
+#if UE4
+                if (stream.UE4Version > 0)
+                {
+                    return;
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedAdditionalPackagesToCook)
+                {
+#if TRANSFORMERS
+                    if (stream.Package.Build == BuildGeneration.HMS)
+                    {
+                        return;
+                    }
+#endif
+                    stream.WriteArray(AdditionalPackagesToCook);
+                }
+#if BORDERLANDS
+                if (stream.Package.Build == GameBuild.BuildName.Borderlands_GOTYE)
+                {
+                    return;
+                }
+#endif
+#if BATTLEBORN
+                if (stream.Package.Build == GameBuild.BuildName.Battleborn)
+                {
+                    // FIXME: Package format is being deserialized incorrectly and fails here.
+                    throw new NotSupportedException("This package version is not supported!");
+                    //stream.ReadUInt32();
+
+                    return;
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTextureAllocations)
+                {
+                    stream.WriteArray(TextureAllocations);
+                }
+#if ROCKETLEAGUE
+                if (stream.Package.Build == GameBuild.BuildName.RocketLeague
+                    && PackageFlags.HasFlag(PackageFlag.Cooked))
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    //int garbageSize = stream.ReadInt32();
+                    //Debug.WriteLine(garbageSize, "GarbageSize");
+                    //int compressedChunkInfoOffset = stream.ReadInt32();
+                    //Debug.WriteLine(compressedChunkInfoOffset, "CompressedChunkInfoOffset");
+                    //int lastBlockSize = stream.ReadInt32();
+                    //Debug.WriteLine(lastBlockSize, "LastBlockSize");
+                    //Debug.Assert(stream.Position == NameOffset, "There is more data before the NameTable");
+                    //// Data after this is encrypted
+                }
+#endif
+#if UE4
+                if (stream.UE4Version >= 112)
+                {
+                    stream.Write(AssetRegistryDataOffset);
+                }
+
+                if (stream.UE4Version >= 212)
+                {
+                    stream.Write(BulkDataOffset);
+                }
+
+                if (stream.UE4Version >= 224)
+                {
+                    stream.Write(WorldTileInfoDataOffset);
+                }
+
+                if (stream.UE4Version >= 278)
+                {
+                    ChunkIdentifiers ??= [];
+
+                    if (stream.UE4Version >= 326)
+                    {
+                        stream.Write(ChunkIdentifiers);
+                    }
+                    else
+                    {
+                        stream.Write(ChunkIdentifiers.Count > 0 ? ChunkIdentifiers[0] : 0);
+                    }
+                }
+
+                if (stream.UE4Version >= 507)
+                {
+                    stream.Write(PreloadDependencyCount);
+                    stream.Write(PreloadDependencyOffset);
+                }
+#endif
             }
 
             public void Deserialize(IUnrealStream stream)
             {
+                if (stream.Position == 0)
+                {
+                    stream.Read(out Tag);
+                }
+
                 const short maxLegacyVersion = -7;
 
-                // Read as one variable due Big Endian Encoding.       
+                // Read as one variable due Big Endian Encoding.
                 int legacyVersion = stream.ReadInt32();
                 // FIXME: >= -7 is true for the game Quantum
                 if (legacyVersion < 0 && legacyVersion >= maxLegacyVersion)
                 {
+                    LegacyVersion = legacyVersion;
 #if UE4
                     uint ue3Version = 0;
                     if (legacyVersion != -4)
@@ -1146,10 +1798,10 @@ namespace UELib
 
                     Version = ue3Version;
 
-                    // Really old, probably no longer in production files? Other than some UE4 assets found in the first public release
+                    // Ancient, probably no longer in production files? Other than some UE4 assets found in the first public release
                     if (UE4Version >= 138 && UE4Version < 142)
                     {
-                        stream.Skip(8); // CookedVersion, CookedLicenseeVersion   
+                        stream.Skip(8); // CookedVersion, CookedLicenseeVersion
                     }
 
                     if (legacyVersion <= -2)
@@ -1230,6 +1882,12 @@ namespace UELib
                     }
                 }
 #endif
+#if LEAD
+                if (stream.Package.Build == BuildGeneration.Lead)
+                {
+                    stream.Read(out int v08);
+                }
+#endif
 #if BIOSHOCK
                 if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
@@ -1248,7 +1906,22 @@ namespace UELib
                     stream.Skip(4);
                 }
 #endif
-                if (stream.Version >= VHeaderSize)
+#if HUXLEY
+                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                {
+                    if (LicenseeVersion >= 8)
+                    {
+                        uint huxleySignature = stream.ReadUInt32();
+                        Contract.Assert(huxleySignature == 0xFEFEFEFE, "[HUXLEY] Invalid Signature!");
+                    }
+
+                    if (LicenseeVersion >= 17)
+                    {
+                        int unk = stream.ReadInt32();
+                    }
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTotalHeaderSize)
                 {
                     // Offset to the first class(not object) in the package.
                     HeaderSize = stream.ReadInt32();
@@ -1271,11 +1944,12 @@ namespace UELib
                     }
                 }
 #endif
-                if (stream.Version >= VFolderName)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedFolderName)
                 {
                     FolderName = stream.ReadString();
                 }
 
+                // version >= 34
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
 #if HAWKEN || GIGANTIC
@@ -1306,6 +1980,7 @@ namespace UELib
 #endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
+                Contract.Assert(NameOffset < stream.Length);
 #if UE4
                 if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
                 {
@@ -1316,10 +1991,12 @@ namespace UELib
                 {
                     GatherableTextDataCount = stream.ReadInt32();
                     GatherableTextDataOffset = stream.ReadInt32();
+                    Contract.Assert(GatherableTextDataOffset <= HeaderSize);
                 }
 #endif
                 ExportCount = stream.ReadInt32();
                 ExportOffset = stream.ReadInt32();
+                Contract.Assert(ExportOffset < stream.Length);
 #if APB
                 if (stream.Package.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 28)
@@ -1334,18 +2011,20 @@ namespace UELib
 #endif
                 ImportCount = stream.ReadInt32();
                 ImportOffset = stream.ReadInt32();
+                Contract.Assert(ImportOffset < stream.Length);
 
                 Console.WriteLine("Names Count:" + NameCount + " Names Offset:" + NameOffset
                                   + " Exports Count:" + ExportCount + " Exports Offset:" + ExportOffset
                                   + " Imports Count:" + ImportCount + " Imports Offset:" + ImportOffset
                 );
 
-                if (stream.Version < 68)
+                if (stream.Version < (uint)PackageObjectLegacyVersion.HeritageTableDeprecated)
                 {
                     HeritageCount = stream.ReadInt32();
                     Contract.Assert(HeritageCount > 0);
 
                     HeritageOffset = stream.ReadInt32();
+                    Contract.Assert(HeritageOffset < stream.Length);
 
                     return;
                 }
@@ -1356,9 +2035,10 @@ namespace UELib
                     stream.Read(out int _);
                 }
 #endif
-                if (stream.Version >= VDependsOffset)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDependsTable)
                 {
                     DependsOffset = stream.ReadInt32();
+                    Debug.Assert(DependsOffset <= HeaderSize); // May be equal when there are no items.
                 }
 #if THIEF_DS || DEUSEX_IW
                 if (stream.Package.Build == GameBuild.BuildName.Thief_DS ||
@@ -1380,18 +2060,38 @@ namespace UELib
                     stream.ReadArray(out UArray<byte> iStack_fc);
                 }
 #endif
+#if LEAD
+                if (stream.Package.Build == BuildGeneration.Lead &&
+                    stream.LicenseeVersion >= 48)
+                {
+                    // Probably a new table, with v2c representing the count and v30 representing the offset.
+                    stream.Read(out int v2c);
+                    stream.Read(out int v30); // FileEndOffset, used in a loop that invokes a similar procedure as the names table.
+                    Contract.Assert(v30 == stream.Length);
+                    // v2c = 0 if v30 < ExportOffset
+
+                    if (stream.LicenseeVersion >= 85)
+                    {
+                        stream.Read(out int v08); // same offset as the variable that is serialized before 'PackageFlags'.
+                    }
+
+                    goto skipGuid;
+                }
+#endif
                 if (stream.UE4Version >= 384)
                 {
                     StringAssetReferencesCount = stream.ReadInt32();
                     StringAssetReferencesOffset = stream.ReadInt32();
+                    Contract.Assert(StringAssetReferencesOffset <= HeaderSize);
                 }
 
                 if (stream.UE4Version >= 510)
                 {
                     SearchableNamesOffset = stream.ReadInt32();
+                    Contract.Assert(SearchableNamesOffset <= HeaderSize);
                 }
 
-                if (stream.Version >= VImportExportGuidsOffset &&
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable &&
                     stream.UE4Version == 0
                     // FIXME: Correct the output version of these games instead.
 #if BIOSHOCK
@@ -1403,6 +2103,8 @@ namespace UELib
                    )
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
+                    Debug.Assert(ImportExportGuidsOffset <= HeaderSize);
+
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();
                 }
@@ -1421,13 +2123,19 @@ namespace UELib
                 if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
                     stream.Skip(4);
 #endif
-                if (stream.Version >= VThumbnailTableOffset)
+#if TERA
+                if (stream.Package.Build == GameBuild.BuildName.Tera)
+                {
+                    goto skipThumbnailTableOffset;
+                }
+#endif
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
+                    Debug.Assert(ThumbnailTableOffset <= HeaderSize);
                 }
-#if MKKE
-                if (stream.Package.Build == GameBuild.BuildName.MKKE) stream.Skip(4);
-#endif
+            skipThumbnailTableOffset:
+
 #if SPELLBORN
                 if (stream.Package.Build == GameBuild.BuildName.Spellborn
                     && stream.Version >= 148)
@@ -1438,13 +2146,27 @@ namespace UELib
                 stream.ReadStruct(out Guid);
                 Console.WriteLine("GUID:" + Guid);
             skipGuid:
-#if TERA
-                if (stream.Package.Build == GameBuild.BuildName.Tera) stream.Position -= 4;
-#endif
 #if MKKE
                 if (stream.Package.Build == GameBuild.BuildName.MKKE)
                 {
                     goto skipGenerations;
+                }
+#endif
+#if UE4
+                if (stream.Package.ContainsEditorData())
+                {
+                    if (stream.UE4Version >= 518)
+                    {
+                        stream.ReadStruct(out PersistentGuid);
+                        if (stream.UE4Version < 520)
+                        {
+                            stream.ReadStruct(out OwnerPersistentGuid);
+                        }
+                    }
+                    else
+                    {
+                        PersistentGuid = Guid;
+                    }
                 }
 #endif
                 int generationCount = stream.ReadInt32();
@@ -1481,7 +2203,7 @@ namespace UELib
                     }
                 }
 #endif
-                if (stream.Version >= VEngineVersion &&
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedEngineVersion &&
                     stream.UE4Version == 0)
                 {
                     // The Engine Version this package was created with
@@ -1489,18 +2211,6 @@ namespace UELib
                     Console.WriteLine("EngineVersion:" + EngineVersion);
                 }
 #if UE4
-                if (stream.Package.ContainsEditorData())
-                {
-                    if (stream.UE4Version >= 518)
-                    {
-                        stream.ReadStruct(out PersistentGuid);
-                        if (stream.UE4Version < 520)
-                        {
-                            stream.ReadStruct(out OwnerPersistentGuid);
-                        }
-                    }
-                }
-
                 if (stream.UE4Version >= 336)
                 {
                     // EngineVersion
@@ -1515,7 +2225,7 @@ namespace UELib
                     PackageCompatibleEngineVersion.Deserialize(stream);
                 }
 #endif
-                if (stream.Version >= VCookerVersion &&
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedCookerVersion &&
                     stream.UE4Version == 0)
                 {
                     // The Cooker Version this package was cooked with
@@ -1568,7 +2278,7 @@ namespace UELib
                 }
 
                 // SFX reads 392?
-                if (stream.Version >= VPackageSource)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedPackageSource)
                 {
                     PackageSource = stream.ReadUInt32();
                     Console.WriteLine("PackageSource:" + PackageSource);
@@ -1588,7 +2298,7 @@ namespace UELib
                     return;
                 }
 #endif
-                if (stream.Version >= VAdditionalPackagesToCook)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedAdditionalPackagesToCook)
                 {
 #if TRANSFORMERS
                     if (stream.Package.Build == BuildGeneration.HMS)
@@ -1631,19 +2341,17 @@ namespace UELib
                     return;
                 }
 #endif
-                if (stream.Version >= VTextureAllocations)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTextureAllocations)
                 {
-                    // TextureAllocations, TextureTypes
-                    int count = stream.ReadInt32();
-                    for (var i = 0; i < count; i++)
+                    try
                     {
-                        stream.ReadInt32();
-                        stream.ReadInt32();
-                        stream.ReadInt32();
-                        stream.ReadUInt32();
-                        stream.ReadUInt32();
-                        int count2 = stream.ReadInt32();
-                        stream.Skip(count2 * 4);
+                        stream.ReadArray(out TextureAllocations);
+                    }
+                    catch (Exception exception)
+                    {
+                        // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                        LibServices.LogService.SilentException(new UnrealException("Couldn't parse TextureAllocations",
+                            exception));
                     }
                 }
 #if ROCKETLEAGUE
@@ -1651,13 +2359,48 @@ namespace UELib
                     && PackageFlags.HasFlag(PackageFlag.Cooked))
                 {
                     int garbageSize = stream.ReadInt32();
-                    Debug.WriteLine(garbageSize, "GarbageSize");
+
                     int compressedChunkInfoOffset = stream.ReadInt32();
-                    Debug.WriteLine(compressedChunkInfoOffset, "CompressedChunkInfoOffset");
+                    Debug.Assert(compressedChunkInfoOffset < stream.Length);
+
                     int lastBlockSize = stream.ReadInt32();
-                    Debug.WriteLine(lastBlockSize, "LastBlockSize");
                     Debug.Assert(stream.Position == NameOffset, "There is more data before the NameTable");
                     // Data after this is encrypted
+                }
+#endif
+#if UE4
+                if (stream.UE4Version >= 112)
+                {
+                    stream.Read(out AssetRegistryDataOffset);
+                }
+
+                if (stream.UE4Version >= 212)
+                {
+                    stream.Read(out BulkDataOffset);
+                }
+
+                if (stream.UE4Version >= 224)
+                {
+                    stream.Read(out WorldTileInfoDataOffset);
+                }
+
+                if (stream.UE4Version >= 278)
+                {
+                    if (stream.UE4Version >= 326)
+                    {
+                        stream.Read(out ChunkIdentifiers);
+                    }
+                    else
+                    {
+                        stream.Read(out int chunkIdentifier);
+                        ChunkIdentifiers = [chunkIdentifier];
+                    }
+                }
+
+                if (stream.UE4Version >= 507)
+                {
+                    stream.Read(out PreloadDependencyCount);
+                    stream.Read(out PreloadDependencyOffset);
                 }
 #endif
             }
@@ -1694,98 +2437,71 @@ namespace UELib
         /// </summary>
         public static ushort OverrideLicenseeVersion;
 
-        /// <summary>
-        /// The bitflags of this package.
-        /// </summary>
         [Obsolete("See Summary.PackageFlags")] public uint PackageFlags;
 
-        /// <summary>
-        /// Size of the Header. Basically points to the first Object in the package.
-        /// </summary>
         [Obsolete("See Summary.HeaderSize")]
         public int HeaderSize => Summary.HeaderSize;
 
-        /// <summary>
-        /// The group the package is associated with in the Content Browser.
-        /// </summary>
         [Obsolete("See Summary.FolderName")] public string Group;
 
-        /// <summary>
-        /// The guid of this package. Used to test if the package on a client is equal to the one on a server.
-        /// </summary>
         [Obsolete("See Summary.Guid")]
         public string GUID => Summary.Guid.ToString();
 
-        /// <summary>
-        /// List of package generations.
-        /// </summary>
         [Obsolete("See Summary.Generations")]
         public UArray<UGenerationTableItem> Generations => Summary.Generations;
 
-        /// <summary>
-        /// The Engine version the package was created with.
-        /// </summary>
         [Obsolete("See Summary.EngineVersion")]
         public int EngineVersion => Summary.EngineVersion;
 
-        /// <summary>
-        /// The Cooker version the package was cooked with.
-        /// </summary>
         [Obsolete("See Summary.CookerVersion")]
         public int CookerVersion => Summary.CookerVersion;
 
-        /// <summary>
-        /// The type of compression the package is compressed with.
-        /// </summary>
         [Obsolete("See Summary.CompressionFlags")]
         public uint CompressionFlags => Summary.CompressionFlags;
 
-        /// <summary>
-        /// List of compressed chunks throughout the package.
-        /// Null if package version less is than <see cref="VCompression" />
-        /// </summary>
         [Obsolete("See Summary.CompressedChunks")]
         public UArray<CompressedChunk> CompressedChunks => Summary.CompressedChunks;
 
         /// <summary>
         /// List of unique unreal names.
         /// </summary>
-        [PublicAPI]
-        public List<UNameTableItem> Names { get; private set; } = new List<UNameTableItem>();
+        public List<UNameTableItem> Names { get; private set; } = [];
 
         /// <summary>
         /// List of info about exported objects.
         /// </summary>
-        [PublicAPI]
-        public List<UExportTableItem> Exports { get; private set; } = new List<UExportTableItem>();
+        public List<UExportTableItem> Exports { get; private set; } = [];
 
         /// <summary>
         /// List of info about imported objects.
         /// </summary>
-        [PublicAPI]
-        public List<UImportTableItem> Imports { get; private set; } = new List<UImportTableItem>();
+        public List<UImportTableItem> Imports { get; private set; } = [];
 
         /// <summary>
-        /// List of info about dependency objects.
+        /// A map of export to import indices for each export.
         /// </summary>
-        //public List<UDependencyTableItem> Dependencies{ get; private set; }
+        public List<UArray<UPackageIndex>> Dependencies { get; private set; } = [];
+
+        public UArray<PackageLevelGuid> ImportGuids { get; private set; } = [];
+        public UMap<UGuid, UPackageIndex> ExportGuids { get; private set; } = new();
+
+        public UArray<UObjectThumbnailTableItem> ObjectThumbnails { get; private set; } = [];
 
         #region Initialized Members
 
         /// <summary>
         /// Class types that should get added to the ObjectsList.
         /// </summary>
-        private readonly Dictionary<string, Type> _ClassTypes = new Dictionary<string, Type>();
+        private readonly Dictionary<string, Type> _ClassTypes = new();
 
         /// <summary>
         /// List of UObjects that were constructed by function ConstructObjects, later deserialized and linked.
         ///
         /// Includes Exports and Imports!.
         /// </summary>
-        [PublicAPI]
-        public List<UObject> Objects { get; private set; } = new List<UObject>();
+        public List<UObject> Objects { get; private set; } = [];
 
-        [PublicAPI] public NativesTablePackage NTLPackage;
+        public NativesTablePackage NTLPackage;
 
         [Obsolete("See UPackageStream.Decoder", true)]
         public IBufferDecoder Decoder;
@@ -1809,7 +2525,6 @@ namespace UELib
             RegisterClasses = 0x0010
         }
 
-        [PublicAPI]
         [Obsolete]
         public static UnrealPackage DeserializePackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
         {
@@ -1817,6 +2532,13 @@ namespace UELib
             var pkg = new UnrealPackage(stream);
             pkg.Deserialize(stream);
             return pkg;
+        }
+
+        private UPackage GetRootPackage(string filePath)
+        {
+            string packageName = Path.GetFileNameWithoutExtension(filePath);
+            return FindObject<UPackage>(packageName)
+                   ?? CreateObject<UPackage>(new UName(packageName), new UnrealFlags<ObjectFlag>(0));
         }
 
         /// <summary>
@@ -1831,17 +2553,201 @@ namespace UELib
 
             // File Type
             // Signature is tested in UPackageStream
+            RootPackage = GetRootPackage(_FullPackageName);
             IsBigEndianEncoded = stream.BigEndianCode;
+
         }
 
+        /// <summary>
+        /// Serializes the package header to the stream.
+        /// </summary>
+        public void Serialize()
+        {
+            Contract.Assert(Stream != null);
+            Serialize(Stream);
+        }
+
+        /// <summary>
+        /// Serializes the package header to the output stream.
+        /// </summary>
+        /// <param name="stream">the output stream.</param>
         public void Serialize(IUnrealStream stream)
         {
-            throw new NotImplementedException();
+            Summary.Serialize(stream);
+
+            Branch.PostSerializeSummary(this, stream, ref Summary);
+            Debug.Assert(stream.Serializer != null,
+                "IUnrealStream.Serializer cannot be null. Did you forget to initialize the Serializer in PostSerializeSummary?");
+
+            if (Summary.CompressedChunks?.Count > 0 &&
+                Summary.CompressionFlags != 0)
+            {
+                throw new NotImplementedException("Cannot serialize compressed package data.");
+            }
+
+            if (Summary.Heritages?.Count > 0
+                && stream.Version < (uint)PackageObjectLegacyVersion.HeritageTableDeprecated)
+            {
+                if (Summary.HeritageOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.HeritageOffset);
+                    stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
+                }
+
+                SerializeHeritages(stream);
+            }
+            else
+            {
+                Summary.HeritageCount = 0;
+                Summary.HeritageOffset = 0;
+            }
+
+            if (Names.Count > 0)
+            {
+                if (Summary.NameOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.NameOffset);
+                    stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
+                }
+
+                SerializeNames(stream);
+            }
+            else
+            {
+                Summary.NameCount = 0;
+                Summary.NameOffset = 0;
+            }
+
+            if (Imports.Count > 0)
+            {
+                if (Summary.ImportOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.ImportOffset);
+                    stream.Seek(Summary.ImportOffset, SeekOrigin.Begin);
+                }
+
+                SerializeImports(stream);
+            }
+            else
+            {
+                Summary.ImportCount = 0;
+                Summary.ImportOffset = 0;
+            }
+
+            if (Exports.Count > 0)
+            {
+                if (Summary.ExportOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.ExportOffset);
+                    stream.Seek(Summary.ExportOffset, SeekOrigin.Begin);
+                }
+
+                SerializeExports(stream);
+            }
+            else
+            {
+                Summary.ExportCount = 0;
+                Summary.ExportOffset = 0;
+            }
+
+            if (Dependencies.Count > 0
+                && stream.Version >= (uint)PackageObjectLegacyVersion.AddedDependsTable)
+            {
+                if (Summary.DependsOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.DependsOffset);
+                    stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
+                }
+
+                SerializeDependencies(stream);
+            }
+            else
+            {
+                Summary.DependsOffset = 0;
+            }
+
+            if ((ImportGuids.Count > 0 || ExportGuids.Count > 0)
+                && stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable
+                && stream.UE4Version == 0)
+            {
+                if (Summary.ImportExportGuidsOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.ImportExportGuidsOffset);
+                    stream.Seek(Summary.ImportExportGuidsOffset, SeekOrigin.Begin);
+                }
+
+                SerializeImportExportGuids(stream);
+            }
+            else
+            {
+                Summary.ImportGuidsCount = 0;
+                Summary.ExportGuidsCount = 0;
+                Summary.ImportExportGuidsOffset = 0;
+            }
+
+            // The count is at the offset, so we have to serialize this regardless of the thumbnail count.
+            if (ObjectThumbnails.Count > 0
+                && stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
+            {
+                if (Summary.ThumbnailTableOffset != 0)
+                {
+                    Contract.Assert(stream.Position < Summary.ThumbnailTableOffset);
+                    stream.Seek(Summary.ThumbnailTableOffset, SeekOrigin.Begin);
+                }
+
+                SerializeThumbnails(stream);
+            }
+            else
+            {
+                Summary.ThumbnailTableOffset = 0;
+            }
+
+            if (stream.UE4Version >= 384)
+            {
+                throw new NotSupportedException("Cannot yet serialize UE4 StringAssetReferences");
+            }
+            else
+            {
+                Summary.StringAssetReferencesCount = 0;
+                Summary.StringAssetReferencesOffset = 0;
+            }
+
+            if (stream.UE4Version >= 510)
+            {
+                throw new NotSupportedException("Cannot yet serialize UE4 SearchableNames");
+            }
+            else
+            {
+                Summary.SearchableNamesOffset = 0;
+            }
+
+            Branch.PostSerializePackage(stream.Package, stream);
+            Summary.HeaderSize = (int)stream.Position;
         }
 
-        public void Deserialize(UPackageStream stream)
+        /// <summary>
+        /// Deserializes the package header from the stream.
+        /// </summary>
+        public void Deserialize()
         {
-            Summary = new PackageFileSummary();
+            Contract.Assert(Stream != null);
+            Deserialize(Stream);
+        }
+
+        /// <summary>
+        /// Deserializes the package header from the input stream.
+        /// </summary>
+        /// <param name="stream">the input stream.</param>
+        public void Deserialize(IUnrealStream stream)
+        {
+            BinaryMetaData.Fields.Clear();
+
+            // Reset all previously-deserialized data if any.
+            uint tag = Summary.Tag;
+            Summary = new PackageFileSummary
+            {
+                Tag = tag
+            };
             Summary.Deserialize(stream);
             BinaryMetaData.AddField(nameof(Summary), Summary, 0, stream.Position);
 
@@ -1849,8 +2755,8 @@ namespace UELib
             PackageFlags = (uint)Summary.PackageFlags;
             Group = Summary.FolderName;
             Branch.PostDeserializeSummary(this, stream, ref Summary);
-            Debug.Assert(Branch.Serializer != null,
-                "Branch.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
+            Debug.Assert(stream.Serializer != null,
+                "IUnrealStream.Serializer cannot be null. Did you forget to initialize the Serializer in PostDeserializeSummary?");
 
             // We can't continue without decompressing.
             if (Summary.CompressedChunks != null &&
@@ -1864,184 +2770,406 @@ namespace UELib
                 // Flags 0? Let's pretend that we no longer possess any chunks.
                 Summary.CompressedChunks.Clear();
             }
-#if TERA
-            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
-#endif
-            // Read the name table
-            if (Summary.NameCount > 0)
-            {
-                stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
-                Names = new List<UNameTableItem>(Summary.NameCount);
-                for (var i = 0; i < Summary.NameCount; ++i)
-                {
-                    var nameEntry = new UNameTableItem { Offset = (int)stream.Position, Index = i };
-                    Branch.Serializer.Deserialize(stream, nameEntry);
-                    nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
-                    Names.Add(nameEntry);
-                }
 
-                BinaryMetaData.AddField(nameof(Names), Names, Summary.NameOffset, stream.Position - Summary.NameOffset);
-
-#if SPELLBORN
-                // WTF were they thinking? Change DRFORTHEWIN to None
-                if (Build == GameBuild.BuildName.Spellborn
-                    && Names[0].Name == "DRFORTHEWIN")
-                    Names[0].Name = "None";
-                // False??
-                //Debug.Assert(stream.Position == Summary.ImportsOffset);
-#endif
-            }
-
-            // Read Heritages
+            // Read the heritages
             if (Summary.HeritageCount > 0)
             {
                 stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
-                stream.ReadArray(out Summary.Heritages, Summary.HeritageCount);
-
-                BinaryMetaData.AddField(nameof(Summary.Heritages), Summary.Heritages, Summary.HeritageOffset,
-                    stream.Position - Summary.HeritageOffset);
+                DeserializeHeritages(stream);
+            }
+#if TERA
+            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
+#endif
+            // Read the names
+            if (Summary.NameCount > 0)
+            {
+                stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
+                DeserializeNames(stream);
             }
 
-            // Read Import Table
+            // Read the imports
             if (Summary.ImportCount > 0)
             {
                 stream.Seek(Summary.ImportOffset, SeekOrigin.Begin);
-                Imports = new List<UImportTableItem>(Summary.ImportCount);
-                for (var i = 0; i < Summary.ImportCount; ++i)
-                {
-                    var imp = new UImportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
-                    Branch.Serializer.Deserialize(stream, imp);
-                    imp.Size = (int)(stream.Position - imp.Offset);
-                    Imports.Add(imp);
-                }
-
-                BinaryMetaData.AddField(nameof(Imports), Imports, Summary.ImportOffset,
-                    stream.Position - Summary.ImportOffset);
+                DeserializeImports(stream);
             }
 
-            // Read Export Table
+            // Read the exports
             if (Summary.ExportCount > 0)
             {
                 stream.Seek(Summary.ExportOffset, SeekOrigin.Begin);
-                Exports = new List<UExportTableItem>(Summary.ExportCount);
-                for (var i = 0; i < Summary.ExportCount; ++i)
+                DeserializeExports(stream);
+            }
+
+            // Read the dependencies
+            if (Summary.DependsOffset > 0)
+            {
+                stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
+
+                try
                 {
-                    var exp = new UExportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
-                    Branch.Serializer.Deserialize(stream, exp);
-                    exp.Size = (int)(stream.Position - exp.Offset);
-                    Exports.Add(exp);
+                    DeserializeDependencies(stream);
                 }
-
-                BinaryMetaData.AddField(nameof(Exports), Exports, Summary.ExportOffset,
-                    stream.Position - Summary.ExportOffset);
-
-                if (Summary.DependsOffset > 0)
+                catch (Exception exception)
                 {
-                    try
-                    {
-                        stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
-                        int dependsCount = Summary.ExportCount;
-#if BIOSHOCK
-                        // FIXME: Version?
-                        if (Build == GameBuild.BuildName.Bioshock_Infinite)
-                        {
-                            dependsCount = stream.ReadInt32();
-                        }
-#endif
-                        var dependsMap = new List<int[]>(dependsCount);
-                        for (var i = 0; i < dependsCount; ++i)
-                        {
-                            // DependencyList, index to import table
-                            int count = stream.ReadInt32(); // -1 in DCUO?
-                            var imports = new int[count];
-                            for (var j = 0; j < count; ++j)
-                            {
-                                imports[j] = stream.ReadInt32();
-                            }
-
-                            dependsMap.Add(imports);
-                        }
-
-                        BinaryMetaData.AddField(nameof(dependsMap), dependsMap, Summary.DependsOffset,
-                            stream.Position - Summary.DependsOffset);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
-                        Console.Error.WriteLine("Couldn't parse DependenciesTable");
-                        Console.Error.WriteLine(ex.ToString());
-#if STRICT
-                        throw new UnrealException("Couldn't parse DependenciesTable", ex);
-#endif
-                    }
+                    // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
+                    LibServices.LogService.SilentException(new UnrealException("Couldn't parse DependenciesTable", exception));
                 }
             }
 
+            // Read the import and export guids
             if (Summary.ImportExportGuidsOffset > 0)
             {
+                stream.Seek(Summary.ImportExportGuidsOffset, SeekOrigin.Begin);
+
                 try
                 {
-                    for (var i = 0; i < Summary.ImportGuidsCount; ++i)
-                    {
-                        string levelName = stream.ReadString();
-                        int guidCount = stream.ReadInt32();
-                        stream.Skip(guidCount * 16);
-                    }
-
-                    for (var i = 0; i < Summary.ExportGuidsCount; ++i)
-                    {
-                        stream.ReadStruct(out UGuid objectGuid);
-                        int exportIndex = stream.ReadInt32();
-                    }
-
-                    if (stream.Position != Summary.ImportExportGuidsOffset)
-                    {
-                        BinaryMetaData.AddField("ImportExportGuids", null, Summary.ImportExportGuidsOffset,
-                            stream.Position - Summary.ImportExportGuidsOffset);
-                    }
+                    DeserializeImportExportGuids(stream);
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
                     // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
-                    Console.Error.WriteLine("Couldn't parse ImportExportGuidsTable");
-                    Console.Error.WriteLine(ex.ToString());
-#if STRICT
-                    throw new UnrealException("Couldn't parse ImportExportGuidsTable", ex);
-#endif
+                    LibServices.LogService.SilentException(new UnrealException("Couldn't parse ImportExportGuidsTable", exception));
                 }
             }
 
-            if (Summary.ThumbnailTableOffset != 0)
+            // Read the object thumbnails
+            if (Summary.ThumbnailTableOffset > 0)
             {
+                stream.Seek(Summary.ThumbnailTableOffset, SeekOrigin.Begin);
+
                 try
                 {
-                    int thumbnailCount = stream.ReadInt32();
-                    // TODO: Serialize
-                    BinaryMetaData.AddField("Thumbnails", null, Summary.ThumbnailTableOffset,
-                        stream.Position - Summary.ThumbnailTableOffset);
+                    DeserializeThumbnails(stream);
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
                     // Errors shouldn't be fatal here because this feature is not necessary for our purposes.
-                    Console.Error.WriteLine("Couldn't parse ThumbnailTable");
-                    Console.Error.WriteLine(ex.ToString());
-#if STRICT
-                    throw new UnrealException("Couldn't parse ThumbnailTable", ex);
-#endif
+                    LibServices.LogService.SilentException(new UnrealException("Couldn't parse ThumbnailTable", exception));
                 }
             }
-
-            Debug.Assert(stream.Position <= int.MaxValue);
-            if (Summary.HeaderSize == 0) Summary.HeaderSize = (int)stream.Position;
 
             Branch.PostDeserializePackage(stream.Package, stream);
+
+            if (Summary.HeaderSize == 0)
+            {
+                Summary.HeaderSize = (int)stream.Position;
+            }
+
+            if (Summary.HeaderSize != stream.Position)
+            {
+                LibServices.LogService.SilentException(new UnrealException("Missing package header data, serialization may fail."));
+            }
+        }
+
+        /// <summary>
+        /// Serializes all the collected package dependencies to a stream.
+        /// </summary>
+        /// <param name="stream">the output stream.</param>
+        private void SerializeDependencies(IUnrealStream stream)
+        {
+            Summary.DependsOffset = (int)stream.Position;
+
+            int dependsCount = Exports.Count;
+#if BIOSHOCK
+            // FIXME: Version?
+            if (Build == GameBuild.BuildName.Bioshock_Infinite)
+            {
+                stream.Write(dependsCount);
+            }
+#endif
+            Contract.Assert(dependsCount <= Dependencies.Count);
+            for (int exportIndex = 0; exportIndex < dependsCount; ++exportIndex)
+            {
+                var imports = Dependencies[exportIndex];
+                stream.Write(imports.Count);
+                foreach (var packageIndex in imports)
+                {
+                    stream.Write((int)packageIndex);
+                }
+            }
+        }
+
+        private void DeserializeDependencies(IUnrealStream stream)
+        {
+            int dependsCount = Summary.ExportCount;
+#if BIOSHOCK
+            // FIXME: Version?
+            if (Build == GameBuild.BuildName.Bioshock_Infinite)
+            {
+                dependsCount = stream.ReadInt32();
+            }
+#endif
+            Dependencies = new List<UArray<UPackageIndex>>(dependsCount);
+            for (int exportIndex = 0; exportIndex < dependsCount; ++exportIndex)
+            {
+                stream.Read(out int c);
+                var importIndexes = new UArray<UPackageIndex>(c);
+                for (int i = 0; i < c; ++i)
+                {
+                    stream.Read(out int packageIndex);
+                    importIndexes.Add(packageIndex);
+                }
+
+                Dependencies.Add(importIndexes);
+            }
+
+            BinaryMetaData.AddField(nameof(Dependencies), Dependencies, Summary.DependsOffset,
+                stream.Position - Summary.DependsOffset);
+        }
+
+        /// <summary>
+        /// Serializes all the collected package heritages to a stream.
+        /// </summary>
+        /// <param name="stream">the output stream.</param>
+        private void SerializeHeritages(IUnrealStream stream)
+        {
+            Summary.HeritageOffset = (int)stream.Position;
+            Summary.HeritageCount = Summary.Heritages.Count;
+
+            stream.WriteArray(Summary.Heritages);
+        }
+
+        /// <summary>
+        /// Deserializes all the package heritages from a stream.
+        /// </summary>
+        /// <param name="stream">the input stream.</param>
+        private void DeserializeHeritages(IUnrealStream stream)
+        {
+            stream.ReadArray(out Summary.Heritages, Summary.HeritageCount);
+
+            if (Summary.Heritages.Count > 0)
+            {
+                Summary.Guid = Summary.Heritages.Last();
+            }
+
+            BinaryMetaData.AddField(nameof(Summary.Heritages), Summary.Heritages, Summary.HeritageOffset,
+                stream.Position - Summary.HeritageOffset);
+        }
+
+        /// <summary>
+        /// Serializes all the collected package names to a stream.
+        /// </summary>
+        /// <param name="stream">the output stream.</param>
+        private void SerializeNames(IUnrealStream stream)
+        {
+            Summary.NameOffset = (int)stream.Position;
+            Summary.NameCount = Names.Count;
+#if SPELLBORN
+            if (Build == GameBuild.BuildName.Spellborn
+                && Names[0].Name == "None")
+                Names[0].Name = "DRFORTHEWIN";
+#endif
+            var serializer = stream.Serializer;
+            foreach (var nameEntry in Names)
+            {
+                nameEntry.Offset = (int)stream.Position;
+                serializer.Serialize(stream, nameEntry);
+                nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
+            }
+#if SPELLBORN
+            if (Build == GameBuild.BuildName.Spellborn
+                && Names[0].Name == "DRFORTHEWIN")
+                Names[0].Name = "None";
+#endif
+        }
+
+        /// <summary>
+        /// Deserializes all the package names from a stream.
+        /// </summary>
+        /// <param name="stream">the input stream.</param>
+        private void DeserializeNames(IUnrealStream stream)
+        {
+            var serializer = stream.Serializer;
+
+            Names = new List<UNameTableItem>(Summary.NameCount);
+            for (var i = 0; i < Summary.NameCount; ++i)
+            {
+                var nameEntry = new UNameTableItem { Offset = (int)stream.Position, Index = i };
+                serializer.Deserialize(stream, nameEntry);
+                nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
+                Names.Add(nameEntry);
+            }
+
+            BinaryMetaData.AddField(nameof(Names), Names, Summary.NameOffset, stream.Position - Summary.NameOffset);
+#if SPELLBORN
+            // WTF were they thinking? Change DRFORTHEWIN to None
+            if (Build == GameBuild.BuildName.Spellborn
+                && Names[0].Name == "DRFORTHEWIN")
+                Names[0].Name = "None";
+            // False??
+            //Debug.Assert(stream.Position == Summary.ImportsOffset);
+#endif
+        }
+
+        /// <summary>
+        /// Serializes all the collected package imports to a stream.
+        /// </summary>
+        /// <param name="stream">the output stream.</param>
+        private void SerializeImports(IUnrealStream stream)
+        {
+            Summary.ImportOffset = (int)stream.Position;
+            Summary.ImportCount = Imports.Count;
+
+            var serializer = stream.Serializer;
+            foreach (var imp in Imports)
+            {
+                imp.Offset = (int)stream.Position;
+                serializer.Serialize(stream, imp);
+                imp.Size = (int)(stream.Position - imp.Offset);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes all the package imports from a stream.
+        /// </summary>
+        /// <param name="stream">the input stream.</param>
+        private void DeserializeImports(IUnrealStream stream)
+        {
+            var serializer = stream.Serializer;
+
+            Imports = new List<UImportTableItem>(Summary.ImportCount);
+            for (var i = 0; i < Summary.ImportCount; ++i)
+            {
+                var imp = new UImportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
+                serializer.Deserialize(stream, imp);
+                imp.Size = (int)(stream.Position - imp.Offset);
+                Imports.Add(imp);
+            }
+
+            BinaryMetaData.AddField(nameof(Imports), Imports, Summary.ImportOffset,
+                stream.Position - Summary.ImportOffset);
+        }
+
+        /// <summary>
+        /// Serializes all the collected package exports to a stream.
+        /// </summary>
+        /// <param name="stream">the output stream.</param>
+        private void SerializeExports(IUnrealStream stream)
+        {
+            Summary.ExportOffset = (int)stream.Position;
+            Summary.ExportCount = Exports.Count;
+
+            var serializer = stream.Serializer;
+            foreach (var exp in Exports)
+            {
+                exp.Offset = (int)stream.Position;
+                serializer.Serialize(stream, exp);
+                exp.Size = (int)(stream.Position - exp.Offset);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes all the package exports from a stream.
+        /// </summary>
+        /// <param name="stream">the input stream.</param>
+        private void DeserializeExports(IUnrealStream stream)
+        {
+            var serializer = stream.Serializer;
+
+            Exports = new List<UExportTableItem>(Summary.ExportCount);
+            for (var i = 0; i < Summary.ExportCount; ++i)
+            {
+                var exp = new UExportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
+                serializer.Deserialize(stream, exp);
+                exp.Size = (int)(stream.Position - exp.Offset);
+                Exports.Add(exp);
+            }
+
+            BinaryMetaData.AddField(nameof(Exports), Exports, Summary.ExportOffset,
+                stream.Position - Summary.ExportOffset);
+        }
+
+        private void SerializeImportExportGuids(IUnrealStream stream)
+        {
+            Summary.ImportExportGuidsOffset = (int)stream.Position;
+
+            Summary.ImportGuidsCount = ImportGuids.Count;
+            foreach (var importGuid in ImportGuids)
+            {
+                var guid = importGuid;
+                stream.Write(ref guid);
+            }
+
+            Summary.ExportGuidsCount = ExportGuids.Count;
+            foreach (var exportGuid in ExportGuids)
+            {
+                var guidKey = exportGuid.Key;
+                stream.Write(ref guidKey);
+                stream.Write((int)exportGuid.Value);
+            }
+        }
+
+        private void DeserializeImportExportGuids(IUnrealStream stream)
+        {
+            ImportGuids = new UArray<PackageLevelGuid>(Summary.ImportGuidsCount);
+            for (var i = 0; i < Summary.ImportGuidsCount; ++i)
+            {
+                stream.ReadStruct(out PackageLevelGuid importGuid);
+                ImportGuids[i] = importGuid;
+            }
+
+            ExportGuids = new UMap<UGuid, UPackageIndex>(Summary.ExportGuidsCount);
+            for (var i = 0; i < Summary.ExportGuidsCount; ++i)
+            {
+                stream.ReadStruct(out UGuid objectGuid);
+                stream.Read(out int exportIndex);
+
+                ExportGuids.Add(objectGuid, exportIndex);
+            }
+
+            if (stream.Position != Summary.ImportExportGuidsOffset)
+            {
+                BinaryMetaData.AddField("ImportExportGuids", null, Summary.ImportExportGuidsOffset,
+                    stream.Position - Summary.ImportExportGuidsOffset);
+            }
+        }
+
+        private void SerializeThumbnails(IUnrealStream stream)
+        {
+            // If true then we are writing a new package, otherwise just overwrite existing data.
+            if (Summary.ThumbnailTableOffset == 0)
+            {
+                // Write the thumbnail data somewhere, keep track of the position for the thumbnail item to reference.
+                foreach (var item in ObjectThumbnails)
+                {
+                    item.ThumbnailOffset = (int)stream.Position;
+                    stream.Write(ref item.Thumbnail);
+                }
+            }
+
+            Summary.ThumbnailTableOffset = (int)stream.Position;
+
+            // Write the thumbnail paths and offsets
+            stream.Write(ObjectThumbnails.Count);
+            foreach (var thumb in ObjectThumbnails)
+            {
+                thumb.Offset = (int)stream.Position;
+                thumb.Deserialize(stream);
+                thumb.Size = (int)(stream.Position - thumb.Offset);
+            }
+        }
+
+        private void DeserializeThumbnails(IUnrealStream stream)
+        {
+            stream.Read(out int thumbnailCount);
+            ObjectThumbnails = new UArray<UObjectThumbnailTableItem>(thumbnailCount);
+            for (var i = 0; i < thumbnailCount; ++i)
+            {
+                var thumb = new UObjectThumbnailTableItem { Offset = (int)stream.Position, Index = i };
+                thumb.Deserialize(stream);
+                thumb.Size = (int)(stream.Position - thumb.Offset);
+                ObjectThumbnails.Add(thumb);
+            }
+
+            BinaryMetaData.AddField("Thumbnails", null, Summary.ThumbnailTableOffset,
+                stream.Position - Summary.ThumbnailTableOffset);
         }
 
         /// <summary>
         /// Constructs all export objects.
         /// </summary>
         /// <param name="initFlags">Initializing rules such as deserializing and/or linking.</param>
-        [PublicAPI]
         public void InitializeExportObjects(InitFlags initFlags = InitFlags.All)
         {
             Objects = new List<UObject>(Exports.Count);
@@ -2074,7 +3202,6 @@ namespace UELib
         /// </summary>
         /// <param name="initFlags">A collection of initializing flags to notify what should be initialized.</param>
         /// <example>InitializePackage( UnrealPackage.InitFlags.All )</example>
-        [PublicAPI]
         public void InitializePackage(InitFlags initFlags = InitFlags.All)
         {
             if ((initFlags & InitFlags.RegisterClasses) != 0) RegisterExportedClassTypes();
@@ -2146,7 +3273,7 @@ namespace UELib
             /// <summary>
             /// The event identification.
             /// </summary>
-            [PublicAPI] public readonly Id EventId;
+            public readonly Id EventId;
 
             /// <summary>
             /// Constructs a new event with @eventId.
@@ -2161,7 +3288,6 @@ namespace UELib
         /// <summary>
         ///
         /// </summary>
-        [PublicAPI]
         public event PackageEventHandler NotifyPackageEvent;
 
         private void OnNotifyPackageEvent(PackageEventArgs e)
@@ -2172,7 +3298,6 @@ namespace UELib
         /// <summary>
         /// Called when an object is added to the ObjectsList via the AddObject function.
         /// </summary>
-        [PublicAPI]
         public event NotifyObjectAddedEventHandler NotifyObjectAdded;
 
         /// <summary>
@@ -2181,26 +3306,30 @@ namespace UELib
         /// </summary>
         private void ConstructObjects()
         {
-            Objects = new List<UObject>();
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Construct));
-            foreach (var exp in Exports)
-                try
-                {
-                    CreateObject(exp);
-                }
-                catch (Exception exc)
-                {
-                    throw new UnrealException("couldn't create export object for " + exp, exc);
-                }
+            LibServices.Debug("Constructing all package objects", PackageName);
 
+            Objects = new List<UObject>(Imports.Count + Exports.Count);
+            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Construct));
             foreach (var imp in Imports)
                 try
                 {
+                    if (imp.Object != null) continue;
                     CreateObject(imp);
                 }
                 catch (Exception exc)
                 {
                     throw new UnrealException("couldn't create import object for " + imp, exc);
+                }
+
+            foreach (var exp in Exports)
+                try
+                {
+                    if (exp.Object != null) continue;
+                    CreateObject(exp);
+                }
+                catch (Exception exc)
+                {
+                    throw new UnrealException("couldn't create export object for " + exp, exc);
                 }
         }
 
@@ -2209,13 +3338,19 @@ namespace UELib
         /// </summary>
         private void DeserializeObjects()
         {
+            LibServices.Debug("Loading all package objects", PackageName);
+
             // Only exports should be deserialized and PostInitialized!
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Deserialize));
             foreach (var exp in Exports)
             {
-                if (!(exp.Object is UnknownObject || exp.Object.ShouldDeserializeOnDemand))
-                    //Console.WriteLine( "Deserializing object:" + exp.ObjectName );
-                    exp.Object.BeginDeserializing();
+                if (exp.Object is not UnknownObject)
+                {
+                    if (exp.Object!.DeserializationState == 0 && !exp.Object.ShouldDeserializeOnDemand)
+                    {
+                        exp.Object.Load();
+                    }
+                }
 
                 OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
             }
@@ -2226,16 +3361,14 @@ namespace UELib
         /// </summary>
         private void LinkObjects()
         {
+            LibServices.Debug("Linking all package objects", PackageName);
+
             // Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Link));
             foreach (var exp in Exports)
                 try
                 {
-                    if (!(exp.Object is UnknownObject)) exp.Object.PostInitialize();
-                }
-                catch (InvalidCastException)
-                {
-                    Console.WriteLine("InvalidCastException occurred on object: " + exp.Object);
+                    if (!(exp.Object is UnknownObject)) exp.Object!.PostInitialize();
                 }
                 finally
                 {
@@ -2258,205 +3391,265 @@ namespace UELib
         #region Methods
 
         // Create pseudo objects for imports so that we have non-null references to imports.
-        private void CreateObject(UImportTableItem item)
+        private UObject CreateObject(UImportTableItem import)
         {
-            var classType = GetClassType(item.ClassName);
-            item.Object = (UObject)Activator.CreateInstance(classType);
-            AddObject(item.Object, item);
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
-        }
-
-        private void CreateObject(UExportTableItem item)
-        {
-            var objectClass = item.Class;
-            var classType = GetClassType(objectClass != null ? objectClass.ObjectName : "Class");
-            // Try one of the "super" classes for unregistered classes.
-        loop:
-            if (objectClass != null && classType == typeof(UnknownObject))
+            if (import.Object != null)
             {
-                switch (objectClass)
-                {
-                    case UExportTableItem classExp:
-                        var super = classExp.Super;
-                        switch (super)
-                        {
-                            //case UImportTableItem superImport:
-                            //    CreateObject(superImport);
-                            //    return;
-
-                            case UExportTableItem superExport:
-                                objectClass = superExport;
-                                classType = GetClassType(objectClass.ObjectName);
-                                goto loop;
-                        }
-
-                        break;
-                }
+                return import.Object;
             }
 
-            item.Object = (UObject)Activator.CreateInstance(classType);
-            AddObject(item.Object, item);
+            var classType = GetClassType(import.ClassName);
+            var obj = (UObject)Activator.CreateInstance(classType);
+            Debug.Assert(obj != null);
+            obj.Name = import.ObjectName;
+            obj.ObjectFlags = new UnrealFlags<ObjectFlag>(Branch.EnumFlagsMap[typeof(ObjectFlag)], ObjectFlag.Public);
+            obj.Package = this;
+            obj.PackageIndex = -(import.Index + 1);
+            obj.Table = import;
+            obj.Class = null; // FindObject<UClass> ?? StaticClass
+            obj.Outer = IndexToObject(import.OuterIndex); // ?? ClassPackage
+            import.Object = obj;
+
+            AddToObjects(obj);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+
+            return obj;
         }
 
-        private void AddObject(UObject obj, UObjectTableItem table)
+        private UObject CreateObject(UExportTableItem export)
         {
-            table.Object = obj;
-            obj.Package = this;
-            obj.Table = table;
+            Debug.Assert(export.Object == null);
 
+            var objName = export.ObjectName;
+            var objSuper = IndexToObject<UStruct>(export.SuperIndex);
+
+            var objOuter = IndexToObject<UObject>(export.OuterIndex);
+            if (objOuter == null && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
+            {
+                var pkg = FindObject<UPackage>(objName) ?? CreateObject<UPackage>(objName);
+                export.Object = pkg;
+
+                return pkg;
+            }
+
+            var objClass = IndexToObject<UClass>(export.ClassIndex);
+
+            var internalClassType = GetClassType(objClass != null ? objClass.Name : "Class");
+            if (objClass != null && internalClassType == typeof(UnknownObject) && (int)objClass > 0)
+            {
+                // Try one of the "super" classes for unregistered classes.
+                internalClassType = objClass
+                    .EnumerateSuper<UClass>()
+                    .Select(cls => GetClassType(cls.Name))
+                    .FirstOrDefault() ?? typeof(UnknownObject);
+            }
+
+            var obj = (UObject)Activator.CreateInstance(internalClassType);
+            Debug.Assert(obj != null);
+            obj.Name = objName;
+            obj.ObjectFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
+            obj.Package = this;
+            obj.PackageIndex = export.Index + 1;
+            obj.Table = export;
+            obj.Class = objClass; // ?? StaticClass
+            obj.Outer = objOuter ?? RootPackage;
+
+            if (obj is UStruct uStruct)
+            {
+                uStruct.Super = objSuper;
+            }
+
+            export.Object = obj;
+
+            AddToObjects(obj);
+            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+
+            return obj;
+        }
+
+        private T CreateObject<T>(UName objectName) where T : UObject
+        {
+            return CreateObject<T>(objectName, new UnrealFlags<ObjectFlag>());
+        }
+
+        private T CreateObject<T>(UName objectName, UnrealFlags<ObjectFlag> objectFlags) where T : UObject
+        {
+            var obj = (T)Activator.CreateInstance(typeof(T));
+            Debug.Assert(obj != null);
+            obj.ObjectFlags = objectFlags;
+            obj.Package = this;
+            obj.PackageIndex = 0;
+            obj.Table = null;
+            obj.Name = objectName;
+
+            AddToObjects(obj);
+            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+
+            return obj;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddToObjects(UObject obj)
+        {
             Objects.Add(obj);
             NotifyObjectAdded?.Invoke(this, new ObjectEventArgs(obj));
         }
 
-        /// <summary>
-        /// Writes the present PackageFlags to disk. HardCoded!
-        /// Only supports UT2004.
-        /// </summary>
-        [PublicAPI]
-        [Obsolete]
+        [Obsolete("Use Summary.Serialize")]
         public void WritePackageFlags()
         {
             Stream.Position = 8;
-            Stream.Writer.Write(PackageFlags);
+            Stream.Write(PackageFlags);
         }
 
-        [PublicAPI]
-        [Obsolete]
+        [Obsolete("Use AddClassType")]
         public void RegisterClass(string className, Type classObject)
         {
             AddClassType(className, classObject);
         }
 
-        [PublicAPI]
         public void AddClassType(string className, Type classObject)
         {
             _ClassTypes[className.ToLower()] = classObject;
         }
 
-        [PublicAPI]
-        [NotNull]
         public Type GetClassType(string className)
         {
             _ClassTypes.TryGetValue(className.ToLower(), out var classType);
             return classType ?? typeof(UnknownObject);
         }
 
-        [PublicAPI]
         public bool HasClassType(string className)
         {
             return _ClassTypes.ContainsKey(className.ToLower());
         }
 
-        [PublicAPI]
-        [Obsolete]
+        [Obsolete("Use HasClassType")]
         public bool IsRegisteredClass(string className)
         {
             return HasClassType(className);
         }
 
-        /// <summary>
-        /// Returns an Object that resides at the specified ObjectIndex.
-        ///
-        /// if index is positive an exported Object will be returned.
-        /// if index is negative an imported Object will be returned.
-        /// if index is zero null will be returned.
-        /// </summary>
-        [PublicAPI]
-        public UObject GetIndexObject(int objectIndex)
-        {
-            return objectIndex < 0
-                ? Imports[-objectIndex - 1].Object
-                : objectIndex > 0
-                    ? Exports[objectIndex - 1].Object
-                    : null;
-        }
+        [Obsolete("Use IndexToObject")]
+        public UObject? GetIndexObject(int packageIndex) => IndexToObject<UObject>(packageIndex);
 
-        [PublicAPI]
-        public string GetIndexObjectName(int objectIndex)
-        {
-            return GetIndexTable(objectIndex).ObjectName;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UObject? IndexToObject(int packageIndex) => IndexToObject<UObject>(packageIndex);
 
         /// <summary>
-        /// Returns a name that resides at the specified NameIndex.
+        /// Returns a <see cref="UObject"/> from a package index.
         /// </summary>
-        [PublicAPI]
+        public T? IndexToObject<T>(int packageIndex)
+            where T : UObject
+        {
+            switch (packageIndex)
+            {
+                case < 0:
+                    {
+                        var import = Imports[-packageIndex - 1];
+                        return (T?)import.Object ?? (T)CreateObject(import);
+                    }
+
+                case > 0:
+                    {
+                        var export = Exports[packageIndex - 1];
+                        return (T?)export.Object ?? (T)CreateObject(export);
+                    }
+
+                default:
+                    return null;
+            }
+        }
+
+        [Obsolete]
+        public string GetIndexObjectName(int packageIndex)
+        {
+            return IndexToObjectResource(packageIndex)!.ObjectName;
+        }
+
+        [Obsolete]
         public string GetIndexName(int nameIndex)
         {
             return Names[nameIndex].Name;
         }
 
+        [Obsolete("Use IndexToObjectResource")]
+        public UObjectTableItem? GetIndexTable(int packageIndex) => IndexToObjectResource(packageIndex);
+
         /// <summary>
-        /// Returns an UnrealTable that resides at the specified TableIndex.
-        ///
-        /// if index is positive an ExportTable will be returned.
-        /// if index is negative an ImportTable will be returned.
-        /// if index is zero null will be returned.
+        /// Returns a <see cref="UObjectTableItem"/> from a package index.
         /// </summary>
-        [PublicAPI]
-        public UObjectTableItem GetIndexTable(int tableIndex)
+        public UObjectTableItem? IndexToObjectResource(int packageIndex)
         {
-            return tableIndex < 0
-                ? Imports[-tableIndex - 1]
-                : tableIndex > 0
-                    ? (UObjectTableItem)Exports[tableIndex - 1]
-                    : null;
+            return packageIndex switch
+            {
+                < 0 => Imports[-packageIndex - 1],
+                > 0 => Exports[packageIndex - 1],
+                _ => null
+            };
         }
 
-        [PublicAPI]
         [Obsolete("See below")]
-        public UObject FindObject(string objectName, Type classType, bool checkForSubclass = false)
+        public UObject? FindObject(string objectName, Type classType, bool checkForSubclass = false)
         {
-            var obj = Objects?.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
-                                         (checkForSubclass
-                                             ? o.GetType().IsSubclassOf(classType)
-                                             : o.GetType() == classType));
+            var obj = Objects.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+                                        (checkForSubclass
+                                            ? o.GetType().IsSubclassOf(classType)
+                                            : o.GetType() == classType));
             return obj;
         }
 
-        [PublicAPI]
-        public T FindObject<T>(string objectName, bool checkForSubclass = false) where T : UObject
+        public T? FindObject<T>(string objectName, bool checkForSubclass = false) where T : UObject
         {
-            var obj = Objects?.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
-                                         (checkForSubclass
-                                             ? o.GetType().IsSubclassOf(typeof(T))
-                                             : o.GetType() == typeof(T)));
-            return obj as T;
+            var obj = Objects.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
+                                        (checkForSubclass
+                                            ? o.GetType().IsSubclassOf(typeof(T))
+                                            : o.GetType() == typeof(T)));
+            return (T)obj;
         }
 
-        [PublicAPI]
-        public UObject FindObjectByGroup(string objectGroup)
+        public UObject? FindObjectByGroup(string objectGroup)
         {
-            if (Objects == null)
+            string[] groups = objectGroup.Split('.');
+            string? objectName = groups.LastOrDefault();
+            if (objectName == null)
             {
                 return null;
             }
 
-            string[] groups = objectGroup.Split('.');
-            UObject lastObj = null;
-            for (var i = 0; i < groups.Length; ++i)
+            groups = groups.Take(groups.Length - 1).Reverse().ToArray();
+            var foundObj = Objects.Find(obj =>
             {
-                var obj = Objects.Find(o =>
-                    string.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0 && o.Outer == lastObj);
-                if (obj != null)
+                if (string.Compare(obj.Name, objectName, StringComparison.OrdinalIgnoreCase) != 0)
                 {
-                    lastObj = obj;
+                    return false;
                 }
-                else
-                {
-                    lastObj = Objects.Find(o =>
-                        string.Compare(o.Name, groups[i], StringComparison.OrdinalIgnoreCase) == 0);
-                    break;
-                }
-            }
 
-            return lastObj;
+                var outer = obj.Outer;
+                foreach (string group in groups)
+                {
+                    if (outer == null)
+                    {
+                        return false;
+                    }
+
+                    if (string.Compare(outer.Name, group, StringComparison.OrdinalIgnoreCase) != 0)
+                    {
+                        return false;
+                    }
+
+                    outer = outer.Outer;
+                }
+
+                return true;
+            });
+
+            return foundObj;
         }
 
         /// <summary>
         /// If true, the package won't have any editor data such as HideCategories, ScriptText etc.
-        /// 
+        ///
         /// However this condition is not only determined by the package flags property.
         /// Thus it is necessary to explicitly indicate this state.
         /// </summary>
@@ -2560,10 +3753,9 @@ namespace UELib
 
         public byte[] CopyBuffer()
         {
-            var buff = new byte[HeaderSize];
+            byte[] buff = new byte[Summary.HeaderSize];
             Stream.Seek(0, SeekOrigin.Begin);
-            Stream.Read(buff, 0, HeaderSize);
-            if (Stream.BigEndianCode) Array.Reverse(buff);
+            Stream.EndianAgnosticRead(buff, 0, Summary.HeaderSize);
 
             return buff;
         }
@@ -2607,11 +3799,7 @@ namespace UELib
                 Objects = null;
             }
 
-            if (Stream == null)
-                return;
-
-            Stream.Close();
-            Stream = null;
+            Stream?.Dispose();
         }
 
         #endregion

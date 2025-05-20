@@ -1,9 +1,8 @@
 using System;
-using UELib.Annotations;
+using UELib.Branch;
 
 namespace UELib
 {
-    [PublicAPI]
     public struct UGenerationTableItem : IUnrealSerializableClass
     {
         private int _ExportCount;
@@ -28,20 +27,12 @@ namespace UELib
             set => _NetObjectCount = value;
         }
 
-        [Obsolete]
-        public object ExportsCount => ExportCount;
-        [Obsolete]
-        public object NamesCount => NameCount;
-        [Obsolete]
-        public object NetObjectsCount => NetObjectCount;
-
-        public const int VNetObjectsCount = 322;
-
         public void Serialize(IUnrealStream stream)
         {
             stream.Write(_ExportCount);
             stream.Write(_NameCount);
-            if (stream.Version >= VNetObjectsCount && stream.UE4Version < 186)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.NetObjectCountAdded &&
+                stream.UE4Version < 186)
             {
                 stream.Write(_NetObjectCount);
             }
@@ -51,10 +42,16 @@ namespace UELib
         {
             stream.Read(out _ExportCount);
             stream.Read(out _NameCount);
-            if (stream.Version >= VNetObjectsCount && stream.UE4Version < 186)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.NetObjectCountAdded &&
+                stream.UE4Version < 186)
             {
                 stream.Read(out _NetObjectCount);
             }
         }
+
+        [Obsolete] public object ExportsCount => ExportCount;
+        [Obsolete] public object NamesCount => NameCount;
+        [Obsolete] public object NetObjectsCount => NetObjectCount;
+        [Obsolete] public const int VNetObjectsCount = 322;
     }
 }

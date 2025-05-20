@@ -14,11 +14,11 @@ namespace UELib.Core
 
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedStructFlagsToScriptStruct)
             {
-                StructFlags = _Buffer.ReadUInt32();
-                Record(nameof(StructFlags), (StructFlags)StructFlags);
+                _Buffer.Read(out StructFlags);
+                Record(nameof(StructFlags), StructFlags);
             }
 
-            DeserializeProperties();
+            DeserializeProperties(_Buffer);
         }
 
         #endregion

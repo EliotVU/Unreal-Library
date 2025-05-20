@@ -19,8 +19,8 @@ namespace UELib.Core
     /// <summary>
     ///     Implements FScale/UObject.Scale
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UScale : IUnrealSerializableClass, IUnrealAtomicStruct
+    [StructLayout(LayoutKind.Sequential, Pack = 1)] // Must pack as 1 for the marshaller to read the correct amount of storage bytes.
+    public record struct UScale : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public UVector Scale;
         public float SheerRate;

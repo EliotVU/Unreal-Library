@@ -37,10 +37,9 @@ namespace UELib.Core
         public ushort LabelTableOffset;
 
         /// <summary>
-        /// This state's flags mask e.g. Auto, Simulated.
-        /// TODO: Retype to UStateFlags and deprecate HasStateFlag, among others
+        /// The state flags.
         /// </summary>
-        private uint _StateFlags;
+        public UnrealFlags<StateFlag> StateFlags;
 
         /// <summary>
         /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.AddedFuncMapToUState"/>
@@ -51,12 +50,11 @@ namespace UELib.Core
 
         #region Script Members
 
-        public IList<UFunction> Functions { get; private set; }
+        [Obsolete]
+        public IEnumerable<UFunction> Functions => EnumerateFields<UFunction>();
 
         #endregion
-
-        #region Constructors
-
+        
         protected override void Deserialize()
         {
             base.Deserialize();
@@ -91,23 +89,21 @@ namespace UELib.Core
             LabelTableOffset = _Buffer.ReadUInt16();
             Record(nameof(LabelTableOffset), LabelTableOffset);
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedStateFlagsToUState)
-            {
 #if BORDERLANDS2 || TRANSFORMERS || BATMAN
-                // FIXME:Temp fix
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
-                    Package.Build == BuildGeneration.HMS ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-                {
-                    _StateFlags = _Buffer.ReadUShort();
-                    goto skipStateFlags;
-                }
-#endif
-                _StateFlags = _Buffer.ReadUInt32();
-            skipStateFlags:
-                Record(nameof(_StateFlags), (StateFlags)_StateFlags);
+            // FIXME:Temp fix
+            if ((Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                 Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                 _Buffer.LicenseeVersion >= 18) ||
+                Package.Build == BuildGeneration.HMS ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                StateFlags = new UnrealFlags<StateFlag>(_Buffer.ReadUShort(), _Buffer.Package.Branch.EnumFlagsMap[typeof(StateFlag)]);
+                goto skipStateFlags;
             }
+#endif
+            StateFlags = _Buffer.ReadFlags32<StateFlag>();
+        skipStateFlags:
+            Record(nameof(StateFlags), StateFlags);
 #if TRANSFORMERS
             if (Package.Build == BuildGeneration.HMS)
             {
@@ -125,27 +121,15 @@ namespace UELib.Core
             Record(nameof(FuncMap), FuncMap);
         }
 
-        protected override void FindChildren()
+        [Obsolete("Use StateFlags directly.")]
+        public bool HasStateFlag(StateFlags flag) => (StateFlags & (uint)flag) != 0;
+
+        [Obsolete("Use StateFlags directly.")]
+        public bool HasStateFlag(uint flag) => (StateFlags & flag) != 0;
+
+        internal bool HasStateFlag(StateFlag flagIndex)
         {
-            base.FindChildren();
-            Functions = new List<UFunction>();
-            for (var child = Children; child != null; child = child.NextField)
-            {
-                if (child.IsClassType("Function"))
-                {
-                    Functions.Insert(0, (UFunction)child);
-                }
-            }
+            return StateFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(StateFlag)], flagIndex);
         }
-
-        #endregion
-
-        #region Methods
-
-        public bool HasStateFlag(StateFlags flag) => (_StateFlags & (uint)flag) != 0;
-
-        public bool HasStateFlag(uint flag) => (_StateFlags & flag) != 0;
-
-        #endregion
     }
 }

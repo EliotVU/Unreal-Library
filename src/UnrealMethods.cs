@@ -25,30 +25,21 @@ namespace UELib
     [Serializable]
     public class DeserializationException : UnrealException
     {
-        [NonSerialized] private readonly string _Output;
-
-        public DeserializationException()
+        public DeserializationException(string message) : base(message)
         {
-            _Output = "DeserializationException";
         }
 
-        public DeserializationException(string output) : base(output)
+        public DeserializationException(string message, Exception innerException) : base(message, innerException)
         {
-            _Output = output;
-        }
-
-        public override string ToString()
-        {
-            return _Output + "\r\n" + base.ToString();
         }
     }
 
-    [Serializable]
-    public class DecompilingCastException : DeserializationException
+    [Obsolete]
+    public class DecompilingCastException : UnrealException
     {
     }
 
-    [Serializable]
+    [Obsolete]
     public class DecompilingHeaderException : UnrealException
     {
         [NonSerialized] private readonly string _Output;
@@ -69,48 +60,24 @@ namespace UELib
         }
     }
 
-    [Serializable]
-    public class CookedPackageException : UnrealException
-    {
-        public CookedPackageException() : base("The package is cooked")
-        {
-        }
-    }
-
-    [Serializable]
-    public class DecompressPackageException : UnrealException
-    {
-        public DecompressPackageException() : base("Failed to decompress this package")
-        {
-        }
-    }
-
-    [Serializable]
-    public class OccurredWhileException : UnrealException
-    {
-        public OccurredWhileException(string postMessage) : base("An exception occurred while " + postMessage)
-        {
-        }
-    }
-
-    [Serializable]
-    public class DeserializingObjectsException : OccurredWhileException
+    [Obsolete]
+    public class DeserializingObjectsException : UnrealException
     {
         public DeserializingObjectsException() : base("deserializing objects")
         {
         }
     }
 
-    [Serializable]
-    public class ImportingObjectsException : OccurredWhileException
+    [Obsolete]
+    public class ImportingObjectsException : UnrealException
     {
         public ImportingObjectsException() : base("importing objects")
         {
         }
     }
 
-    [Serializable]
-    public class LinkingObjectsException : OccurredWhileException
+    [Obsolete]
+    public class LinkingObjectsException : UnrealException
     {
         public LinkingObjectsException() : base("linking objects")
         {

@@ -7,9 +7,9 @@ namespace UELib.Branch
         Undefined = 0,
 
         /// <summary>
-        ///     FIXME: Version 61 is the lowest package version I know that supports StateFlags.
+        /// The lowest version that is supported.
         /// </summary>
-        AddedStateFlagsToUState = 61,
+        LowestVersion = 61,
 
         /// <summary>
         ///     This should mark the first approximated version with dynamic arrays that are accessible using UnrealScript.
@@ -29,6 +29,8 @@ namespace UELib.Branch
         ///     Mixed changes.
         /// </summary>
         Release64 = 64,
+
+        HeritageTableDeprecated = 68,
 
         CharRemapAddedToUFont = 69,
 
@@ -53,6 +55,7 @@ namespace UELib.Branch
 
         LightMapScaleAddedToPoly = 106,
 
+        SerializeStructTags = 118,
         KerningAddedToUFont = 119,
         AddedCppTextToUStruct = 120,
         FontPagesDisplaced = 122,
@@ -108,8 +111,8 @@ namespace UELib.Branch
 
         ObjectFlagsSizeExpandedTo64Bits = 195,
 
-        // FIXME: Version, def not <= 178, not found in RoboHordes (198,200), but found in GoW without a version check, so this approximation should do :)
-        TemplateDataAddedToUComponent = 201,
+        // 196 according to EndWar and R6 Vegas
+        AddedComponentGuid = 196,
 
         // 208 according to EndWar
         PackageImportsDeprecated = 208,
@@ -120,19 +123,23 @@ namespace UELib.Branch
         // 219 according to EndWar
         DisplacedScriptPropertiesWithClassDefaultObject = 219,
 
+        /// <summary>
+        ///     And ComponentMap
+        /// </summary>
         ArchetypeAddedToExports = 220,
 
-        /// <summary>
-        /// FIXME: Version
-        /// No version check in all of RoboHordes (200), EndWar (223), and R6Vegas (241)
-        /// </summary>
-        PropertyFlagsSizeExpandedTo64Bits = UE3,
+        // 220, but doesn't appear to be true for RoboHordes(198,200)
+        PropertyFlagsSizeExpandedTo64Bits = 190,
 
         // 222 according to EndWar
         AddedInterfacesFeature = 222,
 
         // 223 according to EndWar
         RefactoredPropertyTags = 223,
+
+        // FIXME: Version, def not <= 178, not found in RoboHordes (198,200), but found in GoW without a version check, so this approximation should do :)
+        // Set to 224 to skip EndWar (223)
+        TemplateDataAddedToUComponent = 224,
 
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
@@ -142,15 +149,17 @@ namespace UELib.Branch
         /// Not attested with EndWar (223) and R6Vegas (241)
         /// </summary>
         AddedStructFlagsToScriptStruct = 242,
+        AddedEngineVersion = 245,
 
         ExportFlagsAddedToExports = 247,
         ComponentClassBridgeMapDeprecated = 248,
+        AddedTotalHeaderSize = 249,
         SerialSizeConditionRemoved = 249,
 
         // Thanks to @https://www.gildor.org/ for reverse-engineering the lazy-loader version changes.
         LazyLoaderFlagsAddedToLazyArray = 251,
         StorageSizeAddedToLazyArray = 254,
-        L8AddedToLazyArray = 260,
+        PackageNameAddedToLazyArray = 260,
         LazyArrayReplacedWithBulkData = 266,
 
         ComponentTemplatesDeprecated = 267,
@@ -160,8 +169,21 @@ namespace UELib.Branch
         // -- whether if this indicates the addition of such an ObjectFlag or just the conditional test.
         ClassDefaultCheckAddedToTemplateName = 267,
 
+        AddedFolderName = 269,
+
         ComponentGuidDeprecated = 273,
         ClassGuidDeprecated = 276,
+        AddedCookerVersion = 277,
+
+        /// <summary>
+        ///     Structs marked with 'Immutable' should use binary serialization.
+        /// </summary>
+        AddedImmutableStructs = 278,
+
+        /// <summary>
+        ///    Structs that extend a struct marked with 'Immutable' should not use binary serialization.
+        /// </summary>
+        StructsShouldNotInheritImmutable = 279,
 
         InterfaceClassesDeprecated = 288,
 
@@ -183,10 +205,12 @@ namespace UELib.Branch
 
         NetObjectCountAdded = 322,
 
+        AddedXenonSoundData = 327,
+
         CompressionAdded = 334,
 
         NumberAddedToName = 343,
-        
+
         [Discardable] GameGOW = 374, // Engine Version: 2451
         [Discardable] GameStranglehold = 375, // Engine Version: 2605
 
@@ -208,16 +232,30 @@ namespace UELib.Branch
         /// </summary>
         StructReferenceAddedToStructMember = GameStranglehold,
 
-        // 417 according to the GoW client
-        LightingChannelsAddedToPoly = 417,
-
-        AddedArrayEnumToUProperty = 401,
-
         /// <summary>
         ///     Oldest attest MOHA (v421), but not MKKE (v472, non standard)
         ///     FIXME: Unknown version
         /// </summary>
         IsCopyAddedToStructMember = GameStranglehold + 1,
+
+        AddedPS3SoundData = 376,
+
+        /// <summary>
+        /// And deprecated FileType from USoundNodeWave.
+        /// </summary>
+        AddedPCSoundData = 380,
+
+        AddedChannelsSoundInfo = 385,
+        AddedChannelCountSoundInfo = 390,
+
+        AddedArrayEnumToUProperty = 401,
+
+        AddedDependsTable = 415,
+
+        // 417 according to the GoW client
+        LightingChannelsAddedToPoly = 417,
+
+        DisplacedSoundChannelProperties = 420,
 
         [Discardable] GameFFOW = 433, // Engine Version: 2917
 
@@ -227,15 +265,25 @@ namespace UELib.Branch
         /// </summary>
         IsModificationAddedToStructMember = GameFFOW,
 
-        [Discardable] GameGOWPC = 490,
+        AddedPackageSource = 482,
 
         /// <summary>
-        ///     FIXME: Version, not attested in (GoW v490)
+        ///     Invalid for Stargate Worlds.
         /// </summary>
-        SkipSizeAddedToArrayTokenIntrinsics = GameGOWPC + 1,
+        PackageFlagsAddedToExports = 475,
+
+        [Discardable] GameGOWPC = 490,
+        [Discardable] GameHuxley = 496,
+
+        /// <summary>
+        ///     FIXME: Version, not attested in (Huxley v496)
+        /// </summary>
+        SkipSizeAddedToArrayTokenIntrinsics = GameHuxley + 1,
 
         VerticalOffsetAddedToUFont = 506,
         CleanupFonts = 511,
+
+        AddedAdditionalPackagesToCook = 516,
 
         ComponentMapDeprecated = 543,
 
@@ -248,11 +296,20 @@ namespace UELib.Branch
 
         AddedTextureFileCacheGuidToTexture2D = 567,
 
+        AddedThumbnailTable = 584,
+
+        AddedDingoSoundData = 593,
+        AddedOrbisSoundData = 594,
+
         LightmassAdded = 600,
 
         AddedDontSortCategoriesToUClass = 603,
 
         UProcBuildingReferenceAddedToPoly = 606,
+
+        AddedDominantLightShadowMapToDominantDirectionalLightComponent = 617,
+
+        AddedImportExportGuidsTable = 623,
 
         EnumNameAddedToBytePropertyTag = 633,
 
@@ -270,16 +327,29 @@ namespace UELib.Branch
 
         BoolValueToByteForBoolPropertyTag = 673,
 
+        AddedDominantLightShadowMapToUDominantSpotLightComponent = 682,
+
         AddedPVRTCToUTexture2D = 674,
 
         ProbeMaskReducedAndIgnoreMaskRemoved = 691,
         ForceScriptOrderAddedToUClass = 749,
         SuperReferenceMovedToUStruct = 756,
 
+        AddedTextureAllocations = 767,
+
         AddedClassGroupsToUClass = 789,
         AddedNativeClassNameToUClass = 813,
 
+        // 829 according to Borderlands2
+        RemovedConvexVolumes = 829,
+
+        AddedWiiUSoundData = 845,
+        AddedIPhoneSoundData = 851,
+        AddedFlashSoundData = 854,
         AddedATITCToUTexture2D = 857,
         AddedETCToUTexture2D = 864,
+
+        Next,
+        HighestVersion = Next - 1,
     }
 }

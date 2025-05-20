@@ -9,7 +9,7 @@ namespace UELib.Core
     /// A derived class of List to help with the serialization of Unreal arrays.
     /// 
     /// 
-    /// Typically an array is serialized with the count as a CompactInteger (<see cref="IUnrealStream.ReadIndex" />) (Or Int32 in UE3 builds)
+    /// Typically, an array is serialized with the count as a CompactInteger (<see cref="IUnrealStream.ReadIndex" />) (Or Int32 in UE3 builds)
     /// Followed by a series of that array's element type. For example, for an array of objects, the data would be a series of CompactIntegers.
     /// But for a struct type such as FColor, the data is not referenced, but inlined directly in an atomic order.
     ///
@@ -34,6 +34,11 @@ namespace UELib.Core
         public UArray(int capacity) : base(capacity)
         {
         }
+
+        public UArray(IEnumerable<T> collection) : base(collection)
+        {
+        }
+
 
         [Obsolete("Deprecated, see IUnrealStream.ReadArray")]
         public UArray(IUnrealStream stream)

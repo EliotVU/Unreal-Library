@@ -6,7 +6,7 @@ var int InstanceInt;
 
 static final preoperator bool \ ( string v ) { return true; }
 
-function AllCasts()
+function AllExprTokens()
 {
 	local byte localByte;
 	local int localInt;
@@ -57,12 +57,12 @@ function AllCasts()
 	assert (\"NameToString" && string(localName) == ""); 
 
 	// ObjectToX
-	assert (\"DynamicCast" && Casts(localObject) == none); 
+	assert (\"DynamicCast" && ExprTokens(localObject) == none); 
 	assert (\"ObjectToString" && string(localObject) == "None"); 
 	assert (\"ObjectToBool" && bool(localObject) == false); 
 
 	// ClassToX
-	assert (\"MetaCast" && Class<Casts>(localClass) == none); 
+	assert (\"MetaCast" && Class<ExprTokens>(localClass) == none); 
 
 	// VectorToX
 	assert (\"VectorToBool" && bool(localVector) == false); 

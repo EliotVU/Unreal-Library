@@ -1,5 +1,5 @@
 ﻿using System;
-using UELib.Annotations;
+using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.Types;
@@ -23,21 +23,21 @@ namespace UELib.Core
 
         public ushort ElementSize { get; private set; }
 
-        public ulong PropertyFlags { get; private set; }
+        public UnrealFlags<PropertyFlag> PropertyFlags;
 
 #if XCOM2
-        [CanBeNull] public UName ConfigName;
+        public UName? ConfigName;
 #endif
 
-        [CanBeNull] public UName CategoryName;
+        public UName? CategoryName;
 
         [Obsolete("See CategoryName")] public int CategoryIndex { get; }
 
-        [CanBeNull] public UEnum ArrayEnum { get; private set; }
+        public UEnum? ArrayEnum { get; private set; }
 
-        [CanBeNull] public UName RepNotifyFuncName;
+        public UName? RepNotifyFuncName;
 
-        public ushort RepOffset { get; private set; }
+        public ushort RepOffset { get; set; }
 
         public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
 
@@ -49,7 +49,7 @@ namespace UELib.Core
         /// 
         /// An original terminating \" character is serialized as a \n character, the string will also end with a newline character.
         /// </summary>
-        [CanBeNull] public string EditorDataText;
+        public string? EditorDataText;
 
         #endregion
 
@@ -80,8 +80,8 @@ namespace UELib.Core
                 ArrayDim = _Buffer.ReadUInt16();
                 Record(nameof(ArrayDim), ArrayDim);
 
-                PropertyFlags = _Buffer.ReadUInt32();
-                Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
+                _Buffer.Read(out PropertyFlags);
+                Record(nameof(PropertyFlags), PropertyFlags);
 
                 _Buffer.Read(out CategoryName);
                 Record(nameof(CategoryName), CategoryName);
@@ -114,7 +114,7 @@ namespace UELib.Core
             {
                 ArrayDim = _Buffer.ReadInt16();
                 Record(nameof(ArrayDim), ArrayDim);
-                
+
                 goto skipArrayDim;
             }
 #endif
@@ -129,26 +129,50 @@ namespace UELib.Core
             //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
             //    $"Bad array dimension {ArrayDim & 0x0000FFFFU} for property ${GetReferencePath()}");
 
-            PropertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
+            var propertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
-            Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
 #if BATMAN
             if (Package.Build == BuildGeneration.RSS)
             {
                 if (_Buffer.LicenseeVersion >= 101)
                 {
-                    PropertyFlags = (PropertyFlags & 0xFFFF0000) >> 24;
-                    Record(nameof(PropertyFlags), (PropertyFlagsLO)PropertyFlags);
-                }
+                    // DAT_14313fdc0
+                    ulong[] flagMasks =
+                    [
+                        0x0000000000000002, 0x0000000000000004, 0x0000000000000008, 0x0000000000000080,
+                        0x0000000000000010, 0x0000000000000100, 0x0000000000000200, 0x0000000000000400,
+                        0x0000000000000800, 0x0000000000001000, 0x0000000000002000, 0x0000000000004000,
+                        0x0000000000008000, 0x0000000000040000, 0x0000000000080000, 0x0000000000200000,
+                        0x0000000000400000, 0x0000000000800000, 0x0000000010000000, 0x0000000200000000,
+                        0x0000000400000000, 0x0000000800000000, 0x0000004000000000, 0x0000010000000000,
+                        0x0000020000000000, 0x0000000000000020, 0x0000000200000000, 0x0000000010000000,
+                        0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000001,
+                        0x0000000000000040, 0x0000000000020000, 0x0000000000200000, 0x0000004000000000,
+                        0x0000008000000000, 0x0000000040000000, 0x0000000100000000, 0x0000002000000000,
+                        0x0000010000000000, 0x0000001000000000, 0x0000000080000000, 0x0000000100000000,
+                        0x0000000400000000, 0x0000000800000000, 0x0000000000000000
+                    ];
 
-                if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-                {
-                    PropertyFlags = (PropertyFlags & ~(PropertyFlags >> 2 & 1)) |
-                                    ((ulong)PropertyFlagsLO.Net * (PropertyFlags >> 2 & 1));
+                    ulong originalFlags = 0;
+                    ulong bitMask = 1;
+
+                    foreach (ulong flag in flagMasks)
+                    {
+                        if ((propertyFlags & bitMask) != 0)
+                        {
+                            originalFlags |= flag;
+                        }
+
+                        bitMask <<= 1;
+                    }
+
+                    propertyFlags = originalFlags;
                 }
             }
 #endif
+            PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+            Record(nameof(PropertyFlags), PropertyFlags);
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {
@@ -214,15 +238,23 @@ namespace UELib.Core
             {
                 RepNotifyFuncName = _Buffer.ReadNameReference();
                 Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
-                
+
                 return;
             }
 #endif
-            if (HasPropertyFlag(PropertyFlagsLO.Net))
+            if (PropertyFlags.HasFlag(PropertyFlag.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
             }
+#if HUXLEY
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            {
+                // A property linked to the "Core.Object.LazyLoadPropertyInfo" struct.
+                var partLoadInfoProperty = _Buffer.ReadObject();
+                Record(nameof(partLoadInfoProperty), partLoadInfoProperty);
+            }
+#endif
 #if R6
             if (Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {
@@ -278,7 +310,7 @@ namespace UELib.Core
 #endif
             // Appears to be a UE2.5 feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
-            if ((HasPropertyFlag(PropertyFlagsLO.EditorData) &&
+            if ((PropertyFlags.HasFlag(PropertyFlag.CommentString) &&
                  (Package.Build == BuildGeneration.UE2_5
                   || Package.Build == BuildGeneration.AGP
                   || Package.Build == BuildGeneration.Flesh))
@@ -337,28 +369,36 @@ namespace UELib.Core
             return true;
         }
 
-#endregion
+        #endregion
 
         #region Methods
 
+        [Obsolete("Use PropertyFlags directly")]
         public bool HasPropertyFlag(uint flag)
         {
             return ((uint)PropertyFlags & flag) != 0;
         }
 
+        [Obsolete("Use PropertyFlags directly")]
         public bool HasPropertyFlag(PropertyFlagsLO flag)
         {
             return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;
         }
 
+        [Obsolete("Use PropertyFlags directly")]
         public bool HasPropertyFlag(PropertyFlagsHO flag)
         {
-            return ((PropertyFlags >> 32) & (uint)flag) != 0;
+            return (PropertyFlags & ((ulong)flag << 32)) != 0;
+        }
+
+        internal bool HasPropertyFlag(PropertyFlag flagIndex)
+        {
+            return PropertyFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(PropertyFlag)], flagIndex);
         }
 
         public bool IsParm()
         {
-            return HasPropertyFlag(PropertyFlagsLO.Parm);
+            return PropertyFlags.HasFlag(PropertyFlag.Parm);
         }
 
         public virtual string GetFriendlyInnerType()

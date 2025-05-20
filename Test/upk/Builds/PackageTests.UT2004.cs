@@ -8,14 +8,17 @@ using UELib.Engine;
 using static Eliot.UELib.Test.UnrealPackageTests;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
-namespace Eliot.UELib.Test.upk
+namespace Eliot.UELib.Test.Builds
 {
+    /// <summary>
+    /// Use the UT2004 build to test compatibility with UE2 (Might actually be testing for UE2.5)
+    /// </summary>
     [TestClass]
-    public class UE2PackageContentTests
+    public class PackageTestsUT2004
     {
         public static UnrealPackage GetScriptPackageLinker()
         {
-            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk",
+            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "UPK",
                 "TestUC2", "TestUC2.u");
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
@@ -24,7 +27,12 @@ namespace Eliot.UELib.Test.upk
 
         public static UnrealPackage GetMapPackageLinker(string fileName)
         {
-            string packagePath = Path.Join(Packages.UE2MapFilesPath, fileName);
+            string packagePath = Path.Join(Packages.UT2004Path, "Maps", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+            
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
             return linker;
@@ -32,7 +40,12 @@ namespace Eliot.UELib.Test.upk
 
         public static UnrealPackage GetMaterialPackageLinker(string fileName)
         {
-            string packagePath = Path.Join(Packages.UE2MaterialFilesPath, fileName);
+            string packagePath = Path.Join(Packages.UT2004Path, "Textures", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+            
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
             return linker;
@@ -60,33 +73,26 @@ namespace Eliot.UELib.Test.upk
                     "\"String_\\\"\\\\0abfnrtv\"");
                 AssertPropertyTagFormat(defaults, "Vector",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Plane",
                     "(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)");
                 AssertPropertyTagFormat(defaults, "Rotator",
                     "(Pitch=180,Yaw=90,Roll=45)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Coords",
                     "(Origin=(X=0.2000000,Y=0.4000000,Z=1.0000000)," +
                     "XAxis=(X=1.0000000,Y=0.0000000,Z=0.0000000)," +
                     "YAxis=(X=0.0000000,Y=1.0000000,Z=0.0000000)," +
                     "ZAxis=(X=0.0000000,Y=0.0000000,Z=1.0000000))");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Quat",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Range",
                     "(Min=80.0000000,Max=40.0000000)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Scale",
                     "(Scale=(X=1.0000000,Y=2.0000000,Z=3.0000000),SheerRate=5.0000000,SheerAxis=6)");
                 AssertPropertyTagFormat(defaults, "Color",
                     "(R=80,G=40,B=20,A=160)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Box",
                     "(Min=(X=0.0000000,Y=1.0000000,Z=2.0000000)," +
                     "Max=(X=0.0000000,Y=2.0000000,Z=1.0000000),IsValid=1)");
-                // Not atomic!
                 AssertPropertyTagFormat(defaults, "Matrix",
                     "(XPlane=(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)," +
                     "YPlane=(W=4.0000000,X=5.0000000,Y=6.0000000,Z=7.0000000)," +
@@ -97,7 +103,7 @@ namespace Eliot.UELib.Test.upk
             void AssertFunctionDelegateTokens(UnrealPackage linker)
             {
                 var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens");
-                delegateTokensFunc.BeginDeserializing();
+                delegateTokensFunc.Load();
 
                 var script = delegateTokensFunc.ByteCodeManager;
                 script.CurrentTokenIndex = -1;

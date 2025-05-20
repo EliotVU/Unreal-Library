@@ -14,12 +14,12 @@ namespace UELib.Core
         {
             if (ShouldDeserializeOnDemand)
             {
-                BeginDeserializing();
+                Load();
             }
 
             string output = $"// Reference: {GetReferencePath()}\r\n";
 
-            if (ImportTable != null)
+            if ((int)this < 0)
             {
                 return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile an imported object";
             }
@@ -42,7 +42,8 @@ namespace UELib.Core
             if (Archetype == null)
             {
                 Debug.Assert(Class != null);
-                output += $" class={Class.GetReferencePath()}";
+                // ! UE2 compiler does not properly parse a typed reference path, so instead output the qualified identifier loosely.
+                output += $" class={Class.GetPath()}";
             }
             output += "\r\n";
 
@@ -100,10 +101,11 @@ namespace UELib.Core
                 // This will still miss sub-objects that have no reference.
                 var missingSubObjects = UDecompilingState.s_inlinedSubObjects
                     .Where((k, v) => k.Value == false)
-                    .Select(k => k.Key);
+                    .Select(k => k.Key)
+                    .ToList();
                 foreach (var obj in missingSubObjects)
                 {
-                    obj.BeginDeserializing();
+                    obj.Load();
 
                     string objectText = obj.Decompile();
                     output += $"{UDecompilingState.Tabs}{objectText}\r\n";

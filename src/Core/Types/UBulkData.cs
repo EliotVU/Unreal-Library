@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 
@@ -16,11 +15,19 @@ namespace UELib.Core
     {
         public BulkDataFlags Flags;
 
+        /// <summary>
+        /// The package name of the storage file.
+        ///
+        /// Serialized if version &gt;= <see cref="PackageObjectLegacyVersion.PackageNameAddedToLazyArray"/>
+        /// and &lt;= <see cref="PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData"/>
+        /// </summary>
+        private UName _StoragePackageName;
+
         public long StorageSize;
         public long StorageOffset;
 
         public int ElementCount;
-        [CanBeNull] public byte[] ElementData;
+        public byte[]? ElementData;
 
         // TODO: multi-byte based data.
         public UBulkData(BulkDataFlags flags, byte[] rawData)
@@ -54,6 +61,11 @@ namespace UELib.Core
                 return;
             }
 
+            if (Flags.HasFlag(BulkDataFlags.StoreOnlyPayload))
+            {
+                return;
+            }
+
             Debug.Assert(stream.AbsolutePosition == StorageOffset);
             // Skip the ElementData
             stream.AbsolutePosition = StorageOffset + StorageSize;
@@ -71,7 +83,7 @@ namespace UELib.Core
                 StorageSize = ElementCount * elementSize;
                 StorageOffset = stream.AbsolutePosition;
 
-                stream.AbsolutePosition += StorageSize;
+                stream.Position += StorageSize;
                 return;
             }
 
@@ -90,12 +102,23 @@ namespace UELib.Core
                 Flags = (BulkDataFlags)flags;
             }
 
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.L8AddedToLazyArray)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageNameAddedToLazyArray)
             {
-                stream.Read(out UName l8);
+                stream.Read(out _StoragePackageName);
             }
 
             ElementCount = stream.ReadLength();
+
+            // Occurs with SCCT_Versus
+            if (skipOffset == 0)
+            {
+                StorageSize = ElementCount * elementSize;
+                StorageOffset = stream.AbsolutePosition;
+
+                stream.Position += StorageSize;
+
+                return;
+            }
 
             StorageSize = skipOffset - stream.AbsolutePosition;
             StorageOffset = stream.AbsolutePosition;
@@ -178,6 +201,12 @@ namespace UELib.Core
                 return;
             }
 
+            if (Flags.HasFlag(BulkDataFlags.StoreOnlyPayload))
+            {
+                // TODO: Write to the end of file, or change the flags and write it right here.
+                return;
+            }
+
             long storageOffsetPosition = stream.AbsolutePosition;
             stream.Write(ElementData);
 
@@ -221,10 +250,9 @@ namespace UELib.Core
                 stream.Write((uint)Flags);
             }
 
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.L8AddedToLazyArray)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageNameAddedToLazyArray)
             {
-                var dummy = new UName("");
-                stream.Write(dummy);
+                stream.Write(_StoragePackageName);
             }
 
             stream.WriteIndex(ElementCount);

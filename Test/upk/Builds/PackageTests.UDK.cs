@@ -7,14 +7,17 @@ using UELib.Core;
 using static Eliot.UELib.Test.UnrealPackageTests;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
-namespace Eliot.UELib.Test.upk
+namespace Eliot.UELib.Test.Builds
 {
+    /// <summary>
+    /// Use the UDK build to test compatibility with UE3.
+    /// </summary>
     [TestClass]
-    public class UE3PackageContentTests
+    public class PackageTestsUDK
     {
         public static UnrealPackage GetScriptPackageLinker()
         {
-            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "upk",
+            string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "UPK",
                 "TestUC3", "TestUC3.u");
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
@@ -70,7 +73,7 @@ namespace Eliot.UELib.Test.upk
             void AssertFunctionDelegateTokens(UnrealPackage linker)
             {
                 var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens");
-                delegateTokensFunc.BeginDeserializing();
+                delegateTokensFunc.Load();
 
                 var script = delegateTokensFunc.ByteCodeManager;
                 script.Deserialize();

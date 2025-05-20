@@ -43,7 +43,7 @@ namespace UELib.Branch.UE3.GIGANTIC.Core.Classes
         {
             if (ShouldDeserializeOnDemand && JsonObjects == null)
             {
-                BeginDeserializing();
+                Load();
             }
 
             if (JsonObjects == null)

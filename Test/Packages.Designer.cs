@@ -70,40 +70,29 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
+        ///   Looks up a localized string similar to D:\Games\Unreal Engine\.
         /// </summary>
-        public static byte[] TestUC2 {
+        public static string UnrealEngineGamesPath {
             get {
-                object obj = ResourceManager.GetObject("TestUC2", resourceCulture);
-                return ((byte[])(obj));
+                return ResourceManager.GetString("UnrealEngineGamesPath", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
+        ///   Looks up a localized string similar to C:\UT2004.
         /// </summary>
-        public static byte[] TestUC3 {
+        public static string UT2004Path {
             get {
-                object obj = ResourceManager.GetObject("TestUC3", resourceCulture);
-                return ((byte[])(obj));
+                return ResourceManager.GetString("UT2004Path", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to C:\UT2004\Maps.
+        ///   Looks up a localized string similar to C:\UnrealTournament.
         /// </summary>
-        public static string UE2MapFilesPath {
+        public static string UT99Path {
             get {
-                return ResourceManager.GetString("UE2MapFilesPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to C:\UT2004\Textures.
-        /// </summary>
-        public static string UE2MaterialFilesPath {
-            get {
-                return ResourceManager.GetString("UE2MaterialFilesPath", resourceCulture);
+                return ResourceManager.GetString("UT99Path", resourceCulture);
             }
         }
     }

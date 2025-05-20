@@ -1,7 +1,7 @@
 ﻿#if DECOMPILE
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -69,24 +69,27 @@ namespace UELib.Core
 
         private string FormatIgnores()
         {
-            if (IgnoreMask == ulong.MaxValue || Functions == null || !Functions.Any())
+            if (IgnoreMask == ulong.MaxValue)
+            {
+                return string.Empty;
+            }
+
+            var definedFunctions = EnumerateFields<UFunction>()
+                .Where(field => field.FunctionFlags.HasFlag(FunctionFlag.Defined))
+                .ToList();
+
+            if (definedFunctions.Count == 0)
             {
                 return string.Empty;
             }
 
             var output = $"\r\n{UDecompilingState.Tabs}ignores ";
-            var ignores = new List<string>();
-            foreach (var func in Functions.Where(func => !func.HasFunctionFlag(Flags.FunctionFlags.Defined)))
-            {
-                ignores.Add(func.Name);
-            }
-
-            for (var i = 0; i < ignores.Count; ++i)
+            for (var i = 0; i < definedFunctions.Count; ++i)
             {
                 const int ignoresPerRow = 5;
-                output += ignores[i] +
+                output += definedFunctions[i].Name +
                           (
-                              ignores[i] != ignores.Last()
+                              definedFunctions[i] != definedFunctions.Last()
                                   ? ", " +
                                     (
                                         i % ignoresPerRow == 0 && i >= ignoresPerRow
@@ -97,21 +100,19 @@ namespace UELib.Core
                           );
             }
 
-            return ignores.Count > 0 ? output : string.Empty;
+            return output;
         }
 
         protected string FormatFunctions()
         {
-            if (Functions == null || !Functions.Any())
-                return string.Empty;
-
             // Remove functions from parent state, e.g. when overriding states.
-            var formatFunctions = GetType() == typeof(UState)
-                ? Functions.Where(f => f.HasFunctionFlag(Flags.FunctionFlags.Defined))
-                : Functions;
+            var definedFunctions = GetType() == typeof(UState)
+                ? EnumerateFields<UFunction>()
+                    .Where(field => field.FunctionFlags.HasFlag(FunctionFlag.Defined))
+                : EnumerateFields<UFunction>();
 
             var output = string.Empty;
-            foreach (var scriptFunction in formatFunctions)
+            foreach (var scriptFunction in definedFunctions.Reverse())
             {
                 try
                 {

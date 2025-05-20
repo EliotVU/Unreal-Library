@@ -7,7 +7,7 @@ namespace UELib.Core
     ///     Implements FGuid/UObject.Guid
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UGuid : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UGuid : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public uint A, B, C, D;
 

@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using UELib.Annotations;
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib
 {
     /// <summary>
-    /// An internal implementation for the Export and Import table classes.
+    /// An object resource describing the object data that is common to <seealso cref="UExportTableItem"/> and <seealso cref="UImportTableItem"/>
     /// </summary>
     public abstract class UObjectTableItem : UTableItem, IBuffered, IComparable<string>
     {
         /// <summary>
-        /// Reference to the UnrealPackage this object resists in
+        /// The UnrealPackage the object resides in
         /// </summary>
         public UnrealPackage Owner;
 
@@ -23,52 +23,34 @@ namespace UELib
         ///
         /// Only valid if Owner != null and Owner is fully serialized or on demand.
         /// </summary>
-        public UObject Object;
-
-        #region Serialized Members
+        public UObject? Object;
 
         protected UName _ObjectName;
+
         public UName ObjectName
         {
             get => _ObjectName;
             set => _ObjectName = value;
         }
 
-        protected int _OuterIndex;
-        public int OuterIndex
+        protected UPackageIndex _OuterIndex;
+
+        public UPackageIndex OuterIndex
         {
             get => _OuterIndex;
             set => _OuterIndex = value;
         }
 
-        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
-        [Obsolete("Use UExportTableItem.Class"), Browsable(false)] public UObjectTableItem ClassTable => Owner.GetIndexTable(ClassIndex);
-        [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.GetIndexTable(OuterIndex);
-        public UObjectTableItem Outer => Owner.GetIndexTable(_OuterIndex);
+        public UObjectTableItem? Outer => Owner.IndexToObjectResource(_OuterIndex);
 
-        [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
-        public string OuterName
+        private UName _ObjectPackageName;
+
+        [BuildGeneration(BuildGeneration.UE4)]
+        public UName ObjectPackageName
         {
-            get
-            {
-                var table = OuterTable;
-                return table != null ? table._ObjectName : string.Empty;
-            }
+            get => _ObjectPackageName;
+            set => _ObjectPackageName = value;
         }
-
-        [Obsolete("Use UExportTableItem.ClassIndex"), Browsable(false)]
-        public int ClassIndex => __ClassIndex;
-
-        [Obsolete]
-        protected virtual int __ClassIndex => 0;
-
-        [Obsolete("Use Class?.ObjectName or UImportTableItem.ClassName"), Browsable(false)]
-        public string ClassName => __ClassName;
-
-        [Obsolete]
-        protected virtual string __ClassName => "";
-
-        #endregion
 
         public IEnumerable<UObjectTableItem> EnumerateOuter()
         {
@@ -93,7 +75,7 @@ namespace UELib
             return $"?'{GetPath()}'";
         }
 
-        public static string GetReferencePath([CanBeNull] UObjectTableItem item)
+        public static string GetReferencePath(UObjectTableItem? item)
         {
             return item != null
                 ? item.GetReferencePath()
@@ -104,13 +86,9 @@ namespace UELib
 
         public virtual byte[] CopyBuffer()
         {
-            var buff = new byte[Size];
+            byte[] buff = new byte[Size];
             Owner.Stream.Seek(Offset, SeekOrigin.Begin);
-            Owner.Stream.Read(buff, 0, Size);
-            if (Owner.Stream.BigEndianCode)
-            {
-                Array.Reverse(buff);
-            }
+            Owner.Stream.EndianAgnosticRead(buff, 0, Size);
 
             return buff;
         }
@@ -146,5 +124,34 @@ namespace UELib
         {
             return string.Compare(ObjectName.ToString(), other, StringComparison.Ordinal);
         }
+
+        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
+
+        [Obsolete("Use UExportTableItem.Class"), Browsable(false)]
+        public UObjectTableItem? ClassTable => Owner.IndexToObjectResource(ClassIndex);
+
+        [Obsolete, Browsable(false)] public UObjectTableItem? OuterTable => Owner.IndexToObjectResource(OuterIndex);
+
+        [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
+        public string OuterName
+        {
+            get
+            {
+                var table = OuterTable;
+                return table != null ? table._ObjectName : string.Empty;
+            }
+        }
+
+        [Obsolete("Use UExportTableItem.ClassIndex"), Browsable(false)]
+        public int ClassIndex => __ClassIndex;
+
+        [Obsolete]
+        protected virtual int __ClassIndex => 0;
+
+        [Obsolete("Use Class?.ObjectName or UImportTableItem.ClassName"), Browsable(false)]
+        public string ClassName => __ClassName;
+
+        [Obsolete]
+        protected virtual string __ClassName => "";
     }
 }

@@ -8,8 +8,8 @@ namespace UELib.Decompiler
     {
         public static bool Visit(UDelegateProperty obj)
         {
-            return obj.Name.StartsWith("__", StringComparison.OrdinalIgnoreCase) &&
-                   obj.Name.EndsWith("__Delegate", StringComparison.OrdinalIgnoreCase);
+            return ((string)obj.Name).StartsWith("__", StringComparison.OrdinalIgnoreCase) &&
+                   ((string)obj.Name).EndsWith("__Delegate", StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool Visit(UField obj)
@@ -19,7 +19,7 @@ namespace UELib.Decompiler
 
         public static bool Visit(UObject obj)
         {
-            return obj.Name.StartsWith("Default__", StringComparison.OrdinalIgnoreCase);
+            return ((string)obj.Name).StartsWith("Default__", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
