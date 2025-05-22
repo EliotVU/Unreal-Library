@@ -3288,7 +3288,7 @@ namespace UELib
         /// <summary>
         ///
         /// </summary>
-        public event PackageEventHandler NotifyPackageEvent;
+        public event PackageEventHandler? NotifyPackageEvent;
 
         private void OnNotifyPackageEvent(PackageEventArgs e)
         {
@@ -3298,7 +3298,7 @@ namespace UELib
         /// <summary>
         /// Called when an object is added to the ObjectsList via the AddObject function.
         /// </summary>
-        public event NotifyObjectAddedEventHandler NotifyObjectAdded;
+        public event NotifyObjectAddedEventHandler? NotifyObjectAdded;
 
         /// <summary>
         /// Constructs all the objects based on data from _ExportTableList and _ImportTableList, and
@@ -3434,7 +3434,7 @@ namespace UELib
 
             var objClass = IndexToObject<UClass>(export.ClassIndex);
 
-            var internalClassType = GetClassType(objClass != null ? objClass.Name : "Class");
+            var internalClassType = GetClassType(objClass?.Name ?? "Class");
             if (objClass != null && internalClassType == typeof(UnknownObject) && (int)objClass > 0)
             {
                 // Try one of the "super" classes for unregistered classes.

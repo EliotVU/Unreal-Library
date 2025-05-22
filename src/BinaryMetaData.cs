@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace UELib
 {
@@ -30,7 +29,7 @@ namespace UELib
             /// <summary>
             /// Value of this field.
             /// </summary>
-            public object Value { get; set; }
+            public object? Value { get; set; }
 
             /// <summary>
             /// The size in bytes of this field's value.
@@ -41,7 +40,7 @@ namespace UELib
             public string Name => Field;
 
             [Obsolete("Use Value")]
-            public object Tag => Value;
+            public object? Tag => Value;
 
             [Obsolete("Use Offset")] public int Position => (int)Offset;
 
@@ -69,7 +68,7 @@ namespace UELib
         /// <param name="value">Value of the field</param>
         /// <param name="offset">Position in bytes where the field is read from</param>
         /// <param name="size">Size in bytes of the field</param>
-        public void AddField(string field, object value, long offset, long size)
+        public void AddField(string field, object? value, long offset, long size)
         {
             //Debug.Assert(size > 0, $"Size of field {field} at {offset} cannot be less than 1");
             Fields.Push

@@ -19,9 +19,9 @@ namespace UELib.Core
 
             string output = $"// Reference: {GetReferencePath()}\r\n";
 
-            if ((int)this < 0)
+            if ((int)this <= 0)
             {
-                return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile an imported object";
+                return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile a non-export object";
             }
 
             // FIXME: Won't be detected, an UnknownObject might be a UComponent.
