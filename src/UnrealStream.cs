@@ -960,7 +960,7 @@ namespace UELib
             return this;
         }
 
-        public void ConformRecordPosition()
+        public virtual void ConformRecordPosition()
         {
         }
 
@@ -1073,7 +1073,7 @@ namespace UELib
         /// </summary>
         /// <param name="varName">The struct that was read from the previous buffer position.</param>
         /// <param name="varObject">The struct's value that was read.</param>
-        public override IUnrealStream Record(string varName, object varObject = null)
+        public override IUnrealStream Record(string varName, object? varObject = null)
         {
             long size = Position - _LastRecordPosition;
             BinaryMetaData.AddField(varName, varObject, _LastRecordPosition, size);
@@ -1083,9 +1083,8 @@ namespace UELib
         }
 #endif
 
-        [Conditional("BINARYMETADATA")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ConformRecordPosition() => _LastRecordPosition = Position;
+        public override void ConformRecordPosition() => _LastRecordPosition = Position;
     }
 
     /// <summary>
