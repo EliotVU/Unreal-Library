@@ -79,6 +79,13 @@ namespace UELib.Core
             {
                 Super = _Buffer.ReadObject<UStruct>();
                 Record(nameof(Super), Super);
+
+                // Weird bug in UDK (805 and 810), where the Super is set to Commandlet
+                // Set to null to prevent an infinite loop in EnumerateSuper
+                if (Super != null && Name == "Object" && Super.Name == "Commandlet")
+                {
+                    Super = null;
+                }
             }
 #if BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
