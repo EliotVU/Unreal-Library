@@ -10,16 +10,16 @@ namespace UELib.Core.Tokens
     [UsedImplicitly]
     public class TokenFactory
     {
-        [NotNull] protected readonly TokenMap TokenMap;
-        [NotNull] protected readonly Dictionary<ushort, NativeTableItem> NativeTokenMap;
-        
+        protected readonly TokenMap TokenMap;
+        protected readonly Dictionary<ushort, NativeTableItem> NativeTokenMap;
+
         public readonly byte ExtendedNative;
         public readonly byte FirstNative;
-        
+
         public TokenFactory(
-            TokenMap tokenMap, 
-            Dictionary<ushort, NativeTableItem> nativeTokenMap, 
-            byte extendedNative, 
+            TokenMap tokenMap,
+            Dictionary<ushort, NativeTableItem> nativeTokenMap,
+            byte extendedNative,
             byte firstNative)
         {
             TokenMap = tokenMap;
@@ -33,7 +33,6 @@ namespace UELib.Core.Tokens
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [NotNull]
         public Type GetTokenTypeFromOpCode(byte opCode)
         {
             Debug.Assert(opCode < ExtendedNative, $"Unexpected native OpCode 0x{opCode:X2}");
@@ -42,8 +41,7 @@ namespace UELib.Core.Tokens
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [NotNull]
-        public T CreateToken<T>(byte opCode) 
+        public T CreateToken<T>(byte opCode)
             where T : Token
         {
             var tokenType = GetTokenTypeFromOpCode(opCode);
@@ -51,17 +49,15 @@ namespace UELib.Core.Tokens
             token.OpCode = opCode;
             return token;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [NotNull]
-        public static T CreateToken<T>(Type tokenType) 
+        public static T CreateToken<T>(Type tokenType)
             where T : Token
         {
             return (T)Activator.CreateInstance(tokenType);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [NotNull]
         public NativeFunctionToken CreateNativeToken(ushort nativeIndex)
         {
             if (NativeTokenMap.TryGetValue(nativeIndex, out var item))
@@ -71,7 +67,7 @@ namespace UELib.Core.Tokens
                     NativeItem = item,
                 };
             }
-            
+
             return new NativeFunctionToken
             {
                 NativeItem = new NativeTableItem
@@ -90,7 +86,7 @@ namespace UELib.Core.Tokens
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Dictionary<ushort, NativeTableItem> FromPackage([CanBeNull] NativesTablePackage package)
+        public static Dictionary<ushort, NativeTableItem> FromPackage(NativesTablePackage? package)
         {
             return package?.NativeTokenMap ?? new Dictionary<ushort, NativeTableItem>();
         }

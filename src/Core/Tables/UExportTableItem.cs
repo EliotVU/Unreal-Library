@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.IO;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Flags;
@@ -23,7 +22,7 @@ namespace UELib
             set => _ClassIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Class => Owner.IndexToObjectResource(ClassIndex);
+        public UObjectTableItem? Class => Owner.IndexToObjectResource(ClassIndex);
 
         private UPackageIndex _SuperIndex;
 
@@ -33,7 +32,7 @@ namespace UELib
             set => _SuperIndex = value;
         }
 
-        [CanBeNull] public UObjectTableItem Super => Owner.IndexToObjectResource(_SuperIndex);
+        public UObjectTableItem? Super => Owner.IndexToObjectResource(_SuperIndex);
 
         private UPackageIndex _TemplateIndex;
 
@@ -44,8 +43,7 @@ namespace UELib
             set => _TemplateIndex = value;
         }
 
-        [BuildGeneration(BuildGeneration.UE4)]
-        [CanBeNull] public UObjectTableItem Template => Owner.IndexToObjectResource(_TemplateIndex);
+        [BuildGeneration(BuildGeneration.UE4)] public UObjectTableItem? Template => Owner.IndexToObjectResource(_TemplateIndex);
 
         private UPackageIndex _ArchetypeIndex;
 
@@ -57,7 +55,7 @@ namespace UELib
         }
 
         [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
-        [CanBeNull] public UObjectTableItem Archetype => Owner.IndexToObjectResource(_ArchetypeIndex);
+        public UObjectTableItem? Archetype => Owner.IndexToObjectResource(_ArchetypeIndex);
 
         /// <summary>
         /// The object flags <see cref="ObjectFlagsLO"/>
@@ -113,6 +111,12 @@ namespace UELib
         [BuildGeneration(BuildGeneration.UE4)] public bool IsForcedExport;
         [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForEditorGame;
         [BuildGeneration(BuildGeneration.UE4)] public bool IsAsset;
+
+        [BuildGeneration(BuildGeneration.UE4)] public int FirstExportDependency;
+        [BuildGeneration(BuildGeneration.UE4)] public int SerializationBeforeSerializationDependencies;
+        [BuildGeneration(BuildGeneration.UE4)] public int CreateBeforeSerializationDependencies;
+        [BuildGeneration(BuildGeneration.UE4)] public int SerializationBeforeCreateDependencies;
+        [BuildGeneration(BuildGeneration.UE4)] public int CreateBeforeCreateDependencies;
 
         /// <summary>
         /// Serializes the export to a stream.
@@ -350,7 +354,7 @@ namespace UELib
                 _ArchetypeIndex = stream.ReadInt32();
             }
 #if BATMAN
-            if (stream.Package.Build == BuildGeneration.RSS)
+            if (stream.Package.Build == BuildGeneration.RSS && stream.LicenseeVersion > 21)
             {
                 stream.Skip(sizeof(int));
             }
@@ -535,7 +539,7 @@ namespace UELib
 
         [Obsolete] protected override int __ClassIndex => _ClassIndex;
 
-        [Obsolete][NotNull] protected override string __ClassName => Class?.ObjectName ?? "Class";
+        [Obsolete] protected override string __ClassName => Class?.ObjectName ?? "Class";
 
         [Obsolete("Use Super"), Browsable(false)]
         public UObjectTableItem SuperTable => Owner.IndexToObjectResource(_SuperIndex);
@@ -578,7 +582,7 @@ namespace UELib
         public void WriteObjectFlags()
         {
             Owner.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);
-            Owner.Stream.Writer.Write((uint)ObjectFlags);
+            Owner.Stream.Write((uint)ObjectFlags);
         }
     }
 }

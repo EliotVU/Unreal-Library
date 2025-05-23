@@ -121,7 +121,7 @@ namespace UELib.Core
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance)
             {
-                if (Vengeance_Implements != null && Vengeance_Implements.Any()) 
+                if (Vengeance_Implements != null && Vengeance_Implements.Any())
                     output += $" implements {string.Join(", ", Vengeance_Implements.Select(i => i.Name))}";
             }
 #endif
@@ -330,8 +330,8 @@ namespace UELib.Core
                 {
                     if (Package.Version >= PlaceableVersion)
                     {
-                        output += (ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0 
-                            ? "\r\n\tplaceable" 
+                        output += (ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0
+                            ? "\r\n\tplaceable"
                             : "\r\n\tnotplaceable";
                     }
                     else if ((ClassFlags & (uint)Flags.ClassFlags.NoUserCreate) != 0)
@@ -466,16 +466,17 @@ namespace UELib.Core
             }
 
             var replicatedObjects = new List<IUnrealNetObject>();
-            if (Variables != null)
-            {
-                replicatedObjects.AddRange(Variables.Where(prop =>
-                    prop.HasPropertyFlag(Flags.PropertyFlagsLO.Net) && prop.RepOffset != ushort.MaxValue));
-            }
+            replicatedObjects.AddRange(EnumerateFields<UProperty>()
+                .Where(prop => prop.PropertyFlags.HasFlag(PropertyFlag.Net)
+                    && prop.RepOffset != ushort.MaxValue)
+                .Reverse());
 
-            if (Package.Version < VReliableDeprecation && Functions != null)
+            if (Package.Version < VReliableDeprecation)
             {
-                replicatedObjects.AddRange(Functions.Where(func =>
-                    func.HasFunctionFlag(Flags.FunctionFlags.Net) && func.RepOffset != ushort.MaxValue));
+                replicatedObjects.AddRange(EnumerateFields<UFunction>()
+                    .Where(func => func.FunctionFlags.HasFlag(FunctionFlag.Net)
+                        && func.RepOffset != ushort.MaxValue)
+                    .Reverse());
             }
 
             if (replicatedObjects.Count == 0)
@@ -592,11 +593,8 @@ namespace UELib.Core
 
         private string FormatStates()
         {
-            if (States == null || !States.Any())
-                return string.Empty;
-
             var output = string.Empty;
-            foreach (var scriptState in States)
+            foreach (var scriptState in EnumerateFields<UState>().Reverse())
             {
                 output += "\r\n" + scriptState.Decompile() + "\r\n";
             }

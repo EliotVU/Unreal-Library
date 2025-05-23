@@ -154,8 +154,4 @@ namespace UELib.Branch.UE3.RL
                 0x80);
         }
     }
-
-    public class RLIdkToken : Token
-    {
-    }
 }

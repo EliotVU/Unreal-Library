@@ -34,6 +34,36 @@ var Matrix Matrix;
 
 var array<bool> BoolArray;
 
+var enum EEnum
+{
+	EEnum1,
+	EEnum2,
+	EEnum3
+} Enum, Enum2;
+
+var struct sStruct
+{
+	// Test all unique types in a struct
+	var byte Byte;
+	var int Int;
+	var float Float;
+	var name NameProperty;
+	var string String;
+	var Object Object;
+	var Class<DefaultProperties> MetaClass;
+	var delegate<OnDelegate> Delegate;
+	var byte ByteFixedArray[2];
+	var Object.Vector Vector;
+	var array<bool> BoolArray;
+	var EEnum Enum, Enum2;
+
+	// Test struct within struct.
+	var struct sStruct2
+	{
+		var byte Byte;
+	} Struct2;
+} Struct;
+
 delegate OnDelegate();
 private function InternalOnDelegate();
 
@@ -81,4 +111,9 @@ defaultproperties
     BoolArray(1)=false
 
     OnDelegate=DefaultProperties.InternalOnDelegate
+
+	// Test by name
+	Enum=EEnum.EEnum2
+	// Test by byte
+	Enum2=1
 }

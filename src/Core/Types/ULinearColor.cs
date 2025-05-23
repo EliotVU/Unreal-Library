@@ -7,7 +7,7 @@ namespace UELib.Core
     ///     Implements FLinearColor/UObject.LinearColor
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct ULinearColor : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct ULinearColor : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float R, G, B, A;
 

@@ -28,7 +28,7 @@ namespace UELib.Engine
         /// Ericsson Texture Compression
         /// </summary>
         public UArray<MipMap2D> CachedETCMips;
-        
+
         public int CachedFlashMipMaxResolution;
         public UBulkData<byte> CachedFlashMipData;
 
@@ -51,22 +51,57 @@ namespace UELib.Engine
                 Format = (TextureFormat)format;
                 Record(nameof(Format), Format);
             }
-
+#if TERA
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Tera)
+            {
+                // TODO: Not yet supported.
+                return;
+            }
+#endif
+#if BORDERLANDS
+            if (_Buffer.Package.Build == BuildGeneration.GB &&
+                _Buffer.LicenseeVersion >= 55)
+            {
+                _Buffer.ReadStruct(out UGuid constantGuid);
+                Record(nameof(constantGuid), constantGuid);
+            }
+#endif
             _Buffer.ReadArray(out Mips);
             Record(nameof(Mips), Mips);
-
+#if BORDERLANDS || BORDERLANDS2
+            if (_Buffer.Package.Build == BuildGeneration.GB ||
+                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*no version check*/ ||
+                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            {
+                _Buffer.ReadStruct(out UGuid constantGuid);
+                Record(nameof(constantGuid), constantGuid);
+            }
+#endif
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedTextureFileCacheGuidToTexture2D)
             {
                 _Buffer.ReadStruct(out TextureFileCacheGuid);
                 Record(nameof(TextureFileCacheGuid), TextureFileCacheGuid);
             }
-
+#if BORDERLANDS
+            if (_Buffer.Package.Build == BuildGeneration.GB &&
+                _Buffer.LicenseeVersion >= 55)
+            {
+                return;
+            }
+#endif
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedPVRTCToUTexture2D)
             {
                 _Buffer.ReadArray(out CachedPVRTCMips);
                 Record(nameof(CachedPVRTCMips), CachedPVRTCMips);
             }
-
+#if BORDERLANDS2 || BATTLEBORN
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*VR*/ ||
+                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            {
+                // Missed UDK upgrades?
+                return;
+            }
+#endif
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedATITCToUTexture2D)
             {
                 _Buffer.Read(out CachedFlashMipMaxResolution);
@@ -74,7 +109,7 @@ namespace UELib.Engine
 
                 _Buffer.ReadArray(out CachedATITCMips);
                 Record(nameof(CachedATITCMips), CachedATITCMips);
-                
+
                 _Buffer.ReadStruct(out CachedFlashMipData);
                 Record(nameof(CachedFlashMipData), CachedFlashMipData);
             }

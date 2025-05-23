@@ -8,13 +8,13 @@ using UELib.Engine;
 using static Eliot.UELib.Test.UnrealPackageTests;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
-namespace Eliot.UELib.Test.UPK.Builds
+namespace Eliot.UELib.Test.Builds
 {
     /// <summary>
     /// Use the UT2004 build to test compatibility with UE2 (Might actually be testing for UE2.5)
     /// </summary>
     [TestClass]
-    public class PackagetTestsUT2004
+    public class PackageTestsUT2004
     {
         public static UnrealPackage GetScriptPackageLinker()
         {

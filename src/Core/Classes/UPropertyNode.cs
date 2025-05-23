@@ -1,5 +1,6 @@
 ﻿#if Forms
 using System.Windows.Forms;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -9,12 +10,9 @@ namespace UELib.Core
         {
             _ParentNode = AddSectionNode(node, nameof(UProperty));
             var propertyFlagsNode = AddTextNode(_ParentNode,
-                $"Property Flags:{UnrealMethods.FlagToString(PropertyFlags)}"
+                $"Property Flags:{(ulong)PropertyFlags:X8}"
             );
-            propertyFlagsNode.ToolTipText = UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(
-                typeof(Flags.PropertyFlagsLO),
-                typeof(Flags.PropertyFlagsHO), PropertyFlags)
-            );
+            propertyFlagsNode.ToolTipText = PropertyFlags.ToString();
 
             if (RepOffset > 0)
             {
@@ -26,7 +24,7 @@ namespace UELib.Core
 
         public override string GetImageName()
         {
-            if (HasPropertyFlag(Flags.PropertyFlagsLO.ReturnParm))
+            if (HasPropertyFlag(PropertyFlag.ReturnParm))
             {
                 return "ReturnValue";
             }

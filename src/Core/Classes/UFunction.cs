@@ -18,15 +18,14 @@ namespace UELib.Core
 
         public byte OperPrecedence { get; private set; }
 
-        /// <value>
-        /// 32bit in UE2
-        /// 64bit in UE3
-        /// </value>
-        private ulong FunctionFlags { get; set; }
+        /// <summary>
+        /// The function flags.
+        /// </summary>
+        public UnrealFlags<FunctionFlag> FunctionFlags;
 
-        public ushort RepOffset { get; private set; }
+        public ushort RepOffset { get; set; }
 
-        public bool RepReliable => HasFunctionFlag(Flags.FunctionFlags.NetReliable);
+        public bool RepReliable => FunctionFlags.HasFlag(FunctionFlag.NetReliable);
 
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
@@ -34,8 +33,11 @@ namespace UELib.Core
 
         #region Script Members
 
-        public List<UProperty> Params { get; private set; }
-        public UProperty ReturnProperty { get; private set; }
+        [Obsolete]
+        public IEnumerable<UProperty> Params => EnumerateFields<UProperty>().Where(prop => prop.IsParm());
+
+        public UProperty ReturnProperty => EnumerateFields<UProperty>()
+            .FirstOrDefault(prop => prop.PropertyFlags.HasFlag(PropertyFlag.ReturnParm));
 
         #endregion
 
@@ -56,9 +58,9 @@ namespace UELib.Core
 #if UE4
             if (_Buffer.UE4Version > 0)
             {
-                FunctionFlags = _Buffer.ReadUInt32();
-                Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
-                if (HasFunctionFlag(Flags.FunctionFlags.Net))
+                _Buffer.Read(out FunctionFlags);
+                Record(nameof(FunctionFlags), FunctionFlags);
+                if (FunctionFlags.HasFlag(FunctionFlag.Net))
                 {
                     RepOffset = _Buffer.ReadUShort();
                     Record(nameof(RepOffset), RepOffset);
@@ -96,14 +98,12 @@ namespace UELib.Core
             // FIXME: version
             if (_Buffer.Package.Build == BuildGeneration.HMS)
             {
-                FunctionFlags = _Buffer.ReadUInt64();
-                Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+                FunctionFlags = _Buffer.ReadFlags64<FunctionFlag>();
 
                 goto skipFunctionFlags;
             }
 #endif
-            FunctionFlags = _Buffer.ReadUInt32();
-            Record(nameof(FunctionFlags), (FunctionFlags)FunctionFlags);
+            _Buffer.Read(out FunctionFlags);
 #if ROCKETLEAGUE
             // Disassembled code shows two calls to ByteOrderSerialize, might be a different variable not sure.
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
@@ -113,11 +113,12 @@ namespace UELib.Core
                 uint v134 = _Buffer.ReadUInt32();
                 Record(nameof(v134), v134);
 
-                FunctionFlags |= ((ulong)v134 << 32);
+                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)v134 << 32);
             }
 #endif
         skipFunctionFlags:
-            if (HasFunctionFlag(Flags.FunctionFlags.Net))
+            Record(nameof(FunctionFlags), FunctionFlags);
+            if (FunctionFlags.HasFlag(FunctionFlag.Net))
             {
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
@@ -161,35 +162,30 @@ namespace UELib.Core
             }
         }
 
-        protected override void FindChildren()
-        {
-            base.FindChildren();
-            Params = new List<UProperty>();
-            foreach (var property in Variables)
-            {
-                if (property.HasPropertyFlag(PropertyFlagsLO.ReturnParm)) ReturnProperty = property;
-
-                if (property.IsParm()) Params.Add(property);
-            }
-        }
-
         #endregion
 
         #region Methods
 
+        [Obsolete("Use FunctionFlags directly")]
         public bool HasFunctionFlag(uint flag)
         {
             return ((uint)FunctionFlags & flag) != 0;
         }
 
+        [Obsolete("Use FunctionFlags directly")]
         public bool HasFunctionFlag(FunctionFlags flag)
         {
             return ((uint)FunctionFlags & (uint)flag) != 0;
         }
 
+        internal bool HasFunctionFlag(FunctionFlag flagIndex)
+        {
+            return FunctionFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(FunctionFlag)], flagIndex);
+        }
+
         public bool IsOperator()
         {
-            return HasFunctionFlag(Flags.FunctionFlags.Operator);
+            return FunctionFlags.HasFlag(FunctionFlag.Operator);
         }
 
         public bool IsPost()
@@ -199,16 +195,12 @@ namespace UELib.Core
 
         public bool IsPre()
         {
-            return IsOperator() && HasFunctionFlag(Flags.FunctionFlags.PreOperator);
+            return IsOperator() && FunctionFlags.HasFlag(FunctionFlag.PreOperator);
         }
 
         public bool IsDelegate()
         {
-#if DNF
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
-                return HasFunctionFlag(0x400000);
-#endif
-            return HasFunctionFlag(Flags.FunctionFlags.Delegate);
+            return FunctionFlags.HasFlag(FunctionFlag.Delegate);
         }
 
         public bool HasOptionalParamData()
@@ -216,7 +208,9 @@ namespace UELib.Core
             // FIXME: Deprecate version check, and re-map the function flags using the EngineBranch class approach.
             return Package.Version > 300
                    && ByteCodeManager != null
-                   && Params?.Any() == true
+                   && EnumerateFields<UProperty>()
+                       ?.Where(prop => prop.PropertyFlags.HasFlag(PropertyFlag.Parm))
+                       .Any() == true
                 // Not available for older packages.
                 // && HasFunctionFlag(Flags.FunctionFlags.OptionalParameters);
                 ;

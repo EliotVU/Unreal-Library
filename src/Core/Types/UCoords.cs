@@ -6,7 +6,7 @@ namespace UELib.Core
     ///     Implements FCoords/UObject.Coords
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public struct UCoords : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UCoords : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public UVector Origin;
         public UVector XAxis;

@@ -12,7 +12,8 @@ namespace UELib.Core
             [ExprToken(ExprToken.Context)]
             public class ContextToken : Token
             {
-                public UProperty Property;
+                // Field, because sometimes the property can be a UConst.
+                public UField Property;
                 public ushort PropertyType;
 
                 public override void Deserialize(IUnrealStream stream)
@@ -62,6 +63,12 @@ namespace UELib.Core
 
                 public override string Decompile()
                 {
+                    if (Property is UConst uConst)
+                    {
+                        Decompiler.PreComment = $"Const:{uConst.Value}";
+                        return $"{DecompileNext()}.{Property.Name}";
+                    }
+
                     return $"{DecompileNext()}.{DecompileNext()}";
                 }
             }

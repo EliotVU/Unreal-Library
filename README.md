@@ -142,6 +142,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Roboblitz | 2306 | 369/006 |     |
 | Stranglehold | 2605 | 375/025 | |
 | Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon |
+| Warmonger: Operation Downtown Destruction | 2859 | 419/003 | |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
 | Frontlines: Fuel of War | 2917 | 433/052 | |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
@@ -213,6 +214,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
 | Deadlight | 9375 | 854/000 |     |
 | Land of the Dead | 9375 | 854/000 |     |
+| Borderlands Legends | 9505 | 859/000 | iOS; platform needs to be set to console |
 | Ravaged | 9641 | 859/000 |     |
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
@@ -231,6 +233,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | Battleborn | 8623/1055 | 874/078 | |
 | A Hat in Time | 12097 | 877-893/005 | Contributed by @Un-Drew |
+| Bulletstorm: Full Clip Edition | 12212 | 877/041 | |
 | Blue Estate The Game | 10246 | 893/000 | |
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Borderlands 2 VR | 8637/0029 | 895/046 | |

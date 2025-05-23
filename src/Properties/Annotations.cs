@@ -17,6 +17,7 @@ namespace UELib.Annotations
         AttributeTargets.Method | AttributeTargets.Parameter |
         AttributeTargets.Property | AttributeTargets.Delegate |
         AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    [Obsolete]
     public sealed class CanBeNullAttribute : Attribute
     {
     }
@@ -33,6 +34,7 @@ namespace UELib.Annotations
         AttributeTargets.Method | AttributeTargets.Parameter |
         AttributeTargets.Property | AttributeTargets.Delegate |
         AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    [Obsolete]
     public sealed class NotNullAttribute : Attribute
     {
     }
@@ -149,17 +151,18 @@ namespace UELib.Annotations
     /// which should not be removed and so is treated as used
     /// </summary>
     [MeansImplicitUse]
+    [Obsolete]
     public sealed class PublicAPIAttribute : Attribute
     {
         public PublicAPIAttribute()
         {
         }
 
-        public PublicAPIAttribute([NotNull] string comment)
+        public PublicAPIAttribute(string comment)
         {
             Comment = comment;
         }
 
-        [NotNull] public string Comment { get; }
+        public string Comment { get; }
     }
 }

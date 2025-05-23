@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Flags;
 
@@ -28,7 +27,7 @@ namespace UELib.Core
         public long StorageOffset;
 
         public int ElementCount;
-        [CanBeNull] public byte[] ElementData;
+        public byte[]? ElementData;
 
         // TODO: multi-byte based data.
         public UBulkData(BulkDataFlags flags, byte[] rawData)
@@ -58,6 +57,11 @@ namespace UELib.Core
             StorageOffset = stream.ReadInt32();
 
             if (Flags.HasFlag(BulkDataFlags.StoreInSeparateFile))
+            {
+                return;
+            }
+
+            if (Flags.HasFlag(BulkDataFlags.StoreOnlyPayload))
             {
                 return;
             }
@@ -194,6 +198,12 @@ namespace UELib.Core
 
             if (Flags.HasFlag(BulkDataFlags.StoreInSeparateFile))
             {
+                return;
+            }
+
+            if (Flags.HasFlag(BulkDataFlags.StoreOnlyPayload))
+            {
+                // TODO: Write to the end of file, or change the flags and write it right here.
                 return;
             }
 

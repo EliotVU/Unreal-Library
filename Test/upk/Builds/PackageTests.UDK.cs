@@ -7,7 +7,7 @@ using UELib.Core;
 using static Eliot.UELib.Test.UnrealPackageTests;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
-namespace Eliot.UELib.Test.UPK.Builds
+namespace Eliot.UELib.Test.Builds
 {
     /// <summary>
     /// Use the UDK build to test compatibility with UE3.

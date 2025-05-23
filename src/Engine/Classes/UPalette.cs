@@ -14,10 +14,10 @@ namespace UELib.Engine
         /// No alpha was serialized for packages of version 65 or less.
         /// </summary>
         public UArray<UColor> Colors;
-
+#if UNDYING
         [Build(UnrealPackage.GameBuild.BuildName.Undying)]
         public bool HasAlphaChannel;
-
+#endif
         public UPalette()
         {
             ShouldDeserializeOnDemand = true;
@@ -28,8 +28,9 @@ namespace UELib.Engine
             base.Deserialize();
 
             // This could be a lot faster with a fixed array, but it's not a significant class of interest.
-            int count = _Buffer.ReadIndex();
+            int count = _Buffer.ReadLength();
             Debug.Assert(count == 256);
+
             _Buffer.ReadArray(out Colors, count);
             Record(nameof(Colors), Colors);
 #if UNDYING

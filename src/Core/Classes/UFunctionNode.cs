@@ -1,5 +1,7 @@
 ﻿#if Forms
+using System.Linq;
 using System.Windows.Forms;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -10,9 +12,8 @@ namespace UELib.Core
             node.ToolTipText = FormatHeader();
             _ParentNode = AddSectionNode(node, nameof(UFunction));
 
-            var funcFlagsNode = AddTextNode(_ParentNode, $"FunctionFlags:{UnrealMethods.FlagToString(FunctionFlags)}");
-            funcFlagsNode.ToolTipText =
-                UnrealMethods.FlagsListToString(UnrealMethods.FlagsToList(typeof(Flags.FunctionFlags), FunctionFlags));
+            var funcFlagsNode = AddTextNode(_ParentNode, $"FunctionFlags:{(ulong)FunctionFlags:X8}");
+            funcFlagsNode.ToolTipText = FunctionFlags.ToString();
 
             if (RepOffset > 0)
             {
@@ -25,14 +26,14 @@ namespace UELib.Core
         protected override void AddChildren(TreeNode node)
         {
             base.AddChildren(node);
-            AddObjectListNode(node, "Parameters", Params, nameof(UProperty));
-            AddObjectListNode(node, "Locals", Locals, nameof(UProperty));
+            AddObjectListNode(node, "Parameters", EnumerateFields<UProperty>().Where(field => field.IsParm()), nameof(UProperty));
+            AddObjectListNode(node, "Locals", EnumerateFields<UProperty>().Where(field => !field.IsParm()), nameof(UProperty));
         }
 
         public override string GetImageName()
         {
             var name = string.Empty;
-            if (HasFunctionFlag(Flags.FunctionFlags.Event))
+            if (HasFunctionFlag(FunctionFlag.Event))
             {
                 name = "Event";
             }
@@ -40,18 +41,18 @@ namespace UELib.Core
             {
                 name = "Delegate";
             }
-            else if (HasFunctionFlag(Flags.FunctionFlags.Operator))
+            else if (HasFunctionFlag(FunctionFlag.Operator))
             {
                 name = "Operator";
             }
 
             if (name != string.Empty)
             {
-                if (IsProtected())
+                if (HasFunctionFlag(FunctionFlag.Protected))
                 {
                     return $"{name}-Protected";
                 }
-                if (IsPrivate())
+                if (HasFunctionFlag(FunctionFlag.Private))
                 {
                     return $"{name}-Private";
                 }

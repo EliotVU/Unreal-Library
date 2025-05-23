@@ -1,3 +1,8 @@
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Text;
+
 namespace UELib.Core
 {
     [UnrealRegisterClass]
@@ -33,16 +38,25 @@ namespace UELib.Core
             {
                 int uncompressedDataSize = _Buffer.ReadIndex();
                 Record(nameof(uncompressedDataSize), uncompressedDataSize);
-                
-                int dataLength = _Buffer.ReadIndex();
-                Record(nameof(dataLength), dataLength);
-                if (dataLength > 0)
+
+                int compressedDataSize = _Buffer.ReadIndex();
+                Record(nameof(compressedDataSize), compressedDataSize);
+                if (compressedDataSize > 0)
                 {
-                    var data = new byte[uncompressedDataSize];
-                    _Buffer.Read(data, 0, dataLength);
-                    Record(nameof(data), data);
+                    var compressedData = new byte[compressedDataSize];
+                    _Buffer.Read(compressedData, 0, compressedDataSize);
+                    Record(nameof(compressedData), compressedData);
+
+                    byte[] uncompressedData = new byte[uncompressedDataSize];
+#if NET6_0_OR_GREATER
+                    using var s = new ZLibStream(new MemoryStream(compressedData), CompressionMode.Decompress);
+                    s.ReadExactly(uncompressedData, 0, uncompressedDataSize);
+
+                    ScriptText = Encoding.ASCII.GetString(uncompressedData);
+                    return;
+#endif
                 }
-                
+
                 ScriptText = "Text data is compressed";
                 return;
             }

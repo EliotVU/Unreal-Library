@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using UELib.Annotations;
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib
@@ -14,7 +14,7 @@ namespace UELib
     public abstract class UObjectTableItem : UTableItem, IBuffered, IComparable<string>
     {
         /// <summary>
-        /// Reference to the UnrealPackage this object resists in
+        /// The UnrealPackage the object resides in
         /// </summary>
         public UnrealPackage Owner;
 
@@ -23,7 +23,7 @@ namespace UELib
         ///
         /// Only valid if Owner != null and Owner is fully serialized or on demand.
         /// </summary>
-        [CanBeNull] public UObject Object;
+        public UObject? Object;
 
         protected UName _ObjectName;
 
@@ -41,7 +41,16 @@ namespace UELib
             set => _OuterIndex = value;
         }
 
-        public UObjectTableItem Outer => Owner.IndexToObjectResource(_OuterIndex);
+        public UObjectTableItem? Outer => Owner.IndexToObjectResource(_OuterIndex);
+
+        private UName _ObjectPackageName;
+
+        [BuildGeneration(BuildGeneration.UE4)]
+        public UName ObjectPackageName
+        {
+            get => _ObjectPackageName;
+            set => _ObjectPackageName = value;
+        }
 
         public IEnumerable<UObjectTableItem> EnumerateOuter()
         {
@@ -66,7 +75,7 @@ namespace UELib
             return $"?'{GetPath()}'";
         }
 
-        public static string GetReferencePath([CanBeNull] UObjectTableItem item)
+        public static string GetReferencePath(UObjectTableItem? item)
         {
             return item != null
                 ? item.GetReferencePath()
@@ -119,9 +128,9 @@ namespace UELib
         [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
 
         [Obsolete("Use UExportTableItem.Class"), Browsable(false)]
-        public UObjectTableItem ClassTable => Owner.IndexToObjectResource(ClassIndex);
+        public UObjectTableItem? ClassTable => Owner.IndexToObjectResource(ClassIndex);
 
-        [Obsolete, Browsable(false)] public UObjectTableItem OuterTable => Owner.IndexToObjectResource(OuterIndex);
+        [Obsolete, Browsable(false)] public UObjectTableItem? OuterTable => Owner.IndexToObjectResource(OuterIndex);
 
         [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
         public string OuterName

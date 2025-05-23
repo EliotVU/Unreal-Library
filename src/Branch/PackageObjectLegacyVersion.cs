@@ -55,6 +55,7 @@ namespace UELib.Branch
 
         LightMapScaleAddedToPoly = 106,
 
+        SerializeStructTags = 118,
         KerningAddedToUFont = 119,
         AddedCppTextToUStruct = 120,
         FontPagesDisplaced = 122,
@@ -110,8 +111,8 @@ namespace UELib.Branch
 
         ObjectFlagsSizeExpandedTo64Bits = 195,
 
-        // FIXME: Version, def not <= 178, not found in RoboHordes (198,200), but found in GoW without a version check, so this approximation should do :)
-        TemplateDataAddedToUComponent = 201,
+        // 196 according to EndWar and R6 Vegas
+        AddedComponentGuid = 196,
 
         // 208 according to EndWar
         PackageImportsDeprecated = 208,
@@ -127,13 +128,18 @@ namespace UELib.Branch
         /// </summary>
         ArchetypeAddedToExports = 220,
 
-        PropertyFlagsSizeExpandedTo64Bits = 220,
+        // 220, but doesn't appear to be true for RoboHordes(198,200)
+        PropertyFlagsSizeExpandedTo64Bits = 190,
 
         // 222 according to EndWar
         AddedInterfacesFeature = 222,
 
         // 223 according to EndWar
         RefactoredPropertyTags = 223,
+
+        // FIXME: Version, def not <= 178, not found in RoboHordes (198,200), but found in GoW without a version check, so this approximation should do :)
+        // Set to 224 to skip EndWar (223)
+        TemplateDataAddedToUComponent = 224,
 
         // 227 according to the GoW client
         FixedVerticesToArrayFromPoly = 227,
@@ -169,6 +175,16 @@ namespace UELib.Branch
         ClassGuidDeprecated = 276,
         AddedCookerVersion = 277,
 
+        /// <summary>
+        ///     Structs marked with 'Immutable' should use binary serialization.
+        /// </summary>
+        AddedImmutableStructs = 278,
+
+        /// <summary>
+        ///    Structs that extend a struct marked with 'Immutable' should not use binary serialization.
+        /// </summary>
+        StructsShouldNotInheritImmutable = 279,
+
         InterfaceClassesDeprecated = 288,
 
         AddedConvexVolumes = 294,
@@ -188,6 +204,8 @@ namespace UELib.Branch
         ElementOwnerAddedToUPolys = 321,
 
         NetObjectCountAdded = 322,
+
+        AddedXenonSoundData = 327,
 
         CompressionAdded = 334,
 
@@ -220,12 +238,24 @@ namespace UELib.Branch
         /// </summary>
         IsCopyAddedToStructMember = GameStranglehold + 1,
 
+        AddedPS3SoundData = 376,
+
+        /// <summary>
+        /// And deprecated FileType from USoundNodeWave.
+        /// </summary>
+        AddedPCSoundData = 380,
+
+        AddedChannelsSoundInfo = 385,
+        AddedChannelCountSoundInfo = 390,
+
         AddedArrayEnumToUProperty = 401,
 
         AddedDependsTable = 415,
 
         // 417 according to the GoW client
         LightingChannelsAddedToPoly = 417,
+
+        DisplacedSoundChannelProperties = 420,
 
         [Discardable] GameFFOW = 433, // Engine Version: 2917
 
@@ -268,11 +298,16 @@ namespace UELib.Branch
 
         AddedThumbnailTable = 584,
 
+        AddedDingoSoundData = 593,
+        AddedOrbisSoundData = 594,
+
         LightmassAdded = 600,
 
         AddedDontSortCategoriesToUClass = 603,
 
         UProcBuildingReferenceAddedToPoly = 606,
+
+        AddedDominantLightShadowMapToDominantDirectionalLightComponent = 617,
 
         AddedImportExportGuidsTable = 623,
 
@@ -292,6 +327,8 @@ namespace UELib.Branch
 
         BoolValueToByteForBoolPropertyTag = 673,
 
+        AddedDominantLightShadowMapToUDominantSpotLightComponent = 682,
+
         AddedPVRTCToUTexture2D = 674,
 
         ProbeMaskReducedAndIgnoreMaskRemoved = 691,
@@ -303,6 +340,12 @@ namespace UELib.Branch
         AddedClassGroupsToUClass = 789,
         AddedNativeClassNameToUClass = 813,
 
+        // 829 according to Borderlands2
+        RemovedConvexVolumes = 829,
+
+        AddedWiiUSoundData = 845,
+        AddedIPhoneSoundData = 851,
+        AddedFlashSoundData = 854,
         AddedATITCToUTexture2D = 857,
         AddedETCToUTexture2D = 864,
 

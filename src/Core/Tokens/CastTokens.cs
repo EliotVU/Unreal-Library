@@ -183,7 +183,7 @@ namespace UELib.Core
             {
                 public override string Decompile()
                 {
-                    return $"class<{CastClass.Name}>({DecompileNext()})";
+                    return $"Class<{CastClass.Name}>({DecompileNext()})";
                 }
             }
 
