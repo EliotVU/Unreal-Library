@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch.UE2.Lead;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -333,7 +334,7 @@ namespace UELib.Core
 #if UNREAL2
                     // FIXME: Is this a legacy feature or U2 specific?
                     // Also in RSRS, and GBX engine
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP)
+                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP || stream.Package.Build == BuildGeneration.Lead)
                     {
                         OpCodeText = stream.ReadAnsiNullString();
                         Decompiler.AlignSize(OpCodeText.Length + 1);
