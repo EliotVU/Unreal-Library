@@ -230,6 +230,13 @@ namespace UELib.Core
                 Record(nameof(CppText), CppText);
             }
 #endif
+#if LEAD
+            if (Package.Build == BuildGeneration.Lead)
+            {
+                var ObjIndex = _Buffer.ReadIndex();
+                string SomeFStr = _Buffer.ReadString();
+            }
+#endif
         serializeByteCode:
             ByteScriptSize = _Buffer.ReadInt32();
             Record(nameof(ByteScriptSize), ByteScriptSize);
