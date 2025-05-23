@@ -237,7 +237,6 @@ namespace UELib.Core
                     var prop2 = _Buffer.ReadUInt32();
 
                     Record("Lead:Unk_0", objIdx + ":" + prop1.ToString() + ":" + prop2.ToString());
-                    Console.WriteLine(Package.GetIndexObjectName(objIdx) + " " + prop1.ToString() + " " + prop2.ToString());
                 }
 
                 ClassGroups = DeserializeGroup("ClassGroups");
