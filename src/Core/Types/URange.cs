@@ -6,7 +6,7 @@ namespace UELib.Core
     ///     Implements FRange/UObject.Range
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct URange : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct URange : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float A, B;
 

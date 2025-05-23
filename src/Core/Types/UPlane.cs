@@ -8,7 +8,7 @@ namespace UELib.Core
     ///     Extends Vector, but we can't do this in C#
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UPlane : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UPlane : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         /// <summary>
         ///     It's important to retain W as the first field, because in Unreal FPlane extends FVector.

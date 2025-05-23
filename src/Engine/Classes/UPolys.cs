@@ -1,4 +1,3 @@
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Core;
 using UELib.ObjectModel.Annotations;
@@ -12,7 +11,7 @@ namespace UELib.Engine
     [UnrealRegisterClass]
     public class UPolys : UObject
     {
-        [CanBeNull] public UObject ElementOwner;
+        public UObject? ElementOwner;
 
         [Output] public UArray<Poly> Element;
 

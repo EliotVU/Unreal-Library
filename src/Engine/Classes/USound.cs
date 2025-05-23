@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 using UELib.Branch;
 
 namespace UELib.Core
@@ -34,7 +35,7 @@ namespace UELib.Core
 
         public bool CanExport()
         {
-            return Package.Stream != null && RawData.StorageSize != -1;
+            return Package.Stream != null && RawData.StorageSize > 0;
         }
 
         public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
@@ -48,7 +49,6 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
 #if SPLINTERCELLX
             if (Package.Build == BuildGeneration.SCX)
             {
@@ -119,6 +119,41 @@ namespace UELib.Core
 #endif
             FileType = _Buffer.ReadNameReference();
             Record(nameof(FileType), FileType);
+#if R6
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.R6RS)
+            {
+                // Same system as SCX
+                if (FileType == "DareEvent" || FileType == "DareGen")
+                {
+                    if (_Buffer.LicenseeVersion >= 3)
+                    {
+                        // same as SCX v30
+                        _Buffer.Read(out uint v68);
+                        Record(nameof(v68), v68);
+                    }
+
+                    if (_Buffer.LicenseeVersion >= 8)
+                    {
+                        // bLipsyncData?
+                        _Buffer.Read(out bool v6c);
+                        Record(nameof(v6c), v6c);
+
+                        // path
+                        _Buffer.Read(out string v70);
+                        Record(nameof(v70), v70);
+
+                        if (v6c)
+                        {
+                            // Load CCompressedLipDescData...
+                        }
+                    }
+
+                    return;
+                }
+
+                // Read RawData
+            }
+#endif
 #if HP
             if (Package.Build == BuildGeneration.HP)
             {

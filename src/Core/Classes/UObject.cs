@@ -5,7 +5,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using UELib.Annotations;
+using System.Runtime.InteropServices.ComTypes;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
@@ -20,6 +20,12 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
+        /// <summary>
+        /// The object name.
+        /// </summary>
+        [Output(OutputSlot.Parameter)]
+        public UName Name { get; set; }
+
         /// <summary>
         /// The object flags.
         /// </summary>
@@ -41,50 +47,48 @@ namespace UELib.Core
 
         public UImportTableItem ImportTable => Table as UImportTableItem;
 
+        [Obsolete("Pending deprecation")]
         public UNameTableItem NameTable => Table.ObjectTable;
 
         /// <summary>
-        /// The internal represented class in UnrealScript.
+        /// The object class, as represented internally in UnrealScript.
+        ///
+        /// Null for imports and UClass objects.
         /// </summary>
-        [CanBeNull]
         [Output(OutputSlot.Parameter)]
-        public UObject Class => ExportTable != null
-            ? Package.IndexToObject(ExportTable.ClassIndex)
-            : null;
+        public UClass? Class { get; set; }
 
         /// <summary>
-        /// [Package.Group:Outer].Object
+        /// The object outer.
+        ///
+        /// e.g. <example>`Core.Object.Vector.X` where `Vector` is the outer of property `X`</example>
+        ///
+        /// Null for imports with no outer.
         /// </summary>
-        [CanBeNull]
-        public UObject Outer => Package.IndexToObject(Table.OuterIndex);
+        public UObject? Outer { get; set; }
 
-        [CanBeNull]
-        public UObject Archetype => ExportTable != null
+        /// <summary>
+        /// The object archetype.
+        /// </summary>
+        public UObject? Archetype => ExportTable != null
             ? Package.IndexToObject(ExportTable.ArchetypeIndex)
             : null;
 
         [Obsolete("Displaced by PackageIndex")]
         private int _ObjectIndex => PackageIndex;
 
-        [Output(OutputSlot.Parameter)]
-        public string Name
-        {
-            get => Table.ObjectName;
-            set => Table.ObjectName = new UName(value);
-        }
-
         #region Serialized Members
 
         protected UObjectStream _Buffer;
 
-        /// <summary>
-        /// Copy of the Object bytes
-        /// </summary>
-        public UObjectStream Buffer => _Buffer;
+        public UObjectStream? Buffer => _Buffer;
 
+        /// <summary>
+        /// Serialized if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/> or UE4Version is equal or greater than 196
+        /// </summary>
         public int NetIndex = -1;
 
-        [CanBeNull] public UObject Default { get; protected set; }
+        public UObject? Default { get; protected set; }
 
         /// <summary>
         /// Object Properties e.g. SubObjects or/and DefaultProperties
@@ -94,7 +98,7 @@ namespace UELib.Core
         /// <summary>
         /// Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
         /// </summary>
-        [CanBeNull] public UStateFrame StateFrame;
+        public UStateFrame? StateFrame;
 
         [BuildGeneration(BuildGeneration.UE4)]
         public UGuid ObjectGuid;
@@ -113,7 +117,7 @@ namespace UELib.Core
         }
 
         public ObjectState DeserializationState;
-        [CanBeNull] public Exception ThrownException;
+        public Exception? ThrownException;
         public long ExceptionPosition;
 
         public UObject()
@@ -161,8 +165,10 @@ namespace UELib.Core
             where T : UObjectStream
         {
             // Imported objects cannot be deserialized!
-            if (ImportTable != null)
+            if ((int)this < 0)
             {
+                LibServices.Debug("Attempted to load import {0}", GetReferencePath());
+
                 return;
             }
 
@@ -172,6 +178,29 @@ namespace UELib.Core
                 DeserializationState |= ObjectState.Deserialized;
 
                 return;
+            }
+
+            if (DeserializationState.HasFlag(ObjectState.Deserializing))
+            {
+                LibServices.LogService.SilentException(new DeserializationException("The object is already being deserialized."));
+
+                return;
+            }
+
+            LibServices.Debug("Loading {0}", GetReferencePath());
+
+            try
+            {
+                // Load the parent first, if it exists.
+                // We need this to properly link up tagged properties.
+                if (this is UStruct && Package.IndexToObject(ExportTable.SuperIndex) != null)
+                {
+                    LibServices.Debug("Loaded super struct {0}", ExportTable.Super);
+                }
+            }
+            catch (DeserializationException exception)
+            {
+                LibServices.LogService.SilentException(new DeserializationException("Couldn't deserialize dependencies", exception));
             }
 
             _Buffer?.Close();
@@ -199,9 +228,12 @@ namespace UELib.Core
             }
             finally
             {
+
                 DeserializationState &= ~ObjectState.Deserializing;
                 MaybeDisposeBuffer();
             }
+
+            LibServices.Debug("Loaded {0}", GetReferencePath());
         }
 
         /// <summary>
@@ -217,9 +249,7 @@ namespace UELib.Core
 
             try
             {
-                if (ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject)
-                    // Just in-case we have passed an overlapped object flag in UE2 or older packages.
-                    && _Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassDefaultCheckAddedToTemplateName)
+                if (ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject))
                 {
                     DeserializeClassDefault(stream);
                 }
@@ -227,9 +257,8 @@ namespace UELib.Core
                 {
                     Deserialize(stream);
                 }
-#if STRICT
-                Debug.Assert(Buffer.Position == Buffer.Length);
-#endif
+
+                LibServices.LogService.SilentAssert(_Buffer.Position == _Buffer.Length, $"Trailing data for object {GetReferencePath()}");
             }
             catch (Exception exception)
             {
@@ -280,7 +309,7 @@ namespace UELib.Core
                 stream.Decoder = decoder;
 
                 var baseStream = new MemoryDecoderStream(stream.Decoder, buffer, objectOffset);
-                objectStream = (T)Activator.CreateInstance(typeof(T), stream, baseStream);
+                objectStream = (T)Activator.CreateInstance(typeof(T), stream, baseStream, objectOffset);
             }
             else
             {
@@ -288,7 +317,7 @@ namespace UELib.Core
                 stream.Seek(objectOffset, SeekOrigin.Begin);
                 byteCount = stream.EndianAgnosticRead(buffer, 0, objectSize);
 
-                objectStream = (T)Activator.CreateInstance(typeof(T), stream, buffer);
+                objectStream = (T)Activator.CreateInstance(typeof(T), stream, buffer, objectOffset);
             }
 
             Contract.Assert(byteCount == objectSize,
@@ -343,6 +372,11 @@ namespace UELib.Core
 #endif
         private void DeserializeNetIndex(IUnrealStream stream)
         {
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded ||
+                stream.UE4Version >= 196)
+            {
+                return;
+            }
 #if MKKE || BATMAN
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
                 stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
@@ -350,12 +384,6 @@ namespace UELib.Core
                 return;
             }
 #endif
-            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded ||
-                stream.UE4Version >= 196)
-            {
-                return;
-            }
-
             stream.Read(out NetIndex);
             stream.Record(nameof(NetIndex), NetIndex);
         }
@@ -429,13 +457,7 @@ namespace UELib.Core
                 _Buffer.ReadClass(out StateFrame);
                 _Buffer.Record(nameof(StateFrame), StateFrame);
             }
-#if MKKE || BATMAN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.MKKE ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-            {
-                goto skipNetIndex;
-            }
-#endif
+
             // No version check found in the GoW PC client
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.TemplateDataAddedToUComponent)
             {
@@ -449,7 +471,7 @@ namespace UELib.Core
                     // Simply for checking for the parent's class is not reliable without importing objects.
                     case UnknownObject _ when _Buffer.Length >= 12
                                               && IsTemplate()
-                                              && Class!.Name.EndsWith("Component"):
+                                              && ((string)Class!.Name).EndsWith("Component"):
                         {
                             long backupPosition = _Buffer.Position;
 
@@ -474,8 +496,6 @@ namespace UELib.Core
                         }
                 }
             }
-
-        skipNetIndex:
 
             DeserializeNetIndex(_Buffer);
 #if THIEF_DS || DEUSEX_IW
@@ -506,10 +526,11 @@ namespace UELib.Core
 
             DeserializeProperties(_Buffer);
 #if UE4
-            if (_Buffer.UE4Version > 0)
+            if (_Buffer.UE4Version > 0 && !ObjectFlags.HasFlag(ObjectFlag.ClassDefaultObject))
             {
-                bool shouldSerializeGuid = _Buffer.ReadInt32() > 0;
+                _Buffer.Read(out bool shouldSerializeGuid);
                 _Buffer.Record(nameof(shouldSerializeGuid), shouldSerializeGuid);
+
                 if (shouldSerializeGuid)
                 {
                     _Buffer.ReadStruct(out ObjectGuid);
@@ -551,6 +572,11 @@ namespace UELib.Core
         public bool HasObjectFlag(ObjectFlagsHO flag)
         {
             return (ObjectFlags & ((ulong)flag << 32)) != 0;
+        }
+
+        internal bool HasObjectFlag(ObjectFlag flagIndex)
+        {
+            return ObjectFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)], flagIndex);
         }
 
         public bool IsPublic()
@@ -708,6 +734,7 @@ namespace UELib.Core
             _Buffer.Record(varName, varObject);
         }
 
+        [Obsolete]
         protected void AssertEOS(int size, string testSubject = "")
         {
             if (size > _Buffer.Length - _Buffer.Position)
@@ -765,17 +792,17 @@ namespace UELib.Core
             return visitor.Visit(this);
         }
 
-        public static implicit operator UPackageIndex([CanBeNull] UObject obj)
+        public static implicit operator UPackageIndex(UObject? obj)
         {
             return obj?.PackageIndex ?? 0;
         }
 
-        public static explicit operator int([CanBeNull] UObject obj)
+        public static explicit operator int(UObject? obj)
         {
             return obj?.PackageIndex ?? 0;
         }
 
-        public static explicit operator string([CanBeNull] UObject obj)
+        public static explicit operator string(UObject? obj)
         {
             return obj?.Name ?? "none";
         }

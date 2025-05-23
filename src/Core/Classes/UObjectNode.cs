@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using UELib.Annotations;
 
 namespace UELib.Core
 {
@@ -39,7 +38,7 @@ namespace UELib.Core
         protected virtual void InitNodes(TreeNode node)
         {
             _ParentNode = AddSectionNode(node, nameof(UObject));
-            var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{UnrealMethods.FlagToString((ulong)ObjectFlags)}");
+            var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{(ulong)ObjectFlags:X8}");
             flagNode.ToolTipText = ObjectFlags.ToString();
 
             AddTextNode(_ParentNode, $"Size:{ExportTable.SerialSize}");
@@ -113,12 +112,12 @@ namespace UELib.Core
         (
             TreeNode parentNode,
             string title,
-            [CanBeNull] IEnumerable<T> objects,
+            IEnumerable<T> objects,
             string imageName = "TreeView"
         ) where T : UObject
         {
-            var children = objects?.ToList();
-            if (children == null || !children.Any())
+            var children = objects.ToList();
+            if (!children.Any())
                 return null;
 
             var listNode = new ObjectListNode(imageName) { Text = title };

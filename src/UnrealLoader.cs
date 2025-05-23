@@ -65,33 +65,24 @@ namespace UELib
         }
 
         /// <summary>
-        /// Tests if the given file path has a Unreal extension.
+        /// Tests if the given file path has an Unreal extension.
         /// </summary>
         /// <param name="filePath">The path to the Unreal file.</param>
         public static bool IsUnrealFileExtension(string filePath)
         {
             string fileExt = Path.GetExtension(filePath);
-            return UnrealExtensions.Common.Any(ext => fileExt == ext);
+            return UnrealExtensions.Common.Concat(UnrealExtensions.Legacy).Any(ext => fileExt == ext);
         }
 
         /// <summary>
-        /// Tests if the given file has a Unreal signature.
+        /// Tests if the given file has an Unreal signature.
         /// </summary>
         /// <param name="filePath">The path to the Unreal file.</param>
         public static bool IsUnrealFileSignature(string filePath)
         {
-            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            byte[] buffer = new byte[4];
-            int read = stream.Read(buffer, 0, 4);
-            stream.Dispose();
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
 
-            uint signature = BitConverter.ToUInt32(buffer, 0);
-            // Naive and a bit slow, but this works for most standard files.
-            return read == 4 && (
-                signature == UnrealPackage.Signature ||
-                signature == UnrealPackage.Signature_BigEndian
-                // TODO: Check for other games' signatures
-            );
+            return UnrealFile.GetSignature(stream) != 0;
         }
     }
 }

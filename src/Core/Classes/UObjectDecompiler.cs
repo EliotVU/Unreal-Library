@@ -19,7 +19,7 @@ namespace UELib.Core
 
             string output = $"// Reference: {GetReferencePath()}\r\n";
 
-            if (ImportTable != null)
+            if ((int)this < 0)
             {
                 return output + $"\r\n{UDecompilingState.Tabs}// Cannot decompile an imported object";
             }
@@ -101,7 +101,8 @@ namespace UELib.Core
                 // This will still miss sub-objects that have no reference.
                 var missingSubObjects = UDecompilingState.s_inlinedSubObjects
                     .Where((k, v) => k.Value == false)
-                    .Select(k => k.Key);
+                    .Select(k => k.Key)
+                    .ToList();
                 foreach (var obj in missingSubObjects)
                 {
                     obj.Load();

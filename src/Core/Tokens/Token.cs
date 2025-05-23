@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
@@ -94,8 +92,8 @@ namespace UELib.Core
                     var token = Decompiler.NextToken;
                     if (token is DebugInfoToken) goto tryNext;
                     // This assertion will fail in most cases if the native indexes are a mismatch.
-#if STRICT
-                    Debug.Assert(token is T, $"Expected to skip a token of type '{typeof(T)}', but got '{token.GetType()}'");
+#if DEBUG
+                    Services.LibServices.LogService.SilentAssert(token is T, $"Expected to skip a token of type '{typeof(T)}', but got '{token.GetType()}'");
 #endif
                 }
 
@@ -168,7 +166,7 @@ namespace UELib.Core
                     var exprTokenAttr = type.GetCustomAttribute<ExprTokenAttribute>();
                     return exprTokenAttr.ExprToken;
                 }
-                
+
                 public override int GetHashCode() => GetType().GetHashCode();
 
                 public override string ToString()
@@ -185,9 +183,7 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-#if STRICT
-                    Debug.Fail($"Bad expression token 0x{OpCode:X2}");
-#endif
+                    Services.LibServices.LogService.SilentAssert(false, $"Bad expression token 0x{OpCode:X2}");
                 }
 
                 public override string Decompile()
@@ -201,9 +197,7 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-#if DEBUG_HIDDENTOKENS
-                    Debug.WriteLine("Detected an unresolved token.");
-#endif
+                    Services.LibServices.Debug("Detected an unresolved token.");
                 }
 
                 public override string Decompile()

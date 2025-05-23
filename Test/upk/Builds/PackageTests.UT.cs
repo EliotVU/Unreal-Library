@@ -7,7 +7,7 @@ using UELib.Core;
 using UELib.Engine;
 using static Eliot.UELib.Test.UnrealPackageTests;
 
-namespace Eliot.UELib.Test.UPK.Builds
+namespace Eliot.UELib.Test.Builds
 {
     /// <summary>
     /// Use the UT99 build to test compatibility with UE1.

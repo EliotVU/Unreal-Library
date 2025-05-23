@@ -7,7 +7,7 @@ namespace UELib.Core
     ///     Implements FQuat/UObject.Quat
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct UQuat : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct UQuat : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public float X, Y, Z, W;
 

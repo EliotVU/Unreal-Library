@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using UELib.Annotations;
 using UELib.Branch;
+using UELib.Services;
 using UELib.Types;
 using UELib.UnrealScript;
 
@@ -49,7 +48,6 @@ namespace UELib.Core
         ///     The deserialized and decompiled output.
         ///     Serves as a temporary workaround, don't rely on it.
         /// </summary>
-        [PublicAPI]
         public string Value { get; private set; }
 
         public string Decompile()
@@ -61,10 +59,11 @@ namespace UELib.Core
             {
                 value = DeserializeValue();
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                Console.Error.WriteLine($"Exception thrown: {ex} in {nameof(Decompile)}");
-                value = $"/* ERROR: {ex.GetType()} */";
+                value = $"/* ERROR: {exception.GetType()} */";
+
+                LibServices.LogService.SilentException(exception);
             }
             finally
             {
@@ -73,7 +72,7 @@ namespace UELib.Core
 
             // Array or Inlined object
             if ((_TempFlags & DoNotAppendName) != 0)
-                // The tag handles the name etc on its own.
+            // The tag handles the name etc on its own.
             {
                 return value;
             }
@@ -96,8 +95,7 @@ namespace UELib.Core
                 : $"{expr}={value}";
         }
 
-        [CanBeNull]
-        private T FindProperty<T>(out UStruct outer)
+        private T? FindProperty<T>(out UStruct outer)
             where T : UProperty
         {
             UProperty property = null;
@@ -193,9 +191,9 @@ namespace UELib.Core
 
         private PropertyTypeData _TypeData;
 
-        [CanBeNull] public UName StructName => _TypeData.StructName;
-        [CanBeNull] public UName EnumName => _TypeData.EnumName;
-        [CanBeNull] public UName InnerTypeName => _TypeData.InnerTypeName;
+        public UName? StructName => _TypeData.StructName;
+        public UName? EnumName => _TypeData.EnumName;
+        public UName? InnerTypeName => _TypeData.InnerTypeName;
 
         /// <summary>
         ///     The size in bytes of this tag's value.
@@ -318,7 +316,7 @@ namespace UELib.Core
                 return DeserializeTagUE1();
             }
 #if BATMAN
-            if (_Buffer.Package.Build == BuildGeneration.RSS)
+            if (_Buffer.Package.Build == BuildGeneration.RSS && _Buffer.LicenseeVersion > 21)
             {
                 return DeserializeTagByOffset();
             }
@@ -363,6 +361,7 @@ namespace UELib.Core
 
             Size = DeserializePackedSize((byte)(info & InfoSizeMask));
             Record(nameof(Size), Size);
+            Debug.Assert(Size >= 0);
 
             // TypeData
             switch (Type)
@@ -400,6 +399,7 @@ namespace UELib.Core
 
             Size = _Buffer.ReadInt32();
             Record(nameof(Size), Size);
+            Debug.Assert(Size >= 0);
 
             ArrayIndex = _Buffer.ReadInt32();
             Record(nameof(ArrayIndex), ArrayIndex);
@@ -478,6 +478,7 @@ namespace UELib.Core
 
             Size = _Buffer.ReadInt32();
             Record(nameof(Size), Size);
+            Debug.Assert(Size >= 0);
 
             ArrayIndex = _Buffer.ReadInt32();
             Record(nameof(ArrayIndex), ArrayIndex);
@@ -505,7 +506,7 @@ namespace UELib.Core
                 case PropertyType.ByteProperty:
                     if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag
 #if BATMAN
-                        && _Buffer.Package.Build.Generation != BuildGeneration.RSS
+                        && (_Buffer.Package.Build.Generation != BuildGeneration.RSS || _Buffer.LicenseeVersion <= 21)
 #endif
                        )
                     {
@@ -552,7 +553,6 @@ namespace UELib.Core
         ///     Only call after the whole package has been deserialized!
         /// </summary>
         /// <returns>The deserialized value if any.</returns>
-        [PublicAPI]
         public string DeserializeValue(DeserializeFlags deserializeFlags = DeserializeFlags.None)
         {
             if (_Buffer == null)
@@ -565,7 +565,12 @@ namespace UELib.Core
             }
 
             _Buffer.Seek(_PropertyValuePosition, SeekOrigin.Begin);
-            return TryDeserializeDefaultPropertyValue(Type, ref deserializeFlags);
+            string output = TryDeserializeDefaultPropertyValue(Type, ref deserializeFlags);
+
+            LibServices.LogService.SilentAssert(_Buffer.Position == _PropertyValuePosition + Size,
+                $"PropertyTag value deserialization error for '{Name}: {_Buffer.Position} != {_PropertyValuePosition + Size}");
+
+            return output;
         }
 
         private string TryDeserializeDefaultPropertyValue(PropertyType type, ref DeserializeFlags deserializeFlags)
@@ -574,18 +579,16 @@ namespace UELib.Core
             {
                 return DeserializeDefaultPropertyValue(type, ref deserializeFlags);
             }
-            catch (EndOfStreamException e)
+            catch (EndOfStreamException)
             {
                 // Abort decompilation
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                Console.Error.WriteLine(
-                    $"\r\n> PropertyTag value deserialization error for {_Container.GetPath()}.{Name}" +
-                    $"\r\n Exception: {ex}");
+                LibServices.LogService.SilentException(new DeserializationException($"PropertyTag value deserialization error for '{Name}", exception));
 
-                return $"/* ERROR: {ex.GetType()} */";
+                return $"/* ERROR: {exception.GetType()} */";
             }
         }
 
@@ -709,12 +712,13 @@ namespace UELib.Core
                 case PropertyType.ByteProperty:
                     {
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag
-                            && Size != 1)
+                            && Type == PropertyType.ByteProperty
+                            // Cannot compare size with 1 because this byte value may be part of a struct.
+                            && _Buffer.Position + 1 != _PropertyValuePosition + Size)
                         {
                             string enumTagName = _Buffer.ReadName();
                             Record(nameof(enumTagName), enumTagName);
-                            propertyValue = _Buffer.Version >=
-                                            (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag
+                            propertyValue = _TypeData.EnumName != null
                                 ? $"{_TypeData.EnumName}.{enumTagName}"
                                 : enumTagName;
                         }
@@ -1250,7 +1254,20 @@ namespace UELib.Core
                         propertyValue = PropertyDisplay.FormatLiteral(offset);
                         break;
                     }
+#if BORDERLANDS2 || BATTLEBORN
+                case PropertyType.ByteAttributeProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.ByteProperty, ref deserializeFlags);
 
+                case PropertyType.IntAttributeProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.IntProperty, ref deserializeFlags);
+
+                case PropertyType.FloatAttributeProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.FloatProperty, ref deserializeFlags);
+#endif
+#if BULLETSTORM
+                case PropertyType.CppCopyStructProperty:
+                    return DeserializeDefaultPropertyValue(PropertyType.StructProperty, ref deserializeFlags);
+#endif
                 default:
                     throw new Exception($"Unsupported property tag type {Type}");
             }
@@ -1275,14 +1292,12 @@ namespace UELib.Core
     [ComVisible(false)]
     public sealed class DefaultPropertiesCollection : List<UDefaultProperty>
     {
-        [CanBeNull]
-        public UDefaultProperty Find(string name)
+        public UDefaultProperty? Find(string name)
         {
             return Find(prop => prop.Name == name);
         }
 
-        [CanBeNull]
-        public UDefaultProperty Find(UName name)
+        public UDefaultProperty? Find(UName name)
         {
             return Find(prop => prop.Name == name);
         }

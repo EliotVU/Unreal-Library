@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using UELib.Annotations;
 using UELib.Types;
 using UELib.UnrealScript;
 
@@ -11,7 +10,6 @@ namespace UELib
     [SuppressMessage("ReSharper", "UnassignedField.Global")]
     [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Global")]
     [SuppressMessage("ReSharper", "ConvertToConstant.Global")]
-    [PublicAPI("UE Explorer")]
     public static class UnrealConfig
     {
         #region Config

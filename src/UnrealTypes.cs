@@ -35,6 +35,14 @@
         StringRefProperty,
         BioMask4Property,
 #endif
+#if BORDERLANDS2 || BATTLEBORN
+        ByteAttributeProperty,
+        FloatAttributeProperty,
+        IntAttributeProperty,
+#endif
+#if BULLETSTORM
+        CppCopyStructProperty,
+#endif
 
         InterfaceProperty,  // >= UE3, displaced FixedArrayProperty, actual value 15, but we don't need the value for UE3 types.
         ComponentProperty,	// >= UE3

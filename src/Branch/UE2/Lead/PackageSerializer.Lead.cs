@@ -8,7 +8,6 @@ namespace UELib.Branch.UE2.Lead
         {
             stream.WriteIndex((byte)item.Name.Length);
             stream.Write(Encoding.ASCII.GetBytes(item.Name));
-            stream.Write((byte)0x00);
             stream.Write((uint)item.Flags);
         }
 

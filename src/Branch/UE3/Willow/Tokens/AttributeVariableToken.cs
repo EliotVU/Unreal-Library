@@ -2,11 +2,8 @@
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
-namespace UELib.Branch.UE3.BL2.Tokens
+namespace UELib.Branch.UE3.Willow.Tokens
 {
     [ExprToken(ExprToken.InstanceVariable)]
-    public class BLVariableToken : UStruct.UByteCodeDecompiler.FieldToken
-    {
-
-    }
+    public class AttributeVariableToken : UStruct.UByteCodeDecompiler.FieldToken;
 }

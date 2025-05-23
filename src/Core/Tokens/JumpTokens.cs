@@ -40,8 +40,8 @@ namespace UELib.Core
                     }
 
                     string returnValue = DecompileNext();
-                    return "return" + (returnValue.Length != 0 
-                        ? " " + returnValue 
+                    return "return" + (returnValue.Length != 0
+                        ? " " + returnValue
                         : string.Empty);
                 }
             }
@@ -57,8 +57,8 @@ namespace UELib.Core
                         Decompiler._Nester.TryAddNestEnd(NestManager.Nest.NestType.Switch, Position + Size);
                     }
 
-                    return ReturnValueProperty != null 
-                        ? ReturnValueProperty.Name 
+                    return ReturnValueProperty != null
+                        ? ReturnValueProperty.Name
                         : string.Empty;
                 }
             }
@@ -427,7 +427,7 @@ namespace UELib.Core
                                 int begin = Position;
                                 const NestManager.Nest.NestType type = NestManager.Nest.NestType.If;
                                 Decompiler._Nester.Nests.Add(new NestManager.NestBegin
-                                    { Position = begin, Type = type, Creator = this });
+                                { Position = begin, Type = type, Creator = this });
                                 var nestEnd = new NestManager.NestEnd
                                 {
                                     Position = CodeOffset,
@@ -477,7 +477,8 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    if (stream.Version >= 600)
+                    // Skip Tera (610)
+                    if (stream.Version >= 611)
                     {
                         // Points to the object that was passed to the switch,
                         // beware that the followed token chain contains it as well!
@@ -489,6 +490,9 @@ namespace UELib.Core
                     if ((stream.Version >= 536 && stream.Version <= 587)
 #if DNF
                         || stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF
+#endif
+#if TERA
+                        || stream.Package.Build == UnrealPackage.GameBuild.BuildName.Tera
 #endif
                         )
                     {
@@ -605,7 +609,7 @@ namespace UELib.Core
 
                     WithIndexParam = stream.ReadByte();
                     Decompiler.AlignSize(sizeof(byte));
-                    
+
                     // Index param
                     DeserializeNext();
 
@@ -703,7 +707,7 @@ namespace UELib.Core
             public class SkipToken : Token
             {
                 public ushort Size;
-                
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Size = stream.ReadUInt16();

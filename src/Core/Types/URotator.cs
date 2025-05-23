@@ -6,7 +6,7 @@ namespace UELib.Core
     ///     Implements FRotator/UObject.Rotator
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public struct URotator : IUnrealSerializableClass, IUnrealAtomicStruct
+    public record struct URotator : IUnrealSerializableClass, IUnrealAtomicStruct
     {
         public int Pitch;
         public int Yaw;

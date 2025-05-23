@@ -17,7 +17,8 @@ namespace UELib.Engine
         {
             base.Deserialize();
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedConvexVolumes)
+            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedConvexVolumes &&
+                _Buffer.Version < (uint)PackageObjectLegacyVersion.RemovedConvexVolumes)
             {
                 _Buffer.ReadArray(out InclusionConvexVolumes);
                 Record(nameof(InclusionConvexVolumes), InclusionConvexVolumes);
@@ -44,6 +45,18 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UDominantDirectionalLightComponent : UDirectionalLightComponent
     {
+        public UArray<ushort> DominantLightShadowMap;
+
+        public override void Deserialize(IUnrealStream stream)
+        {
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent)
+            {
+                stream.Read(out DominantLightShadowMap);
+                Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
+            }
+
+            base.Deserialize(stream);
+        }
     }
 
     /// <summary>
@@ -62,6 +75,18 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UDominantSpotLightComponent : UPointLightComponent
     {
+        public UArray<ushort> DominantLightShadowMap;
+
+        public override void Deserialize(IUnrealStream stream)
+        {
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToUDominantSpotLightComponent)
+            {
+                stream.Read(out DominantLightShadowMap);
+                Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
+            }
+
+            base.Deserialize(stream);
+        }
     }
 
     /// <summary>
