@@ -122,18 +122,21 @@ namespace UELib.Core
 
                 if (_Buffer.LicenseeVersion >= 4)
                 {
-                    string v50 = _Buffer.ReadString();
-                    Record(nameof(v50), v50);
+                    // CommentString
+                    EditorDataText = _Buffer.ReadString(); // v50
+                    Record(nameof(EditorDataText), EditorDataText);
                 }
 
                 if (_Buffer.LicenseeVersion >= 11)
                 {
+                    // Usually 0 or 0xAA88FF
                     uint v5c = _Buffer.ReadUInt32();
                     Record(nameof(v5c), v5c);
 
                     uint v60 = _Buffer.ReadUInt32();
                     Record(nameof(v60), v60);
 
+                    // Display name e.g. SpecularMask = Specular
                     string v64 = _Buffer.ReadString();
                     Record(nameof(v64), v64);
                 }
