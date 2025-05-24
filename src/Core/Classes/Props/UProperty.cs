@@ -97,6 +97,56 @@ namespace UELib.Core
                 return;
             }
 #endif
+#if LEAD
+            if (Package.Build == BuildGeneration.Lead)
+            {
+                // 32bit => 16bit
+                ArrayDim = _Buffer.ReadUInt16();
+                Record(nameof(ArrayDim), ArrayDim);
+
+                _Buffer.Read(out PropertyFlags);
+                Record(nameof(PropertyFlags), PropertyFlags);
+
+                if (_Buffer.LicenseeVersion >= 72)
+                {
+                    ushort v34 = _Buffer.ReadUInt16();
+                    Record(nameof(v34), v34);
+                }
+
+                _Buffer.Read(out CategoryName);
+                Record(nameof(CategoryName), CategoryName);
+
+                // not versioned
+                var v4c = _Buffer.ReadNameReference();
+                Record(nameof(v4c), v4c);
+
+                if (_Buffer.LicenseeVersion >= 4)
+                {
+                    string v50 = _Buffer.ReadString();
+                    Record(nameof(v50), v50);
+                }
+
+                if (_Buffer.LicenseeVersion >= 11)
+                {
+                    uint v5c = _Buffer.ReadUInt32();
+                    Record(nameof(v5c), v5c);
+
+                    uint v60 = _Buffer.ReadUInt32();
+                    Record(nameof(v60), v60);
+
+                    string v64 = _Buffer.ReadString();
+                    Record(nameof(v64), v64);
+                }
+
+                if (_Buffer.LicenseeVersion >= 101)
+                {
+                    var v7c = _Buffer.ReadNameReference();
+                    Record(nameof(v7c), v7c);
+                }
+
+                return;
+            }
+#endif
 #if AA2
             if (Package.Build == BuildGeneration.AGP &&
                 _Buffer.LicenseeVersion >= 8)
