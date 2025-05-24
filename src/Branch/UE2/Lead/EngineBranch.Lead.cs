@@ -2,7 +2,7 @@
 {
     public class EngineBranchLead : DefaultEngineBranch
     {
-        public EngineBranchLead(BuildGeneration generation) : base(BuildGeneration.UE2)
+        public EngineBranchLead(BuildGeneration generation) : base(BuildGeneration.Lead)
         {
         }
 
