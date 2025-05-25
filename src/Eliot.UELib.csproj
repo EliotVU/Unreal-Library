@@ -44,6 +44,9 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.5" />
+  </ItemGroup>
   <ItemGroup>
     <Folder Include="Branch\UE3\HMS\" />
     <Folder Include="UnrealModel\Core\Types\" />

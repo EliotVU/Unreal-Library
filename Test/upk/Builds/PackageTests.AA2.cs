@@ -1,6 +1,6 @@
 ﻿#if AA2
-using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using UELib;
 using UELib.Branch.UE2.AA2;
 
 namespace Eliot.UELib.Test.Builds
@@ -19,7 +19,7 @@ namespace Eliot.UELib.Test.Builds
             // "None" when bits are scrambled (As serialized in Core.u).
             var scrambledNone = new byte[] { 0x94, 0x3E, 0xBF, 0xB2 };
             decoder.DecodeRead(0x45, scrambledNone, 0, scrambledNone.Length);
-            string decodedString = Encoding.ASCII.GetString(scrambledNone);
+            string decodedString = UnrealEncoding.ANSI.GetString(scrambledNone);
             Assert.AreEqual("None", decodedString);
 
             var i = (char)decoder.DecryptByte(0x44, 0xDE);
