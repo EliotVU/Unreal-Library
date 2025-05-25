@@ -190,15 +190,11 @@ namespace UELib.Core
                 Record(nameof(v194), v194);
             }
 #endif
-#if SPELLBORN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+#if SPELLBORN || LEAD
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn ||
+                Package.Build == BuildGeneration.Lead)
             {
-                goto skipClassGuid;
-            }
-#endif
-#if LEAD
-            if (Package.Build == BuildGeneration.Lead)
-            {
+                // Deprecated with v139 (in Spellborn and UC2 (UE2X))
                 goto skipClassGuid;
             }
 #endif
@@ -215,6 +211,7 @@ namespace UELib.Core
                 _Buffer.ReadStruct(out ClassGuid);
                 Record(nameof(ClassGuid), ClassGuid);
             }
+        skipClassGuid:
 #if R6
             // No version check
             if (Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
@@ -223,35 +220,6 @@ namespace UELib.Core
                 Record(nameof(v100), v100);
             }
 #endif
-        skipClassGuid:
-
-#if LEAD
-            if (Package.Build == BuildGeneration.Lead)
-            {
-                var unk_0 = _Buffer.ReadIndex();
-                Record(nameof(unk_0), unk_0);
-
-                for (int i = 0; i < unk_0; i++) {
-                    var objIdx = _Buffer.ReadObjectIndex();
-                    var prop1 = _Buffer.ReadUInt32();
-                    var prop2 = _Buffer.ReadUInt32();
-
-                    Record("Lead:Unk_0", objIdx + ":" + prop1.ToString() + ":" + prop2.ToString());
-                }
-
-                ClassGroups = DeserializeGroup("ClassGroups");
-
-                var unk_1 = _Buffer.ReadObjectIndex();
-                var unk_2 = _Buffer.ReadUInt32();
-
-                DeserializeGroup("UnknownGroup");
-
-                DeserializeProperties(_Buffer);
-
-                return;
-            }
-#endif
-
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassDependenciesDeprecated)
             {
                 _Buffer.ReadArray(out ClassDependencies);

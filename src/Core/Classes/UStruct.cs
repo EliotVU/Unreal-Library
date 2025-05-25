@@ -231,10 +231,14 @@ namespace UELib.Core
             }
 #endif
 #if LEAD
+            // Same as SCX
             if (Package.Build == BuildGeneration.Lead)
             {
-                var ObjIndex = _Buffer.ReadIndex();
-                string SomeFStr = _Buffer.ReadString();
+                CppText = _Buffer.ReadObject<UTextBuffer>(); // v34
+                Record(nameof(CppText), CppText);
+
+                string v64 = _Buffer.ReadString();
+                Record(nameof(v64), v64);
             }
 #endif
         serializeByteCode:
