@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.Flags;
@@ -19,8 +20,7 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        public int ArrayDim { get; private set; }
-
+        public int ArrayDim;
         public ushort ElementSize { get; private set; }
 
         public UnrealFlags<PropertyFlag> PropertyFlags;
@@ -33,14 +33,11 @@ namespace UELib.Core
 
         [Obsolete("See CategoryName")] public int CategoryIndex { get; }
 
-        public UEnum? ArrayEnum { get; private set; }
+        public UEnum? ArrayEnum;
 
         public UName? RepNotifyFuncName;
-
         public ushort RepOffset { get; set; }
-
         public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
-
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         /// <summary>
@@ -71,6 +68,33 @@ namespace UELib.Core
 
         protected override void Deserialize()
         {
+#if ADVENT
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                // Serialize FProperty
+
+                ArrayDim = _Buffer.ReadInt32();
+                Record(nameof(ArrayDim), ArrayDim);
+
+                ArrayDim = PropertyFlags >> 16;
+                uint propertyIndex = PropertyFlags & 0x0000FFFFU;
+
+                PropertyFlags = new UnrealFlags<PropertyFlag>(_Buffer.ReadUInt32(), _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+                Record(nameof(PropertyFlags), PropertyFlags);
+
+                CategoryName = _Buffer.ReadNameReference();
+                Record(nameof(CategoryName), CategoryName);
+
+                if (_Buffer.LicenseeVersion < 6 && (PropertyFlags & 0x20) != 0)
+                {
+                    RepOffset = _Buffer.ReadUInt16();
+                    Record(nameof(RepOffset), RepOffset);
+                }
+
+                // Skip base.
+                return;
+            }
+#endif
             base.Deserialize();
 #if SPLINTERCELLX
             if (Package.Build == BuildGeneration.SCX &&
@@ -224,7 +248,7 @@ namespace UELib.Core
                 }
             }
 #endif
-            PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+            PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);    
             Record(nameof(PropertyFlags), PropertyFlags);
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)

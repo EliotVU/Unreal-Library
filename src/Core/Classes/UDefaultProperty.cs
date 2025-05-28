@@ -95,7 +95,7 @@ namespace UELib.Core
                 : $"{expr}={value}";
         }
 
-        private T? FindProperty<T>(out UStruct outer)
+        private T? FindProperty<T>(out UStruct? outer)
             where T : UProperty
         {
             UProperty property = null;
@@ -107,8 +107,7 @@ namespace UELib.Core
                              .EnumerateFields()
                              .OfType<UProperty>())
                 {
-                    // FIXME: UName
-                    if (field.Table.ObjectName != Name)
+                    if (field.Name != Name)
                     {
                         continue;
                     }

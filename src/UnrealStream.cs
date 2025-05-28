@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Decoding;
@@ -191,7 +193,15 @@ namespace UELib
                 Write(index);
                 return;
             }
-
+#if ADVENT
+            // FIXME: Implement a ReadIndex serializer class so we can override this logic.
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                Archive.Version >= 144)
+            {
+                Write(index);
+                return;
+            }
+#endif
             WriteCompactIndex(index);
         }
 
@@ -449,10 +459,22 @@ namespace UELib
 
         /// <summary>Reads an index from the current stream.</summary>
         /// <returns>A 4-byte signed integer read from the current stream.</returns>
-        public int ReadIndex() =>
-            Archive.Version >= (uint)PackageObjectLegacyVersion.CompactIndexDeprecated
-                ? ReadInt32()
-                : ReadCompactIndex();
+        public int ReadIndex()
+        {
+            if (Archive.Version >= (uint)PackageObjectLegacyVersion.CompactIndexDeprecated)
+            {
+                return ReadInt32();
+            }
+#if ADVENT
+            // FIXME: Implement a ReadIndex serializer class so we can override this logic.
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                Archive.Version >= 144)
+            {
+                return ReadInt32();
+            }
+#endif
+            return ReadCompactIndex();
+        }
 
         /// <summary>
         /// Deserializes a <seealso cref="UName"/> from the base stream.

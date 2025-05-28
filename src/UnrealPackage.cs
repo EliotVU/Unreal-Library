@@ -12,6 +12,7 @@ using UELib.Branch;
 using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.DNF;
 using UELib.Branch.UE2.DVS;
+using UELib.Branch.UE2.Eon;
 using UELib.Branch.UE2.Lead;
 using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE2.ShadowStrike;
@@ -387,6 +388,18 @@ namespace UELib
                 /// </summary>
                 [Build(137, 0u, BuildGeneration.UE2_5)]
                 MOV,
+
+                /// <summary>
+                /// Advent Rising
+                /// 
+                /// 146/61447 (HO: GPlatform, LO: Licensee 007)
+                /// </summary>
+                [Build(143, 61447u)]
+                [Build(145, 61447u)]
+                [Build(146, 61447u)]
+                [OverridePackageVersion(0, 7)]
+                [BuildEngineBranch(typeof(EonEngineBranch))]
+                Advent,
 
                 /// <summary>
                 /// Duke Nukem Forever
@@ -925,8 +938,8 @@ namespace UELib
                 var overrideAttribute = buildInfo.GetCustomAttribute<OverridePackageVersionAttribute>(false);
                 if (overrideAttribute != null)
                 {
-                    OverrideVersion = overrideAttribute.FixedVersion;
-                    OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                    if (overrideAttribute.FixedVersion != 0) OverrideVersion = overrideAttribute.FixedVersion;
+                    if (overrideAttribute.FixedLicenseeVersion != 0) OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
                 }
 
                 var engineBranchAttribute = buildInfo.GetCustomAttribute<BuildEngineBranchAttribute>(false);

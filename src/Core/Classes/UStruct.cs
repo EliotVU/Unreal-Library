@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UELib.Branch;
+using UELib.Branch.UE2.Eon;
 using UELib.Core.Tokens;
 using UELib.Flags;
 
@@ -124,12 +126,49 @@ namespace UELib.Core
                 goto serializeByteCode;
             }
 #endif
+#if ADVENT
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                // Preload fields so we can tinker with NextField.
+                for (var field = Children; field != null; field = field.NextField)
+                {
+                    if (field is { DeserializationState: 0 })
+                    {
+                        field.Load();
+                    }
+                }
+
+                var tail = EnumerateFields().LastOrDefault();
+                UProperty? property;
+
+                do
+                {
+                    property = EonEngineBranch.SerializeFProperty<UProperty>(_Buffer);
+                    if (tail == null)
+                    {
+                        Children = property;
+                    }
+                    else
+                    {
+                        tail.NextField = property;
+                    }
+
+                    tail = property;
+                } while (property != null);
+
+                if (_Buffer.Version >= 133)
+                {
+                    goto skipFriendlyName;
+                }
+            }
+#endif
             // Moved to UFunction in UE3
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
             {
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
             }
+        skipFriendlyName:
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
@@ -336,8 +375,7 @@ namespace UELib.Core
             {
                 foreach (var field in super.EnumerateFields<T>())
                 {
-                    // FIXME: UName
-                    if (field.Table.ObjectName == name)
+                    if (field.Name == name)
                     {
                         return field;
                     }

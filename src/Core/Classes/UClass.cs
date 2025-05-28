@@ -190,14 +190,6 @@ namespace UELib.Core
                 Record(nameof(v194), v194);
             }
 #endif
-#if SPELLBORN || LEAD
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn ||
-                Package.Build == BuildGeneration.Lead)
-            {
-                // Deprecated with v139 (in Spellborn and UC2 (UE2X))
-                goto skipClassGuid;
-            }
-#endif
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.ClassGuidDeprecated)
             {
                 if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ClassPlatformFlagsDeprecated)
@@ -208,6 +200,17 @@ namespace UELib.Core
             }
             else
             {
+#if SPELLBORN || LEAD || ADVENT
+                if (
+                    Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn ||
+                    Package.Build == BuildGeneration.Lead ||
+                    (Package.Build == UnrealPackage.GameBuild.BuildName.Advent && _Buffer.Version >= 133)
+                )
+                {
+                    // Deprecated with v139 (in Spellborn and UC2 (UE2X), and Advent Rising (v133))
+                    goto skipClassGuid;
+                }
+#endif
                 _Buffer.ReadStruct(out ClassGuid);
                 Record(nameof(ClassGuid), ClassGuid);
             }
@@ -478,7 +481,7 @@ namespace UELib.Core
                             Record(nameof(NativeClassName), NativeClassName);
                         }
 
-                    skipClassGroups: ;
+                    skipClassGroups:;
 
                         // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
                         // TODO: Corrigate Version

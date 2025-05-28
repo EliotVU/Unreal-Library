@@ -13,7 +13,7 @@ namespace UELib.Core
             _ParentNode = AddSectionNode(node, nameof(UFunction));
 
             var funcFlagsNode = AddTextNode(_ParentNode, $"FunctionFlags:{(ulong)FunctionFlags:X8}");
-            funcFlagsNode.ToolTipText = FunctionFlags.ToString();
+            funcFlagsNode.ToolTipText = FunctionFlags.ToString(Package.Branch.EnumFlagsMap[typeof(FunctionFlag)]);
 
             if (RepOffset > 0)
             {
