@@ -110,6 +110,13 @@ namespace UELib.Core
                 goto skipChildren;
             }
 #endif
+#if SWRepublicCommando
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                Super = _Buffer.ReadObject<UStruct>();
+                Record(nameof(Super), Super);
+            }
+#endif
             if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
@@ -159,6 +166,25 @@ namespace UELib.Core
                 if (_Buffer.Version >= 133)
                 {
                     goto skipFriendlyName;
+                }
+            }
+#endif
+#if SWRepublicCommando
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando && Children != null)
+            {
+                var tail = Children;
+                while (true)
+                {
+                    var nextField = _Buffer.ReadObject<UField?>();
+                    Record(nameof(nextField), nextField);
+
+                    if (nextField == null)
+                    {
+                        break;
+                    }
+
+                    tail.NextField = nextField;
+                    tail = nextField;
                 }
             }
 #endif
@@ -247,9 +273,16 @@ namespace UELib.Core
                 Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
                 Record(nameof(TextPos), TextPos);
-                // Version >= UE3 && Version < 200 (RoboHordes, EndWar, R6Vegas)
-                //var MinAlignment = _Buffer.ReadInt32();
-                //Record(nameof(MinAlignment), MinAlignment);
+            }
+
+            // FIXME: Version >= 130 (According to SWRepublic && Version < 200 (RoboHordes, EndWar, R6Vegas)
+            // Guarded with SWRepublicCommando, because it is the only supported game that has this particular change.
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                _Buffer.Version >= 130 &&
+                _Buffer.Version < 200)
+            {
+                uint minAlignment = _Buffer.ReadUInt32(); // v60
+                Record(nameof(minAlignment), minAlignment);
             }
 #if UNREAL2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
