@@ -60,6 +60,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Advent,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Star Wars - Republic Commando\",
+            BuildName.SWRepublicCommando,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Huxley\",
             BuildName.Huxley,
             BuildPlatform.Undetermined

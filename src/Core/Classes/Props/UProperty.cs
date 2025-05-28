@@ -174,6 +174,25 @@ namespace UELib.Core
                 return;
             }
 #endif
+#if SWRepublicCommando
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                if (_Buffer.Version < 137)
+                {
+                    NextField = _Buffer.ReadObject<UField>();
+                    Record(nameof(NextField), NextField);
+                }
+
+                if (_Buffer.Version >= 136)
+                {
+                    // 32bit => 16bit
+                    ArrayDim = _Buffer.ReadUInt16();
+                    Record(nameof(ArrayDim), ArrayDim);
+
+                    goto skipArrayDim;
+                }
+            }
+#endif
 #if AA2
             if (Package.Build == BuildGeneration.AGP &&
                 _Buffer.LicenseeVersion >= 8)
@@ -248,7 +267,7 @@ namespace UELib.Core
                 }
             }
 #endif
-            PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);    
+            PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
             Record(nameof(PropertyFlags), PropertyFlags);
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)

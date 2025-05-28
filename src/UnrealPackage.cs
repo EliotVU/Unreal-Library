@@ -10,6 +10,7 @@ using System.Text;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
+using UELib.Branch.UE2.CT;
 using UELib.Branch.UE2.DNF;
 using UELib.Branch.UE2.DVS;
 using UELib.Branch.UE2.Eon;
@@ -419,6 +420,20 @@ namespace UELib
                 /// </summary>
                 [Build(159, 29u, BuildGeneration.UE2_5)]
                 Spellborn,
+
+                /// <summary>
+                /// Star Wars: Republic Commando
+                ///
+                /// 159/01
+                /// </summary>
+                [Build(134, 01u, BuildGeneration.UE2)]
+                [Build(138, 01u, BuildGeneration.UE2)]
+                [Build(145, 01u, BuildGeneration.UE2)]
+                [Build(148, 01u, BuildGeneration.UE2)]
+                [Build(154, 01u, BuildGeneration.UE2)]
+                [Build(156, 159, 01u, 01u, BuildGeneration.UE2)]
+                [BuildEngineBranch(typeof(CTEngineBranch))]
+                SWRepublicCommando,
 
                 /// <summary>
                 /// Tom Clancy's Splinter Cell: Chaos Theory - Versus
