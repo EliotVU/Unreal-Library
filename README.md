@@ -132,6 +132,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Bioshock 2 | 2226:Vengeance | 143/059 | |
 | Advent Rising | 2226 | 143-146/007 | |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) |
+| Star Wars: Republic Commando | 2226 | 134-159/001 | |
 | The Chronicles of Spellborn | 3323 | 159/029 | |
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
