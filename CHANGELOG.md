@@ -1,5 +1,10 @@
 #
 
+* Support for Star Wars: Republic Commando
+* Support for Advent Rising
+* Support for Tom Clancy's Splinter Cell: Blacklist (thanks to @shryder)
+* Fixed #111; Use Windows ANSI over ASCII
+
 ## [1.10.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.10.0)
 
 * 4578a9be Support for Huxley (thanks to @EDITzDev)
