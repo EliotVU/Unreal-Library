@@ -179,11 +179,12 @@ namespace UELib.Branch
             // version >= 48
             ObjectFlags[(int)ObjectFlag.HasStack] = (uint)ObjectFlagsLO.HasStack;
 
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.Release62)
-            {
+            // Commented out, seen in X-Com
+            //if (linker.Version >= (uint)PackageObjectLegacyVersion.Release62)
+            //{
                 ObjectFlags[(int)ObjectFlag.Standalone] = (uint)ObjectFlagsLO.Standalone;
                 ObjectFlags[(int)ObjectFlag.Public] = (uint)ObjectFlagsLO.Public;
-            }
+            //}
 
             ObjectFlags[(int)ObjectFlag.LoadForClient] = (uint)ObjectFlagsLO.LoadForClient;
             ObjectFlags[(int)ObjectFlag.LoadForServer] = (uint)ObjectFlagsLO.LoadForServer;

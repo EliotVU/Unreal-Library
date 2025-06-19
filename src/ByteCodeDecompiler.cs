@@ -444,6 +444,11 @@ namespace UELib.Core
                 _CanAddSemicolon = true;
             }
 
+            public void MarkCommentStatement()
+            {
+                _MustCommentStatement = true;
+            }
+
             public string Decompile()
             {
                 // Make sure that everything is deserialized!

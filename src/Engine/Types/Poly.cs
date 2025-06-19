@@ -81,8 +81,14 @@ namespace UELib.Engine
             stream.ReadStruct(out Normal);
             stream.ReadStruct(out TextureU);
             stream.ReadStruct(out TextureV);
-
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.FixedVerticesToArrayFromPoly)
+#if SWRepublicCommando
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                stream.Version >= 139)
+            {
+                goto skipVertices;
+            }
+#endif
+            if (verticesCount == -1)
             {
                 stream.Read(out Vertex);
             }
@@ -91,6 +97,7 @@ namespace UELib.Engine
                 stream.ReadArray(out Vertex, verticesCount);
             }
 
+        skipVertices:
             PolyFlags = stream.ReadUInt32();
             if (stream.Version < 250)
             {
@@ -117,7 +124,7 @@ namespace UELib.Engine
             {
                 PanU = stream.ReadInt16();
                 PanV = stream.ReadInt16();
-                
+
                 // Fix UV
                 var newBase = (Vector3)Base;
                 newBase -= (Vector3)TextureU / ((Vector3)TextureU).LengthSquared() * PanU;

@@ -2,7 +2,7 @@
 {
     public class EngineBranchSCX : DefaultEngineBranch
     {
-        public EngineBranchSCX(BuildGeneration generation) : base(BuildGeneration.UE2)
+        public EngineBranchSCX(BuildGeneration generation) : base(BuildGeneration.SCX)
         {
         }
 

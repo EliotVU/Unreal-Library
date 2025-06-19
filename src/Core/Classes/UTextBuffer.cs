@@ -52,7 +52,7 @@ namespace UELib.Core
                     using var s = new ZLibStream(new MemoryStream(compressedData), CompressionMode.Decompress);
                     s.ReadExactly(uncompressedData, 0, uncompressedDataSize);
 
-                    ScriptText = Encoding.ASCII.GetString(uncompressedData);
+                    ScriptText = UnrealEncoding.ANSI.GetString(uncompressedData);
                     return;
 #endif
                 }

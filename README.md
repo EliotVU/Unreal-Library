@@ -104,6 +104,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Tom Clancy's Splinter Cell | 829 | 100/017 | |
 | Tom Clancy's Splinter Cell: Chaos Theory | 829 | 100/120:SCX, 175/000:ShadowStrike | (PC) demo version, Versus mode not supported |
 | Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX, 275/000:ShadowStrike | (PC) Offline mode version, Online mode not supported |
+| Tom Clancy's Splinter Cell: Blacklist | 829 | 102/116:LEAD | In part thanks to @shryder. Third-party decompression is required |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | |
 | Postal 2: Paradise Lost | 1417 | 118/002 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
@@ -130,7 +131,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Bioshock | 2226:Vengeance | 130-141/056 | |
 | Men of Valor | 926 | 137/000 | PC |
 | Bioshock 2 | 2226:Vengeance | 143/059 | |
+| Advent Rising | 2226 | 143-146/007 | |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) |
+| Star Wars: Republic Commando | 2226 | 134-159/001 | |
 | The Chronicles of Spellborn | 3323 | 159/029 | |
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |

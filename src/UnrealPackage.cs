@@ -10,8 +10,10 @@ using System.Text;
 using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
+using UELib.Branch.UE2.CT;
 using UELib.Branch.UE2.DNF;
 using UELib.Branch.UE2.DVS;
+using UELib.Branch.UE2.Eon;
 using UELib.Branch.UE2.Lead;
 using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE2.ShadowStrike;
@@ -389,6 +391,18 @@ namespace UELib
                 MOV,
 
                 /// <summary>
+                /// Advent Rising
+                /// 
+                /// 146/61447 (HO: GPlatform, LO: Licensee 007)
+                /// </summary>
+                [Build(143, 61447u)]
+                [Build(145, 61447u)]
+                [Build(146, 61447u)]
+                [OverridePackageVersion(0, 7)]
+                [BuildEngineBranch(typeof(EonEngineBranch))]
+                Advent,
+
+                /// <summary>
                 /// Duke Nukem Forever
                 ///
                 /// 156/036
@@ -406,6 +420,20 @@ namespace UELib
                 /// </summary>
                 [Build(159, 29u, BuildGeneration.UE2_5)]
                 Spellborn,
+
+                /// <summary>
+                /// Star Wars: Republic Commando
+                ///
+                /// 159/01
+                /// </summary>
+                [Build(134, 01u, BuildGeneration.UE2)]
+                [Build(138, 01u, BuildGeneration.UE2)]
+                [Build(145, 01u, BuildGeneration.UE2)]
+                [Build(148, 01u, BuildGeneration.UE2)]
+                [Build(154, 01u, BuildGeneration.UE2)]
+                [Build(156, 159, 01u, 01u, BuildGeneration.UE2)]
+                [BuildEngineBranch(typeof(CTEngineBranch))]
+                SWRepublicCommando,
 
                 /// <summary>
                 /// Tom Clancy's Splinter Cell: Chaos Theory - Versus
@@ -925,8 +953,8 @@ namespace UELib
                 var overrideAttribute = buildInfo.GetCustomAttribute<OverridePackageVersionAttribute>(false);
                 if (overrideAttribute != null)
                 {
-                    OverrideVersion = overrideAttribute.FixedVersion;
-                    OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                    if (overrideAttribute.FixedVersion != 0) OverrideVersion = overrideAttribute.FixedVersion;
+                    if (overrideAttribute.FixedLicenseeVersion != 0) OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
                 }
 
                 var engineBranchAttribute = buildInfo.GetCustomAttribute<BuildEngineBranchAttribute>(false);

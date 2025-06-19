@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.Flags;
@@ -19,8 +20,7 @@ namespace UELib.Core
 
         #region Serialized Members
 
-        public int ArrayDim { get; private set; }
-
+        public int ArrayDim;
         public ushort ElementSize { get; private set; }
 
         public UnrealFlags<PropertyFlag> PropertyFlags;
@@ -33,14 +33,11 @@ namespace UELib.Core
 
         [Obsolete("See CategoryName")] public int CategoryIndex { get; }
 
-        public UEnum? ArrayEnum { get; private set; }
+        public UEnum? ArrayEnum;
 
         public UName? RepNotifyFuncName;
-
         public ushort RepOffset { get; set; }
-
         public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
-
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         /// <summary>
@@ -71,6 +68,33 @@ namespace UELib.Core
 
         protected override void Deserialize()
         {
+#if ADVENT
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                // Serialize FProperty
+
+                ArrayDim = _Buffer.ReadInt32();
+                Record(nameof(ArrayDim), ArrayDim);
+
+                ArrayDim = PropertyFlags >> 16;
+                uint propertyIndex = PropertyFlags & 0x0000FFFFU;
+
+                PropertyFlags = new UnrealFlags<PropertyFlag>(_Buffer.ReadUInt32(), _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+                Record(nameof(PropertyFlags), PropertyFlags);
+
+                CategoryName = _Buffer.ReadNameReference();
+                Record(nameof(CategoryName), CategoryName);
+
+                if (_Buffer.LicenseeVersion < 6 && (PropertyFlags & 0x20) != 0)
+                {
+                    RepOffset = _Buffer.ReadUInt16();
+                    Record(nameof(RepOffset), RepOffset);
+                }
+
+                // Skip base.
+                return;
+            }
+#endif
             base.Deserialize();
 #if SPLINTERCELLX
             if (Package.Build == BuildGeneration.SCX &&
@@ -95,6 +119,78 @@ namespace UELib.Core
                 }
 
                 return;
+            }
+#endif
+#if LEAD
+            if (Package.Build == BuildGeneration.Lead)
+            {
+                // 32bit => 16bit
+                ArrayDim = _Buffer.ReadUInt16();
+                Record(nameof(ArrayDim), ArrayDim);
+
+                _Buffer.Read(out PropertyFlags);
+                Record(nameof(PropertyFlags), PropertyFlags);
+
+                if (_Buffer.LicenseeVersion >= 72)
+                {
+                    ushort v34 = _Buffer.ReadUInt16();
+                    Record(nameof(v34), v34);
+                }
+
+                _Buffer.Read(out CategoryName);
+                Record(nameof(CategoryName), CategoryName);
+
+                // not versioned
+                var v4c = _Buffer.ReadNameReference();
+                Record(nameof(v4c), v4c);
+
+                if (_Buffer.LicenseeVersion >= 4)
+                {
+                    // CommentString
+                    EditorDataText = _Buffer.ReadString(); // v50
+                    Record(nameof(EditorDataText), EditorDataText);
+                }
+
+                if (_Buffer.LicenseeVersion >= 11)
+                {
+                    // Usually 0 or 0xAA88FF
+                    uint v5c = _Buffer.ReadUInt32();
+                    Record(nameof(v5c), v5c);
+
+                    uint v60 = _Buffer.ReadUInt32();
+                    Record(nameof(v60), v60);
+
+                    // Display name e.g. SpecularMask = Specular
+                    string v64 = _Buffer.ReadString();
+                    Record(nameof(v64), v64);
+                }
+
+                if (_Buffer.LicenseeVersion >= 101)
+                {
+                    var v7c = _Buffer.ReadNameReference();
+                    Record(nameof(v7c), v7c);
+                }
+
+                return;
+            }
+#endif
+#if SWRepublicCommando
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                if (_Buffer.Version < 137)
+                {
+                    NextField = _Buffer.ReadObject<UField>();
+                    Record(nameof(NextField), NextField);
+                }
+
+                if (_Buffer.Version >= 136)
+                {
+                    // 32bit => 16bit
+                    ArrayDim = _Buffer.ReadUInt16();
+                    Record(nameof(ArrayDim), ArrayDim);
+
+                    goto skipArrayDim;
+                }
             }
 #endif
 #if AA2

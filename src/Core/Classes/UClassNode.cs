@@ -1,6 +1,7 @@
 ﻿#if Forms
 using System.Linq;
 using System.Windows.Forms;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -12,7 +13,7 @@ namespace UELib.Core
             AddSimpleObjectNode(_ParentNode, Within, "Within", Within != null ? Within.GetImageName() : "");
 
             var classFlagsNode = AddTextNode(_ParentNode, $"Class Flags:{(ulong)ClassFlags:X8}");
-            classFlagsNode.ToolTipText = ClassFlags.ToString();
+            classFlagsNode.ToolTipText = ClassFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ClassFlag)]);
 
             base.InitNodes(_ParentNode);
         }

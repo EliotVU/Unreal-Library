@@ -134,6 +134,16 @@ namespace UELib.Core
                 Record(nameof(replicationFlags), replicationFlags);
             }
 #endif
+#if ADVENT
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                _Buffer.Version >= 133)
+            {
+                FriendlyName = _Buffer.ReadNameReference();
+                Record(nameof(FriendlyName), FriendlyName);
+
+                return;
+            }
+#endif
 
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction &&
                 !Package.IsConsoleCooked()
@@ -158,7 +168,7 @@ namespace UELib.Core
             {
                 // HACK: Workaround for packages that have stripped FriendlyName data.
                 // FIXME: Operator names need to be translated.
-                if (FriendlyName == null) FriendlyName = Table.ObjectName;
+                if (FriendlyName == null) FriendlyName = Name;
             }
         }
 

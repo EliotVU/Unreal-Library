@@ -1,3 +1,4 @@
+using UELib.Branch.UE2.Eon;
 using UELib.Types;
 
 namespace UELib.Core
@@ -25,7 +26,13 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-            
+#if ADVENT
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                InnerProperty = EonEngineBranch.SerializeFProperty<UProperty>(_Buffer)!;
+                return;
+            }
+#endif
             InnerProperty = _Buffer.ReadObject<UProperty>();
             Record(nameof(InnerProperty), InnerProperty);
         }
@@ -33,21 +40,20 @@ namespace UELib.Core
         /// <inheritdoc/>
         public override string GetFriendlyType()
         {
-            if (InnerProperty != null)
-            {
-                return $"array<{GetFriendlyInnerType()}>";
-            }
-
-            return "array";
+            return $"array<{GetFriendlyInnerType()}>";
         }
 
         public override string GetFriendlyInnerType()
         {
-            return InnerProperty != null
-                ? (InnerProperty.IsClassType("ClassProperty") || InnerProperty.IsClassType("DelegateProperty"))
-                    ? (" " + InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType() + " ")
-                    : (InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType())
-                : "@NULL";
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (InnerProperty == null)
+            {
+                return "@NULL";
+            }
+
+            return InnerProperty.IsClassType("ClassProperty") || InnerProperty.IsClassType("DelegateProperty")
+                ? $" {InnerProperty.FormatFlags()}{InnerProperty.GetFriendlyType()} "
+                : (InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType());
         }
     }
 }

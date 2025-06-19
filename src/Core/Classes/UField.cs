@@ -27,7 +27,12 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-
+#if SWRepublicCommando
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                return;
+            }
+#endif
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
                 Super = _Buffer.ReadObject<UStruct>();

@@ -5,7 +5,7 @@ namespace UELib.Branch.UE2.ShadowStrike
 {
     public class EngineBranchShadowStrike : DefaultEngineBranch
     {
-        public EngineBranchShadowStrike(BuildGeneration generation) : base(BuildGeneration.UE2)
+        public EngineBranchShadowStrike(BuildGeneration generation) : base(BuildGeneration.ShadowStrike)
         {
         }
 

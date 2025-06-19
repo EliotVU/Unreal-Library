@@ -14,7 +14,7 @@ namespace UELib.Core
         #region Serialized Members
 
         // MetaClass
-        public UClass MetaClass;
+        public UClass? MetaClass;
 
         #endregion
 
@@ -41,10 +41,10 @@ namespace UELib.Core
             {
                 return (string.Compare(MetaClass.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0)
                     ? Object.GetFriendlyType()
-                    : ($"class<{GetFriendlyInnerType()}>");
+                    : ($"Class<{GetFriendlyInnerType()}>");
             }
 
-            return "class";
+            return "Class";
         }
 
         public override string GetFriendlyInnerType()

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UELib.Branch;
+using UELib.Branch.UE2.Eon;
 using UELib.Core.Tokens;
 using UELib.Flags;
 
@@ -108,6 +110,13 @@ namespace UELib.Core
                 goto skipChildren;
             }
 #endif
+#if SWRepublicCommando
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                Super = _Buffer.ReadObject<UStruct>();
+                Record(nameof(Super), Super);
+            }
+#endif
             if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
             {
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
@@ -124,12 +133,68 @@ namespace UELib.Core
                 goto serializeByteCode;
             }
 #endif
+#if ADVENT
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                // Preload fields so we can tinker with NextField.
+                for (var field = Children; field != null; field = field.NextField)
+                {
+                    if (field is { DeserializationState: 0 })
+                    {
+                        field.Load();
+                    }
+                }
+
+                var tail = EnumerateFields().LastOrDefault();
+                UProperty? property;
+
+                do
+                {
+                    property = EonEngineBranch.SerializeFProperty<UProperty>(_Buffer);
+                    if (tail == null)
+                    {
+                        Children = property;
+                    }
+                    else
+                    {
+                        tail.NextField = property;
+                    }
+
+                    tail = property;
+                } while (property != null);
+
+                if (_Buffer.Version >= 133)
+                {
+                    goto skipFriendlyName;
+                }
+            }
+#endif
+#if SWRepublicCommando
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando && Children != null)
+            {
+                var tail = Children;
+                while (true)
+                {
+                    var nextField = _Buffer.ReadObject<UField?>();
+                    Record(nameof(nextField), nextField);
+
+                    if (nextField == null)
+                    {
+                        break;
+                    }
+
+                    tail.NextField = nextField;
+                    tail = nextField;
+                }
+            }
+#endif
             // Moved to UFunction in UE3
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
             {
                 FriendlyName = _Buffer.ReadNameReference();
                 Record(nameof(FriendlyName), FriendlyName);
             }
+        skipFriendlyName:
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
@@ -208,9 +273,16 @@ namespace UELib.Core
                 Record(nameof(Line), Line);
                 TextPos = _Buffer.ReadInt32();
                 Record(nameof(TextPos), TextPos);
-                // Version >= UE3 && Version < 200 (RoboHordes, EndWar, R6Vegas)
-                //var MinAlignment = _Buffer.ReadInt32();
-                //Record(nameof(MinAlignment), MinAlignment);
+            }
+
+            // FIXME: Version >= 130 (According to SWRepublic && Version < 200 (RoboHordes, EndWar, R6Vegas)
+            // Guarded with SWRepublicCommando, because it is the only supported game that has this particular change.
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                _Buffer.Version >= 130 &&
+                _Buffer.Version < 200)
+            {
+                uint minAlignment = _Buffer.ReadUInt32(); // v60
+                Record(nameof(minAlignment), minAlignment);
             }
 #if UNREAL2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
@@ -235,6 +307,17 @@ namespace UELib.Core
             {
                 CppText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(CppText), CppText);
+            }
+#endif
+#if LEAD
+            // Same as SCX
+            if (Package.Build == BuildGeneration.Lead)
+            {
+                CppText = _Buffer.ReadObject<UTextBuffer>(); // v34
+                Record(nameof(CppText), CppText);
+
+                string v64 = _Buffer.ReadString();
+                Record(nameof(v64), v64);
             }
 #endif
         serializeByteCode:
@@ -325,8 +408,7 @@ namespace UELib.Core
             {
                 foreach (var field in super.EnumerateFields<T>())
                 {
-                    // FIXME: UName
-                    if (field.Table.ObjectName == name)
+                    if (field.Name == name)
                     {
                         return field;
                     }

@@ -112,6 +112,16 @@ namespace UELib.Core
                 return;
             }
 #endif
+#if ADVENT
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                _Buffer.Version >= 134)
+            {
+                _Buffer.ReadMap(out FuncMap);
+                Record(nameof(FuncMap), FuncMap);
+
+                return;
+            }
+#endif
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.AddedFuncMapToUState)
             {
                 return;

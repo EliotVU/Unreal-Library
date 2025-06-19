@@ -11,7 +11,7 @@ namespace UELib.Core
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public class UStateFrame : IUnrealSerializableClass
     {
-        public UStruct Node;
+        public UStruct? Node;
         public UState StateNode;
         public ulong ProbeMask;
         public uint LatentAction;
@@ -29,9 +29,19 @@ namespace UELib.Core
                 ? stream.ReadUInt64()
                 : stream.ReadUInt32();
             // version >= 55
-            LatentAction = stream.Version < (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
-                ? stream.ReadUInt32()
-                : stream.ReadUInt16();
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
+#if SWRepublicCommando
+                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                    stream.Version >= 156)
+#endif
+                )
+            {
+                LatentAction = stream.ReadUInt16();
+            }
+            else
+            {
+                LatentAction = stream.ReadUInt32();
+            }
 #if DNF
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                 stream.LicenseeVersion >= 25)
@@ -55,10 +65,19 @@ namespace UELib.Core
                 : (uint)ProbeMask
             );
             // version >= 55
-            stream.Write(stream.Version < (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
-                ? LatentAction
-                : (ushort)LatentAction
-            );
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
+#if SWRepublicCommando
+                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                    stream.Version >= 156)
+#endif
+                )
+            {
+                stream.Write((ushort)LatentAction);
+            }
+            else
+            {
+                stream.Write(LatentAction);
+            }
 #if DNF
             if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                 stream.LicenseeVersion >= 25)

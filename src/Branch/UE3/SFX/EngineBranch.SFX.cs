@@ -8,7 +8,7 @@ namespace UELib.Branch.UE3.SFX
 {
     public class EngineBranchSFX : DefaultEngineBranch
     {
-        public EngineBranchSFX(BuildGeneration generation) : base(generation)
+        public EngineBranchSFX(BuildGeneration generation) : base(BuildGeneration.SFX)
         {
         }
 

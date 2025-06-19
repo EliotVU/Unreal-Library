@@ -1,6 +1,7 @@
 ﻿#if Forms
 using System.Linq;
 using System.Windows.Forms;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -12,7 +13,7 @@ namespace UELib.Core
             if (IsPureStruct())
             {
                 var sFlagsNode = AddTextNode(_ParentNode, $"Struct Flags:{(ulong)StructFlags:X8}");
-                sFlagsNode.ToolTipText = StructFlags.ToString();
+                sFlagsNode.ToolTipText = StructFlags.ToString(Package.Branch.EnumFlagsMap[typeof(StructFlag)]);
             }
 
             AddTextNode(_ParentNode, $"Script Size:{DataScriptSize}");

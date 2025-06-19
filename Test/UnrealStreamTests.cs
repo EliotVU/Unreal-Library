@@ -171,7 +171,7 @@ namespace Eliot.UELib.Test
             // Skip past the signature
             writer.Seek(sizeof(int), SeekOrigin.Begin);
 
-            byte[] rawData = Encoding.ASCII.GetBytes("LET'S PRETEND THAT THIS IS BULK DATA!");
+            byte[] rawData = UnrealEncoding.ANSI.GetBytes("LET'S PRETEND THAT THIS IS BULK DATA!");
             var bulkData = new UBulkData<byte>(0, rawData);
 
             long bulkPosition = ((IUnrealStream)stream).Position;

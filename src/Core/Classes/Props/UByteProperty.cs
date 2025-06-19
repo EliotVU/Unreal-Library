@@ -10,7 +10,7 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UEnum Enum;
+        public UEnum? Enum;
 
         #endregion
 

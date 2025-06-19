@@ -423,6 +423,8 @@ namespace UELib.Core
 
         public virtual void Deserialize(IUnrealStream stream)
         {
+            // Temp hack for backwards compatibility.
+            _Buffer = (UObjectStream)stream;
             Deserialize();
         }
 
