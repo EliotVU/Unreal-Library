@@ -13,11 +13,11 @@ namespace Eliot.UELib.Benchmark
         public UnrealPackageBenchmark()
         {
             var stream =
-                new UPackageStream(
+                new FileStream(
                     Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Samples", "TestUC3.u"),
                     FileMode.Open, FileAccess.Read);
             _Linker = new UnrealPackage(stream);
-            _Linker.Deserialize(stream);
+            _Linker.Deserialize();
 
             _Linker.BinaryMetaData?.Fields.Clear();
         }

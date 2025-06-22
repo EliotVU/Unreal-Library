@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using UELib.Annotations;
 using UELib.Branch;
+using UELib.IO;
 using UELib.Services;
 using UELib.Types;
 using UELib.UnrealScript;

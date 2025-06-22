@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using UELib.Core;
 using UELib.Core.Tokens;
+using UELib.IO;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
 namespace UELib.Branch.UE2.AA2
@@ -227,6 +228,21 @@ namespace UELib.Branch.UE2.AA2
             return base.BuildTokenMap(linker);
         }
 
+        public override void PostSerializePackage(UnrealPackage linker, IUnrealStream stream)
+        {
+            base.PostSerializePackage(linker, stream);
+
+            if (stream.LicenseeVersion < 19) return;
+
+            // IsEncrypted: false
+            stream.Write(false);
+
+            if (stream.LicenseeVersion < 33)
+            {
+                // Stuff here that I couldn't decipher, see below
+            }
+        }
+
         public override void PostDeserializeSummary(UnrealPackage linker,
             IUnrealStream stream,
             ref PackageFileSummary summary)
@@ -237,19 +253,20 @@ namespace UELib.Branch.UE2.AA2
             // But we'll preserve this nonetheless
             if (stream.LicenseeVersion < 19) return;
 
-            bool isEncrypted = stream.ReadInt32() > 0;
+            stream.Read(out bool isEncrypted);
             if (isEncrypted)
             {
-                // TODO: Use a stream wrapper instead; but this is blocked by an overly intertwined use of PackageStream.
                 if (stream.LicenseeVersion >= 33)
                 {
                     var decoder = new CryptoDecoderAA2();
-                    stream.Decoder = decoder;
+                    linker.Archive.Decoder = decoder;
+                    linker.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
                 }
                 else
                 {
                     var decoder = new CryptoDecoderWithKeyAA2();
-                    stream.Decoder = decoder;
+                    linker.Archive.Decoder = decoder;
+                    linker.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
 
                     long nonePosition = summary.NameOffset;
                     stream.Seek(nonePosition, SeekOrigin.Begin);
@@ -261,23 +278,26 @@ namespace UELib.Branch.UE2.AA2
                 }
             }
 
-            // Always one
-            //int unkCount = stream.ReadInt32();
-            //for (var i = 0; i < unkCount; i++)
-            //{
-            //    // All zero
-            //    stream.Skip(24);
-            //    // Always identical to the package's GUID
-            //    var guid = stream.ReadGuid();
-            //}
+            if (stream.LicenseeVersion < 33)
+            {
+                // Always one
+                //int unkCount = stream.ReadInt32();
+                //for (var i = 0; i < unkCount; i++)
+                //{
+                //    // All zero
+                //    stream.Skip(24);
+                //    // Always identical to the package's GUID
+                //    var guid = stream.ReadGuid();
+                //}
 
-            //// Always one
-            //int unk2Count = stream.ReadInt32();
-            //for (var i = 0; i < unk2Count; i++)
-            //{
-            //    // All zero
-            //    stream.Skip(12);
-            //}
+                //// Always one
+                //int unk2Count = stream.ReadInt32();
+                //for (var i = 0; i < unk2Count; i++)
+                //{
+                //    // All zero
+                //    stream.Skip(12);
+                //}
+            }
         }
     }
 }

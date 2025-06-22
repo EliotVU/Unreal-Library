@@ -32,6 +32,7 @@ using UELib.Core;
 using UELib.Decoding;
 using UELib.Flags;
 using UELib.Services;
+using UELib.IO;
 
 namespace UELib
 {
@@ -80,7 +81,7 @@ namespace UELib
     }
 
     /// <summary>
-    /// Represents data of a loaded unreal package.
+    /// An Unreal package i.e. a file ending in .upk, .u, or others like .utx, .uax, and .ut2 etc.
     /// </summary>
     public sealed partial class UnrealPackage : IDisposable, IBinaryData
     {
@@ -89,8 +90,18 @@ namespace UELib
 
         public readonly UPackage RootPackage;
 
-        // Reference to the stream used when reading this package
-        public UPackageStream Stream;
+        public UnrealPackageStream Stream
+        {
+            get { return Archive.Stream; }
+            set => Archive.Stream = value;
+        }
+
+        /// <summary>
+        /// A package archive to represent the package version and active stream.
+        ///
+        /// This helps make it easier to re-wrap a package stream and keep track of it.
+        /// </summary>
+        public readonly UnrealPackageArchive Archive;
 
         /// <summary>
         /// The full name of this package including directory.
@@ -100,6 +111,8 @@ namespace UELib
         public string FullPackageName => _FullPackageName;
         public string PackageName => Path.GetFileNameWithoutExtension(_FullPackageName);
         public string PackageDirectory => Path.GetDirectoryName(_FullPackageName)!;
+
+        public static readonly UnrealPackage TransientPackage = new("Transient");
 
         public BinaryMetaData BinaryMetaData { get; } = new();
 
@@ -2439,7 +2452,7 @@ namespace UELib
         /// <summary>
         /// Whether the package was serialized in BigEndian encoding.
         /// </summary>
-        public bool IsBigEndianEncoded { get; }
+        [Obsolete] public bool IsBigEndianEncoded { get; }
 
         [Obsolete] public const int VSIZEPREFIXDEPRECATED = 64;
 
@@ -2531,7 +2544,7 @@ namespace UELib
 
         public NativesTablePackage NTLPackage;
 
-        [Obsolete("See UPackageStream.Decoder", true)]
+        [Obsolete("Replaced with an encoded stream", true)]
         public IBufferDecoder Decoder;
 
         #endregion
@@ -2556,10 +2569,10 @@ namespace UELib
         [Obsolete]
         public static UnrealPackage DeserializePackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
         {
-            var stream = new UPackageStream(packagePath, FileMode.Open, fileAccess);
-            var pkg = new UnrealPackage(stream);
-            pkg.Deserialize(stream);
-            return pkg;
+            var fileStream = new FileStream(packagePath, FileMode.Open, fileAccess);
+            var archive = new UnrealPackageArchive(fileStream, packagePath);
+            archive.Package.Deserialize();
+            return archive.Package;
         }
 
         private UPackage GetRootPackage(string filePath)
@@ -2570,20 +2583,62 @@ namespace UELib
         }
 
         /// <summary>
-        /// Creates a new instance of the UELib.UnrealPackage class with a PackageStream and name.
+        /// Constructs a dummy package, the stream has to be initialized manually.
         /// </summary>
-        /// <param name="stream">A loaded UELib.PackageStream.</param>
+        /// <param name="fileName">the filename used to create the root package.</param>
+        public UnrealPackage(string fileName = "Transient")
+        {
+            Archive = new UnrealPackageArchive(this);
+
+            _FullPackageName = fileName;
+            RootPackage = GetRootPackage(fileName);
+        }
+
+        public UnrealPackage(UnrealPackageArchive archive, string fileName)
+        {
+            Archive = archive;
+
+            _FullPackageName = fileName;
+            RootPackage = GetRootPackage(fileName);
+        }
+
+        public UnrealPackage(Stream stream, string fileName = "Transient")
+        {
+            Archive = new UnrealPackageArchive(this);
+
+            _FullPackageName = fileName;
+            RootPackage = GetRootPackage(fileName);
+
+            if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
+            {
+                Archive.Flags |= UnrealArchiveFlags.BigEndian;
+                IsBigEndianEncoded = true;
+            }
+
+            var packageStream = stream as UnrealPackageStream ?? new UnrealPackageStream(Archive, stream);
+            Archive.Stream = packageStream;
+        }
+
+        public UnrealPackage(FileStream stream) : this(stream, stream.Name)
+        {
+        }
+
+        [Obsolete("Use an UnrealPackageStream or a FileStream")]
         public UnrealPackage(UPackageStream stream)
         {
+            Archive = new UnrealPackageArchive(this);
+
             _FullPackageName = stream.Name;
-            Stream = stream;
-            Stream.PostInit(this);
-
-            // File Type
-            // Signature is tested in UPackageStream
             RootPackage = GetRootPackage(_FullPackageName);
-            IsBigEndianEncoded = stream.BigEndianCode;
 
+            if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
+            {
+                Archive.Flags |= UnrealArchiveFlags.BigEndian;
+                IsBigEndianEncoded = true;
+            }
+
+            var packageStream = new UnrealPackageStream(Archive, stream);
+            Archive.Stream = packageStream;
         }
 
         /// <summary>
@@ -3783,7 +3838,7 @@ namespace UELib
         {
             byte[] buff = new byte[Summary.HeaderSize];
             Stream.Seek(0, SeekOrigin.Begin);
-            Stream.EndianAgnosticRead(buff, 0, Summary.HeaderSize);
+            Stream.Read(buff, 0, Summary.HeaderSize);
 
             return buff;
         }

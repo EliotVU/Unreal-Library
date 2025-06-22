@@ -23,11 +23,10 @@ namespace UELib.Core
         internal int            Index => _NameItem.Index;
         public int              Length => Text.Length;
 
-        [Obsolete]
+        [Obsolete("Deprecated", true)]
         public UName(IUnrealStream stream)
         {
-            int index = stream.ReadNameIndex(out _Number);
-            _NameItem = stream.Package.Names[index];
+            throw new NotSupportedException();
         }
 
         public UName(UNameTableItem nameItem, int number = Numeric)

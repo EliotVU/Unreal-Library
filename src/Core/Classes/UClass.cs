@@ -241,7 +241,7 @@ namespace UELib.Core
                 Within = _Buffer.ReadObject<UClass>();
                 Record(nameof(Within), Within);
 
-                ConfigName = _Buffer.ReadNameReference();
+                ConfigName = _Buffer.ReadName();
                 Record(nameof(ConfigName), ConfigName);
 #if DNF
                 if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
@@ -441,7 +441,7 @@ namespace UELib.Core
 #if DISHONORED
                         if (Package.Build == UnrealPackage.GameBuild.BuildName.Dishonored)
                         {
-                            var unknownName = _Buffer.ReadNameReference();
+                            var unknownName = _Buffer.ReadName();
                             Record("Unknown:Dishonored", unknownName);
                         }
 #endif
@@ -535,7 +535,7 @@ namespace UELib.Core
                     if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature &&
                         _Buffer.UE4Version < 117)
                     {
-                        DLLBindName = _Buffer.ReadNameReference();
+                        DLLBindName = _Buffer.ReadName();
                         Record(nameof(DLLBindName), DLLBindName);
                     }
 #if MASS_EFFECT
@@ -557,7 +557,7 @@ namespace UELib.Core
 #if REMEMBERME
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
                     {
-                        var unknownName = _Buffer.ReadNameReference();
+                        var unknownName = _Buffer.ReadName();
                         Record("Unknown:RememberMe", unknownName);
                     }
 #endif
@@ -724,7 +724,7 @@ namespace UELib.Core
             var groupList = new List<int>(count);
             for (var i = 0; i < count; ++i)
             {
-                int index = _Buffer.ReadNameIndex();
+                int index = (int)_Buffer.ReadName();
                 groupList.Add(index);
 
                 Record($"{groupName}({Package.GetIndexName(index)})", index);

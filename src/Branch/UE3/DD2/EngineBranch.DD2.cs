@@ -10,8 +10,8 @@
         public override void PostDeserializePackage(UnrealPackage linker, IUnrealStream stream)
         {
             base.PostDeserializePackage(linker, stream);
-            int position = stream.Package.Summary.HeaderSize;
-            var exports = stream.Package.Exports;
+            int position = linker.Summary.HeaderSize;
+            var exports = linker.Exports;
             foreach (var exp in exports)
             {
                 // Just in-case.
