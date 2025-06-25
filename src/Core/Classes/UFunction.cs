@@ -7,21 +7,27 @@ using UELib.Flags;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal function.
+    ///     Implements UFunction/Core.Function
     /// </summary>
     [UnrealRegisterClass]
     public partial class UFunction : UStruct, IUnrealNetObject
     {
         #region Serialized Members
 
-        public ushort NativeToken { get; private set; }
+        public ushort NativeToken { get; set; }
 
-        public byte OperPrecedence { get; private set; }
+        public byte OperPrecedence { get; set; }
 
         /// <summary>
         /// The function flags.
         /// </summary>
-        public UnrealFlags<FunctionFlag> FunctionFlags;
+        public UnrealFlags<FunctionFlag> FunctionFlags
+        {
+            get => _FunctionFlags;
+            set => _FunctionFlags = value;
+        }
+
+        private UnrealFlags<FunctionFlag> _FunctionFlags;
 
         public ushort RepOffset { get; set; }
 
@@ -33,10 +39,10 @@ namespace UELib.Core
 
         #region Script Members
 
-        [Obsolete]
+        [Obsolete("Use EnumerateFields")]
         public IEnumerable<UProperty> Params => EnumerateFields<UProperty>().Where(prop => prop.IsParm());
 
-        public UProperty ReturnProperty => EnumerateFields<UProperty>()
+        public UProperty? ReturnProperty => EnumerateFields<UProperty>()
             .FirstOrDefault(prop => prop.PropertyFlags.HasFlag(PropertyFlag.ReturnParm));
 
         #endregion
@@ -58,7 +64,7 @@ namespace UELib.Core
 #if UE4
             if (_Buffer.UE4Version > 0)
             {
-                _Buffer.Read(out FunctionFlags);
+                _Buffer.Read(out _FunctionFlags);
                 Record(nameof(FunctionFlags), FunctionFlags);
                 if (FunctionFlags.HasFlag(FunctionFlag.Net))
                 {
@@ -103,7 +109,7 @@ namespace UELib.Core
                 goto skipFunctionFlags;
             }
 #endif
-            _Buffer.Read(out FunctionFlags);
+            _Buffer.Read(out _FunctionFlags);
 #if ROCKETLEAGUE
             // Disassembled code shows two calls to ByteOrderSerialize, might be a different variable not sure.
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
@@ -138,7 +144,7 @@ namespace UELib.Core
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
                 _Buffer.Version >= 133)
             {
-                FriendlyName = _Buffer.ReadNameReference();
+                FriendlyName = _Buffer.ReadName();
                 Record(nameof(FriendlyName), FriendlyName);
 
                 return;
@@ -161,7 +167,7 @@ namespace UELib.Core
 #endif
                )
             {
-                FriendlyName = _Buffer.ReadNameReference();
+                FriendlyName = _Buffer.ReadName();
                 Record(nameof(FriendlyName), FriendlyName);
             }
             else

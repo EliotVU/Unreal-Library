@@ -3,7 +3,7 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Bool Property
+    ///     Implements UBoolProperty/Core.BoolProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UBoolProperty : UProperty

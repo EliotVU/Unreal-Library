@@ -18,7 +18,7 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UClass MetaClass;
+        public UClass MetaClass { get; set; }
 
         #endregion
 

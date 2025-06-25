@@ -579,7 +579,7 @@ public static class UnrealStreamImplementations
         array = new UArray<UName>(c);
         for (int i = 0; i < c; ++i)
         {
-            var element = stream.ReadNameReference();
+            var element = stream.ReadName();
             array.Add(element);
         }
     }
@@ -736,7 +736,7 @@ public static class UnrealStreamImplementations
     public static void Read(this IUnrealStream stream, out string value) => value = stream.UR.ReadString();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Read(this IUnrealStream stream, out UName value) => value = ReadNameReference(stream);
+    public static void Read(this IUnrealStream stream, out UName value) => value = stream.ReadName();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Read<T>(this IUnrealStream stream, out UArray<T> array)

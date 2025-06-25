@@ -1,7 +1,7 @@
 ﻿namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal const.
+    ///     Implements UEnum/Core.Enum
     /// </summary>
     [UnrealRegisterClass]
     public partial class UConst : UField
@@ -9,7 +9,7 @@
         #region Serialized Members
 
         /// <summary>
-        /// Constant Value
+        /// The literal value of this const.
         /// </summary>
         public string Value { get; set; }
 

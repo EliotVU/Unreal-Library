@@ -137,7 +137,7 @@ public class PackageSerializerUE4 : IPackageSerializer
         }
 
         item.OuterIndex = stream.ReadInt32();
-        item.ObjectName = stream.ReadNameReference();
+        item.ObjectName = stream.ReadName();
 
         if (stream.UE4Version < 142)
         {

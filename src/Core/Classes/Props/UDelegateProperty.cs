@@ -4,17 +4,16 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Delegate Property
-    ///
-    /// UE2+
+    ///     Implements UDelegateProperty/Core.DelegateProperty
     /// </summary>
     [UnrealRegisterClass]
+    [BuildGenerationRange(BuildGeneration.UE2, BuildGeneration.UE4)]
     public class UDelegateProperty : UProperty
     {
         #region Serialized Members
 
-        public UFunction Function;
-        public UFunction Delegate;
+        public UFunction Function { get; set; }
+        public UFunction Delegate { get; set; }
 
         #endregion
 
@@ -32,6 +31,7 @@ namespace UELib.Core
 
             Function = _Buffer.ReadObject<UFunction>();
             Record(nameof(Function), Function);
+            
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.AddedDelegateSourceToUDelegateProperty)
             {
                 return;
@@ -39,7 +39,7 @@ namespace UELib.Core
 
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ChangedDelegateSourceFromNameToObject)
             {
-                var source = _Buffer.ReadNameReference();
+                var source = _Buffer.ReadName();
                 Record(nameof(source), source);
             }
             else

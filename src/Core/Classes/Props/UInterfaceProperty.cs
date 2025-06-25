@@ -1,18 +1,18 @@
+using UELib.Branch;
 using UELib.Types;
 
 namespace UELib.Core
 {
     /// <summary>
-    /// Interface Property
-    ///
-    /// UE3 Only
+    ///     Implements UInterfaceProperty/Core.InterfaceProperty
     /// </summary>
     [UnrealRegisterClass]
+    [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
     public class UInterfaceProperty : UProperty
     {
         #region Serialized Members
 
-        public UClass InterfaceClass;
+        public UClass InterfaceClass { get; set; }
 
         #endregion
 
@@ -34,7 +34,7 @@ namespace UELib.Core
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                 _Buffer.LicenseeVersion >= 32)
             {
-                var vd0 = _Buffer.ReadNameReference();
+                var vd0 = _Buffer.ReadName();
                 Record(nameof(vd0), vd0);
             }
 #endif

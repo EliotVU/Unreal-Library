@@ -22,7 +22,7 @@ namespace UELib
             set => _ClassIndex = value;
         }
 
-        public UObjectTableItem? Class => Owner.IndexToObjectResource(ClassIndex);
+        public UObjectTableItem? Class => Package.IndexToObjectResource(ClassIndex);
 
         private UPackageIndex _SuperIndex;
 
@@ -32,7 +32,7 @@ namespace UELib
             set => _SuperIndex = value;
         }
 
-        public UObjectTableItem? Super => Owner.IndexToObjectResource(_SuperIndex);
+        public UObjectTableItem? Super => Package.IndexToObjectResource(_SuperIndex);
 
         private UPackageIndex _TemplateIndex;
 
@@ -43,7 +43,7 @@ namespace UELib
             set => _TemplateIndex = value;
         }
 
-        [BuildGeneration(BuildGeneration.UE4)] public UObjectTableItem? Template => Owner.IndexToObjectResource(_TemplateIndex);
+        [BuildGeneration(BuildGeneration.UE4)] public UObjectTableItem? Template => Package.IndexToObjectResource(_TemplateIndex);
 
         private UPackageIndex _ArchetypeIndex;
 
@@ -55,7 +55,7 @@ namespace UELib
         }
 
         [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
-        public UObjectTableItem? Archetype => Owner.IndexToObjectResource(_ArchetypeIndex);
+        public UObjectTableItem? Archetype => Package.IndexToObjectResource(_ArchetypeIndex);
 
         /// <summary>
         /// The object flags <see cref="ObjectFlagsLO"/>
@@ -348,7 +348,7 @@ namespace UELib
                 stream.Skip(sizeof(int));
             }
 #endif
-            _ObjectName = stream.ReadNameReference();
+            _ObjectName = stream.ReadName();
             if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
             {
                 _ArchetypeIndex = stream.ReadInt32();
@@ -535,14 +535,14 @@ namespace UELib
         [Obsolete] public const int VObjectFlagsToULONG = 195;
 
         [Obsolete("Use Class"), Browsable(false)]
-        public UObjectTableItem ClassTable => Owner.IndexToObjectResource(_ClassIndex);
+        public UObjectTableItem ClassTable => Package.IndexToObjectResource(_ClassIndex);
 
         [Obsolete] protected override int __ClassIndex => _ClassIndex;
 
         [Obsolete] protected override string __ClassName => Class?.ObjectName ?? "Class";
 
         [Obsolete("Use Super"), Browsable(false)]
-        public UObjectTableItem SuperTable => Owner.IndexToObjectResource(_SuperIndex);
+        public UObjectTableItem SuperTable => Package.IndexToObjectResource(_SuperIndex);
 
         [Obsolete("Use Super?.ObjectName"), Browsable(false)]
         public string SuperName
@@ -555,7 +555,7 @@ namespace UELib
         }
 
         [Obsolete("Use Archetype"), Browsable(false)]
-        public UObjectTableItem ArchetypeTable => Owner.IndexToObjectResource(_ArchetypeIndex);
+        public UObjectTableItem ArchetypeTable => Package.IndexToObjectResource(_ArchetypeIndex);
 
         [Obsolete("Use Archetype?.ObjectName"), Browsable(false)]
         public string ArchetypeName
@@ -581,8 +581,8 @@ namespace UELib
         [Obsolete]
         public void WriteObjectFlags()
         {
-            Owner.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);
-            Owner.Stream.Write((uint)ObjectFlags);
+            Package.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);
+            Package.Stream.Write((uint)ObjectFlags);
         }
     }
 }

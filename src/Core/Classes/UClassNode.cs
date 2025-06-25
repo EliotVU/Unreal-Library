@@ -10,7 +10,7 @@ namespace UELib.Core
         protected override void InitNodes(TreeNode node)
         {
             _ParentNode = AddSectionNode(node, nameof(UClass));
-            AddSimpleObjectNode(_ParentNode, Within, "Within", Within != null ? Within.GetImageName() : "");
+            AddSimpleObjectNode(_ParentNode, ClassWithin, "Within", ClassWithin != null ? ClassWithin.GetImageName() : "");
 
             var classFlagsNode = AddTextNode(_ParentNode, $"Class Flags:{(ulong)ClassFlags:X8}");
             classFlagsNode.ToolTipText = ClassFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ClassFlag)]);

@@ -33,8 +33,12 @@ namespace UELib.Core
         // UnrealProperty
         public UObject/*USoundNode*/ FirstNode;
 
+        #region Serialized Members
+
         // Serialized
-        public UMap<UObject/*USoundNode*/, NodeEditorData> EditorData;
+        public UMap<UObject/*USoundNode*/, NodeEditorData>? EditorData { get; set; }
+
+        #endregion
 
         public USoundCue()
         {

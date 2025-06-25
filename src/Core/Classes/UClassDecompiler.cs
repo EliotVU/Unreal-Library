@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UELib.Annotations;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -116,20 +117,14 @@ namespace UELib.Core
 
             if (IsClassWithin())
             {
-                output += $" within {Within.Name}";
+                output += $" within {ClassWithin.Name}";
             }
-#if VENGEANCE
-            if (Package.Build == BuildGeneration.Vengeance)
-            {
-                if (Vengeance_Implements != null && Vengeance_Implements.Any())
-                    output += $" implements {string.Join(", ", Vengeance_Implements.Select(i => i.Name))}";
-            }
-#endif
+
             string rules = FormatFlags().Replace("\t", UnrealConfig.Indention);
             return output + (string.IsNullOrEmpty(rules) ? ";" : rules);
         }
 
-        private string FormatNameGroup(string groupName, IList<int> enumerableList)
+        private string FormatNameGroup(string groupName, [CanBeNull] List<UName> enumerableList)
         {
             var output = string.Empty;
             if (enumerableList != null && enumerableList.Any())
@@ -137,9 +132,9 @@ namespace UELib.Core
                 output += "\r\n\t" + groupName + "(";
                 try
                 {
-                    foreach (int index in enumerableList)
+                    foreach (var name in enumerableList)
                     {
-                        output += Package.Names[index].Name + ",";
+                        output += name + ",";
                     }
 
                     output = output.TrimEnd(',') + ")";
@@ -153,7 +148,7 @@ namespace UELib.Core
             return output;
         }
 
-        private string FormatObjectGroup(string groupName, IList<int> enumerableList)
+        private string FormatObjectGroup(string groupName, [CanBeNull] List<UObject> enumerableList)
         {
             var output = string.Empty;
             if (enumerableList != null && enumerableList.Any())
@@ -161,9 +156,9 @@ namespace UELib.Core
                 output += "\r\n\t" + groupName + "(";
                 try
                 {
-                    foreach (int index in enumerableList)
+                    foreach (var obj in enumerableList)
                     {
-                        output += Package.GetIndexObjectName(index) + ",";
+                        output += obj.Name + ",";
                     }
 
                     output = output.TrimEnd(',') + ")";
@@ -203,9 +198,9 @@ namespace UELib.Core
             if (ObjectFlags.HasFlag(ObjectFlag.Native))
             {
                 output += "\r\n\t" + FormatNative();
-                if (NativeClassName.Length != 0)
+                if (NativeHeaderName.Length != 0)
                 {
-                    output += $"({NativeClassName})";
+                    output += $"({NativeHeaderName})";
                 }
             }
 
@@ -222,7 +217,7 @@ namespace UELib.Core
             // BTClient.Menu.uc has Config(ClientBtimes) and this flag is not true???
             if ((ClassFlags & (uint)Flags.ClassFlags.Config) != 0)
             {
-                string inner = ConfigName;
+                string inner = ClassConfigName;
                 if (string.Compare(inner, "None", StringComparison.OrdinalIgnoreCase) == 0
                     || string.Compare(inner, "System", StringComparison.OrdinalIgnoreCase) == 0)
                 {
@@ -451,7 +446,15 @@ namespace UELib.Core
             output += FormatNameGroup("classgroup", ClassGroups);
             output += FormatNameGroup("autoexpandcategories", AutoExpandCategories);
             output += FormatNameGroup("autocollapsecategories", AutoCollapseCategories);
-            output += FormatObjectGroup("implements", ImplementedInterfaces);
+#if VENGEANCE
+            if (Package.Build == BuildGeneration.Vengeance)
+            {
+                if (ImplementedInterfaces != null && ImplementedInterfaces.Any())
+                    output += $" implements {string.Join(", ", ImplementedInterfaces.Select(i => i.InterfaceClass.Name))}";
+            }
+            else
+#endif
+                output += FormatObjectGroup("implements", ImplementedInterfaces.Select(UObject (scriptInterface) => scriptInterface.InterfaceClass).ToList());
 
             return output + ";\r\n";
         }
@@ -460,7 +463,7 @@ namespace UELib.Core
 
         public string FormatReplication()
         {
-            if (DataScriptSize <= 0)
+            if (ScriptSize == 0)
             {
                 return string.Empty;
             }

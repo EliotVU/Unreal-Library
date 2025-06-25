@@ -74,7 +74,7 @@ namespace UELib.Core
             return Index ^ _Number;
         }
 
-        public static bool operator ==(UName a, UName b)
+        public static bool operator ==(UName? a, UName? b)
         {
             if (b is null)
             {

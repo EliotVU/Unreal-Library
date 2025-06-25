@@ -16,12 +16,16 @@ namespace UELib.Core
         public float Pitch = 1.0f;
         public float Duration;
 
+        // Serialized//UnrealProperty
+
         public UArray<int> ChannelOffsets;
         public UArray<int> ChannelSizes;
         public int ChannelCount;
 
         public UName AudioFileCacheName;
         public UGuid AudioFileCacheGuid;
+
+        #region Serialized Members
 
         // Serialized
         public UName FileType;
@@ -65,6 +69,8 @@ namespace UELib.Core
         /// Null if version &lt; <see cref="PackageObjectLegacyVersion.AddedFlashSoundData"/>
         /// </summary>
         public UBulkData<byte> CompressedFlashData;
+
+        #endregion
 
         public IEnumerable<string> ExportableExtensions => new List<string> { FileType };
 

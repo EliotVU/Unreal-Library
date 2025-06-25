@@ -4,14 +4,14 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Dynamic Array Property
+    ///     Implements UArrayProperty/Core.ArrayProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UArrayProperty : UProperty
     {
         #region Serialized Members
 
-        public UProperty InnerProperty;
+        public UProperty InnerProperty { get; set; }
 
         #endregion
 
@@ -51,9 +51,9 @@ namespace UELib.Core
                 return "@NULL";
             }
 
-            return InnerProperty.IsClassType("ClassProperty") || InnerProperty.IsClassType("DelegateProperty")
+            return InnerProperty.Type == PropertyType.ClassProperty || InnerProperty.Type == PropertyType.DelegateProperty
                 ? $" {InnerProperty.FormatFlags()}{InnerProperty.GetFriendlyType()} "
-                : (InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType());
+                : InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType();
         }
     }
 }

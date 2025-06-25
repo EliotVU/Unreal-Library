@@ -1,17 +1,20 @@
+using UELib.Branch;
 using UELib.Types;
 
 namespace UELib.Core
 {
     /// <summary>
-    /// Pointer Property
+    ///     Implements UPointerProperty/Core.PointerProperty
     ///
-    /// UE2 Only (UStructProperty in UE3)
+    ///     Exclusive to UE2(and UE1 OldUnreal), replaced by a UStructProperty with UE3.
     /// </summary>
     [UnrealRegisterClass]
+    [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2)]
     public class UPointerProperty : UProperty
     {
 #if DNF
-        public UName PointerType;
+        [Build(UnrealPackage.GameBuild.BuildName.DNF)]
+        public UName PointerType { get; set; }
 #endif
 
         /// <summary>
@@ -29,7 +32,7 @@ namespace UELib.Core
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                PointerType = _Buffer.ReadNameReference();
+                PointerType = _Buffer.ReadName();
             }
 #endif
         }

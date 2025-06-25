@@ -327,7 +327,7 @@ namespace UELib.Core
         /// <returns>True if this is the last tag.</returns>
         private bool DeserializeTagUE1()
         {
-            Name = _Buffer.ReadNameReference();
+            Name = _Buffer.ReadName();
             Record(nameof(Name), Name);
             if (Name.IsNone())
             {
@@ -386,7 +386,7 @@ namespace UELib.Core
         /// <returns>True if this is the last tag.</returns>
         private bool DeserializeTagUE3()
         {
-            Name = _Buffer.ReadNameReference();
+            Name = _Buffer.ReadName();
             Record(nameof(Name), Name);
             if (Name.IsNone())
             {
@@ -473,7 +473,7 @@ namespace UELib.Core
                 }
             }
 
-            Name = _Buffer.ReadNameReference();
+            Name = _Buffer.ReadName();
             Record(nameof(Name), Name);
 
             Size = _Buffer.ReadInt32();
@@ -638,7 +638,7 @@ namespace UELib.Core
 
                 case PropertyType.NameProperty:
                     {
-                        var value = _Buffer.ReadNameReference();
+                        var value = _Buffer.ReadName();
                         Record(nameof(value), value);
                         propertyValue = $"\"{value}\"";
                         break;
@@ -646,7 +646,7 @@ namespace UELib.Core
 #if GIGANTIC
                 case PropertyType.JsonRefProperty:
                     {
-                        var jsonObjectName = _Buffer.ReadNameReference();
+                        var jsonObjectName = _Buffer.ReadName();
                         var jsonObject = _Buffer.ReadObject<UObject>();
 
                         if (jsonObject == null)

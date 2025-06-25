@@ -127,7 +127,7 @@ namespace UELib.Core
                         return ReadNameNoNumber(stream);
                     }
 #endif
-                    var name = stream.ReadNameReference();
+                    var name = stream.ReadName();
                     Decompiler.AlignNameSize();
                     return name;
                 }

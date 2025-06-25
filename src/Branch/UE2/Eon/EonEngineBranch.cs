@@ -55,7 +55,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         property.Package = stream.Package;
 
         // FProperty serialization
-        var propertyName = stream.ReadNameReference();
+        var propertyName = stream.ReadName();
         stream.Record(nameof(propertyName), propertyName);
         property.Name = propertyName;
 

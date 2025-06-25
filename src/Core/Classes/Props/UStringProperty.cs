@@ -3,14 +3,14 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Fixed String
-    ///
-    /// UE1 Only
+    ///     Implements UStringProperty/Core.StringProperty
+    ///     
+    ///     A fixed-length string property that is used to store strings in Unreal Engine 1.
     /// </summary>
     [UnrealRegisterClass]
     public class UStringProperty : UProperty
     {
-        public int Size;
+        public int Size { get; set; }
 
         /// <summary>
         /// Creates a new instance of the UELib.Core.UStringProperty class.

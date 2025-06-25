@@ -3,7 +3,7 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Float Property
+    ///     Implements UFloatProperty/Core.FloatProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UFloatProperty : UProperty

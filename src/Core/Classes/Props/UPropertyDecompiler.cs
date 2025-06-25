@@ -48,7 +48,7 @@ namespace UELib.Core
 
         private string FormatSize()
         {
-            if (!_IsArray)
+            if (!IsArray)
             {
                 return string.Empty;
             }

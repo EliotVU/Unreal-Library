@@ -17,19 +17,24 @@ namespace UELib.Engine
 
         public int BrushPoly = -1;
 
-        [DefaultValue(null)] [Output("Item", OutputSlot.Parameter)]
+        [DefaultValue(null)]
+        [Output("Item", OutputSlot.Parameter)]
         public UName ItemName;
 
-        [DefaultValue(null)] [Output("Texture")]
+        [DefaultValue(null)]
+        [Output("Texture")]
         public UObject Material;
 
-        [DefaultValue(3584u)] [Output("Flags", OutputSlot.Parameter)]
+        [DefaultValue(3584u)]
+        [Output("Flags", OutputSlot.Parameter)]
         public uint PolyFlags = 3584u;
 
-        [DefaultValue(-1)] [Output(OutputSlot.Parameter)]
+        [DefaultValue(-1)]
+        [Output(OutputSlot.Parameter)]
         public int Link = -1;
 
-        [DefaultValue(32.0f)] [Output(OutputSlot.Parameter)]
+        [DefaultValue(32.0f)]
+        [Output(OutputSlot.Parameter)]
         public float ShadowMapScale = 32.0f;
 
         //[Output(OutputSlot.Parameter)] 
@@ -41,8 +46,8 @@ namespace UELib.Engine
         [Output(OutputFlags.ShorthandProperty)]
         public UVector Normal;
 
-        [DefaultValue(0)] [Output("U")] public short PanU;
-        [DefaultValue(0)] [Output("V")] public short PanV;
+        [DefaultValue(0)][Output("U")] public short PanU;
+        [DefaultValue(0)][Output("V")] public short PanV;
 
         [Output(OutputFlags.ShorthandProperty)]
         public UVector TextureU;
@@ -110,7 +115,7 @@ namespace UELib.Engine
                 Material = stream.ReadObject<UObject>();
             }
 
-            ItemName = stream.ReadNameReference();
+            ItemName = stream.ReadName();
             // The fact this is serialized after ItemName indicates we may have had both (A texture and material) at one point.
             if (stream.Version >= (uint)PackageObjectLegacyVersion.MaterialAddedToPoly)
             {

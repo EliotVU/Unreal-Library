@@ -1,7 +1,7 @@
 ﻿namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal enum.
+    ///     Implements UEnum/Core.Enum
     /// </summary>
     [UnrealRegisterClass]
     public partial class UEnum : UField
@@ -9,9 +9,15 @@
         #region Serialized Members
 
         /// <summary>
-        /// Names of each element in the UEnum.
+        ///     Enum tags (or members) of this enum.
         /// </summary>
-        public UArray<UName> Names;
+        public UArray<UName> Names
+        {
+            get => _Names;
+            set => _Names = value;
+        }
+
+        private UArray<UName> _Names;
 
         #endregion
 
@@ -21,7 +27,7 @@
         {
             base.Deserialize();
 
-            _Buffer.ReadArray(out Names);
+            _Buffer.ReadArray(out _Names);
             Record(nameof(Names), Names);
 #if SPELLBORN
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn

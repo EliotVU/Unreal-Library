@@ -12,7 +12,7 @@ namespace UELib.Core
     }
 
     /// <summary>
-    /// Represents a unreal state.
+    ///     Implements UState/Core.State
     /// </summary>
     [UnrealRegisterClass]
     public partial class UState : UStruct
@@ -24,37 +24,43 @@ namespace UELib.Core
         /// <summary>
         /// Mask of current functions being probed by this class.
         /// </summary>
-        public ulong ProbeMask;
+        public ulong ProbeMask { get; set; }
 
         /// <summary>
         /// Mask of current functions being ignored by the present state node.
         /// </summary>
-        public ulong IgnoreMask;
+        public ulong IgnoreMask { get; set; }
 
         /// <summary>
         /// Offset into the ScriptStack where the FLabelEntry persist.
         /// </summary>
-        public ushort LabelTableOffset;
+        public ushort LabelTableOffset { get; private set; }
 
         /// <summary>
         /// The state flags.
         /// </summary>
-        public UnrealFlags<StateFlag> StateFlags;
+        public UnrealFlags<StateFlag> StateFlags { get; set; }
 
         /// <summary>
         /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.AddedFuncMapToUState"/>
         /// </summary>
-        public UMap<UName, UFunction> FuncMap;
+        public UMap<UName, UFunction> FuncMap
+        {
+            get => _FuncMap;
+            set => _FuncMap = value;
+        }
+
+        private UMap<UName, UFunction> _FuncMap;
 
         #endregion
 
         #region Script Members
 
-        [Obsolete]
+        [Obsolete("Use EnumerateFields")]
         public IEnumerable<UFunction> Functions => EnumerateFields<UFunction>();
 
         #endregion
-        
+
         protected override void Deserialize()
         {
             base.Deserialize();
@@ -116,7 +122,7 @@ namespace UELib.Core
             if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
                 _Buffer.Version >= 134)
             {
-                _Buffer.ReadMap(out FuncMap);
+                _Buffer.ReadMap(out _FuncMap);
                 Record(nameof(FuncMap), FuncMap);
 
                 return;
@@ -127,7 +133,7 @@ namespace UELib.Core
                 return;
             }
 
-            _Buffer.ReadMap(out FuncMap);
+            _Buffer.ReadMap(out _FuncMap);
             Record(nameof(FuncMap), FuncMap);
         }
 

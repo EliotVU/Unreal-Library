@@ -1,13 +1,13 @@
-﻿using UELib.Types;
+﻿using UELib.Branch;
+using UELib.Types;
 
 namespace UELib.Core
 {
     /// <summary>
     /// Component Property
-    ///
-    /// UE3 Only
     /// </summary>
     [UnrealRegisterClass]
+    [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
     public class UComponentProperty : UObjectProperty
     {
         /// <summary>

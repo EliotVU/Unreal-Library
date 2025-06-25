@@ -14,15 +14,21 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UName FileType;
+        public UName FileType { get; set; }
 
         /// <summary>
         /// The likely hood that this sound will be selected from an array of sounds, see "USoundGroup".
         /// Null if not serialized.
         /// </summary>
-        public float? Likelihood;
+        public float? Likelihood { get; set; }
 
-        public UBulkData<byte> RawData;
+        public UBulkData<byte> RawData
+        {
+            get => _RawData;
+            set => _RawData = value;
+        }
+
+        private UBulkData<byte> _RawData;
 
         #endregion
 
@@ -38,7 +44,7 @@ namespace UELib.Core
             return Package.Stream != null && RawData.StorageSize > 0;
         }
 
-        public void SerializeExport(string desiredExportExtension, System.IO.Stream exportStream)
+        public void SerializeExport(string desiredExportExtension, Stream exportStream)
         {
             var stream = Package.Stream;
             RawData.LoadData(stream);
@@ -117,7 +123,7 @@ namespace UELib.Core
                 }
             }
 #endif
-            FileType = _Buffer.ReadNameReference();
+            FileType = _Buffer.ReadName();
             Record(nameof(FileType), FileType);
 #if R6
             if (Package.Build == UnrealPackage.GameBuild.BuildName.R6RS)
@@ -237,7 +243,7 @@ namespace UELib.Core
             }
 #endif
             // Resource Interchange File Format
-            _Buffer.Read(out RawData);
+            _Buffer.Read(out _RawData);
             Record(nameof(RawData), RawData);
 #if UNDYING
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying)

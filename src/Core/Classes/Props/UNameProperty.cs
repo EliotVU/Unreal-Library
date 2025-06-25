@@ -3,7 +3,7 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Name Property
+    ///     Implements UNameProperty/Core.NameProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UNameProperty : UProperty

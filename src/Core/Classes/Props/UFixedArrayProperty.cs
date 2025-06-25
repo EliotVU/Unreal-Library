@@ -3,15 +3,15 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Fixed Array Property
+    ///     Implements UFixedArrayProperty/Core.FixedArrayProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UFixedArrayProperty : UProperty
     {
         #region Serialized Members
 
-        public UProperty InnerProperty;
-        public int Count;
+        public UProperty InnerProperty { get; set; }
+        public int Count { get; set; }
 
         #endregion
 
@@ -20,8 +20,8 @@ namespace UELib.Core
         /// </summary>
         public UFixedArrayProperty()
         {
-            Count = 0;
             Type = PropertyType.FixedArrayProperty;
+            Count = 0;
         }
 
         protected override void Deserialize()

@@ -4,9 +4,7 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Class Property
-    ///
-    /// var class'Actor' ActorClass;
+    ///     Implements UClassProperty/Core.ClassProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UClassProperty : UObjectProperty
@@ -14,7 +12,7 @@ namespace UELib.Core
         #region Serialized Members
 
         // MetaClass
-        public UClass? MetaClass;
+        public UClass? MetaClass { get; set; }
 
         #endregion
 

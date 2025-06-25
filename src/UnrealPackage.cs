@@ -3114,7 +3114,7 @@ namespace UELib
             Imports = new List<UImportTableItem>(Summary.ImportCount);
             for (var i = 0; i < Summary.ImportCount; ++i)
             {
-                var imp = new UImportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
+                var imp = new UImportTableItem { Offset = (int)stream.Position, Index = i, Package = this };
                 serializer.Deserialize(stream, imp);
                 imp.Size = (int)(stream.Position - imp.Offset);
                 Imports.Add(imp);
@@ -3153,7 +3153,7 @@ namespace UELib
             Exports = new List<UExportTableItem>(Summary.ExportCount);
             for (var i = 0; i < Summary.ExportCount; ++i)
             {
-                var exp = new UExportTableItem { Offset = (int)stream.Position, Index = i, Owner = this };
+                var exp = new UExportTableItem { Offset = (int)stream.Position, Index = i, Package = this };
                 serializer.Deserialize(stream, exp);
                 exp.Size = (int)(stream.Position - exp.Offset);
                 Exports.Add(exp);
@@ -3490,7 +3490,7 @@ namespace UELib
             obj.PackageIndex = -(import.Index + 1);
             obj.Table = import;
             obj.Class = null; // FindObject<UClass> ?? StaticClass
-            obj.Outer = IndexToObject(import.OuterIndex); // ?? ClassPackage
+            obj.Outer = IndexToObject<UObject?>(import.OuterIndex); // ?? ClassPackage
             import.Object = obj;
 
             AddToObjects(obj);
@@ -3504,18 +3504,19 @@ namespace UELib
             Debug.Assert(export.Object == null);
 
             var objName = export.ObjectName;
-            var objSuper = IndexToObject<UStruct>(export.SuperIndex);
+            var objSuper = IndexToObject<UStruct?>(export.SuperIndex);
 
-            var objOuter = IndexToObject<UObject>(export.OuterIndex);
+            var objOuter = IndexToObject<UObject?>(export.OuterIndex);
             if (objOuter == null && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
             {
-                var pkg = FindObject<UPackage>(objName) ?? CreateObject<UPackage>(objName);
+                var pkg = FindObject<UPackage?>(objName) ?? CreateObject<UPackage>(objName);
                 export.Object = pkg;
 
                 return pkg;
             }
 
-            var objClass = IndexToObject<UClass>(export.ClassIndex);
+            var objClass = IndexToObject<UClass?>(export.ClassIndex);
+            var objArchetype = IndexToObject<UObject?>(export.ArchetypeIndex);
 
             var internalClassType = GetClassType(objClass?.Name ?? "Class");
             if (objClass != null && internalClassType == typeof(UnknownObject) && (int)objClass > 0)
@@ -3536,6 +3537,7 @@ namespace UELib
             obj.Table = export;
             obj.Class = objClass; // ?? StaticClass
             obj.Outer = objOuter ?? RootPackage;
+            obj.Archetype = objArchetype;
 
             if (obj is UStruct uStruct)
             {

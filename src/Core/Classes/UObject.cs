@@ -5,7 +5,6 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.IO;
@@ -15,8 +14,9 @@ using UELib.Services;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents the Unreal class Core.UObject.
-    /// Instances of this class are deserialized from the exports table entries.
+    ///     Implements UObject/Core.Object
+    /// 
+    ///     Instances of this class are deserialized from the exports table entries.
     /// </summary>
     [UnrealRegisterClass]
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
@@ -71,56 +71,50 @@ namespace UELib.Core
         /// <summary>
         /// The object archetype.
         /// </summary>
-        public UObject? Archetype => ExportTable != null
-            ? Package.IndexToObject(ExportTable.ArchetypeIndex)
-            : null;
-
-        [Obsolete("Displaced by PackageIndex")]
-        private int _ObjectIndex => PackageIndex;
+        public UObject? Archetype { get; set; }
 
         #region Serialized Members
-
-        protected UObjectStream _Buffer;
-
-        public UObjectStream? Buffer => _Buffer;
 
         /// <summary>
         /// Serialized if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/> or UE4Version is equal or greater than 196
         /// </summary>
-        public int NetIndex = -1;
+        public int NetIndex
+        {
+            get => _NetIndex;
+            set => _NetIndex = value;
+        }
+        
+        private int _NetIndex = -1;
 
+        /// <summary>
+        /// Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
+        /// </summary>
+        public UStateFrame? StateFrame
+        {
+            get => _StateFrame;
+            set => _StateFrame = value;
+        }
+        
+        private UStateFrame? _StateFrame;
+
+        [BuildGeneration(BuildGeneration.UE4)]
+        public UGuid ObjectGuid
+        {
+            get => _ObjectGuid;
+            set => _ObjectGuid = value;
+        }
+        
+        private UGuid _ObjectGuid;
+
+        #endregion
+        
         public UObject? Default { get; protected set; }
 
         /// <summary>
         /// Object Properties e.g. SubObjects or/and DefaultProperties
         /// </summary>
         public DefaultPropertiesCollection Properties { get; protected set; }
-
-        /// <summary>
-        /// Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
-        /// </summary>
-        public UStateFrame? StateFrame;
-
-        [BuildGeneration(BuildGeneration.UE4)]
-        public UGuid ObjectGuid;
-
-        #endregion
-
-        [Flags]
-        public enum ObjectState : byte
-        {
-            [Obsolete("Use Deserialized")]
-            Deserialied = Deserialized,
-
-            Deserialized = 0x01,
-            Errorlized = 0x02,
-            Deserializing = 0x04
-        }
-
-        public ObjectState DeserializationState;
-        public Exception? ThrownException;
-        public long ExceptionPosition;
-
+        
         public UObject()
         {
 
@@ -146,6 +140,24 @@ namespace UELib.Core
 
         #region Constructors
 
+        public UObjectStream? Buffer => _Buffer;
+        protected UObjectStream _Buffer;
+
+        [Flags]
+        public enum ObjectState : byte
+        {
+            [Obsolete("Use Deserialized")]
+            Deserialied = Deserialized,
+
+            Deserialized = 0x01,
+            Errorlized = 0x02,
+            Deserializing = 0x04
+        }
+
+        public ObjectState DeserializationState;
+        public Exception? ThrownException;
+        public long ExceptionPosition;
+        
         [Obsolete("Use Load<UObjectRecordStream>() instead.")]
         public void BeginDeserializing()
         {
@@ -259,7 +271,7 @@ namespace UELib.Core
                     Deserialize(stream);
                 }
 
-                LibServices.LogService.SilentAssert(_Buffer.Position == _Buffer.Length, $"Trailing data for object {GetReferencePath()}");
+                LibServices.LogService.SilentAssert(stream.Position == stream.Length, $"Trailing data for object {GetReferencePath()}");
             }
             catch (Exception exception)
             {
@@ -371,7 +383,7 @@ namespace UELib.Core
                 return;
             }
 #endif
-            stream.Read(out NetIndex);
+            stream.Read(out _NetIndex);
             stream.Record(nameof(NetIndex), NetIndex);
         }
 
@@ -420,9 +432,7 @@ namespace UELib.Core
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Deserialize this object's structure from the _Buffer stream.
-        /// </summary>
+        [Obsolete("Use Deserialize(IUnrealStream) instead.")]
         protected virtual void Deserialize()
         {
 #if VENGEANCE
@@ -443,7 +453,7 @@ namespace UELib.Core
             // This appears to be serialized for templates of classes like AmbientSoundNonLoop
             if (ObjectFlags.HasFlag(ObjectFlag.HasStack))
             {
-                _Buffer.ReadClass(out StateFrame);
+                _Buffer.ReadClass(out _StateFrame);
                 _Buffer.Record(nameof(StateFrame), StateFrame);
             }
 
@@ -522,7 +532,7 @@ namespace UELib.Core
 
                 if (shouldSerializeGuid)
                 {
-                    _Buffer.ReadStruct(out ObjectGuid);
+                    _Buffer.ReadStruct(out _ObjectGuid);
                     _Buffer.Record(nameof(ObjectGuid), ObjectGuid);
                 }
             }
@@ -619,6 +629,10 @@ namespace UELib.Core
             }
         }
 
+        /// <summary>
+        /// Builds a full path string of the object and its class.
+        /// </summary>
+        /// <returns>Full path of object e.g. "Struct'Core.Object.Vector'"</returns>
         public string GetReferencePath()
         {
             if (ImportTable != null)
@@ -631,32 +645,19 @@ namespace UELib.Core
                 : $"Class'{GetPath()}'";
         }
 
-        /// <summary>
-        /// Gets the name of this object instance class.
-        /// </summary>
-        /// <returns>The class name of this object instance.</returns>
-        [Obsolete("To be deprecated")]
+        [Obsolete("Use Class?.Name ?? \"Class\"")]
         public string GetClassName()
         {
-            return ImportTable != null
-                ? ImportTable.ClassName
-                : Class?.Name ?? "Class";
+            return ImportTable?.ClassName ?? (Class?.Name ?? "Class");
         }
 
-        /// <summary>
-        /// Use this over 'typeof' to support UELib modifications such as replacing classes with the 'RegisterClass' function.
-        /// </summary>
-        /// <param name="className">The class name to compare to.</param>
-        /// <returns>TRUE if this object instance class name is equal className, FALSE otherwise.</returns>
+        [Obsolete("Use Class?.Name ?? \"Class\"")]
         public bool IsClassType(string className)
         {
             return string.Compare(GetClassName(), className, StringComparison.OrdinalIgnoreCase) == 0;
         }
 
-        /// <summary>
-        /// Macro for getting a object instance by index.
-        /// </summary>
-        [Obsolete("To be deprecated", true)]
+        [Obsolete("Use Package.IndexToObject", true)]
         protected UObject GetIndexObject(int index)
         {
             return Package.IndexToObject(index);
@@ -689,7 +690,7 @@ namespace UELib.Core
 
         public IUnrealStream GetBuffer()
         {
-            return Package?.Stream;
+            return Package.Stream;
         }
 
         public int GetBufferPosition()
@@ -716,17 +717,6 @@ namespace UELib.Core
         internal void Record(string varName, object varObject = null)
         {
             _Buffer.Record(varName, varObject);
-        }
-
-        [Obsolete]
-        protected void AssertEOS(int size, string testSubject = "")
-        {
-            if (size > _Buffer.Length - _Buffer.Position)
-            {
-                throw new DeserializationException(Name + ": Allocation past end of stream detected! Size:" + size +
-                                                   " Subject:" + testSubject);
-            }
-            //System.Diagnostics.Debug.Assert( size <= (_Buffer.Length - _Buffer.Position), Name + ": Allocation past end of stream detected! " + size );
         }
 
         public int CompareTo(object obj)

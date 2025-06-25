@@ -32,10 +32,10 @@ public class EonPackageSerializer : PackageSerializerBase
             return;
         }
 
-        item.ClassPackageName = stream.ReadNameReference();
-        item.ClassName = stream.ReadNameReference();
+        item.ClassPackageName = stream.ReadName();
+        item.ClassName = stream.ReadName();
         item.OuterIndex = stream.ReadInt16();
-        item.ObjectName = stream.ReadNameReference();
+        item.ObjectName = stream.ReadName();
     }
 
     public override void Serialize(IUnrealStream stream, UExportTableItem item)
@@ -76,7 +76,7 @@ public class EonPackageSerializer : PackageSerializerBase
         item.SuperIndex = (short)stream.ReadIndex();
         item.OuterIndex = stream.ReadInt16();
 
-        item.ObjectName = stream.ReadNameReference();
+        item.ObjectName = stream.ReadName();
         item.ObjectFlags = stream.ReadUInt32();
 
         item.SerialSize = stream.ReadIndex();

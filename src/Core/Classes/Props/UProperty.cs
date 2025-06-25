@@ -8,37 +8,45 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal property.
+    ///     Implements UProperty/Core.Property
     /// </summary>
     public partial class UProperty : UField, IUnrealNetObject
     {
-        #region PreInitialized Members
-
         public PropertyType Type { get; protected set; }
-
-        #endregion
 
         #region Serialized Members
 
-        public int ArrayDim;
-        public ushort ElementSize { get; private set; }
+        public int ArrayDim { get; set; }
 
-        public UnrealFlags<PropertyFlag> PropertyFlags;
+        public UnrealFlags<PropertyFlag> PropertyFlags
+        {
+            get => _PropertyFlags;
+            set => _PropertyFlags = value;
+        }
 
+        private UnrealFlags<PropertyFlag> _PropertyFlags;
 #if XCOM2
-        public UName? ConfigName;
+        [Build(UnrealPackage.GameBuild.BuildName.XCOM2WotC)]
+        public UName? ConfigName { get; set; }
 #endif
+        public UName? CategoryName
+        {
+            get => _CategoryName;
+            set => _CategoryName = value;
+        }
 
-        public UName? CategoryName;
+        private UName? _CategoryName;
 
-        [Obsolete("See CategoryName")] public int CategoryIndex { get; }
+        [Obsolete("See CategoryName", true)] public int CategoryIndex { get; }
 
-        public UEnum? ArrayEnum;
+        [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
+        public UEnum? ArrayEnum { get; set; }
 
-        public UName? RepNotifyFuncName;
+        [BuildGeneration(BuildGeneration.UE4)]
+        [Build(UnrealPackage.GameBuild.BuildName.DNF)]
+        public UName? RepNotifyFuncName { get; set; }
+
         public ushort RepOffset { get; set; }
-        public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
-        public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         /// <summary>
         /// Stored meta-data in the "option" format (i.e. WebAdmin, and commandline options), used to assist developers in the editor.
@@ -46,15 +54,15 @@ namespace UELib.Core
         /// 
         /// An original terminating \" character is serialized as a \n character, the string will also end with a newline character.
         /// </summary>
-        public string? EditorDataText;
+        public string? EditorDataText { get; set; }
 
         #endregion
 
-        #region General Members
+        private bool IsArray => ArrayDim > 1;
 
-        private bool _IsArray => ArrayDim > 1;
-
-        #endregion
+        public ushort ElementSize => (ushort)(ArrayDim >> 16);
+        public bool RepReliable => HasPropertyFlag(PropertyFlag.Net);
+        public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         #region Constructors
 
@@ -82,7 +90,7 @@ namespace UELib.Core
                 PropertyFlags = new UnrealFlags<PropertyFlag>(_Buffer.ReadUInt32(), _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
                 Record(nameof(PropertyFlags), PropertyFlags);
 
-                CategoryName = _Buffer.ReadNameReference();
+                CategoryName = _Buffer.ReadName();
                 Record(nameof(CategoryName), CategoryName);
 
                 if (_Buffer.LicenseeVersion < 6 && (PropertyFlags & 0x20) != 0)
@@ -104,10 +112,10 @@ namespace UELib.Core
                 ArrayDim = _Buffer.ReadUInt16();
                 Record(nameof(ArrayDim), ArrayDim);
 
-                _Buffer.Read(out PropertyFlags);
+                _Buffer.Read(out _PropertyFlags);
                 Record(nameof(PropertyFlags), PropertyFlags);
 
-                _Buffer.Read(out CategoryName);
+                _Buffer.Read(out _CategoryName);
                 Record(nameof(CategoryName), CategoryName);
 
                 // FIXME: Unknown version, attested without a version check since SC3 and SC4.
@@ -128,7 +136,7 @@ namespace UELib.Core
                 ArrayDim = _Buffer.ReadUInt16();
                 Record(nameof(ArrayDim), ArrayDim);
 
-                _Buffer.Read(out PropertyFlags);
+                _Buffer.Read(out _PropertyFlags);
                 Record(nameof(PropertyFlags), PropertyFlags);
 
                 if (_Buffer.LicenseeVersion >= 72)
@@ -137,11 +145,11 @@ namespace UELib.Core
                     Record(nameof(v34), v34);
                 }
 
-                _Buffer.Read(out CategoryName);
+                _Buffer.Read(out _CategoryName);
                 Record(nameof(CategoryName), CategoryName);
 
                 // not versioned
-                var v4c = _Buffer.ReadNameReference();
+                var v4c = _Buffer.ReadName();
                 Record(nameof(v4c), v4c);
 
                 if (_Buffer.LicenseeVersion >= 4)
@@ -167,7 +175,7 @@ namespace UELib.Core
 
                 if (_Buffer.LicenseeVersion >= 101)
                 {
-                    var v7c = _Buffer.ReadNameReference();
+                    var v7c = _Buffer.ReadName();
                     Record(nameof(v7c), v7c);
                 }
 
@@ -216,7 +224,6 @@ namespace UELib.Core
 #endif
             ArrayDim = _Buffer.ReadInt32();
             Record(nameof(ArrayDim), ArrayDim);
-            ElementSize = (ushort)(ArrayDim >> 16);
         skipArrayDim:
             // Just to verify if this is in use at all.
             //Debug.Assert(ElementSize == 0, $"ElementSize: {ElementSize}");
@@ -272,7 +279,7 @@ namespace UELib.Core
 #if XCOM2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {
-                ConfigName = _Buffer.ReadNameReference();
+                ConfigName = _Buffer.ReadName();
                 Record(nameof(ConfigName), ConfigName);
             }
 #endif
@@ -295,7 +302,7 @@ namespace UELib.Core
                 // FIXME: UE4 version
                 if (_Buffer.UE4Version < 160)
                 {
-                    CategoryName = _Buffer.ReadNameReference();
+                    CategoryName = _Buffer.ReadName();
                     Record(nameof(CategoryName), CategoryName);
                 }
 
@@ -332,7 +339,7 @@ namespace UELib.Core
 #if UE4
             if (_Buffer.UE4Version > 0)
             {
-                RepNotifyFuncName = _Buffer.ReadNameReference();
+                RepNotifyFuncName = _Buffer.ReadName();
                 Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
 
                 return;
@@ -370,7 +377,7 @@ namespace UELib.Core
 
                 //if (_Buffer.LicenseeVersion == 15)
                 //{
-                //    var v68 = _Buffer.ReadNameReference();
+                //    var v68 = _Buffer.ReadName();
                 //    Record(nameof(v68), v68);
                 //}
             }
@@ -378,9 +385,9 @@ namespace UELib.Core
 #if VENGEANCE
             if (Package.Build == BuildGeneration.Vengeance)
             {
-                var vengeanceEditComboType = _Buffer.ReadNameReference();
+                var vengeanceEditComboType = _Buffer.ReadName();
                 Record(nameof(vengeanceEditComboType), vengeanceEditComboType);
-                var vengeanceEditDisplay = _Buffer.ReadNameReference();
+                var vengeanceEditDisplay = _Buffer.ReadName();
                 Record(nameof(vengeanceEditDisplay), vengeanceEditDisplay);
             }
 #endif
@@ -397,7 +404,7 @@ namespace UELib.Core
                 if (_Buffer.Version >= 118 && HasPropertyFlag(0x2000000))
                 {
                     // a.k.a NetUpdateName ;)
-                    RepNotifyFuncName = _Buffer.ReadNameReference();
+                    RepNotifyFuncName = _Buffer.ReadName();
                     Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
                 }
 

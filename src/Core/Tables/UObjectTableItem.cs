@@ -16,14 +16,14 @@ namespace UELib
         /// <summary>
         /// The UnrealPackage the object resides in
         /// </summary>
-        public UnrealPackage Owner;
+        public UnrealPackage Package { get; internal set; }
 
         /// <summary>
         /// Reference to the serialized object based on this table.
         ///
         /// Only valid if Owner != null and Owner is fully serialized or on demand.
         /// </summary>
-        public UObject? Object;
+        public UObject? Object { get; internal set; }
 
         protected UName _ObjectName;
 
@@ -41,7 +41,7 @@ namespace UELib
             set => _OuterIndex = value;
         }
 
-        public UObjectTableItem? Outer => Owner.IndexToObjectResource(_OuterIndex);
+        public UObjectTableItem? Outer => Package.IndexToObjectResource(_OuterIndex);
 
         private UName _ObjectPackageName;
 
@@ -87,15 +87,15 @@ namespace UELib
         public virtual byte[] CopyBuffer()
         {
             byte[] buff = new byte[Size];
-            Owner.Stream.Seek(Offset, SeekOrigin.Begin);
-            Owner.Stream.Read(buff, 0, Size);
+            Package.Stream.Seek(Offset, SeekOrigin.Begin);
+            Package.Stream.Read(buff, 0, Size);
 
             return buff;
         }
 
         public IUnrealStream GetBuffer()
         {
-            return Owner.Stream;
+            return Package.Stream;
         }
 
         public int GetBufferPosition()
@@ -110,7 +110,7 @@ namespace UELib
 
         public string GetBufferId(bool fullName = false)
         {
-            return fullName ? Owner.PackageName + "." + _ObjectName + ".table" : _ObjectName + ".table";
+            return fullName ? Package.PackageName + "." + _ObjectName + ".table" : _ObjectName + ".table";
         }
 
         #endregion
@@ -125,12 +125,19 @@ namespace UELib
             return string.Compare(ObjectName.ToString(), other, StringComparison.Ordinal);
         }
 
-        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Owner.Names[(int)_ObjectName];
+        [Obsolete("Use Package")]
+        public UnrealPackage Owner
+        {
+            get => Package;
+            set => Package = value;
+        }
+
+        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Package.Names[(int)_ObjectName];
 
         [Obsolete("Use UExportTableItem.Class"), Browsable(false)]
-        public UObjectTableItem? ClassTable => Owner.IndexToObjectResource(ClassIndex);
+        public UObjectTableItem? ClassTable => Package.IndexToObjectResource(ClassIndex);
 
-        [Obsolete, Browsable(false)] public UObjectTableItem? OuterTable => Owner.IndexToObjectResource(OuterIndex);
+        [Obsolete, Browsable(false)] public UObjectTableItem? OuterTable => Package.IndexToObjectResource(OuterIndex);
 
         [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
         public string OuterName

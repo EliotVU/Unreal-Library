@@ -74,11 +74,11 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Deserialize(IUnrealStream stream, UImportTableItem item)
         {
-            item.ClassPackageName = stream.ReadNameReference();
-            item.ClassName = stream.ReadNameReference();
+            item.ClassPackageName = stream.ReadName();
+            item.ClassName = stream.ReadName();
             byte unkByte = stream.ReadByte();
             Debug.WriteLine(unkByte, "unkByte");
-            item.ObjectName = stream.ReadNameReference();
+            item.ObjectName = stream.ReadName();
             item.OuterIndex = stream.ReadInt32();
         }
 

@@ -14,7 +14,7 @@ namespace UELib.Core
 
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedStructFlagsToScriptStruct)
             {
-                _Buffer.Read(out StructFlags);
+                StructFlags = _Buffer.ReadFlags32<StructFlag>();
                 Record(nameof(StructFlags), StructFlags);
             }
 

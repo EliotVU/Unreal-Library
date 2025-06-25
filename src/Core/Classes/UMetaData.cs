@@ -4,7 +4,7 @@ using System.Linq;
 namespace UELib.Core
 {
     /// <summary>
-    /// MetaData objects contain all the metadata of UField objects.
+    ///     Implements UMetaData/Core.MetaData
     /// </summary>
     [UnrealRegisterClass]
     public sealed class UMetaData : UObject
@@ -42,7 +42,7 @@ namespace UELib.Core
                 Tags = new UMap<string, string>(length);
                 for (var i = 0; i < length; ++i)
                 {
-                    var key = stream.ReadNameReference();
+                    var key = stream.ReadName();
                     string value = stream.ReadString();
                     Tags.Add(key.Name, value);
                 }
@@ -71,7 +71,7 @@ namespace UELib.Core
         }
 
         #region Serialized Members
-        
+
         private UArray<UFieldData> _Fields;
 
         public UArray<UFieldData> Fields
@@ -87,7 +87,7 @@ namespace UELib.Core
         protected override void Deserialize()
         {
             base.Deserialize();
-            
+
             _Buffer.ReadArray(out _Fields);
             Record(nameof(_Fields), _Fields);
         }

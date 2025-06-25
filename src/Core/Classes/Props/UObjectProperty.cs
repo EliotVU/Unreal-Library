@@ -3,14 +3,14 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Object Reference Property
+    ///     Implements UObjectProperty/Core.ObjectProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UObjectProperty : UProperty
     {
         #region Serialized Members
 
-        public UObject Object;
+        public UObject Object { get; set; }
 
         #endregion
 
@@ -33,7 +33,7 @@ namespace UELib.Core
                 // version >= 17 for UComponentProperty?
                 _Buffer.LicenseeVersion >= 32)
             {
-                var vd0 = _Buffer.ReadNameReference();
+                var vd0 = _Buffer.ReadName();
                 Record(nameof(vd0), vd0);
             }
 #endif

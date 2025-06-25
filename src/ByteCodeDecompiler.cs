@@ -122,7 +122,7 @@ namespace UELib.Core
                 {
                     _Buffer = _Container.LoadBuffer();
                     _Buffer.Seek(_Container.ScriptOffset, SeekOrigin.Begin);
-                    int scriptSize = _Container.ByteScriptSize;
+                    int scriptSize = _Container.MemoryScriptSize;
                     while (ScriptPosition < scriptSize)
                         try
                         {
@@ -160,7 +160,7 @@ namespace UELib.Core
             {
                 // Sometimes we may end up at the end of a script
                 // -- and by coincidence pickup a DebugInfo byte-code outside of the script-boundary.
-                if (ScriptPosition + sizeof(byte) + sizeof(int) >= _Container.ByteScriptSize) return;
+                if (ScriptPosition + sizeof(byte) + sizeof(int) >= _Container.MemoryScriptSize) return;
 
                 long p = _Buffer.Position;
                 byte opCode = _Buffer.ReadByte();

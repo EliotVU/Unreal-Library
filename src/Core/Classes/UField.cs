@@ -5,7 +5,7 @@ using UELib.Branch;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal field.
+    ///     Implements UField/Core.Field
     /// </summary>
     public partial class UField : UObject
     {
@@ -17,10 +17,9 @@ namespace UELib.Core
         #endregion
 
         /// <summary>
-        /// Initialized by the UMetaData object,
-        /// This Meta contains comments and other meta related info that belongs to this instance.
+        ///     Reference to the metadata for this field, if any.
         /// </summary>
-        public UMetaData.UFieldData? MetaData;
+        public UMetaData.UFieldData? MetaData { get; internal set; }
 
         #region Constructors
 
@@ -35,16 +34,20 @@ namespace UELib.Core
 #endif
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
-                Super = _Buffer.ReadObject<UStruct>();
+                Super = _Buffer.ReadObject<UStruct?>();
                 Record(nameof(Super), Super);
             }
 
-            NextField = _Buffer.ReadObject<UField>();
+            NextField = _Buffer.ReadObject<UField?>();
             Record(nameof(NextField), NextField);
         }
 
         #endregion
-        
+
+        /// <summary>
+        ///     Enumerates all super-structs of this struct.
+        /// </summary>
+        /// <returns>the enumerated super-struct.</returns>
         public IEnumerable<UStruct> EnumerateSuper()
         {
             for (var super = Super; super != null; super = super.Super)
@@ -53,6 +56,11 @@ namespace UELib.Core
             }
         }
 
+        /// <summary>
+        ///     Enumerates all super-structs of this struct, casting them to the specified type.
+        /// </summary>
+        /// <typeparam name="T">the struct type to cast the super-struct to.</typeparam>
+        /// <returns>the enumerated super-struct.</returns>
         public IEnumerable<T> EnumerateSuper<T>() where T : UStruct
         {
             for (var super = Super; super != null; super = super.Super)
@@ -61,7 +69,10 @@ namespace UELib.Core
             }
         }
 
-
+        /// <summary>
+        ///     Enumerates all super-structs of the specified struct.
+        /// </summary>
+        /// <returns>the enumerated super-struct.</returns>
         public IEnumerable<UStruct> EnumerateSuper(UStruct super)
         {
             for (; super != null; super = super.Super)
@@ -78,11 +89,11 @@ namespace UELib.Core
             }
         }
 
-        public bool Extends(string classType)
+        public bool Extends(string superName)
         {
             for (var field = Super; field != null; field = field.Super)
             {
-                if (string.Equals(field.Name, classType, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(field.Name, superName, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -91,6 +102,18 @@ namespace UELib.Core
             return false;
         }
 
+        public bool Extends(UName superName)
+        {
+            for (var field = Super; field != null; field = field.Super)
+            {
+                if (field.Name == superName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
         [Obsolete]
         public string GetSuperGroup()
         {

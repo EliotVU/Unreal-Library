@@ -176,7 +176,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.StructConst)]
             public class StructConstToken : Token
             {
-                
+
             }
 
             [ExprToken(ExprToken.ObjectConst)]
@@ -203,7 +203,7 @@ namespace UELib.Core
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Name = stream.ReadNameReference();
+                    Name = stream.ReadName();
                     Decompiler.AlignNameSize();
                 }
 
@@ -289,7 +289,7 @@ namespace UELib.Core
             public class RangeConstToken : Token
             {
                 public URange Range;
-                
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     stream.ReadStruct(out Range);

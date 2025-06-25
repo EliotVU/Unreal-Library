@@ -3,7 +3,9 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Dynamic String
+    ///     Implements UStrProperty/Core.StrProperty
+    ///
+    ///     A dynamic string property, unlike the fixed-length UStringProperty.
     /// </summary>
     [UnrealRegisterClass]
     public class UStrProperty : UProperty

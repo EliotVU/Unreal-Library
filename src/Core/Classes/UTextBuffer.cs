@@ -10,10 +10,10 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public uint Top;
-        public uint Pos;
+        public uint Top { get; private set; }
+        public uint Pos { get; private set; }
 
-        public string ScriptText;
+        public string ScriptText { get; set; }
 
         #endregion
 

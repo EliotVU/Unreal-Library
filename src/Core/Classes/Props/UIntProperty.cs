@@ -3,7 +3,7 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Int Property
+    ///     Implements UIntProperty/Core.IntProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UIntProperty : UProperty

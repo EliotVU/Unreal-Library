@@ -16,7 +16,7 @@ namespace UELib.Core
                 sFlagsNode.ToolTipText = StructFlags.ToString(Package.Branch.EnumFlagsMap[typeof(StructFlag)]);
             }
 
-            AddTextNode(_ParentNode, $"Script Size:{DataScriptSize}");
+            AddTextNode(_ParentNode, $"Script Size:{ScriptSize}");
             base.InitNodes(_ParentNode);
         }
 

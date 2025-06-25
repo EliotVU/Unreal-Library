@@ -3,14 +3,14 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Byte Property
+    ///     Implements UByteProperty/Core.ByteProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UByteProperty : UProperty
     {
         #region Serialized Members
 
-        public UEnum? Enum;
+        public UEnum? Enum { get; set; }
 
         #endregion
 

@@ -9,9 +9,19 @@ namespace UELib.Core
     [BuildGeneration(BuildGeneration.UE2_5)]
     public class USoundGroup : USound
     {
+        #region Serialized Members
+
         // p.s. It's not safe to cast to USound
-        public UArray<UObject> Sounds;
-        
+        public UArray<UObject> Sounds
+        {
+            get => _Sounds;
+            set => _Sounds = value;
+        }
+
+        private UArray<UObject> _Sounds;
+
+        #endregion
+
         protected override void Deserialize()
         {
             base.Deserialize();
@@ -24,7 +34,7 @@ namespace UELib.Core
                 Record(nameof(package), package);
             }
 #endif
-            _Buffer.ReadArray(out Sounds);
+            _Buffer.ReadArray(out _Sounds);
             Record(nameof(Sounds), Sounds);
         }
     }

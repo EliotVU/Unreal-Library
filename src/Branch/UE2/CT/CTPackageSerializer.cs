@@ -52,7 +52,7 @@ public class CTPackageSerializer : PackageSerializerBase
             UPackageIndex v0c = stream.ReadIndex();
         }
 
-        item.ObjectName = stream.ReadNameReference();
+        item.ObjectName = stream.ReadName();
         item.ObjectFlags = stream.ReadUInt32();
         if (stream.Version >= 152)
         {

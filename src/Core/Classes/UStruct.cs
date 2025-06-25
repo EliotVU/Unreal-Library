@@ -11,7 +11,7 @@ using UELib.Flags;
 namespace UELib.Core
 {
     /// <summary>
-    /// Represents a unreal struct with the functionality to contain Constants, Enums, Structs and Properties.
+    ///     Implements UStruct/Core.Struct
     /// </summary>
     [UnrealRegisterClass]
     public partial class UStruct : UField
@@ -19,57 +19,67 @@ namespace UELib.Core
         [Obsolete] public const int VInterfaceClass = 222;
 
         #region Serialized Members
+#pragma warning disable CA1051
 
-        public UTextBuffer? ScriptText { get; private set; }
-        public UTextBuffer? ProcessedText { get; private set; }
-        public UTextBuffer? CppText { get; private set; }
-        public UName FriendlyName { get; protected set; }
+        public UTextBuffer? ScriptText { get; set; }
+        public UTextBuffer? ProcessedText { get; set; }
+        public UTextBuffer? CppText { get; set; }
+        public UName FriendlyName { get; set; }
 
-        public int Line;
-        public int TextPos;
+        public int Line { get; internal set; }
+        public int TextPos { get; internal set; }
 
-        public UnrealFlags<StructFlag> StructFlags;
+        public UnrealFlags<StructFlag> StructFlags
+        {
+            get => _StructFlags;
+            set => _StructFlags = value;
+        }
 
-        protected UField? Children { get; private set; }
-        protected int DataScriptSize { get; private set; }
-        private int ByteScriptSize { get; set; }
+        private UField? _Children;
+        private UnrealFlags<StructFlag> _StructFlags;
 
+        [Obsolete("Use FindField and EnumerateFields respectively.")]
+        protected UField? Children => _Children;
+
+        [Obsolete("Use StorageScriptSize instead.")]
+        protected int DataScriptSize => StorageScriptSize;
+
+        private int StorageScriptSize { get; set; }
+        private int MemoryScriptSize { get; set; }
+
+#pragma warning restore CA1051
         #endregion
 
         #region Script Members
 
-        [Obsolete]
+        [Obsolete("Use EnumerateFields")]
         public IEnumerable<UConst> Constants => EnumerateFields<UConst>();
 
-        [Obsolete]
+        [Obsolete("Use EnumerateFields")]
         public IEnumerable<UEnum> Enums => EnumerateFields<UEnum>();
 
-        [Obsolete]
+        [Obsolete("Use EnumerateFields")]
         public IEnumerable<UStruct> Structs => EnumerateFields<UStruct>().Where(obj => obj.IsPureStruct());
 
-        [Obsolete]
+        [Obsolete("Use EnumerateFields")]
         public IEnumerable<UProperty> Variables => EnumerateFields<UProperty>();
 
-        [Obsolete]
+        [Obsolete("Use EnumerateFields")]
         public IEnumerable<UProperty> Locals => EnumerateFields<UProperty>().Where(prop => !prop.IsParm());
 
         #endregion
 
-        #region General Members
+        /// <summary>
+        ///     The start of the script code in the object's buffer.
+        /// </summary>
+        public long ScriptOffset { get; private set; }
 
         /// <summary>
-        /// Default Properties buffer offset
+        ///     The size of the script in storage.
         /// </summary>
-        protected long _DefaultPropertiesOffset;
-
-        //protected uint _CodePosition;
-
-        public long ScriptOffset { get; private set; }
         public int ScriptSize { get; private set; }
 
-        public UByteCodeDecompiler? ByteCodeManager;
-
-        #endregion
+        public UByteCodeDecompiler? ByteCodeManager { get; private set; }
 
         #region Constructors
 
@@ -99,8 +109,8 @@ namespace UELib.Core
             // Swapped order...
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
             {
-                Children = _Buffer.ReadObject<UField>();
-                Record(nameof(Children), Children);
+                _Children = _Buffer.ReadObject<UField>();
+                Record(nameof(_Children), _Children);
 
                 ScriptText = _Buffer.ReadObject<UTextBuffer>();
                 Record(nameof(ScriptText), ScriptText);
@@ -124,8 +134,8 @@ namespace UELib.Core
             }
 
         skipScriptText:
-            Children = _Buffer.ReadObject<UField>();
-            Record(nameof(Children), Children);
+            _Children = _Buffer.ReadObject<UField>();
+            Record(nameof(_Children), _Children);
         skipChildren:
 #if BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
@@ -137,7 +147,7 @@ namespace UELib.Core
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
             {
                 // Preload fields so we can tinker with NextField.
-                for (var field = Children; field != null; field = field.NextField)
+                for (var field = _Children; field != null; field = field.NextField)
                 {
                     if (field is { DeserializationState: 0 })
                     {
@@ -153,7 +163,7 @@ namespace UELib.Core
                     property = EonEngineBranch.SerializeFProperty<UProperty>(_Buffer);
                     if (tail == null)
                     {
-                        Children = property;
+                        _Children = property;
                     }
                     else
                     {
@@ -170,9 +180,9 @@ namespace UELib.Core
             }
 #endif
 #if SWRepublicCommando
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando && Children != null)
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando && _Children != null)
             {
-                var tail = Children;
+                var tail = _Children;
                 while (true)
                 {
                     var nextField = _Buffer.ReadObject<UField?>();
@@ -254,7 +264,7 @@ namespace UELib.Core
 #endif
                )
             {
-                _Buffer.Read(out StructFlags);
+                _Buffer.Read(out _StructFlags);
                 Record(nameof(StructFlags), StructFlags);
             }
 #if VENGEANCE
@@ -287,7 +297,7 @@ namespace UELib.Core
 #if UNREAL2
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
             {
-                // Always zero in all of the Core.u structs
+                // Always zero in all the Core.u structs
                 int unknownInt32 = _Buffer.ReadInt32();
                 Record("Unknown:Unreal2", unknownInt32);
             }
@@ -321,34 +331,31 @@ namespace UELib.Core
             }
 #endif
         serializeByteCode:
-            ByteScriptSize = _Buffer.ReadInt32();
-            Record(nameof(ByteScriptSize), ByteScriptSize);
+            MemoryScriptSize = _Buffer.ReadInt32();
+            Record(nameof(MemoryScriptSize), MemoryScriptSize);
 
             if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
             {
-                DataScriptSize = _Buffer.ReadInt32();
-                Record(nameof(DataScriptSize), DataScriptSize);
-            }
-            else
-            {
-                DataScriptSize = ByteScriptSize;
+                StorageScriptSize = _Buffer.ReadInt32();
+                Record(nameof(StorageScriptSize), StorageScriptSize);
             }
 
             ScriptOffset = _Buffer.Position;
 
             // Code Statements
-            if (DataScriptSize > 0)
+            if (MemoryScriptSize > 0)
             {
                 ByteCodeManager = new UByteCodeDecompiler(this);
-                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
+                if (StorageScriptSize > 0)
                 {
-                    _Buffer.Skip(DataScriptSize);
+                    _Buffer.Skip(StorageScriptSize);
                 }
                 else
                 {
                     ByteCodeManager.Deserialize();
                 }
 
+                // Fix the recording position
                 _Buffer.ConformRecordPosition();
                 ScriptSize = (int)(_Buffer.Position - ScriptOffset);
             }
@@ -379,18 +386,27 @@ namespace UELib.Core
 
         #endregion
 
+        /// <summary>
+        ///     Enumerates all fields in this struct.
+        /// </summary>
+        /// <returns>the enumerated field.</returns>
         public IEnumerable<UField> EnumerateFields()
         {
-            for (var field = Children; field != null; field = field.NextField)
+            for (var field = _Children; field != null; field = field.NextField)
             {
                 yield return field;
             }
         }
 
+        /// <summary>
+        ///     Enumerates all fields of a specific type in this struct.
+        /// </summary>
+        /// <typeparam name="T">the field type to limit the enumeration to.</typeparam>
+        /// <returns>the enumerated field.</returns>
         public IEnumerable<T> EnumerateFields<T>()
             where T : UField
         {
-            for (var field = Children; field != null; field = field.NextField)
+            for (var field = _Children; field != null; field = field.NextField)
             {
                 if (field is T tField)
                 {
@@ -399,11 +415,36 @@ namespace UELib.Core
             }
         }
 
-        public T? FindProperty<T>(UName name)
-            where T : UProperty
+        /// <summary>
+        ///     Looks for a field with a matching name in this struct and its super structs.
+        /// </summary>
+        /// <param name="name">the name of the field.</param>
+        /// <typeparam name="T">the type to limit the search to.</typeparam>
+        /// <returns>the field with a matching name and type.</returns>
+        public T? FindField<T>(UName name) where T : UField
         {
-            UProperty property = null;
+            foreach (var super in EnumerateSuper(this))
+            {
+                foreach (var field in super.EnumerateFields<T>())
+                {
+                    if (field.Name == name)
+                    {
+                        return field;
+                    }
+                }
+            }
 
+            return null;
+        }
+
+        /// <summary>
+        ///     Looks for a property with a matching name in this struct and its super structs.
+        /// </summary>
+        /// <param name="name">the name of the property.</param>
+        /// <typeparam name="T">the type to limit the search to.</typeparam>
+        /// <returns>the property with a matching name and type.</returns>
+        public T? FindProperty<T>(UName name) where T : UProperty
+        {
             foreach (var super in EnumerateSuper(this))
             {
                 foreach (var field in super.EnumerateFields<T>())
@@ -438,7 +479,7 @@ namespace UELib.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsPureStruct()
         {
-            return IsClassType("Struct") || IsClassType("ScriptStruct");
+            return GetType() == typeof(UStruct) || this is UScriptStruct;
         }
     }
 }

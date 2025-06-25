@@ -3,15 +3,15 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Dynamic Map Property
+    ///     Implements UMapProperty/Core.MapProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UMapProperty : UProperty
     {
         #region Serialized Members
 
-        public UProperty KeyProperty;
-        public UProperty ValueProperty;
+        public UProperty? KeyProperty { get; set; }
+        public UProperty? ValueProperty { get; set; }
 
         #endregion
 
@@ -27,10 +27,10 @@ namespace UELib.Core
         {
             base.Deserialize();
 
-            KeyProperty = _Buffer.ReadObject<UProperty>();
+            KeyProperty = _Buffer.ReadObject<UProperty?>();
             Record(nameof(KeyProperty), KeyProperty);
             
-            ValueProperty = _Buffer.ReadObject<UProperty>();
+            ValueProperty = _Buffer.ReadObject<UProperty?>();
             Record(nameof(ValueProperty), ValueProperty);
         }
 

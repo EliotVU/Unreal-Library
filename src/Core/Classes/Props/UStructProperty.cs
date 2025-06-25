@@ -3,14 +3,14 @@
 namespace UELib.Core
 {
     /// <summary>
-    /// Struct Property
+    ///     Implements UStructProperty/Core.StructProperty
     /// </summary>
     [UnrealRegisterClass]
     public class UStructProperty : UProperty
     {
         #region Serialized Members
 
-        public UStruct Struct;
+        public UStruct Struct { get; set; }
 
         #endregion
 

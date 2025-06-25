@@ -7,13 +7,17 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UNativeTypeProperty : UProperty
     {
-        public UName NativeTypeName;
+        #region Serialized Members
+        
+        public UName NativeTypeName { get; set; }
+        
+        #endregion
 
         protected override void Deserialize()
         {
             base.Deserialize();
 
-            NativeTypeName = _Buffer.ReadNameReference();
+            NativeTypeName = _Buffer.ReadName();
         }
 
         /// <inheritdoc/>
