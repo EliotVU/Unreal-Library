@@ -49,7 +49,11 @@ namespace UELib.Engine
 
         public override void Deserialize(IUnrealStream stream)
         {
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent
+#if GOWUE
+                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.GoWUE)
+#endif
+            )
             {
                 stream.Read(out DominantLightShadowMap);
                 Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
