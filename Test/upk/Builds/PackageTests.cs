@@ -108,6 +108,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.EndWar,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Gears of War Ultimate Edition\",
+            BuildName.GoWUE,
+            BuildPlatform.Undetermined
+        )]        
         [DataRow(@"Mirrors Edge\",
             BuildName.MirrorsEdge,
             BuildPlatform.Undetermined
