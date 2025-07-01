@@ -51,9 +51,9 @@ namespace UELib.Engine
         {
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent
 #if GOWUE
-                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.GoWUE)
+                || stream.Package.Build == UnrealPackage.GameBuild.BuildName.GoWUE
 #endif
-            )
+                )
             {
                 stream.Read(out DominantLightShadowMap);
                 Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
