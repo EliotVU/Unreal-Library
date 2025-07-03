@@ -202,6 +202,8 @@ This is a table of games that are confirmed to be compatible with the current st
 | Borderlands 2 | 8623/0023 | 832/056 | |
 | Borderlands: Game of the Year Enhanced | 5001/0001 | 832/058 | |
 | Remember Me | 8623 | 832/021 |     |
+| Gears of War: Ultimate Edition | 3340 | 835/056 | Actual package version is 490; thanks to @PaoloTK |
+| Gears of War: Reloaded | 3340 | 835/076 | Actual package version is 490; thanks to @PaoloTK |
 | The Haunted: Hells Reach | 8788 | 841/000 |     |
 | Asura's Wrath | 8788 | 841/000 | -zlib; platform needs to be set to console. |
 | Blacklight Retribution | 8788-10499 | 841-864/002 |     |

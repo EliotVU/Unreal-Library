@@ -85,7 +85,14 @@ namespace UELib.Core
                 if (_Package.Build == UnrealPackage.GameBuild.BuildName.Tera) return;
 #endif
                 const short vObjectSizeTo8 = 587;
-                if (_Package.Version >= vObjectSizeTo8) _ObjectMemorySize = sizeof(long);
+                if (_Package.Version >= vObjectSizeTo8
+#if GOWUE
+                    || _Package.Build == UnrealPackage.GameBuild.BuildName.GoWUE
+#endif
+                   )
+                {
+                    _ObjectMemorySize = sizeof(long);
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

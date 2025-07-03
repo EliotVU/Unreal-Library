@@ -116,6 +116,26 @@ namespace Eliot.UELib.Test.Builds
             BuildName.EndWar,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Gears of War\", // G4WLive
+            BuildName.GoW1,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Gears of War 2\",
+            BuildName.GoW2,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Gears of War 3\",
+            BuildName.GoW3,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Gears of War Ultimate Edition\", // Microsoft Store / WinUAP
+            BuildName.GoWUE,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Gears of War Reloaded Beta\", // Steam
+            BuildName.GoWUE,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Mirrors Edge\",
             BuildName.MirrorsEdge,
             BuildPlatform.Undetermined
