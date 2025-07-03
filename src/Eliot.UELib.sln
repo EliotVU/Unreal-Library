@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eliot.UELib.Benchmark", "..
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eliot.UELib.CLI", "..\CLI\Eliot.UELib.CLI.csproj", "{01B07425-0B35-4DAB-9555-D61261A0F161}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageObjectExpansion", "..\Samples\PackageObjectExpansion\PackageObjectExpansion.csproj", "{56B352BB-2DDE-CE61-421C-BB143498FCAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,9 +39,16 @@ Global
 		{01B07425-0B35-4DAB-9555-D61261A0F161}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01B07425-0B35-4DAB-9555-D61261A0F161}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01B07425-0B35-4DAB-9555-D61261A0F161}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56B352BB-2DDE-CE61-421C-BB143498FCAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56B352BB-2DDE-CE61-421C-BB143498FCAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56B352BB-2DDE-CE61-421C-BB143498FCAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56B352BB-2DDE-CE61-421C-BB143498FCAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{56B352BB-2DDE-CE61-421C-BB143498FCAA} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {64004BC4-798F-4D4E-BD42-3EA400109093}
