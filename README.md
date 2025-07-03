@@ -104,6 +104,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Tom Clancy's Splinter Cell | 829 | 100/017 | |
 | Tom Clancy's Splinter Cell: Chaos Theory | 829 | 100/120:SCX, 175/000:ShadowStrike | (PC) demo version, Versus mode not supported |
 | Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX, 275/000:ShadowStrike | (PC) Offline mode version, Online mode not supported |
+| Tom Clancy's Splinter Cell: Blacklist | 829 | 102/116:LEAD | In part thanks to @shryder. Third-party decompression is required |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | |
 | Postal 2: Paradise Lost | 1417 | 118/002 | |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | |
@@ -130,7 +131,9 @@ This is a table of games that are confirmed to be compatible with the current st
 | Bioshock | 2226:Vengeance | 130-141/056 | |
 | Men of Valor | 926 | 137/000 | PC |
 | Bioshock 2 | 2226:Vengeance | 143/059 | |
+| Advent Rising | 2226 | 143-146/007 | |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) |
+| Star Wars: Republic Commando | 2226 | 134-159/001 | |
 | The Chronicles of Spellborn | 3323 | 159/029 | |
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) |
 |     |     |     |     |
@@ -142,6 +145,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Roboblitz | 2306 | 369/006 |     |
 | Stranglehold | 2605 | 375/025 | |
 | Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon |
+| Warmonger: Operation Downtown Destruction | 2859 | 419/003 | |
 | Medal of Honor: Airborne | 2859 | 421/011 |     |
 | Frontlines: Fuel of War | 2917 | 433/052 | |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified |
@@ -213,6 +217,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | [Unmechanical](http://unmechanical.net/) | 9249 | 852/000 |     |
 | Deadlight | 9375 | 854/000 |     |
 | Land of the Dead | 9375 | 854/000 |     |
+| Borderlands Legends | 9505 | 859/000 | iOS; platform needs to be set to console |
 | Ravaged | 9641 | 859/000 |     |
 | [The Five Cores](http://neeblagames.com/category/games/thefivecores/) | 9656 | 859/000 |     |
 | Painkiller HD | 9953 | 860/000 |     |
@@ -231,6 +236,7 @@ This is a table of games that are confirmed to be compatible with the current st
 | Gal\*Gun: Double Peace | 10897 | 871/000 | |
 | Battleborn | 8623/1055 | 874/078 | |
 | A Hat in Time | 12097 | 877-893/005 | Contributed by @Un-Drew |
+| Bulletstorm: Full Clip Edition | 12212 | 877/041 | |
 | Blue Estate The Game | 10246 | 893/000 | |
 | Shadow Complex Remastered | 10897 | 893/001 | |
 | Borderlands 2 VR | 8637/0029 | 895/046 | |

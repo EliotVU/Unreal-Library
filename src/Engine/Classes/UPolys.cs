@@ -37,7 +37,13 @@ namespace UELib.Engine
                 ElementOwner = _Buffer.ReadObject();
                 Record(nameof(ElementOwner), ElementOwner);
             }
-
+#if SWRepublicCommando
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                // Not supported
+                return;
+            }
+#endif
             Element = new UArray<Poly>(num);
             if (num > 0)
             {

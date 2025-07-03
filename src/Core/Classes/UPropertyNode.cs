@@ -12,7 +12,7 @@ namespace UELib.Core
             var propertyFlagsNode = AddTextNode(_ParentNode,
                 $"Property Flags:{(ulong)PropertyFlags:X8}"
             );
-            propertyFlagsNode.ToolTipText = PropertyFlags.ToString();
+            propertyFlagsNode.ToolTipText = PropertyFlags.ToString(Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
 
             if (RepOffset > 0)
             {

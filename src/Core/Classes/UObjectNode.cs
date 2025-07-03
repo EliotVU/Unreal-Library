@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -39,10 +40,13 @@ namespace UELib.Core
         {
             _ParentNode = AddSectionNode(node, nameof(UObject));
             var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{(ulong)ObjectFlags:X8}");
-            flagNode.ToolTipText = ObjectFlags.ToString();
+            flagNode.ToolTipText = ObjectFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)]);
 
-            AddTextNode(_ParentNode, $"Size:{ExportTable.SerialSize}");
-            AddTextNode(_ParentNode, $"Offset:{ExportTable.SerialOffset}");
+            if (ExportTable != null)
+            {
+                AddTextNode(_ParentNode, $"Size:{ExportTable.SerialSize}");
+                AddTextNode(_ParentNode, $"Offset:{ExportTable.SerialOffset}");
+            }
         }
 
         protected virtual void AddChildren(TreeNode node)

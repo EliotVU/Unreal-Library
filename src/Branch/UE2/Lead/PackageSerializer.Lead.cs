@@ -1,13 +1,11 @@
-﻿using System.Text;
-
-namespace UELib.Branch.UE2.Lead
+﻿namespace UELib.Branch.UE2.Lead
 {
     public class PackageSerializerLead : PackageSerializerBase
     {
         public override void Serialize(IUnrealStream stream, UNameTableItem item)
         {
             stream.WriteIndex((byte)item.Name.Length);
-            stream.Write(Encoding.ASCII.GetBytes(item.Name));
+            stream.Write(UnrealEncoding.ANSI.GetBytes(item.Name));
             stream.Write((uint)item.Flags);
         }
 
@@ -18,7 +16,7 @@ namespace UELib.Branch.UE2.Lead
             byte[] buffer = new byte[length];
             stream.Read(buffer, 0, length);
 
-            string name = new(Encoding.ASCII.GetChars(buffer), 0, length);
+            string name = new(UnrealEncoding.ANSI.GetChars(buffer), 0, length);
 
             item.Name = name;
             item.Flags = stream.ReadUInt32();

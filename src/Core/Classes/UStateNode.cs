@@ -1,6 +1,7 @@
 ﻿#if Forms
 using System.Linq;
 using System.Windows.Forms;
+using UELib.Flags;
 
 namespace UELib.Core
 {
@@ -13,7 +14,7 @@ namespace UELib.Core
             if (GetType() == typeof(UState))
             {
                 var stateFlagsNode = AddTextNode(_ParentNode, $"State Flags:{(ulong)StateFlags:X8}");
-                stateFlagsNode.ToolTipText = StateFlags.ToString();
+                stateFlagsNode.ToolTipText = StateFlags.ToString(Package.Branch.EnumFlagsMap[typeof(StateFlag)]);
             }
 
             base.InitNodes(_ParentNode);

@@ -139,9 +139,22 @@ namespace UELib.Core
             }
 
             string output = $"\r\n{UDecompilingState.Tabs}{CPPTextKeyword}" +
-                            UnrealConfig.PrintBeginBracket() + "\r\n" +
-                            CppText.Decompile() +
-                            UnrealConfig.PrintEndBracket() + "\r\n";
+                            UnrealConfig.PrintBeginBracket() + "\r\n";
+
+            try
+            {
+                output += CppText.Decompile();
+            }
+            catch (Exception e) // may occur when the CppText content are corrupted.
+            {
+                output += $"{UDecompilingState.Tabs}/* {e} */ // occurred while decompiling CppText!" +
+                         "\r\n";
+            }
+            finally
+            {
+                output += UnrealConfig.PrintEndBracket() + "\r\n";
+            }
+            
             return output;
         }
 

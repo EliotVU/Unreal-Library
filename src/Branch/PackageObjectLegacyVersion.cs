@@ -60,10 +60,10 @@ namespace UELib.Branch
         AddedCppTextToUStruct = 120,
         FontPagesDisplaced = 122,
 
-        // FIXME: Version 138? Cheating with 160 to avoid issues with DNF and Spellborn
+        // FIXME: Version 138 (UC2)? (134 according to Advent Rising) Cheating with 160 to avoid issues with DNF and Spellborn
         AddedFuncMapToUState = 160,
 
-        // FIXME: Version 138? Cheating with 160 to avoid issues with DNF and Spellborn
+        // FIXME: Version 138 (UC2)? (133 according to Advent Rising) Cheating with 160 to avoid issues with DNF and Spellborn
         MovedFriendlyNameToUFunction = 160,
 
         // The estimated version changes that came after the latest known UE2 build.
@@ -71,6 +71,12 @@ namespace UELib.Branch
         MaterialAddedToPoly = 170,
 
         UE3 = 178,
+
+        /// <summary>
+        /// FIXME: Version 145 (UC2)? (144 according to Advent Rising)
+        ///
+        /// Generally the type was deprecated with 178, but the serialization change from 1-5 bytes to UInt32 was applied much earlier.
+        /// </summary>
         CompactIndexDeprecated = 178,
 
         /// <summary>

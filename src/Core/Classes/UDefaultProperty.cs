@@ -95,7 +95,7 @@ namespace UELib.Core
                 : $"{expr}={value}";
         }
 
-        private T? FindProperty<T>(out UStruct outer)
+        private T? FindProperty<T>(out UStruct? outer)
             where T : UProperty
         {
             UProperty property = null;
@@ -107,8 +107,7 @@ namespace UELib.Core
                              .EnumerateFields()
                              .OfType<UProperty>())
                 {
-                    // FIXME: UName
-                    if (field.Table.ObjectName != Name)
+                    if (field.Name != Name)
                     {
                         continue;
                     }
@@ -316,7 +315,7 @@ namespace UELib.Core
                 return DeserializeTagUE1();
             }
 #if BATMAN
-            if (_Buffer.Package.Build == BuildGeneration.RSS)
+            if (_Buffer.Package.Build == BuildGeneration.RSS && _Buffer.LicenseeVersion > 21)
             {
                 return DeserializeTagByOffset();
             }
@@ -506,7 +505,7 @@ namespace UELib.Core
                 case PropertyType.ByteProperty:
                     if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag
 #if BATMAN
-                        && _Buffer.Package.Build.Generation != BuildGeneration.RSS
+                        && (_Buffer.Package.Build.Generation != BuildGeneration.RSS || _Buffer.LicenseeVersion <= 21)
 #endif
                        )
                     {

@@ -103,7 +103,7 @@ namespace UELib.UnrealScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string FormatLiteral(UObject input)
+        public static string FormatLiteral(UObject? input)
         {
             return input != null
                 ? input.GetReferencePath()
@@ -113,7 +113,7 @@ namespace UELib.UnrealScript
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatExport(float input)
         {
-            return input.ToString("+00000.000000;-00000.000000", CultureInfo.InvariantCulture);
+            return input.ToString("+000000.000000;-000000.000000", CultureInfo.InvariantCulture);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

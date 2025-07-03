@@ -1,6 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <DefineConstants>DECOMPILE;BINARYMETADATA;UE1;UE2;UE3;UE4;VENGEANCE;SWAT4;UNREAL2;INFINITYBLADE;BORDERLANDS2;GOW2;APB;SPECIALFORCE2;XIII;SINGULARITY;THIEF_DS;DEUSEX_IW;BORDERLANDS;MIRRORSEDGE;BIOSHOCK;HAWKEN;UT;DISHONORED;REMEMBERME;ALPHAPROTOCOL;VANGUARD;TERA;MKKE;TRANSFORMERS;XCOM2;DD2;DCUO;AA2;SPELLBORN;BATMAN;MOH;ROCKETLEAGUE;DNF;LSGAME;UNDYING;HP;DEVASTATION;BATTLEBORN;SPLINTERCELLX;AHIT;GIGANTIC;ENDWAR;SG1;MASS_EFFECT;MOV;MIDWAY;SHADOWSTRIKE;R6;HUXLEY;RM;LEAD;BULLETSTORM;GOWUE</DefineConstants>
+    <DefineConstants>DECOMPILE;BINARYMETADATA;UE1;UE2;UE3;UE4;VENGEANCE;SWAT4;UNREAL2;INFINITYBLADE;BORDERLANDS2;GOW2;APB;SPECIALFORCE2;XIII;SINGULARITY;THIEF_DS;DEUSEX_IW;BORDERLANDS;MIRRORSEDGE;BIOSHOCK;HAWKEN;UT;DISHONORED;REMEMBERME;ALPHAPROTOCOL;VANGUARD;TERA;MKKE;TRANSFORMERS;XCOM2;DD2;DCUO;AA2;SPELLBORN;BATMAN;MOH;ROCKETLEAGUE;DNF;LSGAME;UNDYING;HP;DEVASTATION;BATTLEBORN;SPLINTERCELLX;AHIT;GIGANTIC;ENDWAR;SG1;MASS_EFFECT;MOV;MIDWAY;SHADOWSTRIKE;R6;HUXLEY;RM;LEAD;BULLETSTORM;ADVENT;SWRepublicCommando;GOWUE</DefineConstants>
     <TargetFrameworks>net48;netstandard2.0;netstandard2.1;net8.0;net9.0</TargetFrameworks>
     <LangVersion>13.0</LangVersion>
     <OutputType>Library</OutputType>
@@ -44,6 +44,9 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.5" />
+  </ItemGroup>
   <ItemGroup>
     <Folder Include="Branch\UE3\HMS\" />
     <Folder Include="UnrealModel\Core\Types\" />
@@ -75,7 +78,7 @@
   <PropertyGroup>
     <AssemblyName>Eliot.UELib</AssemblyName>
     <PackageId>$(AssemblyName)</PackageId>
-    <Version>$(VersionPrefix)1.10.0</Version>
+    <Version>$(VersionPrefix)1.11.0</Version>
     <Authors>EliotVU</Authors>
     <Title>$(AssemblyName)</Title>
     <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>

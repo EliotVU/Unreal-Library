@@ -41,14 +41,14 @@ namespace UELib.Core
         /// </summary>
         public UPackageIndex PackageIndex { get; internal set; }
 
-        public UObjectTableItem Table { get; internal set; }
+        public UObjectTableItem? Table { get; internal set; }
 
-        public UExportTableItem ExportTable => Table as UExportTableItem;
+        public UExportTableItem? ExportTable => Table as UExportTableItem;
 
-        public UImportTableItem ImportTable => Table as UImportTableItem;
+        public UImportTableItem? ImportTable => Table as UImportTableItem;
 
         [Obsolete("Pending deprecation")]
-        public UNameTableItem NameTable => Table.ObjectTable;
+        public UNameTableItem? NameTable => Table.ObjectTable;
 
         /// <summary>
         /// The object class, as represented internally in UnrealScript.
@@ -164,16 +164,16 @@ namespace UELib.Core
         public void Load<T>()
             where T : UObjectStream
         {
-            // Imported objects cannot be deserialized!
-            if ((int)this < 0)
+            // non-export objects cannot be deserialized!
+            if ((int)this <= 0)
             {
-                LibServices.Debug("Attempted to load import {0}", GetReferencePath());
+                LibServices.Debug("Attempted to load non-export {0}", GetReferencePath());
 
                 return;
             }
 
             // e.g. None.
-            if (ExportTable.SerialSize == 0)
+            if (ExportTable == null || ExportTable.SerialSize == 0)
             {
                 DeserializationState |= ObjectState.Deserialized;
 
@@ -423,6 +423,8 @@ namespace UELib.Core
 
         public virtual void Deserialize(IUnrealStream stream)
         {
+            // Temp hack for backwards compatibility.
+            _Buffer = (UObjectStream)stream;
             Deserialize();
         }
 

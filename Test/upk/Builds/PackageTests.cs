@@ -56,6 +56,14 @@ namespace Eliot.UELib.Test.Builds
             BuildName.SG1_TA,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Advent Rising\",
+            BuildName.Advent,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Star Wars - Republic Commando\",
+            BuildName.SWRepublicCommando,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Huxley\",
             BuildName.Huxley,
             BuildPlatform.Undetermined
@@ -205,7 +213,11 @@ namespace Eliot.UELib.Test.Builds
 
             var versions = new SortedSet<uint>();
 
+#if DEBUG
+            const int maxTasks = 1;
+#else
             const int maxTasks = 3;
+#endif
             for (int i = 0; i < filePaths.Count; i += maxTasks)
             {
                 var tasks = filePaths[i..Math.Min(filePaths.Count, i + maxTasks)]

@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Xml.Linq;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Decoding;
@@ -123,7 +123,7 @@ namespace UELib
 
         public void WriteAnsi(string s)
         {
-            byte[] data = Encoding.UTF8.GetBytes(s);
+            byte[] data = UnrealEncoding.ANSI.GetBytes(s);
             // TODO: Byte-order
             BaseStream.Write(data, 0, data.Length);
             BaseStream.WriteByte(0);
@@ -131,7 +131,7 @@ namespace UELib
 
         public void WriteUnicode(string s)
         {
-            byte[] data = Encoding.Unicode.GetBytes(s);
+            byte[] data = UnrealEncoding.Unicode.GetBytes(s);
             // TODO: Byte-order
             BaseStream.Write(data, 0, data.Length);
             BaseStream.WriteByte(0);
@@ -193,7 +193,15 @@ namespace UELib
                 Write(index);
                 return;
             }
-
+#if ADVENT
+            // FIXME: Implement a ReadIndex serializer class so we can override this logic.
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                Archive.Version >= 144)
+            {
+                Write(index);
+                return;
+            }
+#endif
             WriteCompactIndex(index);
         }
 
@@ -308,8 +316,8 @@ namespace UELib
                 }
 
                 return chars[size - 1] == '\0'
-                    ? Encoding.ASCII.GetString(chars, 0, chars.Length - 1)
-                    : Encoding.ASCII.GetString(chars, 0, chars.Length);
+                    ? UnrealEncoding.ANSI.GetString(chars, 0, chars.Length - 1)
+                    : UnrealEncoding.ANSI.GetString(chars, 0, chars.Length);
             }
 
             if (length < 0) // UNICODE
@@ -337,8 +345,8 @@ namespace UELib
                     BaseStream.Read(chars, 0, chars.Length);
 
                     return chars[(size * 2) - 2] == '\0' && chars[(size * 2) - 1] == '\0'
-                        ? Encoding.Unicode.GetString(chars, 0, chars.Length - 2)
-                        : Encoding.Unicode.GetString(chars, 0, chars.Length);
+                        ? UnrealEncoding.Unicode.GetString(chars, 0, chars.Length - 2)
+                        : UnrealEncoding.Unicode.GetString(chars, 0, chars.Length);
                 }
                 else
                 {
@@ -388,7 +396,7 @@ namespace UELib
                 goto nextChar;
             }
 
-            string s = Encoding.ASCII.GetString(strBytes.ToArray());
+            string s = UnrealEncoding.ANSI.GetString(strBytes.ToArray());
             return s;
         }
 
@@ -404,7 +412,7 @@ namespace UELib
                 goto nextWord;
             }
 
-            string s = Encoding.Unicode.GetString(strBytes.ToArray());
+            string s = UnrealEncoding.Unicode.GetString(strBytes.ToArray());
             return s;
         }
 
@@ -451,10 +459,22 @@ namespace UELib
 
         /// <summary>Reads an index from the current stream.</summary>
         /// <returns>A 4-byte signed integer read from the current stream.</returns>
-        public int ReadIndex() =>
-            Archive.Version >= (uint)PackageObjectLegacyVersion.CompactIndexDeprecated
-                ? ReadInt32()
-                : ReadCompactIndex();
+        public int ReadIndex()
+        {
+            if (Archive.Version >= (uint)PackageObjectLegacyVersion.CompactIndexDeprecated)
+            {
+                return ReadInt32();
+            }
+#if ADVENT
+            // FIXME: Implement a ReadIndex serializer class so we can override this logic.
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                Archive.Version >= 144)
+            {
+                return ReadInt32();
+            }
+#endif
+            return ReadCompactIndex();
+        }
 
         /// <summary>
         /// Deserializes a <seealso cref="UName"/> from the base stream.
@@ -960,7 +980,7 @@ namespace UELib
             return this;
         }
 
-        public void ConformRecordPosition()
+        public virtual void ConformRecordPosition()
         {
         }
 
@@ -1073,7 +1093,7 @@ namespace UELib
         /// </summary>
         /// <param name="varName">The struct that was read from the previous buffer position.</param>
         /// <param name="varObject">The struct's value that was read.</param>
-        public override IUnrealStream Record(string varName, object varObject = null)
+        public override IUnrealStream Record(string varName, object? varObject = null)
         {
             long size = Position - _LastRecordPosition;
             BinaryMetaData.AddField(varName, varObject, _LastRecordPosition, size);
@@ -1083,9 +1103,8 @@ namespace UELib
         }
 #endif
 
-        [Conditional("BINARYMETADATA")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ConformRecordPosition() => _LastRecordPosition = Position;
+        public override void ConformRecordPosition() => _LastRecordPosition = Position;
     }
 
     /// <summary>

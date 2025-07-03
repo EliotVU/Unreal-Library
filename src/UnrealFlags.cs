@@ -173,14 +173,14 @@ namespace UELib.Flags
             return _RawValue == other;
         }
 
-        public override string ToString()
+        public string ToString(ulong[] flagsMap)
         {
             var stringBuilder = new StringBuilder();
             var values = Enum.GetValues(typeof(TEnum));
             ulong flags = _RawValue;
             for (int i = 0; i < values.Length - 1; i++)
             {
-                ulong flag = _RawValue & GetFlag(i);
+                ulong flag = _RawValue & GetFlag(flagsMap, i);
                 if (flag == 0)
                 {
                     continue;
@@ -204,6 +204,13 @@ namespace UELib.Flags
             }
 
             return stringBuilder.ToString();
+        }
+
+        public override string ToString()
+        {
+            Debug.Assert(FlagsMap != null);
+
+            return ToString(FlagsMap);
         }
     }
 
