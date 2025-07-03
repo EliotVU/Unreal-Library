@@ -1,5 +1,12 @@
 #
 
+## [1.11.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.11.1)
+
+* Support for Gears of War: Ultimate Edition and Reloaded (thanks to @PaoloTK)
+* Fixed missing CtorLink flag resulting in a /* 0x400000 */ comment in the decompilation output.
+
+## [1.11.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.11.0)
+
 * Support for Star Wars: Republic Commando
 * Support for Advent Rising
 * Support for Tom Clancy's Splinter Cell: Blacklist (thanks to @shryder)
