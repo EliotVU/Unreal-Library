@@ -739,6 +739,13 @@ namespace UELib.Flags
         AlwaysInit,
 
         /// <summary>
+        /// The property needs a constructor link, and should be initialized in the constructor.
+        ///
+        /// Usually applied to property types String, Array or Map.
+        /// </summary>
+        CtorLink,
+
+        /// <summary>
         /// The property is marked with the modifier 'Instanced' and the referenced object should be exported to T3D markup.
         ///
         /// Should also apply the flag <seealso cref="EditInline"/>

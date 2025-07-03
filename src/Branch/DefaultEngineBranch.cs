@@ -263,6 +263,8 @@ namespace UELib.Branch
             // Not functional
             PropertyFlags[(int)PropertyFlag.DuplicateTransient] = (ulong)PropertyFlagsLO.New;
 
+            PropertyFlags[(int)PropertyFlag.CtorLink] = (ulong)PropertyFlagsLO.NeedCtorLink;
+
             if (linker.Version > 68)
             {
                 PropertyFlags[(int)PropertyFlag.NoExport] = (ulong)PropertyFlagsLO.NoExport;
