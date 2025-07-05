@@ -4,22 +4,20 @@
 
 # UELib
 
-The Unreal library (UELib) provides you an API to read (parse/deserialize) the contents of Unreal Engine game package files such as .UDK, .UPK.
-Its main purpose is to decompile the UnrealScript byte-code to its original source-code.
+The Unreal library (UELib) provides you an API to read (parse/deserialize) contents of Unreal Engine game package files, such as .UDK and .UPK files.
 
-It accomplishes this by reading the necessary Unreal data classes such as:
+The main goal of UELib is to decompile the UnrealScript byte-code, which is achieved by reconstructing the original UnrealScript source from Unreal data classes:
 
     UObject, UField, UConst, UEnum, UProperty, UStruct, UFunction, UState, UClass,
     UTextBuffer, UMetaData, UPackage
 
-Classes such as UStruct, UState, UClass, and UFunction contain the UnrealScript byte-code which we can deserialize in order to re-construct the byte-codes to its original UnrealScript source.
-
-Additionally UELib is also capable of deserializing of many more data classes such as:
+UELib is also capable of deserializing other Unreal data classes:
 
     UFont, USound, UPalette, UTexture,
     UTexture2D, UTexture2DDynamic, UTexture2DComposite, UTexture3D,
     UTextureCube, UTextureFlipBook, UTextureMovie
-    UPrimitive, UPolys
+    UPrimitive, UPolys,
+    UComponent
 
 ## Install
 
@@ -67,11 +65,12 @@ Additionally UELib is also capable of deserializing of many more data classes su
     }
 ```
 
-If you're looking to modify the library for the sole purpose of modding [UE Explorer](https://github.com/UE-Explorer/UE-Explorer), I recommend you to clone or fork this repository and install UE Explorer within your ```UELib/src/bin/Debug/``` folder, or change the project's configuration to build inside of the UE Explorer's folder.
+If you're looking to modify the library for the sole purpose of modding [UE Explorer](https://github.com/UE-Explorer/UE-Explorer) consider forking UE Explorer instead (UELib is linked as a sub-module)
 
 ## Compatible Games
 
 This is a table of games that are confirmed to be compatible with the current state of UELib, the table is sorted by Package-Version.
+Do you know a game that is compatible but is not listed here? Feel free to send a pull-request.
 
 | Name                  | Engine:Branch    | Package/Licensee    | Support State     |
 | --------------------- | ---------------- | ------------------- | ----------------- |
@@ -252,14 +251,19 @@ saved everything before opening any file!**
 
 **Note** UE3 production-ready packages are often **compressed** and must first be decompressed, [Unreal Package Decompressor](https://www.gildor.org/downloads) by **Gildor** is a tool that can decompress most packages for you; for some games you need a specialized decompressor, see for example [RLUPKTool](https://github.com/AltimorTASDK/RLUPKTool).
 
-Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes)
-
-Do you know a game that is compatible but is not listed here? Click on the top right to edit this file!
-
 ## How to contribute
 
 * Open an issue
 * Or make a pull-request by creating a [fork](https://help.github.com/articles/fork-a-repo/) of this repository, create a new branch and commit your changes to that particular branch, so that I can easily merge your changes.
+  
+Want to add support for a game? See [adding support for new Unreal classes](https://github.com/EliotVU/Unreal-Library/wiki/Adding-support-for-new-Unreal-classes)
+
+## Made with the help of UELib
+
+* [UnrealScript to C# Conversion](https://github.com/Eideren/Unreal-Library) and [Mirror's Edge Decompiled](https://eideren.com/posts/mirrors-edge-decompiled.html?i=1)
+* [Duke Nukem Forever: Enhanced](https://www.moddb.com/mods/duke-nukem-forever-enhanced)
+* [UE3 Shader Cache Patcher](https://github.com/tuokri/UE3ShaderCachePatcher)
+* [UnrealFlagEditor](https://github.com/Un-Drew/UnrealFlagEditor)
 
 ## Special thanks to
 
