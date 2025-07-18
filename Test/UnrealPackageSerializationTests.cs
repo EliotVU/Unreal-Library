@@ -440,31 +440,31 @@ public class UnrealPackageSerializationTests
                 set => baseStream.AbsolutePosition = value;
             }
 
-            public T ReadObject<T>() where T : UObject
+            public T? ReadObject<T>() where T : UObject
             {
                 throw new NotImplementedException();
             }
 
-            public void WriteObject<T>(T value) where T : UObject
+            public void WriteObject<T>(T? value) where T : UObject
             {
                 int index;
 
                 switch ((int)value)
                 {
                     case > 0:
-                        if (ExportToIndexMap.TryGetValue(value.ExportTable, out index) == false)
+                        if (ExportToIndexMap.TryGetValue(value!.ExportTable!, out index) == false)
                         {
                             index = ExportToIndexMap.Count + 1;
-                            ExportToIndexMap.Add(value.ExportTable, index);
+                            ExportToIndexMap.Add(value.ExportTable!, index);
                         }
 
                         break;
 
                     case < 0:
-                        if (ImportToIndexMap.TryGetValue(value.ImportTable, out index) == false)
+                        if (ImportToIndexMap.TryGetValue(value!.ImportTable!, out index) == false)
                         {
                             index = -(ImportToIndexMap.Count + 1);
-                            ImportToIndexMap.Add(value.ImportTable, index);
+                            ImportToIndexMap.Add(value.ImportTable!, index);
                         }
 
                         break;

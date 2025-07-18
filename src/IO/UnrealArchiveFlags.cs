@@ -13,5 +13,5 @@ public enum UnrealArchiveFlags
     /// <summary>
     ///     The archive is encoded and should pipe to an <see cref="EncodedStream"/>
     /// </summary>
-    Encoded = 1 << 1
+    Encoded = 1 << 1,
 }

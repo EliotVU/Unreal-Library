@@ -1,8 +1,7 @@
 ﻿using System;
 using UELib.Branch;
-using UELib.IO;
 
-namespace UELib.PackageFormats;
+namespace UELib.IO;
 
 /// <summary>
 ///     A dummy archive that does not contain any data.

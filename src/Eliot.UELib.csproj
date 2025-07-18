@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Branch\UE3\HMS\" />
+    <Folder Include="PackageFormats\" />
     <Folder Include="UnrealModel\Core\Types\" />
     <Folder Include="UnrealModel\Engine\Classes\" />
     <Folder Include="UnrealModel\Engine\Types\" />

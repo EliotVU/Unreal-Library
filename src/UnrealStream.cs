@@ -54,6 +54,34 @@ public interface IUnrealStream : IUnrealArchive, IDisposable
     public void ConformRecordPosition();
 }
 
+public static class UnrealStreamExtensions
+{
+    /// <summary>
+    ///     Checks if the stream package is cooked, meaning it has been processed for a specific platform.
+    /// </summary>
+    /// <param name="streeam">The stream.</param>
+    /// <returns>True if the stream package is cooked.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsCooked(this IUnrealStream stream)
+    {
+        return stream.Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked);
+    }
+
+    /// <summary>
+    ///     Checks if the stream package contains editor-only data; this is generally false only for packages that are cooked
+    ///     for a console platform.
+    ///     Except for PC packages that are also cooked for console, this is indicated by the directory name "CookedPCConsole"
+    ///     in the package path.
+    /// </summary>
+    /// <param name="stream">The stream.</param>
+    /// <returns>True if the stream package has serialized editor-only data.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool ContainsEditorOnlyData(this IUnrealStream stream)
+    {
+        return !IsCooked(stream) || stream.Package.CookerPlatform != BuildPlatform.Console;
+    }
+}
+
 public sealed class UnrealWriter(UnrealPackageArchive archive, BinaryWriter baseWriter)
     : UnrealBinaryWriter(archive, baseWriter)
 {
@@ -78,7 +106,7 @@ public sealed class UnrealWriter(UnrealPackageArchive archive, BinaryWriter base
 #if SHADOWSTRIKE
         if (archive.Build == BuildGeneration.ShadowStrike)
         {
-            LibServices.LogService.SilentException(new NotSupportedException("Writing index 0 for ShadowStrike."));
+            LibServices.LogService.SilentException(new NotSupportedException("Writing external index 0 for ShadowStrike."));
             WriteIndex(0);
         }
 #endif
@@ -159,122 +187,12 @@ public class UPackageFileStream : FileStream
     }
 }
 
-public abstract class UnrealPackagePipedStream : PipedStream, IUnrealStream
-{
-    protected readonly UnrealPackageArchive BaseArchive;
-
-    protected UnrealPackagePipedStream(UnrealPackageArchive baseArchive, Stream baseStream) : base(baseStream)
-    {
-        BaseArchive = baseArchive;
-
-        if (baseStream.CanRead)
-        {
-            var binaryReader = CreateBinaryReader(baseStream);
-            Reader = new UnrealReader(baseArchive, binaryReader);
-        }
-
-        if (baseStream.CanWrite)
-        {
-            var binaryWriter = CreateBinaryWriter(baseStream);
-            Writer = new UnrealWriter(baseArchive, binaryWriter);
-        }
-    }
-
-    protected UnrealReader Reader { get; set; }
-    protected UnrealWriter Writer { get; set; }
-
-    [Obsolete] public IBufferDecoder Decoder { get; set; }
-
-    public IPackageSerializer Serializer { get; set; }
-    UnrealBinaryReader IUnrealStream.UR => Reader;
-    UnrealBinaryWriter IUnrealStream.UW => Writer;
-
-    public UnrealPackage Package => BaseArchive.Package;
-    public uint Version => BaseArchive.Version;
-    public uint LicenseeVersion => BaseArchive.LicenseeVersion;
-    public uint UE4Version => BaseArchive.UE4Version;
-    public UnrealPackage.GameBuild Build => BaseArchive.Build;
-
-    public bool BigEndianCode => Flags.HasFlag(UnrealArchiveFlags.BigEndian);
-    public UnrealArchiveFlags Flags => BaseArchive.Flags;
-
-    public virtual long AbsolutePosition
-    {
-        get => Position;
-        set => Position = value;
-    }
-
-    // We need this implementation to keep the interface extensions working.
-    public void Skip(int bytes) => Position += bytes;
-
-    public virtual IUnrealStream Record(string name, object value) => this;
-
-    public virtual void ConformRecordPosition()
-    {
-    }
-
-    public T? ReadObject<T>() where T : UObject
-    {
-        int index = Reader.ReadIndex();
-        return (T?)Package.IndexToObject(index);
-    }
-
-    public void WriteObject<T>(T? value) where T : UObject => Writer.WriteIndex((int)value);
-
-    public UName ReadName() => Reader.ReadName();
-
-    public void WriteName(in UName value) => Writer.WriteName(value);
-
-    protected BinaryReader CreateBinaryReader(Stream stream) =>
-        (BaseArchive.Flags & UnrealArchiveFlags.BigEndian) == 0
-            ? new BinaryReader(stream)
-            : new BigEndianBinaryReader(stream);
-
-    protected BinaryWriter CreateBinaryWriter(Stream stream) =>
-        (BaseArchive.Flags & UnrealArchiveFlags.BigEndian) == 0
-            ? new BinaryWriter(stream)
-            : new BigEndianBinaryWriter(stream);
-
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-
-        if (!disposing)
-        {
-            return;
-        }
-
-        Reader?.Dispose();
-        Writer?.Dispose();
-    }
-}
-
 [Obsolete("Use UnrealPackageStream")]
 public sealed class UPackageStream(string path, FileMode mode, FileAccess access) : UPackageFileStream(path, mode, access,
     FileShare.Read)
 {
     [Obsolete("Deprecated", true)]
     public void PostInit(UnrealPackage package) => throw new NotImplementedException("Deprecated");
-}
-
-public class UnrealPackageStream(UnrealPackageArchive baseArchive, Stream baseStream)
-    : UnrealPackagePipedStream(baseArchive, baseStream)
-{
-    internal void SwapReaderBaseStream(Stream newBaseStream)
-    {
-        if (CanRead)
-        {
-            Reader = new UnrealReader(BaseArchive, CreateBinaryReader(newBaseStream));
-        }
-    }
-
-    internal void SwapWriterBaseStream(Stream newBaseStream)
-    {
-        if (CanWrite)
-        {
-            Writer = new UnrealWriter(BaseArchive, CreateBinaryWriter(newBaseStream));
-        }
-    }
 }
 
 public class UObjectStream(UnrealPackageArchive baseArchive, Stream baseStream, long virtualPosition = 0)
@@ -829,6 +747,54 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<byte>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        Write(stream, array.ToArray());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<short>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (short element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<ushort>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (ushort element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteArray(this IUnrealStream stream, in UArray<int>? array)
     {
         if (array == null)
@@ -846,7 +812,7 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteArray(this IUnrealStream stream, in UArray<byte>? array)
+    public static void WriteArray(this IUnrealStream stream, in UArray<uint>? array)
     {
         if (array == null)
         {
@@ -856,7 +822,61 @@ public static class UnrealStreamImplementations
         }
 
         WriteIndex(stream, array.Count);
-        Write(stream, array.ToArray());
+        foreach (uint element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<long>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (long element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<ulong>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (ulong element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<bool>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (bool element in array)
+        {
+            stream.Write(element);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -871,6 +891,40 @@ public static class UnrealStreamImplementations
 
         WriteIndex(stream, array.Count);
         foreach (string element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<UName>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (var element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<UObject>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (var element in array)
         {
             stream.Write(element);
         }
@@ -893,6 +947,26 @@ public static class UnrealStreamImplementations
             stream.Write(pair.Key);
             var value = pair.Value;
             stream.WriteStruct(ref value);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteMap<TKey, TValue>(this IUnrealStream stream, in UMap<TKey, TValue>? map)
+        where TKey : UName
+        where TValue : UObject
+    {
+        if (map == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, map.Count);
+        foreach (var pair in map)
+        {
+            stream.Write(pair.Key);
+            stream.Write(pair.Value);
         }
     }
 
@@ -961,8 +1035,34 @@ public static class UnrealStreamImplementations
         WriteArray(stream, in array);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<byte>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<short>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<ushort>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(this IUnrealStream stream, in UArray<int>? array) => WriteArray(stream, in array);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<uint>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<long>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<ulong>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<bool>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<UName>? array) => WriteArray(stream, in array);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(this IUnrealStream stream, in UArray<UObject>? array) => WriteArray(stream, in array);
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
     //public static void Write<T>(this IUnrealStream stream, ref T item)
     //    where T : struct, IUnrealSerializableClass =>
@@ -998,4 +1098,19 @@ public static class UnrealStreamImplementations
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteIndex(this IUnrealStream stream, int index) => stream.UW.WriteIndex(index);
+
+    private readonly struct Peeker(IUnrealStream stream, long position) : IDisposable
+    {
+        public void Dispose()
+        {
+            stream.Position = position;
+        }
+    }
+
+    public static IDisposable Peek(this IUnrealStream stream, long position)
+    {
+        var peeker = new Peeker(stream, stream.Position);
+        stream.Position = position;
+        return peeker;
+    }
 }

@@ -12,7 +12,7 @@ internal interface IUnrealPackageArchive : IUnrealArchive
 
 public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
 {
-    private IBufferDecoder _Decoder;
+    private IBufferDecoder? _Decoder;
 
     public UnrealPackageArchive(UnrealPackage package) => Package = package;
 
@@ -28,7 +28,8 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
         Stream = new UnrealPackageStream(this, stream);
     }
 
-    public IBufferDecoder Decoder
+    [Obsolete]
+    public IBufferDecoder? Decoder
     {
         get => _Decoder;
         set
@@ -55,6 +56,7 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
     public uint UE4Version => Package.Summary.UE4Version;
     public UnrealPackage.GameBuild Build => Package.Build;
 
+    [Obsolete]
     public bool BigEndianCode => Flags.HasFlag(UnrealArchiveFlags.BigEndian);
     public UnrealArchiveFlags Flags { get; set; }
 
