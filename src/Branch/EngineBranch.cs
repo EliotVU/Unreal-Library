@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UELib.Branch.UE2.DNF;
 using UELib.Core.Tokens;
 using UELib.Decoding;
 using UELib.Tokens;
@@ -22,7 +21,7 @@ namespace UELib.Branch
         public IBufferDecoder? Decoder;
 
         // TODO: Re-factor this as a factory where we can retrieve the correct type-specific serializer.
-        public IPackageSerializer Serializer;
+        public IPackageSerializer? Serializer;
         private TokenFactory? _TokenFactory;
 
         /// <summary>
@@ -37,12 +36,7 @@ namespace UELib.Branch
         protected readonly ulong[] PropertyFlags = new ulong[(int)Flags.PropertyFlag.Max];
         protected readonly ulong[] StructFlags = new ulong[(int)Flags.StructFlag.Max];
         protected readonly ulong[] FunctionFlags = new ulong[(int)Flags.FunctionFlag.Max];
-        protected readonly ulong[] StateFlags = new ulong[(int)Flags.StateFlag.Max]
-        {
-            (ulong)Flags.StateFlags.Auto,
-            (ulong)Flags.StateFlags.Editable,
-            (ulong)Flags.StateFlags.Simulated,
-        };
+        protected readonly ulong[] StateFlags = new ulong[(int)Flags.StateFlag.Max];
         protected readonly ulong[] ClassFlags = new ulong[(int)Flags.ClassFlag.Max];
 
         public EngineBranch()

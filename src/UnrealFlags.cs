@@ -1147,6 +1147,8 @@ namespace UELib.Flags
         Auto,
         Simulated,
 
+        HasLocalProps,
+
         Max,
     }
 
@@ -1159,6 +1161,7 @@ namespace UELib.Flags
         Editable            = 0x00000001U,
         Auto                = 0x00000002U,
         Simulated           = 0x00000004U,
+        HasLocalProps       = 0x00000008U,
     }
 
     /// <summary>  

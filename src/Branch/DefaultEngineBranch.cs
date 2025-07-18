@@ -482,6 +482,12 @@ namespace UELib.Branch
             StateFlags[(int)StateFlag.Auto] = (ulong)Flags.StateFlags.Auto;
             StateFlags[(int)StateFlag.Editable] = (ulong)Flags.StateFlags.Editable;
             StateFlags[(int)StateFlag.Simulated] = (ulong)Flags.StateFlags.Simulated;
+
+            if (linker.Version > 655) // 691?
+            {
+                // Late UDK addition, together with the LocalStateVariable token.
+                StateFlags[(int)StateFlag.HasLocalProps] = (ulong)Flags.StateFlags.HasLocalProps;
+            }
         }
 
         protected virtual void SetupEnumClassFlags(UnrealPackage linker)
