@@ -22,88 +22,100 @@ namespace UELib.Core
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
     {
         /// <summary>
-        /// The object name.
+        ///     The name for this object.
         /// </summary>
         [Output(OutputSlot.Parameter)]
         public UName Name { get; set; }
 
         /// <summary>
-        /// The object flags.
+        ///     The object flags for this object.
         /// </summary>
         public UnrealFlags<ObjectFlag> ObjectFlags { get; set; }
 
         /// <summary>
-        /// The object package.
+        ///     The package for this object.
         /// </summary>
         public UnrealPackage Package { get; internal set; }
 
         /// <summary>
-        /// The object resource index in the <see cref="Package"/>.
+        ///     The resource index in the <see cref="Package"/> to this object.
         /// </summary>
         public UPackageIndex PackageIndex { get; internal set; }
 
-        public UObjectTableItem? Table { get; internal set; }
+        /// <summary>
+        ///     The resource for this object in the <see cref="Package"/>.
+        /// </summary>
+        public UObjectTableItem? PackageResource { get; internal set; }
+
+        [Obsolete("Use PackageResource instead")]
+        public UObjectTableItem? Table => PackageResource;
 
         public UExportTableItem? ExportTable => Table as UExportTableItem;
-
         public UImportTableItem? ImportTable => Table as UImportTableItem;
 
-        [Obsolete("Pending deprecation")]
+        [Obsolete("Use Name instead")]
         public UNameTableItem? NameTable => Table.ObjectTable;
 
         /// <summary>
-        /// The object class, as represented internally in UnrealScript.
+        ///     The class for this object, as represented internally in UnrealScript.
         ///
-        /// Null for imports and UClass objects.
+        ///     Null for imports and UClass objects.
         /// </summary>
         [Output(OutputSlot.Parameter)]
         public UClass? Class { get; set; }
 
         /// <summary>
-        /// The object outer.
+        ///     The outer for this object, if any.
         ///
-        /// e.g. <example>`Core.Object.Vector.X` where `Vector` is the outer of property `X`</example>
+        ///     e.g. <example>`Core.Object.Vector.X` where `Vector` is the outer of property `X`</example>
         ///
-        /// Null for imports with no outer.
+        ///     Null for imports with no outer.
         /// </summary>
         public UObject? Outer { get; set; }
 
         /// <summary>
-        /// The object archetype.
+        ///     The archetype for this object, if any.
         /// </summary>
         public UObject? Archetype { get; set; }
 
         #region Serialized Members
 
         /// <summary>
-        /// Serialized if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/> or UE4Version is equal or greater than 196
+        ///     The networking index for this object.
+        /// 
+        ///     Serialized if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/> or UE4Version is equal or greater than 196
         /// </summary>
         public int NetIndex
         {
             get => _NetIndex;
             set => _NetIndex = value;
         }
-        
+
         private int _NetIndex = -1;
 
         /// <summary>
-        /// Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
+        ///     The state frame for this object.
+        /// 
+        ///     Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
         /// </summary>
         public UStateFrame? StateFrame
         {
             get => _StateFrame;
             set => _StateFrame = value;
         }
-        
+
         private UStateFrame? _StateFrame;
 
+        /// <summary>
+        ///     The unique identifier for this object.
+        /// </summary>
         [BuildGeneration(BuildGeneration.UE4)]
         public UGuid ObjectGuid
         {
             get => _ObjectGuid;
             set => _ObjectGuid = value;
         }
-        
+
         private UGuid _ObjectGuid;
 
         #endregion
@@ -127,7 +139,7 @@ namespace UELib.Core
 
             if (packageIndex)
             {
-                Table = package.IndexToObjectResource(packageIndex);
+                PackageResource = package.IndexToObjectResource(packageIndex);
             }
         }
 
@@ -645,24 +657,6 @@ namespace UELib.Core
                 : $"Class'{GetPath()}'";
         }
 
-        [Obsolete("Use Class?.Name ?? \"Class\"")]
-        public string GetClassName()
-        {
-            return ImportTable?.ClassName ?? (Class?.Name ?? "Class");
-        }
-
-        [Obsolete("Use Class?.Name ?? \"Class\"")]
-        public bool IsClassType(string className)
-        {
-            return string.Compare(GetClassName(), className, StringComparison.OrdinalIgnoreCase) == 0;
-        }
-
-        [Obsolete("Use Package.IndexToObject", true)]
-        protected UObject GetIndexObject(int index)
-        {
-            return Package.IndexToObject(index);
-        }
-
         #region IBuffered
 
         public virtual byte[] CopyBuffer()
@@ -721,7 +715,7 @@ namespace UELib.Core
 
         public int CompareTo(object obj)
         {
-            return (int)Table.ObjectName - (int)((UObject)obj).Table.ObjectName;
+            return (int)Name - (int)((UObject)obj).Name;
         }
 
         public override string ToString()
@@ -779,6 +773,24 @@ namespace UELib.Core
         public static explicit operator string(UObject? obj)
         {
             return obj?.Name ?? "none";
+        }
+
+        [Obsolete("Use Class?.Name ?? \"Class\"")]
+        public string GetClassName()
+        {
+            return ImportTable?.ClassName ?? (Class?.Name ?? "Class");
+        }
+
+        [Obsolete("Use Class?.Name ?? \"Class\"")]
+        public bool IsClassType(string className)
+        {
+            return string.Compare(GetClassName(), className, StringComparison.OrdinalIgnoreCase) == 0;
+        }
+
+        [Obsolete("Use Package.IndexToObject", true)]
+        protected UObject GetIndexObject(int index)
+        {
+            return Package.IndexToObject(index);
         }
 
         /// <summary>

@@ -421,7 +421,7 @@ namespace UELib.Core
         /// <param name="name">the name of the field.</param>
         /// <typeparam name="T">the type to limit the search to.</typeparam>
         /// <returns>the field with a matching name and type.</returns>
-        public T? FindField<T>(UName name) where T : UField
+        public T? FindField<T>(in UName name) where T : UField
         {
             foreach (var super in EnumerateSuper(this))
             {
@@ -443,7 +443,7 @@ namespace UELib.Core
         /// <param name="name">the name of the property.</param>
         /// <typeparam name="T">the type to limit the search to.</typeparam>
         /// <returns>the property with a matching name and type.</returns>
-        public T? FindProperty<T>(UName name) where T : UProperty
+        public T? FindProperty<T>(in UName name) where T : UProperty
         {
             foreach (var super in EnumerateSuper(this))
             {

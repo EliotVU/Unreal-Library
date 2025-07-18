@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using UELib.Branch;
+using UELib.Core;
 
 namespace UELib
 {
@@ -9,13 +11,19 @@ namespace UELib
     /// </summary>
     public sealed class UNameTableItem : UTableItem, IUnrealSerializableClass
     {
+        internal IndexName? IndexName;
+
         /// <summary>
-        /// The unique name excluding the terminal null character.
+        /// The case-preserved name of the package name entry.
         /// </summary>
         public string Name
         {
             get => _Name;
-            set => _Name = value;
+            set
+            {
+                _Name = value;
+                IndexName = IndexName.FromText(value);
+            }
         }
 
         internal string _Name;
@@ -45,6 +53,16 @@ namespace UELib
         public UNameTableItem(string text)
         {
             Name = text;
+            IndexName = IndexName.FromText(text);
+        }
+
+        public UNameTableItem(int index)
+        {
+            var indexName = IndexName.FromIndex(index);
+            Contract.Assert(indexName != null, "Cannot construct from an unregistered index.");
+
+            Name = IndexName.Text;
+            IndexName = indexName;
         }
 
         /// <summary>

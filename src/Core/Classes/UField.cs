@@ -73,7 +73,7 @@ namespace UELib.Core
         ///     Enumerates all super-structs of the specified struct.
         /// </summary>
         /// <returns>the enumerated super-struct.</returns>
-        public IEnumerable<UStruct> EnumerateSuper(UStruct super)
+        public static IEnumerable<UStruct> EnumerateSuper(UStruct super)
         {
             for (; super != null; super = super.Super)
             {
@@ -89,20 +89,9 @@ namespace UELib.Core
             }
         }
 
-        public bool Extends(string superName)
-        {
-            for (var field = Super; field != null; field = field.Super)
-            {
-                if (string.Equals(field.Name, superName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
+        public bool Extends(string superName) => Extends(new UName(superName));
 
-            return false;
-        }
-
-        public bool Extends(UName superName)
+        public bool Extends(in UName superName)
         {
             for (var field = Super; field != null; field = field.Super)
             {
@@ -114,6 +103,7 @@ namespace UELib.Core
 
             return false;
         }
+
         [Obsolete]
         public string GetSuperGroup()
         {

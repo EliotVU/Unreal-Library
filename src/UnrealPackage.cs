@@ -3070,6 +3070,8 @@ namespace UELib
             {
                 var nameEntry = new UNameTableItem { Offset = (int)stream.Position, Index = i };
                 serializer.Deserialize(stream, nameEntry);
+                // Register this unique name globally.
+                nameEntry.IndexName = IndexName.FromText(nameEntry.Name);
                 nameEntry.Size = (int)(stream.Position - nameEntry.Offset);
                 Names.Add(nameEntry);
             }
@@ -3488,7 +3490,7 @@ namespace UELib
             obj.ObjectFlags = new UnrealFlags<ObjectFlag>(Branch.EnumFlagsMap[typeof(ObjectFlag)], ObjectFlag.Public);
             obj.Package = this;
             obj.PackageIndex = -(import.Index + 1);
-            obj.Table = import;
+            obj.PackageResource = import;
             obj.Class = null; // FindObject<UClass> ?? StaticClass
             obj.Outer = IndexToObject<UObject?>(import.OuterIndex); // ?? ClassPackage
             import.Object = obj;
@@ -3534,7 +3536,7 @@ namespace UELib
             obj.ObjectFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
             obj.Package = this;
             obj.PackageIndex = export.Index + 1;
-            obj.Table = export;
+            obj.PackageResource = export;
             obj.Class = objClass; // ?? StaticClass
             obj.Outer = objOuter ?? RootPackage;
             obj.Archetype = objArchetype;
@@ -3552,12 +3554,12 @@ namespace UELib
             return obj;
         }
 
-        private T CreateObject<T>(UName objectName) where T : UObject
+        private T CreateObject<T>(in UName objectName) where T : UObject
         {
             return CreateObject<T>(objectName, new UnrealFlags<ObjectFlag>());
         }
 
-        private T CreateObject<T>(UName objectName, UnrealFlags<ObjectFlag> objectFlags) where T : UObject
+        private T CreateObject<T>(in UName objectName, UnrealFlags<ObjectFlag> objectFlags) where T : UObject
         {
             var obj = (T)Activator.CreateInstance(typeof(T));
             Debug.Assert(obj != null);

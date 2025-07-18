@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UELib.Decoding;
 using UELib.IO;
@@ -13,6 +14,8 @@ internal interface IUnrealPackageArchive : IUnrealArchive
 public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
 {
     private IBufferDecoder? _Decoder;
+
+    public Dictionary<int, int> NameIndices { get; } = new(1000);
 
     public UnrealPackageArchive(UnrealPackage package) => Package = package;
 

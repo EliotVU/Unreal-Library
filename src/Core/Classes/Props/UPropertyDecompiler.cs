@@ -454,7 +454,7 @@ namespace UELib.Core
                 else if (HasPropertyFlag(PropertyFlag.Config))
                 {
 #if XCOM2
-                    if (ConfigName != null && !ConfigName.IsNone())
+                    if (ConfigName != null && !ConfigName.Value.IsNone())
                     {
                         output += "config(" + ConfigName + ") ";
                     }

@@ -85,8 +85,13 @@ public class UnrealStreamTests
         var archive = new UnrealPackageArchive(package);
         using var stream = new UnrealPackageStream(archive, fileStream);
 
+        // Ensure the package knows about the name.
         package.Names.Add(new UNameTableItem("Name"));
         var writtenName = new UName(package.Names[0]);
+
+        // Ensure the stream can retrieve the package name index.
+        // Hash -> package name index.
+        archive.NameIndices.Add(writtenName.Index, 0);
 
         stream.Seek(0, SeekOrigin.Begin);
         stream.WriteName(writtenName);
@@ -95,7 +100,7 @@ public class UnrealStreamTests
         stream.Seek(0, SeekOrigin.Begin);
         var readName = stream.ReadName();
         Assert.AreEqual(length, stream.Position, "Serialize cannot differ from deserialize");
-        Assert.AreEqual(writtenName.Name, readName.Name);
+        Assert.AreEqual(writtenName, readName);
     }
 
     [DataTestMethod]

@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.Flags;
+using UELib.IO;
 using UELib.Types;
 
 namespace UELib.Core
@@ -12,7 +11,7 @@ namespace UELib.Core
     /// </summary>
     public partial class UProperty : UField, IUnrealNetObject
     {
-        public PropertyType Type { get; protected set; }
+        public PropertyType Type { get; protected set; } = PropertyType.None;
 
         #region Serialized Members
 
@@ -29,16 +28,21 @@ namespace UELib.Core
         [Build(UnrealPackage.GameBuild.BuildName.XCOM2WotC)]
         public UName? ConfigName { get; set; }
 #endif
-        public UName? CategoryName
+        /// <summary>
+        ///     The name of the category this property belongs to.
+        ///     "None" indicates that this property is not categorized; otherwise if equivalent to 'Outer.Class.Name' then, it is categorized without a custom name.
+        /// </summary>
+        public UName CategoryName
         {
             get => _CategoryName;
             set => _CategoryName = value;
         }
 
-        private UName? _CategoryName;
+        private UName _CategoryName = UniqueName.None;
 
-        [Obsolete("See CategoryName", true)] public int CategoryIndex { get; }
-
+        /// <summary>
+        ///     The enum used to represent the array dimension, if any.
+        /// </summary>
         [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
         public UEnum? ArrayEnum { get; set; }
 
@@ -509,6 +513,6 @@ namespace UELib.Core
             return string.Empty;
         }
 
-        #endregion
+        [Obsolete("See CategoryName", true)] public int CategoryIndex { get; }
     }
 }

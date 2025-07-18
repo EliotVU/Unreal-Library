@@ -93,15 +93,18 @@ public sealed class UnrealWriter(UnrealPackageArchive archive, BinaryWriter base
     /// </summary>
     public override void WriteName(in UName value)
     {
+        int hash = value.Index;
+        int index = archive.NameIndices[hash];
+        int number = value.Number + 1;
 #if R6
         if (archive.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
         {
-            _BaseWriter.Write(value.Index | ((value.Number + 1) << 18));
+            _BaseWriter.Write(index | (number << 18));
 
             return;
         }
 #endif
-        WriteIndex(value.Index);
+        WriteIndex(index);
 
 #if SHADOWSTRIKE
         if (archive.Build == BuildGeneration.ShadowStrike)
@@ -116,7 +119,7 @@ public sealed class UnrealWriter(UnrealPackageArchive archive, BinaryWriter base
 #endif
            )
         {
-            _BaseWriter.Write(value.Number + 1);
+            _BaseWriter.Write(number);
         }
     }
 }
@@ -535,17 +538,16 @@ public static class UnrealStreamImplementations
         }
     }
 
-    public static void ReadMap<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
-        where TKey : UName
+    public static void ReadMap<TValue>(this IUnrealStream stream, out UMap<UName, TValue> map)
         where TValue : UObject
     {
         int c = stream.ReadLength();
-        map = new UMap<TKey, TValue>(c);
+        map = new UMap<UName, TValue>(c);
         for (int i = 0; i < c; ++i)
         {
             Read(stream, out UName key);
             Read(stream, out TValue value);
-            map.Add((TKey)key, value);
+            map.Add((UName)key, value);
         }
     }
 
@@ -683,8 +685,7 @@ public static class UnrealStreamImplementations
     public static void Read(this IUnrealStream stream, out UArray<ushort> array) => ReadArray(stream, out array);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Read<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map)
-        where TKey : UName
+    public static void Read<TValue>(this IUnrealStream stream, out UMap<UName, TValue> map)
         where TValue : UObject =>
         ReadMap(stream, out map);
 
@@ -951,8 +952,7 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteMap<TKey, TValue>(this IUnrealStream stream, in UMap<TKey, TValue>? map)
-        where TKey : UName
+    public static void WriteMap<TValue>(this IUnrealStream stream, in UMap<UName, TValue>? map)
         where TValue : UObject
     {
         if (map == null)
