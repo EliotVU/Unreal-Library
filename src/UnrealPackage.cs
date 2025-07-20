@@ -92,7 +92,7 @@ namespace UELib
 
         public UnrealPackageStream Stream
         {
-            get { return Archive.Stream; }
+            get => Archive.Stream;
             set => Archive.Stream = value;
         }
 
@@ -925,7 +925,7 @@ namespace UELib
             [Obsolete("To be deprecated")] public readonly BuildFlags Flags;
 
             public GameBuild(uint overrideVersion, ushort overrideLicenseeVersion, BuildGeneration generation,
-                Type engineBranchType,
+                Type? engineBranchType,
                 BuildFlags flags)
             {
                 OverrideVersion = overrideVersion;
@@ -1106,7 +1106,7 @@ namespace UELib
             ///
             /// Null if (<see cref="Version"/> &gt;= <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
             /// </summary>
-            public UArray<UGuid> Heritages;
+            public UArray<UGuid>? Heritages;
 
             public int DependsOffset;
 
@@ -1117,7 +1117,7 @@ namespace UELib
             ///
             /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
             /// </summary>
-            public UArray<UGenerationTableItem> Generations;
+            public UArray<UGenerationTableItem>? Generations;
 
             private PackageFileEngineVersion PackageEngineVersion;
             private PackageFileEngineVersion PackageCompatibleEngineVersion;
@@ -1140,14 +1140,14 @@ namespace UELib
             ///
             /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.CompressionAdded"/>)
             /// </summary>
-            public UArray<CompressedChunk> CompressedChunks;
+            public UArray<CompressedChunk>? CompressedChunks;
 
             public uint PackageSource;
 
             /// <summary>
             /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.AddedAdditionalPackagesToCook"/>)
             /// </summary>
-            public UArray<string> AdditionalPackagesToCook;
+            public UArray<string>? AdditionalPackagesToCook;
 
             public int ImportExportGuidsOffset;
             public int ImportGuidsCount;
@@ -1158,7 +1158,7 @@ namespace UELib
             /// <summary>
             /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.AddedTextureAllocations"/>)
             /// </summary>
-            public UArray<PackageTextureType> TextureAllocations;
+            public UArray<PackageTextureType>? TextureAllocations;
 
             public int GatherableTextDataCount;
             public int GatherableTextDataOffset;
@@ -1175,7 +1175,7 @@ namespace UELib
             public int BulkDataOffset;
             public int WorldTileInfoDataOffset;
 
-            public UArray<int> ChunkIdentifiers;
+            public UArray<int>? ChunkIdentifiers;
 
             public int PreloadDependencyCount;
             public int PreloadDependencyOffset;
@@ -1255,7 +1255,8 @@ namespace UELib
             {
                 if (package.Build.EngineBranchType != null)
                 {
-                    package.Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType,
+                    package.Branch = (EngineBranch)Activator.CreateInstance(
+                        package.Build.EngineBranchType,
                         package.Build.Generation);
 
                     // The branch may override the generation. (Especially in unit-tests this is useful)
@@ -1311,9 +1312,8 @@ namespace UELib
                     uint version = Version | (uint)(LicenseeVersion << 16);
                     stream.Write(version);
                 }
-
 #if SPLINTERCELLX
-                if (stream.Package.Build == BuildGeneration.SCX &&
+                if (stream.Build == BuildGeneration.SCX &&
                     stream.LicenseeVersion >= 83)
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1322,23 +1322,15 @@ namespace UELib
                 }
 #endif
 #if BIOSHOCK
-                if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
+                if (stream.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
                     throw new NotSupportedException("This package version is not supported!");
 
                     stream.Skip(4);
                 }
 #endif
-#if MKKE
-                if (stream.Package.Build == GameBuild.BuildName.MKKE)
-                {
-                    throw new NotSupportedException("This package version is not supported!");
-
-                    stream.Skip(8);
-                }
-#endif
 #if TRANSFORMERS
-                if (stream.Package.Build == BuildGeneration.HMS &&
+                if (stream.Build == BuildGeneration.HMS &&
                     stream.LicenseeVersion >= 55)
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1349,7 +1341,7 @@ namespace UELib
                 }
 #endif
 #if HUXLEY
-                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                if (stream.Build == GameBuild.BuildName.Huxley)
                 {
                     if (LicenseeVersion >= 8)
                     {
@@ -1368,8 +1360,16 @@ namespace UELib
                 {
                     stream.Write(HeaderSize);
                 }
+#if MKKE
+                if (stream.Build == GameBuild.BuildName.MKKE)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    stream.Skip(8);
+                }
+#endif
 #if MIDWAY
-                if (stream.Package.Build == BuildGeneration.Midway3 &&
+                if (stream.Build == BuildGeneration.Midway3 &&
                     stream.LicenseeVersion >= 2)
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1389,15 +1389,15 @@ namespace UELib
                 stream.Write((uint)PackageFlags);
 
 #if HAWKEN || GIGANTIC
-                if ((stream.Package.Build == GameBuild.BuildName.Hawken ||
-                     stream.Package.Build == GameBuild.BuildName.Gigantic) &&
+                if ((stream.Build == GameBuild.BuildName.Hawken ||
+                     stream.Build == GameBuild.BuildName.Gigantic) &&
                     stream.LicenseeVersion >= 2)
                 {
                     throw new NotSupportedException("This package version is not supported!");
                 }
 #endif
 #if MASS_EFFECT
-                if (stream.Package.Build == BuildGeneration.SFX)
+                if (stream.Build == BuildGeneration.SFX)
                 {
                     // Untested, but seen in the reverse-engineered assembly...
                     if ((int)PackageFlags < 0)
@@ -1431,7 +1431,7 @@ namespace UELib
                 stream.Write(ExportCount);
                 stream.Write(ExportOffset);
 #if APB
-                if (stream.Package.Build == GameBuild.BuildName.APB &&
+                if (stream.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 28)
                 {
                     if (stream.LicenseeVersion >= 29)
@@ -1458,7 +1458,7 @@ namespace UELib
                     return;
                 }
 #if MIDWAY
-                if (stream.Package.Build == GameBuild.BuildName.Stranglehold &&
+                if (stream.Build == GameBuild.BuildName.Stranglehold &&
                     stream.Version >= 375)
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1470,15 +1470,15 @@ namespace UELib
                     stream.Write(DependsOffset);
                 }
 #if THIEF_DS || DEUSEX_IW
-                if (stream.Package.Build == GameBuild.BuildName.Thief_DS ||
-                    stream.Package.Build == GameBuild.BuildName.DeusEx_IW)
+                if (stream.Build == GameBuild.BuildName.Thief_DS ||
+                    stream.Build == GameBuild.BuildName.DeusEx_IW)
                 {
                     throw new NotSupportedException("This package version is not supported!");
                     //int unknown = stream.ReadInt32();
                 }
 #endif
 #if SPLINTERCELLX
-                if (stream.Package.Build == BuildGeneration.SCX &&
+                if (stream.Build == BuildGeneration.SCX &&
                     stream.LicenseeVersion >= 12)
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1491,7 +1491,7 @@ namespace UELib
                 }
 #endif
 #if R6
-                if (stream.Package.Build == GameBuild.BuildName.R6Vegas)
+                if (stream.Build == GameBuild.BuildName.R6Vegas)
                 {
                     if (stream.LicenseeVersion >= 48)
                     {
@@ -1519,13 +1519,13 @@ namespace UELib
                 }
 
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable &&
-                    stream.UE4Version == 0
+                    stream.IsLegacy()
                     // FIXME: Correct the output version of these games instead.
 #if BIOSHOCK
-                    && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+                    && stream.Build != GameBuild.BuildName.Bioshock_Infinite
 #endif
 #if BORDERLANDS
-                    && stream.Package.Build != GameBuild.BuildName.Borderlands_GOTYE
+                    && stream.Build != GameBuild.BuildName.Borderlands_GOTYE
 #endif
                    )
                 {
@@ -1534,7 +1534,7 @@ namespace UELib
                     stream.Write(ExportGuidsCount);
                 }
 #if TRANSFORMERS
-                if (stream.Package.Build == BuildGeneration.HMS &&
+                if (stream.Build == BuildGeneration.HMS &&
                     stream.Version >= 535)
                 {
                     // FIXME: unverified
@@ -1545,13 +1545,13 @@ namespace UELib
 #endif
 #if DD2
                 // No version check found in the .exe
-                if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
+                if (stream.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
                 {
                     throw new NotSupportedException("This package version is not supported!");
                 }
 #endif
 #if TERA
-                if (stream.Package.Build == GameBuild.BuildName.Tera)
+                if (stream.Build == GameBuild.BuildName.Tera)
                 {
                     goto skipThumbnailTableOffset;
                 }
@@ -1561,8 +1561,16 @@ namespace UELib
                     stream.Write(ThumbnailTableOffset);
                 }
             skipThumbnailTableOffset:
+#if MKKE
+                if (stream.Build == GameBuild.BuildName.MKKE)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+
+                    stream.Skip(4);
+                }
+#endif
 #if SPELLBORN
-                if (stream.Package.Build == GameBuild.BuildName.Spellborn
+                if (stream.Build == GameBuild.BuildName.Spellborn
                     && stream.Version >= 148)
                 {
                     goto skipGuid;
@@ -1571,7 +1579,7 @@ namespace UELib
                 stream.WriteStruct(ref Guid);
             skipGuid:
 #if MKKE
-                if (stream.Package.Build == GameBuild.BuildName.MKKE)
+                if (stream.Build == GameBuild.BuildName.MKKE)
                 {
                     goto skipGenerations;
                 }
@@ -1600,7 +1608,7 @@ namespace UELib
                 stream.Write(Generations.Count);
 #if APB
                 // Guid, however only serialized for the first generation item.
-                if (stream.Package.Build == GameBuild.BuildName.APB &&
+                if (stream.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 32)
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1614,7 +1622,7 @@ namespace UELib
 
             skipGenerations:
 #if DNF
-                if (stream.Package.Build == GameBuild.BuildName.DNF &&
+                if (stream.Build == GameBuild.BuildName.DNF &&
                     stream.Version >= 151)
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1637,7 +1645,7 @@ namespace UELib
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedEngineVersion &&
-                    stream.UE4Version == 0)
+                    stream.IsLegacy())
                 {
                     stream.Write(EngineVersion);
                 }
@@ -1653,12 +1661,12 @@ namespace UELib
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedCookerVersion &&
-                    stream.UE4Version == 0)
+                    stream.IsLegacy())
                 {
                     stream.Write(CookerVersion);
                 }
 #if MASS_EFFECT
-                if (stream.Package.Build == BuildGeneration.SFX)
+                if (stream.Build == BuildGeneration.SFX)
                 {
                     throw new NotSupportedException("This package version is not supported!");
 
@@ -1713,7 +1721,7 @@ namespace UELib
                     stream.Write(PackageSource);
                 }
 #if MASS_EFFECT
-                if (stream.Package.Build == BuildGeneration.SFX)
+                if (stream.Build == BuildGeneration.SFX)
                 {
                     if (stream.LicenseeVersion >= 44 && stream.LicenseeVersion < 136)
                     {
@@ -1723,7 +1731,7 @@ namespace UELib
                 }
 #endif
 #if UE4
-                if (stream.UE4Version > 0)
+                if (stream.IsUE4())
                 {
                     return;
                 }
@@ -1731,7 +1739,7 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedAdditionalPackagesToCook)
                 {
 #if TRANSFORMERS
-                    if (stream.Package.Build == BuildGeneration.HMS)
+                    if (stream.Build == BuildGeneration.HMS)
                     {
                         return;
                     }
@@ -1739,13 +1747,13 @@ namespace UELib
                     stream.WriteArray(AdditionalPackagesToCook);
                 }
 #if BORDERLANDS
-                if (stream.Package.Build == GameBuild.BuildName.Borderlands_GOTYE)
+                if (stream.Build == GameBuild.BuildName.Borderlands_GOTYE)
                 {
                     return;
                 }
 #endif
 #if BATTLEBORN
-                if (stream.Package.Build == GameBuild.BuildName.Battleborn)
+                if (stream.Build == GameBuild.BuildName.Battleborn)
                 {
                     // FIXME: Package format is being deserialized incorrectly and fails here.
                     throw new NotSupportedException("This package version is not supported!");
@@ -1759,7 +1767,7 @@ namespace UELib
                     stream.WriteArray(TextureAllocations);
                 }
 #if ROCKETLEAGUE
-                if (stream.Package.Build == GameBuild.BuildName.RocketLeague
+                if (stream.Build == GameBuild.BuildName.RocketLeague
                     && PackageFlags.HasFlag(PackageFlag.Cooked))
                 {
                     throw new NotSupportedException("This package version is not supported!");
@@ -1889,22 +1897,22 @@ namespace UELib
                 Contract.Assert(Version != 0, "Bad package version 0!");
 
                 SetupBuild(stream.Package);
-                Debug.Assert(stream.Package.Build != null);
-                Console.WriteLine("Build:" + stream.Package.Build);
+                Debug.Assert(stream.Build != null);
+                Console.WriteLine("Build:" + stream.Build);
 
                 SetupBranch(stream.Package);
                 Debug.Assert(stream.Package.Branch != null);
                 Console.WriteLine("Branch:" + stream.Package.Branch);
 #if SPLINTERCELLX
                 // Starting with SC3
-                if (stream.Package.Build == BuildGeneration.SCX &&
+                if (stream.Build == BuildGeneration.SCX &&
                     stream.LicenseeVersion >= 83)
                 {
                     stream.Read(out int v08);
                 }
 #endif
 #if R6
-                if (stream.Package.Build == GameBuild.BuildName.R6Vegas)
+                if (stream.Build == GameBuild.BuildName.R6Vegas)
                 {
                     if (stream.LicenseeVersion >= 48)
                     {
@@ -1924,31 +1932,31 @@ namespace UELib
                 }
 #endif
 #if LEAD
-                if (stream.Package.Build == BuildGeneration.Lead)
+                if (stream.Build == BuildGeneration.Lead)
                 {
                     stream.Read(out int v08);
                 }
 #endif
 #if BIOSHOCK
-                if (stream.Package.Build == GameBuild.BuildName.Bioshock_Infinite)
+                if (stream.Build == GameBuild.BuildName.Bioshock_Infinite)
                 {
                     int unk = stream.ReadInt32();
                 }
 #endif
-#if MKKE
-                if (stream.Package.Build == GameBuild.BuildName.MKKE) stream.Skip(8);
-#endif
 #if TRANSFORMERS
-                if (stream.Package.Build == BuildGeneration.HMS &&
+                if (stream.Build == BuildGeneration.HMS &&
                     stream.LicenseeVersion >= 55)
                 {
-                    if (stream.LicenseeVersion >= 181) stream.Skip(16);
+                    if (stream.LicenseeVersion >= 181)
+                    {
+                        stream.Skip(16);
+                    }
 
                     stream.Skip(4);
                 }
 #endif
 #if HUXLEY
-                if (stream.Package.Build == GameBuild.BuildName.Huxley)
+                if (stream.Build == GameBuild.BuildName.Huxley)
                 {
                     if (LicenseeVersion >= 8)
                     {
@@ -1964,12 +1972,18 @@ namespace UELib
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTotalHeaderSize)
                 {
-                    // Offset to the first class(not object) in the package.
                     HeaderSize = stream.ReadInt32();
                     Console.WriteLine("Header Size: " + HeaderSize);
                 }
+#if MKKE
+                if (stream.Build == GameBuild.BuildName.MKKE)
+                {
+                    int unk1 = stream.ReadInt32();
+                    int unk2 = stream.ReadInt32();
+                }
+#endif
 #if MIDWAY
-                if (stream.Package.Build == BuildGeneration.Midway3 &&
+                if (stream.Build == BuildGeneration.Midway3 &&
                     stream.LicenseeVersion >= 2)
                 {
                     stream.Read(out int abbrev);
@@ -1994,15 +2008,15 @@ namespace UELib
                 PackageFlags = stream.ReadFlags32<PackageFlag>();
                 Console.WriteLine("Package Flags:" + PackageFlags);
 #if HAWKEN || GIGANTIC
-                if ((stream.Package.Build == GameBuild.BuildName.Hawken ||
-                     stream.Package.Build == GameBuild.BuildName.Gigantic) &&
+                if ((stream.Build == GameBuild.BuildName.Hawken ||
+                     stream.Build == GameBuild.BuildName.Gigantic) &&
                     stream.LicenseeVersion >= 2)
                 {
                     stream.Read(out int vUnknown);
                 }
 #endif
 #if MASS_EFFECT
-                if (stream.Package.Build == BuildGeneration.SFX)
+                if (stream.Build == BuildGeneration.SFX)
                 {
                     // Untested, but seen in the reverse-engineered assembly...
                     if ((int)PackageFlags < 0)
@@ -2039,7 +2053,7 @@ namespace UELib
                 ExportOffset = stream.ReadInt32();
                 Contract.Assert(ExportOffset < stream.Length);
 #if APB
-                if (stream.Package.Build == GameBuild.BuildName.APB &&
+                if (stream.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 28)
                 {
                     if (stream.LicenseeVersion >= 29)
@@ -2070,7 +2084,7 @@ namespace UELib
                     return;
                 }
 #if MIDWAY
-                if (stream.Package.Build == GameBuild.BuildName.Stranglehold &&
+                if (stream.Build == GameBuild.BuildName.Stranglehold &&
                     stream.Version >= 375)
                 {
                     stream.Read(out int _);
@@ -2082,8 +2096,8 @@ namespace UELib
                     Debug.Assert(DependsOffset <= HeaderSize); // May be equal when there are no items.
                 }
 #if THIEF_DS || DEUSEX_IW
-                if (stream.Package.Build == GameBuild.BuildName.Thief_DS ||
-                    stream.Package.Build == GameBuild.BuildName.DeusEx_IW)
+                if (stream.Build == GameBuild.BuildName.Thief_DS ||
+                    stream.Build == GameBuild.BuildName.DeusEx_IW)
                 {
                     //stream.Skip( 4 );
                     int unknown = stream.ReadInt32();
@@ -2091,7 +2105,7 @@ namespace UELib
                 }
 #endif
 #if SPLINTERCELLX
-                if (stream.Package.Build == BuildGeneration.SCX &&
+                if (stream.Build == BuildGeneration.SCX &&
                     stream.LicenseeVersion >= 12)
                 {
                     // compiled-constant: SC1: 0xff0adde, SC3: DE AD F0 0F
@@ -2102,7 +2116,7 @@ namespace UELib
                 }
 #endif
 #if LEAD
-                if (stream.Package.Build == BuildGeneration.Lead &&
+                if (stream.Build == BuildGeneration.Lead &&
                     stream.LicenseeVersion >= 48)
                 {
                     // Probably a new table, with v2c representing the count and v30 representing the offset.
@@ -2133,13 +2147,13 @@ namespace UELib
                 }
 
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable &&
-                    stream.UE4Version == 0
+                    stream.IsLegacy()
                     // FIXME: Correct the output version of these games instead.
 #if BIOSHOCK
-                    && stream.Package.Build != GameBuild.BuildName.Bioshock_Infinite
+                    && stream.Build != GameBuild.BuildName.Bioshock_Infinite
 #endif
 #if BORDERLANDS
-                    && stream.Package.Build != GameBuild.BuildName.Borderlands_GOTYE
+                    && stream.Build != GameBuild.BuildName.Borderlands_GOTYE
 #endif
                    )
                 {
@@ -2150,7 +2164,7 @@ namespace UELib
                     ExportGuidsCount = stream.ReadInt32();
                 }
 #if TRANSFORMERS
-                if (stream.Package.Build == BuildGeneration.HMS &&
+                if (stream.Build == BuildGeneration.HMS &&
                     stream.Version >= 535)
                 {
                     // ThumbnailTableOffset? But if so, the partial-upgrade must have skipped @AdditionalPackagesToCook
@@ -2161,11 +2175,13 @@ namespace UELib
 #endif
 #if DD2
                 // No version check found in the .exe
-                if (stream.Package.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
+                if (stream.Build == GameBuild.BuildName.DD2 && PackageFlags.HasFlag(PackageFlag.Cooked))
+                {
                     stream.Skip(4);
+                }
 #endif
 #if TERA
-                if (stream.Package.Build == GameBuild.BuildName.Tera)
+                if (stream.Build == GameBuild.BuildName.Tera)
                 {
                     goto skipThumbnailTableOffset;
                 }
@@ -2175,20 +2191,27 @@ namespace UELib
                     ThumbnailTableOffset = stream.ReadInt32();
                     Debug.Assert(ThumbnailTableOffset <= HeaderSize);
                 }
+#if MKKE
+                if (stream.Build == GameBuild.BuildName.MKKE)
+                {
+                    // Extra int before UGuid
+                    int unk1 = stream.ReadInt32();
+                }
+#endif
             skipThumbnailTableOffset:
-
 #if SPELLBORN
-                if (stream.Package.Build == GameBuild.BuildName.Spellborn
+                if (stream.Build == GameBuild.BuildName.Spellborn
                     && stream.Version >= 148)
                 {
                     goto skipGuid;
                 }
 #endif
+
                 stream.ReadStruct(out Guid);
                 Console.WriteLine("GUID:" + Guid);
             skipGuid:
 #if MKKE
-                if (stream.Package.Build == GameBuild.BuildName.MKKE)
+                if (stream.Build == GameBuild.BuildName.MKKE)
                 {
                     goto skipGenerations;
                 }
@@ -2215,7 +2238,7 @@ namespace UELib
                 Console.WriteLine("Generations Count:" + generationCount);
 #if APB
                 // Guid, however only serialized for the first generation item.
-                if (stream.Package.Build == GameBuild.BuildName.APB &&
+                if (stream.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 32)
                 {
                     stream.Skip(16);
@@ -2224,7 +2247,7 @@ namespace UELib
                 stream.ReadArray(out Generations, generationCount);
             skipGenerations:
 #if DNF
-                if (stream.Package.Build == GameBuild.BuildName.DNF &&
+                if (stream.Build == GameBuild.BuildName.DNF &&
                     stream.Version >= 151)
                 {
                     if (PackageFlags.HasFlags(0x20U))
@@ -2245,7 +2268,7 @@ namespace UELib
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedEngineVersion &&
-                    stream.UE4Version == 0)
+                    stream.IsLegacy())
                 {
                     // The Engine Version this package was created with
                     EngineVersion = stream.ReadInt32();
@@ -2267,14 +2290,14 @@ namespace UELib
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedCookerVersion &&
-                    stream.UE4Version == 0)
+                    stream.IsLegacy())
                 {
                     // The Cooker Version this package was cooked with
                     CookerVersion = stream.ReadInt32();
                     Console.WriteLine("CookerVersion:" + CookerVersion);
                 }
 #if MASS_EFFECT
-                if (stream.Package.Build == BuildGeneration.SFX)
+                if (stream.Build == BuildGeneration.SFX)
                 {
                     // Appears to be similar to a PackageFileEngineVersion
 
@@ -2325,7 +2348,7 @@ namespace UELib
                     Console.WriteLine("PackageSource:" + PackageSource);
                 }
 #if MASS_EFFECT
-                if (stream.Package.Build == BuildGeneration.SFX)
+                if (stream.Build == BuildGeneration.SFX)
                 {
                     if (stream.LicenseeVersion >= 44 && stream.LicenseeVersion < 136)
                     {
@@ -2334,7 +2357,7 @@ namespace UELib
                 }
 #endif
 #if UE4
-                if (stream.UE4Version > 0)
+                if (stream.IsUE4())
                 {
                     return;
                 }
@@ -2342,39 +2365,39 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedAdditionalPackagesToCook)
                 {
 #if TRANSFORMERS
-                    if (stream.Package.Build == BuildGeneration.HMS)
+                    if (stream.Build == BuildGeneration.HMS)
                     {
                         return;
                     }
 #endif
                     stream.ReadArray(out AdditionalPackagesToCook);
-#if DCUO
-                    if (stream.Package.Build == GameBuild.BuildName.DCUO)
-                    {
-                        var realNameOffset = (int)stream.Position;
-                        Debug.Assert(
-                            realNameOffset <= NameOffset,
-                            "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!"
-                        );
-
-                        int offsetDif = NameOffset - realNameOffset;
-                        NameOffset -= offsetDif;
-                        ImportOffset -= offsetDif;
-                        ExportOffset -= offsetDif;
-                        DependsOffset = 0; // not working
-                        ImportExportGuidsOffset -= offsetDif;
-                        ThumbnailTableOffset -= offsetDif;
-                    }
-#endif
                 }
+#if DCUO
+                if (stream.Build == GameBuild.BuildName.DCUO)
+                {
+                    var realNameOffset = (int)stream.Position;
+                    Debug.Assert(
+                        realNameOffset <= NameOffset,
+                        "realNameOffset is > the parsed name offset for a DCUO package, we don't know where to go now!"
+                    );
+
+                    int offsetDif = NameOffset - realNameOffset;
+                    NameOffset -= offsetDif;
+                    ImportOffset -= offsetDif;
+                    ExportOffset -= offsetDif;
+                    DependsOffset = 0; // not working
+                    ImportExportGuidsOffset -= offsetDif;
+                    ThumbnailTableOffset -= offsetDif;
+                }
+#endif
 #if BORDERLANDS
-                if (stream.Package.Build == GameBuild.BuildName.Borderlands_GOTYE)
+                if (stream.Build == GameBuild.BuildName.Borderlands_GOTYE)
                 {
                     return;
                 }
 #endif
 #if BATTLEBORN
-                if (stream.Package.Build == GameBuild.BuildName.Battleborn)
+                if (stream.Build == GameBuild.BuildName.Battleborn)
                 {
                     // FIXME: Package format is being deserialized incorrectly and fails here.
                     stream.ReadUInt32();
@@ -2396,7 +2419,7 @@ namespace UELib
                     }
                 }
 #if ROCKETLEAGUE
-                if (stream.Package.Build == GameBuild.BuildName.RocketLeague
+                if (stream.Build == GameBuild.BuildName.RocketLeague
                     && PackageFlags.HasFlag(PackageFlag.Cooked))
                 {
                     int garbageSize = stream.ReadInt32();
@@ -2673,7 +2696,7 @@ namespace UELib
             {
                 if (Summary.HeritageOffset != 0)
                 {
-                    Contract.Assert(stream.Position < Summary.HeritageOffset);
+                    Contract.Assert(stream.Position <= Summary.HeritageOffset);
                     stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
                 }
 
@@ -2689,7 +2712,7 @@ namespace UELib
             {
                 if (Summary.NameOffset != 0)
                 {
-                    Contract.Assert(stream.Position < Summary.NameOffset);
+                    Contract.Assert(stream.Position <= Summary.NameOffset);
                     stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
                 }
 
@@ -2705,7 +2728,7 @@ namespace UELib
             {
                 if (Summary.ImportOffset != 0)
                 {
-                    Contract.Assert(stream.Position < Summary.ImportOffset);
+                    Contract.Assert(stream.Position <= Summary.ImportOffset);
                     stream.Seek(Summary.ImportOffset, SeekOrigin.Begin);
                 }
 
@@ -2721,7 +2744,7 @@ namespace UELib
             {
                 if (Summary.ExportOffset != 0)
                 {
-                    Contract.Assert(stream.Position < Summary.ExportOffset);
+                    Contract.Assert(stream.Position <= Summary.ExportOffset);
                     stream.Seek(Summary.ExportOffset, SeekOrigin.Begin);
                 }
 
@@ -2738,7 +2761,7 @@ namespace UELib
             {
                 if (Summary.DependsOffset != 0)
                 {
-                    Contract.Assert(stream.Position < Summary.DependsOffset);
+                    Contract.Assert(stream.Position <= Summary.DependsOffset);
                     stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
                 }
 
@@ -2751,11 +2774,11 @@ namespace UELib
 
             if ((ImportGuids.Count > 0 || ExportGuids.Count > 0)
                 && stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable
-                && stream.UE4Version == 0)
+                && stream.IsLegacy())
             {
                 if (Summary.ImportExportGuidsOffset != 0)
                 {
-                    Contract.Assert(stream.Position < Summary.ImportExportGuidsOffset);
+                    Contract.Assert(stream.Position <= Summary.ImportExportGuidsOffset);
                     stream.Seek(Summary.ImportExportGuidsOffset, SeekOrigin.Begin);
                 }
 
@@ -2774,7 +2797,7 @@ namespace UELib
             {
                 if (Summary.ThumbnailTableOffset != 0)
                 {
-                    Contract.Assert(stream.Position < Summary.ThumbnailTableOffset);
+                    Contract.Assert(stream.Position <= Summary.ThumbnailTableOffset);
                     stream.Seek(Summary.ThumbnailTableOffset, SeekOrigin.Begin);
                 }
 
@@ -3010,7 +3033,11 @@ namespace UELib
             Summary.HeritageOffset = (int)stream.Position;
             Summary.HeritageCount = Summary.Heritages.Count;
 
-            stream.WriteArray(Summary.Heritages);
+            // Write without writing down the array size.
+            foreach (var heritage in Summary.Heritages)
+            {
+                stream.WriteStruct(heritage);
+            }
         }
 
         /// <summary>
@@ -3219,7 +3246,8 @@ namespace UELib
                 foreach (var item in ObjectThumbnails)
                 {
                     item.ThumbnailOffset = (int)stream.Position;
-                    stream.Write(ref item.Thumbnail);
+                    var thumbnail = item.Thumbnail;
+                    stream.Write(ref thumbnail);
                 }
             }
 
@@ -3230,7 +3258,7 @@ namespace UELib
             foreach (var thumb in ObjectThumbnails)
             {
                 thumb.Offset = (int)stream.Position;
-                thumb.Deserialize(stream);
+                thumb.Serialize(stream);
                 thumb.Size = (int)(stream.Position - thumb.Offset);
             }
         }
@@ -3566,7 +3594,7 @@ namespace UELib
             obj.ObjectFlags = objectFlags;
             obj.Package = this;
             obj.PackageIndex = 0;
-            obj.Table = null;
+            obj.PackageResource = null;
             obj.Name = objectName;
 
             AddToObjects(obj);

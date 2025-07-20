@@ -15,6 +15,9 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
 {
     private IBufferDecoder? _Decoder;
 
+    /// <summary>
+    /// IndexName(hash) -> UnrealPackage.Names[index]
+    /// </summary>
     public Dictionary<int, int> NameIndices { get; } = new(1000);
 
     public UnrealPackageArchive(UnrealPackage package) => Package = package;
@@ -31,7 +34,6 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
         Stream = new UnrealPackageStream(this, stream);
     }
 
-    [Obsolete]
     public IBufferDecoder? Decoder
     {
         get => _Decoder;
