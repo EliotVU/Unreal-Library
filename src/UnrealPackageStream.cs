@@ -9,7 +9,7 @@ public class UnrealPackageStream(UnrealPackageArchive baseArchive, Stream baseSt
     {
         if (CanRead)
         {
-            Reader = new UnrealReader(BaseArchive, CreateBinaryReader(newBaseStream));
+            Reader = new UnrealPackageReader(BaseArchive, CreateBinaryReader(newBaseStream));
         }
     }
 
@@ -17,7 +17,7 @@ public class UnrealPackageStream(UnrealPackageArchive baseArchive, Stream baseSt
     {
         if (CanWrite)
         {
-            Writer = new UnrealWriter(BaseArchive, CreateBinaryWriter(newBaseStream));
+            Writer = new UnrealPackageWriter(BaseArchive, CreateBinaryWriter(newBaseStream));
         }
     }
 }

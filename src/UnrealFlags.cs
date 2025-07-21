@@ -128,6 +128,12 @@ namespace UELib.Flags
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ushort(UnrealFlags<TEnum> flags)
+        {
+            return (ushort)flags._RawValue;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator int(UnrealFlags<TEnum> flags)
         {
             return (int)flags._RawValue;

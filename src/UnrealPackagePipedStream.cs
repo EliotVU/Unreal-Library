@@ -18,18 +18,18 @@ public abstract class UnrealPackagePipedStream : PipedStream, IUnrealStream
         if (baseStream.CanRead)
         {
             var binaryReader = CreateBinaryReader(baseStream);
-            Reader = new UnrealReader(baseArchive, binaryReader);
+            Reader = new UnrealPackageReader(baseArchive, binaryReader);
         }
 
         if (baseStream.CanWrite)
         {
             var binaryWriter = CreateBinaryWriter(baseStream);
-            Writer = new UnrealWriter(baseArchive, binaryWriter);
+            Writer = new UnrealPackageWriter(baseArchive, binaryWriter);
         }
     }
 
-    protected UnrealReader? Reader { get; set; }
-    protected UnrealWriter? Writer { get; set; }
+    protected UnrealPackageReader? Reader { get; set; }
+    protected UnrealPackageWriter? Writer { get; set; }
 
     [Obsolete] public IBufferDecoder? Decoder { get; set; }
 
@@ -75,12 +75,12 @@ public abstract class UnrealPackagePipedStream : PipedStream, IUnrealStream
     public void WriteName(in UName value) => Writer.WriteName(value);
 
     protected BinaryReader CreateBinaryReader(Stream stream) =>
-        (BaseArchive.Flags & UnrealArchiveFlags.BigEndian) == 0
+        (Flags & UnrealArchiveFlags.BigEndian) == 0
             ? new BinaryReader(stream)
             : new BigEndianBinaryReader(stream);
 
     protected BinaryWriter CreateBinaryWriter(Stream stream) =>
-        (BaseArchive.Flags & UnrealArchiveFlags.BigEndian) == 0
+        (Flags & UnrealArchiveFlags.BigEndian) == 0
             ? new BinaryWriter(stream)
             : new BigEndianBinaryWriter(stream);
 

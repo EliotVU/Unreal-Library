@@ -20,8 +20,10 @@ namespace UELib
 
         public static uint GetSignature(Stream stream, uint[] signatures)
         {
+            long p = stream.Position;
             byte[] buffer = new byte[4];
             int read = stream.Read(buffer, 0, 4);
+            stream.Position = p;
 
             uint signature = BitConverter.ToUInt32(buffer, 0);
             // Naive and a bit slow, but this works for most standard files.

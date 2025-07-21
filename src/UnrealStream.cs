@@ -7,7 +7,6 @@ using UELib.Core;
 using UELib.Decoding;
 using UELib.Flags;
 using UELib.IO;
-using UELib.Services;
 
 namespace UELib;
 
@@ -15,10 +14,7 @@ public interface IUnrealStream : IUnrealArchive, IDisposable
 {
     new UnrealPackage Package { get; }
 
-    [Obsolete("To be deprecated; ideally we want to pass the UnrealReader directly to the Deserialize methods.")]
     UnrealBinaryReader UR { get; }
-
-    [Obsolete("To be deprecated; ideally we want to pass the UnrealWriter directly to the Serialize methods.")]
     UnrealBinaryWriter UW { get; }
 
     [Obsolete("Use the EncodedStream instead", true)]
@@ -82,105 +78,6 @@ public static class UnrealStreamExtensions
     }
 }
 
-public sealed class UnrealWriter(UnrealPackageArchive archive, BinaryWriter baseWriter)
-    : UnrealBinaryWriter(archive, baseWriter)
-{
-    [Obsolete("See WriteString")]
-    public void WriteText(string s) => WriteString(s);
-
-    /// <summary>
-    ///     Serializes a <see cref="UName" /> with an index and number.
-    /// </summary>
-    public override void WriteName(in UName value)
-    {
-        int hash = value.Index;
-        int index = archive.NameIndices[hash];
-        int number = value.Number + 1;
-#if R6
-        if (archive.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
-        {
-            _BaseWriter.Write(index | (number << 18));
-
-            return;
-        }
-#endif
-        WriteIndex(index);
-
-#if SHADOWSTRIKE
-        if (archive.Build == BuildGeneration.ShadowStrike)
-        {
-            LibServices.LogService.SilentException(new NotSupportedException("Writing external index 0 for ShadowStrike."));
-            WriteIndex(0);
-        }
-#endif
-        if (archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
-#if BIOSHOCK
-            || archive.Build == UnrealPackage.GameBuild.BuildName.BioShock
-#endif
-           )
-        {
-            _BaseWriter.Write(number);
-        }
-    }
-}
-
-/// <summary>
-///     Wrapper for Streams with specific functions for deserializing UELib.UnrealPackage.
-/// </summary>
-public sealed class UnrealReader(UnrealPackageArchive archive, BinaryReader baseReader)
-    : UnrealBinaryReader(archive, baseReader)
-{
-    [Obsolete("See ReadString")]
-    public string ReadText() => ReadString();
-
-    /// <summary>
-    ///     Deserializes a <seealso cref="UName" /> from an index and number.
-    /// </summary>
-    /// <returns>A unique UName representing the number and index to a <seealso cref="UNameTableItem" /></returns>
-    public override UName ReadName()
-    {
-        int index, number;
-#if R6 || LEAD
-        if (archive.Build == UnrealPackage.GameBuild.BuildName.R6Vegas ||
-            archive.Build == BuildGeneration.Lead)
-        {
-            // Some changes were made with licensee version 71, but I couldn't make much sense of it.
-            index = _BaseReader.ReadInt32();
-            number = (index >> 18) - 1;
-            index &= 0x3FFFF;
-
-            // only the 18 lower bits are used.
-            return new UName(archive.Package.Names[index], number);
-        }
-#endif
-        index = ReadIndex();
-        number = -1;
-
-#if SHADOWSTRIKE
-        if (archive.Build == BuildGeneration.ShadowStrike)
-        {
-            int externalIndex = ReadIndex();
-        }
-#endif
-        if (archive.Version >= (uint)PackageObjectLegacyVersion.NumberAddedToName
-#if BIOSHOCK
-            || archive.Build == UnrealPackage.GameBuild.BuildName.BioShock
-#endif
-           )
-        {
-            number = _BaseReader.ReadInt32() - 1;
-        }
-
-        return new UName(archive.Package.Names[index], number);
-    }
-
-    [Obsolete("Deprecated", true)]
-    public int ReadNameIndex(out int num)
-    {
-        throw new NotImplementedException("Deprecated");
-    }
-}
-
 [Obsolete]
 public class UPackageFileStream : FileStream
 {
@@ -212,6 +109,7 @@ public class UObjectStream(UnrealPackageArchive baseArchive, Stream baseStream, 
         set => Position = value - virtualPosition;
     }
 
+    [Obsolete]
     public new byte ReadByte() => (byte)base.ReadByte();
 
     [Obsolete]
@@ -319,7 +217,8 @@ public static class UnrealStreamImplementations
     public static UObject? ReadObject(this IUnrealStream stream) => stream.ReadObject<UObject>();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T? ReadObject<T>(this IUnrealStream stream) where T : UObject => stream.ReadObject<T>();
+    public static T? ReadObject<T>(this IUnrealStream stream)
+        where T : UObject => stream.ReadObject<T>();
 
     [Obsolete("Use ReadName")]
     public static UName ReadNameReference(this IUnrealStream stream) => stream.ReadName();
@@ -340,29 +239,14 @@ public static class UnrealStreamImplementations
         return stream.ReadIndex();
     }
 
-    public static void ReadArray<T>(this IUnrealStream stream, out UArray<T> array)
-        where T : IUnrealDeserializableClass, new()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T ReadStruct<T>(this IUnrealStream stream)
+        where T : struct, IUnrealDeserializableClass
     {
-        int c = stream.ReadLength();
-        array = new UArray<T>(c);
-        for (int i = 0; i < c; ++i)
-        {
-            var element = new T();
-            element.Deserialize(stream);
-            array.Add(element);
-        }
-    }
+        var item = new T();
+        item.Deserialize(stream);
 
-    public static void ReadArray<T>(this IUnrealStream stream, out UArray<T> array, int count)
-        where T : IUnrealDeserializableClass, new()
-    {
-        array = new UArray<T>(count);
-        for (int i = 0; i < count; ++i)
-        {
-            var element = new T();
-            element.Deserialize(stream);
-            array.Add(element);
-        }
+        return item;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -417,105 +301,233 @@ public static class UnrealStreamImplementations
         }
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<byte> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<byte> ReadByteArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<byte>(c);
+        var array = new UArray<byte>(c);
+        // Yeah, could read the whole array at once, but this is required for the decoding (decryption and the like) to work properly.
         for (int i = 0; i < c; ++i)
         {
-            stream.Read(out byte element);
+            var element = stream.ReadByte();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<int> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<short> ReadShortArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<int>(c);
+        var array = new UArray<short>(c);
         for (int i = 0; i < c; ++i)
         {
-            stream.Read(out int element);
+            var element = stream.ReadInt16();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<uint> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<ushort> ReadUShortArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<uint>(c);
+        var array = new UArray<ushort>(c);
         for (int i = 0; i < c; ++i)
         {
-            stream.Read(out uint element);
+            var element = stream.ReadUInt16();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<ushort> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<int> ReadIntArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<ushort>(c);
+        var array = new UArray<int>(c);
         for (int i = 0; i < c; ++i)
         {
-            stream.Read(out ushort element);
+            var element = stream.ReadInt32();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<short> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<uint> ReadUIntArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<short>(c);
+        var array = new UArray<uint>(c);
         for (int i = 0; i < c; ++i)
         {
-            stream.Read(out short element);
+            var element = stream.ReadUInt32();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<float> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<long> ReadLongArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<float>(c);
+        var array = new UArray<long>(c);
         for (int i = 0; i < c; ++i)
         {
-            Read(stream, out float element);
+            var element = stream.ReadInt64();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<string> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<ulong> ReadULongArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<string>(c);
+        var array = new UArray<ulong>(c);
         for (int i = 0; i < c; ++i)
         {
-            string element = stream.ReadString();
+            var element = stream.ReadUInt64();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<UName> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<float> ReadFloatArray(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
-        array = new UArray<UName>(c);
+        var array = new UArray<float>(c);
+        for (int i = 0; i < c; ++i)
+        {
+            var element = stream.ReadFloat();
+            array.Add(element);
+        }
+
+        return array;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<string> ReadStringArray(this IUnrealStream stream)
+    {
+        int c = stream.ReadLength();
+        var array = new UArray<string>(c);
+        for (int i = 0; i < c; ++i)
+        {
+            var element = stream.ReadString();
+            array.Add(element);
+        }
+
+        return array;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<UName> ReadNameArray(this IUnrealStream stream)
+    {
+        int c = stream.ReadLength();
+        var array = new UArray<UName>(c);
         for (int i = 0; i < c; ++i)
         {
             var element = stream.ReadName();
             array.Add(element);
         }
+
+        return array;
     }
 
-    public static void ReadArray(this IUnrealStream stream, out UArray<UObject> array)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<T> ReadObjectArray<T>(this IUnrealStream stream)
+        where T : UObject
     {
         int c = stream.ReadLength();
-        array = new UArray<UObject>(c);
+        var array = new UArray<T>(c);
         for (int i = 0; i < c; ++i)
         {
-            var element = stream.ReadObject<UObject>();
+            var element = stream.ReadObject<T>();
             array.Add(element);
         }
+
+        return array;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<T> ReadArray<T>(this IUnrealStream stream)
+        where T : IUnrealDeserializableClass, new()
+    {
+        int c = stream.ReadLength();
+        var array = new UArray<T>(c);
+        for (int i = 0; i < c; ++i)
+        {
+            var element = new T();
+            element.Deserialize(stream);
+            array.Add(element);
+        }
+
+        return array;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<T> ReadArray<T>(this IUnrealStream stream, int count)
+        where T : IUnrealDeserializableClass, new()
+    {
+        var array = new UArray<T>(count);
+        for (int i = 0; i < count; ++i)
+        {
+            var element = new T();
+            element.Deserialize(stream);
+            array.Add(element);
+        }
+
+        return array;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray<T>(this IUnrealStream stream, out UArray<T> array, int count)
+        where T : IUnrealDeserializableClass, new()
+    {
+        array = stream.ReadArray<T>(count);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<byte> array) => array = stream.ReadByteArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<int> array) => array = stream.ReadIntArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<uint> array) => array = stream.ReadUIntArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<ushort> array) => array = stream.ReadUShortArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<short> array) => array = stream.ReadShortArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<float> array) => array = stream.ReadFloatArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<string> array) => array = stream.ReadStringArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<UName> array) => array = stream.ReadNameArray();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray(this IUnrealStream stream, out UArray<UObject> array) => array = stream.ReadObjectArray<UObject>();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadArray<T>(this IUnrealStream stream, out UArray<T> array)
+        where T : IUnrealDeserializableClass, new() =>
+        array = stream.ReadArray<T>();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReadArray(this IUnrealStream stream, out UArray<UObject> array, int count)
     {
         array = new UArray<UObject>(count);
@@ -526,6 +538,7 @@ public static class UnrealStreamImplementations
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReadMap(this IUnrealStream stream, out UMap<ushort, ushort> map)
     {
         int c = stream.ReadLength();
@@ -538,6 +551,7 @@ public static class UnrealStreamImplementations
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReadMap<TValue>(this IUnrealStream stream, out UMap<UName, TValue> map)
         where TValue : UObject
     {
@@ -547,10 +561,11 @@ public static class UnrealStreamImplementations
         {
             Read(stream, out UName key);
             Read(stream, out TValue value);
-            map.Add((UName)key, value);
+            map.Add(key, value);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReadMap(this IUnrealStream stream, out UMap<string, UArray<string>> map)
     {
         int c = stream.ReadLength();
@@ -563,19 +578,7 @@ public static class UnrealStreamImplementations
         }
     }
 
-    public static void ReadMap<TValue>(this IUnrealStream stream, out UMap<string, TValue> map)
-        where TValue : struct, IUnrealDeserializableClass
-    {
-        int c = stream.ReadLength();
-        map = new UMap<string, TValue>(c);
-        for (int i = 0; i < c; ++i)
-        {
-            Read(stream, out string key);
-            ReadStruct<TValue>(stream, out var value);
-            map.Add(key, value);
-        }
-    }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReadMap(this IUnrealStream stream, out UMap<UObject, UName> map)
     {
         int c = stream.ReadLength();
@@ -586,6 +589,30 @@ public static class UnrealStreamImplementations
             Read(stream, out UName value);
             map.Add(key, value);
         }
+    }
+
+    /// <summary>
+    /// Reads a map using dynamic typing (that should hopefully be optimized out by the compiler).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ReadMap<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map) => map = ReadMap<TKey, TValue>(stream);
+
+    /// <summary>
+    /// Reads a map using dynamic typing (that should hopefully be optimized out by the compiler).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UMap<TKey, TValue> ReadMap<TKey, TValue>(this IUnrealStream stream)
+    {
+        int c = stream.ReadLength();
+        var map = new UMap<TKey, TValue>(c);
+        for (int i = 0; i < c; ++i)
+        {
+            ReadTyped(stream, out TKey key);
+            ReadTyped(stream, out TValue value);
+            map.Add(key, value);
+        }
+
+        return map;
     }
 
     [Obsolete("See UGuid")]
@@ -623,13 +650,6 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void VersionedDeserialize(this IUnrealStream stream, IUnrealDeserializableClass obj)
-    {
-        Debug.Assert(stream.Serializer != null, "stream.Serializer != null");
-        stream.Serializer.Deserialize(stream, obj);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Read(this IUnrealStream stream, out UPackageIndex value) => value = stream.UR.ReadIndex();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -637,6 +657,7 @@ public static class UnrealStreamImplementations
         where T : UObject =>
         value = ReadObject<T>(stream);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Read<T>(this IUnrealStream stream, out IUnrealDeserializableClass item)
         where T : struct, IUnrealDeserializableClass
     {
@@ -718,6 +739,70 @@ public static class UnrealStreamImplementations
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Read(this IUnrealStream stream, out bool value) => value = ReadBool(stream);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ReadTyped<TValue>(this IUnrealStream stream, out TValue value)
+    {
+        value = default;
+        switch (value)
+        {
+            case byte v:
+                Read(stream, out v);
+                break;
+
+            case short v:
+                Read(stream, out v);
+                break;
+
+            case ushort v:
+                Read(stream, out v);
+                break;
+
+            case int v:
+                Read(stream, out v);
+                break;
+
+            case uint v:
+                Read(stream, out v);
+                break;
+
+            case long v:
+                Read(stream, out v);
+                break;
+
+            case ulong v:
+                Read(stream, out v);
+                break;
+
+            case float v:
+                Read(stream, out v);
+                break;
+
+            case bool v:
+                Read(stream, out v);
+                break;
+
+            case string v:
+                Read(stream, out v);
+                break;
+
+            case UName v:
+                Read(stream, out v);
+                break;
+
+            case UPackageIndex v:
+                Read(stream, out v);
+                break;
+
+            case UObject v:
+                Read(stream, out v);
+                break;
+
+            case IUnrealSerializableClass v:
+                v.Deserialize(stream);
+                break;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteString(this IUnrealStream stream, string value) => stream.UW.WriteString(value);
@@ -864,6 +949,23 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray(this IUnrealStream stream, in UArray<float>? array)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (float element in array)
+        {
+            stream.Write(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteArray(this IUnrealStream stream, in UArray<bool>? array)
     {
         if (array == null)
@@ -932,6 +1034,24 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteMap(this IUnrealStream stream, in UMap<ushort, ushort>? map)
+    {
+        if (map == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, map.Count);
+        foreach (var pair in map)
+        {
+            stream.Write(pair.Key);
+            stream.Write(pair.Value);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteMap<TValue>(this IUnrealStream stream, in UMap<string, TValue>? map)
         where TValue : struct, IUnrealSerializableClass
     {
@@ -966,12 +1086,93 @@ public static class UnrealStreamImplementations
         foreach (var pair in map)
         {
             stream.Write(pair.Key);
-            stream.Write(pair.Value);
+            stream.Write((UObject)pair.Value);
+        }
+    }
+
+    /// <summary>
+    /// WriteMap with dynamic type checking, hopefully optimized out when the type is known at compile time.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteMap<TKey, TValue>(this IUnrealStream stream, in UMap<TKey, TValue>? map)
+    {
+        if (map == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, map.Count);
+        foreach (var pair in map)
+        {
+            stream.WriteTyped(pair.Key);
+            stream.WriteTyped(pair.Value);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void Write<TValue>(this IUnrealStream stream, TValue value) => throw new NotImplementedException();
+    private static void WriteTyped<TValue>(this IUnrealStream stream, in TValue value)
+    {
+        switch (value)
+        {
+            case byte v:
+                Write(stream, v);
+                break;
+
+            case short v:
+                Write(stream, v);
+                break;
+
+            case ushort v:
+                Write(stream, v);
+                break;
+
+            case int v:
+                Write(stream, v);
+                break;
+
+            case uint v:
+                Write(stream, v);
+                break;
+
+            case long v:
+                Write(stream, v);
+                break;
+
+            case ulong v:
+                Write(stream, v);
+                break;
+
+            case float v:
+                Write(stream, v);
+                break;
+
+            case bool v:
+                Write(stream, v);
+                break;
+
+            case string v:
+                Write(stream, v);
+                break;
+
+            case UName v:
+                Write(stream, v);
+                break;
+
+            case UPackageIndex v:
+                Write(stream, v);
+                break;
+
+            case UObject v:
+                Write(stream, v);
+                break;
+
+            case IUnrealSerializableClass v:
+                v.Serialize(stream);
+                break;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(this IUnrealStream stream, in UPackageIndex value) => stream.UW.WriteIndex(value);
@@ -982,6 +1183,10 @@ public static class UnrealStreamImplementations
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStruct<T>(this IUnrealStream stream, ref T item)
+        where T : struct, IUnrealSerializableClass => item.Serialize(stream);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteStruct<T>(this IUnrealStream stream, T item)
         where T : struct, IUnrealSerializableClass => item.Serialize(stream);
 
     public static unsafe void WriteStructMarshal<T>(this IUnrealStream stream, ref T item)
