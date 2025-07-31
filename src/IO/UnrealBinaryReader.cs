@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text;
 using UELib.Branch;
 using UELib.Core;
 
@@ -17,6 +16,9 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
     // Generally this is the case for most packages, but some games have big endian encoded packages, where a string is serialized per byte.
     private readonly bool _CanBulkRead =
         archive.Flags.HasFlag(UnrealArchiveFlags.BigEndian);
+
+    // FIXME: Not all games use null-terminated strings.
+    private readonly bool _IsNullTerminated = true;
 
     /// <inheritdoc />
     public void Dispose() => _BaseReader.Dispose();
@@ -35,13 +37,14 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
     }
 
     /// <summary>Reads a string from the base stream.</summary>
-    /// <param name="length">The length in characters; a negative length indicates an unicode string.</param>
-    /// <returns>The string being read with the null termination cut off.</returns>
+    /// <param name="length">The length in characters (including the null-terminator); a negative length indicates an unicode string.</param>
+    /// <returns>The string being read with the null-terminator cut off.</returns>
     private string ReadString(int length)
     {
         int size = length < 0
             ? -length
             : length;
+
         if (length > 0) // ANSI
         {
             byte[] chars = new byte[size];
@@ -58,14 +61,14 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
             }
             else
 #endif
-                // Always bulk read, because the BaseStream is no longer effected by the big-endian byte-order.
+            // Always bulk read, because the BaseStream is no longer effected by the big-endian byte-order.
             {
                 _BaseStream.Read(chars, 0, chars.Length);
             }
 
             return chars[size - 1] == '\0'
-                ? Encoding.ASCII.GetString(chars, 0, chars.Length - 1)
-                : Encoding.ASCII.GetString(chars, 0, chars.Length);
+                ? UnrealEncoding.ANSI.GetString(chars, 0, chars.Length - 1)
+                : UnrealEncoding.ANSI.GetString(chars, 0, chars.Length);
         }
 
         if (length < 0) // UNICODE
@@ -93,8 +96,8 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
                 _BaseStream.Read(chars, 0, chars.Length);
 
                 return chars[size * 2 - 2] == '\0' && chars[size * 2 - 1] == '\0'
-                    ? Encoding.Unicode.GetString(chars, 0, chars.Length - 2)
-                    : Encoding.Unicode.GetString(chars, 0, chars.Length);
+                    ? UnrealEncoding.Unicode.GetString(chars, 0, chars.Length - 2)
+                    : UnrealEncoding.Unicode.GetString(chars, 0, chars.Length);
             }
             else
             {
@@ -115,25 +118,26 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
     }
 
     /// <summary>Reads a length prefixed string from the base stream.</summary>
-    /// <returns>The string being read with the null termination cut off.</returns>
+    /// <returns>The string being read with the null-terminator cut off.</returns>
     public string ReadString()
     {
-        int unfixedSize = ReadIndex();
+        // Assumed to include the null-terminator.
+        int length = ReadIndex();
 #if BIOSHOCK
         // TODO: Make this a build option instead.
         if (archive.Build == BuildGeneration.Vengeance &&
             archive.Version >= 135)
         {
-            unfixedSize = -unfixedSize;
+            return ReadString(-length);
         }
 #endif
-        return ReadString(unfixedSize);
+        return ReadString(length);
     }
 
     /// <summary>
     ///     Reads a null-terminated Unreal ansi (1 byte) string from the base stream.
     /// </summary>
-    /// <returns>the read string without the null-terminal.</returns>
+    /// <returns>the read string without the null-terminator.</returns>
     public string ReadAnsi()
     {
         var strBytes = new List<byte>();
@@ -145,14 +149,14 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
             goto nextChar;
         }
 
-        string s = Encoding.ASCII.GetString(strBytes.ToArray());
+        string s = UnrealEncoding.ANSI.GetString(strBytes.ToArray());
         return s;
     }
 
     /// <summary>
     ///     Reads a null-terminated Unreal unicode (2 bytes) string from the base stream.
     /// </summary>
-    /// <returns>the read string without the null-terminal.</returns>
+    /// <returns>the read string without the null-terminator.</returns>
     public string ReadUnicode()
     {
         var strBytes = new List<byte>();
@@ -165,7 +169,7 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
             goto nextWord;
         }
 
-        string s = Encoding.Unicode.GetString(strBytes.ToArray());
+        string s = UnrealEncoding.Unicode.GetString(strBytes.ToArray());
         return s;
     }
 
@@ -226,7 +230,7 @@ public class UnrealBinaryReader(IUnrealArchive archive, BinaryReader baseReader)
             return _BaseReader.ReadInt32();
         }
 #endif
-         return ReadCompactIndex();
+        return ReadCompactIndex();
     }
 
     /// <summary>

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using UELib.Branch;
 using UELib.Core;
 
@@ -16,45 +14,91 @@ public class UnrealBinaryWriter(IUnrealArchive archive, BinaryWriter baseWriter)
     private readonly bool _CanBulkWrite =
         archive.Flags.HasFlag(UnrealArchiveFlags.BigEndian);
 
+    // FIXME: Not all games use null-terminated strings.
+    private readonly bool _IsNullTerminated = true;
+
     /// <inheritdoc />
     public void Dispose() => _BaseWriter.Dispose();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsUnicode(string s) => s.Any(c => c >= 127);
+    /// <summary>
+    /// Checks whether the given string contains non-ANSI characters, and must be serialized using UNICODE.
+    /// </summary>
+    /// <param name="text">the text to validate.</param>
+    /// <returns>true if the text contains non-ANSI characters.</returns>
+    public static bool IsUnicode(string text) => text.Any(c => c > 255);
+
+    /// <summary>Writes a string to the base stream.</summary>
+    /// <param name="value">the string to be written.</param>
+    /// <param name="length">the length of the string without the null-terminator.</param>
+    public void WriteString(string value, int length)
+    {
+        switch (length)
+        {
+            case > 0:
+                {
+                    byte[] buffer = UnrealEncoding.ANSI.GetBytes(value);
+                    _BaseStream.Write(buffer, 0, buffer.Length);
+
+                    if (_IsNullTerminated) _BaseStream.WriteByte(0);
+
+                    break;
+                }
+
+            case < 0:
+                {
+                    if (_CanBulkWrite)
+                    {
+                        byte[] buffer = UnrealEncoding.Unicode.GetBytes(value);
+                        _BaseStream.Write(buffer, 0, buffer.Length);
+                    }
+                    else
+                    {
+                        // Write 2 bytes at a time due Big-Endian byte-order.
+                        foreach (char c in value)
+                        {
+                            _BaseWriter.Write((short)c);
+                        }
+                    }
+
+                    if (_IsNullTerminated) _BaseWriter.Write((short)0);
+
+                    break;
+                }
+        }
+
+        // else, write nothing, not even a null terminator.
+    }
 
     /// <summary>Writes a length prefixed string to the base stream.</summary>
     /// <param name="value">the string to be written.</param>
     public void WriteString(string value)
     {
+        int length = value.Length;
+        if (length != 0 && _IsNullTerminated)
+        {
+            ++length;
+        }
+#if BIOSHOCK
+        // TODO: Make this a build option instead.
+        if (archive.Build == BuildGeneration.Vengeance &&
+            archive.Version >= 135)
+        {
+            // Always write using unicode.
+            WriteIndex(length);
+            WriteString(value, -length);
+
+            return;
+        }
+#endif
         if (!IsUnicode(value))
         {
-            int length = value.Length + 1;
             WriteIndex(length);
-
-            byte[] buffer = Encoding.ASCII.GetBytes(value);
-            _BaseStream.Write(buffer, 0, buffer.Length);
-            _BaseStream.WriteByte(0); // FIXME: Not all games use null-terminated strings.
+            WriteString(value, length);
         }
         else
         {
-            int length = value.Length + 1;
             WriteIndex(-length);
-
-            if (_CanBulkWrite)
-            {
-                byte[] buffer = Encoding.Unicode.GetBytes(value);
-                _BaseStream.Write(buffer, 0, buffer.Length);
-            }
-            else
-            {
-                // Write 2 bytes at a time due Big-Endian byte-order.
-                foreach (char c in value)
-                {
-                    _BaseWriter.Write((short)c);
-                }
-            }
-
-            _BaseWriter.Write((short)0); // FIXME: Not all games use null-terminated strings.
+            WriteString(value, -length);
         }
     }
 
@@ -64,7 +108,7 @@ public class UnrealBinaryWriter(IUnrealArchive archive, BinaryWriter baseWriter)
     /// <param name="value">the string to be written.</param>
     public void WriteAnsi(string value)
     {
-        byte[] data = Encoding.ASCII.GetBytes(value);
+        byte[] data = UnrealEncoding.ANSI.GetBytes(value);
         _BaseWriter.Write(data, 0, data.Length);
         _BaseStream.WriteByte(0);
     }
@@ -77,7 +121,7 @@ public class UnrealBinaryWriter(IUnrealArchive archive, BinaryWriter baseWriter)
     {
         if (_CanBulkWrite)
         {
-            byte[] data = Encoding.Unicode.GetBytes(value);
+            byte[] data = UnrealEncoding.Unicode.GetBytes(value);
             _BaseWriter.Write(data, 0, data.Length);
         }
         else

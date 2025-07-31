@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Branch;
@@ -40,19 +39,24 @@ public class UnrealStreamTests
     }
 
     [DataTestMethod]
-    [DataRow(PackageObjectLegacyVersion.Undefined, "String")]
-    [DataRow(PackageObjectLegacyVersion.Undefined, "语言处理")]
-    public void SerializeString(PackageObjectLegacyVersion version, string text)
+    [DataRow(PackageObjectLegacyVersion.Undefined, "")] // Verify empty string
+    [DataRow(PackageObjectLegacyVersion.Undefined, "String")] // Verify ASCII string
+    [DataRow(PackageObjectLegacyVersion.Undefined, "Strîñg", false)] // Verify ANSI characters
+    [DataRow(PackageObjectLegacyVersion.Undefined, "语言处理", true)] // Verify Unicode characters
+    public void SerializeString(PackageObjectLegacyVersion version, string text, bool requiresUnicode = false)
     {
         using var stream = new UnrealDummyStream(
             new UnrealTestArchive(UnrealPackage.TransientPackage, (uint)version),
             UnrealPackageUtilities.CreateTempPackageStream()
         );
 
+        bool isUnicode = UnrealBinaryWriter.IsUnicode(text);
+        Assert.AreEqual(requiresUnicode, isUnicode);
+
         stream.Seek(0, SeekOrigin.Begin);
         stream.WriteString(text);
 
-        if (text.Any(c => c >= 127))
+        if (isUnicode)
         {
             stream.WriteUnicodeNullString(text);
         }
@@ -65,7 +69,7 @@ public class UnrealStreamTests
         stream.Seek(0, SeekOrigin.Begin);
         string readString = stream.ReadString();
         Assert.AreEqual(text, readString);
-        readString = text.Any(c => c >= 127)
+        readString = isUnicode
             ? stream.ReadUnicodeNullString()
             : stream.ReadAnsiNullString();
         Assert.AreEqual(length, stream.Position, "Serialize cannot differ from deserialize");
@@ -78,12 +82,9 @@ public class UnrealStreamTests
     [DataRow(PackageObjectLegacyVersion.NumberAddedToName)]
     public void SerializeName(PackageObjectLegacyVersion version)
     {
-        using var fileStream = UnrealPackageUtilities.CreateTempPackageStream();
-        var package = new UnrealPackage("Transient");
-        package.Summary.Version = (uint)version;
-        package.Build = new UnrealPackage.GameBuild((uint)version, 0, BuildGeneration.Undefined, null, 0);
-        var archive = new UnrealPackageArchive(package);
-        using var stream = new UnrealPackageStream(archive, fileStream);
+        using var archive = UnrealPackageUtilities.CreateTempArchive((uint)version);
+        var package = archive.Package;
+        var stream = archive.Stream;
 
         // Ensure the package knows about the name.
         package.Names.Add(new UNameTableItem("Name"));
@@ -201,16 +202,15 @@ public class UnrealStreamTests
     }
 
     [DataTestMethod]
+    [DataRow(PackageObjectLegacyVersion.LowestVersion)]
+    //[DataRow(PackageObjectLegacyVersion.CharRemapAddedToUFont)]
+    //[DataRow(PackageObjectLegacyVersion.KerningAddedToUFont)]
     [DataRow(PackageObjectLegacyVersion.FontPagesDisplaced)]
     [DataRow(PackageObjectLegacyVersion.VerticalOffsetAddedToUFont)]
     public void SerializeDataTypes(PackageObjectLegacyVersion version)
     {
-        using var fileStream = UnrealPackageUtilities.CreateTempPackageStream();
-        var package = new UnrealPackage("Transient");
-        package.Summary.Version = (uint)version;
-        package.Build = new UnrealPackage.GameBuild((uint)version, 0, BuildGeneration.Undefined, null, 0);
-        var archive = new UnrealPackageArchive(package);
-        using var stream = new UnrealPackageStream(archive, fileStream);
+        using var archive = UnrealPackageUtilities.CreateTempArchive((uint)version);
+        var stream = archive.Stream;
 
         var fontPage = new UFont.FontPage
         {
