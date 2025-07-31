@@ -474,6 +474,20 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<TValue> ReadArray<TValue>(this IUnrealStream stream, Func<TValue> elementSelector)
+    {
+        int c = stream.ReadLength();
+        var array = new UArray<TValue>(c);
+        for (int i = 0; i < c; ++i)
+        {
+            var element = elementSelector();
+            array.Add(element);
+        }
+
+        return array;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static UArray<T> ReadArray<T>(this IUnrealStream stream, int count)
         where T : IUnrealDeserializableClass, new()
     {
@@ -609,6 +623,23 @@ public static class UnrealStreamImplementations
         {
             ReadTyped(stream, out TKey key);
             ReadTyped(stream, out TValue value);
+            map.Add(key, value);
+        }
+
+        return map;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UMap<TKey, TValue> ReadMap<TKey, TValue>(this IUnrealStream stream,
+                                                           Func<TKey> keySelector,
+                                                           Func<TValue> valueSelector)
+    {
+        int c = stream.ReadLength();
+        var map = new UMap<TKey, TValue>(c);
+        for (int i = 0; i < c; ++i)
+        {
+            var key = keySelector();
+            var value = valueSelector();
             map.Add(key, value);
         }
 
@@ -1034,6 +1065,23 @@ public static class UnrealStreamImplementations
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray<TValue>(this IUnrealStream stream, in UArray<TValue>? array, Action<TValue> valueWriter)
+    {
+        if (array == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, array.Count);
+        foreach (var element in array)
+        {
+            valueWriter(element);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteMap(this IUnrealStream stream, in UMap<ushort, ushort>? map)
     {
         if (map == null)
@@ -1108,6 +1156,26 @@ public static class UnrealStreamImplementations
         {
             stream.WriteTyped(pair.Key);
             stream.WriteTyped(pair.Value);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteMap<TKey, TValue>(this IUnrealStream stream, in UMap<TKey, TValue>? map,
+                                              Action<TKey> keyWriter,
+                                              Action<TValue> valueWriter)
+    {
+        if (map == null)
+        {
+            WriteIndex(stream, 0);
+
+            return;
+        }
+
+        WriteIndex(stream, map.Count);
+        foreach (var pair in map)
+        {
+            keyWriter(pair.Key);
+            valueWriter(pair.Value);
         }
     }
 
