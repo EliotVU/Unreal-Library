@@ -109,15 +109,15 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         public override void Deserialize(IUnrealStream stream)
         {
             int property = stream.ReadIndex();
-            Decompiler.AlignSize(4);
+            Script.AlignSize(4);
 
-            PropertyContainer = Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
+            PropertyContainer = stream.Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
             PropertyIndex = property >> 16;
 
             Debug.Assert(PropertyContainer != null);
         }
 
-        public override string Decompile()
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
             int index = 0;
             var property = PropertyContainer
@@ -129,7 +129,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
                 return property.Name;
             }
 
-            Decompiler.PreComment = $"// Unresolved import {PropertyContainer.Name} property #[{PropertyIndex}]";
+            decompiler.PreComment = $"// Unresolved import {PropertyContainer.Name} property #[{PropertyIndex}]";
             return $"[{PropertyIndex}]";
         }
     }
@@ -137,12 +137,12 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
     [ExprToken(ExprToken.NativeParm)]
     public class NativeParameterToken : LocalVariableToken
     {
-        public override string Decompile()
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
 #if DEBUG
-            Decompiler.MarkSemicolon();
-            Decompiler.MarkCommentStatement();
-            return $"native.{base.Decompile()}";
+            decompiler.MarkSemicolon();
+            decompiler.MarkCommentStatement();
+            return $"native.{base.Decompile(decompiler)}";
 #else
             return string.Empty;
 #endif
@@ -158,8 +158,8 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
     [ExprToken(ExprToken.OutVariable)]
     public class OutVariableToken : UStruct.UByteCodeDecompiler.Token
     {
-        public override void Deserialize(IUnrealStream stream) => DeserializeNext();
-        public override string Decompile() => DecompileNext();
+        public override void Deserialize(IUnrealStream stream) => Script.DeserializeNextToken(stream);
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler) => DecompileNext(decompiler);
     }
 
     [ExprToken(ExprToken.DefaultVariable)]
@@ -174,18 +174,18 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         public override void Deserialize(IUnrealStream stream)
         {
             int property = stream.ReadIndex();
-            Decompiler.AlignSize(4);
+            Script.AlignSize(4);
 
-            PropertyContainer = Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
+            PropertyContainer = stream.Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
             PropertyIndex = property >> 16;
 
             Debug.Assert(PropertyContainer != null);
 
             // Pre-Context
-            DeserializeNext();
+            Script.DeserializeNextToken(stream);
         }
 
-        public override string Decompile()
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
             int index = 0;
             var property = PropertyContainer
@@ -194,11 +194,11 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
 
             if (property != null)
             {
-                return $"{DecompileNext()}.{property.Name}";
+                return $"{DecompileNext(decompiler)}.{property.Name}";
             }
 
-            Decompiler.PreComment = $"// Unresolved import {PropertyContainer.Name} property #[{PropertyIndex}]";
-            return $"{DecompileNext()}[{index}]";
+            decompiler.PreComment = $"// Unresolved import {PropertyContainer.Name} property #[{PropertyIndex}]";
+            return $"{DecompileNext(decompiler)}[{index}]";
         }
     }
 }
