@@ -60,9 +60,9 @@ namespace UELib
             Tabs = string.Empty;
         }
 
-        public static string OffsetLabelName(uint offset)
+        public static UName OffsetLabelName(uint offset)
         {
-            return $"J0x{offset:X2}";
+            return new UName($"J0x{offset:X2}");
         }
     }
 }

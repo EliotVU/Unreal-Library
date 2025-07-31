@@ -72,32 +72,31 @@ namespace Eliot.UELib.Test.Builds
 
             void AssertFunctionDelegateTokens(UnrealPackage linker)
             {
-                var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens");
+                var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens")!;
                 delegateTokensFunc.Load();
 
-                var script = delegateTokensFunc.ByteCodeManager;
-                script.Deserialize();
-                script.CurrentTokenIndex = -1;
+                var decompiler = new UStruct.UByteCodeDecompiler(delegateTokensFunc);
+                decompiler.Deserialize();
 
                 // OnDelegate();
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(DelegateFunctionToken),
                     typeof(EndFunctionParmsToken));
 
                 // OnDelegate = InternalOnDelegate;
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
 
                 // OnDelegate = none;
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
 
                 // if (OnDelegate == InstanceDelegate);
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateCmpEqToken),
                     typeof(InstanceVariableToken),
@@ -105,7 +104,7 @@ namespace Eliot.UELib.Test.Builds
                     typeof(EndFunctionParmsToken));
 
                 // if (OnDelegate != InstanceDelegate);
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateCmpNeToken),
                     typeof(InstanceVariableToken),
@@ -113,7 +112,7 @@ namespace Eliot.UELib.Test.Builds
                     typeof(EndFunctionParmsToken));
 
                 // if (OnDelegate == InternalOnDelegate);
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateFunctionCmpEqToken),
                     typeof(InstanceVariableToken),
@@ -121,7 +120,7 @@ namespace Eliot.UELib.Test.Builds
                     typeof(EndFunctionParmsToken));
 
                 // if (OnDelegate != InternalOnDelegate);
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateFunctionCmpNeToken),
                     typeof(InstanceVariableToken),
@@ -129,7 +128,7 @@ namespace Eliot.UELib.Test.Builds
                     typeof(EndFunctionParmsToken));
 
                 // if (OnDelegate == none);
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateCmpEqToken),
                     typeof(InstanceVariableToken),
@@ -137,12 +136,12 @@ namespace Eliot.UELib.Test.Builds
                     typeof(EndFunctionParmsToken));
 
                 // (return)
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(ReturnToken),
                     typeof(NothingToken),
                     typeof(EndOfScriptToken));
 
-                Assert.AreEqual(script.DeserializedTokens.Last(), script.CurrentToken);
+                Assert.AreEqual(decompiler.DeserializedTokens.Last(), decompiler.CurrentToken);
             }
 
             using var linker = GetScriptPackageLinker();

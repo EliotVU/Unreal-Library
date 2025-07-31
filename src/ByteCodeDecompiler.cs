@@ -2,12 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
-using UELib.Branch;
-using UELib.Core.Tokens;
 using UELib.Flags;
 using UELib.Services;
-using UELib.Tokens;
 
 namespace UELib.Core
 {
@@ -16,218 +12,53 @@ namespace UELib.Core
 
     public partial class UStruct
     {
-        public partial class UByteCodeDecompiler : IUnrealDecompilable
+        public partial class UByteCodeDecompiler(UStruct container, UByteCodeScript script) : IUnrealDecompilable
         {
-            private readonly UStruct _Container;
-            private UObjectStream _Buffer;
-            private readonly UnrealPackage _Package;
-            private readonly TokenFactory _TokenFactory;
+            private readonly UStruct _Container = container;
 
-            /// <summary>
-            /// A collection of deserialized tokens, in their correspondence stream order.
-            /// </summary>
-            public List<Token> DeserializedTokens { get; private set; }
+            public readonly UnrealPackage Package = container.Package;
+            public UByteCodeScript Script { get; } = script ?? throw new ArgumentNullException(nameof(script), "Script cannot be null.");
 
-            [System.ComponentModel.DefaultValue(-1)]
-            public int CurrentTokenIndex { get; set; }
-
+            public int CurrentTokenIndex { get; set; } = -1;
+            public List<Token> DeserializedTokens => Script.Tokens;
             public Token NextToken => DeserializedTokens[++CurrentTokenIndex];
-
             public Token PeekToken => DeserializedTokens[CurrentTokenIndex + 1];
-
             public Token PreviousToken => DeserializedTokens[CurrentTokenIndex - 1];
-
             public Token CurrentToken => DeserializedTokens[CurrentTokenIndex];
 
-            public UByteCodeDecompiler(UStruct container)
-            {
-                _Container = container;
-
-                _Package = container.Package;
-                Debug.Assert(_Package != null);
-                _TokenFactory = container.GetTokenFactory();
-                Debug.Assert(_TokenFactory != null);
-
-                SetupMemorySizes();
-            }
-
-            #region Deserialize
-
             /// <summary>
-            /// The current in memory position relative to the first byte-token.
+            /// Context hint, a reference to the last relevant-object that was accessed during the decompilation.
             /// </summary>
-            private int ScriptPosition { get; set; }
+            private UObject? _ObjectHint;
 
-            /// <summary>
-            /// Size of FName in memory (int Index, (>= 343) int Number).
-            /// </summary>
-            private byte _NameMemorySize = sizeof(int);
-
-            /// <summary>
-            /// Size of a pointer to an UObject in memory.
-            /// 32bit, 64bit as of version 587 (even on 32bit platforms)
-            /// </summary>
-            private byte _ObjectMemorySize = sizeof(int);
-
-            private void SetupMemorySizes()
+            public UByteCodeDecompiler(UStruct container) : this(
+                container,
+                // Only ever null if the container has no script, but create one anyway, so that this construction is always safe.
+                container.Script ?? new UByteCodeScript(
+                    container,
+                    container.MemoryScriptSize,
+                    container.StorageScriptSize))
             {
-#if BIOSHOCK
-                if (_Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
-                {
-                    _NameMemorySize = sizeof(int) + sizeof(int);
-                    return;
-                }
-#endif
-                const uint vNameSizeTo8 = (uint)PackageObjectLegacyVersion.NumberAddedToName;
-                if (_Package.Version >= vNameSizeTo8) _NameMemorySize = sizeof(int) + sizeof(int);
-#if TERA
-                // Tera's reported version is false (partial upgrade?)
-                if (_Package.Build == UnrealPackage.GameBuild.BuildName.Tera) return;
-#endif
-                const short vObjectSizeTo8 = 587;
-                if (_Package.Version >= vObjectSizeTo8) _ObjectMemorySize = sizeof(long);
             }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal void AlignSize(int size)
-            {
-                ScriptPosition += size;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal void AlignNameSize()
-            {
-                ScriptPosition += _NameMemorySize;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal void AlignObjectSize()
-            {
-                ScriptPosition += _ObjectMemorySize;
-            }
-
-            private bool _WasDeserialized;
 
             public void Deserialize()
             {
-                if (_WasDeserialized)
+                if (Script.MemorySize == 0 || Script.Tokens.Count != 0)
+                {
                     return;
+                }
 
-                _WasDeserialized = true;
-                CurrentTokenIndex = -1;
-                DeserializedTokens = new List<Token>();
-                _Labels = new List<ULabelEntry>();
-                ScriptPosition = 0;
                 try
                 {
-                    _Buffer = _Container.LoadBuffer();
-                    _Buffer.Seek(_Container.ScriptOffset, SeekOrigin.Begin);
-                    int scriptSize = _Container.MemoryScriptSize;
-                    while (ScriptPosition < scriptSize)
-                        try
-                        {
-                            DeserializeNext();
-                        }
-                        catch (StackOverflowException exception)
-                        {
-                            LibServices.Debug("Failed to deserialize token at position:" + ScriptPosition);
-                            LibServices.LogService.SilentException(exception);
-
-                            break;
-                        }
-                        catch (EndOfStreamException exception)
-                        {
-                            LibServices.Debug("Failed to deserialize token at position:" + ScriptPosition);
-                            LibServices.LogService.SilentException(exception);
-
-                            break;
-                        }
-                        catch (Exception exception)
-                        {
-                            LibServices.Debug("Failed to deserialize token at position:" + ScriptPosition);
-                            LibServices.LogService.SilentException(exception);
-
-                            break;
-                        }
+                    var buffer = _Container.LoadBuffer();
+                    buffer.Seek(_Container.ScriptOffset, SeekOrigin.Begin);
+                    Script.Deserialize(buffer);
                 }
                 finally
                 {
                     _Container.MaybeDisposeBuffer();
                 }
             }
-
-            private void DeserializeDebugToken()
-            {
-                // Sometimes we may end up at the end of a script
-                // -- and by coincidence pickup a DebugInfo byte-code outside of the script-boundary.
-                if (ScriptPosition + sizeof(byte) + sizeof(int) >= _Container.MemoryScriptSize) return;
-
-                long p = _Buffer.Position;
-                byte opCode = _Buffer.ReadByte();
-
-                // Let's avoid converting native calls to a token type ;D
-                if (opCode >= _TokenFactory.ExtendedNative)
-                {
-                    _Buffer.Position = p;
-                    return;
-                }
-
-                int version = 0;
-
-                var tokenType = _TokenFactory.GetTokenTypeFromOpCode(opCode);
-                if (tokenType == typeof(DebugInfoToken))
-                {
-                    // Sometimes we may catch a false positive,
-                    // e.g. A FinalFunction within an Iterator may expect a debug token and by mere coincidence match the Iterator's CodeOffset.
-                    // So let's verify the next 4 bytes too.
-                    version = _Buffer.ReadInt32();
-                }
-
-                _Buffer.Position = p;
-                if (version == 100)
-                {
-                    // Expecting a DebugInfo token.
-                    DeserializeNext();
-                }
-            }
-
-            private Token DeserializeNextOpCodeToToken()
-            {
-                byte opCode = _Buffer.ReadByte();
-                AlignSize(sizeof(byte));
-
-                if (opCode < _TokenFactory.ExtendedNative) return _TokenFactory.CreateToken<Token>(opCode);
-                if (opCode >= _TokenFactory.FirstNative)
-                {
-                    return _TokenFactory.CreateNativeToken(opCode);
-                }
-
-                byte opCodeExtension = _Buffer.ReadByte();
-                AlignSize(sizeof(byte));
-
-                var nativeIndex = (ushort)(((opCode - _TokenFactory.ExtendedNative) << 8) | opCodeExtension);
-                Debug.Assert(nativeIndex < (ushort)ExprToken.MaxNative);
-                return _TokenFactory.CreateNativeToken(nativeIndex);
-            }
-
-            private Token DeserializeNext()
-            {
-                int scriptPosition = ScriptPosition;
-                var token = DeserializeNextOpCodeToToken();
-                Debug.Assert(token != null);
-
-                DeserializedTokens.Add(token);
-                token.Decompiler = this;
-                token.Position = scriptPosition;
-                token.StoragePosition = (int)(_Buffer.Position - _Container.ScriptOffset - 1);
-                token.Deserialize(_Buffer);
-                token.Size = (short)(ScriptPosition - scriptPosition);
-                token.StorageSize = (short)(_Buffer.Position - _Container.ScriptOffset - token.StoragePosition);
-                token.PostDeserialized();
-
-                return token;
-            }
-            #endregion
 
 #if DECOMPILE
 
@@ -307,16 +138,16 @@ namespace UELib.Core
                     }
                 }
 
-                public readonly List<Nest> Nests = new List<Nest>();
+                public readonly List<Nest> Nests = [];
 
-                public void AddNest(Nest.NestType type, int position, int endPosition, Token creator = null)
+                public void AddNest(Nest.NestType type, int position, int endPosition, Token? creator = null)
                 {
                     creator = creator ?? Decompiler.CurrentToken;
                     Nests.Add(new NestBegin { Position = position, Type = type, Creator = creator });
                     Nests.Add(new NestEnd { Position = endPosition, Type = type, Creator = creator });
                 }
 
-                public NestBegin AddNestBegin(Nest.NestType type, int position, Token creator = null)
+                public NestBegin AddNestBegin(Nest.NestType type, int position, Token? creator = null)
                 {
                     var n = new NestBegin { Position = position, Type = type };
                     Nests.Add(n);
@@ -324,7 +155,7 @@ namespace UELib.Core
                     return n;
                 }
 
-                public NestEnd AddNestEnd(Nest.NestType type, int position, Token creator = null)
+                public NestEnd AddNestEnd(Nest.NestType type, int position, Token? creator = null)
                 {
                     var n = new NestEnd { Position = position, Type = type };
                     Nests.Add(n);
@@ -347,7 +178,7 @@ namespace UELib.Core
             public NestManager Nester => _Nester;
 
             // Checks if we're currently within a nest of type nestType in any stack!
-            private NestManager.Nest IsWithinNest(NestManager.Nest.NestType nestType)
+            private NestManager.Nest? IsWithinNest(NestManager.Nest.NestType nestType)
             {
                 for (int i = _NestChain.Count - 1; i >= 0; --i)
                     if (_NestChain[i].Type == nestType)
@@ -358,7 +189,7 @@ namespace UELib.Core
 
             // Checks if the current nest is of type nestType in the current stack!
             // Only BeginNests that have been decompiled will be tested for!
-            private NestManager.Nest IsInNest(NestManager.Nest.NestType nestType)
+            private NestManager.Nest? IsInNest(NestManager.Nest.NestType nestType)
             {
                 int i = _NestChain.Count - 1;
                 if (i == -1)
@@ -373,9 +204,8 @@ namespace UELib.Core
 
                 _Nester = new NestManager { Decompiler = this };
                 CurrentTokenIndex = -1;
-                ScriptPosition = 0;
 
-                FieldToken.LastField = null;
+                _ObjectHint = null;
 
                 // Reset these, in case of a loop in the Decompile function that did not finish due exception errors!
                 _IsWithinClassContext = false;
@@ -388,23 +218,74 @@ namespace UELib.Core
                 PreComment = string.Empty;
                 PostComment = string.Empty;
 
+                _Labels = [];
                 _TempLabels = new List<(ULabelEntry, int)>();
-                if (_Labels != null)
-                    for (var i = 0; i < _Labels.Count; ++i)
+
+                foreach (var token in Script.Statements)
+                {
+                    switch (token)
                     {
-                        // No duplicates, caused by having multiple goto's with the same destination
-                        int index = _TempLabels.FindIndex(p => p.entry.Position == _Labels[i].Position);
-                        if (index == -1)
-                        {
-                            _TempLabels.Add((_Labels[i], 1));
-                        }
-                        else
-                        {
-                            var data = _TempLabels[index];
-                            data.refs++;
-                            _TempLabels[index] = data;
-                        }
+                        // if ()
+                        case JumpToken jumpToken when token is JumpIfNotToken jumpIfNotToken:
+                            {
+                                // Add jump label for 'do until' jump pattern
+                                if ((jumpIfNotToken.CodeOffset & ushort.MaxValue) < jumpIfNotToken.Position)
+                                {
+                                    _Labels.Add
+                                    (
+                                        new ULabelEntry
+                                        {
+                                            Name = UDecompilingState.OffsetLabelName(jumpIfNotToken.CodeOffset),
+                                            Position = jumpIfNotToken.CodeOffset
+                                        }
+                                    );
+                                }
+
+                                break;
+                            }
+                        // goto Label;
+                        case JumpToken jumpToken:
+                            {
+                                if ((jumpToken.CodeOffset & ushort.MaxValue) < token.Position)
+                                {
+                                    _Labels.Add
+                                    (
+                                        new ULabelEntry
+                                        {
+                                            Name = UDecompilingState.OffsetLabelName(jumpToken.CodeOffset),
+                                            Position = jumpToken.CodeOffset
+                                        }
+                                    );
+                                }
+
+                                break;
+                            }
+                        // State labels
+                        case LabelTableToken labelTableToken:
+                            // Add label for 'goto' jump pattern
+                            _Labels.AddRange(labelTableToken.Labels);
+                            break;
                     }
+
+                    // Fallback for legacy tokens.
+                    token.PostDeserialized();
+                }
+
+                for (var i = 0; i < _Labels.Count; ++i)
+                {
+                    // No duplicates, caused by having multiple goto statements with the same destination
+                    int index = _TempLabels.FindIndex(p => p.entry.Position == _Labels[i].Position);
+                    if (index == -1)
+                    {
+                        _TempLabels.Add((_Labels[i], 1));
+                    }
+                    else
+                    {
+                        var data = _TempLabels[index];
+                        data.refs++;
+                        _TempLabels[index] = data;
+                    }
+                }
             }
 
             public void JumpTo(ushort codeOffset)
@@ -444,6 +325,11 @@ namespace UELib.Core
                 _CanAddSemicolon = true;
             }
 
+            public void PopSemicolon()
+            {
+                _CanAddSemicolon = false;
+            }
+
             public void MarkCommentStatement()
             {
                 _MustCommentStatement = true;
@@ -451,8 +337,13 @@ namespace UELib.Core
 
             public string Decompile()
             {
-                // Make sure that everything is deserialized!
-                if (!_WasDeserialized) Deserialize();
+                // Ensure we have deserialized tokens to work with.
+                Deserialize();
+
+                if (DeserializedTokens.Count == 0)
+                {
+                    return string.Empty;
+                }
 
                 var output = new StringBuilder();
                 // Original indention, so that we can restore it later, necessary if decompilation fails to reduce nesting indention.
@@ -491,7 +382,7 @@ namespace UELib.Core
                                         do
                                         {
                                             ++CurrentTokenIndex;
-                                        } while (!(CurrentToken is EndParmValueToken));
+                                        } while (CurrentToken is not EndParmValueToken);
 
                                         ++CurrentTokenIndex; // EndParmValueToken
                                         break;
@@ -545,7 +436,7 @@ namespace UELib.Core
 
                             try
                             {
-                                tokenOutput = newToken.Decompile();
+                                tokenOutput = newToken.Decompile(this);
                                 if (CurrentTokenIndex + 1 < DeserializedTokens.Count &&
                                     PeekToken is EndOfScriptToken)
                                 {
@@ -745,7 +636,7 @@ namespace UELib.Core
                 return output.ToString();
             }
 
-            private readonly List<NestManager.Nest> _NestChain = new List<NestManager.Nest>();
+            private readonly List<NestManager.Nest> _NestChain = [];
 
             private static string FormatTabs(string nonTabbedText)
             {
@@ -767,7 +658,7 @@ namespace UELib.Core
                     try
                     {
                         output += "\r\n" + UDecompilingState.Tabs +
-                                  $"{FormatTokenInfo(t)} << {t.Decompile()}";
+                                  $"{FormatTokenInfo(t)} << {t.Decompile(this)}";
                     }
                     catch (Exception exception)
                     {
@@ -802,7 +693,7 @@ namespace UELib.Core
                 if (labelIndex == -1) return string.Empty;
 
                 var labelEntry = _TempLabels[labelIndex].entry;
-                bool isStateLabel = !labelEntry.Name.StartsWith("J0x", StringComparison.Ordinal);
+                bool isStateLabel = !labelEntry.Name.ToString().StartsWith("J0x", StringComparison.Ordinal);
                 string statementOutput = isStateLabel
                     ? $"{labelEntry.Name}:\r\n"
                     : $"{UDecompilingState.Tabs}{labelEntry.Name}:";
@@ -821,7 +712,7 @@ namespace UELib.Core
                 // Give { priority hence separated loops
                 for (var i = 0; i < _Nester.Nests.Count; ++i)
                 {
-                    if (!(_Nester.Nests[i] is NestManager.NestBegin))
+                    if (_Nester.Nests[i] is not NestManager.NestBegin)
                         continue;
 
                     if (_Nester.Nests[i].IsPastOffset((int)CurrentToken.Position) || outputAllRemainingNests)
@@ -899,17 +790,6 @@ namespace UELib.Core
             }
 
             #endregion
-
-            #region Disassemble
-
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
-            public string Disassemble()
-            {
-                return string.Empty;
-            }
-
-            #endregion
-
 #endif
         }
     }

@@ -102,36 +102,36 @@ namespace Eliot.UELib.Test.Builds
 
             void AssertFunctionDelegateTokens(UnrealPackage linker)
             {
-                var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens");
+                var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens")!;
                 delegateTokensFunc.Load();
 
-                var script = delegateTokensFunc.ByteCodeManager;
-                script.CurrentTokenIndex = -1;
+                var decompiler = new UStruct.UByteCodeDecompiler(delegateTokensFunc);
+                decompiler.Deserialize();
 
                 // OnDelegate();
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(DelegateFunctionToken),
                     typeof(EndFunctionParmsToken));
 
                 // OnDelegate = InternalOnDelegate;
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
 
                 // OnDelegate = none;
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
 
                 // (return)
-                AssertTokens(script,
+                AssertTokens(decompiler,
                     typeof(ReturnToken),
                     typeof(NothingToken),
                     typeof(EndOfScriptToken));
 
-                Assert.AreEqual(script.DeserializedTokens.Last(), script.CurrentToken);
+                Assert.AreEqual(decompiler.DeserializedTokens.Last(), decompiler.CurrentToken);
             }
 
             using var linker = GetScriptPackageLinker();

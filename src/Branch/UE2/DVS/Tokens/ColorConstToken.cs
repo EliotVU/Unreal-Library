@@ -12,10 +12,16 @@ namespace UELib.Branch.UE2.DVS.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             stream.ReadStruct(out Color);
-            Decompiler.AlignSize(4);
+            Script.AlignSize(4);
         }
 
-        public override string Decompile()
+        public override void Serialize(IUnrealStream stream)
+        {
+            stream.WriteStruct(Color);
+            Script.AlignSize(4);
+        }
+
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
             return $"col({Color.R},{Color.G},{Color.B},{Color.A})";
         }

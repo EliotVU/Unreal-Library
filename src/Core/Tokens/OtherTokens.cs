@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
-using UELib.Annotations;
-using UELib.Branch.UE2.Lead;
+using System.Diagnostics.Contracts;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -12,25 +11,19 @@ namespace UELib.Core
         public partial class UByteCodeDecompiler
         {
             [ExprToken(ExprToken.Nothing)]
-            public class NothingToken : Token
-            {
-            }
+            public class NothingToken : Token;
 
             [ExprToken(ExprToken.EmptyDelegate)]
-            public class EmptyDelegateToken : NoneToken
-            {
-            }
+            public class EmptyDelegateToken : NoneToken;
 
             [ExprToken(ExprToken.NoObject)]
-            public class NoObjectToken : NoneToken
-            {
-            }
+            public class NoObjectToken : NoneToken;
 
             // A skipped parameter when calling a function
             [ExprToken(ExprToken.EmptyParmValue)]
             public class EmptyParmToken : Token
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return ",";
                 }
@@ -38,97 +31,142 @@ namespace UELib.Core
 
             // Also known as an EndCode or EndFunction token.
             [ExprToken(ExprToken.EndOfScript)]
-            public class EndOfScriptToken : Token
-            {
-            }
+            public class EndOfScriptToken : Token;
 
             [ExprToken(ExprToken.Assert)]
             public class AssertToken : Token
             {
                 public ushort Line;
                 public byte? IsDebug;
+                public Token ConditionalExpression;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Line = stream.ReadUInt16();
-                    Decompiler.AlignSize(sizeof(short));
+                    Script.AlignSize(sizeof(short));
 
                     // FIXME: Version, verified against (RoboBlitz v369)
                     if (stream.Version >= 200)
                     {
                         IsDebug = stream.ReadByte();
-                        Decompiler.AlignSize(sizeof(byte));
+                        Script.AlignSize(sizeof(byte));
                     }
 
-                    DeserializeNext();
+                    ConditionalExpression = Script.DeserializeNextToken(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.Write(Line);
+                    Script.AlignSize(sizeof(short));
+
+                    if (stream.Version >= 200)
+                    {
+                        stream.Write(IsDebug ?? (byte)0);
+                        Script.AlignSize(sizeof(byte));
+                    }
+
+                    Contract.Assert(ConditionalExpression != null);
+                    Script.SerializeToken(stream, ConditionalExpression);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     if (IsDebug.HasValue)
                     {
-                        Decompiler.PreComment = $"// DebugMode: {IsDebug}";
+                        decompiler.PreComment = $"// DebugMode: {IsDebug}";
                     }
 
-                    string condition = DecompileNext();
-                    Decompiler._CanAddSemicolon = true;
-                    return $"assert({condition})";
+                    string condition = DecompileNext(decompiler);
+                    decompiler.MarkSemicolon();
+
+                    return $"assert {condition}";
                 }
             }
 
             public abstract class ComparisonToken : Token
             {
                 public UObject Object;
+                public Token LeftExpression, RightExpression;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     stream.Read(out Object);
-                    Decompiler.AlignObjectSize();
+                    Script.AlignObjectSize();
 
-                    DeserializeNext();
+                    LeftExpression = Script.DeserializeNextToken(stream);
                     // ==
-                    DeserializeNext();
+                    RightExpression = Script.DeserializeNextToken(stream);
+                }
+
+                public override void Serialize(IUnrealStream stream)
+                {
+                    Contract.Assert(Object != null);
+                    stream.WriteObject(Object);
+                    Script.AlignObjectSize();
+
+                    Contract.Assert(LeftExpression != null);
+                    Script.SerializeToken(stream, LeftExpression);
+
+                    Contract.Assert(RightExpression != null);
+                    Script.SerializeToken(stream, RightExpression);
                 }
             }
 
             [ExprToken(ExprToken.StructCmpEq)]
             public class StructCmpEqToken : ComparisonToken
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    return $"{DecompileNext()} == {DecompileNext()}";
+                    return $"{DecompileNext(decompiler)} == {DecompileNext(decompiler)}";
                 }
             }
 
             [ExprToken(ExprToken.StructCmpNe)]
             public class StructCmpNeToken : ComparisonToken
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    return $"{DecompileNext()} != {DecompileNext()}";
+                    return $"{DecompileNext(decompiler)} != {DecompileNext(decompiler)}";
                 }
             }
 
             public class DelegateComparisonToken : Token
             {
+                public Token LeftExpression, RightExpression;
+                public Token EndToken;
+
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeNext(); // Left
+                    LeftExpression = Script.DeserializeNextToken(stream);
                     // ==
-                    DeserializeNext(); // Right
+                    RightExpression = Script.DeserializeNextToken(stream);
 
                     // End
-                    DeserializeNext();
+                    EndToken = Script.DeserializeNextToken(stream);
+                }
+
+                public override void Serialize(IUnrealStream stream)
+                {
+                    Contract.Assert(LeftExpression != null);
+                    Script.SerializeToken(stream, LeftExpression);
+
+                    Contract.Assert(RightExpression != null);
+                    Script.SerializeToken(stream, RightExpression);
+
+                    Contract.Assert(EndToken != null);
+                    Script.SerializeToken(stream, EndToken);
                 }
             }
 
             [ExprToken(ExprToken.DelegateCmpEq)]
             public class DelegateCmpEqToken : DelegateComparisonToken
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    var output = $"{DecompileNext()} == {DecompileNext()}";
-                    DecompileNext();
+                    var output = $"{DecompileNext(decompiler)} == {DecompileNext(decompiler)}";
+                    AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+
                     return output;
                 }
             }
@@ -136,10 +174,11 @@ namespace UELib.Core
             [ExprToken(ExprToken.DelegateCmpNe)]
             public class DelegateCmpNeToken : DelegateComparisonToken
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    var output = $"{DecompileNext()} != {DecompileNext()}";
-                    DecompileNext();
+                    var output = $"{DecompileNext(decompiler)} != {DecompileNext(decompiler)}";
+                    AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+
                     return output;
                 }
             }
@@ -147,10 +186,11 @@ namespace UELib.Core
             [ExprToken(ExprToken.DelegateFunctionCmpEq)]
             public class DelegateFunctionCmpEqToken : DelegateComparisonToken
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    var output = $"{DecompileNext()} == {DecompileNext()}";
-                    DecompileNext();
+                    var output = $"{DecompileNext(decompiler)} == {DecompileNext(decompiler)}";
+                    AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+
                     return output;
                 }
             }
@@ -158,10 +198,11 @@ namespace UELib.Core
             [ExprToken(ExprToken.DelegateFunctionCmpNe)]
             public class DelegateFunctionCmpNeToken : DelegateComparisonToken
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    var output = $"{DecompileNext()} != {DecompileNext()}";
-                    DecompileNext();
+                    var output = $"{DecompileNext(decompiler)} != {DecompileNext(decompiler)}";
+                    AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+
                     return output;
                 }
             }
@@ -175,10 +216,25 @@ namespace UELib.Core
                 {
                     // TODO: Correct version, confirmed to at least exist as of the earliest UE3-game v369(Roboblitz).
                     // -- definitely not in the older UE3 builds v186
-                    if (stream.Version < 201) return;
+                    if (stream.Version < 201)
+                    {
+                        return;
+                    }
 
                     ReturnValueProperty = stream.ReadObject<UProperty>();
-                    Decompiler.AlignObjectSize();
+                    Script.AlignObjectSize();
+                }
+
+                public override void Serialize(IUnrealStream stream)
+                {
+                    if (stream.Version < 201)
+                    {
+                        return;
+                    }
+
+                    Contract.Assert(ReturnValueProperty != null);
+                    stream.WriteObject(ReturnValueProperty);
+                    Script.AlignObjectSize();
                 }
             }
 
@@ -186,19 +242,29 @@ namespace UELib.Core
             public class ResizeStringToken : Token
             {
                 public byte Length;
+                public Token Expression;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Length = stream.ReadByte();
-                    Decompiler.AlignSize(sizeof(byte));
+                    Script.AlignSize(sizeof(byte));
 
                     // Could there have been an explicit cast too maybe?
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileNext();
+                    stream.Write(Length);
+                    Script.AlignSize(sizeof(byte));
+
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileNext(decompiler);
                 }
             }
 
@@ -210,57 +276,80 @@ namespace UELib.Core
                     for (; ; )
                     {
                         byte elementSize = stream.ReadByte();
-                        Decompiler.AlignSize(sizeof(byte));
+                        Script.AlignSize(sizeof(byte));
                         if (elementSize == 0x00)
                         {
                             break;
                         }
 
                         stream.ReadByte(); // bOutParam
-                        Decompiler.AlignSize(sizeof(byte));
+                        Script.AlignSize(sizeof(byte));
                     }
+                }
+
+                public override void Serialize(IUnrealStream stream)
+                {
+                    // TODO: 
+                    throw new NotImplementedException("BeginFunctionToken serialization is not implemented.");
                 }
             }
 
             [ExprToken(ExprToken.New)]
             public class NewToken : Token
             {
-                // Greater Than!
-                private const uint TemplateVersion = 300; // TODO: Corrigate Version
+                public Token OuterArgument, NameArgument, FlagsArgument;
+                public Token ClassExpression;
+
+                public Token? TemplateExpression;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    // Outer
-                    DeserializeNext();
-                    // Name
-                    DeserializeNext();
-                    // Flags
-                    DeserializeNext();
-
-                    // Class?
-                    DeserializeNext();
+                    OuterArgument = Script.DeserializeNextToken(stream);
+                    NameArgument = Script.DeserializeNextToken(stream);
+                    FlagsArgument = Script.DeserializeNextToken(stream);
+                    ClassExpression = Script.DeserializeNextToken(stream);
 
                     // TODO: Corrigate Version
-                    if (stream.Version > TemplateVersion)
+                    if (stream.Version > 300)
                     {
-                        // Template?
-                        DeserializeNext();
+                        TemplateExpression = Script.DeserializeNextToken(stream);
                     }
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    Contract.Assert(OuterArgument != null);
+                    Script.SerializeToken(stream, OuterArgument);
+
+                    Contract.Assert(NameArgument != null);
+                    Script.SerializeToken(stream, NameArgument);
+
+                    Contract.Assert(FlagsArgument != null);
+                    Script.SerializeToken(stream, FlagsArgument);
+
+                    Contract.Assert(ClassExpression != null);
+                    Script.SerializeToken(stream, ClassExpression);
+
+                    if (stream.Version > 300)
+                    {
+                        Contract.Assert(TemplateExpression != null);
+                        Script.SerializeToken(stream, TemplateExpression);
+                    }
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     // TODO:Clean this up; make it more concise!
-                    string outerStr = DecompileNext();
-                    string nameStr = DecompileNext();
-                    string flagsStr = DecompileNext();
-                    string classStr = DecompileNext();
+                    string outerStr = DecompileNext(decompiler);
+                    string nameStr = DecompileNext(decompiler);
+                    string flagsStr = DecompileNext(decompiler);
+                    string classStr = DecompileNext(decompiler);
 
                     var templateStr = string.Empty;
                     // TODO: Corrigate Version
-                    if (Package.Version > TemplateVersion)
+                    if (TemplateExpression != null)
                     {
-                        templateStr = DecompileNext();
+                        templateStr = DecompileNext(decompiler);
                     }
 
                     // Handles: new [( [outer [, name [, flags]]] )] class [( template )]
@@ -306,7 +395,8 @@ namespace UELib.Core
                         output += $" ({templateStr})";
                     }
 
-                    Decompiler._CanAddSemicolon = true;
+                    decompiler.MarkSemicolon();
+
                     return $"new{output}";
                 }
             }
@@ -325,19 +415,19 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Version = stream.ReadInt32();
-                    Decompiler.AlignSize(4);
+                    Script.AlignSize(sizeof(int));
                     Line = stream.ReadInt32();
-                    Decompiler.AlignSize(4);
+                    Script.AlignSize(sizeof(int));
                     TextPos = stream.ReadInt32();
-                    Decompiler.AlignSize(4);
+                    Script.AlignSize(sizeof(int));
 #if UNREAL2
                     // FIXME: Is this a legacy feature or U2 specific?
                     // Also in RSRS, and GBX engine
-                    if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP || stream.Package.Build == BuildGeneration.Lead)
+                    if (stream.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP ||
+                        stream.Build == BuildGeneration.Lead)
                     {
                         OpCodeText = stream.ReadAnsiNullString();
-                        Decompiler.AlignSize(OpCodeText.Length + 1);
-                        Decompiler._Container.Record(nameof(OpCodeText), OpCodeText);
+                        Script.AlignSize(OpCodeText.Length + 1);
                         if (!Enum.TryParse(OpCodeText, true, out OpCode))
                         {
                             Debug.WriteLine($"Couldn't parse OpCode '{OpCodeText}'");
@@ -345,12 +435,36 @@ namespace UELib.Core
 
                         return;
                     }
-#endif                    
+#endif
                     // At least since UT2004+
                     OpCode = (DebugInfo)stream.ReadByte();
-                    Decompiler.AlignSize(1);
-                    Decompiler._Container.Record(nameof(OpCode), OpCode);
+                    Script.AlignSize(sizeof(byte));
                 }
+
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.Write(Version);
+                    Script.AlignSize(sizeof(int));
+                    stream.Write(Line);
+                    Script.AlignSize(sizeof(int));
+                    stream.Write(TextPos);
+                    Script.AlignSize(sizeof(int));
+#if UNREAL2
+                    // FIXME: Is this a legacy feature or U2 specific?
+                    // Also in RSRS, and GBX engine
+                    if (stream.Build == UnrealPackage.GameBuild.BuildName.Unreal2XMP ||
+                        stream.Build == BuildGeneration.Lead)
+                    {
+                        stream.WriteAnsiNullString(OpCodeText);
+                        Script.AlignSize(OpCodeText.Length + 1);
+
+                        return;
+                    }
+#endif
+                    stream.Write((byte)OpCode);
+                    Script.AlignSize(sizeof(byte));
+                }
+
 #if DEBUG_HIDDENTOKENS
                 public override string Decompile()
                 {
@@ -364,17 +478,28 @@ namespace UELib.Core
             public class LineNumberToken : Token
             {
                 public ushort Line;
+                public Token Expression;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Line = stream.ReadUInt16();
-                    Decompiler.AlignSize(sizeof(ushort));
-                    DeserializeNext();
+                    Script.AlignSize(sizeof(ushort));
+
+                    Expression = Script.DeserializeNextToken(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileNext();
+                    stream.Write(Line);
+                    Script.AlignSize(sizeof(ushort));
+
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileNext(decompiler);
                 }
             }
         }

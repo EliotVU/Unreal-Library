@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
@@ -12,161 +12,316 @@ namespace UELib.Core
             [ExprToken(ExprToken.ArrayElement)]
             public class ArrayElementToken : Token
             {
+                /// <summary>
+                /// The index argument expression for the array expression.
+                ///
+                /// e.g. `Array[0]`
+                /// </summary>
+                public Token IndexArgument;
+
+                /// <summary>
+                /// The array expression for the index argument.
+                ///
+                /// e.g. `Expression[0]`
+                /// </summary>
+                public Token Expression;
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // Key
-                    DeserializeNext();
+                    IndexArgument = Script.DeserializeNextToken(stream);
 
                     // Array
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    Decompiler._CanAddSemicolon = true;
-                    string keyExpression = DecompileNext();
-                    string primaryExpression = DecompileNext();
-                    return $"{primaryExpression}[{keyExpression}]";
+                    Contract.Assert(IndexArgument != null);
+                    Script.SerializeToken(stream, IndexArgument);
+
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    decompiler.MarkSemicolon();
+
+                    string indexExpression = DecompileNext(decompiler);
+                    string primaryExpression = DecompileNext(decompiler);
+
+                    return $"{primaryExpression}[{indexExpression}]";
                 }
             }
 
             [ExprToken(ExprToken.DynArrayElement)]
-            public class DynamicArrayElementToken : ArrayElementToken
-            {
-            }
+            public class DynamicArrayElementToken : ArrayElementToken;
 
             [ExprToken(ExprToken.DynArrayLength)]
             public class DynamicArrayLengthToken : Token
             {
+                public Token Expression;
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // Array
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    Decompiler._CanAddSemicolon = true;
-                    return $"{DecompileNext()}.Length";
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    decompiler.MarkSemicolon();
+
+                    return $"{DecompileNext(decompiler)}.Length";
                 }
             }
 
             public abstract class DynamicArrayMethodToken : Token
             {
-                protected void DeserializeOneParamMethodWithSkip(IUnrealStream stream, uint skipSizeVersion = (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayTokenIntrinsics)
+                public Token Expression;
+
+                public ushort SkipSize { get; protected set; }
+
+                public Token? Argument1;
+                public Token? Argument2;
+
+                /// <summary>
+                /// Null if not deserialized.
+                /// </summary>
+                public Token? EndToken;
+
+                protected void DeserializeOneParamMethodWithSkip(IUnrealStream stream,
+                                                                 uint skipSizeVersion = (uint)PackageObjectLegacyVersion
+                                                                     .SkipSizeAddedToArrayTokenIntrinsics)
                 {
                     // Array
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
 
                     if (stream.Version >= skipSizeVersion)
                     {
-                        // Size
-                        stream.Skip(2);
-                        Decompiler.AlignSize(sizeof(ushort));
+                        SkipSize = stream.ReadUInt16();
+                        Script.AlignSize(sizeof(ushort));
                     }
 
                     // Param 1
-                    DeserializeNext();
+                    Argument1 = Script.DeserializeNextToken(stream);
 
                     if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
                     {
                         // EndParms
-                        DeserializeNext();
+                        EndToken = Script.DeserializeNextToken(stream);
                     }
-                    
-                    Decompiler.DeserializeDebugToken();
+
+                    Script.DeserializeNextDebugToken(stream);
                 }
-                
+
+                protected void SerializeOneParamMethodWithSkip(IUnrealStream stream,
+                                                               uint skipSizeVersion = (uint)PackageObjectLegacyVersion
+                                                                   .SkipSizeAddedToArrayTokenIntrinsics)
+                {
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+
+                    long skipSizePeek = stream.Position;
+                    if (stream.Version >= skipSizeVersion)
+                    {
+                        stream.Write((ushort)0);
+                        Script.AlignSize(sizeof(ushort));
+                    }
+
+                    int memorySize = Script.MemorySize;
+                    Contract.Assert(Argument1 != null);
+                    Script.SerializeToken(stream, Argument1);
+
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    {
+                        // TODO: Should create the end token if it is null (version migration) 
+                        Contract.Assert(EndToken != null);
+                        Script.SerializeToken(stream, EndToken);
+                    }
+
+                    if (stream.Version >= skipSizeVersion)
+                    {
+                        SkipSize = (ushort)(Script.MemorySize - memorySize);
+                        using (stream.Peek(skipSizePeek))
+                        {
+                            stream.Write(SkipSize);
+                        }
+                    }
+                }
+
                 protected void DeserializeOneParamMethodNoSkip(IUnrealStream stream)
                 {
                     // Array
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
 
                     // Param 1
-                    DeserializeNext();
+                    Argument1 = Script.DeserializeNextToken(stream);
 
                     if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
                     {
                         // EndParms
-                        DeserializeNext();
+                        EndToken = Script.DeserializeNextToken(stream);
                     }
 
-                    Decompiler.DeserializeDebugToken();
+                    Script.DeserializeNextDebugToken(stream);
                 }
-                
+
+                protected void SerializeOneParamMethodNoSkip(IUnrealStream stream)
+                {
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+
+                    Contract.Assert(Argument1 != null);
+                    Script.SerializeToken(stream, Argument1);
+
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    {
+                        // TODO: Should create the end token if it is null (version migration) 
+                        Contract.Assert(EndToken != null);
+                        Script.SerializeToken(stream, EndToken);
+                    }
+                }
+
                 protected void DeserializeTwoParamMethodNoSkip(IUnrealStream stream)
                 {
                     // Array
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
 
                     // Param 1
-                    DeserializeNext();
+                    Argument1 = Script.DeserializeNextToken(stream);
 
                     // Param 2
-                    DeserializeNext();
+                    Argument2 = Script.DeserializeNextToken(stream);
 
                     if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
                     {
                         // EndParms
-                        DeserializeNext();
+                        EndToken = Script.DeserializeNextToken(stream);
                     }
 
-                    Decompiler.DeserializeDebugToken();
+                    Script.DeserializeNextDebugToken(stream);
                 }
-                
-                protected void DeserializeTwoParamMethodWithSkip(IUnrealStream stream, uint skipSizeVersion = (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayTokenIntrinsics)
+
+                protected void SerializeTwoParamMethodNoSkip(IUnrealStream stream)
+                {
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+
+                    Contract.Assert(Argument1 != null);
+                    Script.SerializeToken(stream, Argument1);
+
+                    Contract.Assert(Argument2 != null);
+                    Script.SerializeToken(stream, Argument2);
+
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    {
+                        // TODO: Should create the end token if it is null (version migration) 
+                        Contract.Assert(EndToken != null);
+                        Script.SerializeToken(stream, EndToken);
+                    }
+                }
+
+                protected void DeserializeTwoParamMethodWithSkip(IUnrealStream stream,
+                                                                 uint skipSizeVersion = (uint)PackageObjectLegacyVersion
+                                                                     .SkipSizeAddedToArrayTokenIntrinsics)
                 {
                     // Array
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
 
                     if (stream.Version >= skipSizeVersion)
                     {
-                        // Size
-                        stream.Skip(2);
-                        Decompiler.AlignSize(sizeof(ushort));
+                        SkipSize = stream.ReadUInt16();
+                        Script.AlignSize(sizeof(ushort));
                     }
 
                     // Param 1
-                    DeserializeNext();
+                    Argument1 = Script.DeserializeNextToken(stream);
 
                     // Param 2
-                    DeserializeNext();
+                    Argument2 = Script.DeserializeNextToken(stream);
 
                     if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
                     {
                         // EndParms
-                        DeserializeNext();
+                        EndToken = Script.DeserializeNextToken(stream);
                     }
-                    
-                    Decompiler.DeserializeDebugToken();
+
+                    Script.DeserializeNextDebugToken(stream);
                 }
 
-                protected string DecompileOneParamMethod(string functionName)
+                protected void SerializeTwoParamMethodWithSkip(IUnrealStream stream,
+                                                               uint skipSizeVersion = (uint)PackageObjectLegacyVersion
+                                                                   .SkipSizeAddedToArrayTokenIntrinsics)
                 {
-                    Decompiler._CanAddSemicolon = true;
-                    string context = DecompileNext();
-                    string param1 = DecompileNext();
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
 
-                    if (Package.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    long skipSizePeek = stream.Position;
+                    if (stream.Version >= skipSizeVersion)
+                    {
+                        stream.Write((ushort)0);
+                        Script.AlignSize(sizeof(ushort));
+                    }
+
+                    int memorySize = Script.MemorySize;
+                    Contract.Assert(Argument1 != null);
+                    Script.SerializeToken(stream, Argument1);
+
+                    Contract.Assert(Argument2 != null);
+                    Script.SerializeToken(stream, Argument2);
+
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
                     {
                         // EndParms
-                        AssertSkipCurrentToken<EndFunctionParmsToken>();
+                        Script.SerializeToken(stream, EndToken);
+                    }
+
+                    if (stream.Version >= skipSizeVersion)
+                    {
+                        SkipSize = (ushort)(Script.MemorySize - memorySize);
+                        using (stream.Peek(skipSizePeek))
+                        {
+                            stream.Write(SkipSize);
+                        }
+                    }
+                }
+
+                protected string DecompileOneParamMethod(string functionName, UByteCodeDecompiler decompiler)
+                {
+                    decompiler.MarkSemicolon();
+
+                    string context = DecompileNext(decompiler);
+                    string param1 = DecompileNext(decompiler);
+
+                    if (EndToken != null)
+                    {
+                        // EndParms
+                        AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
                     }
 
                     return $"{context}.{functionName}({param1})";
                 }
 
-                protected string DecompileTwoParamMethod(string functionName)
+                protected string DecompileTwoParamMethod(string functionName, UByteCodeDecompiler decompiler)
                 {
-                    Decompiler._CanAddSemicolon = true;
-                    string context = DecompileNext();
-                    string param1 = DecompileNext();
-                    string param2 = DecompileNext();
+                    decompiler.MarkSemicolon();
 
-                    if (Package.Version >= (uint)PackageObjectLegacyVersion.EndTokenAppendedToArrayTokenIntrinsics)
+                    string context = DecompileNext(decompiler);
+                    string param1 = DecompileNext(decompiler);
+                    string param2 = DecompileNext(decompiler);
+
+                    if (EndToken != null)
                     {
                         // EndParms
-                        AssertSkipCurrentToken<EndFunctionParmsToken>();
+                        AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
                     }
 
                     return $"{context}.{functionName}({param1}, {param2})";
@@ -178,12 +333,18 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeOneParamMethodWithSkip(stream, (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayFindTokenIntrinsics);
+                    DeserializeOneParamMethodWithSkip(
+                        stream, (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayFindTokenIntrinsics);
                 }
-                
-                public override string Decompile()
+
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileOneParamMethod("Find");
+                    SerializeOneParamMethodWithSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileOneParamMethod("Find", decompiler);
                 }
             }
 
@@ -192,12 +353,18 @@ namespace UELib.Core
             {
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    DeserializeOneParamMethodWithSkip(stream, (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayFindTokenIntrinsics);
+                    DeserializeOneParamMethodWithSkip(
+                        stream, (uint)PackageObjectLegacyVersion.SkipSizeAddedToArrayFindTokenIntrinsics);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileTwoParamMethod("Find");
+                    SerializeOneParamMethodWithSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileTwoParamMethod("Find", decompiler);
                 }
             }
 
@@ -209,38 +376,55 @@ namespace UELib.Core
                     DeserializeOneParamMethodWithSkip(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileOneParamMethod("Sort");
+                    SerializeOneParamMethodWithSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileOneParamMethod("Sort", decompiler);
                 }
             }
 
             [ExprToken(ExprToken.DynArrayAdd)]
             public class DynamicArrayAddToken : DynamicArrayMethodToken
             {
-                // Ugly copy, but this is the only array token that always has EndParms regardless of engine version.
+                // Ugly copy, but this is the only array token that always has an EndParms regardless of engine version.
                 public override void Deserialize(IUnrealStream stream)
                 {
                     // Array
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
 
                     // Param 1
-                    DeserializeNext();
+                    Argument1 = Script.DeserializeNextToken(stream);
 
                     // EndParms
-                    DeserializeNext();
-                    
-                    Decompiler.DeserializeDebugToken();
+                    EndToken = Script.DeserializeNextToken(stream);
+
+                    Script.DeserializeNextDebugToken(stream);
                 }
 
-                // Ugly copy, but this is the only array token that always has EndParms regardless of engine version.
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    Decompiler._CanAddSemicolon = true;
-                    string context = DecompileNext();
-                    string param1 = DecompileNext();
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
 
-                    AssertSkipCurrentToken<EndFunctionParmsToken>();
+                    Contract.Assert(Argument1 != null);
+                    Script.SerializeToken(stream, Argument1);
+
+                    Contract.Assert(EndToken != null);
+                    Script.SerializeToken(stream, EndToken);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    decompiler.MarkSemicolon();
+
+                    string context = DecompileNext(decompiler);
+                    string param1 = DecompileNext(decompiler);
+
+                    AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
 
                     return $"{context}.Add({param1})";
                 }
@@ -254,9 +438,14 @@ namespace UELib.Core
                     DeserializeOneParamMethodWithSkip(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileOneParamMethod("AddItem");
+                    SerializeOneParamMethodWithSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileOneParamMethod("AddItem", decompiler);
                 }
             }
 
@@ -268,9 +457,14 @@ namespace UELib.Core
                     DeserializeTwoParamMethodNoSkip(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileTwoParamMethod("Insert");
+                    SerializeTwoParamMethodNoSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileTwoParamMethod("Insert", decompiler);
                 }
             }
 
@@ -282,9 +476,14 @@ namespace UELib.Core
                     DeserializeTwoParamMethodWithSkip(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileTwoParamMethod("InsertItem");
+                    SerializeTwoParamMethodWithSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileTwoParamMethod("InsertItem", decompiler);
                 }
             }
 
@@ -296,9 +495,14 @@ namespace UELib.Core
                     DeserializeTwoParamMethodNoSkip(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileTwoParamMethod("Remove");
+                    SerializeTwoParamMethodNoSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileTwoParamMethod("Remove", decompiler);
                 }
             }
 
@@ -310,9 +514,14 @@ namespace UELib.Core
                     DeserializeOneParamMethodWithSkip(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return DecompileOneParamMethod("RemoveItem");
+                    SerializeOneParamMethodWithSkip(stream);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileOneParamMethod("RemoveItem", decompiler);
                 }
             }
         }

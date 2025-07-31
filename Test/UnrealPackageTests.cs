@@ -11,12 +11,12 @@ namespace Eliot.UELib.Test
     public class UnrealPackageTests
     {
         public class MyUModel : UModel;
-        
+
         [TestMethod]
         public void TestClassTypeOverride()
         {
             using var package1 = new UnrealPackage();
-            
+
             Assert.IsTrue(package1.GetClassType("Model") == typeof(UnknownObject));
             package1.AddClassType("Model", typeof(MyUModel));
             Assert.IsTrue(package1.GetClassType("Model") == typeof(MyUModel));
@@ -32,7 +32,7 @@ namespace Eliot.UELib.Test
             package2.AddClassType("Model", typeof(MyUModel));
             Assert.IsTrue(package2.GetClassType("Model") == typeof(MyUModel));
         }
-        
+
         internal static void AssertTestClass(UnrealPackage linker)
         {
             var testClass = linker.FindObject<UClass>("Test");
@@ -60,27 +60,23 @@ namespace Eliot.UELib.Test
 
         internal static void AssertScriptDecompile(UStruct scriptInstance)
         {
-            if (scriptInstance.ByteCodeManager != null)
+            try
             {
-                try
-                {
-                    scriptInstance.ByteCodeManager.Decompile();
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail($"Token decompilation exception in script instance {scriptInstance.GetReferencePath()}: {ex.Message}");
-                }
+                var decompiler = new UStruct.UByteCodeDecompiler(scriptInstance);
+                decompiler.Decompile();
             }
-            
+            catch (Exception ex)
+            {
+                Assert.Fail(
+                    $"Token decompilation exception in script instance {scriptInstance.GetReferencePath()}: {ex.Message}");
+            }
+
             foreach (var subScriptInstance in scriptInstance
                          .EnumerateFields()
                          .OfType<UStruct>())
             {
-                if (subScriptInstance.ByteCodeManager == null) continue;
-                
                 try
                 {
-                    subScriptInstance.ByteCodeManager.Decompile();
                     // ... for states
                     AssertScriptDecompile(subScriptInstance);
                 }
@@ -98,7 +94,6 @@ namespace Eliot.UELib.Test
 
             var defaults = testClass.Default ?? testClass;
             defaults.Load();
-            Assert.IsNotNull(defaults.Properties);
 
             return defaults;
         }
@@ -120,7 +115,7 @@ namespace Eliot.UELib.Test
             Assert.IsTrue(textures.Any());
             textures.ForEach(AssertObjectDeserialization);
         }
-        
+
         internal static void AssertExports(IEnumerable<UObject> objects)
         {
             var compatibleExports = objects.Where(exp => exp is not UnknownObject)
@@ -128,7 +123,7 @@ namespace Eliot.UELib.Test
             Assert.IsTrue(compatibleExports.Any());
             compatibleExports.ForEach(AssertObjectDeserialization);
         }
-        
+
         internal static void AssertObjectDeserialization(UObject obj)
         {
             if (obj.DeserializationState == 0)
@@ -150,11 +145,11 @@ namespace Eliot.UELib.Test
             Assert.AreEqual(tokenType, token.GetType());
         }
 
-        internal static void AssertTokens(UStruct.UByteCodeDecompiler script, params Type[] tokenTypesSequence)
+        internal static void AssertTokens(UStruct.UByteCodeDecompiler decompiler, params Type[] tokenTypesSequence)
         {
             foreach (var tokenType in tokenTypesSequence)
             {
-                AssertTokenType(script.NextToken, tokenType);
+                AssertTokenType(decompiler.NextToken, tokenType);
             }
         }
     }

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.IO;
 using UELib.ObjectModel.Annotations;
@@ -15,11 +14,13 @@ namespace UELib.Core
             [ExprToken(ExprToken.PrimitiveCast)]
             public class PrimitiveCastToken : Token
             {
-                public CastToken CastOpCode = CastToken.None;
+                private byte _CastOpCode;
 
-                [SuppressMessage("ReSharper", "StringLiteralTypo")]
+                public CastToken CastOpCode { get; protected set; } = CastToken.None;
+                public Token Expression;
+
                 private static readonly Dictionary<CastToken, string> CastTypeNameMap =
-                    new Dictionary<CastToken, string>
+                    new()
                     {
                         //{ CastToken.InterfaceToObject, "" },
                         { CastToken.InterfaceToString, "string" },
@@ -61,19 +62,28 @@ namespace UELib.Core
                         { CastToken.StringToName, "name" }
                     };
 
-                public void GetFriendlyCastName(out string castTypeName)
+                public void GetFriendlyCastName(out string? castTypeName)
                 {
                     CastTypeNameMap.TryGetValue(CastOpCode, out castTypeName);
                 }
 
                 protected virtual void DeserializeCastToken(IUnrealStream stream)
                 {
-                    CastOpCode = (CastToken)stream.ReadByte();
-                    Decompiler.AlignSize(sizeof(byte));
+                    _CastOpCode = stream.ReadByte();
+                    Script.AlignSize(sizeof(byte));
+
+                    RemapCastToken(stream);
+                }
+
+                protected virtual void SerializeCastToken(IUnrealStream stream)
+                {
+                    stream.Write(_CastOpCode);
+                    Script.AlignSize(sizeof(byte));
                 }
 
                 private void RemapCastToken(IUnrealArchive stream)
                 {
+                    CastOpCode = (CastToken)_CastOpCode;
                     if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedInterfacesFeature) return;
 
                     // TODO: Could there be more?
@@ -88,11 +98,18 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     DeserializeCastToken(stream);
-                    RemapCastToken(stream);
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    SerializeCastToken(stream);
+
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     // Suppress implicit casts
                     switch (CastOpCode)
@@ -101,15 +118,15 @@ namespace UELib.Core
                         //case CastToken.ByteToInt:
                         case CastToken.InterfaceToObject:
                         case CastToken.ObjectToInterface:
-                            return DecompileNext();
+                            return DecompileNext(decompiler);
                     }
 
-                    GetFriendlyCastName(out string castTypeName);
-                    if (castTypeName == default)
+                    GetFriendlyCastName(out string? castTypeName);
+                    if (castTypeName == null)
                     {
 #if GIGANTIC
                         // HACK: Should implement a cast tokens table in the engine branch instead.
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Gigantic)
+                        if (decompiler.Package.Build == UnrealPackage.GameBuild.BuildName.Gigantic)
                         {
                             switch ((uint)CastOpCode)
                             {
@@ -123,7 +140,7 @@ namespace UELib.Core
                         }
 #endif
 #if MASS_EFFECT
-                        if (Package.Build == BuildGeneration.SFX)
+                        if (decompiler.Package.Build == BuildGeneration.SFX)
                         {
                             switch ((uint)CastOpCode)
                             {
@@ -146,8 +163,8 @@ namespace UELib.Core
 #endif
                     }
 
-                    Debug.Assert(castTypeName != default, $"Detected an unresolved token '0x{CastOpCode:X}'.");
-                    return $"{castTypeName}({DecompileNext()})";
+                    Services.LibServices.LogService.SilentAssert(castTypeName != null, $"Detected an unresolved token '0x{CastOpCode:X}'.");
+                    return $"{castTypeName}({DecompileNext(decompiler)})";
                 }
             }
 
@@ -158,40 +175,53 @@ namespace UELib.Core
                 {
                     CastOpCode = (CastToken)OpCode;
                 }
+
+                // No serialization needed for inline casts.
+                protected override void SerializeCastToken(IUnrealStream stream)
+                {
+                }
             }
 
             [ExprToken(ExprToken.DynamicCast)]
             public class DynamicCastToken : Token
             {
                 public UClass CastClass;
+                public Token Expression;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
                     CastClass = stream.ReadObject<UClass>();
-                    Decompiler.AlignObjectSize();
+                    Script.AlignObjectSize();
 
-                    DeserializeNext();
+                    Expression = Script.DeserializeNextToken(stream);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return $"{CastClass.Name}({DecompileNext()})";
+                    stream.WriteObject(CastClass);
+                    Script.AlignObjectSize();
+
+                    Contract.Assert(Expression != null);
+                    Script.SerializeToken(stream, Expression);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return $"{CastClass.Name}({DecompileNext(decompiler)})";
                 }
             }
 
             [ExprToken(ExprToken.MetaCast)]
             public class MetaClassCastToken : DynamicCastToken
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    return $"Class<{CastClass.Name}>({DecompileNext()})";
+                    return $"Class<{CastClass.Name}>({DecompileNext(decompiler)})";
                 }
             }
 
             [ExprToken(ExprToken.InterfaceCast)]
-            public class InterfaceCastToken : DynamicCastToken
-            {
-            }
+            public class InterfaceCastToken : DynamicCastToken;
         }
     }
 }

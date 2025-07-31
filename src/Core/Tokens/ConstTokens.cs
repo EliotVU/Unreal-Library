@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 using UELib.UnrealScript;
@@ -13,7 +12,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.IntZero)]
             public class IntZeroToken : Token
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return "0";
                 }
@@ -22,7 +21,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.IntOne)]
             public class IntOneToken : Token
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return "1";
                 }
@@ -31,7 +30,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.True)]
             public class TrueToken : Token
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return "true";
                 }
@@ -40,7 +39,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.False)]
             public class FalseToken : Token
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return "false";
                 }
@@ -49,7 +48,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.NoObject)]
             public class NoneToken : Token
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return "none";
                 }
@@ -58,7 +57,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.Self)]
             public class SelfToken : Token
             {
-                public override string Decompile()
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return "self";
                 }
@@ -72,10 +71,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadInt32();
-                    Decompiler.AlignSize(sizeof(int));
+                    Script.AlignSize(sizeof(int));
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.Write(Value);
+                    Script.AlignSize(sizeof(int));
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return PropertyDisplay.FormatLiteral(Value);
                 }
@@ -116,23 +121,32 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadByte();
-                    Decompiler.AlignSize(sizeof(byte));
+                    Script.AlignSize(sizeof(byte));
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    if (FieldToken.LastField != null)
-                        switch (FieldToken.LastField.Outer.Name + FieldToken.LastField.Name)
+                    stream.Write(Value);
+                    Script.AlignSize(sizeof(byte));
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    if (decompiler._ObjectHint != null)
+                    {
+                        switch (decompiler._ObjectHint.Outer.Name + decompiler._ObjectHint.Name)
                         {
                             case "ActorRemoteRole":
                             case "ActorRole":
-                                return Enum.GetName(Package.Version >= 220 ? typeof(ENetRole3) : typeof(ENetRole),
+                                return Enum.GetName(
+                                    decompiler.Package.Version >= 220 ? typeof(ENetRole3) : typeof(ENetRole),
                                     Value);
 
                             case "LevelInfoNetMode":
                             case "WorldInfoNetMode":
                                 return Enum.GetName(typeof(ENetMode), Value);
                         }
+                    }
 
                     return PropertyDisplay.FormatLiteral(Value);
                 }
@@ -146,10 +160,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadByte();
-                    Decompiler.AlignSize(sizeof(byte));
+                    Script.AlignSize(sizeof(byte));
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.Write(Value);
+                    Script.AlignSize(sizeof(byte));
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return PropertyDisplay.FormatLiteral(Value);
                 }
@@ -163,10 +183,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadFloat();
-                    Decompiler.AlignSize(sizeof(float));
+                    Script.AlignSize(sizeof(float));
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.Write(Value);
+                    Script.AlignSize(sizeof(float));
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return PropertyDisplay.FormatLiteral(Value);
                 }
@@ -174,42 +200,51 @@ namespace UELib.Core
 
             // Not supported, but has existed here and there
             [ExprToken(ExprToken.StructConst)]
-            public class StructConstToken : Token
-            {
-
-            }
+            public class StructConstToken : Token;
 
             [ExprToken(ExprToken.ObjectConst)]
             public class ObjectConstToken : Token
             {
-                public UObject ObjectRef;
+                public UObject Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    ObjectRef = stream.ReadObject();
-                    Decompiler.AlignObjectSize();
+                    Value = stream.ReadObject();
+                    Script.AlignObjectSize();
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return PropertyDisplay.FormatLiteral(ObjectRef);
+                    stream.Write(Value);
+                    Script.AlignObjectSize();
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
             [ExprToken(ExprToken.NameConst)]
             public class NameConstToken : Token
             {
-                public UName Name;
+                public UName Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
-                    Name = stream.ReadName();
-                    Decompiler.AlignNameSize();
+                    Value = stream.ReadName();
+                    Script.AlignNameSize();
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
                 {
-                    return PropertyDisplay.FormatLiteral(Name);
+                    stream.Write(Value);
+                    Script.AlignNameSize();
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return PropertyDisplay.FormatLiteral(Value);
                 }
             }
 
@@ -221,10 +256,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadAnsiNullString();
-                    Decompiler.AlignSize(Value.Length + 1); // inc null char
+                    Script.AlignSize(Value.Length + 1); // inc null char
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.WriteAnsiNullString(Value);
+                    Script.AlignSize(Value.Length + 1); // inc null char
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return PropertyDisplay.FormatLiteral(Value);
                 }
@@ -238,10 +279,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadUnicodeNullString();
-                    Decompiler.AlignSize(Value.Length * 2 + 2); // inc null char
+                    Script.AlignSize(Value.Length * 2 + 2); // inc null char
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.WriteUnicodeNullString(Value);
+                    Script.AlignSize(Value.Length * 2 + 2); // inc null char
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return PropertyDisplay.FormatLiteral(Value);
                 }
@@ -255,10 +302,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     stream.ReadStruct(out Rotation);
-                    Decompiler.AlignSize(12);
+                    Script.AlignSize(12);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.WriteStruct(Rotation);
+                    Script.AlignSize(12);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return $"rot({PropertyDisplay.FormatLiteral(Rotation.Pitch)}, " +
                            $"{PropertyDisplay.FormatLiteral(Rotation.Yaw)}, " +
@@ -274,10 +327,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     stream.ReadStruct(out Vector);
-                    Decompiler.AlignSize(12);
+                    Script.AlignSize(12);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.WriteStruct(Vector);
+                    Script.AlignSize(12);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return $"vect({PropertyDisplay.FormatLiteral(Vector.X)}, " +
                            $"{PropertyDisplay.FormatLiteral(Vector.Y)}, " +
@@ -293,10 +352,16 @@ namespace UELib.Core
                 public override void Deserialize(IUnrealStream stream)
                 {
                     stream.ReadStruct(out Range);
-                    Decompiler.AlignSize(8);
+                    Script.AlignSize(8);
                 }
 
-                public override string Decompile()
+                public override void Serialize(IUnrealStream stream)
+                {
+                    stream.WriteStruct(Range);
+                    Script.AlignSize(8);
+                }
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return
                         $"rng({PropertyDisplay.FormatLiteral(Range.A)}, " +

@@ -10,10 +10,16 @@ namespace UELib.Branch.UE2.DNF.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             X = stream.ReadFloat();
-            Decompiler.AlignSize(sizeof(float));
+            Script.AlignSize(sizeof(float));
+        }
+        
+        public override void Serialize(IUnrealStream stream)
+        {
+            stream.Write(X);
+            Script.AlignSize(sizeof(float));
         }
 
-        public override string Decompile()
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
             return $"vectx({PropertyDisplay.FormatLiteral(X)})";
         }

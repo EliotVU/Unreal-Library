@@ -7,6 +7,8 @@ using UELib.Branch;
 using UELib.Branch.UE2.Eon;
 using UELib.Core.Tokens;
 using UELib.Flags;
+using UELib.Services;
+using UELib.Types;
 
 namespace UELib.Core
 {
@@ -17,6 +19,24 @@ namespace UELib.Core
     public partial class UStruct : UField
     {
         [Obsolete] public const int VInterfaceClass = 222;
+
+        /// <summary>
+        ///     The deserialized offset to the script code in storage relative to the offset of the object.
+        /// </summary>
+        public long ScriptOffset { get; private set; }
+
+        /// <summary>
+        ///     The deserialized size of the script in storage.
+        /// </summary>
+        public int ScriptSize { get; private set; }
+
+        [Obsolete("Construct a new one as needed.", true)]
+        public UByteCodeDecompiler? ByteCodeManager => null;
+
+        /// <summary>
+        ///     The script for this struct (replication block, function script or state block), if any.
+        /// </summary>
+        public UByteCodeScript? Script { get; set; }
 
         #region Serialized Members
 #pragma warning disable CA1051
@@ -44,7 +64,15 @@ namespace UELib.Core
         [Obsolete("Use StorageScriptSize instead.")]
         protected int DataScriptSize => StorageScriptSize;
 
+        /// <summary>
+        ///     The serialized size of the byte-code script in storage (on disk)
+        /// </summary>
         private int StorageScriptSize { get; set; }
+
+        /// <summary>
+        ///     The serialized size of the byte-code script in memory.
+        ///     (each index is aligned to 4-bytes and each object to 4 or 8 bytes depending on platform)
+        /// </summary>
         private int MemoryScriptSize { get; set; }
 
 #pragma warning restore CA1051
@@ -345,19 +373,29 @@ namespace UELib.Core
             // Code Statements
             if (MemoryScriptSize > 0)
             {
-                ByteCodeManager = new UByteCodeDecompiler(this);
+                Script = new UByteCodeScript(this, MemoryScriptSize, StorageScriptSize);
+
                 if (StorageScriptSize > 0)
                 {
                     _Buffer.Skip(StorageScriptSize);
                 }
                 else
                 {
-                    ByteCodeManager.Deserialize();
+                    Script.Deserialize(_Buffer);
                 }
 
                 // Fix the recording position
                 _Buffer.ConformRecordPosition();
                 ScriptSize = (int)(_Buffer.Position - ScriptOffset);
+
+                if (StorageScriptSize > 0)
+                {
+                    LibServices.LogService.SilentAssert(ScriptSize == StorageScriptSize, "StorageScriptSize mismatch");
+                }
+                else
+                {
+                    StorageScriptSize = ScriptSize;
+                }
             }
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)

@@ -54,7 +54,7 @@
         /// assert(c);
         /// </summary>
         Assert,
-        
+
         /// <summary>
         /// case/default: expr
         /// </summary>
@@ -74,7 +74,7 @@
         /// goto 'label' or name expr;
         /// </summary>
         GotoLabel,
-        
+
         ValidateObject,
         EatString,
         EatReturnValue,
@@ -98,7 +98,7 @@
         /// expr.expr i.e. Class'Package.Group.Object'.default/static/const.Field
         /// </summary>
         ClassContext,
-        
+
         /// <summary>
         /// <Class>(expr)
         /// </summary>
@@ -108,7 +108,7 @@
         /// Contains the size of elements in the function's stack.
         /// </summary>
         BeginFunction,
-        
+
         /// <summary>
         /// expr = expr;
         /// </summary>
@@ -248,17 +248,17 @@
         /// Class(Expr)
         /// </summary>
         DynamicCast,
-        
+
         /// <summary>
         /// foreach expr
         /// </summary>
         Iterator,
-        
+
         /// <summary>
         /// break;
         /// </summary>
         IteratorPop,
-        
+
         /// <summary>
         /// continue;
         /// </summary>
@@ -268,7 +268,7 @@
         /// A == B
         /// </summary>
         StructCmpEq,
-        
+
         /// <summary>
         /// A != B
         /// </summary>
@@ -317,7 +317,7 @@
         /// expr == expr
         /// </summary>
         DelegateCmpEq,
-        
+
         /// <summary>
         /// expr != expr
         /// </summary>
@@ -342,7 +342,7 @@
         /// DynamicArray.Insert(...)
         /// </summary>
         DynArrayInsert,
-        
+
         /// <summary>
         /// DynamicArray.Remove(...)
         /// </summary>
@@ -431,7 +431,7 @@
         /// DynamicArray.Add(expr)
         /// </summary>
         DynArrayAdd,
-        
+
         /// <summary>
         /// DynamicArray.AddItem(expr)
         /// </summary>
@@ -461,7 +461,7 @@
         /// DynamicArray.Empty(expr?)
         /// </summary>
         DynArrayEmpty,
-        
+
         /// <summary>
         /// JumpIfNot statement
         /// 
@@ -486,7 +486,7 @@
     public enum CastToken : byte
     {
         None                    = 0x00,
-        
+
         #region UE3
         InterfaceToObject       = 0x36,
         InterfaceToString       = 0x37,
@@ -549,6 +549,7 @@
         NewStack            = 0x20,
         NewStackLatent      = 0x21,
         NewStackLabel       = 0x22,
+        NewStackState       = 0x23,
         PrevStack           = 0x30,
         PrevStackLatent     = 0x31,
         PrevStackLabel      = 0x32,
@@ -566,9 +567,10 @@
         ContinueLoop        = 0x70,
         ContinueForeach     = 0x71,
         ContinueFor         = 0x72,
-        
-        Unset               = 0xFF,
-        
+        FilterEditorOnly    = 0x73,
+
+        Unset = 0xFF,
+
         // Older names, we need these to help with the conversion of a string to OpCode.
         OperEFP             = EFPOper,
         IterEFP             = EFPIter,

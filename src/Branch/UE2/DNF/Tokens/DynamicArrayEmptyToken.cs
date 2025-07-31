@@ -1,4 +1,5 @@
-﻿using UELib.Core;
+﻿using System.Diagnostics.Contracts;
+using UELib.Core;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -10,13 +11,21 @@ namespace UELib.Branch.UE2.DNF.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             // Array
-            DeserializeNext();
+            Expression = Script.DeserializeNextToken(stream);
         }
 
-        public override string Decompile()
+        public override void Serialize(IUnrealStream stream)
         {
-            Decompiler.MarkSemicolon();
-            return $"{DecompileNext()}.Empty()";
+            // Array
+            Contract.Assert(Expression != null);
+            Script.SerializeToken(stream, Expression);
+        }
+
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
+        {
+            decompiler.MarkSemicolon();
+
+            return $"{DecompileNext(decompiler)}.Empty()";
         }
     }
 }

@@ -10,10 +10,16 @@ namespace UELib.Branch.UE2.DNF.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             Pitch = stream.ReadInt32();
-            Decompiler.AlignSize(sizeof(int));
+            Script.AlignSize(sizeof(int));
         }
 
-        public override string Decompile()
+        public override void Serialize(IUnrealStream stream)
+        {
+            stream.Write(Pitch);
+            Script.AlignSize(sizeof(int));
+        }
+
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
             return $"rotpitch({PropertyDisplay.FormatLiteral(Pitch)})";
         }

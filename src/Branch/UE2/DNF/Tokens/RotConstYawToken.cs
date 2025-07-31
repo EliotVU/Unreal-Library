@@ -10,10 +10,16 @@ namespace UELib.Branch.UE2.DNF.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             Yaw = stream.ReadInt32();
-            Decompiler.AlignSize(sizeof(int));
+            Script.AlignSize(sizeof(int));
+        }
+        
+        public override void Serialize(IUnrealStream stream)
+        {
+            stream.Write(Yaw);
+            Script.AlignSize(sizeof(int));
         }
 
-        public override string Decompile()
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
             return $"rotyaw({PropertyDisplay.FormatLiteral(Yaw)})";
         }

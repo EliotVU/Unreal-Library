@@ -7,11 +7,11 @@ namespace UELib.Branch.UE3.SFX.Tokens
     [ExprToken(ExprToken.VirtualFunction)]
     public class NamedFunctionToken : UStruct.UByteCodeDecompiler.VirtualFunctionToken
     {
-        public override string Decompile()
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
-            Decompiler.MarkSemicolon();
-            
-            return DecompileCall($"'{FunctionName}'");
+            decompiler.MarkSemicolon();
+
+            return DecompileCall($"'{FunctionName}'", decompiler);
         }
     }
 }

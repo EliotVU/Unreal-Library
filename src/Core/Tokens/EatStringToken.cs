@@ -1,4 +1,5 @@
-﻿using UELib.ObjectModel.Annotations;
+﻿using System.Diagnostics.Contracts;
+using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
 namespace UELib.Core
@@ -9,14 +10,22 @@ namespace UELib.Core
     [ExprToken(ExprToken.EatString)]
     public class EatStringToken : UStruct.UByteCodeDecompiler.Token
     {
+        public UStruct.UByteCodeDecompiler.Token Expression;
+
         public override void Deserialize(IUnrealStream stream)
         {
-            DeserializeNext();
+            Expression = Script.DeserializeNextToken(stream);
         }
 
-        public override string Decompile()
+        public override void Serialize(IUnrealStream stream)
         {
-            return DecompileNext();
+            Contract.Assert(Expression != null);
+            Script.SerializeToken(stream, Expression);
+        }
+
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
+        {
+            return DecompileNext(decompiler);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace UELib.Core
 {
     public struct ULabelEntry
     {
-        public string Name;
+        public UName Name;
         public int Position;
     }
 

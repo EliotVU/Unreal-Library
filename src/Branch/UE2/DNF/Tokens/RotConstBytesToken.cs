@@ -8,11 +8,17 @@ namespace UELib.Branch.UE2.DNF.Tokens
         {
             // FIXME: These must have been compressed right?
             Rotation.Pitch = stream.ReadByte(); 
-            Decompiler.AlignSize(sizeof(byte));
             Rotation.Roll = stream.ReadByte(); 
-            Decompiler.AlignSize(sizeof(byte));
             Rotation.Yaw = stream.ReadByte(); 
-            Decompiler.AlignSize(sizeof(byte));
+            Script.AlignSize(sizeof(byte)*3);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            stream.Write((byte)Rotation.Pitch);
+            stream.Write((byte)Rotation.Roll);
+            stream.Write((byte)Rotation.Yaw);
+            Script.AlignSize(sizeof(byte)*3);
         }
     }
 }

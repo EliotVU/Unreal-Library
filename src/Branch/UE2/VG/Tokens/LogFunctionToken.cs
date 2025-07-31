@@ -13,11 +13,17 @@ namespace UELib.Branch.UE2.VG.Tokens
             DeserializeCall(stream);
         }
 
-        public override string Decompile()
+        public override void Serialize(IUnrealStream stream)
         {
-            Decompiler.MarkSemicolon();
+            SerializeCall(stream);
+        }
+
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
+        {
+            decompiler.MarkSemicolon();
+
             // FIXME: Reverse-order of params?
-            return DecompileCall("log");
+            return DecompileCall("log", decompiler);
         }
     }
 }

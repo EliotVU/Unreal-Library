@@ -15,10 +15,16 @@ namespace UELib.Branch.UE3.SFX.Tokens
         public override void Deserialize(IUnrealStream stream)
         {
             stream.Read(out Index);
-            Decompiler.AlignSize(sizeof(int));
+            Script.AlignSize(sizeof(int));
         }
 
-        public override string Decompile()
+        public override void Serialize(IUnrealStream stream)
+        {
+            stream.Write(Index);
+            Script.AlignSize(sizeof(int));
+        }
+
+        public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
         {
             // FIXME: pseudo syntax
             return $"strref[{Index}]";
