@@ -9,34 +9,34 @@ namespace Eliot.UELib.Benchmark;
 [BenchmarkCategory("UnrealStream")]
 public class UnrealStreamBenchmark
 {
-//| Method                 | Mean       | Error     | StdDev     | Median     |
-//|----------------------- |-----------:|----------:|-----------:|-----------:|
-//| ReadInt32              |   5.294 ns | 0.2509 ns |  0.6869 ns |   4.980 ns |
-//| WriteInt32             |   9.282 ns | 0.4072 ns |  1.1619 ns |   9.020 ns |
-//| ReadCompactIndex1      |   6.499 ns | 0.1571 ns |  0.1614 ns |   6.518 ns |
-//| WriteCompactIndex1     |   8.888 ns | 0.3097 ns |  0.9035 ns |   8.658 ns |
-//| ReadCompactIndex2      |   8.677 ns | 0.4152 ns |  1.2177 ns |   8.068 ns |
-//| WriteCompactIndex2     |  12.246 ns | 0.3799 ns |  1.1141 ns |  12.063 ns |
-//| ReadCompactIndex3      |   9.146 ns | 0.2274 ns |  0.6670 ns |   8.961 ns |
-//| WriteCompactIndex3     |  12.351 ns | 0.4338 ns |  1.2790 ns |  12.007 ns |
-//| ReadString             |  33.230 ns | 0.7688 ns |  2.2182 ns |  32.793 ns |
-//| WriteString            |  47.027 ns | 0.6626 ns |  0.5533 ns |  46.892 ns |
-//| ReadUnicodeString      |  56.253 ns | 1.9718 ns |  5.8139 ns |  55.199 ns |
-//| WriteUnicodeString     |  47.195 ns | 0.7643 ns |  0.6776 ns |  46.796 ns |
-//| ReadAnsiNullString     | 135.265 ns | 4.5381 ns | 12.9475 ns | 131.953 ns |
-//| WriteAnsiNullString    |  29.486 ns | 0.7090 ns |  2.0794 ns |  29.138 ns |
-//| ReadUnicodeNullString  | 218.980 ns | 4.3951 ns |  6.9711 ns | 215.966 ns |
-//| WriteUnicodeNullString |  41.222 ns | 0.7677 ns |  0.7884 ns |  40.930 ns |
-//| ReadName               |  15.753 ns | 0.2120 ns |  0.1983 ns |  15.653 ns |
-//| WriteName              |  10.935 ns | 0.5582 ns |  1.6106 ns |  11.028 ns |
-//| ReadColor              |  15.036 ns | 0.3183 ns |  0.7985 ns |  14.835 ns |
-//| WriteColor             |  20.262 ns | 0.4038 ns |  0.4147 ns |  20.274 ns |
-//| ReadColorMarshal       |  13.243 ns | 0.2127 ns |  0.1776 ns |  13.167 ns |
-//| WriteColorMarshal      |  16.553 ns | 0.8599 ns |  2.5354 ns |  15.883 ns |
-//| ReadMatrix             |  64.193 ns | 1.9424 ns |  5.6968 ns |  63.202 ns |
-//| WriteMatrix            | 119.797 ns | 3.9709 ns | 11.5834 ns | 117.552 ns |
-//| ReadMatrixMarshal      |  18.508 ns | 0.3762 ns |  0.9507 ns |  18.262 ns |
-//| WriteMatrixMarshal     |  20.775 ns | 1.1954 ns |  3.5245 ns |  19.036 ns |
+    //| Method                 | Mean       | Error     | StdDev     | Median     |
+    //|----------------------- |-----------:|----------:|-----------:|-----------:|
+    //| ReadInt32              |   5.294 ns | 0.2509 ns |  0.6869 ns |   4.980 ns |
+    //| WriteInt32             |   9.282 ns | 0.4072 ns |  1.1619 ns |   9.020 ns |
+    //| ReadCompactIndex1      |   6.499 ns | 0.1571 ns |  0.1614 ns |   6.518 ns |
+    //| WriteCompactIndex1     |   8.888 ns | 0.3097 ns |  0.9035 ns |   8.658 ns |
+    //| ReadCompactIndex2      |   8.677 ns | 0.4152 ns |  1.2177 ns |   8.068 ns |
+    //| WriteCompactIndex2     |  12.246 ns | 0.3799 ns |  1.1141 ns |  12.063 ns |
+    //| ReadCompactIndex3      |   9.146 ns | 0.2274 ns |  0.6670 ns |   8.961 ns |
+    //| WriteCompactIndex3     |  12.351 ns | 0.4338 ns |  1.2790 ns |  12.007 ns |
+    //| ReadString             |  33.230 ns | 0.7688 ns |  2.2182 ns |  32.793 ns |
+    //| WriteString            |  47.027 ns | 0.6626 ns |  0.5533 ns |  46.892 ns |
+    //| ReadUnicodeString      |  56.253 ns | 1.9718 ns |  5.8139 ns |  55.199 ns |
+    //| WriteUnicodeString     |  47.195 ns | 0.7643 ns |  0.6776 ns |  46.796 ns |
+    //| ReadAnsiNullString     | 135.265 ns | 4.5381 ns | 12.9475 ns | 131.953 ns |
+    //| WriteAnsiNullString    |  29.486 ns | 0.7090 ns |  2.0794 ns |  29.138 ns |
+    //| ReadUnicodeNullString  | 218.980 ns | 4.3951 ns |  6.9711 ns | 215.966 ns |
+    //| WriteUnicodeNullString |  41.222 ns | 0.7677 ns |  0.7884 ns |  40.930 ns |
+    //| ReadName               |  15.753 ns | 0.2120 ns |  0.1983 ns |  15.653 ns |
+    //| WriteName              |  10.935 ns | 0.5582 ns |  1.6106 ns |  11.028 ns |
+    //| ReadColor              |  15.036 ns | 0.3183 ns |  0.7985 ns |  14.835 ns |
+    //| WriteColor             |  20.262 ns | 0.4038 ns |  0.4147 ns |  20.274 ns |
+    //| ReadColorMarshal       |  13.243 ns | 0.2127 ns |  0.1776 ns |  13.167 ns |
+    //| WriteColorMarshal      |  16.553 ns | 0.8599 ns |  2.5354 ns |  15.883 ns |
+    //| ReadMatrix             |  64.193 ns | 1.9424 ns |  5.6968 ns |  63.202 ns |
+    //| WriteMatrix            | 119.797 ns | 3.9709 ns | 11.5834 ns | 117.552 ns |
+    //| ReadMatrixMarshal      |  18.508 ns | 0.3762 ns |  0.9507 ns |  18.262 ns |
+    //| WriteMatrixMarshal     |  20.775 ns | 1.1954 ns |  3.5245 ns |  19.036 ns |
     private readonly UnrealPackageArchive _Archive;
     private readonly IUnrealStream _Stream;
 
@@ -65,7 +65,9 @@ public class UnrealStreamBenchmark
     public UnrealStreamBenchmark()
     {
         _Archive = UnrealPackageUtilities.CreateMemoryArchive(100);
-        _Archive.Package.Names.Add(new UNameTableItem("Name")); // Ensure that index 0 exists for ReadName
+        _Archive.Package.Names.Add(new UNameTableItem(_Name)); // Ensure that index 0 exists for ReadName
+        _Archive.NameIndices.Add(_Name.Index, 0);
+
         _Stream = _Archive.Stream;
 
         _Int32Position = _Stream.Position;
@@ -192,28 +194,28 @@ public class UnrealStreamBenchmark
     public void ReadAnsiNullString()
     {
         _Stream.Position = _AnsiNullStringPosition;
-        _String = _Stream.ReadAnsiNullString();
+        _AnsiNullString = _Stream.ReadAnsiNullString();
     }
 
     [Benchmark]
     public void WriteAnsiNullString()
     {
         _Stream.Position = _AnsiNullStringPosition;
-        _Stream.WriteAnsiNullString(_String);
+        _Stream.WriteAnsiNullString(_AnsiNullString);
     }
 
     [Benchmark]
     public void ReadUnicodeNullString()
     {
         _Stream.Position = _UnicodeNullStringPosition;
-        _String = _Stream.ReadUnicodeNullString();
+        _UnicodeNullString = _Stream.ReadUnicodeNullString();
     }
 
     [Benchmark]
     public void WriteUnicodeNullString()
     {
         _Stream.Position = _UnicodeNullStringPosition;
-        _Stream.WriteUnicodeNullString(_String);
+        _Stream.WriteUnicodeNullString(_UnicodeNullString);
     }
 
     [Benchmark]

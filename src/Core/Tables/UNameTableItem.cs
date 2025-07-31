@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using UELib.Branch;
@@ -7,14 +6,14 @@ using UELib.Core;
 namespace UELib
 {
     /// <summary>
-    /// A unique name in a package or unreal environment, usually referenced in a package by index, or by hash in other cases.
+    /// A unique package name entry.
     /// </summary>
     public sealed class UNameTableItem : UTableItem, IUnrealSerializableClass
     {
         internal IndexName? IndexName;
 
         /// <summary>
-        /// The case-preserved name of the package name entry.
+        /// The case-preserved name of this package name entry.
         /// </summary>
         public string Name
         {
@@ -29,7 +28,7 @@ namespace UELib
         internal string _Name;
 
         /// <summary>
-        /// The flags to define loading rules, see <see cref="ObjectFlagsLO"/>
+        /// The flags of this package name entry, see <see cref="ObjectFlagsLO"/>
         /// </summary>
         [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE3)]
         public ulong Flags
@@ -65,34 +64,10 @@ namespace UELib
             IndexName = indexName;
         }
 
-        /// <summary>
-        /// Serializes the name to a stream.
-        /// 
-        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UNameTableItem)"/>
-        /// </summary>
-        /// <param name="stream">The output stream</param>
-        public void Serialize(IUnrealStream stream)
+        public UNameTableItem(UName name)
         {
-            Debug.Assert(_Name.Length <= 1024,
-                "Maximum name length exceeded! Possible corrupt or unsupported package.");
-
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.Release64)
-            {
-                stream.Write(_Name);
-            }
-            else
-            {
-                stream.WriteAnsiNullString(_Name);
-            }
-
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
-            {
-                stream.Write(_Flags);
-            }
-            else
-            {
-                stream.Write((uint)_Flags);
-            }
+            Name = name.Text; // This might allocate a new string.
+            IndexName = IndexName.FromIndex(name.Index);
         }
 
         /// <summary>
@@ -115,7 +90,7 @@ namespace UELib
             Debug.Assert(_Name.Length <= 1024,
                 "Maximum name length exceeded! Possible corrupt or unsupported package.");
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.BioShock)
             {
                 stream.Read(out _Flags);
 
@@ -133,6 +108,36 @@ namespace UELib
             }
         }
 
+        /// <summary>
+        /// Serializes the name to a stream.
+        /// 
+        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UNameTableItem)"/>
+        /// </summary>
+        /// <param name="stream">The output stream</param>
+        public void Serialize(IUnrealStream stream)
+        {
+            Debug.Assert(_Name.Length <= 1024,
+                         "Maximum name length exceeded! Possible corrupt or unsupported package.");
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.Release64)
+            {
+                stream.Write(_Name);
+            }
+            else
+            {
+                stream.WriteAnsiNullString(_Name);
+            }
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
+            {
+                stream.Write(_Flags);
+            }
+            else
+            {
+                stream.Write((uint)_Flags);
+            }
+        }
+
         public override string ToString()
         {
             return _Name;
@@ -146,6 +151,11 @@ namespace UELib
         public static implicit operator int(UNameTableItem a)
         {
             return a.Index;
+        }
+
+        public static explicit operator IndexName?(UNameTableItem a)
+        {
+            return a.IndexName;
         }
     }
 }

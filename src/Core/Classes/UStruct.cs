@@ -24,7 +24,7 @@ namespace UELib.Core
         public UTextBuffer? ScriptText { get; set; }
         public UTextBuffer? ProcessedText { get; set; }
         public UTextBuffer? CppText { get; set; }
-        public UName FriendlyName { get; set; }
+        public UName FriendlyName { get; set; } = UnrealName.None;
 
         public int Line { get; internal set; }
         public int TextPos { get; internal set; }
@@ -94,7 +94,7 @@ namespace UELib.Core
 
                 // Weird bug in UDK (805 and 810), where the Super is set to Commandlet
                 // Set to null to prevent an infinite loop in EnumerateSuper
-                if (Super != null && Name == "Object" && Super.Name == "Commandlet")
+                if (Super != null && Name == UnrealName.Object && Super.Name == UnrealName.Commandlet)
                 {
                     Super = null;
                 }

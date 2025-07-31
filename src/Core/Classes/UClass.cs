@@ -51,12 +51,12 @@ namespace UELib.Core
         /// 
         /// Presume <value>'System'</value> if 'None'.
         /// </summary>
-        public UName ClassConfigName { get; set; }
+        public UName ClassConfigName { get; set; } = UnrealName.None;
 
         /// <summary>
         /// The DLL name to bind the class to, e.g. <example>class MyClass extends Object DLLBind(MyDLL);</example>
         /// </summary>
-        public UName? DLLBindName { get; set; }
+        public UName? DLLBindName { get; set; } = UnrealName.None;
 
         [Obsolete("Use NativeHeaderName instead")] public string NativeClassName => NativeHeaderName;
 
@@ -815,7 +815,7 @@ namespace UELib.Core
 
         public bool IsClassWithin()
         {
-            return ClassWithin != null && !string.Equals(ClassWithin.Name, "Object", StringComparison.OrdinalIgnoreCase);
+            return ClassWithin != null && ClassWithin.Name != UnrealName.Object;
         }
 
         #endregion

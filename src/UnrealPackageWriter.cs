@@ -17,7 +17,7 @@ public sealed class UnrealPackageWriter(UnrealPackageArchive archive, BinaryWrit
     {
         int hash = value.Index;
         int index = archive.NameIndices[hash];
-        int number = value.Number + 1;
+        int number = value.Number;
 #if R6
         if (archive.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
         {

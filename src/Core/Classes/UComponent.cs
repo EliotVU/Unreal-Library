@@ -10,7 +10,7 @@ namespace UELib.Core
     public class UComponent : UObject
     {
         public UClass? TemplateOwnerClass;
-        public UName TemplateName;
+        public UName TemplateName = UnrealName.None;
 
         public UComponent()
         {

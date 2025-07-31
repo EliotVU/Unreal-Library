@@ -11,7 +11,7 @@ namespace UELib.Core
         public string FormatTooltipMetaData()
         {
             string tooltipValue = null;
-            MetaData?.Tags.TryGetValue(UniqueName.Tooltip, out tooltipValue);
+            MetaData?.Tags.TryGetValue(UnrealName.Tooltip, out tooltipValue);
             if (tooltipValue == null)
             {
                 return string.Empty;

@@ -167,16 +167,18 @@ public class UnrealStreamTests
     [DataRow(PackageObjectLegacyVersion.LazyArraySkipCountChangedToSkipOffset)]
     [DataRow(PackageObjectLegacyVersion.LazyLoaderFlagsAddedToLazyArray)]
     [DataRow(PackageObjectLegacyVersion.StorageSizeAddedToLazyArray)]
-    //[DataRow(PackageObjectLegacyVersion.L8AddedToLazyArray)]
+    [DataRow(PackageObjectLegacyVersion.PackageNameAddedToLazyArray)]
     [DataRow(PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData)]
     public void SerializeBulkData(PackageObjectLegacyVersion version)
     {
-        using var fileStream = UnrealPackageUtilities.CreateTempPackageStream();
-        var package = new UnrealPackage("Transient");
-        package.Summary.Version = (uint)version;
-        package.Build = new UnrealPackage.GameBuild((uint)version, 0, BuildGeneration.Undefined, null, 0);
-        var archive = new UnrealPackageArchive(package);
-        using var stream = new UnrealPackageStream(archive, fileStream);
+        using var archive = UnrealPackageUtilities.CreateTempArchive((uint)version);
+        var package = archive.Package;
+        var stream = archive.Stream;
+
+        // To ensure that StoragePackageName can be serialized.
+        package.Names.Add(new UNameTableItem(UnrealName.None));
+        var nameInPackage = new UName(package.Names[0]);
+        archive.NameIndices.Add(nameInPackage.Index, 0);
 
         byte[] rawData = "LET'S PRETEND THAT THIS IS BULK DATA!"u8.ToArray();
         var bulkData = new UBulkData<byte>(0, rawData);
@@ -194,7 +196,7 @@ public class UnrealStreamTests
 
         readBulkData.LoadData(stream);
         Assert.IsNotNull(readBulkData.ElementData);
-        Assert.AreEqual(bulkData.ElementData.Length, readBulkData.ElementData.Length);
+        Assert.AreEqual(bulkData.ElementData!.Length, readBulkData.ElementData.Length);
         CollectionAssert.AreEqual(bulkData.ElementData, readBulkData.ElementData);
     }
 

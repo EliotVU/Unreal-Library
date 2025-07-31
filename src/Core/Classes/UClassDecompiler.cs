@@ -67,15 +67,15 @@ namespace UELib.Core
         public override string Decompile()
         {
             string content = FormatHeader() +
-                       FormatCPPText() +
-                       FormatConstants() +
-                       FormatEnums() +
-                       FormatStructs() +
-                       FormatProperties() +
-                       FormatReplication() +
-                       FormatFunctions() +
-                       FormatStates() +
-                       FormatDefaultProperties();
+                             FormatCPPText() +
+                             FormatConstants() +
+                             FormatEnums() +
+                             FormatStructs() +
+                             FormatProperties() +
+                             FormatReplication() +
+                             FormatFunctions() +
+                             FormatStates() +
+                             FormatDefaultProperties();
 
             return content;
         }
@@ -107,10 +107,8 @@ namespace UELib.Core
                 output = metaData + "\r\n" + output;
             }
 
-            // Object doesn't have an extension so only try add the extension if theres a SuperField
-            if (Super != null
-                && !(IsClassInterface() &&
-                     string.Compare(Super.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0))
+            // Object doesn't have an extension so only try to add the extension if there's a SuperField
+            if (Super != null && !(IsClassInterface() && Super.Name == UnrealName.Object))
             {
                 output += $" {FormatExtends()} {Super.Name}";
             }
@@ -124,7 +122,7 @@ namespace UELib.Core
             return output + (string.IsNullOrEmpty(rules) ? ";" : rules);
         }
 
-        private string FormatNameGroup(string groupName, [CanBeNull] List<UName> enumerableList)
+        private string FormatNameGroup(string groupName, List<UName>? enumerableList)
         {
             var output = string.Empty;
             if (enumerableList != null && enumerableList.Any())
@@ -148,7 +146,7 @@ namespace UELib.Core
             return output;
         }
 
-        private string FormatObjectGroup(string groupName, [CanBeNull] List<UObject> enumerableList)
+        private string FormatObjectGroup(string groupName, List<UObject>? enumerableList)
         {
             var output = string.Empty;
             if (enumerableList != null && enumerableList.Any())
@@ -218,8 +216,7 @@ namespace UELib.Core
             if ((ClassFlags & (uint)Flags.ClassFlags.Config) != 0)
             {
                 string inner = ClassConfigName;
-                if (string.Compare(inner, "None", StringComparison.OrdinalIgnoreCase) == 0
-                    || string.Compare(inner, "System", StringComparison.OrdinalIgnoreCase) == 0)
+                if (ClassConfigName == UnrealName.None || ClassConfigName == UnrealName.System)
                 {
                     output += "\r\n\tconfig";
                 }
@@ -370,8 +367,7 @@ namespace UELib.Core
                     output += "\r\n\tforcescriptorder(false)";
             }
 
-            if (DLLBindName != null
-                && string.Compare(DLLBindName, "None", StringComparison.OrdinalIgnoreCase) != 0)
+            if (DLLBindName != UnrealName.None)
             {
                 output += $"\r\n\tdllbind({DLLBindName})";
             }
@@ -470,16 +466,16 @@ namespace UELib.Core
 
             var replicatedObjects = new List<IUnrealNetObject>();
             replicatedObjects.AddRange(EnumerateFields<UProperty>()
-                .Where(prop => prop.PropertyFlags.HasFlag(PropertyFlag.Net)
-                    && prop.RepOffset != ushort.MaxValue)
-                .Reverse());
+                                       .Where(prop => prop.PropertyFlags.HasFlag(PropertyFlag.Net)
+                                                      && prop.RepOffset != ushort.MaxValue)
+                                       .Reverse());
 
             if (Package.Version < VReliableDeprecation)
             {
                 replicatedObjects.AddRange(EnumerateFields<UFunction>()
-                    .Where(func => func.FunctionFlags.HasFlag(FunctionFlag.Net)
-                        && func.RepOffset != ushort.MaxValue)
-                    .Reverse());
+                                           .Where(func => func.FunctionFlags.HasFlag(FunctionFlag.Net)
+                                                          && func.RepOffset != ushort.MaxValue)
+                                           .Reverse());
             }
 
             if (replicatedObjects.Count == 0)

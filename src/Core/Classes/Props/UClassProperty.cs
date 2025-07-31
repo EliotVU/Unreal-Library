@@ -37,7 +37,7 @@ namespace UELib.Core
         {
             if (MetaClass != null)
             {
-                return (string.Compare(MetaClass.Name, "Object", StringComparison.OrdinalIgnoreCase) == 0)
+                return MetaClass.Name == UnrealName.Object
                     ? Object.GetFriendlyType()
                     : ($"Class<{GetFriendlyInnerType()}>");
             }

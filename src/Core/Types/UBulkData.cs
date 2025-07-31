@@ -21,7 +21,7 @@ namespace UELib.Core
         /// Serialized if version &gt;= <see cref="PackageObjectLegacyVersion.PackageNameAddedToLazyArray"/>
         /// and &lt;= <see cref="PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData"/>
         /// </summary>
-        private UName _StoragePackageName;
+        private UName _StoragePackageName = UnrealName.None;
 
         public long StorageSize;
         public long StorageOffset;

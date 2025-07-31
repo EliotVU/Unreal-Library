@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace UELib.Core;
 
@@ -9,15 +10,16 @@ namespace UELib.Core;
 ///     Implements FName
 ///
 ///     A reference to a unique name and number in an Unreal package.
-///     The reference itself does not store any text, but instead, registers and retrieves it from a global name map.
+///     The reference itself does not store any text, but instead, registers and retrieves it from the global <see cref="IndexNameMap"/>
 /// </summary>
 [DebuggerDisplay("{Text}")]
+[StructLayout(LayoutKind.Sequential, Pack = 4, Size = 8)]
 public readonly struct UName : IEquatable<UName>
 {
-    public const int NoNumber = -1;
+    private const int NoNumber = 0;
 
     /// <summary>
-    ///     The unique index (hash) in the global NamesMap.
+    ///     The unique hash index in the <see cref="IndexNameMap"/>
     /// </summary>
     public readonly int Index;
 
@@ -35,7 +37,7 @@ public readonly struct UName : IEquatable<UName>
     }
 
     /// <summary>
-    ///     Creates and registers a new name reference from text string and an optional number.
+    ///     Creates and registers a new name reference from a string and an optional number.
     /// </summary>
     public UName(string text, int number = NoNumber)
     {
@@ -44,7 +46,7 @@ public readonly struct UName : IEquatable<UName>
     }
 
     /// <summary>
-    ///     Creates and registers a new name reference from text string, a number, and fixed index.
+    ///     Creates and registers a new name reference from a string, a number, and fixed index.
     /// </summary>
     public UName(string text, int number, int index)
     {
@@ -80,7 +82,7 @@ public readonly struct UName : IEquatable<UName>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsNone()
     {
-        return Equals(UniqueName.None);
+        return this == UnrealName.None;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,44 +94,32 @@ public readonly struct UName : IEquatable<UName>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(UName a, UName b)
     {
-        return a.Index == b.Index && a.Number == b.Number;
-    }
-
-    public static bool operator ==(UName a, UName? b)
-    {
-        return false;
+        return Unsafe.As<UName, ulong>(ref a) == Unsafe.As<UName, ulong>(ref b);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(UName a, UName b)
     {
-        return a.Index != b.Index || a.Number != b.Number;
-    }
-
-    public static bool operator !=(UName a, UName? b)
-    {
-        return true;
+        return Unsafe.As<UName, ulong>(ref a) != Unsafe.As<UName, ulong>(ref b);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(UName a, string text)
     {
-        return string.Equals(a, text);
+        return string.Equals(a, text, StringComparison.OrdinalIgnoreCase);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(UName a, string text)
     {
-        return !string.Equals(a, text);
+        return !string.Equals(a, text, StringComparison.OrdinalIgnoreCase);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(UName a, int index)
     {
         return a.Index == index;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(UName a, int index)
     {
         return a.Index != index;
@@ -141,16 +131,21 @@ public readonly struct UName : IEquatable<UName>
         return name.ToString();
     }
 
-    // FIXME: No longer compatible with uses if (int)NameRef because we no longer return the index into the NamesTable, but instead we return a hash of the name.
-    // Therefor comparisons made using this operator will break.
+    // No longer compatible, because UName no longer preserves the package index, but instead uses a global hash map.
+    [Obsolete("Deprecated", true)]
     public static explicit operator int(UName name)
     {
-        return name.GetHashCode();
+        throw new NotImplementedException();
     }
 
     public override bool Equals(object? obj)
     {
-        return base.Equals(obj);
+        if (obj is UName other)
+        {
+            return Equals(other);
+        }
+
+        return false;
     }
 
     public override int GetHashCode()
@@ -162,7 +157,7 @@ public readonly struct UName : IEquatable<UName>
     {
         return Number == NoNumber
             ? Text
-            : $"{Text}_{Number}";
+            : $"{Text}_{Number - 1}";
     }
 
     [Obsolete("Use Text instead")]
@@ -171,35 +166,40 @@ public readonly struct UName : IEquatable<UName>
 
 internal static class IndexNameMap
 {
-    private static readonly Dictionary<int, IndexName> ByIndex = new(1000)
+    private static readonly IndexName s_noneIndex = new("None", 0);
+
+    private static readonly Dictionary<int, IndexName> s_byIndex = new(4096)
     {
         // Ensure that non-initialized UName are always "None" with index 0.
-        { 0, new IndexName("None", IndexName.ToIndex("None")) }
+        { 0, s_noneIndex },
+        // Map the actual hash to the hardcoded 0 index.
+        { IndexName.ToIndex("None"), s_noneIndex },
     };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IndexName GetByIndex(int index)
     {
-        return ByIndex[index];
+        return s_byIndex[index];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool Has(int index)
     {
-        return ByIndex.ContainsKey(index);
+        return s_byIndex.ContainsKey(index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Add(IndexName item)
     {
-        ByIndex.Add(item.Index, item);
+        s_byIndex.Add(item.Index, item);
     }
 }
 
+[StructLayout(LayoutKind.Auto, CharSet = CharSet.Unicode)]
 public sealed class IndexName(string text, int index)
 {
-    public string Text { get; } = text;
     public int Index { get; } = index;
+    public string Text { get; } = text;
 
     internal static int ToIndex(string text)
     {
@@ -241,17 +241,11 @@ public sealed class IndexName(string text, int index)
     {
         return Index;
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Equals(UName other)
-    {
-        return Index == other.Index;
-    }
 }
 
-public static class UniqueName
+public static class UnrealName
 {
-    public static readonly UName None = new("None");
+    public static readonly UName None = new(0); // See the IndexNameMap for the "None" entry.
     public static readonly UName Package = new("Package");
     public static readonly UName Object = new("Object");
     public static readonly UName Field = new("Field");
@@ -282,9 +276,12 @@ public static class UniqueName
     public static readonly UName Class = new("Class");
     public static readonly UName Interface = new("Interface");
     public static readonly UName TextBuffer = new("TextBuffer");
+    public static readonly UName Commandlet = new("Commandlet");
     public static readonly UName OrderIndex = new("OrderIndex");
     public static readonly UName Tooltip = new("Tooltip");
 
     public static readonly UName Core = new("Core");
     public static readonly UName Engine = new("Engine");
+
+    public static readonly UName System = new("System");
 }

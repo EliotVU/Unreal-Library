@@ -15,8 +15,16 @@ namespace UELib.Core
 
         #region Serialized Members
 
+        /// <summary>
+        ///     The array dimension of this property.
+        ///
+        ///     In UnrealScript all properties are fixed-arrays of a length of 1; so a length greater than 1 indicates that this property is declared as an array.
+        /// </summary>
         public int ArrayDim { get; set; }
 
+        /// <summary>
+        /// The property flags, which indicate various modifiers of this property.
+        /// </summary>
         public UnrealFlags<PropertyFlag> PropertyFlags
         {
             get => _PropertyFlags;
@@ -38,7 +46,7 @@ namespace UELib.Core
             set => _CategoryName = value;
         }
 
-        private UName _CategoryName = UniqueName.None;
+        private UName _CategoryName = UnrealName.None;
 
         /// <summary>
         ///     The enum used to represent the array dimension, if any.
@@ -48,9 +56,7 @@ namespace UELib.Core
 
         [BuildGeneration(BuildGeneration.UE4)]
         [Build(UnrealPackage.GameBuild.BuildName.DNF)]
-        public UName? RepNotifyFuncName { get; set; }
-
-        public ushort RepOffset { get; set; }
+        public UName RepNotifyFuncName { get; set; } = UnrealName.None;
 
         /// <summary>
         /// Stored meta-data in the "option" format (i.e. WebAdmin, and commandline options), used to assist developers in the editor.
@@ -64,8 +70,21 @@ namespace UELib.Core
 
         private bool IsArray => ArrayDim > 1;
 
+        /// <summary>
+        ///     The element size of this property in memory.
+        /// </summary>
         public ushort ElementSize => (ushort)(ArrayDim >> 16);
+
+        /// <summary>
+        ///     The offset to the conditional in the replication script of the outer-class.
+        /// </summary>
+        public ushort RepOffset { get; set; }
+
+        /// <summary>
+        ///     Whether this property is marked with the 'reliable' modifier in the replication block.
+        /// </summary>
         public bool RepReliable => HasPropertyFlag(PropertyFlag.Net);
+
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         #region Constructors

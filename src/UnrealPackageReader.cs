@@ -24,7 +24,7 @@ public sealed class UnrealPackageReader(UnrealPackageArchive archive, BinaryRead
         {
             // Some changes were made with licensee version 71, but I couldn't make much sense of it.
             index = _BaseReader.ReadInt32();
-            number = (index >> 18) - 1;
+            number = index >> 18;
             index &= 0x3FFFF;
 
             // only the 18 lower bits are used.
@@ -32,7 +32,7 @@ public sealed class UnrealPackageReader(UnrealPackageArchive archive, BinaryRead
         }
 #endif
         index = ReadIndex();
-        number = -1;
+        number = 0;
 
 #if SHADOWSTRIKE
         if (archive.Build == BuildGeneration.ShadowStrike)
@@ -46,7 +46,7 @@ public sealed class UnrealPackageReader(UnrealPackageArchive archive, BinaryRead
 #endif
            )
         {
-            number = _BaseReader.ReadInt32() - 1;
+            number = _BaseReader.ReadInt32();
         }
 
         return new UName(archive.Package.Names[index], number);
