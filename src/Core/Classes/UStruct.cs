@@ -97,18 +97,6 @@ namespace UELib.Core
 
         #endregion
 
-        /// <summary>
-        ///     The start of the script code in the object's buffer.
-        /// </summary>
-        public long ScriptOffset { get; private set; }
-
-        /// <summary>
-        ///     The size of the script in storage.
-        /// </summary>
-        public int ScriptSize { get; private set; }
-
-        public UByteCodeDecompiler? ByteCodeManager { get; private set; }
-
         #region Constructors
 
         protected override void Deserialize()
@@ -413,7 +401,7 @@ namespace UELib.Core
 
         protected override bool CanDisposeBuffer()
         {
-            return base.CanDisposeBuffer() && ByteCodeManager == null;
+            return base.CanDisposeBuffer() && Script == null;
         }
 
         [Obsolete("Deprecated", true)]
@@ -512,6 +500,11 @@ namespace UELib.Core
         internal bool HasStructFlag(StructFlag flagIndex)
         {
             return StructFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(StructFlag)], flagIndex);
+        }
+
+        public bool HasAnyStructFlags(ulong flag)
+        {
+            return (StructFlags & flag) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

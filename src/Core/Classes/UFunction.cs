@@ -174,7 +174,7 @@ namespace UELib.Core
             {
                 // HACK: Workaround for packages that have stripped FriendlyName data.
                 // FIXME: Operator names need to be translated.
-                if (FriendlyName == null) FriendlyName = Name;
+                if (FriendlyName.IsNone()) FriendlyName = Name;
             }
         }
 
@@ -182,21 +182,26 @@ namespace UELib.Core
 
         #region Methods
 
-        [Obsolete("Use FunctionFlags directly")]
+        [Obsolete("Use HasAnyFunctionFlags")]
         public bool HasFunctionFlag(uint flag)
         {
-            return ((uint)FunctionFlags & flag) != 0;
+            return (FunctionFlags & flag) != 0;
         }
 
         [Obsolete("Use FunctionFlags directly")]
         public bool HasFunctionFlag(FunctionFlags flag)
         {
-            return ((uint)FunctionFlags & (uint)flag) != 0;
+            return (FunctionFlags & (uint)flag) != 0;
         }
 
         internal bool HasFunctionFlag(FunctionFlag flagIndex)
         {
             return FunctionFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(FunctionFlag)], flagIndex);
+        }
+
+        public bool HasAnyFunctionFlags(ulong flag)
+        {
+            return (FunctionFlags & flag) != 0;
         }
 
         public bool IsOperator()
@@ -223,10 +228,9 @@ namespace UELib.Core
         {
             // FIXME: Deprecate version check, and re-map the function flags using the EngineBranch class approach.
             return Package.Version > 300
-                   && ByteCodeManager != null
+                   && Script != null
                    && EnumerateFields<UProperty>()
-                       ?.Where(prop => prop.PropertyFlags.HasFlag(PropertyFlag.Parm))
-                       .Any() == true
+                       .Any(prop => prop.HasPropertyFlag(PropertyFlag.Parm))
                 // Not available for older packages.
                 // && HasFunctionFlag(Flags.FunctionFlags.OptionalParameters);
                 ;

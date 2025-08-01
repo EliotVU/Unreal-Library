@@ -513,6 +513,9 @@ namespace UELib.Core
             var output = new StringBuilder($"\r\nreplication{UnrealConfig.PrintBeginBracket()}");
             UDecompilingState.AddTab();
 
+            var decompiler = new UByteCodeDecompiler(this);
+            decompiler.Deserialize();
+
             foreach (var statement in statements)
             {
                 try
@@ -526,12 +529,11 @@ namespace UELib.Core
                         output.AppendFormat("// Pos:0x{0:X3}\r\n{1}", pos, UDecompilingState.Tabs);
                     }
 
-                    ByteCodeManager.Deserialize();
-                    ByteCodeManager.JumpTo(pos);
+                    decompiler.JumpTo(pos);
                     string statementCode;
                     try
                     {
-                        statementCode = ByteCodeManager.CurrentToken.Decompile();
+                        statementCode = decompiler.CurrentToken.Decompile(decompiler);
                     }
                     catch (EndOfStreamException)
                     {

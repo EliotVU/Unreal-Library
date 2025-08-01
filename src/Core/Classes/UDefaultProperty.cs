@@ -38,7 +38,7 @@ namespace UELib.Core
         private bool _RecordingEnabled = true;
 
         // Temporary solution, needed so we can lazy-load the property value.
-        private UObjectStream _Buffer { get; set; }
+        private IUnrealStream _Buffer { get; set; }
 
         internal long _TagPosition { get; set; }
         internal long _PropertyValuePosition { get; set; }
@@ -102,7 +102,7 @@ namespace UELib.Core
             UProperty property = null;
             outer = _Outer ?? (UStruct)_Container.Class;
             Debug.Assert(outer != null, nameof(outer) + " != null");
-            foreach (var super in outer.EnumerateSuper(outer))
+            foreach (var super in outer.EnumerateSuper())
             {
                 foreach (var field in super
                              .EnumerateFields()
@@ -718,7 +718,7 @@ namespace UELib.Core
                         {
                             string enumTagName = _Buffer.ReadName();
                             Record(nameof(enumTagName), enumTagName);
-                            propertyValue = _TypeData.EnumName != null
+                            propertyValue = _TypeData.EnumName.IsNone() == false
                                 ? $"{_TypeData.EnumName}.{enumTagName}"
                                 : enumTagName;
                         }
@@ -1111,7 +1111,7 @@ namespace UELib.Core
                         }
 
                         var arrayType = PropertyType.None;
-                        if (_TypeData.InnerTypeName != null && !Enum.TryParse(_TypeData.InnerTypeName, out arrayType))
+                        if (_TypeData.InnerTypeName.IsNone() && !Enum.TryParse(_TypeData.InnerTypeName, out arrayType))
                         {
                             throw new Exception(
                                 $"Couldn't convert InnerTypeName \"{_TypeData.InnerTypeName}\" to PropertyType");

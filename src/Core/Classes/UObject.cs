@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -19,7 +20,8 @@ namespace UELib.Core
     ///     Instances of this class are deserialized from the exports table entries.
     /// </summary>
     [UnrealRegisterClass]
-    public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable, IComparable
+    public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable,
+                                   IComparable
     {
         /// <summary>
         ///     The name for this object.
@@ -50,11 +52,11 @@ namespace UELib.Core
         [Obsolete("Use PackageResource instead")]
         public UObjectTableItem? Table => PackageResource;
 
-        public UExportTableItem? ExportTable => Table as UExportTableItem;
-        public UImportTableItem? ImportTable => Table as UImportTableItem;
+        public UExportTableItem? ExportTable => PackageResource as UExportTableItem;
+        public UImportTableItem? ImportTable => PackageResource as UImportTableItem;
 
         [Obsolete("Use Name instead")]
-        public UNameTableItem? NameTable => Table.ObjectTable;
+        public UNameTableItem? NameTable => PackageResource.ObjectTable;
 
         /// <summary>
         ///     The class for this object, as represented internally in UnrealScript.
@@ -129,7 +131,6 @@ namespace UELib.Core
         
         public UObject()
         {
-
         }
 
         public UObject(UnrealPackage package, UPackageIndex packageIndex) : this()
@@ -144,10 +145,11 @@ namespace UELib.Core
         }
 
         /// <summary>
-        /// Object will not be deserialized by UnrealPackage, Can only be deserialized by calling the methods yourself.
+        /// Object will not be deserialized by UnrealPackage.InitializePackage and must be explicitly requested by calling Load().
         /// </summary>
         public bool ShouldDeserializeOnDemand { get; protected set; }
 
+        [Obsolete("Pending deprecation; instead load the object using a UObjectRecordStream.")]
         public BinaryMetaData BinaryMetaData { get; private set; }
 
         #region Constructors
@@ -158,24 +160,30 @@ namespace UELib.Core
         [Flags]
         public enum ObjectState : byte
         {
-            [Obsolete("Use Deserialized")]
-            Deserialied = Deserialized,
-
             Deserialized = 0x01,
             Errorlized = 0x02,
-            Deserializing = 0x04
+            Deserializing = 0x04,
+
+            [Obsolete("Use Deserialized")]
+            Deserialied = Deserialized,
         }
 
-        public ObjectState DeserializationState;
-        public Exception? ThrownException;
-        public long ExceptionPosition;
-        
+        public ObjectState DeserializationState { get; set; }
+        public Exception? ThrownException { get; set; }
+        public long ExceptionPosition { get; private set; }
+
         [Obsolete("Use Load<UObjectRecordStream>() instead.")]
         public void BeginDeserializing()
         {
             Load<UObjectRecordStream>();
         }
 
+        /// <summary>
+        /// Loads the object data from the object's associated package.
+        ///
+        /// The stream may be preserved if the object contains a script or script properties.
+        /// That stream is accessible using <see cref="Buffer"/> and must be disposed of manually.
+        /// </summary>
         public void Load()
         {
             Load<UObjectStream>();
@@ -210,6 +218,11 @@ namespace UELib.Core
                 LibServices.LogService.SilentException(new DeserializationException("The object is already being deserialized."));
 
                 return;
+            }
+
+            if (DeserializationState.HasFlag(ObjectState.Deserialized))
+            {
+                LibServices.Debug("Re-loading {0}", GetReferencePath());
             }
 
             LibServices.Debug("Loading {0}", GetReferencePath());
@@ -318,30 +331,39 @@ namespace UELib.Core
             long objectOffset = ExportTable.SerialOffset;
             int objectSize = ExportTable.SerialSize;
 
+            return LoadStream<T>(stream, objectOffset, objectSize);
+        }
+
+        public T LoadStream<T>(UnrealPackageStream stream, long objectOffset, int objectSize)
+            where T : UObjectStream
+        {
             byte[] buffer = new byte[objectSize];
             stream.Seek(objectOffset, SeekOrigin.Begin);
             int byteCount = stream.Read(buffer, 0, objectSize);
             Stream baseStream = new MemoryStream(buffer, 0, objectSize, false, true);
             var packageArchive = stream.Package.Archive;
             // Make an object stream with a decoder as the base stream.
-            if (stream.Flags.HasFlag(UnrealArchiveFlags.Encoded))
+            if (stream.IsEncoded())
             {
+                Contract.Assert(packageArchive.Decoder != null);
                 baseStream = new EncodedStream(baseStream, packageArchive.Decoder, objectOffset);
             }
 
             var objectStream = (T)Activator.CreateInstance(typeof(T), packageArchive, baseStream, objectOffset);
 
             Contract.Assert(byteCount == objectSize,
-                $"Incomplete read; expected a total bytes of {objectSize} but got {byteCount}");
+                            $"Incomplete read; expected a total bytes of {objectSize} but got {byteCount}");
 
             return objectStream;
         }
 
-        internal UObjectStream LoadBuffer()
+        [Obsolete("Pending deprecation")]
+        internal IUnrealStream LoadBuffer()
         {
             return _Buffer ??= LoadStream<UObjectStream>(Package.Stream);
         }
 
+        [Obsolete("Pending deprecation")]
         internal void MaybeDisposeBuffer()
         {
             // Do not dispose while deserializing!
@@ -353,6 +375,7 @@ namespace UELib.Core
             _Buffer = null;
         }
 
+        [Obsolete("Pending deprecation")]
         protected virtual bool CanDisposeBuffer()
         {
             return Properties.Count == 0;
@@ -590,6 +613,8 @@ namespace UELib.Core
             return ObjectFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)], flagIndex);
         }
 
+        public bool HasAnyObjectFlags(ulong flag) => (ObjectFlags & flag) != 0;
+
         public bool IsPublic()
         {
             return ObjectFlags.HasFlag(ObjectFlag.Public);
@@ -620,6 +645,19 @@ namespace UELib.Core
             {
                 yield return outer;
             }
+        }
+
+        public T OuterMost<T>() where T : UObject
+        {
+            for (var outer = Outer; outer != null; outer = outer.Outer)
+            {
+                if (outer is T result)
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -715,7 +753,7 @@ namespace UELib.Core
 
         public int CompareTo(object obj)
         {
-            return (int)Name - (int)((UObject)obj).Name;
+            return (int)this - (int)(UObject)obj;
         }
 
         public override string ToString()
@@ -741,7 +779,7 @@ namespace UELib.Core
                 return;
             }
 
-            _Buffer?.Close();
+            _Buffer?.Dispose();
             _Buffer = null;
         }
 
@@ -760,14 +798,17 @@ namespace UELib.Core
             return visitor.Visit(this);
         }
 
+#if NETCOREAPP2_1_OR_GREATER
+        [param: NotNullWhen(true)]
+#endif
         public static implicit operator UPackageIndex(UObject? obj)
         {
-            return obj?.PackageIndex ?? 0;
+            return obj?.PackageIndex ?? UPackageIndex.Null;
         }
 
         public static explicit operator int(UObject? obj)
         {
-            return obj?.PackageIndex ?? 0;
+            return obj?.PackageIndex ?? UPackageIndex.Null;
         }
 
         public static explicit operator string(UObject? obj)
@@ -825,9 +866,6 @@ namespace UELib.Core
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// <see cref="GetPath()"/>
-        /// </summary>
         [Obsolete("Use GetPath instead")]
         public string GetOuterGroup() => GetPath();
 
@@ -853,9 +891,6 @@ namespace UELib.Core
     /// </summary>
     public sealed class UnknownObject : UObject
     {
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UnknownObject class.
-        /// </summary>
         public UnknownObject()
         {
             ShouldDeserializeOnDemand = true;

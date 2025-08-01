@@ -38,19 +38,20 @@ namespace UELib.Engine
             var formatProperty = Properties.Find("Format");
             if (formatProperty != null)
             {
-                _Buffer.StartPeek(formatProperty._PropertyValuePosition);
-                _Buffer.Read(out byte index);
-                _Buffer.EndPeek();
-
-                Format = (TextureFormat)index;
+                using (_Buffer.Peek(formatProperty._PropertyValuePosition))
+                {
+                    _Buffer.Read(out byte index);
+                    Format = (TextureFormat)index;
+                }
             }
 
             var paletteProperty = Properties.Find("Palette");
             if (paletteProperty != null)
             {
-                _Buffer.StartPeek(paletteProperty._PropertyValuePosition);
-                _Buffer.Read(out Palette);
-                _Buffer.EndPeek();
+                using (_Buffer.Peek(paletteProperty._PropertyValuePosition))
+                {
+                    Palette = _Buffer.ReadObject<UPalette>();
+                }
             }
         }
     }

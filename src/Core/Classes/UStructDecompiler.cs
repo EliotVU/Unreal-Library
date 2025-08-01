@@ -148,13 +148,13 @@ namespace UELib.Core
             catch (Exception e) // may occur when the CppText content are corrupted.
             {
                 output += $"{UDecompilingState.Tabs}/* {e} */ // occurred while decompiling CppText!" +
-                         "\r\n";
+                          "\r\n";
             }
             finally
             {
                 output += UnrealConfig.PrintEndBracket() + "\r\n";
             }
-            
+
             return output;
         }
 
@@ -187,8 +187,8 @@ namespace UELib.Core
         {
             var output = string.Empty;
             foreach (var scriptStruct in EnumerateFields<UStruct>()
-                         .Where(field => field.IsPureStruct())
-                         .Reverse())
+                                         .Where(field => field.IsPureStruct())
+                                         .Reverse())
             {
                 // And add an empty line between all structs!
                 output += "\r\n"
@@ -225,7 +225,7 @@ namespace UELib.Core
                 }
 
                 output += "var";
-                if (property.CategoryName != null && !property.CategoryName.IsNone())
+                if (!property.CategoryName.IsNone())
                 {
                     output += property.CategoryName == Name
                         ? "()"
@@ -348,7 +348,8 @@ namespace UELib.Core
 
         protected string DecompileScript()
         {
-            return ByteCodeManager != null ? ByteCodeManager.Decompile() : string.Empty;
+            var decompiler = new UByteCodeDecompiler(this);
+            return decompiler.Decompile();
         }
     }
 }

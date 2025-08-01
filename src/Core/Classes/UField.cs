@@ -9,17 +9,17 @@ namespace UELib.Core
     /// </summary>
     public partial class UField : UObject
     {
+        /// <summary>
+        ///     Reference to the metadata for this field, if any.
+        /// </summary>
+        public UMetaData.ObjectTags? MetaData { get; internal set; }
+
         #region Serialized Members
 
         public UStruct? Super { get; set; }
         public UField? NextField { get; set; }
 
         #endregion
-
-        /// <summary>
-        ///     Reference to the metadata for this field, if any.
-        /// </summary>
-        public UMetaData.UFieldData? MetaData { get; internal set; }
 
         #region Constructors
 
@@ -89,7 +89,10 @@ namespace UELib.Core
             }
         }
 
-        public bool Extends(string superName) => Extends(new UName(superName));
+        public bool Extends(string superName)
+        {
+            return Extends(new UName(superName));
+        }
 
         public bool Extends(in UName superName)
         {
@@ -110,7 +113,7 @@ namespace UELib.Core
             var group = string.Empty;
             for (var field = Super; field != null; field = field.Super)
             {
-                group = $"{field.Name}.{@group}";
+                group = $"{field.Name}.{group}";
             }
 
             return group + Name;

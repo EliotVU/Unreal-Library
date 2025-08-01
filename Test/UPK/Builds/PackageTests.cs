@@ -309,8 +309,8 @@ namespace Eliot.UELib.Test.Builds
                 {
                     switch (obj)
                     {
-                        case UStruct { Script.Tokens: null } uStruct:
-                            new UStruct.UByteCodeDecompiler(uStruct).Deserialize();
+                        case UStruct { ByteCodeManager.DeserializedTokens: null } uStruct:
+                            uStruct.ByteCodeManager.Deserialize();
                             break;
                     }
                 }

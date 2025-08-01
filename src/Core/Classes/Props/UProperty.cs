@@ -87,166 +87,158 @@ namespace UELib.Core
 
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
-        #region Constructors
-
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UProperty class.
-        /// </summary>
-        public UProperty()
-        {
-            Type = PropertyType.None;
-        }
-
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
 #if ADVENT
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent)
             {
                 // Serialize FProperty
 
-                ArrayDim = _Buffer.ReadInt32();
-                Record(nameof(ArrayDim), ArrayDim);
+                ArrayDim = stream.ReadInt32();
+                stream.Record(nameof(ArrayDim), ArrayDim);
 
                 ArrayDim = PropertyFlags >> 16;
                 uint propertyIndex = PropertyFlags & 0x0000FFFFU;
 
-                PropertyFlags = new UnrealFlags<PropertyFlag>(_Buffer.ReadUInt32(), _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
-                Record(nameof(PropertyFlags), PropertyFlags);
+                PropertyFlags =
+                    new UnrealFlags<PropertyFlag>(stream.ReadUInt32(),
+                                                  stream.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+                stream.Record(nameof(PropertyFlags), PropertyFlags);
 
-                CategoryName = _Buffer.ReadName();
-                Record(nameof(CategoryName), CategoryName);
+                CategoryName = stream.ReadName();
+                stream.Record(nameof(CategoryName), CategoryName);
 
-                if (_Buffer.LicenseeVersion < 6 && (PropertyFlags & 0x20) != 0)
+                if (stream.LicenseeVersion < 6 && (PropertyFlags & 0x20) != 0)
                 {
-                    RepOffset = _Buffer.ReadUInt16();
-                    Record(nameof(RepOffset), RepOffset);
+                    RepOffset = stream.ReadUInt16();
+                    stream.Record(nameof(RepOffset), RepOffset);
                 }
 
                 // Skip base.
                 return;
             }
 #endif
-            base.Deserialize();
+            base.Deserialize(stream);
 #if SPLINTERCELLX
-            if (Package.Build == BuildGeneration.SCX &&
-                _Buffer.LicenseeVersion >= 15)
+            if (stream.Build == BuildGeneration.SCX &&
+                stream.LicenseeVersion >= 15)
             {
                 // 32bit => 16bit
-                ArrayDim = _Buffer.ReadUInt16();
-                Record(nameof(ArrayDim), ArrayDim);
+                ArrayDim = stream.ReadUInt16();
+                stream.Record(nameof(ArrayDim), ArrayDim);
 
-                _Buffer.Read(out _PropertyFlags);
-                Record(nameof(PropertyFlags), PropertyFlags);
+                stream.Read(out _PropertyFlags);
+                stream.Record(nameof(PropertyFlags), PropertyFlags);
 
-                _Buffer.Read(out _CategoryName);
-                Record(nameof(CategoryName), CategoryName);
+                stream.Read(out _CategoryName);
+                stream.Record(nameof(CategoryName), CategoryName);
 
                 // FIXME: Unknown version, attested without a version check since SC3 and SC4.
-                if (_Buffer.LicenseeVersion > 17) // 17 = newer than SC1
+                if (stream.LicenseeVersion > 17) // 17 = newer than SC1
                 {
                     // Music? Some kind of alternative to category name
-                    _Buffer.Read(out UName v68);
-                    Record(nameof(v68), v68);
+                    stream.Read(out UName v68);
+                    stream.Record(nameof(v68), v68);
                 }
 
                 return;
             }
 #endif
 #if LEAD
-            if (Package.Build == BuildGeneration.Lead)
+            if (stream.Build == BuildGeneration.Lead)
             {
                 // 32bit => 16bit
-                ArrayDim = _Buffer.ReadUInt16();
-                Record(nameof(ArrayDim), ArrayDim);
+                ArrayDim = stream.ReadUInt16();
+                stream.Record(nameof(ArrayDim), ArrayDim);
 
-                _Buffer.Read(out _PropertyFlags);
-                Record(nameof(PropertyFlags), PropertyFlags);
+                stream.Read(out _PropertyFlags);
+                stream.Record(nameof(PropertyFlags), PropertyFlags);
 
-                if (_Buffer.LicenseeVersion >= 72)
+                if (stream.LicenseeVersion >= 72)
                 {
-                    ushort v34 = _Buffer.ReadUInt16();
-                    Record(nameof(v34), v34);
+                    ushort v34 = stream.ReadUInt16();
+                    stream.Record(nameof(v34), v34);
                 }
 
-                _Buffer.Read(out _CategoryName);
-                Record(nameof(CategoryName), CategoryName);
+                stream.Read(out _CategoryName);
+                stream.Record(nameof(CategoryName), CategoryName);
 
                 // not versioned
-                var v4c = _Buffer.ReadName();
-                Record(nameof(v4c), v4c);
+                var v4c = stream.ReadName();
+                stream.Record(nameof(v4c), v4c);
 
-                if (_Buffer.LicenseeVersion >= 4)
+                if (stream.LicenseeVersion >= 4)
                 {
                     // CommentString
-                    EditorDataText = _Buffer.ReadString(); // v50
-                    Record(nameof(EditorDataText), EditorDataText);
+                    EditorDataText = stream.ReadString(); // v50
+                    stream.Record(nameof(EditorDataText), EditorDataText);
                 }
 
-                if (_Buffer.LicenseeVersion >= 11)
+                if (stream.LicenseeVersion >= 11)
                 {
                     // Usually 0 or 0xAA88FF
-                    uint v5c = _Buffer.ReadUInt32();
-                    Record(nameof(v5c), v5c);
+                    uint v5c = stream.ReadUInt32();
+                    stream.Record(nameof(v5c), v5c);
 
-                    uint v60 = _Buffer.ReadUInt32();
-                    Record(nameof(v60), v60);
+                    uint v60 = stream.ReadUInt32();
+                    stream.Record(nameof(v60), v60);
 
                     // Display name e.g. SpecularMask = Specular
-                    string v64 = _Buffer.ReadString();
-                    Record(nameof(v64), v64);
+                    string v64 = stream.ReadString();
+                    stream.Record(nameof(v64), v64);
                 }
 
-                if (_Buffer.LicenseeVersion >= 101)
+                if (stream.LicenseeVersion >= 101)
                 {
-                    var v7c = _Buffer.ReadName();
-                    Record(nameof(v7c), v7c);
+                    var v7c = stream.ReadName();
+                    stream.Record(nameof(v7c), v7c);
                 }
 
                 return;
             }
 #endif
 #if SWRepublicCommando
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
             {
-                if (_Buffer.Version < 137)
+                if (stream.Version < 137)
                 {
-                    NextField = _Buffer.ReadObject<UField>();
-                    Record(nameof(NextField), NextField);
+                    NextField = stream.ReadObject<UField?>();
+                    stream.Record(nameof(NextField), NextField);
                 }
 
-                if (_Buffer.Version >= 136)
+                if (stream.Version >= 136)
                 {
                     // 32bit => 16bit
-                    ArrayDim = _Buffer.ReadUInt16();
-                    Record(nameof(ArrayDim), ArrayDim);
+                    ArrayDim = stream.ReadUInt16();
+                    stream.Record(nameof(ArrayDim), ArrayDim);
 
                     goto skipArrayDim;
                 }
             }
 #endif
 #if AA2
-            if (Package.Build == BuildGeneration.AGP &&
-                _Buffer.LicenseeVersion >= 8)
+            if (stream.Build == BuildGeneration.AGP &&
+                stream.LicenseeVersion >= 8)
             {
                 // Always 26125 (hardcoded in the assembly) 
-                uint aa2FixedPack = _Buffer.ReadUInt32();
-                Record(nameof(aa2FixedPack), aa2FixedPack);
+                uint aa2FixedPack = stream.ReadUInt32();
+                stream.Record(nameof(aa2FixedPack), aa2FixedPack);
             }
 #endif
 #if XIII || DNF || MOV
             // TODO: (UE2X) Version 131 ArrayDim size changed from DWORD to WORD
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.XIII ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.DNF ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.MOV)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.XIII ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.DNF ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.MOV)
             {
-                ArrayDim = _Buffer.ReadInt16();
-                Record(nameof(ArrayDim), ArrayDim);
+                ArrayDim = stream.ReadInt16();
+                stream.Record(nameof(ArrayDim), ArrayDim);
 
                 goto skipArrayDim;
             }
 #endif
-            ArrayDim = _Buffer.ReadInt32();
-            Record(nameof(ArrayDim), ArrayDim);
+            ArrayDim = stream.ReadInt32();
+            stream.Record(nameof(ArrayDim), ArrayDim);
         skipArrayDim:
             // Just to verify if this is in use at all.
             //Debug.Assert(ElementSize == 0, $"ElementSize: {ElementSize}");
@@ -255,13 +247,13 @@ namespace UELib.Core
             //    (ArrayDim & 0x0000FFFFU) > 0 && (ArrayDim & 0x0000FFFFU) <= 2048, 
             //    $"Bad array dimension {ArrayDim & 0x0000FFFFU} for property ${GetReferencePath()}");
 
-            var propertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
-                ? _Buffer.ReadUInt64()
-                : _Buffer.ReadUInt32();
+            ulong propertyFlags = stream.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
+                ? stream.ReadUInt64()
+                : stream.ReadUInt32();
 #if BATMAN
-            if (Package.Build == BuildGeneration.RSS)
+            if (stream.Build == BuildGeneration.RSS)
             {
-                if (_Buffer.LicenseeVersion >= 101)
+                if (stream.LicenseeVersion >= 101)
                 {
                     // DAT_14313fdc0
                     ulong[] flagMasks =
@@ -297,138 +289,139 @@ namespace UELib.Core
                 }
             }
 #endif
-            PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
-            Record(nameof(PropertyFlags), PropertyFlags);
+            PropertyFlags =
+                new UnrealFlags<PropertyFlag>(propertyFlags, stream.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+            stream.Record(nameof(PropertyFlags), PropertyFlags);
 #if XCOM2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
             {
-                ConfigName = _Buffer.ReadName();
-                Record(nameof(ConfigName), ConfigName);
+                ConfigName = stream.ReadName();
+                stream.Record(nameof(ConfigName), ConfigName);
             }
 #endif
 #if THIEF_DS || DEUSEX_IW
-            if (Package.Build == BuildGeneration.Flesh)
+            if (stream.Build == BuildGeneration.Flesh)
             {
                 // Property flags like CustomEditor, CustomViewer, ThiefProp, DeusExProp, NoTextExport, NoTravel
-                uint deusFlags = _Buffer.ReadUInt32();
-                Record(nameof(deusFlags), deusFlags);
+                uint deusFlags = stream.ReadUInt32();
+                stream.Record(nameof(deusFlags), deusFlags);
             }
 #endif
-            if (!Package.IsConsoleCooked()
+            if (stream.ContainsEditorOnlyData()
 #if MASS_EFFECT
                 // M1:LE is cooked for "WindowsConsole" yet retains this data.
-                || Package.Build == BuildGeneration.SFX
+                || stream.Build == BuildGeneration.SFX
 #endif
                )
             {
                 // TODO: Not serialized if XENON (UE2X)
                 // FIXME: UE4 version
-                if (_Buffer.UE4Version < 160)
+                if (stream.UE4Version < 160)
                 {
-                    CategoryName = _Buffer.ReadName();
-                    Record(nameof(CategoryName), CategoryName);
+                    CategoryName = stream.ReadName();
+                    stream.Record(nameof(CategoryName), CategoryName);
                 }
 
-                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty
 #if MIDWAY
-                    || Package.Build == UnrealPackage.GameBuild.BuildName.Stranglehold
+                    || stream.Build == UnrealPackage.GameBuild.BuildName.Stranglehold
 #endif
-                    )
+                   )
                 {
-                    ArrayEnum = _Buffer.ReadObject<UEnum>();
-                    Record(nameof(ArrayEnum), ArrayEnum);
+                    ArrayEnum = stream.ReadObject<UEnum?>();
+                    stream.Record(nameof(ArrayEnum), ArrayEnum);
                 }
             }
 
 #if THIEF_DS || DEUSEX_IW
-            if (Package.Build == BuildGeneration.Flesh)
+            if (stream.Build == BuildGeneration.Flesh)
             {
-                short deusInheritedOrRuntimeInstantiated = _Buffer.ReadInt16();
-                Record(nameof(deusInheritedOrRuntimeInstantiated), deusInheritedOrRuntimeInstantiated);
-                short deusUnkInt16 = _Buffer.ReadInt16();
-                Record(nameof(deusUnkInt16), deusUnkInt16);
+                short deusInheritedOrRuntimeInstantiated = stream.ReadInt16();
+                stream.Record(nameof(deusInheritedOrRuntimeInstantiated), deusInheritedOrRuntimeInstantiated);
+                short deusUnkInt16 = stream.ReadInt16();
+                stream.Record(nameof(deusUnkInt16), deusUnkInt16);
             }
 #endif
 #if BORDERLANDS
-            if (Package.Build == BuildGeneration.GB &&
-                _Buffer.LicenseeVersion >= 2)
+            if (stream.Build == BuildGeneration.GB &&
+                stream.LicenseeVersion >= 2)
             {
-                var va8 = _Buffer.ReadObject();
-                Record(nameof(va8), va8);
-                var vb0 = _Buffer.ReadObject();
-                Record(nameof(vb0), vb0);
+                var va8 = stream.ReadObject();
+                stream.Record(nameof(va8), va8);
+                var vb0 = stream.ReadObject();
+                stream.Record(nameof(vb0), vb0);
             }
 #endif
 #if UE4
-            if (_Buffer.UE4Version > 0)
+            if (stream.IsUE4())
             {
-                RepNotifyFuncName = _Buffer.ReadName();
-                Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
+                RepNotifyFuncName = stream.ReadName();
+                stream.Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
 
                 return;
             }
 #endif
-            if (PropertyFlags.HasFlag(PropertyFlag.Net))
+            if (HasPropertyFlag(PropertyFlag.Net))
             {
-                RepOffset = _Buffer.ReadUShort();
-                Record(nameof(RepOffset), RepOffset);
+                RepOffset = stream.ReadUShort();
+                stream.Record(nameof(RepOffset), RepOffset);
             }
 #if HUXLEY
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {
                 // A property linked to the "Core.Object.LazyLoadPropertyInfo" struct.
-                var partLoadInfoProperty = _Buffer.ReadObject();
-                Record(nameof(partLoadInfoProperty), partLoadInfoProperty);
+                var partLoadInfoProperty = stream.ReadObject();
+                stream.Record(nameof(partLoadInfoProperty), partLoadInfoProperty);
             }
 #endif
 #if R6
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {
-                _Buffer.Read(out string v0c);
-                Record(nameof(v0c), v0c);
+                stream.Read(out string v0c);
+                stream.Record(nameof(v0c), v0c);
 
                 EditorDataText = v0c;
             }
 #endif
 #if ROCKETLEAGUE
             // identical to this object's name.
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
-                _Buffer.LicenseeVersion >= 11)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                stream.LicenseeVersion >= 11)
             {
-                string vb8 = _Buffer.ReadString();
-                Record(nameof(vb8), vb8);
+                string vb8 = stream.ReadString();
+                stream.Record(nameof(vb8), vb8);
 
-                //if (_Buffer.LicenseeVersion == 15)
+                //if (stream.LicenseeVersion == 15)
                 //{
-                //    var v68 = _Buffer.ReadName();
-                //    Record(nameof(v68), v68);
+                //    var v68 = stream.ReadName();
+                //    stream.Record(nameof(v68), v68);
                 //}
             }
 #endif
 #if VENGEANCE
-            if (Package.Build == BuildGeneration.Vengeance)
+            if (stream.Build == BuildGeneration.Vengeance)
             {
-                var vengeanceEditComboType = _Buffer.ReadName();
-                Record(nameof(vengeanceEditComboType), vengeanceEditComboType);
-                var vengeanceEditDisplay = _Buffer.ReadName();
-                Record(nameof(vengeanceEditDisplay), vengeanceEditDisplay);
+                var vengeanceEditComboType = stream.ReadName();
+                stream.Record(nameof(vengeanceEditComboType), vengeanceEditComboType);
+                var vengeanceEditDisplay = stream.ReadName();
+                stream.Record(nameof(vengeanceEditDisplay), vengeanceEditDisplay);
             }
 #endif
 #if DNF
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                if (HasPropertyFlag(0x800000))
+                if (HasAnyPropertyFlags(0x800000))
                 {
-                    EditorDataText = _Buffer.ReadString();
-                    Record(nameof(EditorDataText), EditorDataText);
+                    EditorDataText = stream.ReadString();
+                    stream.Record(nameof(EditorDataText), EditorDataText);
                 }
 
                 // Same flag as EditorData, but this may merely be a coincidence, see above
-                if (_Buffer.Version >= 118 && HasPropertyFlag(0x2000000))
+                if (stream.Version >= 118 && HasAnyPropertyFlags(0x2000000))
                 {
                     // a.k.a NetUpdateName ;)
-                    RepNotifyFuncName = _Buffer.ReadName();
-                    Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
+                    RepNotifyFuncName = stream.ReadName();
+                    stream.Record(nameof(RepNotifyFuncName), RepNotifyFuncName);
                 }
 
                 return;
@@ -436,55 +429,345 @@ namespace UELib.Core
 #endif
             // Appears to be a UE2.5 feature, it is not present in UE2 builds with no custom LicenseeVersion
             // Albeit DeusEx indicates otherwise?
-            if ((PropertyFlags.HasFlag(PropertyFlag.CommentString) &&
-                 (Package.Build == BuildGeneration.UE2_5
-                  || Package.Build == BuildGeneration.AGP
-                  || Package.Build == BuildGeneration.Flesh))
+            if ((HasPropertyFlag(PropertyFlag.CommentString) &&
+                 (stream.Build == BuildGeneration.UE2_5
+                  || stream.Build == BuildGeneration.AGP
+                  || stream.Build == BuildGeneration.Flesh))
                 // No property flag check
 #if VENGEANCE
-                || Package.Build == BuildGeneration.Vengeance
+                || stream.Build == BuildGeneration.Vengeance
 #endif
 #if MOV
                 // No property flag check
-                || Package.Build == UnrealPackage.GameBuild.BuildName.MOV
+                || stream.Build == UnrealPackage.GameBuild.BuildName.MOV
 #endif
 #if LSGAME
                 // No property flag check
-                || (Package.Build == UnrealPackage.GameBuild.BuildName.LSGame &&
-                    Package.LicenseeVersion >= 3)
+                || (stream.Build == UnrealPackage.GameBuild.BuildName.LSGame &&
+                    stream.LicenseeVersion >= 3)
 #endif
 #if DEVASTATION
                 // No property flag check
-                || Package.Build == UnrealPackage.GameBuild.BuildName.Devastation
+                || stream.Build == UnrealPackage.GameBuild.BuildName.Devastation
 #endif
                )
             {
                 // May represent a tooltip/comment in some games. Usually in the form of a quoted string, sometimes as a double-flash comment or both.
-                EditorDataText = _Buffer.ReadString();
-                Record(nameof(EditorDataText), EditorDataText);
+                EditorDataText = stream.ReadString();
+                stream.Record(nameof(EditorDataText), EditorDataText);
             }
 #if SPELLBORN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
             {
-                if (_Buffer.Version < 157)
+                if (stream.Version < 157)
                 {
                     throw new NotSupportedException("< 157 Spellborn packages are not supported");
 
-                    if (133 < _Buffer.Version)
+                    if (133 < stream.Version)
                     {
                         // idk
                     }
 
-                    if (134 < _Buffer.Version)
+                    if (134 < stream.Version)
                     {
-                        int unk32 = _Buffer.ReadInt32();
-                        Record("Unknown:Spellborn", unk32);
+                        int unk32 = stream.ReadInt32();
+                        stream.Record("Unknown:Spellborn", unk32);
                     }
                 }
                 else
                 {
-                    uint replicationFlags = _Buffer.ReadUInt32();
-                    Record(nameof(replicationFlags), replicationFlags);
+                    uint replicationFlags = stream.ReadUInt32();
+                    stream.Record(nameof(replicationFlags), replicationFlags);
+                }
+            }
+#endif
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+#if ADVENT
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                // Serialize FProperty
+
+                stream.Write(ArrayDim);
+                // ArrayDim = PropertyFlags >> 16;
+                // uint propertyIndex = PropertyFlags & 0x0000FFFFU;
+                stream.Write((uint)PropertyFlags);
+                stream.Write(CategoryName);
+
+                if (stream.LicenseeVersion < 6 && ((uint)PropertyFlags & 0x20) != 0)
+                {
+                    stream.Write(RepOffset);
+                }
+
+                // Skip base.
+                return;
+            }
+#endif
+            base.Serialize(stream);
+#if SPLINTERCELLX
+            if (stream.Build == BuildGeneration.SCX &&
+                stream.LicenseeVersion >= 15)
+            {
+                stream.Write((ushort)ArrayDim);
+                stream.Write(_PropertyFlags);
+                stream.Write(_CategoryName);
+
+                if (stream.LicenseeVersion > 17)
+                {
+                    // Music? Some kind of alternative to category name
+                    UName v68 = default;
+                    stream.Write(v68);
+                }
+
+                return;
+            }
+#endif
+#if LEAD
+            if (stream.Build == BuildGeneration.Lead)
+            {
+                stream.Write((ushort)ArrayDim);
+                stream.Write(_PropertyFlags);
+
+                if (stream.LicenseeVersion >= 72)
+                {
+                    ushort v34 = 0;
+                    stream.Write(v34);
+                }
+
+                stream.Write(_CategoryName);
+
+                var v4c = UnrealName.None;
+                stream.Write(v4c);
+
+                if (stream.LicenseeVersion >= 4)
+                {
+                    stream.Write(EditorDataText ?? string.Empty);
+                }
+
+                if (stream.LicenseeVersion >= 11)
+                {
+                    uint v5c = 0;
+                    stream.Write(v5c);
+
+                    uint v60 = 0;
+                    stream.Write(v60);
+
+                    string v64 = string.Empty;
+                    stream.Write(v64);
+                }
+
+                if (stream.LicenseeVersion >= 101)
+                {
+                    var v7c = UnrealName.None;
+                    stream.Write(v7c);
+                }
+
+                return;
+            }
+#endif
+#if SWRepublicCommando
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                if (stream.Version < 137)
+                {
+                    stream.Write(NextField);
+                }
+
+                if (stream.Version >= 136)
+                {
+                    stream.Write((ushort)ArrayDim);
+
+                    goto skipArrayDim;
+                }
+            }
+#endif
+#if AA2
+            if (stream.Build == BuildGeneration.AGP &&
+                stream.LicenseeVersion >= 8)
+            {
+                uint aa2FixedPack = 26125;
+                stream.Write(aa2FixedPack);
+            }
+#endif
+#if XIII || DNF || MOV
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.XIII ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.DNF ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.MOV)
+            {
+                stream.Write((short)ArrayDim);
+
+                goto skipArrayDim;
+            }
+#endif
+            stream.Write(ArrayDim);
+        skipArrayDim:
+            ulong propertyFlags = PropertyFlags;
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits)
+            {
+                stream.Write(propertyFlags);
+            }
+            else
+            {
+                stream.Write((uint)propertyFlags);
+            }
+#if XCOM2
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.XCOM2WotC)
+            {
+                stream.Write(ConfigName ?? UnrealName.None);
+            }
+#endif
+#if THIEF_DS || DEUSEX_IW
+            if (stream.Build == BuildGeneration.Flesh)
+            {
+                uint deusFlags = 0;
+                stream.Write(deusFlags);
+            }
+#endif
+            if (stream.ContainsEditorOnlyData()
+#if MASS_EFFECT
+                || stream.Build == BuildGeneration.SFX
+#endif
+               )
+            {
+                if (stream.UE4Version < 160)
+                {
+                    stream.Write(CategoryName);
+                }
+
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty
+#if MIDWAY
+                    || stream.Build == UnrealPackage.GameBuild.BuildName.Stranglehold
+#endif
+                   )
+                {
+                    stream.Write(ArrayEnum);
+                }
+            }
+
+#if THIEF_DS || DEUSEX_IW
+            if (stream.Build == BuildGeneration.Flesh)
+            {
+                short deusInheritedOrRuntimeInstantiated = 0;
+                stream.Write(deusInheritedOrRuntimeInstantiated);
+                short deusUnkInt16 = 0;
+                stream.Write(deusUnkInt16);
+            }
+#endif
+#if BORDERLANDS
+            if (stream.Build == BuildGeneration.GB &&
+                stream.LicenseeVersion >= 2)
+            {
+                UObject va8 = null;
+                stream.Write(va8);
+                UObject vb0 = null;
+                stream.Write(vb0);
+            }
+#endif
+#if UE4
+            if (stream.IsUE4())
+            {
+                stream.Write(RepNotifyFuncName);
+
+                return;
+            }
+#endif
+            if (HasPropertyFlag(PropertyFlag.Net))
+            {
+                stream.Write(RepOffset);
+            }
+#if HUXLEY
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            {
+                UObject obj = null;
+                stream.Write(obj);
+            }
+#endif
+#if R6
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                string v0c = EditorDataText ?? string.Empty;
+                stream.Write(v0c);
+            }
+#endif
+#if ROCKETLEAGUE
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                stream.LicenseeVersion >= 11)
+            {
+                string vb8 = string.Empty;
+                stream.Write(vb8);
+            }
+#endif
+#if VENGEANCE
+            if (stream.Build == BuildGeneration.Vengeance)
+            {
+                var vengeanceEditComboType = UnrealName.None;
+                stream.Write(vengeanceEditComboType);
+                var vengeanceEditDisplay = UnrealName.None;
+                stream.Write(vengeanceEditDisplay);
+            }
+#endif
+#if DNF
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                if (HasAnyPropertyFlags(0x800000))
+                {
+                    stream.Write(EditorDataText ?? string.Empty);
+                }
+
+                if (stream.Version >= 118 && HasAnyPropertyFlags(0x2000000))
+                {
+                    stream.Write(RepNotifyFuncName);
+                }
+
+                return;
+            }
+#endif
+            if ((HasPropertyFlag(PropertyFlag.CommentString) &&
+                 (stream.Build == BuildGeneration.UE2_5
+                  || stream.Build == BuildGeneration.AGP
+                  || stream.Build == BuildGeneration.Flesh))
+#if VENGEANCE
+                || stream.Build == BuildGeneration.Vengeance
+#endif
+#if MOV
+                || stream.Build == UnrealPackage.GameBuild.BuildName.MOV
+#endif
+#if LSGAME
+                || (stream.Build == UnrealPackage.GameBuild.BuildName.LSGame &&
+                    stream.LicenseeVersion >= 3)
+#endif
+#if DEVASTATION
+                || stream.Build == UnrealPackage.GameBuild.BuildName.Devastation
+#endif
+               )
+            {
+                stream.Write(EditorDataText ?? string.Empty);
+            }
+#if SPELLBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Spellborn)
+            {
+                if (stream.Version < 157)
+                {
+                    throw new NotSupportedException("< 157 Spellborn packages are not supported");
+
+                    if (133 < stream.Version)
+                    {
+                        // idk
+                    }
+
+                    if (134 < stream.Version)
+                    {
+                        int unk32 = 0;
+                        stream.Write(unk32);
+                        ;
+                    }
+                }
+                else
+                {
+                    uint replicationFlags = 0;
+                    stream.Write(replicationFlags);
                 }
             }
 #endif
@@ -495,23 +778,19 @@ namespace UELib.Core
             return true;
         }
 
-        #endregion
-
-        #region Methods
-
-        [Obsolete("Use PropertyFlags directly")]
+        [Obsolete("Use HasAnyPropertyFlags")]
         public bool HasPropertyFlag(uint flag)
         {
             return ((uint)PropertyFlags & flag) != 0;
         }
 
-        [Obsolete("Use PropertyFlags directly")]
+        [Obsolete("Use HasAnyPropertyFlags or HasPropertyFlag")]
         public bool HasPropertyFlag(PropertyFlagsLO flag)
         {
             return ((uint)(PropertyFlags & 0x00000000FFFFFFFFU) & (uint)flag) != 0;
         }
 
-        [Obsolete("Use PropertyFlags directly")]
+        [Obsolete("Use HasAnyPropertyFlags or HasPropertyFlag")]
         public bool HasPropertyFlag(PropertyFlagsHO flag)
         {
             return (PropertyFlags & ((ulong)flag << 32)) != 0;
@@ -520,6 +799,11 @@ namespace UELib.Core
         internal bool HasPropertyFlag(PropertyFlag flagIndex)
         {
             return PropertyFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(PropertyFlag)], flagIndex);
+        }
+
+        public bool HasAnyPropertyFlags(ulong flag)
+        {
+            return (PropertyFlags & flag) != 0;
         }
 
         public bool IsParm()
