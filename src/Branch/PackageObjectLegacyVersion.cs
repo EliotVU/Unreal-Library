@@ -291,6 +291,11 @@ namespace UELib.Branch
 
         AddedAdditionalPackagesToCook = 516,
 
+        /// <summary>
+        ///     FIXME: Version, not versioned in any assembly; but, generally coincides with 541.
+        /// </summary>
+        ChangedUMetaDataObjectPathToReference = 541,
+
         ComponentMapDeprecated = 543,
 
         /// <summary>

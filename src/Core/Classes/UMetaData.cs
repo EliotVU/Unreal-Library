@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq;
+using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Core
 {
@@ -7,123 +10,123 @@ namespace UELib.Core
     ///     Implements UMetaData/Core.MetaData
     /// </summary>
     [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
     public sealed class UMetaData : UObject
     {
-        public sealed class UFieldData : IUnrealDecompilable, IUnrealSerializableClass
+        #region Serialized Members
+
+        [StreamRecord]
+        public UMap<ObjectMetaKey, ObjectTags> ObjectTagsMap { get; set; } = [];
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            private string _FieldName;
+            base.Deserialize(stream);
 
-            private UField _Field;
+            ObjectTagsMap = stream.ReadMap(stream.ReadStruct<ObjectMetaKey>, stream.ReadClass<ObjectTags>);
+            stream.Record(nameof(ObjectTagsMap), ObjectTagsMap);
 
-            // Dated qualified identifier to this meta data's field. e.g. UT3, Mirrors Edge
-            public UMap<string, string> Tags;
-
-            public void Serialize(IUnrealStream stream)
+            foreach (var pair in ObjectTagsMap)
             {
-                throw new NotImplementedException();
+                if (pair.Key.Object is UField field) field.MetaData = pair.Value;
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.WriteMap(ObjectTagsMap, stream.WriteStruct, stream.WriteClass);
+        }
+
+        public override string Decompile()
+        {
+            if (ShouldDeserializeOnDemand) Load();
+
+            return string.Join("\r\n", ObjectTagsMap.Select(pair => pair.Key + pair.Value.Decompile()));
+        }
+
+        public struct ObjectMetaKey : IUnrealSerializableClass
+        {
+            public UObject Object { get; private set; }
+
+            /// <summary>
+            ///     A path to the object, e.g. "Core.Object.X".
+            ///     Legacy support for versions before <see cref="PackageObjectLegacyVersion.ChangedUMetaDataObjectPathToReference" />
+            /// </summary>
+            private string? _LegacyObjectPath;
+
+            // ReSharper disable once ConvertToPrimaryConstructor
+            public ObjectMetaKey(UObject obj)
+            {
+                Object = obj ?? throw new ArgumentNullException(nameof(obj));
             }
 
             public void Deserialize(IUnrealStream stream)
             {
-                // FIXME: Unversioned
-                if (stream.Version <= 540)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.ChangedUMetaDataObjectPathToReference)
                 {
-                    // e.g. Core.Object.X
-                    _FieldName = stream.ReadString();
-                }
-                else
-                {
-                    // TODO: Possibly linked to a non-ufield?
-                    _Field = stream.ReadObject<UField>();
-                    _Field.MetaData = this;
+                    Object = stream.ReadObject<UObject>();
+
+                    return;
                 }
 
-                int length = stream.ReadInt32();
-                Tags = new UMap<string, string>(length);
-                for (var i = 0; i < length; ++i)
-                {
-                    var key = stream.ReadName();
-                    string value = stream.ReadString();
-                    Tags.Add(key.Name, value);
-                }
+                _LegacyObjectPath = stream.ReadString();
             }
 
-            public string Decompile()
+            public void Serialize(IUnrealStream stream)
             {
-                if (Tags.Count == 0)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.ChangedUMetaDataObjectPathToReference)
                 {
-                    return string.Empty;
+                    Contract.Assert(Object != null, "Cannot re-serialize from ObjectName to Object");
+                    stream.WriteObject(Object);
+
+                    return;
                 }
 
-                // Filter out compiler-generated tags
-                var tags = Tags
-                    .Where((tag) => tag.Key != "OrderIndex" && tag.Key != "ToolTip")
-                    .ToList()
-                    .ConvertAll((tag) => $"{tag.Key}={tag.Value}");
+                stream.WriteString(_LegacyObjectPath ?? Object.GetPath());
+            }
 
-                return tags.Count == 0 ? string.Empty : $"<{string.Join("|", tags)}>";
+            public override int GetHashCode()
+            {
+                return Object?.GetHashCode() ?? _LegacyObjectPath!.GetHashCode();
             }
 
             public override string ToString()
             {
-                return _Field != null ? _Field.GetPath() : _FieldName;
+                return Object?.GetPath() ?? _LegacyObjectPath!;
             }
         }
 
-        #region Serialized Members
-
-        private UArray<UFieldData> _Fields;
-
-        public UArray<UFieldData> Fields
+        public sealed class ObjectTags : IUnrealSerializableClass, IUnrealDecompilable
         {
-            get => _Fields;
-            set => _Fields = value;
-        }
+            public UMap<UName, string>? Tags { get; set; }
 
-        #endregion
-
-        #region Constructors
-
-        protected override void Deserialize()
-        {
-            base.Deserialize();
-
-            _Buffer.ReadArray(out _Fields);
-            Record(nameof(_Fields), _Fields);
-        }
-
-        #endregion
-
-        #region Decompilation
-
-        /// <summary>
-        /// Decompiles this object into a text format of:
-        ///
-        /// Meta Count _MetaFields.Count
-        ///
-        /// "ForEach _MetaFields"
-        ///
-        ///     fieldname+Field.Decompile()
-        /// </summary>
-        /// <returns></returns>
-        public override string Decompile()
-        {
-            // UE3 Debug
-            Load();
-            if (_Fields == null)
+            public void Deserialize(IUnrealStream stream)
             {
-                return "";
+                Tags = stream.ReadMap(stream.ReadName, stream.ReadString);
             }
 
-            return string.Join("\r\n", _Fields.ConvertAll(data => data + data.Decompile()));
-        }
+            public void Serialize(IUnrealStream stream)
+            {
+                stream.WriteMap(Tags, key => stream.WriteName(key), stream.WriteString);
+            }
 
-        #endregion
+            public string Decompile()
+            {
+                if (Tags == null || Tags.Count == 0) return string.Empty;
 
-        [Obsolete()]
-        public string GetUniqueMetas()
-        {
-            return "";
+                // Filter out compiler-generated tags
+                var tags = Tags
+                           .Where(tag => tag.Key != UnrealName.OrderIndex && tag.Key != UnrealName.Tooltip)
+                           .ToList()
+                           .ConvertAll(tag => $"{tag.Key}={tag.Value}");
+
+                return tags.Count == 0
+                    ? string.Empty
+                    : $"<{string.Join("|", tags)}>";
+            }
         }
     }
 }
