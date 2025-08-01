@@ -282,6 +282,16 @@ public static class UnrealStreamImplementations
         item.Deserialize(stream);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T ReadClass<T>(this IUnrealStream stream)
+        where T : class, IUnrealDeserializableClass, new()
+    {
+        var item = new T();
+        item.Deserialize(stream);
+
+        return item;
+    }
+
     // Can't seem to overload this :(
     public static unsafe void ReadArrayMarshal<T>(this IUnrealStream stream, out UArray<T> array, int count)
         where T : unmanaged, IUnrealAtomicStruct
@@ -496,6 +506,19 @@ public static class UnrealStreamImplementations
         {
             var element = new T();
             element.Deserialize(stream);
+            array.Add(element);
+        }
+
+        return array;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UArray<TValue> ReadArray<TValue>(this IUnrealStream stream, int count, Func<TValue> elementSelector)
+    {
+        var array = new UArray<TValue>(count);
+        for (int i = 0; i < count; ++i)
+        {
+            var element = elementSelector();
             array.Add(element);
         }
 
