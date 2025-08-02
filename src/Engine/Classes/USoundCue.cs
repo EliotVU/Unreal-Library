@@ -1,7 +1,10 @@
+using System;
 using UELib.Branch;
+using UELib.Core;
 using UELib.Flags;
+using UELib.ObjectModel.Annotations;
 
-namespace UELib.Core
+namespace UELib.Engine
 {
     /// <summary>
     ///     Implements USoundCue/Engine.SoundCue
@@ -10,6 +13,51 @@ namespace UELib.Core
     [BuildGeneration(BuildGeneration.UE3)]
     public class USoundCue : UObject
     {
+        #region Script Properties
+
+        [UnrealProperty]
+        public UObject?/*USoundNode*/ FirstNode { get; set; }
+
+        #endregion
+
+        #region Serialized Members
+
+        // Using ValueType to allow for null keys in the map.
+        [StreamRecord]
+        public UMap<ValueTuple<UObject?>/*USoundNode*/, NodeEditorData>? EditorData { get; set; }
+
+        #endregion
+
+        public USoundCue()
+        {
+            ShouldDeserializeOnDemand = true;
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked))
+            {
+                return;
+            }
+
+            stream.WriteMap(EditorData, key => stream.WriteObject(key.Item1), stream.WriteStruct);
+        }
+
+        public override void Deserialize(IUnrealStream stream)
+        {
+            base.Deserialize(stream);
+
+            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked))
+            {
+                return;
+            }
+
+            EditorData = stream.ReadMap(() => ValueTuple.Create(stream.ReadObject()), stream.ReadStruct<NodeEditorData>);
+            stream.Record(nameof(EditorData), EditorData);
+        }
+
         /// <summary>
         ///     Implements Engine.SoundCue.SoundNodeEditorData
         /// </summary>
@@ -28,74 +76,6 @@ namespace UELib.Core
                 stream.Write(X);
                 stream.Write(Y);
             }
-        }
-
-        // UnrealProperty
-        public UObject/*USoundNode*/ FirstNode;
-
-        #region Serialized Members
-
-        // Serialized
-        public UMap<UObject/*USoundNode*/, NodeEditorData>? EditorData { get; set; }
-
-        #endregion
-
-        public USoundCue()
-        {
-            ShouldDeserializeOnDemand = true;
-        }
-
-        public override void Serialize(IUnrealStream stream)
-        {
-            base.Serialize(stream);
-
-            if (Package.IsConsoleCooked())
-            {
-                return;
-            }
-
-            if (EditorData == null)
-            {
-                stream.Write(0);
-            }
-            else
-            {
-                stream.Write(EditorData.Count);
-                foreach (var editorData in EditorData)
-                {
-                    stream.Write(editorData.Key);
-                    var nodeEditorData = editorData.Value;
-                    stream.WriteStruct(ref nodeEditorData);
-                }
-            }
-        }
-
-        public override void Deserialize(IUnrealStream stream)
-        {
-            base.Deserialize(stream);
-
-            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked))
-            {
-                return;
-            }
-
-            int c = stream.ReadInt32();
-            EditorData = new UMap<UObject, NodeEditorData>(c);
-            for (int i = 0; i < c; ++i)
-            {
-                stream.Read(out UObject key);
-                stream.ReadStruct(out NodeEditorData value);
-
-                // Can be null sometimes.
-                if (key == null)
-                {
-                    continue;
-                }
-
-                EditorData.Add(key, value);
-            }
-
-            stream.Record(nameof(EditorData), EditorData);
         }
     }
 }

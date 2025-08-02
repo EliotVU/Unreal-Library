@@ -6,10 +6,6 @@ public class PackageSerializerUE4 : IPackageSerializer
 {
     private const int MaxNameLengthUE4 = 1024;
 
-    public void Serialize(IUnrealStream stream, IUnrealSerializableClass obj) => obj.Serialize(stream);
-
-    public void Deserialize(IUnrealStream stream, IUnrealDeserializableClass obj) => obj.Deserialize(stream);
-
     public void Serialize(IUnrealStream stream, UNameTableItem item)
     {
         stream.Write(item.Name);

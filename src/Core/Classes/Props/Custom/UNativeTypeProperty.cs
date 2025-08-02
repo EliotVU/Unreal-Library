@@ -1,4 +1,6 @@
-﻿#if MKKE
+﻿using UELib.ObjectModel.Annotations;
+
+#if MKKE
 namespace UELib.Core
 {
     /// <summary>
@@ -8,16 +10,25 @@ namespace UELib.Core
     public class UNativeTypeProperty : UProperty
     {
         #region Serialized Members
-        
+
+        [StreamRecord]
         public UName NativeTypeName { get; set; }
-        
+
         #endregion
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            NativeTypeName = _Buffer.ReadName();
+            NativeTypeName = stream.ReadName();
+            stream.Record(nameof(NativeTypeName), NativeTypeName);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.Write(NativeTypeName);
         }
 
         /// <inheritdoc/>

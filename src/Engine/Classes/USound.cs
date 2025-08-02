@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using UELib.Branch;
+using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
-namespace UELib.Core
+namespace UELib.Engine
 {
     /// <summary>
     ///     Implements USound/Engine.Sound
@@ -14,21 +17,21 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UName FileType { get; set; }
+        /// <summary>
+        ///     The sound type of <see cref="RawData"/>, e.g. 'WAV', 'OGG', etc.
+        /// </summary>
+        [StreamRecord]
+        public UName FileType { get; set; } = UnrealName.None;
 
         /// <summary>
-        /// The likely hood that this sound will be selected from an array of sounds, see "USoundGroup".
-        /// Null if not serialized.
+        ///     The likelihood that this sound will be selected from an array of sounds, when part of a <see cref="USoundGroup"/>.
+        ///     Null if not serialized.
         /// </summary>
+        [StreamRecord]
         public float? Likelihood { get; set; }
 
-        public UBulkData<byte> RawData
-        {
-            get => _RawData;
-            set => _RawData = value;
-        }
-
-        private UBulkData<byte> _RawData;
+        [StreamRecord]
+        public UBulkData<byte> RawData { get; set; }
 
         #endregion
 
@@ -41,7 +44,7 @@ namespace UELib.Core
 
         public bool CanExport()
         {
-            return Package.Stream != null && RawData.StorageSize > 0;
+            return RawData.StorageSize > 0;
         }
 
         public void SerializeExport(string desiredExportExtension, Stream exportStream)
@@ -52,59 +55,59 @@ namespace UELib.Core
             exportStream.Write(RawData.ElementData, 0, RawData.ElementData.Length);
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 #if SPLINTERCELLX
-            if (Package.Build == BuildGeneration.SCX)
+            if (stream.Build == BuildGeneration.SCX)
             {
                 // Always 0x0100BB00 but the first four digits appear to increment by 1 per object;
                 // -- BB00 is always the same for all sounds, but differs per package.
                 // Probably representing SoundFlags
-                _Buffer.Read(out uint v30);
-                Record(nameof(v30), v30);
+                stream.Read(out uint v30);
+                stream.Record(nameof(v30), v30);
 
-                if (_Buffer.LicenseeVersion < 31)
+                if (stream.LicenseeVersion < 31)
                 {
                     // bBinData?
                     // same as v40
-                    _Buffer.Read(out bool v04);
-                    Record(nameof(v04), v04);
+                    stream.Read(out bool v04);
+                    stream.Record(nameof(v04), v04);
 
                     // Relative path to the sound's .bin file
                     // same as v48
-                    _Buffer.Read(out string v1c);
-                    Record(nameof(v1c), v1c);
+                    stream.Read(out string v1c);
+                    stream.Record(nameof(v1c), v1c);
                 }
 
-                if (_Buffer.LicenseeVersion >= 72)
+                if (stream.LicenseeVersion >= 72)
                 {
                     // 0xFFFFFFFF
-                    _Buffer.Read(out int v38);
-                    Record(nameof(v38), v38);
+                    stream.Read(out int v38);
+                    stream.Record(nameof(v38), v38);
                 }
 
-                if (_Buffer.LicenseeVersion >= 98)
+                if (stream.LicenseeVersion >= 98)
                 {
-                    _Buffer.Read(out UObject v3c);
-                    Record(nameof(v3c), v3c);
+                    stream.Read(out UObject v3c);
+                    stream.Record(nameof(v3c), v3c);
                 }
 
-                if (_Buffer.LicenseeVersion >= 117)
+                if (stream.LicenseeVersion >= 117)
                 {
-                    _Buffer.Read(out int v44);
-                    Record(nameof(v44), v44);
+                    stream.Read(out int v44);
+                    stream.Record(nameof(v44), v44);
                 }
 
-                if (_Buffer.LicenseeVersion >= 81)
+                if (stream.LicenseeVersion >= 81)
                 {
                     // bBinData?
-                    _Buffer.Read(out bool v40);
-                    Record(nameof(v40), v40);
+                    stream.Read(out bool v40);
+                    stream.Record(nameof(v40), v40);
 
                     // Relative path to the sound's .bin file
-                    _Buffer.Read(out string v48);
-                    Record(nameof(v48), v48);
+                    stream.Read(out string v48);
+                    stream.Record(nameof(v48), v48);
 
                     // No native serialization, maybe as a ScriptProperty
                     // bLipsyncData?
@@ -112,41 +115,41 @@ namespace UELib.Core
                     if (v40 && v4c)
                     {
                         // lip-sync data path
-                        _Buffer.Read(out string dataPath);
-                        Record(nameof(dataPath), dataPath);
+                        stream.Read(out string dataPath);
+                        stream.Record(nameof(dataPath), dataPath);
                     }
                 }
 
-                if (_Buffer.LicenseeVersion > 0)
+                if (stream.LicenseeVersion > 0)
                 {
                     return;
                 }
             }
 #endif
-            FileType = _Buffer.ReadName();
-            Record(nameof(FileType), FileType);
+            FileType = stream.ReadName();
+            stream.Record(nameof(FileType), FileType);
 #if R6
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.R6RS)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.R6RS)
             {
                 // Same system as SCX
                 if (FileType == "DareEvent" || FileType == "DareGen")
                 {
-                    if (_Buffer.LicenseeVersion >= 3)
+                    if (stream.LicenseeVersion >= 3)
                     {
                         // same as SCX v30
-                        _Buffer.Read(out uint v68);
-                        Record(nameof(v68), v68);
+                        stream.Read(out uint v68);
+                        stream.Record(nameof(v68), v68);
                     }
 
-                    if (_Buffer.LicenseeVersion >= 8)
+                    if (stream.LicenseeVersion >= 8)
                     {
                         // bLipsyncData?
-                        _Buffer.Read(out bool v6c);
-                        Record(nameof(v6c), v6c);
+                        stream.Read(out bool v6c);
+                        stream.Record(nameof(v6c), v6c);
 
                         // path
-                        _Buffer.Read(out string v70);
-                        Record(nameof(v70), v70);
+                        stream.Read(out string v70);
+                        stream.Record(nameof(v70), v70);
 
                         if (v6c)
                         {
@@ -161,112 +164,209 @@ namespace UELib.Core
             }
 #endif
 #if HP
-            if (Package.Build == BuildGeneration.HP)
+            if (stream.Build == BuildGeneration.HP)
             {
-                _Buffer.Read(out uint flags);
-                Record(nameof(flags), flags);
-                _Buffer.Read(out float duration);
-                Record(nameof(duration), duration);
+                stream.Read(out uint flags);
+                stream.Record(nameof(flags), flags);
+                stream.Read(out float duration);
+                stream.Record(nameof(duration), duration);
 
-                if (_Buffer.Version >= 77)
+                if (stream.Version >= 77)
                 {
-                    _Buffer.Read(out int numSamples);
-                    Record(nameof(numSamples), numSamples);
+                    stream.Read(out int numSamples);
+                    stream.Record(nameof(numSamples), numSamples);
                 }
 
-                if (_Buffer.Version >= 78)
+                if (stream.Version >= 78)
                 {
-                    _Buffer.Read(out int bitsPerSample);
-                    Record(nameof(bitsPerSample), bitsPerSample);
-                    _Buffer.Read(out int numChannels);
-                    Record(nameof(numChannels), numChannels);
+                    stream.Read(out int bitsPerSample);
+                    stream.Record(nameof(bitsPerSample), bitsPerSample);
+                    stream.Read(out int numChannels);
+                    stream.Record(nameof(numChannels), numChannels);
                 }
 
-                if (_Buffer.Version >= 79)
+                if (stream.Version >= 79)
                 {
-                    _Buffer.Read(out int sampleRate);
-                    Record(nameof(sampleRate), sampleRate);
+                    stream.Read(out int sampleRate);
+                    stream.Record(nameof(sampleRate), sampleRate);
                 }
             }
 #endif
 #if UNDYING
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying)
             {
-                if (_Buffer.Version >= 77)
+                if (stream.Version >= 77)
                 {
-                    _Buffer.Read(out int v7c);
-                    Record(nameof(v7c), v7c);
-                    _Buffer.Read(out int v74);
-                    Record(nameof(v74), v74);
-                    _Buffer.Read(out float v6c);
-                    Record(nameof(v6c), v6c);
+                    stream.Read(out int v7c);
+                    stream.Record(nameof(v7c), v7c);
+                    stream.Read(out int v74);
+                    stream.Record(nameof(v74), v74);
+                    stream.Read(out float v6c);
+                    stream.Record(nameof(v6c), v6c);
                 }
 
-                if (_Buffer.Version >= 79)
+                if (stream.Version >= 79)
                 {
-                    _Buffer.Read(out uint v78);
-                    Record(nameof(v78), v78);
-                    _Buffer.Read(out float v68); // Radius?
-                    Record(nameof(v68), v68);
+                    stream.Read(out uint v78);
+                    stream.Record(nameof(v78), v78);
+                    stream.Read(out float v68); // Radius?
+                    stream.Record(nameof(v68), v68);
                 }
 
-                if (_Buffer.Version >= 80)
+                if (stream.Version >= 80)
                 {
-                    _Buffer.Read(out float v80);
-                    Record(nameof(v80), v80);
+                    stream.Read(out float v80);
+                    stream.Record(nameof(v80), v80);
                 }
 
-                if (_Buffer.Version >= 82)
+                if (stream.Version >= 82)
                 {
-                    _Buffer.Read(out int v84);
-                    Record(nameof(v84), v84);
+                    stream.Read(out int v84);
+                    stream.Record(nameof(v84), v84);
                 }
             }
 #endif
 #if DEVASTATION
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Devastation
-                && _Buffer.LicenseeVersion >= 6
-                && _Buffer.LicenseeVersion < 8)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Devastation
+                && stream.LicenseeVersion is >= 6 and < 8)
             {
                 // l14
-                Likelihood = _Buffer.ReadFloat();
-                Record(nameof(Likelihood), Likelihood);
+                Likelihood = stream.ReadFloat();
+                stream.Record(nameof(Likelihood), Likelihood);
             }
 #endif
 #if UT
-            if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
-                 Package.Build == UnrealPackage.GameBuild.BuildName.UT2003)
-                && _Buffer.LicenseeVersion >= 2)
+            if ((stream.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
+                 stream.Build == UnrealPackage.GameBuild.BuildName.UT2003)
+                && stream.LicenseeVersion >= 2)
             {
-                Likelihood = _Buffer.ReadFloat();
-                Record(nameof(Likelihood), Likelihood);
+                Likelihood = stream.ReadFloat();
+                stream.Record(nameof(Likelihood), Likelihood);
             }
 #endif
             // Resource Interchange File Format
-            _Buffer.Read(out _RawData);
-            Record(nameof(RawData), RawData);
+            RawData = stream.ReadStruct<UBulkData<byte>>();
+            stream.Record(nameof(RawData), RawData);
 #if UNDYING
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying)
             {
-                if (_Buffer.Version >= 76)
+                if (stream.Version >= 76)
                 {
-                    _Buffer.Read(out uint v5c);
-                    Record(nameof(v5c), v5c);
+                    stream.Read(out uint v5c);
+                    stream.Record(nameof(v5c), v5c);
 
-                    int undyingExtraDataLength = _Buffer.ReadIndex();
-                    Record(nameof(undyingExtraDataLength), undyingExtraDataLength);
+                    int undyingExtraDataLength = stream.ReadIndex();
+                    stream.Record(nameof(undyingExtraDataLength), undyingExtraDataLength);
                     if (undyingExtraDataLength > 0)
                     {
                         var undyingExtraData = new byte[undyingExtraDataLength];
-                        _Buffer.Read(undyingExtraData, 0, undyingExtraDataLength);
-                        Record(nameof(undyingExtraData), undyingExtraData);
+                        stream.Read(undyingExtraData, 0, undyingExtraDataLength);
+                        stream.Record(nameof(undyingExtraData), undyingExtraData);
                     }
                 }
 
-                if (_Buffer.Version >= 85)
+                if (stream.Version >= 85)
                 {
-                    _Buffer.Read(out uint v8c);
-                    Record(nameof(v8c), v8c);
+                    stream.Read(out uint v8c);
+                    stream.Record(nameof(v8c), v8c);
+                }
+            }
+#endif
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+#if SPLINTERCELLX
+            if (stream.Build == BuildGeneration.SCX)
+            {
+                throw new NotSupportedException("This package version is not supported!");
+
+                if (stream.LicenseeVersion > 0)
+                {
+                    return;
+                }
+            }
+#endif
+            stream.Write(FileType);
+#if R6
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.R6RS)
+            {
+                // Same system as SCX
+                if (FileType == "DareEvent" || FileType == "DareGen")
+                {
+                    if (stream.LicenseeVersion >= 3)
+                    {
+                        throw new NotSupportedException("This package version is not supported!");
+                    }
+
+                    if (stream.LicenseeVersion >= 8)
+                    {
+                        throw new NotSupportedException("This package version is not supported!");
+                    }
+
+                    return;
+                }
+            }
+#endif
+#if HP
+            if (stream.Build == BuildGeneration.HP)
+            {
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#endif
+#if UNDYING
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying)
+            {
+                if (stream.Version >= 77)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+
+                if (stream.Version >= 79)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+
+                if (stream.Version >= 80)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+
+                if (stream.Version >= 82)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+            }
+#endif
+#if DEVASTATION
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Devastation
+                && stream.LicenseeVersion is >= 6 and < 8)
+            {
+                // l14
+                stream.Write(Likelihood.Value);
+            }
+#endif
+#if UT
+            if ((stream.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
+                 stream.Build == UnrealPackage.GameBuild.BuildName.UT2003)
+                && stream.LicenseeVersion >= 2)
+            {
+                stream.Write(Likelihood.Value);
+            }
+#endif
+            stream.WriteStruct(RawData);
+#if UNDYING
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying)
+            {
+                if (stream.Version >= 76)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+
+                if (stream.Version >= 85)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
                 }
             }
 #endif

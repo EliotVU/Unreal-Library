@@ -8,7 +8,5 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UProcBuildingRuleset : UObject
-    {
-    }
+    public class UProcBuildingRuleset : UObject;
 }

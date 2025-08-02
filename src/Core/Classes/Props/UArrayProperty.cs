@@ -1,4 +1,7 @@
+using System;
+using System.Diagnostics;
 using UELib.Branch.UE2.Eon;
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -11,33 +14,49 @@ namespace UELib.Core
     {
         #region Serialized Members
 
+        /// <summary>
+        ///     The property that defines the type of elements in the array.
+        /// </summary>
+        [StreamRecord]
         public UProperty InnerProperty { get; set; }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UArrayProperty class.
-        /// </summary>
         public UArrayProperty()
         {
             Type = PropertyType.ArrayProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 #if ADVENT
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent)
             {
-                InnerProperty = EonEngineBranch.SerializeFProperty<UProperty>(_Buffer)!;
+                InnerProperty = EonEngineBranch.DeserializeFProperty<UProperty>(stream)!;
+
                 return;
             }
 #endif
-            InnerProperty = _Buffer.ReadObject<UProperty>();
-            Record(nameof(InnerProperty), InnerProperty);
+            InnerProperty = stream.ReadObject<UProperty>();
+            stream.Record(nameof(InnerProperty), InnerProperty);
+
+            Debug.Assert(InnerProperty != null);
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+#if ADVENT
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#endif
+            Debug.Assert(InnerProperty != null);
+            stream.Write(InnerProperty);
+        }
+
         public override string GetFriendlyType()
         {
             return $"array<{GetFriendlyInnerType()}>";
@@ -51,7 +70,8 @@ namespace UELib.Core
                 return "@NULL";
             }
 
-            return InnerProperty.Type == PropertyType.ClassProperty || InnerProperty.Type == PropertyType.DelegateProperty
+            return InnerProperty.Type == PropertyType.ClassProperty ||
+                   InnerProperty.Type == PropertyType.DelegateProperty
                 ? $" {InnerProperty.FormatFlags()}{InnerProperty.GetFriendlyType()} "
                 : InnerProperty.FormatFlags() + InnerProperty.GetFriendlyType();
         }

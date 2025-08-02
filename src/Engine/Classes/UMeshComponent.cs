@@ -7,72 +7,56 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UMeshComponent : UPrimitiveComponent
-    {
-    }
+    public class UMeshComponent : UPrimitiveComponent;
 
     /// <summary>
     ///     Implements USkeletalMeshComponent/Engine.SkeletalMeshComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USkeletalMeshComponent : UMeshComponent
-    {
-    }
+    public class USkeletalMeshComponent : UMeshComponent;
 
     /// <summary>
     ///     Implements UStaticMeshComponent/Engine.StaticMeshComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UStaticMeshComponent : UMeshComponent
-    {
-    }
+    public class UStaticMeshComponent : UMeshComponent;
 
     /// <summary>
     ///     Implements UFracturedBaseComponent/Engine.FracturedBaseComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UFracturedBaseComponent : UStaticMeshComponent
-    {
-    }
+    public class UFracturedBaseComponent : UStaticMeshComponent;
 
     /// <summary>
     ///     Implements UFracturedSkinnedMeshComponent/Engine.FracturedSkinnedMeshComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UFracturedSkinnedMeshComponent : UFracturedBaseComponent
-    {
-    }
+    public class UFracturedSkinnedMeshComponent : UFracturedBaseComponent;
 
     /// <summary>
     ///     Implements UFracturedStaticMeshComponent/Engine.FracturedStaticMeshComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UFracturedStaticMeshComponent : UFracturedBaseComponent
-    {
-    }
+    public class UFracturedStaticMeshComponent : UFracturedBaseComponent;
 
     /// <summary>
     ///     Implements UImageBasedReflectionComponent/Engine.ImageBasedReflectionComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UImageBasedReflectionComponent : UStaticMeshComponent
-    {
-    }
+    public class UImageBasedReflectionComponent : UStaticMeshComponent;
 
     /// <summary>
     ///     Implements UInstancedStaticMeshComponent/Engine.InstancedStaticMeshComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UInstancedStaticMeshComponent : UStaticMeshComponent
-    {
-    }
+    public class UInstancedStaticMeshComponent : UStaticMeshComponent;
 
 
     /// <summary>
@@ -80,16 +64,12 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UInteractiveFoliageComponent : UStaticMeshComponent
-    {
-    }
+    public class UInteractiveFoliageComponent : UStaticMeshComponent;
 
     /// <summary>
     ///     Implements USplineMeshComponent/Engine.SplineMeshComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USplineMeshComponent : UStaticMeshComponent
-    {
-    }
+    public class USplineMeshComponent : UStaticMeshComponent;
 }

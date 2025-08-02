@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using UELib.Flags;
+using System.Runtime.CompilerServices;
 using UELib.Branch;
+using UELib.Flags;
+using UELib.IO;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Core
 {
@@ -22,130 +25,204 @@ namespace UELib.Core
         #region Serialized Members
 
         /// <summary>
-        /// Mask of current functions being probed by this class.
+        ///     A mask of functions being probed by this state.
         /// </summary>
+        [StreamRecord]
         public ulong ProbeMask { get; set; }
 
         /// <summary>
-        /// Mask of current functions being ignored by the present state node.
+        ///     A mask of functions being ignored by this state.
         /// </summary>
+        [StreamRecord]
         public ulong IgnoreMask { get; set; }
 
         /// <summary>
-        /// Offset into the ScriptStack where the FLabelEntry persist.
+        ///     Offset in the script to get to the <see cref="UStruct.UByteCodeDecompiler.LabelTableToken" /> token.
         /// </summary>
+        [StreamRecord]
         public ushort LabelTableOffset { get; private set; }
 
         /// <summary>
-        /// The state flags.
+        ///     The state flags for this state.
         /// </summary>
+        [StreamRecord]
         public UnrealFlags<StateFlag> StateFlags { get; set; }
 
         /// <summary>
-        /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.AddedFuncMapToUState"/>
+        ///     A virtual-call function map for this state.
+        ///     This maps the name of a <see cref="UStruct.UByteCodeDecompiler.VirtualFunctionToken" /> to the actual function.
+        ///     Always null if version is lower than <see cref="PackageObjectLegacyVersion.AddedFuncMapToUState" />
         /// </summary>
-        public UMap<UName, UFunction> FuncMap
-        {
-            get => _FuncMap;
-            set => _FuncMap = value;
-        }
-
-        private UMap<UName, UFunction> _FuncMap;
+        [StreamRecord]
+        public UMap<UName, UFunction>? FuncMap { get; set; }
 
         #endregion
-
-        #region Script Members
 
         [Obsolete("Use EnumerateFields")]
         public IEnumerable<UFunction> Functions => EnumerateFields<UFunction>();
 
-        #endregion
-
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 #if UE4
-            if (_Buffer.UE4Version > 0)
+            if (stream.IsUE4())
             {
                 return;
             }
 #endif
 #if TRANSFORMERS
-            if (Package.Build == BuildGeneration.HMS)
+            if (stream.Build == BuildGeneration.HMS)
             {
                 goto noMasks;
             }
 #endif
-
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved)
             {
-                ProbeMask = _Buffer.ReadUInt64();
-                Record(nameof(ProbeMask), ProbeMask);
+                ProbeMask = stream.ReadUInt64();
+                stream.Record(nameof(ProbeMask), ProbeMask);
 
-                IgnoreMask = _Buffer.ReadUInt64();
-                Record(nameof(IgnoreMask), IgnoreMask);
+                IgnoreMask = stream.ReadUInt64();
+                stream.Record(nameof(IgnoreMask), IgnoreMask);
             }
             else
             {
-                ProbeMask = _Buffer.ReadUInt32();
-                Record(nameof(ProbeMask), ProbeMask);
+                ProbeMask = stream.ReadUInt32();
+                stream.Record(nameof(ProbeMask), ProbeMask);
             }
 
         noMasks:
-            LabelTableOffset = _Buffer.ReadUInt16();
-            Record(nameof(LabelTableOffset), LabelTableOffset);
+            LabelTableOffset = stream.ReadUInt16();
+            stream.Record(nameof(LabelTableOffset), LabelTableOffset);
 
 #if BORDERLANDS2 || TRANSFORMERS || BATMAN
             // FIXME:Temp fix
-            if ((Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                 Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
-                 _Buffer.LicenseeVersion >= 18) ||
-                Package.Build == BuildGeneration.HMS ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn && stream.LicenseeVersion >= 18) ||
+                stream.Build == BuildGeneration.HMS ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
-                StateFlags = new UnrealFlags<StateFlag>(_Buffer.ReadUShort(), _Buffer.Package.Branch.EnumFlagsMap[typeof(StateFlag)]);
+                ushort flags = stream.ReadUShort();
+                StateFlags = new UnrealFlags<StateFlag>(flags, stream.Package.Branch.EnumFlagsMap[typeof(StateFlag)]);
+
                 goto skipStateFlags;
             }
 #endif
-            StateFlags = _Buffer.ReadFlags32<StateFlag>();
+            StateFlags = stream.ReadFlags32<StateFlag>();
         skipStateFlags:
-            Record(nameof(StateFlags), StateFlags);
+            stream.Record(nameof(StateFlags), StateFlags);
 #if TRANSFORMERS
-            if (Package.Build == BuildGeneration.HMS)
+            if (stream.Build == BuildGeneration.HMS)
             {
-                _Buffer.Skip(4);
-                _Buffer.ConformRecordPosition();
+                stream.Skip(4);
+                stream.ConformRecordPosition();
+
                 return;
             }
 #endif
 #if ADVENT
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Advent &&
-                _Buffer.Version >= 134)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                stream.Version >= 134)
             {
-                _Buffer.ReadMap(out _FuncMap);
-                Record(nameof(FuncMap), FuncMap);
+                FuncMap = stream.ReadMap(stream.ReadName, stream.ReadObject<UFunction>);
+                stream.Record(nameof(FuncMap), FuncMap);
 
                 return;
             }
 #endif
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.AddedFuncMapToUState)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.AddedFuncMapToUState)
             {
                 return;
             }
 
-            _Buffer.ReadMap(out _FuncMap);
-            Record(nameof(FuncMap), FuncMap);
+            FuncMap = stream.ReadMap(stream.ReadName, stream.ReadObject<UFunction>);
+            stream.Record(nameof(FuncMap), FuncMap);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+#if UE4
+            if (stream.IsUE4())
+            {
+                return;
+            }
+#endif
+#if TRANSFORMERS
+            if (stream.Build == BuildGeneration.HMS)
+            {
+                goto noMasks;
+            }
+#endif
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved)
+            {
+                stream.Write(ProbeMask);
+                stream.Write(IgnoreMask);
+            }
+            else
+            {
+                stream.Write((uint)ProbeMask);
+            }
+
+        noMasks:
+            stream.Write(LabelTableOffset);
+#if BORDERLANDS2 || TRANSFORMERS || BATMAN
+            // FIXME:Temp fix
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn && stream.LicenseeVersion >= 18) ||
+                stream.Build == BuildGeneration.HMS ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            {
+                stream.Write(StateFlags);
+
+                goto skipStateFlags;
+            }
+#endif
+            stream.Write((uint)StateFlags);
+        skipStateFlags:
+#if TRANSFORMERS
+            if (stream.Build == BuildGeneration.HMS)
+            {
+                stream.Skip(4);
+                throw new NotSupportedException("This package version is not supported!");
+
+                return;
+            }
+#endif
+#if ADVENT
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent &&
+                stream.Version >= 134)
+            {
+                stream.WriteMap(FuncMap);
+
+                return;
+            }
+#endif
+            if (stream.Version < (uint)PackageObjectLegacyVersion.AddedFuncMapToUState)
+            {
+                return;
+            }
+
+            stream.WriteMap(FuncMap);
         }
 
         [Obsolete("Use StateFlags directly.")]
-        public bool HasStateFlag(StateFlags flag) => (StateFlags & (uint)flag) != 0;
+        public bool HasStateFlag(StateFlags flag)
+        {
+            return (StateFlags & (uint)flag) != 0;
+        }
 
         [Obsolete("Use StateFlags directly.")]
-        public bool HasStateFlag(uint flag) => (StateFlags & flag) != 0;
+        public bool HasStateFlag(uint flag)
+        {
+            return (StateFlags & flag) != 0;
+        }
 
         internal bool HasStateFlag(StateFlag flagIndex)
         {
             return StateFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(StateFlag)], flagIndex);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasAnyStateFlags(ulong flag) => (StateFlags & flag) != 0;
     }
 }

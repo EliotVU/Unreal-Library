@@ -4,6 +4,7 @@ using System.IO;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Flags;
+using UELib.IO;
 using UELib.Services;
 
 namespace UELib
@@ -83,7 +84,7 @@ namespace UELib
         /// or higher than <see cref="PackageObjectLegacyVersion.ComponentMapDeprecated"/>
         /// </summary>
         [BuildGeneration(BuildGeneration.UE3)]
-        public UMap<UName, UPackageIndex> ComponentMap;
+        public UMap<UName, UPackageIndex>? ComponentMap;
 
         /// <summary>
         /// The count of net objects for each generation <see cref="UGenerationTableItem.NetObjectCount"/> in this (exported) package.
@@ -91,7 +92,7 @@ namespace UELib
         /// Always null if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/>
         /// </summary>
         [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
-        public UArray<int> GenerationNetObjectCount;
+        public UArray<int>? GenerationNetObjectCount;
 
         /// <summary>
         /// The <see cref="UnrealPackage.PackageFileSummary.Guid"/> of the package that this object was exported from.
@@ -119,6 +120,188 @@ namespace UELib
         [BuildGeneration(BuildGeneration.UE4)] public int CreateBeforeCreateDependencies;
 
         /// <summary>
+        /// Deserializes the export from a stream.
+        /// 
+        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UExportTableItem)"/>
+        /// </summary>
+        /// <param name="stream">The input stream</param>
+        public void Deserialize(IUnrealStream stream)
+        {
+            stream.Read(out _ClassIndex);
+            stream.Read(out _SuperIndex);
+            // version >= 50
+            _OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
+#if BIOSHOCK
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+                stream.Version >= 132)
+            {
+                stream.Skip(sizeof(int));
+            }
+#endif
+            _ObjectName = stream.ReadName();
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+            {
+                _ArchetypeIndex = stream.ReadInt32();
+            }
+#if BATMAN
+            if (stream.Build == BuildGeneration.RSS && stream.LicenseeVersion > 21)
+            {
+                stream.Skip(sizeof(int));
+            }
+#endif
+#if BIOSHOCK
+            // Like UE3 but without the shifting of flags
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+                stream.LicenseeVersion >= 40)
+            {
+                ObjectFlags = stream.ReadUInt64();
+
+                goto streamSerialSize;
+            }
+#endif
+#if LEAD
+            if (stream.Build == BuildGeneration.Lead &&
+                stream.LicenseeVersion >= 93)
+            {
+                ObjectFlags = stream.ReadUInt64();
+
+                goto streamSerialSize;
+            }
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
+            {
+                ObjectFlags = stream.ReadUInt64();
+                if (stream.IsBigEndianness())
+                {
+                    ObjectFlags = (ObjectFlags << 32) | (ObjectFlags >> 32);
+                }
+                else
+                {
+                    ObjectFlags = (ObjectFlags >> 32) | (ObjectFlags << 32);
+                }
+            }
+            else
+            {
+                ObjectFlags = stream.ReadUInt32();
+            }
+
+        streamSerialSize:
+            SerialSize = stream.ReadIndex();
+#if ROCKETLEAGUE
+            // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
+
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                stream.LicenseeVersion >= 22)
+            {
+                SerialOffset = (int)stream.ReadInt64();
+
+                goto streamExportFlags;
+            }
+#endif
+            if (SerialSize > 0 || stream.Version >= (uint)PackageObjectLegacyVersion.SerialSizeConditionRemoved)
+            {
+                SerialOffset = stream.ReadIndex();
+            }
+#if BIOSHOCK
+            // Overlaps with Tribes: Vengeance (130)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+                stream.Version >= 130)
+            {
+                stream.Skip(sizeof(int));
+            }
+#endif
+#if HUXLEY
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            {
+                if (stream.LicenseeVersion >= 22)
+                {
+                    stream.Read(out int serialSize2);
+                }
+            }
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports &&
+                stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
+#if ALPHAPROTOCOL
+                && stream.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
+#endif
+#if TRANSFORMERS
+                && (stream.Build != BuildGeneration.HMS ||
+                    stream.LicenseeVersion < 37)
+#endif
+               )
+            {
+                stream.Read(out int componentCount);
+                ComponentMap = new UMap<UName, UPackageIndex>(componentCount);
+                for (int i = 0; i < componentCount; ++i)
+                {
+                    stream.Read(out UName key);
+                    stream.Read(out int value);
+                    ComponentMap.Add(key, value);
+                }
+            }
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ExportFlagsAddedToExports)
+            {
+                return;
+            }
+
+        streamExportFlags:
+            ExportFlags = stream.ReadUInt32();
+            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded)
+            {
+                return;
+            }
+#if TRANSFORMERS
+            if (stream.Build == BuildGeneration.HMS &&
+                stream.LicenseeVersion >= 116)
+            {
+                byte flag = stream.ReadByte();
+                if (flag == 0)
+                {
+                    return;
+                }
+            }
+#endif
+#if BIOSHOCK
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite)
+            {
+                uint unk = stream.ReadUInt32();
+                if (unk != 1)
+                {
+                    return;
+                }
+
+                uint flags = stream.ReadUInt32();
+                if ((flags & 1) != 0x0)
+                {
+                    // NetObjectCount?
+                    stream.ReadUInt32();
+                }
+
+                // Some kind of guid, maybe package?
+                stream.ReadStruct(out PackageGuid);
+                stream.Read(out PackageFlags); // 01000020
+
+                return;
+            }
+#endif
+#if MKKE
+            if (stream.Build != UnrealPackage.GameBuild.BuildName.MKKE)
+            {
+#endif
+                stream.ReadArray(out GenerationNetObjectCount);
+#if MKKE
+            }
+#endif
+            stream.ReadStruct(out PackageGuid);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports)
+            {
+                stream.Read(out PackageFlags);
+            }
+        }
+
+        /// <summary>
         /// Serializes the export to a stream.
         /// 
         /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UExportTableItem)"/>
@@ -129,9 +312,10 @@ namespace UELib
             stream.Write(_ClassIndex);
             stream.Write(_SuperIndex);
             // version >= 50
-            stream.Write((int)_OuterIndex); // Never serialize it as an index, it must be written as 32 bits regardless of build.
+            stream.Write(
+                (int)_OuterIndex); // Never serialize it as an index, it must be written as 32 bits regardless of build.
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.Version >= 132)
             {
                 LibServices.LogService.SilentException(
@@ -147,7 +331,7 @@ namespace UELib
                 stream.Write((int)_ArchetypeIndex);
             }
 #if BATMAN
-            if (stream.Package.Build == BuildGeneration.RSS)
+            if (stream.Build == BuildGeneration.RSS)
             {
                 LibServices.LogService.SilentException(
                     new NotSupportedException("Missing an integer at " + stream.Position));
@@ -156,7 +340,7 @@ namespace UELib
             }
 #endif
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.LicenseeVersion >= 40)
             {
                 stream.Write(ObjectFlags);
@@ -165,7 +349,7 @@ namespace UELib
             }
 #endif
 #if LEAD
-            if (stream.Package.Build == BuildGeneration.Lead &&
+            if (stream.Build == BuildGeneration.Lead &&
                 stream.LicenseeVersion >= 93)
             {
                 stream.Write(ObjectFlags);
@@ -175,7 +359,7 @@ namespace UELib
 #endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
             {
-                if (stream.BigEndianCode)
+                if (stream.IsBigEndianness())
                 {
                     ulong shiftedFlags = (ObjectFlags << 32) | (ObjectFlags >> 32);
                     stream.Write(shiftedFlags);
@@ -196,7 +380,7 @@ namespace UELib
 #if ROCKETLEAGUE
             // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
 
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                 stream.LicenseeVersion >= 22)
             {
                 stream.Write((long)SerialOffset);
@@ -211,7 +395,7 @@ namespace UELib
             }
 #if BIOSHOCK
             // Overlaps with Tribes: Vengeance (130)
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
                 stream.Version >= 130)
             {
                 LibServices.LogService.SilentException(
@@ -220,7 +404,7 @@ namespace UELib
             }
 #endif
 #if HUXLEY
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {
                 if (stream.LicenseeVersion >= 22)
                 {
@@ -233,10 +417,10 @@ namespace UELib
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports &&
                 stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
 #if ALPHAPROTOCOL
-                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
+                && stream.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
 #endif
 #if TRANSFORMERS
-                && (stream.Package.Build != BuildGeneration.HMS ||
+                && (stream.Build != BuildGeneration.HMS ||
                     stream.LicenseeVersion < 37)
 #endif
                )
@@ -269,7 +453,7 @@ namespace UELib
                 return;
             }
 #if TRANSFORMERS
-            if (stream.Package.Build == BuildGeneration.HMS &&
+            if (stream.Build == BuildGeneration.HMS &&
                 stream.LicenseeVersion >= 116)
             {
                 LibServices.LogService.SilentException(
@@ -285,7 +469,7 @@ namespace UELib
             }
 #endif
 #if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite)
             {
                 LibServices.LogService.SilentException(new NotSupportedException("Missing data at " + stream.Position));
 
@@ -314,7 +498,7 @@ namespace UELib
             }
 #endif
 #if MKKE
-            if (stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
+            if (stream.Build != UnrealPackage.GameBuild.BuildName.MKKE)
             {
 #endif
                 stream.WriteArray(GenerationNetObjectCount);
@@ -326,189 +510,6 @@ namespace UELib
             if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports)
             {
                 stream.Write((uint)PackageFlags);
-            }
-        }
-
-        /// <summary>
-        /// Deserializes the export from a stream.
-        /// 
-        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UExportTableItem)"/>
-        /// </summary>
-        /// <param name="stream">The input stream</param>
-        public void Deserialize(IUnrealStream stream)
-        {
-            stream.Read(out _ClassIndex);
-            stream.Read(out _SuperIndex);
-            // version >= 50
-            _OuterIndex = stream.ReadInt32(); // ObjectIndex, though always written as 32bits regardless of build.
-#if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
-                stream.Version >= 132)
-            {
-                stream.Skip(sizeof(int));
-            }
-#endif
-            _ObjectName = stream.ReadName();
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
-            {
-                _ArchetypeIndex = stream.ReadInt32();
-            }
-#if BATMAN
-            if (stream.Package.Build == BuildGeneration.RSS && stream.LicenseeVersion > 21)
-            {
-                stream.Skip(sizeof(int));
-            }
-#endif
-            _ObjectFlagsOffset = stream.Position;
-#if BIOSHOCK
-            // Like UE3 but without the shifting of flags
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
-                stream.LicenseeVersion >= 40)
-            {
-                ObjectFlags = stream.ReadUInt64();
-
-                goto streamSerialSize;
-            }
-#endif
-#if LEAD
-            if (stream.Package.Build == BuildGeneration.Lead &&
-                stream.LicenseeVersion >= 93)
-            {
-                ObjectFlags = stream.ReadUInt64();
-
-                goto streamSerialSize;
-            }
-#endif
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
-            {
-                ObjectFlags = stream.ReadUInt64();
-                if (stream.BigEndianCode)
-                {
-                    ObjectFlags = (ObjectFlags << 32) | (ObjectFlags >> 32);
-                }
-                else
-                {
-                    ObjectFlags = (ObjectFlags >> 32) | (ObjectFlags << 32);
-                }
-            }
-            else
-            {
-                ObjectFlags = stream.ReadUInt32();
-            }
-
-        streamSerialSize:
-            SerialSize = stream.ReadIndex();
-#if ROCKETLEAGUE
-            // FIXME: Can't change SerialOffset to 64bit due UE Explorer.
-
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
-                stream.LicenseeVersion >= 22)
-            {
-                SerialOffset = (int)stream.ReadInt64();
-
-                goto streamExportFlags;
-            }
-#endif
-            if (SerialSize > 0 || stream.Version >= (uint)PackageObjectLegacyVersion.SerialSizeConditionRemoved)
-            {
-                SerialOffset = stream.ReadIndex();
-            }
-#if BIOSHOCK
-            // Overlaps with Tribes: Vengeance (130)
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.BioShock &&
-                stream.Version >= 130)
-            {
-                stream.Skip(sizeof(int));
-            }
-#endif
-#if HUXLEY
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
-            {
-                if (stream.LicenseeVersion >= 22)
-                {
-                    stream.Read(out int serialSize2);
-                }
-            }
-#endif
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedComponentMapToExports &&
-                stream.Version < (uint)PackageObjectLegacyVersion.ComponentMapDeprecated
-#if ALPHAPROTOCOL
-                && stream.Package.Build != UnrealPackage.GameBuild.BuildName.AlphaProtocol
-#endif
-#if TRANSFORMERS
-                && (stream.Package.Build != BuildGeneration.HMS ||
-                    stream.LicenseeVersion < 37)
-#endif
-               )
-            {
-                stream.Read(out int componentCount);
-                ComponentMap = new UMap<UName, UPackageIndex>(componentCount);
-                for (int i = 0; i < componentCount; ++i)
-                {
-                    stream.Read(out UName key);
-                    stream.Read(out int value);
-                    ComponentMap.Add(key, value);
-                }
-            }
-
-            if (stream.Version < (uint)PackageObjectLegacyVersion.ExportFlagsAddedToExports)
-            {
-                return;
-            }
-
-        streamExportFlags:
-            ExportFlags = stream.ReadUInt32();
-            if (stream.Version < (uint)PackageObjectLegacyVersion.NetObjectCountAdded)
-            {
-                return;
-            }
-#if TRANSFORMERS
-            if (stream.Package.Build == BuildGeneration.HMS &&
-                stream.LicenseeVersion >= 116)
-            {
-                byte flag = stream.ReadByte();
-                if (flag == 0)
-                {
-                    return;
-                }
-            }
-#endif
-#if BIOSHOCK
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.Bioshock_Infinite)
-            {
-                uint unk = stream.ReadUInt32();
-                if (unk != 1)
-                {
-                    return;
-                }
-
-                uint flags = stream.ReadUInt32();
-                if ((flags & 1) != 0x0)
-                {
-                    // NetObjectCount?
-                    stream.ReadUInt32();
-                }
-
-                // Some kind of guid, maybe package?
-                stream.ReadStruct(out PackageGuid);
-                stream.Read(out PackageFlags); // 01000020
-
-                return;
-            }
-#endif
-#if MKKE
-            if (stream.Package.Build != UnrealPackage.GameBuild.BuildName.MKKE)
-            {
-#endif
-                stream.ReadArray(out GenerationNetObjectCount);
-#if MKKE
-            }
-#endif
-            stream.ReadStruct(out PackageGuid);
-
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.PackageFlagsAddedToExports)
-            {
-                stream.Read(out PackageFlags);
             }
         }
 
@@ -545,27 +546,13 @@ namespace UELib
         public UObjectTableItem SuperTable => Package.IndexToObjectResource(_SuperIndex);
 
         [Obsolete("Use Super?.ObjectName"), Browsable(false)]
-        public string SuperName
-        {
-            get
-            {
-                var table = SuperTable;
-                return table != null ? table.ObjectName : string.Empty;
-            }
-        }
+        public string SuperName => Super?.ObjectName ?? string.Empty;
 
         [Obsolete("Use Archetype"), Browsable(false)]
         public UObjectTableItem ArchetypeTable => Package.IndexToObjectResource(_ArchetypeIndex);
 
         [Obsolete("Use Archetype?.ObjectName"), Browsable(false)]
-        public string ArchetypeName
-        {
-            get
-            {
-                var table = ArchetypeTable;
-                return table != null ? table.ObjectName : string.Empty;
-            }
-        }
+        public string ArchetypeName => Archetype?.ObjectName ?? string.Empty;
 
         [Obsolete("Use ToString()")]
         public string ToString(bool v)
@@ -573,12 +560,13 @@ namespace UELib
             return ToString();
         }
 
-        [Obsolete] private long _ObjectFlagsOffset;
+        [Obsolete("Deprecated", true)]
+        private long _ObjectFlagsOffset;
 
         /// <summary>
         /// Updates the ObjectFlags inside the Stream to the current set ObjectFlags of this Table
         /// </summary>
-        [Obsolete]
+        [Obsolete("Deprecated", true)]
         public void WriteObjectFlags()
         {
             Package.Stream.Seek(_ObjectFlagsOffset, SeekOrigin.Begin);

@@ -66,7 +66,8 @@ namespace UELib
         /// <returns>Full path of object e.g. "Core.Object.Vector"</returns>
         public string GetPath()
         {
-            string group = EnumerateOuter().Aggregate(string.Empty, (current, outer) => $"{outer.ObjectName}.{current}");
+            string group = EnumerateOuter()
+                .Aggregate(string.Empty, (current, outer) => $"{outer.ObjectName}.{current}");
             return $"{group}{ObjectName}";
         }
 
@@ -86,7 +87,7 @@ namespace UELib
 
         public virtual byte[] CopyBuffer()
         {
-            byte[] buff = new byte[Size];
+            var buff = new byte[Size];
             Package.Stream.Seek(Offset, SeekOrigin.Begin);
             Package.Stream.Read(buff, 0, Size);
 
@@ -132,7 +133,7 @@ namespace UELib
             set => Package = value;
         }
 
-        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Package.Names[(int)_ObjectName];
+        [Obsolete, Browsable(false)] public UNameTableItem ObjectTable => Package.Names.First(entry => entry.IndexName.Index == _ObjectName.Index);
 
         [Obsolete("Use UExportTableItem.Class"), Browsable(false)]
         public UObjectTableItem? ClassTable => Package.IndexToObjectResource(ClassIndex);
@@ -140,14 +141,7 @@ namespace UELib
         [Obsolete, Browsable(false)] public UObjectTableItem? OuterTable => Package.IndexToObjectResource(OuterIndex);
 
         [Obsolete("Use Outer?.ObjectName"), Browsable(false)]
-        public string OuterName
-        {
-            get
-            {
-                var table = OuterTable;
-                return table != null ? table._ObjectName : string.Empty;
-            }
-        }
+        public string OuterName => Outer?._ObjectName ?? string.Empty;
 
         [Obsolete("Use UExportTableItem.ClassIndex"), Browsable(false)]
         public int ClassIndex => __ClassIndex;

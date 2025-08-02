@@ -17,6 +17,7 @@ namespace UELib
         string Decompile();
     }
 
+#if Forms
     /// <summary>
     /// This class has a reference to an object and are both decompilable.
     /// </summary>
@@ -28,6 +29,7 @@ namespace UELib
         /// </summary>
         IUnrealDecompilable Object { get; }
     }
+#endif
 
     /// <summary>
     /// This class has a stream reference.

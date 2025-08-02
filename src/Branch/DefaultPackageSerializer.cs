@@ -8,16 +8,6 @@
     /// </summary>
     public sealed class DefaultPackageSerializer : IPackageSerializer
     {
-        public void Serialize(IUnrealStream stream, IUnrealSerializableClass obj)
-        {
-            obj.Serialize(stream);
-        }
-
-        public void Deserialize(IUnrealStream stream, IUnrealDeserializableClass obj)
-        {
-            obj.Deserialize(stream);
-        }
-
         public void Serialize(IUnrealStream stream, UNameTableItem item)
         {
             item.Serialize(stream);

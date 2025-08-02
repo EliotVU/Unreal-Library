@@ -30,7 +30,7 @@ namespace UELib
 
         [Obsolete]
         public static CookedPlatform Platform;
-        public static Dictionary<string, Tuple<string, PropertyType>> VariableTypes;
+        public static Dictionary<string, Tuple<string, PropertyType>>? VariableTypes;
 
         #endregion
 

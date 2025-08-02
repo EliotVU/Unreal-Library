@@ -1,4 +1,5 @@
-﻿using static UELib.UnrealPackage;
+﻿using System;
+using static UELib.UnrealPackage;
 using System.Diagnostics;
 using System.IO;
 using UELib.Core;
@@ -240,6 +241,7 @@ namespace UELib.Branch.UE2.AA2
             if (stream.LicenseeVersion < 33)
             {
                 // Stuff here that I couldn't decipher, see below
+                throw new NotSupportedException("This package version is not supported!");
             }
         }
 

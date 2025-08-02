@@ -45,6 +45,7 @@ namespace UELib.Core
                 // ! UE2 compiler does not properly parse a typed reference path, so instead output the qualified identifier loosely.
                 output += $" class={Class.GetPath()}";
             }
+
             output += "\r\n";
 
             UDecompilingState.AddTabs(1);
@@ -68,11 +69,11 @@ namespace UELib.Core
 
         protected string DecompileProperties()
         {
-            if (Properties == null || Properties.Count == 0)
+            if (Properties.Count == 0)
                 return string.Empty;
 
             string output = string.Empty;
-            
+
             // HACK: Start with a fresh scope.
             var oldState = UDecompilingState.s_inlinedSubObjects;
             UDecompilingState.s_inlinedSubObjects = new Dictionary<UObject, bool>();
@@ -85,7 +86,7 @@ namespace UELib.Core
                     //output += $"{UDecompilingState.Tabs}// {Properties[i].Type}\r\n";
                     string propertyText = Properties[i].Decompile();
 
-                    // This is the first element of a static array
+                    // This is the first element of an array
                     if (i + 1 < Properties.Count
                         && Properties[i + 1].Name == Properties[i].Name
                         && Properties[i].ArrayIndex <= 0
@@ -105,8 +106,6 @@ namespace UELib.Core
                     .ToList();
                 foreach (var obj in missingSubObjects)
                 {
-                    obj.Load();
-
                     string objectText = obj.Decompile();
                     output += $"{UDecompilingState.Tabs}{objectText}\r\n";
                 }

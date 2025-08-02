@@ -7,7 +7,5 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UShadowMapTexture2D : UTexture2D
-    {
-    }
+    public class UShadowMapTexture2D : UTexture2D;
 }

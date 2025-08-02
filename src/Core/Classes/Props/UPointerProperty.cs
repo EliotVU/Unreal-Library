@@ -1,4 +1,5 @@
 using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -12,32 +13,43 @@ namespace UELib.Core
     [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2)]
     public class UPointerProperty : UProperty
     {
+        #region Serialized Members
+
 #if DNF
-        [Build(UnrealPackage.GameBuild.BuildName.DNF)]
+        [StreamRecord, Build(UnrealPackage.GameBuild.BuildName.DNF)]
         public UName PointerType { get; set; }
 #endif
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UPointerProperty class.
-        /// </summary>
+        #endregion
+
         public UPointerProperty()
         {
             Type = PropertyType.PointerProperty;
         }
 
-        /// <inheritdoc/>
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 #if DNF
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                PointerType = _Buffer.ReadName();
+                PointerType = stream.ReadName();
+                stream.Record(nameof(PointerType), PointerType);
             }
 #endif
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+#if DNF
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                stream.Write(PointerType);
+            }
+#endif
+        }
+
         public override string GetFriendlyType()
         {
 #if DNF

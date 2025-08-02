@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using UELib.Core;
 using UELib.Core.Tokens;
@@ -34,7 +35,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         return tokenMap;
     }
 
-    internal static T? SerializeFProperty<T>(IUnrealStream stream) where T : UProperty
+    internal static T? DeserializeFProperty<T>(IUnrealStream stream) where T : UProperty
     {
         byte type = stream.ReadByte();
         stream.Record(nameof(type), type);
@@ -45,12 +46,20 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         }
 
         var property = ConstructProperty(type);
-        SerializeProperty(stream, property);
+        DeserializeProperty(stream, property);
 
         return (T)property;
     }
 
-    private static void SerializeProperty(IUnrealStream stream, UProperty property)
+    internal static void SerializeFProperty(IUnrealStream stream, UProperty property)
+    {
+        byte propertyType = ConstructProperty(property);
+        stream.Write(propertyType);
+
+        SerializeProperty(stream, property);
+    }
+
+    private static void DeserializeProperty(IUnrealStream stream, UProperty property)
     {
         property.Package = stream.Package;
 
@@ -81,6 +90,45 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         property.Deserialize(stream);
     }
 
+    private static void SerializeProperty(IUnrealStream stream, UProperty property)
+    {
+        // FProperty serialization
+        stream.WriteName(property.Name);
+        stream.WriteObject(property.Outer);
+        // Maybe ObjectFlags? (To remove)
+        stream.Write((ushort)0);
+
+        // Not efficient by any means, but it'll do for now.
+        byte propertyIndex = (byte)((UStruct)property.Outer)
+            .EnumerateFields<UProperty>()
+            .TakeWhile(prop => prop != property)
+            .Aggregate(0, (index, _) => ++index);
+        stream.Write(propertyIndex); // v04
+
+        // UProperty serialization
+        property.Serialize(stream);
+    }
+
+    private static byte ConstructProperty(UProperty property) =>
+        property switch
+        {
+            UByteProperty _ => 2,
+            UIntProperty _ => 3,
+            UPointerProperty _ => 4,
+            UBoolProperty _ => 5,
+            UFloatProperty _ => 6,
+            UClassProperty _ => 8,
+            UObjectProperty _ => 7,
+            UNameProperty _ => 9,
+            UStrProperty _ => 10,
+            UFixedArrayProperty _ => 11,
+            UArrayProperty _ => 12,
+            UMapProperty _ => 13,
+            UStructProperty _ => 14,
+            UDelegateProperty _ => 15,
+            _ => throw new NotSupportedException($"Unsupported property type: {property.Type}")
+        };
+
     private static UProperty ConstructProperty(byte type) =>
         type switch
         {
@@ -109,12 +157,20 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         public override void Deserialize(IUnrealStream stream)
         {
             int property = stream.ReadIndex();
-            Script.AlignSize(4);
+            Script.AlignSize(sizeof(int));
 
             PropertyContainer = stream.Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
             PropertyIndex = property >> 16;
 
             Debug.Assert(PropertyContainer != null);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            Contract.Assert(PropertyContainer != null);
+            int property = (PropertyIndex << 16) | ((int)PropertyContainer & 0xFFFF);
+            stream.WriteIndex(property);
+            Script.AlignSize(sizeof(int));
         }
 
         public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
@@ -130,6 +186,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
             }
 
             decompiler.PreComment = $"// Unresolved import {PropertyContainer.Name} property #[{PropertyIndex}]";
+
             return $"[{PropertyIndex}]";
         }
     }
@@ -142,6 +199,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
 #if DEBUG
             decompiler.MarkSemicolon();
             decompiler.MarkCommentStatement();
+
             return $"native.{base.Decompile(decompiler)}";
 #else
             return string.Empty;
@@ -158,7 +216,19 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
     [ExprToken(ExprToken.OutVariable)]
     public class OutVariableToken : UStruct.UByteCodeDecompiler.Token
     {
-        public override void Deserialize(IUnrealStream stream) => Script.DeserializeNextToken(stream);
+        public UStruct.UByteCodeDecompiler.Token Expression;
+
+        public override void Deserialize(IUnrealStream stream)
+        {
+            Expression = Script.DeserializeNextToken(stream);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            Contract.Assert(Expression != null);
+            Script.SerializeToken(stream, Expression);
+        }
+
         public override string Decompile(UStruct.UByteCodeDecompiler decompiler) => DecompileNext(decompiler);
     }
 
@@ -171,10 +241,12 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         public UStruct PropertyContainer;
         public int PropertyIndex;
 
+        public UStruct.UByteCodeDecompiler.Token ContextExpression;
+
         public override void Deserialize(IUnrealStream stream)
         {
             int property = stream.ReadIndex();
-            Script.AlignSize(4);
+            Script.AlignSize(sizeof(int));
 
             PropertyContainer = stream.Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
             PropertyIndex = property >> 16;
@@ -182,7 +254,18 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
             Debug.Assert(PropertyContainer != null);
 
             // Pre-Context
-            Script.DeserializeNextToken(stream);
+            ContextExpression = Script.DeserializeNextToken(stream);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            Contract.Assert(PropertyContainer != null);
+            int property = (PropertyIndex << 16) | ((int)PropertyContainer & 0xFFFF);
+            stream.WriteIndex(property);
+            Script.AlignSize(sizeof(int));
+
+            Contract.Assert(ContextExpression != null);
+            Script.SerializeToken(stream, ContextExpression);
         }
 
         public override string Decompile(UStruct.UByteCodeDecompiler decompiler)
@@ -198,6 +281,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
             }
 
             decompiler.PreComment = $"// Unresolved import {PropertyContainer.Name} property #[{PropertyIndex}]";
+
             return $"{DecompileNext(decompiler)}[{index}]";
         }
     }

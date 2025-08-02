@@ -2,53 +2,66 @@
 using System.Linq;
 using System.Text;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 using UELib.UnrealScript;
 
 namespace UELib.Branch.UE3.GIGANTIC.Core.Classes
 {
     public class UJsonNodeRoot : UObject
     {
-        public UMap<string, UMoJsonObject> JsonObjects;
+        #region Serialized Members
+
+        [StreamRecord]
+        public UMap<string, UMoJsonObject> JsonObjects { get; set; }
+
+        #endregion
 
         public UJsonNodeRoot()
         {
             ShouldDeserializeOnDemand = true;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            int c = _Buffer.ReadInt32();
-            _Buffer.Record(nameof(c), c);
+            int c = stream.ReadInt32();
+            stream.Record(nameof(c), c);
 
             JsonObjects = new UMap<string, UMoJsonObject>(c);
             for (int i = 0; i < c; ++i)
             {
-                _Buffer.Read(out string key);
-                _Buffer.Record(nameof(key), key);
+                stream.Read(out string key);
+                stream.Record(nameof(key), key);
 
                 // In the engine 'ReadObject<UMoJsonObject>' is overriden here to serialize as a string / value
                 var jsonObject = new UMoJsonObject();
-                jsonObject.Deserialize(_Buffer);
-                _Buffer.Record(nameof(jsonObject), jsonObject);
+                jsonObject.Deserialize(stream);
+                stream.Record(nameof(jsonObject), jsonObject);
 
                 JsonObjects.Add(key, jsonObject);
             }
 
-            //_Buffer.Record(nameof(JsonObjects), JsonObjects);
+            //stream.Record(nameof(JsonObjects), JsonObjects);
+        }
+        
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+            
+            stream.Write(JsonObjects.Count);
+            foreach (var pair in JsonObjects)
+            {
+                stream.Write(pair.Key);
+                pair.Value.Serialize(stream);
+            }
         }
 
         public override string Decompile()
         {
-            if (ShouldDeserializeOnDemand && JsonObjects == null)
+            if (ShouldDeserializeOnDemand)
             {
                 Load();
-            }
-
-            if (JsonObjects == null)
-            {
-                return base.Decompile();
             }
 
             var str = new StringBuilder(JsonObjects.Count * 16);

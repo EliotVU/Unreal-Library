@@ -1,4 +1,5 @@
 ﻿using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -9,6 +10,8 @@ namespace UELib.Engine
     [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)]
     public class UBitmapMaterial : URenderedMaterial
     {
+        #region Script Members
+
         // UE2 implementation
         public enum TextureFormat
         {
@@ -26,21 +29,26 @@ namespace UELib.Engine
             RRRGGGBBB
         };
 
-        public TextureFormat Format;
-        public UPalette? Palette;
+        [UnrealProperty]
+        public TextureFormat Format { get; set; }
 
-        protected override void Deserialize()
+        [UnrealProperty]
+        public UPalette? Palette { get; set; }
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
             // HACK: This will do until we have a proper property linking setup.
 
             var formatProperty = Properties.Find("Format");
             if (formatProperty != null)
             {
-                using (_Buffer.Peek(formatProperty._PropertyValuePosition))
+                using (stream.Peek(formatProperty._PropertyValuePosition))
                 {
-                    _Buffer.Read(out byte index);
+                    stream.Read(out byte index);
                     Format = (TextureFormat)index;
                 }
             }
@@ -48,9 +56,9 @@ namespace UELib.Engine
             var paletteProperty = Properties.Find("Palette");
             if (paletteProperty != null)
             {
-                using (_Buffer.Peek(paletteProperty._PropertyValuePosition))
+                using (stream.Peek(paletteProperty._PropertyValuePosition))
                 {
-                    Palette = _Buffer.ReadObject<UPalette>();
+                    Palette = stream.ReadObject<UPalette>();
                 }
             }
         }

@@ -260,7 +260,7 @@ namespace UELib.Core
             var output = string.Empty;
             string innerOutput;
 
-            if (ExportTable.ClassIndex == 0)
+            if (ExportResource.ClassIndex == 0)
             {
                 output += "\r\n" +
                           "defaultproperties" +

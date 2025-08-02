@@ -11,44 +11,84 @@ namespace UELib.Engine
     [UnrealRegisterClass]
     public class UPolys : UObject
     {
-        public UObject? ElementOwner;
+        #region Serialized Members
 
-        [Output] public UArray<Poly> Element;
+        /// <summary>
+        ///     The object (like a <see cref="UBrush"/>) this polygon list belongs to.
+        /// </summary>
+        [StreamRecord]
+        public UObject? ElementOwner { get; set; }
+
+        /// <summary>
+        ///     The polygons for this polygon list.
+        /// </summary>
+        [StreamRecord, Output]
+        public UArray<Poly> Element { get; set; } = [];
+
+        #endregion
 
         public UPolys()
         {
             ShouldDeserializeOnDemand = true;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
             // version >= 40
-            int num = _Buffer.ReadInt32();
-            Record(nameof(num), num);
+            int elementCount = stream.ReadInt32();
+            stream.Record(nameof(elementCount), elementCount);
 
             // version >= 40
-            int max = _Buffer.ReadInt32();
-            Record(nameof(max), max);
+            int elementCapacity = stream.ReadInt32();
+            stream.Record(nameof(elementCapacity), elementCapacity);
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.ElementOwnerAddedToUPolys)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ElementOwnerAddedToUPolys)
             {
-                ElementOwner = _Buffer.ReadObject();
-                Record(nameof(ElementOwner), ElementOwner);
+                ElementOwner = stream.ReadObject();
+                stream.Record(nameof(ElementOwner), ElementOwner);
             }
 #if SWRepublicCommando
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
             {
                 // Not supported
                 return;
             }
 #endif
-            Element = new UArray<Poly>(num);
-            if (num > 0)
+            Element = stream.ReadArray<Poly>(elementCount);
+            if (elementCount > 0)
             {
-                _Buffer.ReadArray(out Element, num);
-                Record(nameof(Element), Element);
+                stream.Record(nameof(Element), Element);
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            // version >= 40
+            int elementCount = Element.Count;
+            stream.Write(elementCount);
+
+            // version >= 40
+            int elementCapacity = Element.Capacity;
+            stream.Write(elementCapacity);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ElementOwnerAddedToUPolys)
+            {
+                stream.WriteObject(ElementOwner);
+            }
+#if SWRepublicCommando
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                // Not supported
+                return;
+            }
+#endif
+            foreach (var polygon in Element)
+            {
+                polygon.Serialize(stream);
             }
         }
     }

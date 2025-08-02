@@ -50,14 +50,11 @@ namespace UELib.Branch.UE3.GIGANTIC.Core.Classes
 
         public void Deserialize(IUnrealStream stream)
         {
-            // So we can record properly.
-            _Buffer = (UObjectRecordStream)stream;
+            stream.Read(out JsonID);
+            //stream.Record(nameof(JsonID), JsonID);
 
-            _Buffer.Read(out JsonID);
-            //_Buffer.Record(nameof(JsonID), JsonID);
-
-            _Buffer.Read(out _ValueType);
-            //_Buffer.Record(nameof(ValueType), ValueType);
+            stream.Read(out _ValueType);
+            //stream.Record(nameof(ValueType), ValueType);
 
             switch (ValueType)
             {
@@ -65,65 +62,65 @@ namespace UELib.Branch.UE3.GIGANTIC.Core.Classes
                     break;
 
                 case MoJsonValueTypes.MO_JSON_INT:
-                    _Buffer.Read(out int intValue);
+                    stream.Read(out int intValue);
                     Value.Int = new JsonValueRef<int>(intValue);
-                    //_Buffer.Record(nameof(IntValue), IntValue);
+                    //stream.Record(nameof(IntValue), IntValue);
                     break;
 
                 case MoJsonValueTypes.MO_JSON_STRING:
-                    _Buffer.Read(out Value.String);
-                    //_Buffer.Record(nameof(StringValue), StringValue);
+                    stream.Read(out Value.String);
+                    //stream.Record(nameof(StringValue), StringValue);
                     break;
 
                 case MoJsonValueTypes.MO_JSON_FLOAT:
-                    _Buffer.Read(out float floatValue);
+                    stream.Read(out float floatValue);
                     Value.Float = new JsonValueRef<float>(floatValue);
-                    //_Buffer.Record(nameof(FloatValue), FloatValue);
+                    //stream.Record(nameof(FloatValue), FloatValue);
                     break;
 
                 case MoJsonValueTypes.MO_JSON_BOOL:
-                    _Buffer.Read(out byte boolValue);
+                    stream.Read(out byte boolValue);
                     Value.Bool = new JsonValueRef<bool>(boolValue > 0);
-                    //_Buffer.Record(nameof(BoolValue), BoolValue);
+                    //stream.Record(nameof(BoolValue), BoolValue);
                     break;
 
                 case MoJsonValueTypes.MO_JSON_ARRAY:
                     {
-                        int c = _Buffer.ReadInt32();
-                        //_Buffer.Record(nameof(c), c);
+                        int c = stream.ReadInt32();
+                        //stream.Record(nameof(c), c);
 
                         Value.Array = new UArray<UMoJsonObject>(c);
                         for (int i = 0; i < c; ++i)
                         {
                             var jsonObject = new UMoJsonObject();
-                            jsonObject.Deserialize(_Buffer);
+                            jsonObject.Deserialize(stream);
 
                             Value.Array.Add(jsonObject);
                         }
 
-                        _Buffer.Record(nameof(Value.Array), Value.Array);
+                        stream.Record(nameof(Value.Array), Value.Array);
 
                         break;
                     }
 
                 case MoJsonValueTypes.MO_JSON_MAP:
                     {
-                        int c = _Buffer.ReadInt32();
-                        //_Buffer.Record(nameof(c), c);
+                        int c = stream.ReadInt32();
+                        //stream.Record(nameof(c), c);
 
                         Value.Map = new UMap<string, UMoJsonObject>(c);
                         for (int i = 0; i < c; ++i)
                         {
-                            _Buffer.Read(out string key);
-                            //_Buffer.Record(nameof(key), key);
+                            stream.Read(out string key);
+                            //stream.Record(nameof(key), key);
 
                             var jsonObject = new UMoJsonObject();
-                            jsonObject.Deserialize(_Buffer);
+                            jsonObject.Deserialize(stream);
 
                             Value.Map.Add(key, jsonObject);
                         }
 
-                        _Buffer.Record(nameof(Value.Map), Value.Map);
+                        stream.Record(nameof(Value.Map), Value.Map);
 
                         break;
                     }
@@ -135,7 +132,7 @@ namespace UELib.Branch.UE3.GIGANTIC.Core.Classes
 
         public void Serialize(IUnrealStream stream)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public override string Decompile()

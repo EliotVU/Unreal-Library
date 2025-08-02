@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -10,35 +11,57 @@ namespace UELib.Engine
     [UnrealRegisterClass]
     public class UPalette : UObject, IUnrealViewable
     {
+        #region Serialized Members
+
         /// <summary>
         /// No alpha was serialized for packages of version 65 or less.
         /// </summary>
-        public UArray<UColor> Colors;
+        [StreamRecord]
+        public UArray<UColor> Colors { get; set; } = [];
+
 #if UNDYING
-        [Build(UnrealPackage.GameBuild.BuildName.Undying)]
-        public bool HasAlphaChannel;
+        [StreamRecord, Build(UnrealPackage.GameBuild.BuildName.Undying)]
+        public bool HasAlphaChannel { get; set; }
 #endif
+
+        #endregion
+
         public UPalette()
         {
             ShouldDeserializeOnDemand = true;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
             // This could be a lot faster with a fixed array, but it's not a significant class of interest.
-            int count = _Buffer.ReadLength();
+            int count = stream.ReadLength();
             Debug.Assert(count == 256);
 
-            _Buffer.ReadArray(out Colors, count);
-            Record(nameof(Colors), Colors);
+            Colors = stream.ReadArray<UColor>(count);
+            stream.Record(nameof(Colors), Colors);
 #if UNDYING
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying &&
-                _Buffer.Version >= 75)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying &&
+                stream.Version >= 75)
             {
-                _Buffer.Read(out HasAlphaChannel); // v28
-                Record(nameof(HasAlphaChannel), HasAlphaChannel);
+                HasAlphaChannel = stream.ReadBool(); // v28
+                stream.Record(nameof(HasAlphaChannel), HasAlphaChannel);
+            }
+#endif
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            Debug.Assert(Colors.Count == 256);
+            stream.WriteArray(Colors);
+#if UNDYING
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying &&
+                stream.Version >= 75)
+            {
+                stream.Write(HasAlphaChannel); // v28
             }
 #endif
         }

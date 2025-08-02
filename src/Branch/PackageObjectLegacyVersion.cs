@@ -120,6 +120,9 @@ namespace UELib.Branch
         // 196 according to EndWar and R6 Vegas
         AddedComponentGuid = 196,
 
+        // 200 (RoboHordes, EndWar, R6Vegas)
+        RemovedMinAlignmentFromUStruct = 200,
+
         // 208 according to EndWar
         PackageImportsDeprecated = 208,
 
@@ -205,6 +208,8 @@ namespace UELib.Branch
 
         // FIXME: Not attested in the GoW client, must have been before v321
         ShadowMapScaleAddedToPoly = 300,
+
+        UpdatedDecalMaterial = 312,
 
         // 321 according to the GoW client
         ElementOwnerAddedToUPolys = 321,
@@ -318,6 +323,8 @@ namespace UELib.Branch
 
         UProcBuildingReferenceAddedToPoly = 606,
 
+        AddedEditorDataToUSoundClass = 613,
+
         AddedDominantLightShadowMapToDominantDirectionalLightComponent = 617,
 
         AddedImportExportGuidsTable = 623,
@@ -338,9 +345,9 @@ namespace UELib.Branch
 
         BoolValueToByteForBoolPropertyTag = 673,
 
-        AddedDominantLightShadowMapToUDominantSpotLightComponent = 682,
-
         AddedPVRTCToUTexture2D = 674,
+
+        AddedDominantLightShadowMapToUDominantSpotLightComponent = 682,
 
         ProbeMaskReducedAndIgnoreMaskRemoved = 691,
         ForceScriptOrderAddedToUClass = 749,
@@ -358,6 +365,7 @@ namespace UELib.Branch
         AddedIPhoneSoundData = 851,
         AddedFlashSoundData = 854,
         AddedATITCToUTexture2D = 857,
+        AddedQualityMaskToUMaterial = 858,
         AddedETCToUTexture2D = 864,
 
         Next,

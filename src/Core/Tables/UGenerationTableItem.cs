@@ -27,25 +27,25 @@ namespace UELib
             set => _NetObjectCount = value;
         }
 
-        public void Serialize(IUnrealStream stream)
-        {
-            stream.Write(_ExportCount);
-            stream.Write(_NameCount);
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.NetObjectCountAdded &&
-                stream.UE4Version < 186)
-            {
-                stream.Write(_NetObjectCount);
-            }
-        }
-
         public void Deserialize(IUnrealStream stream)
         {
             stream.Read(out _ExportCount);
             stream.Read(out _NameCount);
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.NetObjectCountAdded &&
-                stream.UE4Version < 186)
+
+            if (stream is { Version: >= (uint)PackageObjectLegacyVersion.NetObjectCountAdded, UE4Version: < 186 })
             {
                 stream.Read(out _NetObjectCount);
+            }
+        }
+
+        public void Serialize(IUnrealStream stream)
+        {
+            stream.Write(_ExportCount);
+            stream.Write(_NameCount);
+
+            if (stream is { Version: >= (uint)PackageObjectLegacyVersion.NetObjectCountAdded, UE4Version: < 186 })
+            {
+                stream.Write(_NetObjectCount);
             }
         }
 

@@ -10,15 +10,11 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UStrProperty : UProperty
     {
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UStrProperty class.
-        /// </summary>
         public UStrProperty()
         {
             Type = PropertyType.StrProperty;
         }
 
-        /// <inheritdoc/>
         public override string GetFriendlyType()
         {
             return "string";

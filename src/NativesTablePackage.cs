@@ -57,7 +57,7 @@ namespace UELib
         private const uint Signature = 0x2C8D14F1;
         public const string Extension = ".NTL";
 
-        public List<NativeTableItem> NativeTableList;
+        public List<NativeTableItem> NativeTableList { get; set; } = [];
         public Dictionary<ushort, NativeTableItem> NativeTokenMap { get; set; }
 
         [Obsolete]
@@ -119,7 +119,7 @@ namespace UELib
         [Obsolete("Use Serialize")]
         public void CreatePackage(string filePath)
         {
-            var stream = new FileStream(filePath + Extension, FileMode.Create, FileAccess.Write);
+            using var stream = new FileStream(filePath + Extension, FileMode.Create, FileAccess.Write);
             Serialize(stream);
         }
 

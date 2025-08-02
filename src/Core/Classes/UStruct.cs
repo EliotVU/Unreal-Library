@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UELib.Branch;
 using UELib.Branch.UE2.Eon;
 using UELib.Core.Tokens;
 using UELib.Flags;
+using UELib.ObjectModel.Annotations;
 using UELib.Services;
 using UELib.Types;
 
@@ -38,28 +40,62 @@ namespace UELib.Core
         /// </summary>
         public UByteCodeScript? Script { get; set; }
 
+        /// <summary>
+        ///     The serialized default script properties for this struct (or class), if any.
+        /// </summary>
+        protected DefaultPropertiesCollection? DefaultProperties { get; set; }
+
         #region Serialized Members
+
 #pragma warning disable CA1051
 
+        /// <summary>
+        ///     The (partially processed) UnrealScript text for this struct (.uc class), if any.
+        /// </summary>
+        [StreamRecord]
         public UTextBuffer? ScriptText { get; set; }
+
+        /// <summary>
+        ///     The processed UnrealScript text for this struct (.uc class), if any.
+        /// </summary>
+        [StreamRecord]
         public UTextBuffer? ProcessedText { get; set; }
+
+        /// <summary>
+        ///     The C++ text for this struct (cpptext or structcpptext), if any.
+        /// </summary>
+        [StreamRecord]
         public UTextBuffer? CppText { get; set; }
+
+        /// <summary>
+        ///     The user-friendly name for this struct (usually the symbolic name of an operator function such as +=)
+        /// </summary>
+        [StreamRecord]
         public UName FriendlyName { get; set; } = UnrealName.None;
 
+        /// <summary>
+        ///     The compiled line number of the struct declaration in the source code.
+        /// </summary>
+        [StreamRecord]
         public int Line { get; internal set; }
+
+        /// <summary>
+        ///     The compiled text position of the struct declaration in the source code.
+        /// </summary>
+        [StreamRecord]
         public int TextPos { get; internal set; }
 
-        public UnrealFlags<StructFlag> StructFlags
-        {
-            get => _StructFlags;
-            set => _StructFlags = value;
-        }
-
-        private UField? _Children;
-        private UnrealFlags<StructFlag> _StructFlags;
+        /// <summary>
+        ///     The struct flags for this struct.
+        /// </summary>
+        [StreamRecord]
+        public UnrealFlags<StructFlag> StructFlags { get; set; }
 
         [Obsolete("Use FindField and EnumerateFields respectively.")]
         protected UField? Children => _Children;
+
+        [StreamRecord]
+        private UField? _Children;
 
         [Obsolete("Use StorageScriptSize instead.")]
         protected int DataScriptSize => StorageScriptSize;
@@ -67,18 +103,19 @@ namespace UELib.Core
         /// <summary>
         ///     The serialized size of the byte-code script in storage (on disk)
         /// </summary>
+        [StreamRecord]
         private int StorageScriptSize { get; set; }
 
         /// <summary>
         ///     The serialized size of the byte-code script in memory.
         ///     (each index is aligned to 4-bytes and each object to 4 or 8 bytes depending on platform)
         /// </summary>
+        [StreamRecord]
         private int MemoryScriptSize { get; set; }
 
 #pragma warning restore CA1051
-        #endregion
 
-        #region Script Members
+        #endregion
 
         [Obsolete("Use EnumerateFields")]
         public IEnumerable<UConst> Constants => EnumerateFields<UConst>();
@@ -95,18 +132,14 @@ namespace UELib.Core
         [Obsolete("Use EnumerateFields")]
         public IEnumerable<UProperty> Locals => EnumerateFields<UProperty>().Where(prop => !prop.IsParm());
 
-        #endregion
-
-        #region Constructors
-
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
-                Super = _Buffer.ReadObject<UStruct>();
-                Record(nameof(Super), Super);
+                Super = stream.ReadObject<UStruct>();
+                stream.Record(nameof(Super), Super);
 
                 // Weird bug in UDK (805 and 810), where the Super is set to Commandlet
                 // Set to null to prevent an infinite loop in EnumerateSuper
@@ -116,20 +149,20 @@ namespace UELib.Core
                 }
             }
 #if BATMAN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
                 goto skipScriptText;
             }
 #endif
 #if BORDERLANDS
             // Swapped order...
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
             {
-                _Children = _Buffer.ReadObject<UField>();
-                Record(nameof(_Children), _Children);
+                _Children = stream.ReadObject<UField?>();
+                stream.Record(nameof(_Children), _Children);
 
-                ScriptText = _Buffer.ReadObject<UTextBuffer>();
-                Record(nameof(ScriptText), ScriptText);
+                ScriptText = stream.ReadObject<UTextBuffer?>();
+                stream.Record(nameof(ScriptText), ScriptText);
 
                 // FIXME: another 2x32 uints here (IsConsoleCooked)
 
@@ -137,30 +170,30 @@ namespace UELib.Core
             }
 #endif
 #if SWRepublicCommando
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
             {
-                Super = _Buffer.ReadObject<UStruct>();
-                Record(nameof(Super), Super);
+                Super = stream.ReadObject<UStruct?>();
+                stream.Record(nameof(Super), Super);
             }
 #endif
-            if (!Package.IsConsoleCooked() && _Buffer.UE4Version < 117)
+            if (stream.ContainsEditorOnlyData() && stream.UE4Version < 117)
             {
-                ScriptText = _Buffer.ReadObject<UTextBuffer>();
-                Record(nameof(ScriptText), ScriptText);
+                ScriptText = stream.ReadObject<UTextBuffer?>();
+                stream.Record(nameof(ScriptText), ScriptText);
             }
 
         skipScriptText:
-            _Children = _Buffer.ReadObject<UField>();
-            Record(nameof(_Children), _Children);
+            _Children = stream.ReadObject<UField?>();
+            stream.Record(nameof(_Children), _Children);
         skipChildren:
 #if BATMAN
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
                 goto serializeByteCode;
             }
 #endif
 #if ADVENT
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent)
             {
                 // Preload fields so we can tinker with NextField.
                 for (var field = _Children; field != null; field = field.NextField)
@@ -176,7 +209,7 @@ namespace UELib.Core
 
                 do
                 {
-                    property = EonEngineBranch.SerializeFProperty<UProperty>(_Buffer);
+                    property = EonEngineBranch.DeserializeFProperty<UProperty>(stream);
                     if (tail == null)
                     {
                         _Children = property;
@@ -189,20 +222,20 @@ namespace UELib.Core
                     tail = property;
                 } while (property != null);
 
-                if (_Buffer.Version >= 133)
+                if (stream.Version >= 133)
                 {
                     goto skipFriendlyName;
                 }
             }
 #endif
 #if SWRepublicCommando
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando && _Children != null)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando && _Children != null)
             {
                 var tail = _Children;
                 while (true)
                 {
-                    var nextField = _Buffer.ReadObject<UField?>();
-                    Record(nameof(nextField), nextField);
+                    var nextField = stream.ReadObject<UField?>();
+                    stream.Record(nameof(nextField), nextField);
 
                     if (nextField == null)
                     {
@@ -215,148 +248,157 @@ namespace UELib.Core
             }
 #endif
             // Moved to UFunction in UE3
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
             {
-                FriendlyName = _Buffer.ReadName();
-                Record(nameof(FriendlyName), FriendlyName);
+                FriendlyName = stream.ReadName();
+                stream.Record(nameof(FriendlyName), FriendlyName);
+
+                // Debug.Assert here, because we can work without a FriendlyName, but it is not expected.
+                Debug.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
             }
+
         skipFriendlyName:
 #if DNF
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                if (_Buffer.LicenseeVersion >= 17)
+                if (stream.LicenseeVersion >= 17)
                 {
                     // Back-ported CppText
-                    CppText = _Buffer.ReadObject<UTextBuffer>();
-                    Record(nameof(CppText), CppText);
+                    CppText = stream.ReadObject<UTextBuffer?>();
+                    stream.Record(nameof(CppText), CppText);
 
-                    var dnfTextObj2 = _Buffer.ReadObject();
-                    Record(nameof(dnfTextObj2), dnfTextObj2);
+                    var dnfTextObj2 = stream.ReadObject();
+                    stream.Record(nameof(dnfTextObj2), dnfTextObj2);
 
-                    _Buffer.ReadArray(out UArray<UObject> dnfIncludeTexts);
-                    Record(nameof(dnfIncludeTexts), dnfIncludeTexts);
+                    stream.ReadArray(out UArray<UObject> dnfIncludeTexts);
+                    stream.Record(nameof(dnfIncludeTexts), dnfIncludeTexts);
                 }
 
-                if (_Buffer.LicenseeVersion >= 2)
+                if (stream.LicenseeVersion >= 2)
                 {
                     // Bool?
-                    byte dnfByte = _Buffer.ReadByte();
-                    Record(nameof(dnfByte), dnfByte);
+                    byte dnfByte = stream.ReadByte();
+                    stream.Record(nameof(dnfByte), dnfByte);
 
-                    var dnfName = _Buffer.ReadName();
-                    Record(nameof(dnfName), dnfName);
+                    var dnfName = stream.ReadName();
+                    stream.Record(nameof(dnfName), dnfName);
                 }
 
                 goto lineData;
             }
 #endif
             // Standard, but UT2004' derived games do not include this despite reporting version 128+
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedCppTextToUStruct &&
-                _Buffer.UE4Version < 117 &&
-                !Package.IsConsoleCooked() &&
-                (Package.Build != BuildGeneration.UE2_5 &&
-                 Package.Build != BuildGeneration.AGP))
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedCppTextToUStruct &&
+                stream.UE4Version < 117 &&
+                stream.ContainsEditorOnlyData() &&
+                stream.Build != BuildGeneration.UE2_5 &&
+                stream.Build != BuildGeneration.AGP)
             {
-                CppText = _Buffer.ReadObject<UTextBuffer>();
-                Record(nameof(CppText), CppText);
+                CppText = stream.ReadObject<UTextBuffer?>();
+                stream.Record(nameof(CppText), CppText);
             }
 #if VENGEANCE
             // Introduced with BioShock
-            if (Package.Build == BuildGeneration.Vengeance &&
-                _Buffer.LicenseeVersion >= 29)
+            if (stream.Build == BuildGeneration.Vengeance &&
+                stream.LicenseeVersion >= 29)
             {
-                var vengeanceUnknownObject = _Buffer.ReadObject();
-                Record(nameof(vengeanceUnknownObject), vengeanceUnknownObject);
+                var vengeanceUnknownObject = stream.ReadObject();
+                stream.Record(nameof(vengeanceUnknownObject), vengeanceUnknownObject);
+                if (vengeanceUnknownObject != null)
+                {
+                    LibServices.Debug(GetReferencePath() + ":vengeanceUnknownObject", vengeanceUnknownObject);
+                }
             }
 #endif
             // UE3 or UE2.5 build, it appears that StructFlags may have been merged from an early UE3 build.
             // UT2004 reports version 26, and BioShock version 2
-            if ((Package.Build == BuildGeneration.UE2_5 && _Buffer.LicenseeVersion >= 26) ||
-                (Package.Build == BuildGeneration.AGP && _Buffer.LicenseeVersion >= 17) ||
-                (Package.Build == BuildGeneration.Vengeance && _Buffer.LicenseeVersion >= 2)
+            if ((stream.Build == BuildGeneration.UE2_5 && stream.LicenseeVersion >= 26) ||
+                (stream.Build == BuildGeneration.AGP && stream.LicenseeVersion >= 17) ||
+                (stream.Build == BuildGeneration.Vengeance && stream.LicenseeVersion >= 2)
 #if SG1
                 // Same offset and version check as CppText (120) probably an incorrectly back-ported feature.
-                || (Package.Build == UnrealPackage.GameBuild.BuildName.SG1_TA && _Buffer.Version >= 120)
+                || (stream.Build == UnrealPackage.GameBuild.BuildName.SG1_TA && stream.Version >= 120)
 #endif
                )
             {
-                _Buffer.Read(out _StructFlags);
-                Record(nameof(StructFlags), StructFlags);
+                StructFlags = stream.ReadFlags32<StructFlag>();
+                stream.Record(nameof(StructFlags), StructFlags);
             }
 #if VENGEANCE
-            if (Package.Build == BuildGeneration.Vengeance &&
-                _Buffer.LicenseeVersion >= 14)
+            if (stream.Build == BuildGeneration.Vengeance &&
+                stream.LicenseeVersion >= 14)
             {
-                ProcessedText = _Buffer.ReadObject<UTextBuffer>();
-                Record(nameof(ProcessedText), ProcessedText);
+                ProcessedText = stream.ReadObject<UTextBuffer?>();
+                stream.Record(nameof(ProcessedText), ProcessedText);
             }
 #endif
         lineData:
-            if (!Package.IsConsoleCooked() &&
-                _Buffer.UE4Version < 117)
+            if (stream.ContainsEditorOnlyData() &&
+                stream.UE4Version < 117)
             {
-                Line = _Buffer.ReadInt32();
-                Record(nameof(Line), Line);
-                TextPos = _Buffer.ReadInt32();
-                Record(nameof(TextPos), TextPos);
+                Line = stream.ReadInt32();
+                stream.Record(nameof(Line), Line);
+                TextPos = stream.ReadInt32();
+                stream.Record(nameof(TextPos), TextPos);
             }
 
             // FIXME: Version >= 130 (According to SWRepublic && Version < 200 (RoboHordes, EndWar, R6Vegas)
             // Guarded with SWRepublicCommando, because it is the only supported game that has this particular change.
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
-                _Buffer.Version >= 130 &&
-                _Buffer.Version < 200)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                stream.Version >= 130 &&
+                stream.Version < (uint)PackageObjectLegacyVersion.RemovedMinAlignmentFromUStruct)
             {
-                uint minAlignment = _Buffer.ReadUInt32(); // v60
-                Record(nameof(minAlignment), minAlignment);
+                uint minAlignment = stream.ReadUInt32(); // v60
+                stream.Record(nameof(minAlignment), minAlignment);
             }
 #if UNREAL2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
             {
                 // Always zero in all the Core.u structs
-                int unknownInt32 = _Buffer.ReadInt32();
-                Record("Unknown:Unreal2", unknownInt32);
+                int unknownInt32 = stream.ReadInt32();
+                stream.Record("Unknown:Unreal2", unknownInt32);
+                if (unknownInt32 != 0) LibServices.Debug(GetReferencePath() + ":unknownInt32", unknownInt32);
             }
 #endif
 #if TRANSFORMERS
-            if (Package.Build == BuildGeneration.HMS)
+            if (stream.Build == BuildGeneration.HMS)
             {
-                int transformersEndLine = _Buffer.ReadInt32();
-                // The line where the struct's code body ends.
-                Record(nameof(transformersEndLine), transformersEndLine);
+                int transformersEndLine = stream.ReadInt32();
+                stream.Record(nameof(transformersEndLine), transformersEndLine);
             }
 #endif
 #if SPLINTERCELLX
             // Probably a backport mistake, this should appear before Line and TextPos
-            if (Package.Build == BuildGeneration.SCX &&
-                _Buffer.LicenseeVersion >= 39)
+            if (stream.Build == BuildGeneration.SCX &&
+                stream.LicenseeVersion >= 39)
             {
-                CppText = _Buffer.ReadObject<UTextBuffer>();
-                Record(nameof(CppText), CppText);
+                CppText = stream.ReadObject<UTextBuffer?>();
+                stream.Record(nameof(CppText), CppText);
             }
 #endif
 #if LEAD
             // Same as SCX
-            if (Package.Build == BuildGeneration.Lead)
+            if (stream.Build == BuildGeneration.Lead)
             {
-                CppText = _Buffer.ReadObject<UTextBuffer>(); // v34
-                Record(nameof(CppText), CppText);
+                CppText = stream.ReadObject<UTextBuffer?>(); // v34
+                stream.Record(nameof(CppText), CppText);
 
-                string v64 = _Buffer.ReadString();
-                Record(nameof(v64), v64);
+                string v64 = stream.ReadString();
+                stream.Record(nameof(v64), v64);
+                if (v64 != string.Empty) LibServices.Debug(GetReferencePath() + ":v64", v64);
             }
 #endif
         serializeByteCode:
-            MemoryScriptSize = _Buffer.ReadInt32();
-            Record(nameof(MemoryScriptSize), MemoryScriptSize);
+            MemoryScriptSize = stream.ReadInt32();
+            stream.Record(nameof(MemoryScriptSize), MemoryScriptSize);
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
             {
-                StorageScriptSize = _Buffer.ReadInt32();
-                Record(nameof(StorageScriptSize), StorageScriptSize);
+                StorageScriptSize = stream.ReadInt32();
+                stream.Record(nameof(StorageScriptSize), StorageScriptSize);
             }
 
-            ScriptOffset = _Buffer.Position;
+            ScriptOffset = stream.Position;
 
             // Code Statements
             if (MemoryScriptSize > 0)
@@ -365,16 +407,16 @@ namespace UELib.Core
 
                 if (StorageScriptSize > 0)
                 {
-                    _Buffer.Skip(StorageScriptSize);
+                    stream.Skip(StorageScriptSize);
                 }
                 else
                 {
-                    Script.Deserialize(_Buffer);
+                    Script.Deserialize(stream);
                 }
 
                 // Fix the recording position
-                _Buffer.ConformRecordPosition();
-                ScriptSize = (int)(_Buffer.Position - ScriptOffset);
+                stream.ConformRecordPosition();
+                ScriptSize = (int)(stream.Position - ScriptOffset);
 
                 if (StorageScriptSize > 0)
                 {
@@ -386,16 +428,225 @@ namespace UELib.Core
                 }
             }
 #if DNF
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
                 //_Buffer.ReadByte();
             }
 #endif
             // StructDefaults in RoboHordes (200)
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.UE3
                 && GetType() == typeof(UStruct))
             {
-                DeserializeProperties(_Buffer);
+                DefaultProperties = DeserializeScriptProperties(stream, this);
+                Properties = DefaultProperties;
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
+            {
+                stream.WriteObject(Super);
+            }
+#if BORDERLANDS
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+            {
+                stream.WriteObject(_Children);
+                stream.WriteObject(ScriptText);
+
+                // Skipping 2x32 uints (IsConsoleCooked)
+                if (stream.ContainsEditorOnlyData())
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+
+                return;
+            }
+#endif
+#if SWRepublicCommando
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                stream.WriteObject(Super);
+            }
+#endif
+            if (stream.ContainsEditorOnlyData() && stream.UE4Version < 117)
+            {
+                stream.WriteObject(ScriptText);
+            }
+
+            stream.WriteObject(_Children);
+#if ADVENT
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Advent)
+            {
+                foreach (var property in EnumerateFields<UProperty>())
+                {
+                    EonEngineBranch.SerializeFProperty(stream, property);
+                }
+
+                // End
+                stream.WriteObject<UObject>(null);
+
+                if (stream.Version >= 133)
+                {
+                    goto skipFriendlyName;
+                }
+            }
+#endif
+#if SWRepublicCommando
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando && _Children != null)
+            {
+                var tail = _Children;
+                while (true)
+                {
+                    var nextField = tail.NextField;
+                    stream.WriteObject(nextField);
+
+                    if (nextField == null)
+                    {
+                        break;
+                    }
+
+                    tail = nextField;
+                }
+            }
+#endif
+            if (stream.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
+            {
+                Contract.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
+                stream.WriteName(FriendlyName);
+            }
+
+        skipFriendlyName:
+#if DNF
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                if (stream.LicenseeVersion >= 17)
+                {
+                    stream.WriteObject(CppText);
+                    // dnfTextObj2 and dnfIncludeTexts omitted for brevity
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+
+                if (stream.LicenseeVersion >= 2)
+                {
+                    // dnfByte and dnfName omitted for brevity
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+
+                // No further serialization
+                return;
+            }
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedCppTextToUStruct &&
+                stream.UE4Version < 117 &&
+                stream.ContainsEditorOnlyData() &&
+                stream.Build != BuildGeneration.UE2_5 &&
+                stream.Build != BuildGeneration.AGP)
+            {
+                stream.WriteObject(CppText);
+            }
+#if VENGEANCE
+            if (stream.Build == BuildGeneration.Vengeance &&
+                stream.LicenseeVersion >= 29)
+            {
+                // vengeanceUnknownObject omitted for brevity
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#endif
+            if ((stream.Build == BuildGeneration.UE2_5 && stream.LicenseeVersion >= 26) ||
+                (stream.Build == BuildGeneration.AGP && stream.LicenseeVersion >= 17) ||
+                (stream.Build == BuildGeneration.Vengeance && stream.LicenseeVersion >= 2)
+#if SG1
+                || (stream.Build == UnrealPackage.GameBuild.BuildName.SG1_TA && stream.Version >= 120)
+#endif
+               )
+            {
+                stream.Write((uint)StructFlags);
+            }
+#if VENGEANCE
+            if (stream.Build == BuildGeneration.Vengeance &&
+                stream.LicenseeVersion >= 14)
+            {
+                stream.WriteObject(ProcessedText);
+            }
+#endif
+            if (stream.ContainsEditorOnlyData() &&
+                stream.UE4Version < 117)
+            {
+                stream.Write(Line);
+                stream.Write(TextPos);
+            }
+
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                stream.Version >= 130 &&
+                stream.Version < (uint)PackageObjectLegacyVersion.RemovedMinAlignmentFromUStruct)
+            {
+                // minAlignment omitted for brevity
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#if UNREAL2
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+            {
+                // unknownInt32 omitted for brevity
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#endif
+#if TRANSFORMERS
+            if (stream.Build == BuildGeneration.HMS)
+            {
+                stream.Write(0); // transformersEndLine
+            }
+#endif
+#if SPLINTERCELLX
+            if (stream.Build == BuildGeneration.SCX &&
+                stream.LicenseeVersion >= 39)
+            {
+                stream.WriteObject(CppText);
+            }
+#endif
+#if LEAD
+            if (stream.Build == BuildGeneration.Lead)
+            {
+                stream.WriteObject(CppText);
+                stream.WriteString(""); // v64 omitted for brevity
+            }
+#endif
+            long storageScriptPosition = stream.Position;
+            stream.Write(0); // MemoryScriptSize
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
+            {
+                stream.Write(0); // StorageScriptSize
+            }
+
+            ScriptOffset = stream.Position;
+            if (Script != null)
+            {
+                Script.Serialize(stream);
+
+                // Go back and write down the correct sizes.
+                using (stream.Peek(storageScriptPosition))
+                {
+                    stream.Write(Script.MemorySize);
+                    if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDataScriptSizeToUStruct)
+                    {
+                        stream.Write(Script.StorageSize);
+                    }
+                }
+            }
+#if DNF
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
+            {
+                // _Buffer.ReadByte();
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.UE3
+                && GetType() == typeof(UStruct))
+            {
+                SerializeScriptProperties(stream, this, DefaultProperties);
+                Properties = DefaultProperties;
             }
         }
 
@@ -404,13 +655,145 @@ namespace UELib.Core
             return base.CanDisposeBuffer() && Script == null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public DefaultPropertiesCollection DeserializeScriptProperties(
+            IUnrealStream stream,
+            UObject? tagSource
+        )
+        {
+            return DeserializeScriptProperties(stream, this, tagSource);
+        }
+
+        public static DefaultPropertiesCollection DeserializeScriptProperties(
+            IUnrealStream stream,
+            UStruct? propertySource,
+            UObject? tagSource
+        )
+        {
+            DefaultPropertiesCollection properties = [];
+
+            while (true)
+            {
+                var scriptProperty = DeserializeNextScriptProperty(stream, propertySource, tagSource);
+                if (scriptProperty == null)
+                {
+                    break;
+                }
+
+                properties.Add(scriptProperty);
+
+                // Serialize the actual data and value
+                scriptProperty.Deserialize(stream);
+            }
+
+            return properties;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SerializeScriptProperties(
+            IUnrealStream stream,
+            UObject? tagSource,
+            DefaultPropertiesCollection? properties
+        )
+        {
+            SerializeScriptProperties(stream, this, tagSource, properties);
+        }
+
+        public static void SerializeScriptProperties(
+            IUnrealStream stream,
+            UStruct? propertySource,
+            UObject? tagSource,
+            DefaultPropertiesCollection? properties
+        )
+        {
+            if (properties != null)
+            {
+                foreach (var tag in properties)
+                {
+                    SerializeNextScriptProperty(stream, tag, propertySource, tagSource);
+                    tag.Serialize(stream);
+                }
+            }
+
+            SerializeNextScriptProperty(stream, null, propertySource, tagSource);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SerializeNextScriptProperty(
+            IUnrealStream stream,
+            UDefaultProperty? scriptProperty,
+            UStruct? propertySource,
+            UObject? tagSource)
+        {
+#if BATMAN
+            if (stream.Build == BuildGeneration.RSS)
+            {
+                if (scriptProperty != null)
+                {
+                    var transformedType = scriptProperty.Type;
+                    if (transformedType == PropertyType.Vector)
+                    {
+                        transformedType = (PropertyType)11;
+                    }
+
+                    stream.Write((uint)transformedType);
+                }
+                else
+                {
+                    stream.Write((uint)PropertyType.None);
+                }
+
+                return;
+            }
+#endif
+            stream.Write(scriptProperty?.Name ?? UnrealName.None);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static UDefaultProperty? DeserializeNextScriptProperty(
+            IUnrealStream stream,
+            UStruct? propertySource,
+            UObject? tagSource
+        )
+        {
+            UDefaultProperty scriptProperty;
+#if BATMAN
+            if (stream.Build == BuildGeneration.RSS)
+            {
+                var type = (PropertyType)stream.ReadInt16();
+                stream.Record(nameof(type), type.ToString());
+
+                return type != PropertyType.None
+                    ? CreateScriptProperty(UnrealName.None, type)
+                    : null;
+            }
+#endif
+            // Read the property name here, instead of in the script property, so that, we can skip the tag if it's not needed.
+            var name = stream.ReadName();
+            stream.Record(nameof(name), name);
+
+            return !name.IsNone()
+                ? CreateScriptProperty(name, PropertyType.None)
+                : null;
+
+            UDefaultProperty CreateScriptProperty(in UName propertyName, PropertyType propertyType)
+            {
+                UProperty? property = null;
+                var destPtr = IntPtr.Zero;
+
+                var tag = new UPropertyTag(propertyName, propertyType);
+
+                // ... tag linking code
+
+                return new UDefaultProperty(tagSource, property, ref tag, destPtr);
+            }
+        }
+
         [Obsolete("Deprecated", true)]
         protected void FindChildren()
         {
             throw new NotImplementedException("Use EnumerateFields");
         }
-
-        #endregion
 
         /// <summary>
         ///     Enumerates all fields in this struct.
@@ -502,10 +885,8 @@ namespace UELib.Core
             return StructFlags.HasFlag(Package.Branch.EnumFlagsMap[typeof(StructFlag)], flagIndex);
         }
 
-        public bool HasAnyStructFlags(ulong flag)
-        {
-            return (StructFlags & flag) != 0;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasAnyStructFlags(ulong flag) => (StructFlags & flag) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsPureStruct()

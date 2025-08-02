@@ -312,15 +312,16 @@ namespace UELib.Core
 #if AHIT
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
                 {
-                    if (HasPropertyFlag(PropertyFlagsHO.AHIT_Serialize))
+                    if (HasAnyPropertyFlags(0x4000UL)) // Serialize
                     {
                         output += "serialize ";
-                        copyFlags &= ~(ulong)PropertyFlagsHO.AHIT_Serialize << 32;
+                        copyFlags &= ~0x4000UL;
                     }
-                    if (HasPropertyFlag(PropertyFlagsLO.AHIT_Bitwise))
+
+                    if (HasAnyPropertyFlags(0x08000000U)) // Bitwise
                     {
                         output += "bitwise ";
-                        copyFlags &= ~(ulong)PropertyFlagsLO.AHIT_Bitwise;
+                        copyFlags &= ~0x08000000U;
                     }
                 }
 #endif
@@ -372,7 +373,7 @@ namespace UELib.Core
                         // 0x00800000 is CPF_Comment in DNF
                         && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
 #endif
-                        )
+                       )
                     {
                         output += "noexport ";
                         copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.NoExport);
@@ -438,7 +439,7 @@ namespace UELib.Core
 #if DNF
                     && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
 #endif
-                    )
+                   )
                 {
                     output += "deprecated ";
                     copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Deprecated);
@@ -477,7 +478,7 @@ namespace UELib.Core
                 // Assuming UE2.5 (introduced with UT2004 but is also used in SG1)
                 if (Package.Build == BuildGeneration.UE2_5)
                 {
-                    if (HasPropertyFlag(PropertyFlagsLO.Cache))
+                    if (HasAnyPropertyFlags((ulong)PropertyFlagsLO.Cache))
                     {
                         copyFlags &= ~(ulong)PropertyFlagsLO.Cache;
                         output += "cache ";
@@ -507,37 +508,37 @@ namespace UELib.Core
                     // Always erase 'CommentString'
                     copyFlags &= ~(uint)0x00800000;
 
-                    if (HasPropertyFlag(0x20000000))
+                    if (HasAnyPropertyFlags(0x20000000))
                     {
                         output += "edfindable ";
                         copyFlags &= ~(uint)0x20000000;
                     }
 
-                    if (HasPropertyFlag(0x1000000))
+                    if (HasAnyPropertyFlags(0x1000000))
                     {
                         output += "nontrans ";
                         copyFlags &= ~(uint)0x1000000;
-
                     }
-                    if (HasPropertyFlag(0x8000000))
+
+                    if (HasAnyPropertyFlags(0x8000000))
                     {
                         output += "nocompress ";
                         copyFlags &= ~(uint)0x8000000;
                     }
 
-                    if (HasPropertyFlag(0x2000000))
+                    if (HasAnyPropertyFlags(0x2000000))
                     {
                         output += $"netupdate({RepNotifyFuncName}) ";
                         copyFlags &= ~(uint)0x2000000;
                     }
 
-                    if (HasPropertyFlag(0x4000000))
+                    if (HasAnyPropertyFlags(0x4000000))
                     {
                         output += "state ";
                         copyFlags &= ~(uint)0x4000000;
                     }
 
-                    if (HasPropertyFlag(0x100000))
+                    if (HasAnyPropertyFlags(0x100000))
                     {
                         output += "anim ";
                         copyFlags &= ~(uint)0x100000;

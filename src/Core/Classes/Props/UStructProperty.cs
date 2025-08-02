@@ -1,4 +1,6 @@
-﻿using UELib.Types;
+﻿using System.Diagnostics;
+using UELib.ObjectModel.Annotations;
+using UELib.Types;
 
 namespace UELib.Core
 {
@@ -10,27 +12,37 @@ namespace UELib.Core
     {
         #region Serialized Members
 
+        /// <summary>
+        ///     The UStruct that this property represents.
+        /// </summary>
+        [StreamRecord]
         public UStruct Struct { get; set; }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UStructProperty class.
-        /// </summary>
         public UStructProperty()
         {
             Type = PropertyType.StructProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            Struct = _Buffer.ReadObject<UStruct>();
-            Record(nameof(Struct), Struct);
+            Struct = stream.ReadObject<UStruct>();
+            stream.Record(nameof(Struct), Struct);
+
+            Debug.Assert(Struct != null);
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            Debug.Assert(Struct != null);
+            stream.Write(Struct);
+        }
+
         public override string GetFriendlyType()
         {
             return Struct != null ? Struct.GetFriendlyType() : "@NULL";

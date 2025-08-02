@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -10,25 +12,37 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UStringProperty : UProperty
     {
-        public int Size { get; set; }
+        #region Serialized Members
 
         /// <summary>
-        /// Creates a new instance of the UELib.Core.UStringProperty class.
+        ///     The fixed-length of the string in bytes.
         /// </summary>
+        [StreamRecord]
+        public int Size { get; set; }
+
+        #endregion
+
         public UStringProperty()
         {
             Type = PropertyType.StringProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            Size = _Buffer.ReadInt32();
-            Record(nameof(Size), Size);
+            Size = stream.ReadInt32();
+            stream.Record(nameof(Size), Size);
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            Debug.Assert(Size > 0);
+            stream.Write(Size);
+        }
+
         public override string GetFriendlyType()
         {
             return $"string[{Size}]";

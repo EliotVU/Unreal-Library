@@ -1,4 +1,7 @@
+using System;
+using System.Diagnostics;
 using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -12,35 +15,53 @@ namespace UELib.Core
     {
         #region Serialized Members
 
+        /// <summary>
+        ///     The interface class that this property references.
+        /// </summary>
+        [StreamRecord]
         public UClass InterfaceClass { get; set; }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UInterfaceProperty class.
-        /// </summary>
         public UInterfaceProperty()
         {
             Type = PropertyType.InterfaceProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            InterfaceClass = _Buffer.ReadObject<UClass>();
-            Record(nameof(InterfaceClass), InterfaceClass);
+            InterfaceClass = stream.ReadObject<UClass>();
+            stream.Record(nameof(InterfaceClass), InterfaceClass);
+
+            Debug.Assert(InterfaceClass != null);
 #if ROCKETLEAGUE
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
-                _Buffer.LicenseeVersion >= 32)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                stream.LicenseeVersion >= 32)
             {
-                var vd0 = _Buffer.ReadName();
-                Record(nameof(vd0), vd0);
+                var vd0 = stream.ReadName();
+                stream.Record(nameof(vd0), vd0);
             }
 #endif
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            Debug.Assert(InterfaceClass != null);
+            stream.Write(InterfaceClass);
+
+#if ROCKETLEAGUE
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
+                stream.LicenseeVersion >= 32)
+            {
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#endif
+        }
+
         public override string GetFriendlyType()
         {
             return InterfaceClass != null ? InterfaceClass.GetFriendlyType() : "@NULL";

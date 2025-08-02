@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Numerics;
 using UELib.Branch;
 using UELib.Core;
@@ -17,20 +16,16 @@ namespace UELib.Engine
 
         public int BrushPoly = -1;
 
-        [DefaultValue(null)]
-        [Output("Item", OutputSlot.Parameter)]
+        [DefaultValue(null), Output("Item", OutputSlot.Parameter)]
         public UName ItemName;
 
-        [DefaultValue(null)]
-        [Output("Texture")]
+        [DefaultValue(null), Output("Texture")]
         public UObject Material;
 
-        [DefaultValue(3584u)]
-        [Output("Flags", OutputSlot.Parameter)]
+        [DefaultValue(3584u), Output("Flags", OutputSlot.Parameter)]
         public uint PolyFlags = 3584u;
 
-        [DefaultValue(-1)]
-        [Output(OutputSlot.Parameter)]
+        [DefaultValue(-1), Output(OutputSlot.Parameter)]
         public int Link = -1;
 
         [DefaultValue(32.0f)]
@@ -46,8 +41,8 @@ namespace UELib.Engine
         [Output(OutputFlags.ShorthandProperty)]
         public UVector Normal;
 
-        [DefaultValue(0)][Output("U")] public short PanU;
-        [DefaultValue(0)][Output("V")] public short PanV;
+        [DefaultValue(0), Output("U")] public short PanU;
+        [DefaultValue(0), Output("V")] public short PanV;
 
         [Output(OutputFlags.ShorthandProperty)]
         public UVector TextureU;
@@ -87,7 +82,7 @@ namespace UELib.Engine
             stream.ReadStruct(out TextureU);
             stream.ReadStruct(out TextureV);
 #if SWRepublicCommando
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
                 stream.Version >= 139)
             {
                 goto skipVertices;
@@ -175,7 +170,7 @@ namespace UELib.Engine
                 }
             }
 #if R6
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {
                 if (stream.LicenseeVersion >= 18)
                 {
@@ -186,7 +181,7 @@ namespace UELib.Engine
                     stream.Read(out UObject v30);
                 }
 
-                if (stream.LicenseeVersion < 17 || stream.LicenseeVersion >= 40)
+                if (stream.LicenseeVersion is < 17 or >= 40)
                 {
                     stream.Read(out UObject v90);
                 }
@@ -206,7 +201,127 @@ namespace UELib.Engine
 
         public void Serialize(IUnrealStream stream)
         {
-            throw new NotImplementedException();
+            // Always 16
+            int verticesCount = stream.Version < (uint)PackageObjectLegacyVersion.FixedVerticesToArrayFromPoly
+                ? Vertex.Count
+                : -1;
+
+            if (verticesCount != -1)
+            {
+                stream.WriteIndex(verticesCount);
+            }
+
+            stream.WriteStruct(Base);
+            stream.WriteStruct(Normal);
+            stream.WriteStruct(TextureU);
+            stream.WriteStruct(TextureV);
+
+#if SWRepublicCommando
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                stream.Version >= 139)
+            {
+                goto skipVertices;
+            }
+#endif
+            if (verticesCount == -1)
+            {
+                stream.Write(Vertex);
+            }
+            else
+            {
+                stream.WriteArray(Vertex, verticesCount);
+            }
+
+        skipVertices:
+            stream.Write(PolyFlags);
+            if (stream.Version < 250)
+            {
+                // PolyFlags |= 0xe00; // Not needed for serialization
+            }
+
+            stream.WriteObject(Actor);
+            if (stream.Version < (uint)PackageObjectLegacyVersion.TextureDeprecatedFromPoly)
+            {
+                stream.WriteObject(Material);
+            }
+
+            stream.WriteName(ItemName);
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.MaterialAddedToPoly)
+            {
+                stream.WriteObject(Material);
+            }
+
+            stream.WriteIndex(Link);
+            stream.WriteIndex(BrushPoly);
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.PanUVRemovedFromPoly)
+            {
+                stream.Write(PanU);
+                stream.Write(PanV);
+                // No need to "fix" UV here, as Base is already set
+            }
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.LightMapScaleAddedToPoly &&
+                stream.Version < (uint)PackageObjectLegacyVersion.LightMapScaleRemovedFromPoly)
+            {
+                stream.Write(LightMapScale);
+            }
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.ShadowMapScaleAddedToPoly)
+            {
+                stream.Write(ShadowMapScale);
+            }
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.LightingChannelsAddedToPoly)
+            {
+                stream.WriteStructMarshal(ref LightingChannels);
+            }
+            // else: nothing to write, LightingChannels is defaulted
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.LightmassAdded)
+            {
+                stream.WriteStruct(LightmassSettings);
+            }
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.UProcBuildingReferenceAddedToPoly)
+            {
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.PolyRulesetVariationTypeChangedToName)
+                {
+                    stream.Write(RulesetVariation);
+                }
+                else
+                {
+                    stream.Write(Ruleset);
+                }
+            }
+#if R6
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
+            {
+                if (stream.LicenseeVersion >= 18)
+                {
+                    stream.Write((UObject)null); // v8c
+                }
+                else if (stream.LicenseeVersion < 39)
+                {
+                    stream.Write((UObject)null); // v30
+                }
+
+                if (stream.LicenseeVersion is < 17 or >= 40)
+                {
+                    stream.Write((UObject)null); // v90
+                }
+
+                if (stream.LicenseeVersion == 23)
+                {
+                    stream.Write((UArray<UObject>)null); // v10
+                }
+
+                if (stream.LicenseeVersion >= 24)
+                {
+                    stream.Write((UArray<UPlane>)null); // v80
+                }
+            }
+#endif
         }
     }
 }

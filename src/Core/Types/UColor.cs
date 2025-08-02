@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace UELib.Core
 {
@@ -32,6 +33,7 @@ namespace UELib.Core
         // FIXME: RGBA UE1, UE2, UE3..
         // Always packed as one Int32 (order BGRA for Intel-byte-order) if serialized in bulk, and non bulk for later UE3 builds.
         // Packed as RGBA for UE1 unless not build intel-byte-order.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deserialize(IUnrealStream stream)
         {
             stream.Read(out R);
@@ -40,6 +42,7 @@ namespace UELib.Core
             stream.Read(out A);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Serialize(IUnrealStream stream)
         {
             stream.Write(R);

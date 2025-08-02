@@ -1,4 +1,6 @@
-﻿using UELib.Branch;
+﻿using System;
+using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -12,44 +14,97 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        public UFunction Function { get; set; }
-        public UFunction Delegate { get; set; }
+        [StreamRecord]
+        public UFunction? Function { get; set; }
+
+        [StreamRecord]
+        public UFunction? Delegate { get; set; }
+
+        [StreamRecord]
+        private UName? _DelegateSourceName;
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UDelegateProperty class.
-        /// </summary>
         public UDelegateProperty()
         {
             Type = PropertyType.DelegateProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            Function = _Buffer.ReadObject<UFunction>();
-            Record(nameof(Function), Function);
-            
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.AddedDelegateSourceToUDelegateProperty)
+            Function = stream.ReadObject<UFunction?>();
+            stream.Record(nameof(Function), Function);
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.AddedDelegateSourceToUDelegateProperty)
             {
                 return;
             }
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.ChangedDelegateSourceFromNameToObject)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ChangedDelegateSourceFromNameToObject)
             {
-                var source = _Buffer.ReadName();
-                Record(nameof(source), source);
+                _DelegateSourceName = stream.ReadName();
+                stream.Record(nameof(_DelegateSourceName), _DelegateSourceName);
+
+                if (_DelegateSourceName.Value.IsNone() == false)
+                {
+                    Delegate = Package.FindObject<UFunction>(_DelegateSourceName);
+                    // Cannot find imported delegates 
+                    //Debug.Assert(Delegate != null, $"Couldn't retrieve delegate source '{_DelegateSourceName}'");
+                }
+                else
+                {
+                    Delegate = null;
+                }
             }
             else
             {
-                Delegate = _Buffer.ReadObject<UFunction>();
-                Record(nameof(Delegate), Delegate);
+                Delegate = stream.ReadObject<UFunction?>();
+                stream.Record(nameof(Delegate), Delegate);
             }
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.Write(Function);
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.AddedDelegateSourceToUDelegateProperty)
+            {
+                return;
+            }
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.ChangedDelegateSourceFromNameToObject)
+            {
+                // 'None' if Delegate is null?
+                stream.Write(_DelegateSourceName ?? Delegate.Name);
+            }
+            else
+            {
+                // Upgrade the delegate source if it was set by name previously.
+                if (_DelegateSourceName != null)
+                {
+                    if (_DelegateSourceName.Value.IsNone() == false)
+                    {
+                        Delegate = Package.FindObject<UFunction>(_DelegateSourceName);
+                        if (Delegate == null)
+                        {
+                            throw new NotImplementedException(
+                                $"Couldn't upgrade delegate source '{_DelegateSourceName}'");
+                        }
+                    }
+                    else
+                    {
+                        Delegate = null;
+                    }
+                }
+
+                stream.Write(Delegate);
+            }
+        }
+
         public override string GetFriendlyType()
         {
             return $"delegate<{GetFriendlyInnerType()}>";
@@ -57,7 +112,7 @@ namespace UELib.Core
 
         public override string GetFriendlyInnerType()
         {
-            return Function != null ? Function.GetFriendlyType() : "@NULL";
+            return Function != null ? Function.GetFriendlyType() : _DelegateSourceName ?? "@NULL";
         }
     }
 }

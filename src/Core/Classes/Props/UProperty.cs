@@ -2,6 +2,7 @@
 using UELib.Branch;
 using UELib.Flags;
 using UELib.IO;
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -20,11 +21,13 @@ namespace UELib.Core
         ///
         ///     In UnrealScript all properties are fixed-arrays of a length of 1; so a length greater than 1 indicates that this property is declared as an array.
         /// </summary>
+        [StreamRecord]
         public int ArrayDim { get; set; }
 
         /// <summary>
         /// The property flags, which indicate various modifiers of this property.
         /// </summary>
+        [StreamRecord]
         public UnrealFlags<PropertyFlag> PropertyFlags
         {
             get => _PropertyFlags;
@@ -33,13 +36,14 @@ namespace UELib.Core
 
         private UnrealFlags<PropertyFlag> _PropertyFlags;
 #if XCOM2
-        [Build(UnrealPackage.GameBuild.BuildName.XCOM2WotC)]
+        [StreamRecord, Build(UnrealPackage.GameBuild.BuildName.XCOM2WotC)]
         public UName? ConfigName { get; set; }
 #endif
         /// <summary>
         ///     The name of the category this property belongs to.
         ///     "None" indicates that this property is not categorized; otherwise if equivalent to 'Outer.Class.Name' then, it is categorized without a custom name.
         /// </summary>
+        [StreamRecord]
         public UName CategoryName
         {
             get => _CategoryName;
@@ -51,11 +55,10 @@ namespace UELib.Core
         /// <summary>
         ///     The enum used to represent the array dimension, if any.
         /// </summary>
-        [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
+        [StreamRecord, BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
         public UEnum? ArrayEnum { get; set; }
 
-        [BuildGeneration(BuildGeneration.UE4)]
-        [Build(UnrealPackage.GameBuild.BuildName.DNF)]
+        [StreamRecord, BuildGeneration(BuildGeneration.UE4), Build(UnrealPackage.GameBuild.BuildName.DNF)]
         public UName RepNotifyFuncName { get; set; } = UnrealName.None;
 
         /// <summary>
@@ -64,6 +67,7 @@ namespace UELib.Core
         /// 
         /// An original terminating \" character is serialized as a \n character, the string will also end with a newline character.
         /// </summary>
+        [StreamRecord]
         public string? EditorDataText { get; set; }
 
         #endregion
@@ -78,6 +82,7 @@ namespace UELib.Core
         /// <summary>
         ///     The offset to the conditional in the replication script of the outer-class.
         /// </summary>
+        [StreamRecord]
         public ushort RepOffset { get; set; }
 
         /// <summary>

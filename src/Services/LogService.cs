@@ -24,7 +24,7 @@ public class DefaultLogService : ILogService
         Console.WriteLine(text);
     }
 
-    public void Log(string format, params object[] arg)
+    public void Log(string format, params object?[] arg)
     {
         Console.WriteLine(format, arg);
     }

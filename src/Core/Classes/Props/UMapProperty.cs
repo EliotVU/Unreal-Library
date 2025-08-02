@@ -1,3 +1,4 @@
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -10,38 +11,45 @@ namespace UELib.Core
     {
         #region Serialized Members
 
+        [StreamRecord]
         public UProperty? KeyProperty { get; set; }
+
+        [StreamRecord]
         public UProperty? ValueProperty { get; set; }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UMapProperty class.
-        /// </summary>
         public UMapProperty()
         {
             Type = PropertyType.MapProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            KeyProperty = _Buffer.ReadObject<UProperty?>();
-            Record(nameof(KeyProperty), KeyProperty);
-            
-            ValueProperty = _Buffer.ReadObject<UProperty?>();
-            Record(nameof(ValueProperty), ValueProperty);
+            KeyProperty = stream.ReadObject<UProperty?>();
+            stream.Record(nameof(KeyProperty), KeyProperty);
+
+            ValueProperty = stream.ReadObject<UProperty?>();
+            stream.Record(nameof(ValueProperty), ValueProperty);
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.Write(KeyProperty);
+            stream.Write(ValueProperty);
+        }
+
         public override string GetFriendlyType()
         {
             if (KeyProperty == null || ValueProperty == null)
             {
                 return "map{VOID,VOID}";
             }
-            
+
             return $"map<{KeyProperty.GetFriendlyType()}, {ValueProperty.GetFriendlyType()}>";
         }
     }

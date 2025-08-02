@@ -7,8 +7,9 @@ public class UObjectThumbnailTableItem : UTableItem, IUnrealSerializableClass
     public string ObjectClassName;
     public string ObjectPath;
 
-    public UObjectThumbnail Thumbnail;
     public int ThumbnailOffset;
+
+    public UObjectThumbnail Thumbnail { get; set; }
 
     public void Deserialize(IUnrealStream stream)
     {

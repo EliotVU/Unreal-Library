@@ -1,5 +1,6 @@
 ﻿using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -9,49 +10,88 @@ namespace UELib.Engine
     [UnrealRegisterClass]
     public class UTexture : UBitmapMaterial
     {
-        public bool HasComp;
+        #region Serialized Members
 
-        [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)]
-        public UArray<LegacyMipMap>? Mips;
+        [StreamRecord, BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)]
+        public UArray<LegacyMipMap> Mips { get; set; } = [];
 
-        [BuildGeneration(BuildGeneration.UE3)]
-        public UBulkData<byte> SourceArt;
+        [StreamRecord, BuildGeneration(BuildGeneration.UE3)]
+        public UBulkData<byte> SourceArt { get; set; }
 
-        protected override void Deserialize()
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
             // This kind of data was moved to UTexture2D
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.UE3)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.UE3)
             {
 #if BORDERLANDS2 || BATTLEBORN
-                if (this is not UTexture2D && (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn))
+                if (this is not UTexture2D && (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                    stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn))
                 {
                     return;
                 }
 #endif
-                _Buffer.Read(out SourceArt);
-                Record(nameof(SourceArt), SourceArt);
+                SourceArt = stream.ReadStruct<UBulkData<byte>>();
+                stream.Record(nameof(SourceArt), SourceArt);
+
                 return;
             }
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.CompMipsDeprecated)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.CompMipsDeprecated)
             {
                 var bHasCompProperty = Properties.Find("bHasComp");
                 if (bHasCompProperty != null)
                 {
-                    HasComp = bool.Parse(bHasCompProperty.Value);
-                    if (HasComp)
+                    bool bHasComp = bool.Parse(bHasCompProperty.Value);
+                    if (bHasComp)
                     {
-                        _Buffer.ReadArray(out UArray<LegacyMipMap> oldMips);
-                        Record(nameof(oldMips), oldMips);
+                        stream.ReadArray(out UArray<LegacyMipMap> oldMips);
+                        stream.Record(nameof(oldMips), oldMips);
                     }
                 }
             }
 
-            _Buffer.ReadArray(out Mips);
-            Record(nameof(Mips), Mips);
+            var legacyMipMaps = Mips;
+            stream.ReadArray(out legacyMipMaps);
+            stream.Record(nameof(Mips), Mips);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            // This kind of data was moved to UTexture2D
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.UE3)
+            {
+#if BORDERLANDS2 || BATTLEBORN
+                if (this is not UTexture2D && (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                                               stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn))
+                {
+                    return;
+                }
+#endif
+                stream.WriteStruct(SourceArt);
+
+                return;
+            }
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.CompMipsDeprecated)
+            {
+                var bHasCompProperty = Properties.Find("bHasComp");
+                if (bHasCompProperty != null)
+                {
+                    bool bHasComp = bool.Parse(bHasCompProperty.Value);
+                    if (bHasComp)
+                    {
+                        stream.WriteArray(new UArray<LegacyMipMap>(0));
+                    }
+                }
+            }
+
+            stream.Write(Mips);
         }
 
         public struct LegacyMipMap : IUnrealSerializableClass

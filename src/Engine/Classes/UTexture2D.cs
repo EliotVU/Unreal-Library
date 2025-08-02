@@ -1,5 +1,7 @@
-﻿using UELib.Branch;
+﻿using System;
+using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -10,114 +12,202 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UTexture2D : UTexture
     {
-        public uint SizeX, SizeY;
+        #region Serialized Members
 
-        public UArray<MipMap2D> Mips;
+        [StreamRecord, UnrealProperty]
+        public uint SizeX { get; set; }
+
+        [StreamRecord, UnrealProperty]
+        public uint SizeY { get; set; }
+
+        [StreamRecord]
+        public UArray<MipMap2D> Mips { get; set; } = [];
 
         /// <summary>
         /// PVR Texture Compression
         /// </summary>
-        public UArray<MipMap2D> CachedPVRTCMips;
+        [StreamRecord]
+        public UArray<MipMap2D>? CachedPVRTCMips { get; set; }
 
         /// <summary>
         /// ATI Texture Compression
         /// </summary>
-        public UArray<MipMap2D> CachedATITCMips;
+        [StreamRecord]
+        public UArray<MipMap2D>? CachedATITCMips { get; set; }
 
         /// <summary>
         /// Ericsson Texture Compression
         /// </summary>
-        public UArray<MipMap2D> CachedETCMips;
+        [StreamRecord]
+        public UArray<MipMap2D>? CachedETCMips { get; set; }
 
-        public int CachedFlashMipMaxResolution;
-        public UBulkData<byte> CachedFlashMipData;
+        [StreamRecord]
+        public int CachedFlashMipMaxResolution { get; set; }
 
-        public UGuid TextureFileCacheGuid;
+        [StreamRecord]
+        public UBulkData<byte> CachedFlashMipData { get; set; }
 
-        protected override void Deserialize()
+        [StreamRecord]
+        public UGuid TextureFileCacheGuid { get; set; }
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
             // These properties have been moved to ScriptProperties.
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
             {
-                _Buffer.Read(out SizeX);
-                Record(nameof(SizeX), SizeX);
+                SizeX = stream.ReadUInt32();
+                stream.Record(nameof(SizeX), SizeX);
 
-                _Buffer.Read(out SizeY);
-                Record(nameof(SizeY), SizeY);
+                SizeY = stream.ReadUInt32();
+                stream.Record(nameof(SizeY), SizeY);
 
-                _Buffer.Read(out int format);
+                stream.Read(out int format);
                 Format = (TextureFormat)format;
-                Record(nameof(Format), Format);
+                stream.Record(nameof(Format), Format);
             }
 #if TERA
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Tera)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Tera)
             {
                 // TODO: Not yet supported.
                 return;
             }
 #endif
 #if BORDERLANDS
-            if (_Buffer.Package.Build == BuildGeneration.GB &&
-                _Buffer.LicenseeVersion >= 55)
+            if (stream.Build == BuildGeneration.GB &&
+                stream.LicenseeVersion >= 55)
             {
-                _Buffer.ReadStruct(out UGuid constantGuid);
-                Record(nameof(constantGuid), constantGuid);
+                stream.ReadStruct(out UGuid constantGuid);
+                stream.Record(nameof(constantGuid), constantGuid);
             }
 #endif
-            _Buffer.ReadArray(out Mips);
-            Record(nameof(Mips), Mips);
+            var mipMap2Ds = Mips;
+            stream.ReadArray(out mipMap2Ds);
+            stream.Record(nameof(Mips), Mips);
 #if BORDERLANDS || BORDERLANDS2
-            if (_Buffer.Package.Build == BuildGeneration.GB ||
-                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*no version check*/ ||
-                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            if (stream.Build == BuildGeneration.GB ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*no version check*/ ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
-                _Buffer.ReadStruct(out UGuid constantGuid);
-                Record(nameof(constantGuid), constantGuid);
+                stream.ReadStruct(out UGuid constantGuid);
+                stream.Record(nameof(constantGuid), constantGuid);
             }
 #endif
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedTextureFileCacheGuidToTexture2D)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTextureFileCacheGuidToTexture2D)
             {
-                _Buffer.ReadStruct(out TextureFileCacheGuid);
-                Record(nameof(TextureFileCacheGuid), TextureFileCacheGuid);
+                TextureFileCacheGuid = stream.ReadStruct<UGuid>();
+                stream.Record(nameof(TextureFileCacheGuid), TextureFileCacheGuid);
             }
 #if BORDERLANDS
-            if (_Buffer.Package.Build == BuildGeneration.GB &&
-                _Buffer.LicenseeVersion >= 55)
+            if (stream.Build == BuildGeneration.GB &&
+                stream.LicenseeVersion >= 55)
             {
                 return;
             }
 #endif
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedPVRTCToUTexture2D)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedPVRTCToUTexture2D)
             {
-                _Buffer.ReadArray(out CachedPVRTCMips);
-                Record(nameof(CachedPVRTCMips), CachedPVRTCMips);
+                CachedPVRTCMips = stream.ReadArray<MipMap2D>();
+                stream.Record(nameof(CachedPVRTCMips), CachedPVRTCMips);
             }
 #if BORDERLANDS2 || BATTLEBORN
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*VR*/ ||
-                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*VR*/ ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
                 // Missed UDK upgrades?
                 return;
             }
 #endif
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedATITCToUTexture2D)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedATITCToUTexture2D)
             {
-                _Buffer.Read(out CachedFlashMipMaxResolution);
-                Record(nameof(CachedFlashMipMaxResolution), CachedFlashMipMaxResolution);
+                CachedFlashMipMaxResolution = stream.ReadInt32();
+                stream.Record(nameof(CachedFlashMipMaxResolution), CachedFlashMipMaxResolution);
 
-                _Buffer.ReadArray(out CachedATITCMips);
-                Record(nameof(CachedATITCMips), CachedATITCMips);
+                CachedATITCMips = stream.ReadArray<MipMap2D>();
+                stream.Record(nameof(CachedATITCMips), CachedATITCMips);
 
-                _Buffer.ReadStruct(out CachedFlashMipData);
-                Record(nameof(CachedFlashMipData), CachedFlashMipData);
+                CachedFlashMipData = stream.ReadStruct<UBulkData<byte>>();
+                stream.Record(nameof(CachedFlashMipData), CachedFlashMipData);
             }
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedETCToUTexture2D)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedETCToUTexture2D)
             {
-                _Buffer.ReadArray(out CachedETCMips);
-                Record(nameof(CachedETCMips), CachedETCMips);
+                CachedETCMips = stream.ReadArray<MipMap2D>();
+                stream.Record(nameof(CachedETCMips), CachedETCMips);
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            // These properties have been moved to ScriptProperties.
+            if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
+            {
+                stream.Write(SizeX);
+                stream.Write(SizeY);
+                stream.Write((int)Format);
+            }
+#if TERA
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Tera)
+            {
+                throw new NotSupportedException("This package version is not supported!");
+            }
+#endif
+#if BORDERLANDS
+            if (stream.Build == BuildGeneration.GB &&
+                stream.LicenseeVersion >= 55)
+            {
+                stream.WriteStruct(default(UGuid)); // Placeholder, as we don't have the value here
+            }
+#endif
+            var mipMap2Ds = Mips;
+            stream.WriteArray(mipMap2Ds);
+#if BORDERLANDS || BORDERLANDS2
+            if (stream.Build == BuildGeneration.GB ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            {
+                stream.WriteStruct(default(UGuid)); // Placeholder, as we don't have the value here
+            }
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTextureFileCacheGuidToTexture2D)
+            {
+                stream.WriteStruct(TextureFileCacheGuid);
+            }
+#if BORDERLANDS
+            if (stream.Build == BuildGeneration.GB &&
+                stream.LicenseeVersion >= 55)
+            {
+                return;
+            }
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedPVRTCToUTexture2D)
+            {
+                var cachedPvrtcMips = CachedPVRTCMips;
+                stream.WriteArray(cachedPvrtcMips);
+            }
+#if BORDERLANDS2 || BATTLEBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            {
+                // Missed UDK upgrades?
+                return;
+            }
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedATITCToUTexture2D)
+            {
+                stream.Write(CachedFlashMipMaxResolution);
+                stream.WriteArray(CachedATITCMips);
+                stream.WriteStruct(CachedFlashMipData);
+            }
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedETCToUTexture2D)
+            {
+                stream.WriteArray(CachedETCMips);
             }
         }
 

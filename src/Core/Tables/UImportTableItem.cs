@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UELib.Core;
 
 namespace UELib
@@ -20,13 +21,6 @@ namespace UELib
             set => _ClassPackageName = value;
         }
 
-        [Obsolete("Renamed to ClassPackageName")]
-        public UName PackageName
-        {
-            get => _ClassPackageName;
-            set => _ClassPackageName = value;
-        }
-
         private UName _ClassName;
 
         /// <summary>
@@ -36,24 +30,6 @@ namespace UELib
         {
             get => _ClassName;
             set => _ClassName = value;
-        }
-
-        [Obsolete] protected override string __ClassName => _ClassName;
-        [Obsolete] protected override int __ClassIndex => (int)_ClassName;
-
-        /// <summary>
-        /// Serializes the import to a stream.
-        /// 
-        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UImportTableItem)"/>
-        /// </summary>
-        /// <param name="stream">The output stream</param>
-        public void Serialize(IUnrealStream stream)
-        {
-            stream.Write(_ClassPackageName);
-            stream.Write(_ClassName);
-            // version >= 50
-            stream.Write((int)_OuterIndex); // Always an ordinary integer
-            stream.Write(_ObjectName);
         }
 
         /// <summary>
@@ -72,6 +48,21 @@ namespace UELib
             stream.Read(out _ObjectName);
         }
 
+        /// <summary>
+        /// Serializes the import to a stream.
+        /// 
+        /// For UE4 see: <seealso cref="UELib.Branch.UE4.PackageSerializerUE4.Serialize(IUnrealStream, UImportTableItem)"/>
+        /// </summary>
+        /// <param name="stream">The output stream</param>
+        public void Serialize(IUnrealStream stream)
+        {
+            stream.Write(_ClassPackageName);
+            stream.Write(_ClassName);
+            // version >= 50
+            stream.Write((int)_OuterIndex); // Always an ordinary integer
+            stream.Write(_ObjectName);
+        }
+
         public override string GetReferencePath()
         {
             return $"{_ClassName}'{GetPath()}'";
@@ -82,15 +73,25 @@ namespace UELib
             return $"{ObjectName}({-(Index + 1)})";
         }
 
+        public static explicit operator int(UImportTableItem item)
+        {
+            return -(item.Index + 1);
+        }
+
+        [Obsolete("Renamed to ClassPackageName")]
+        public UName PackageName
+        {
+            get => _ClassPackageName;
+            set => _ClassPackageName = value;
+        }
+
+        [Obsolete] protected override string __ClassName => _ClassName;
+        [Obsolete] protected override int __ClassIndex => Package.Names.First(entry => entry.IndexName.Index == _ClassName.Index);
+
         [Obsolete("Use ToString()")]
         public string ToString(bool v)
         {
             return ToString();
-        }
-
-        public static explicit operator int(UImportTableItem item)
-        {
-            return -(item.Index + 1);
         }
     }
 }

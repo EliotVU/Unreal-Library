@@ -1,6 +1,8 @@
 using UELib.Branch;
+using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
-namespace UELib.Core
+namespace UELib.Engine
 {
     /// <summary>
     ///     Implements USoundNode/Engine.SoundNode
@@ -9,8 +11,12 @@ namespace UELib.Core
     [BuildGeneration(BuildGeneration.UE3)]
     public class USoundNode : UObject
     {
-        // UnrealProperty
-        public UArray<USoundNode> ChildNodes;
+        #region Script Properties
+
+        [UnrealProperty]
+        public UArray<USoundNode> ChildNodes { get; set; } = [];
+
+        #endregion
 
         public USoundNode()
         {

@@ -10,6 +10,5 @@ namespace UELib.Engine
     public class UDecalComponent : UPrimitiveComponent
     {
         // TODO: StaticReceivers
-        protected override void Deserialize() => base.Deserialize();
     }
 }

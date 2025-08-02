@@ -27,7 +27,10 @@
         QwordProperty,              // (UE3, Bioshock Infinite)
         XWeakReferenceProperty,
 #endif
-
+#if MKKE
+        MKItemProperty,
+        MkItemNoDestroyProperty,
+#endif
 #if GIGANTIC
         JsonRefProperty,
 #endif

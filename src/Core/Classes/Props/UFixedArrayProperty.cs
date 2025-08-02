@@ -1,4 +1,6 @@
-﻿using UELib.Types;
+﻿using System.Diagnostics;
+using UELib.ObjectModel.Annotations;
+using UELib.Types;
 
 namespace UELib.Core
 {
@@ -10,32 +12,42 @@ namespace UELib.Core
     {
         #region Serialized Members
 
+        [StreamRecord]
         public UProperty InnerProperty { get; set; }
+
+        [StreamRecord]
         public int Count { get; set; }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UFixedArrayProperty class.
-        /// </summary>
         public UFixedArrayProperty()
         {
             Type = PropertyType.FixedArrayProperty;
             Count = 0;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            InnerProperty = _Buffer.ReadObject<UProperty>();
-            Record(nameof(InnerProperty), InnerProperty);
-            
-            Count = _Buffer.ReadIndex();
-            Record(nameof(Count), Count);
+            InnerProperty = stream.ReadObject<UProperty>();
+            stream.Record(nameof(InnerProperty), InnerProperty);
+
+            Count = stream.ReadIndex();
+            stream.Record(nameof(Count), Count);
         }
 
-        /// <inheritdoc/>
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            Debug.Assert(InnerProperty != null);
+            stream.WriteObject(InnerProperty);
+
+            Debug.Assert(Count > 1);
+            stream.WriteIndex(Count);
+        }
+
         public override string GetFriendlyType()
         {
             return $"{InnerProperty.GetFriendlyType()}[{Count}]";

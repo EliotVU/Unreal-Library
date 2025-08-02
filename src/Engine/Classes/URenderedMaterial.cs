@@ -7,7 +7,5 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGenerationRange(BuildGeneration.UE1, BuildGeneration.UE2_5)]
-    public class URenderedMaterial : UMaterial
-    {
-    }
+    public class URenderedMaterial : UMaterial;
 }

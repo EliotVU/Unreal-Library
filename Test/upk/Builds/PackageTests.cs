@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Core;
+using UELib.Engine;
 using UELib.Services;
 using static UELib.UnrealPackage.GameBuild;
 
@@ -15,7 +16,7 @@ namespace Eliot.UELib.Test.Builds
     public class PackageTests
     {
         // .upk packages are assumed to be decompressed.
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(@"X-COM-Alliance\",
             BuildName.Unreal1,
             BuildPlatform.Undetermined
@@ -104,6 +105,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Undying,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Unreal 2\",
+            BuildName.Unreal2,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"DCUO\",
             BuildName.DCUO,
             BuildPlatform.Undetermined
@@ -172,6 +177,38 @@ namespace Eliot.UELib.Test.Builds
             BuildName.UT3,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"CrimeCraft\",
+            BuildName.CrimeCraft,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Asylum\",
+            BuildName.Batman1,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Knight\",
+            BuildName.Batman4,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Singularity\",
+            BuildName.Singularity,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"BioShockInfinite\",
+            BuildName.Bioshock_Infinite,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Dishonored\",
+            BuildName.Dishonored,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"RememberMe\",
+            BuildName.RememberMe,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Hawken\",
+            BuildName.Hawken,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"A Hat in Time\",
             BuildName.AHIT,
             BuildPlatform.Undetermined
@@ -184,7 +221,8 @@ namespace Eliot.UELib.Test.Builds
             BuildPlatform packagesPlatform = BuildPlatform.Undetermined,
             // The forced build name for the package.
             BuildName forcedBuild = BuildName.Unset,
-            BuildGeneration forcedGeneration = BuildGeneration.Undefined)
+            BuildGeneration forcedGeneration = BuildGeneration.Undefined,
+            bool shouldTestSerialization = false)
         {
             packagesPath = Path.Join(Packages.UnrealEngineGamesPath, packagesPath);
             if (!Directory.Exists(packagesPath))
@@ -221,37 +259,59 @@ namespace Eliot.UELib.Test.Builds
                     {
                         Console.WriteLine($@"Validating '{filePath}'");
 
+                        if (Path.GetExtension(filePath) == ".xxx")
+                        {
+                            Console.WriteLine($@"Skipping analysis for fully compressed package '{filePath}'");
+
+                            return;
+                        }
+
                         using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        using var linker = new UnrealPackage(fileStream, filePath)
+                        using var package = new UnrealPackage(fileStream, filePath)
                         {
                             BuildTarget = forcedBuild
                         };
 
-                        linker.Deserialize();
+                        package.Deserialize();
 
-                        versions.Add((linker.Summary.Version << 16) | linker.Summary.LicenseeVersion);
+                        versions.Add((package.Summary.Version << 16) | package.Summary.LicenseeVersion);
 
-                        Console.WriteLine($@"Detected build: {linker.Build} and expected build: {packagesBuild}");
+                        Console.WriteLine($@"Detected build: {package.Build} and expected build: {packagesBuild}");
 
                         if (forcedBuild != BuildName.Unset)
                         {
-                            Assert.AreEqual(forcedBuild, linker.Build.Name);
+                            Assert.AreEqual(forcedBuild, package.Build.Name);
                         }
 
                         // Commented out, because, UE2 games often contain a mix of UE1 packages.
                         //Assert.AreEqual(packagesBuild, linker.Build.Name);
 
-                        if (linker.CookerPlatform != BuildPlatform.Undetermined)
+                        if (package.CookerPlatform != BuildPlatform.Undetermined)
                         {
-                            Console.WriteLine($@"Detected cooker platform: {linker.CookerPlatform}");
+                            Console.WriteLine($@"Detected cooker platform: {package.CookerPlatform}");
                         }
 
                         if (packagesPlatform != BuildPlatform.Undetermined)
                         {
-                            Assert.AreEqual(packagesPlatform, linker.CookerPlatform);
+                            Assert.AreEqual(packagesPlatform, package.CookerPlatform);
                         }
 
-                        AssertPackage(linker, exceptions);
+                        if (package.Summary.CompressedChunks?.Count > 0)
+                        {
+                            Console.WriteLine($@"Skipping analysis for compressed package '{filePath}'");
+
+                            return;
+                        }
+
+                        AssertPackage(package, exceptions);
+
+                        // Re-serialize the package to test serialization.
+                        if (shouldTestSerialization)
+                        {
+                            AssertPackageSerialization(package);
+
+                            Console.WriteLine($@"Successfully serialized package '{filePath}'");
+                        }
                     }, TaskCreationOptions.LongRunning))
                     //.Select(task => task.WaitAsync(TimeSpan.FromSeconds(20)))
                     .ToList();
@@ -261,7 +321,116 @@ namespace Eliot.UELib.Test.Builds
 
             Console.WriteLine($@"Unique package versions: [{string.Join(',', versions.Select(v => $"{(ushort)(v >> 16)}/{(ushort)v}"))}]");
 
-            Assert.IsFalse(exceptions.Any(), $"{exceptions.Count} exceptions: {string.Join('\n', exceptions)}");
+            Assert.AreEqual(0, exceptions.Count, $"{exceptions.Count} exceptions: {string.Join('\n', exceptions)}");
+        }
+
+        [TestMethod]
+        // All (non-cooked) UDK builds that differ in package format.
+        [DataRow(@"UDK-2009-11\", // Also includes The Ball (Game)
+            BuildName.Default, // v648
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2009-12\",
+            BuildName.Default, // v664
+            BuildPlatform.Undetermined
+        )]
+        // 01-04 no difference in package format.
+        [DataRow(@"UDK-2010-05\", // Also includes (Updated) The Ball (Game)
+            BuildName.Default, // v706
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-06\", // BioShock Infinite (but, heavily modified)
+            BuildName.Default, // v727
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-07\",
+            BuildName.Default, // v737
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-08\",
+            BuildName.Default, // v756
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-09\",
+            BuildName.Default, // v765
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-10\",
+            BuildName.Default, // v787
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-11\",
+            BuildName.Default, // v799
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-12\",
+            BuildName.Default, // v803
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-01\", // Rock of Ages, Tribes (Modified), Batman Asylum (Heavily modified)
+            BuildName.Default, // v805
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-02\", // Sanctum
+            BuildName.Default, // v810
+            BuildPlatform.Undetermined
+        )]
+        // 03 no difference in package format.
+        [DataRow(@"UDK-2011-04\",
+            BuildName.Default, // v813
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-06\", // Remember Me (Modified), Borderlands 2 (Heavily modified), Quantum (Modified)
+            BuildName.Default, // v832
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-07\",
+            BuildName.Default, // v840
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-08\", // FoxGame
+            BuildName.Default, // v841
+            BuildPlatform.Undetermined
+        )]
+        // 2011/09 - 2012/04 no difference in package format.
+        [DataRow(@"UDK-2012-05\", // PainKillerHD
+            BuildName.Default, // v860
+            BuildPlatform.Undetermined
+        )]
+        // 06 no difference in package format.
+        [DataRow(@"UDK-2012-07\", // AOC (Chivalry: Medieval Warfare), Hawken (Modified)
+            BuildName.Default, // v860
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2015-02\", // 29 january 2015
+            BuildName.Default, // v868
+            BuildPlatform.Undetermined
+        )]
+        public async Task TestUDKPackages(
+            string packagesPath,
+            BuildName packagesBuild = BuildName.Unset,
+            BuildPlatform packagesPlatform = BuildPlatform.Undetermined,
+            BuildName forcedBuild = BuildName.Unset,
+            BuildGeneration forcedGeneration = BuildGeneration.Undefined,
+            bool shouldTestSerialization = true)
+        {
+            await TestPackages(packagesPath, packagesBuild, packagesPlatform, forcedBuild, forcedGeneration, shouldTestSerialization);
+        }
+
+        /// <summary>
+        /// Test a directory with loose packages.
+        /// </summary>
+        [TestMethod]
+        [DataRow(@"Packages\")]
+        public async Task TestLoosePackages(
+            string packagesPath,
+            BuildName packagesBuild = BuildName.Unset,
+            BuildPlatform packagesPlatform = BuildPlatform.Undetermined,
+            BuildName forcedBuild = BuildName.Unset,
+            BuildGeneration forcedGeneration = BuildGeneration.Undefined,
+            bool shouldTestSerialization = true)
+        {
+            await TestPackages(packagesPath, packagesBuild, packagesPlatform, forcedBuild, forcedGeneration, shouldTestSerialization);
         }
 
         private static void AssertPackage(UnrealPackage linker, List<Exception> exceptions)
@@ -274,6 +443,7 @@ namespace Eliot.UELib.Test.Builds
             catch (Exception exception)
             {
                 exceptions.Add(new NotSupportedException($"'{linker.FullPackageName}' package exception", exception));
+
                 return;
             }
 
@@ -308,8 +478,8 @@ namespace Eliot.UELib.Test.Builds
                 {
                     switch (obj)
                     {
-                        case UStruct { ByteCodeManager.DeserializedTokens: null } uStruct:
-                            uStruct.ByteCodeManager.Deserialize();
+                        case UStruct { Script: not null } uStruct:
+                            new UStruct.UByteCodeDecompiler(uStruct).Deserialize();
                             break;
                     }
                 }
@@ -350,6 +520,127 @@ namespace Eliot.UELib.Test.Builds
                 Console.WriteLine($@"Found {incompatibleClasses.Count} unrecognized classes [{string.Join(',', incompatibleClasses)}]");
                 // Commented out, because it gets too long.
                 //Console.Write($@"{string.Join(';', incompatibleExports.Select(exp => exp.GetReferencePath()))}");
+            }
+        }
+
+        private static readonly HashSet<Type> s_incompleteTypes =
+        [
+            typeof(UClass),
+            typeof(UModel),
+            typeof(UModelComponent),
+            typeof(UPolys),
+            typeof(UMaterial),
+        ];
+
+        private static void AssertPackageSerialization(UnrealPackage package)
+        {
+            using var memoryStream = new MemoryStream((int)package.Archive.Stream.Length);
+            using var tempStream = new UnrealPackageStream(package.Archive, memoryStream);
+
+            // Rebuild the name indices (name hash to package index).
+            for (int i = 0; i < package.Names.Count; i++)
+            {
+                package.Archive.NameIndices.Add(((IndexName)package.Names[i])!.Index, i);
+            }
+
+            // Ensure we have loaded all the thumbnail data, in order to verify that serialize and deserialize are in sync.
+            package.ObjectThumbnails.ForEach(item =>
+            {
+                var thumbnail = item.Thumbnail;
+                package.Stream.Seek(item.ThumbnailOffset, SeekOrigin.Begin);
+                thumbnail.Deserialize(package.Stream);
+                item.Thumbnail = thumbnail;
+            });
+
+            // Trick it into serializing the full thumbnail data.
+            //package.Summary.ThumbnailTableOffset = 0;
+
+            tempStream.Seek(0, SeekOrigin.Begin);
+            package.Serialize(tempStream);
+
+            // Let's see if we can deserialize the package back.
+            tempStream.Seek(0, SeekOrigin.Begin);
+            package.Deserialize(tempStream);
+
+            // Work with a copy, because the linker.Objects list is modified during serialization.
+            // Because, the exports and imports have been re-serialized
+            // -- which causes the object serialization to invoke a new object creation when the export has no assigned object.
+            var objects = package.Objects.ToList();
+
+            // Let's serialize all supported objects and re-serialize them.
+            foreach (var obj in objects)
+            {
+                if (obj is null or UnknownObject)
+                {
+                    continue; // Skip null and unknown objects.
+                }
+
+                if (obj.PackageIndex.IsExport == false)
+                {
+                    continue;
+                }
+
+                if (obj.DeserializationState != UObject.ObjectState.Deserialized)
+                {
+                    continue;
+                }
+
+                if (s_incompleteTypes.Contains(obj.GetType()))
+                {
+                    continue;
+                }
+
+                int serialOffset = obj.ExportResource!.SerialOffset;
+                int serialSize = obj.ExportResource!.SerialSize;
+
+                var tokenSizes = new List<(short, short)>();
+                if (obj is UStruct { Script.Tokens.Count: 0 } uStruct)
+                {
+                    var buffer = uStruct.GetBuffer();
+                    buffer.Seek(serialOffset + uStruct.ScriptOffset, SeekOrigin.Begin);
+                    uStruct.Script.Deserialize(buffer);
+
+                    tokenSizes = uStruct.Script.Tokens
+                        .Select(token => (token.Size, token.StorageSize))
+                        .ToList();
+                }
+
+                tempStream.Seek(serialOffset, SeekOrigin.Begin);
+                obj.Save(tempStream);
+
+                if (tokenSizes.Count > 0)
+                {
+                    uStruct = (UStruct)obj;
+                    for (int i = 0; i < tokenSizes.Count; i++)
+                    {
+                        var token = uStruct.Script!.Tokens[i];
+                        Assert.AreEqual(tokenSizes[i].Item1, token.Size, $"Mismatch token memory size {uStruct.GetReferencePath()}:{token.GetExprToken()}");
+                        Assert.AreEqual(tokenSizes[i].Item2, token.StorageSize, $"Mismatch token storage size {uStruct.GetReferencePath()}:{token.GetExprToken()}");
+                    }
+                }
+
+                if (obj.Properties.Count > 0)
+                {
+                    //Console.WriteLine($@"Skipped size validation for object with properties {obj.GetReferencePath()}");
+                    //continue; // Skip objects with properties, because they are not serializable yet.
+                }
+
+                Assert.AreEqual(
+                    serialSize,
+                    (int)tempStream.Position - serialOffset,
+                    $"Saving object size mismatch {obj.GetReferencePath()}"
+                );
+
+                // Let's see if we can deserialize the object back.
+                tempStream.Seek(serialOffset, SeekOrigin.Begin);
+                obj.Load(tempStream);
+                Assert.AreEqual(
+                    serialSize,
+                    (int)tempStream.Position - serialOffset,
+                    $"Loading object size mismatch {obj.GetReferencePath()}"
+                );
+
+                //Console.WriteLine($@"Successfully saved object {obj.GetReferencePath()}");
             }
         }
     }

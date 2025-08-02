@@ -1,5 +1,6 @@
 ﻿using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -10,14 +11,26 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UTextureMovie : UTexture
     {
-        public UBulkData<byte> RawData;
+        #region Serialized Members
 
-        protected override void Deserialize()
+        [StreamRecord]
+        public UBulkData<byte> RawData { get; set; }
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            _Buffer.Read(out RawData);
-            Record(nameof(RawData), RawData);
+            RawData = stream.ReadStruct<UBulkData<byte>>();
+            stream.Record(nameof(RawData), RawData);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+            
+            stream.WriteStruct(RawData);
         }
     }
 }

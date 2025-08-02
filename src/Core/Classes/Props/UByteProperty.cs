@@ -1,3 +1,4 @@
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -10,24 +11,32 @@ namespace UELib.Core
     {
         #region Serialized Members
 
+        /// <summary>
+        ///     The enum associated with this byte property, if any.
+        /// </summary>
+        [StreamRecord]
         public UEnum? Enum { get; set; }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UByteProperty class.
-        /// </summary>
         public UByteProperty()
         {
             Type = PropertyType.ByteProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            Enum = _Buffer.ReadObject<UEnum>();
-            Record(nameof(Enum), Enum);
+            Enum = stream.ReadObject<UEnum>();
+            stream.Record(nameof(Enum), Enum);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.Write(Enum);
         }
 
         public override string GetFriendlyType()
@@ -39,6 +48,7 @@ namespace UELib.Core
                     ? $"{Enum.Outer.Name}.{Enum.Name}"
                     : Enum.Name;
             }
+
             return "byte";
         }
     }

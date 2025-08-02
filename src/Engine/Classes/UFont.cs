@@ -1,5 +1,8 @@
-﻿using UELib.Branch;
+﻿using System;
+using System.Linq;
+using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -9,33 +12,54 @@ namespace UELib.Engine
     [UnrealRegisterClass]
     public class UFont : UObject
     {
-        public UArray<FontCharacter> Characters;
-        public UArray<UObject> Textures;
-        public int Kerning;
-        public UMap<ushort, ushort> CharRemap;
-        public bool IsRemapped;
+        #region Script Properties
+
+        [StreamRecord, UnrealProperty]
+        public UArray<FontCharacter> Characters { get; set; } = [];
+
+        [StreamRecord, UnrealProperty]
+        public UArray<UObject /*UTexture or UTexture2D*/> Textures { get; set; } = [];
+
+        /// <summary>
+        ///     The default spacing between characters in this font.
+        /// </summary>
+        [StreamRecord, UnrealProperty]
+        public int Kerning { get; set; }
+
+        [StreamRecord, UnrealProperty]
+        [BuildGeneration(BuildGeneration.UE3)]
+        public bool IsRemapped { get; set; }
+
+        #endregion
+
+        #region Serialized Members
+
+        [StreamRecord]
+        public UMap<ushort, ushort>? CharRemap { get; set; }
+
+        #endregion
 
         public UFont()
         {
             ShouldDeserializeOnDemand = true;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
             // UT2004(v128) < LicenseeVersion 29, but the correct version to test against is 122
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.FontPagesDisplaced)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.FontPagesDisplaced)
             {
-                _Buffer.Read(out UArray<FontPage> pages);
-                Record(nameof(pages), pages);
+                stream.Read(out UArray<FontPage> pages);
+                stream.Record(nameof(pages), pages);
 
-                _Buffer.Read(out int charactersPerPage);
-                Record(nameof(charactersPerPage), charactersPerPage);
+                stream.Read(out int charactersPerPage);
+                stream.Record(nameof(charactersPerPage), charactersPerPage);
 
-                Characters = new UArray<FontCharacter>();
-                Textures = new UArray<UObject>();
-                for (int i = 0; i < pages.Count; i++)
+                Characters = [];
+                Textures = [];
+                for (var i = 0; i < pages.Count; i++)
                 {
                     Textures.Add(pages[i].Texture);
                     foreach (var c in pages[i].Characters)
@@ -48,54 +72,113 @@ namespace UELib.Engine
 
                 if (pages.Count == 0 && charactersPerPage == 0)
                 {
-                    _Buffer.Read(out string fontName);
-                    Record(nameof(fontName), fontName);
+                    stream.Read(out string fontName);
+                    stream.Record(nameof(fontName), fontName);
 
-                    _Buffer.Read(out int fontHeight);
-                    Record(nameof(fontHeight), fontHeight);
+                    stream.Read(out int fontHeight);
+                    stream.Record(nameof(fontHeight), fontHeight);
                 }
             }
-            else if (_Buffer.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
+            else if (stream.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
             {
-                _Buffer.Read(out Characters);
-                Record(nameof(Characters), Characters);
+                Characters = stream.ReadArray<FontCharacter>();
+                stream.Record(nameof(Characters), Characters);
 
-                _Buffer.Read(out Textures);
-                Record(nameof(Textures), Textures);
+                Textures = stream.ReadObjectArray<UObject>();
+                stream.Record(nameof(Textures), Textures);
             }
-
+#if MKKE
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.MKKE) return; // End of object.
+#endif
             // No version check in UT2003 (v120) and UT2004 (v128)
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.KerningAddedToUFont &&
-                _Buffer.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.KerningAddedToUFont &&
+                stream.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
             {
-                _Buffer.Read(out Kerning);
-                Record(nameof(Kerning), Kerning);
+                Kerning = stream.ReadInt32();
+                stream.Record(nameof(Kerning), Kerning);
             }
 #if DNF
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
-            {
-                // Not yet supported.
-                return;
-            }
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF) return; // Not yet supported.
 #endif
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.CharRemapAddedToUFont)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.CharRemapAddedToUFont)
             {
-                _Buffer.Read(out CharRemap);
-                Record(nameof(CharRemap), CharRemap);
+                stream.Read(out UMap<ushort, ushort> charRemap);
+                CharRemap = charRemap;
+                stream.Record(nameof(CharRemap), CharRemap);
 
-                if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.CleanupFonts)
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.CleanupFonts)
                 {
                     return;
                 }
 
-                _Buffer.Read(out IsRemapped);
-                Record(nameof(IsRemapped), IsRemapped);
+                IsRemapped = stream.ReadBool();
+                stream.Record(nameof(IsRemapped), IsRemapped);
 
-                //if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+                //if (stream.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
                 //{
-                //    _Buffer.Read(out int xPad);
-                //    _Buffer.Read(out int yPad);
+                //    stream.Read(out int xPad);
+                //    stream.Read(out int yPad);
                 //}
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            // UT2004(v128) < LicenseeVersion 29, but the correct version to test against is 122
+            if (stream.Version < (uint)PackageObjectLegacyVersion.FontPagesDisplaced)
+            {
+                // Reconstruct FontPages and CharactersPerPage from Textures and Characters
+                var pages = new UArray<FontPage>(Textures.Select(texture => new FontPage
+                {
+                    Texture = texture as UTexture,
+                    Characters = Characters
+                }));
+
+                stream.Write(pages);
+
+                int charactersPerPage = Characters.Count;
+                stream.Write(charactersPerPage);
+
+                if (pages.Count == 0 && charactersPerPage == 0)
+                {
+                    // Write dummy fontName and fontHeight
+                    stream.Write(string.Empty);
+                    stream.Write(0);
+                }
+            }
+            else if (stream.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
+            {
+                stream.Write(Characters);
+                stream.Write(Textures);
+            }
+#if MKKE
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.MKKE) return; // End of object.
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.KerningAddedToUFont &&
+                stream.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
+            {
+                stream.Write(Kerning);
+            }
+#if DNF
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF) return; // Not yet supported.
+#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.CharRemapAddedToUFont)
+            {
+                stream.WriteMap(CharRemap);
+                if (stream.Version >= (uint)PackageObjectLegacyVersion.CleanupFonts)
+                {
+                    return;
+                }
+
+                stream.Write(IsRemapped);
+#if UNREAL2
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Unreal2)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
             }
         }
 
@@ -117,6 +200,9 @@ namespace UELib.Engine
             }
         }
 
+        /// <summary>
+        ///     Implements FFontCharacter/Engine.Font.FontCharacter (See Engine/Classes/UFont.uc)
+        /// </summary>
         public struct FontCharacter : IUnrealSerializableClass
         {
             public int StartU;

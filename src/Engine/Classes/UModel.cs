@@ -1,7 +1,6 @@
-using UELib.Engine;
 using UELib.ObjectModel.Annotations;
 
-namespace UELib.Core
+namespace UELib.Engine
 {
     /// <summary>
     ///     Implements UModel/Engine.Model
@@ -10,11 +9,15 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UModel : UPrimitive
     {
-        [Output] public UPolys Polys;
+        #region Script Properties
 
-        protected override void Deserialize()
+        [UnrealProperty, Output] public UPolys Polys;
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
         }
     }
 }

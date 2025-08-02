@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using UELib.ObjectModel.Annotations;
+
+namespace UELib.Core
 {
     /// <summary>
     ///     Implements UEnum/Core.Enum
@@ -11,34 +13,40 @@
         /// <summary>
         ///     Enum tags (or members) of this enum.
         /// </summary>
-        public UArray<UName> Names
-        {
-            get => _Names;
-            set => _Names = value;
-        }
-
-        private UArray<UName> _Names;
+        [StreamRecord]
+        public UArray<UName> Names { get; set; } = [];
 
         #endregion
 
-        #region Constructors
-
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            _Buffer.ReadArray(out _Names);
-            Record(nameof(Names), Names);
+            Names = stream.ReadNameArray();
+            stream.Record(nameof(Names), Names);
 #if SPELLBORN
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Spellborn
-                && 145 < _Buffer.Version)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Spellborn
+                && 145 < stream.Version)
             {
-                uint unknownEnumFlags = _Buffer.ReadUInt32();
-                Record(nameof(unknownEnumFlags), unknownEnumFlags);
+                uint unknownEnumFlags = stream.ReadUInt32();
+                stream.Record(nameof(unknownEnumFlags), unknownEnumFlags);
             }
 #endif
         }
 
-        #endregion
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.WriteArray(Names);
+#if SPELLBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Spellborn
+                && 145 < stream.Version)
+            {
+                uint unknownEnumFlags = 0;
+                stream.Write(unknownEnumFlags);
+            }
+#endif
+        }
     }
 }

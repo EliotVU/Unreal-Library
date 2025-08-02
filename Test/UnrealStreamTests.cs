@@ -11,7 +11,7 @@ namespace Eliot.UELib.Test;
 [TestClass]
 public class UnrealStreamTests
 {
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.Undefined, 1, +0b0000000000000000000000100101)]
     [DataRow(PackageObjectLegacyVersion.Undefined, 1, -0b0000000000000000000000100101)]
     [DataRow(PackageObjectLegacyVersion.Undefined, 2, +0b0000000000000001000001100101)]
@@ -38,7 +38,7 @@ public class UnrealStreamTests
         Assert.AreEqual(compactIndex, readCompactIndex);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.Undefined, "")] // Verify empty string
     [DataRow(PackageObjectLegacyVersion.Undefined, "String")] // Verify ASCII string
     [DataRow(PackageObjectLegacyVersion.Undefined, "Strîñg", false)] // Verify ANSI characters
@@ -76,7 +76,7 @@ public class UnrealStreamTests
         Assert.AreEqual(text, readString);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.Undefined)]
     [DataRow(PackageObjectLegacyVersion.CompactIndexDeprecated)]
     [DataRow(PackageObjectLegacyVersion.NumberAddedToName)]
@@ -104,7 +104,7 @@ public class UnrealStreamTests
         Assert.AreEqual(writtenName, readName);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.Undefined)]
     public void SerializeStruct(PackageObjectLegacyVersion version)
     {
@@ -128,7 +128,7 @@ public class UnrealStreamTests
         Assert.AreEqual(80, outColor.A);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.Undefined)]
     public void SerializeStructMarshal(PackageObjectLegacyVersion version)
     {
@@ -163,7 +163,7 @@ public class UnrealStreamTests
         Assert.AreEqual(inColor3, colors[2]);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.LowestVersion)]
     [DataRow(PackageObjectLegacyVersion.LazyArraySkipCountChangedToSkipOffset)]
     [DataRow(PackageObjectLegacyVersion.LazyLoaderFlagsAddedToLazyArray)]
@@ -201,7 +201,7 @@ public class UnrealStreamTests
         CollectionAssert.AreEqual(bulkData.ElementData, readBulkData.ElementData);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.LowestVersion)]
     //[DataRow(PackageObjectLegacyVersion.CharRemapAddedToUFont)]
     //[DataRow(PackageObjectLegacyVersion.KerningAddedToUFont)]

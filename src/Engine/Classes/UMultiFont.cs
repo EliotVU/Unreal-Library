@@ -1,5 +1,6 @@
 ﻿using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -10,16 +11,34 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UMultiFont : UFont
     {
-        public UArray<float> ResolutionTestTable;
+        #region Serialized Members
 
-        protected override void Deserialize()
+        /// <summary>
+        ///     A list of resolutions that map to a given set of font pages.
+        /// </summary>
+        [StreamRecord, UnrealProperty]
+        public UArray<float>? ResolutionTestTable { get; set; }
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
             {
-                _Buffer.ReadArray(out ResolutionTestTable);
-                Record(nameof(ResolutionTestTable), ResolutionTestTable);
+                ResolutionTestTable = stream.ReadFloatArray();
+                stream.Record(nameof(ResolutionTestTable), ResolutionTestTable);
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.CleanupFonts)
+            {
+                stream.WriteArray(ResolutionTestTable);
             }
         }
     }

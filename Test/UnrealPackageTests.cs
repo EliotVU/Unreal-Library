@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Core;
+using UELib.Engine;
 
 namespace Eliot.UELib.Test
 {

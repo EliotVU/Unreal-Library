@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace UELib.Core
@@ -19,6 +20,7 @@ namespace UELib.Core
             D = d;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deserialize(IUnrealStream stream)
         {
             stream.Read(out A);
@@ -27,6 +29,7 @@ namespace UELib.Core
             stream.Read(out D);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Serialize(IUnrealStream stream)
         {
             stream.Write(A);

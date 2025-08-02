@@ -1,28 +1,28 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using UELib.Branch;
 using UELib.Services;
 
-namespace UELib.Core
+namespace UELib.Core;
+
+public partial class UObject
 {
     /// <summary>
-    /// Implements FStateFrame.
+    ///     Implements FStateFrame.
     /// </summary>
-    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public class UStateFrame : IUnrealSerializableClass
     {
-        public UStruct? Node;
-        public UState StateNode;
-        public ulong ProbeMask;
         public uint LatentAction;
+        public UStruct? Node;
+        public int Offset;
+        public ulong ProbeMask;
+        public UState StateNode;
 
         public UArray<PushedState> StateStack;
-        public int Offset;
 
         public void Deserialize(IUnrealStream stream)
         {
             // version >= 51
-            Node = stream.ReadObject<UStruct>();
+            Node = stream.ReadObject<UStruct?>();
             // version >= 51
             StateNode = stream.ReadObject<UState>();
             ProbeMask = stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved
@@ -31,10 +31,10 @@ namespace UELib.Core
             // version >= 55
             if (stream.Version >= (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
 #if SWRepublicCommando
-                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                || (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
                     stream.Version >= 156)
 #endif
-                )
+               )
             {
                 LatentAction = stream.ReadUInt16();
             }
@@ -43,14 +43,17 @@ namespace UELib.Core
                 LatentAction = stream.ReadUInt32();
             }
 #if DNF
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                 stream.LicenseeVersion >= 25)
             {
                 uint dnfUInt32 = stream.ReadUInt32();
             }
 #endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
+            {
                 stream.ReadArray(out StateStack);
+            }
+
             if (Node != null) Offset = stream.ReadIndex();
         }
 
@@ -61,16 +64,16 @@ namespace UELib.Core
             // version >= 51
             stream.Write(StateNode);
             stream.Write(stream.Version < (uint)PackageObjectLegacyVersion.ProbeMaskReducedAndIgnoreMaskRemoved
-                ? ProbeMask
-                : (uint)ProbeMask
+                             ? ProbeMask
+                             : (uint)ProbeMask
             );
             // version >= 55
             if (stream.Version >= (uint)PackageObjectLegacyVersion.StateFrameLatentActionReduced
 #if SWRepublicCommando
-                || (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
+                || (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando &&
                     stream.Version >= 156)
 #endif
-                )
+               )
             {
                 stream.Write((ushort)LatentAction);
             }
@@ -79,7 +82,7 @@ namespace UELib.Core
                 stream.Write(LatentAction);
             }
 #if DNF
-            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF &&
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF &&
                 stream.LicenseeVersion >= 25)
             {
                 LibServices.LogService.SilentException(new NotSupportedException("Unknown data"));
@@ -87,7 +90,10 @@ namespace UELib.Core
             }
 #endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStateStackToUStateFrame)
+            {
                 stream.Write(StateStack);
+            }
+
             if (Node != null) stream.Write(Offset);
         }
 

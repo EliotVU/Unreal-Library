@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Core
 {
@@ -16,33 +17,59 @@ namespace UELib.Core
 
         #region Serialized Members
 
+        /// <summary>
+        ///     The super-struct of this struct, if any.
+        ///     i.e. the parent struct that this struct(or state/class) extends.
+        /// </summary>
+        [StreamRecord]
         public UStruct? Super { get; set; }
+
+        /// <summary>
+        ///     The next field in the chain of fields.
+        ///     The chain starts at <seealso cref="UStruct.get_Children" />
+        /// </summary>
+        [StreamRecord]
         public UField? NextField { get; set; }
 
         #endregion
 
-        #region Constructors
-
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
+
 #if SWRepublicCommando
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
             {
                 return;
             }
 #endif
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
-                Super = _Buffer.ReadObject<UStruct?>();
-                Record(nameof(Super), Super);
+                Super = stream.ReadObject<UStruct?>();
+                stream.Record(nameof(Super), Super);
             }
 
-            NextField = _Buffer.ReadObject<UField?>();
-            Record(nameof(NextField), NextField);
+            NextField = stream.ReadObject<UField?>();
+            stream.Record(nameof(NextField), NextField);
         }
 
-        #endregion
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+#if SWRepublicCommando
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SWRepublicCommando)
+            {
+                return;
+            }
+#endif
+            if (stream.Version < (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
+            {
+                stream.WriteObject(Super);
+            }
+
+            stream.WriteObject(NextField);
+        }
 
         /// <summary>
         ///     Enumerates all super-structs of this struct.

@@ -7,7 +7,5 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UTextureFlipBook : UTexture2D
-    {
-    }
+    public class UTextureFlipBook : UTexture2D;
 }

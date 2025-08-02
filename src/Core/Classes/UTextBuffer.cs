@@ -1,7 +1,8 @@
-using System;
+using UELib.ObjectModel.Annotations;
+#if NET6_0_OR_GREATER
 using System.IO;
 using System.IO.Compression;
-using System.Text;
+#endif
 
 namespace UELib.Core
 {
@@ -10,61 +11,101 @@ namespace UELib.Core
     {
         #region Serialized Members
 
+        [StreamRecord]
         public uint Top { get; private set; }
+
+        [StreamRecord]
         public uint Pos { get; private set; }
 
+        [StreamRecord]
         public string ScriptText { get; set; }
 
         #endregion
-
-        #region Constructors
 
         public UTextBuffer()
         {
             ShouldDeserializeOnDemand = true;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            Top = _Buffer.ReadUInt32();
-            Record(nameof(Top), Top);
-            Pos = _Buffer.ReadUInt32();
-            Record(nameof(Pos), Pos);
+            Top = stream.ReadUInt32();
+            stream.Record(nameof(Top), Top);
+            Pos = stream.ReadUInt32();
+            stream.Record(nameof(Pos), Pos);
 #if UNDYING
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.Undying &&
-                _Buffer.Version >= 85)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying &&
+                stream.Version >= 85)
             {
-                int uncompressedDataSize = _Buffer.ReadIndex();
-                Record(nameof(uncompressedDataSize), uncompressedDataSize);
+                int uncompressedDataSize = stream.ReadIndex();
+                stream.Record(nameof(uncompressedDataSize), uncompressedDataSize);
 
-                int compressedDataSize = _Buffer.ReadIndex();
-                Record(nameof(compressedDataSize), compressedDataSize);
+                int compressedDataSize = stream.ReadIndex();
+                stream.Record(nameof(compressedDataSize), compressedDataSize);
                 if (compressedDataSize > 0)
                 {
                     var compressedData = new byte[compressedDataSize];
-                    _Buffer.Read(compressedData, 0, compressedDataSize);
-                    Record(nameof(compressedData), compressedData);
+                    stream.Read(compressedData, 0, compressedDataSize);
+                    stream.Record(nameof(compressedData), compressedData);
 
-                    byte[] uncompressedData = new byte[uncompressedDataSize];
+                    var uncompressedData = new byte[uncompressedDataSize];
 #if NET6_0_OR_GREATER
-                    using var s = new ZLibStream(new MemoryStream(compressedData), CompressionMode.Decompress);
-                    s.ReadExactly(uncompressedData, 0, uncompressedDataSize);
+                    using var zlib = new ZLibStream(new MemoryStream(compressedData), CompressionMode.Decompress);
+                    zlib.ReadExactly(uncompressedData, 0, uncompressedDataSize);
 
                     ScriptText = UnrealEncoding.ANSI.GetString(uncompressedData);
+
                     return;
 #endif
                 }
 
                 ScriptText = "Text data is compressed";
+
                 return;
             }
 #endif
-            ScriptText = _Buffer.ReadString();
-            Record(nameof(ScriptText), "...");
+            ScriptText = stream.ReadString();
+            stream.Record(nameof(ScriptText), "...");
         }
 
-        #endregion
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.Write(Top);
+            stream.Write(Pos);
+#if UNDYING
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Undying &&
+                stream.Version >= 85)
+            {
+                if (!string.IsNullOrEmpty(ScriptText))
+                {
+                    byte[] uncompressedData = UnrealEncoding.ANSI.GetBytes(ScriptText);
+#if NET6_0_OR_GREATER
+                    using var memoryStream = new MemoryStream();
+                    using var zlib = new ZLibStream(memoryStream, CompressionMode.Compress);
+                    zlib.Write(uncompressedData, 0, uncompressedData.Length);
+                    byte[] compressedData = memoryStream.ToArray();
+                    stream.WriteIndex(uncompressedData.Length);
+                    stream.WriteIndex(compressedData.Length);
+                    stream.Write(compressedData, 0, compressedData.Length);
+#else
+                    stream.WriteIndex(0);
+                    stream.WriteIndex(0);
+#endif
+                }
+                else
+                {
+                    stream.WriteIndex(0);
+                    stream.WriteIndex(0);
+                }
+
+                return;
+            }
+#endif
+            stream.WriteString(ScriptText);
+        }
     }
 }

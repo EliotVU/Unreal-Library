@@ -1,4 +1,5 @@
 using System;
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core
@@ -11,25 +12,32 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        // MetaClass
+        /// <summary>
+        ///     The metaclass e.g. "Class<Object>" where Object is the defined metaclass.
+        /// </summary>
+        [StreamRecord]
         public UClass? MetaClass { get; set; }
 
         #endregion
 
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UClassProperty class.
-        /// </summary>
         public UClassProperty()
         {
             Type = PropertyType.ClassProperty;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            MetaClass = _Buffer.ReadObject<UClass>();
-            Record(nameof(MetaClass), MetaClass);
+            MetaClass = stream.ReadObject<UClass>();
+            stream.Record(nameof(MetaClass), MetaClass);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.Write(MetaClass);
         }
 
         /// <inheritdoc/>

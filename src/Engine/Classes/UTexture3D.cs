@@ -1,5 +1,6 @@
 ﻿using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -10,24 +11,50 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UTexture3D : UTexture
     {
-        public UArray<MipMap3D> Mips;
-        public uint SizeX, SizeY;
+        #region Serialized Members
 
-        protected override void Deserialize()
+        [StreamRecord]
+        public uint SizeX { get; set; }
+
+        [StreamRecord]
+        public uint SizeY { get; set; }
+
+        [StreamRecord]
+        public UArray<MipMap3D> Mips { get; set; } = [];
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            _Buffer.Read(out SizeX);
-            Record(nameof(SizeX), SizeX);
-            
-            _Buffer.Read(out SizeY);
-            Record(nameof(SizeY), SizeY);
-            
-            _Buffer.Read(out int format);
+            SizeX = stream.ReadUInt32();
+            stream.Record(nameof(SizeX), SizeX);
+
+            SizeY = stream.ReadUInt32();
+            stream.Record(nameof(SizeY), SizeY);
+
+            stream.Read(out int format);
             Format = (TextureFormat)format;
-            Record(nameof(Format), Format);
+            stream.Record(nameof(Format), Format);
 
-            _Buffer.ReadArray(out Mips);
+            Mips = stream.ReadArray<MipMap3D>();
+            stream.Record(nameof(Mips), Mips);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
+            {
+                stream.Write(SizeX);
+                stream.Write(SizeY);
+
+                stream.Write((byte)Format);
+
+                stream.Write(Mips);
+            }
         }
 
         public struct MipMap3D : IUnrealSerializableClass

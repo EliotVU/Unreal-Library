@@ -11,20 +11,39 @@ namespace UELib.Engine
     public class UTexture2DComposite : UTexture2D
     {
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate void _Deserialize();
-        
-        protected override void Deserialize()
+        private delegate void _Deserialize(IUnrealStream stream);
+
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        private delegate void _Serialize(IUnrealStream stream);
+
+        public override void Deserialize(IUnrealStream stream)
         {
             // Deserialize from UTexture instead of UTexture2D
-            if (_Buffer.Version >= 600)
+            if (stream.Version >= 600)
             {
                 var ptr = typeof(UTexture).GetMethod(nameof(Deserialize)).MethodHandle.GetFunctionPointer();
                 var deserializeFunc = Marshal.GetDelegateForFunctionPointer<_Deserialize>(ptr);
-                deserializeFunc();
+                deserializeFunc(stream);
+
                 return;
             }
 
-            base.Deserialize();
+            base.Deserialize(stream);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            // Serialize from UTexture instead of UTexture2D
+            if (stream.Version >= 600)
+            {
+                var ptr = typeof(UTexture).GetMethod(nameof(Serialize)).MethodHandle.GetFunctionPointer();
+                var deserializeFunc = Marshal.GetDelegateForFunctionPointer<_Serialize>(ptr);
+                deserializeFunc(stream);
+
+                return;
+            }
+
+            base.Serialize(stream);
         }
     }
 }

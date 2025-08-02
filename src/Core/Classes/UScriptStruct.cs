@@ -4,23 +4,34 @@ using UELib.Flags;
 namespace UELib.Core
 {
     [UnrealRegisterClass]
+    [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
     public class UScriptStruct : UStruct
     {
-        #region Constructors
-
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedStructFlagsToScriptStruct)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStructFlagsToScriptStruct)
             {
-                StructFlags = _Buffer.ReadFlags32<StructFlag>();
-                Record(nameof(StructFlags), StructFlags);
+                StructFlags = stream.ReadFlags32<StructFlag>();
+                stream.Record(nameof(StructFlags), StructFlags);
             }
 
-            DeserializeProperties(_Buffer);
+            DefaultProperties = DeserializeScriptProperties(stream, this);
+            Properties = DefaultProperties;
         }
 
-        #endregion
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedStructFlagsToScriptStruct)
+            {
+                stream.Write((uint)StructFlags);
+            }
+
+            SerializeScriptProperties(stream, this, DefaultProperties);
+            Properties = DefaultProperties;
+        }
     }
 }

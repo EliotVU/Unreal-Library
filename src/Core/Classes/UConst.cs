@@ -1,4 +1,6 @@
-﻿namespace UELib.Core
+﻿using UELib.ObjectModel.Annotations;
+
+namespace UELib.Core
 {
     /// <summary>
     ///     Implements UEnum/Core.Enum
@@ -9,22 +11,26 @@
         #region Serialized Members
 
         /// <summary>
-        /// The literal value of this const.
+        ///     The literal value of this const.
         /// </summary>
+        [StreamRecord]
         public string Value { get; set; }
 
         #endregion
 
-        #region Constructors
-
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
-            
-            Value = _Buffer.ReadString();
-            Record(nameof(Value), Value);
+            base.Deserialize(stream);
+
+            Value = stream.ReadString();
+            stream.Record(nameof(Value), Value);
         }
 
-        #endregion
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            stream.WriteString(Value);
+        }
     }
 }

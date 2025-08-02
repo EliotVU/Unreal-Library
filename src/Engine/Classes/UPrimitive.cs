@@ -1,4 +1,7 @@
-namespace UELib.Core
+using UELib.Core;
+using UELib.ObjectModel.Annotations;
+
+namespace UELib.Engine
 {
     /// <summary>
     ///     Implements UPrimitive/Engine.Primitive
@@ -6,23 +9,30 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public class UPrimitive : UObject
     {
-        public UBox BoundingBox;
-        public USphere BoundingSphere;
+        #region Serialized Members
+
+        [StreamRecord]
+        public UBox BoundingBox { get; set; }
+
+        [StreamRecord]
+        public USphere BoundingSphere { get; set; }
+
+        #endregion
 
         public UPrimitive()
         {
             ShouldDeserializeOnDemand = true;
         }
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            _Buffer.ReadStruct(out BoundingBox);
-            Record(nameof(BoundingBox), BoundingBox);
+            BoundingBox = stream.ReadStruct<UBox>();
+            stream.Record(nameof(BoundingBox), BoundingBox);
 
-            _Buffer.ReadStruct(out BoundingSphere);
-            Record(nameof(BoundingSphere), BoundingSphere);
+            BoundingSphere = stream.ReadStruct<USphere>();
+            stream.Record(nameof(BoundingSphere), BoundingSphere);
         }
     }
 }

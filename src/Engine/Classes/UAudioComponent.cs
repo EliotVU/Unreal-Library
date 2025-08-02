@@ -7,43 +7,33 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UAudioComponent : UActorComponent
-    {
-    }
+    public class UAudioComponent : UActorComponent;
 
     /// <summary>
     ///     Implements USplineAudioComponent/Engine.SplineAudioComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USplineAudioComponent : UAudioComponent
-    {
-    }
+    public class USplineAudioComponent : UAudioComponent;
 
     /// <summary>
     ///     Implements UMultiCueSplineAudioComponent/Engine.MultiCueSplineAudioComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UMultiCueSplineAudioComponent : USplineAudioComponent
-    {
-    }
+    public class UMultiCueSplineAudioComponent : USplineAudioComponent;
 
     /// <summary>
     ///     Implements USimpleSplineAudioComponent/Engine.SimpleSplineAudioComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USimpleSplineAudioComponent : USplineAudioComponent
-    {
-    }
+    public class USimpleSplineAudioComponent : USplineAudioComponent;
 
     /// <summary>
     ///     Implements USimpleSplineNonLoopAudioComponent/Engine.SimpleSplineNonLoopAudioComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USimpleSplineNonLoopAudioComponent : USimpleSplineAudioComponent
-    {
-    }
+    public class USimpleSplineNonLoopAudioComponent : USimpleSplineAudioComponent;
 }

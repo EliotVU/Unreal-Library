@@ -42,10 +42,10 @@ namespace UELib.Core
             var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{(ulong)ObjectFlags:X8}");
             flagNode.ToolTipText = ObjectFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)]);
 
-            if (ExportTable != null)
+            if (ExportResource != null)
             {
-                AddTextNode(_ParentNode, $"Size:{ExportTable.SerialSize}");
-                AddTextNode(_ParentNode, $"Offset:{ExportTable.SerialOffset}");
+                AddTextNode(_ParentNode, $"Size:{ExportResource.SerialSize}");
+                AddTextNode(_ParentNode, $"Offset:{ExportResource.SerialOffset}");
             }
         }
 

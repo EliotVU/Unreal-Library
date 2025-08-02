@@ -1,6 +1,8 @@
 using UELib.Branch;
+using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
-namespace UELib.Core
+namespace UELib.Engine
 {
     /// <summary>
     ///     Implements USoundGroup/Engine.SoundGroup
@@ -11,31 +13,39 @@ namespace UELib.Core
     {
         #region Serialized Members
 
-        // p.s. It's not safe to cast to USound
-        public UArray<UObject> Sounds
-        {
-            get => _Sounds;
-            set => _Sounds = value;
-        }
-
-        private UArray<UObject> _Sounds;
+        [StreamRecord]
+        public UArray<UObject /*USound*/> Sounds { get; set; } = [];
 
         #endregion
 
-        protected override void Deserialize()
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 #if UT
-            if ((Package.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
-                 Package.Build == UnrealPackage.GameBuild.BuildName.UT2003)
-                && _Buffer.LicenseeVersion < 27)
+            if ((stream.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
+                 stream.Build == UnrealPackage.GameBuild.BuildName.UT2003)
+                && stream.LicenseeVersion < 27)
             {
-                _Buffer.Read(out string package);
-                Record(nameof(package), package);
+                stream.Read(out string package);
+                stream.Record(nameof(package), package);
             }
 #endif
-            _Buffer.ReadArray(out _Sounds);
-            Record(nameof(Sounds), Sounds);
+            Sounds = stream.ReadObjectArray<UObject>();
+            stream.Record(nameof(Sounds), Sounds);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+#if UT
+            if ((stream.Build == UnrealPackage.GameBuild.BuildName.UT2004 ||
+                 stream.Build == UnrealPackage.GameBuild.BuildName.UT2003)
+                && stream.LicenseeVersion < 27)
+            {
+                stream.Write("None"); // package name
+            }
+#endif
+            stream.WriteArray(Sounds);
         }
     }
 }

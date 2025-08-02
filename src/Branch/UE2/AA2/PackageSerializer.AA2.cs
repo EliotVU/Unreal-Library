@@ -13,7 +13,7 @@ namespace UELib.Branch.UE2.AA2
 
         public override void Serialize(IUnrealStream stream, UNameTableItem item)
         {
-            if (stream.Flags.HasFlag(UnrealArchiveFlags.Encoded))
+            if (stream.IsEncoded())
             {
                 throw new NotSupportedException("Can't serialize encrypted name entries");
             }
@@ -24,7 +24,7 @@ namespace UELib.Branch.UE2.AA2
         // Note: Names are not encrypted in AAA/AAO 2.6 (LicenseeVersion 32)
         public override void Deserialize(IUnrealStream stream, UNameTableItem item)
         {
-            if (!stream.Flags.HasFlag(UnrealArchiveFlags.Encoded))
+            if (!stream.IsEncoded())
             {
                 // Fallback to the default implementation
                 item.Deserialize(stream);
@@ -109,7 +109,7 @@ namespace UELib.Branch.UE2.AA2
             item.ClassIndex = stream.ReadIndex();
             item.OuterIndex = stream.ReadInt32();
             item.ObjectFlags = ~stream.ReadUInt32();
-            item.ObjectName = stream.ReadNameReference();
+            item.ObjectName = stream.ReadName();
             item.SerialSize = stream.ReadIndex();
             if (item.SerialSize > 0)
             {

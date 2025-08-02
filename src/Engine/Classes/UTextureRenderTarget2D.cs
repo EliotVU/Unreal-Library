@@ -1,4 +1,5 @@
 ﻿using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -9,25 +10,47 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UTextureRenderTarget2D : UTexture
     {
-        public uint SizeX, SizeY;
+        #region Serialized Members
 
-        protected override void Deserialize()
+        [StreamRecord, UnrealProperty]
+        public uint SizeX { get; set; }
+
+        [StreamRecord, UnrealProperty]
+        public uint SizeY { get; set; }
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            if (_Buffer.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
+            if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
             {
-                _Buffer.Read(out SizeX);
-                Record(nameof(SizeX), SizeX);
-                _Buffer.Read(out SizeY);
-                Record(nameof(SizeY), SizeY);
+                SizeX = stream.ReadUInt32();
+                stream.Record(nameof(SizeX), SizeX);
+                SizeY = stream.ReadUInt32();
+                stream.Record(nameof(SizeY), SizeY);
 
-                _Buffer.Read(out int format);
+                stream.Read(out byte format);
                 Format = (TextureFormat)format;
-                Record(nameof(Format), Format);
+                stream.Record(nameof(Format), Format);
 
-                _Buffer.Read(out int numMips);
-                Record(nameof(numMips), numMips);
+                stream.Read(out int numMips);
+                stream.Record(nameof(numMips), numMips);
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
+            {
+                stream.Write(SizeX);
+                stream.Write(SizeY);
+
+                stream.Write((byte)Format);
+                stream.Write(Mips.Count);
             }
         }
     }

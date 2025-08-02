@@ -7,25 +7,19 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class ULightEnvironmentComponent : UActorComponent
-    {
-    }
+    public class ULightEnvironmentComponent : UActorComponent;
 
     /// <summary>
     ///     Implements UDynamicLightEnvironmentComponent/Engine.DynamicLightEnvironmentComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UDynamicLightEnvironmentComponent : ULightEnvironmentComponent
-    {
-    }
+    public class UDynamicLightEnvironmentComponent : ULightEnvironmentComponent;
 
     /// <summary>
     ///     Implements UParticleLightEnvironmentComponent/Engine.ParticleLightEnvironmentComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UParticleLightEnvironmentComponent : UDynamicLightEnvironmentComponent
-    {
-    }
+    public class UParticleLightEnvironmentComponent : UDynamicLightEnvironmentComponent;
 }

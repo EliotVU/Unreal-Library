@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Runtime.CompilerServices;
 using UELib.Branch;
@@ -632,13 +633,13 @@ public static class UnrealStreamImplementations
     /// Reads a map using dynamic typing (that should hopefully be optimized out by the compiler).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ReadMap<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map) => map = ReadMap<TKey, TValue>(stream);
+    private static void ReadMap<TKey, TValue>(this IUnrealStream stream, out UMap<TKey, TValue> map) => map = ReadMap<TKey, TValue>(stream);
 
     /// <summary>
     /// Reads a map using dynamic typing (that should hopefully be optimized out by the compiler).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static UMap<TKey, TValue> ReadMap<TKey, TValue>(this IUnrealStream stream)
+    private static UMap<TKey, TValue> ReadMap<TKey, TValue>(this IUnrealStream stream)
     {
         int c = stream.ReadLength();
         var map = new UMap<TKey, TValue>(c);
@@ -882,6 +883,23 @@ public static class UnrealStreamImplementations
         WriteIndex(stream, array.Count);
         foreach (var element in array)
         {
+            element.Serialize(stream);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteArray<T>(this IUnrealStream stream, in UArray<T>? array, int count)
+        where T : IUnrealSerializableClass
+    {
+        if (array == null)
+        {
+            return;
+        }
+
+        Contract.Assert(array.Count >= count);
+        for (int index = 0; index < count; index++)
+        {
+            var element = array[index];
             element.Serialize(stream);
         }
     }

@@ -1,4 +1,5 @@
 ﻿using UELib.Branch;
+using UELib.IO;
 
 namespace UELib.Core;
 
@@ -29,12 +30,7 @@ public partial class UClass
             stream.Read(out InterfaceClass);
             stream.Read(out VfTableProperty);
 #if UE4
-            if (stream.UE4Version == 0)
-            {
-                return;
-            }
-
-            stream.Read(out IsImplementedByK2);
+            if (stream.IsUE4()) stream.Read(out IsImplementedByK2);
 #endif
         }
 
@@ -43,12 +39,7 @@ public partial class UClass
             stream.Write(InterfaceClass);
             stream.Write(VfTableProperty);
 #if UE4
-            if (stream.UE4Version == 0)
-            {
-                return;
-            }
-
-            stream.Write(IsImplementedByK2);
+            if (stream.IsUE4()) stream.Write(IsImplementedByK2);
 #endif
         }
     }

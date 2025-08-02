@@ -4,15 +4,12 @@ using UELib.Types;
 namespace UELib.Core
 {
     /// <summary>
-    /// Component Property
+    ///     Implements UComponentProperty/Core.ComponentProperty
     /// </summary>
     [UnrealRegisterClass]
     [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
     public class UComponentProperty : UObjectProperty
     {
-        /// <summary>
-        /// Creates a new instance of the UELib.Core.UComponentProperty class.
-        /// </summary>
         public UComponentProperty()
         {
             Type = PropertyType.ComponentProperty;

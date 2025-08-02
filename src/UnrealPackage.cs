@@ -2010,7 +2010,7 @@ namespace UELib
 #if HAWKEN || GIGANTIC
                 if ((stream.Build == GameBuild.BuildName.Hawken ||
                      stream.Build == GameBuild.BuildName.Gigantic) &&
-                    stream.LicenseeVersion >= 2)
+                     stream.LicenseeVersion >= 2)
                 {
                     stream.Read(out int vUnknown);
                 }
@@ -2035,7 +2035,7 @@ namespace UELib
 #endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
-                Contract.Assert(NameOffset < stream.Length);
+                Contract.Assert(NameOffset < HeaderSize || HeaderSize == 0);
 #if UE4
                 if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
                 {
@@ -2051,7 +2051,7 @@ namespace UELib
 #endif
                 ExportCount = stream.ReadInt32();
                 ExportOffset = stream.ReadInt32();
-                Contract.Assert(ExportOffset < stream.Length);
+                Contract.Assert(ExportOffset < HeaderSize || HeaderSize == 0);
 #if APB
                 if (stream.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 28)
@@ -2066,7 +2066,7 @@ namespace UELib
 #endif
                 ImportCount = stream.ReadInt32();
                 ImportOffset = stream.ReadInt32();
-                Contract.Assert(ImportOffset < stream.Length);
+                Contract.Assert(ImportOffset < HeaderSize || HeaderSize == 0);
 
                 Console.WriteLine("Names Count:" + NameCount + " Names Offset:" + NameOffset
                                   + " Exports Count:" + ExportCount + " Exports Offset:" + ExportOffset
@@ -2079,7 +2079,7 @@ namespace UELib
                     Contract.Assert(HeritageCount > 0);
 
                     HeritageOffset = stream.ReadInt32();
-                    Contract.Assert(HeritageOffset < stream.Length);
+                    Contract.Assert(HeritageOffset < HeaderSize || HeaderSize == 0);
 
                     return;
                 }
@@ -2551,8 +2551,6 @@ namespace UELib
 
         public UArray<UObjectThumbnailTableItem> ObjectThumbnails { get; private set; } = [];
 
-        #region Initialized Members
-
         /// <summary>
         /// Class types that should get added to the ObjectsList.
         /// </summary>
@@ -2569,10 +2567,6 @@ namespace UELib
 
         [Obsolete("Replaced with an encoded stream", true)]
         public IBufferDecoder Decoder;
-
-        #endregion
-
-        #region Constructors
 
         /// <summary>
         /// A Collection of flags describing how a package should be initialized.
@@ -2858,7 +2852,7 @@ namespace UELib
             BinaryMetaData.AddField(nameof(Summary), Summary, 0, stream.Position);
 
             // FIXME: For backwards compatibility.
-            PackageFlags = (uint)Summary.PackageFlags;
+            PackageFlags = Summary.PackageFlags;
             Group = Summary.FolderName;
             Branch.PostDeserializeSummary(this, stream, ref Summary);
             Debug.Assert(stream.Serializer != null,
@@ -2884,7 +2878,7 @@ namespace UELib
                 DeserializeHeritages(stream);
             }
 #if TERA
-            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Generations.Last().NameCount;
+            if (Build == GameBuild.BuildName.Tera) Summary.NameCount = Summary.Generations.Last().NameCount;
 #endif
             // Read the names
             if (Summary.NameCount > 0)
@@ -3237,18 +3231,27 @@ namespace UELib
             }
         }
 
+        private void SerializeThumbnailData(IUnrealStream stream)
+        {
+            foreach (var item in ObjectThumbnails)
+            {
+                item.ThumbnailOffset = (int)stream.Position;
+                var thumbnail = item.Thumbnail;
+                if (thumbnail.ImageData.Count == 0)
+                {
+                    LibServices.LogService.Log("Writing empty thumbnail data! This is likely not intended.");
+                }
+
+                stream.Write(ref thumbnail);
+            }
+        }
+
         private void SerializeThumbnails(IUnrealStream stream)
         {
-            // If true then we are writing a new package, otherwise just overwrite existing data.
             if (Summary.ThumbnailTableOffset == 0)
             {
-                // Write the thumbnail data somewhere, keep track of the position for the thumbnail item to reference.
-                foreach (var item in ObjectThumbnails)
-                {
-                    item.ThumbnailOffset = (int)stream.Position;
-                    var thumbnail = item.Thumbnail;
-                    stream.Write(ref thumbnail);
-                }
+                // Write the thumbnail data before the thumbnails table
+                SerializeThumbnailData(stream);
             }
 
             Summary.ThumbnailTableOffset = (int)stream.Position;
@@ -3499,8 +3502,6 @@ namespace UELib
             }
         }
 
-        #endregion
-
         #region Methods
 
         // Create pseudo objects for imports so that we have non-null references to imports.
@@ -3534,6 +3535,7 @@ namespace UELib
             Debug.Assert(export.Object == null);
 
             var objName = export.ObjectName;
+            var objFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
             var objSuper = IndexToObject<UStruct?>(export.SuperIndex);
 
             var objOuter = IndexToObject<UObject?>(export.OuterIndex);
@@ -3549,19 +3551,35 @@ namespace UELib
             var objArchetype = IndexToObject<UObject?>(export.ArchetypeIndex);
 
             var internalClassType = GetClassType(objClass?.Name ?? "Class");
-            if (objClass != null && internalClassType == typeof(UnknownObject) && (int)objClass > 0)
+            if (objClass != null && internalClassType == typeof(UnknownObject))
             {
                 // Try one of the "super" classes for unregistered classes.
                 internalClassType = objClass
                     .EnumerateSuper<UClass>()
+                    // Don't fall back to UObject, because we already do for UnknownObject
+                    .TakeWhile(cls => cls.Name != UnrealName.Object)
                     .Select(cls => GetClassType(cls.Name))
                     .FirstOrDefault() ?? typeof(UnknownObject);
+
+                // HACK: Workaround for unknown UComponent types.
+                if (internalClassType == typeof(UnknownObject)
+                    // IsTemplate Detects:
+                    && objName.ToString().EndsWith("Component", StringComparison.OrdinalIgnoreCase)
+                    && (objFlags.HasFlag(ObjectFlag.TemplateObject)
+                        || export
+                           .EnumerateOuter()
+                           .Cast<UExportTableItem>()
+                           .Any(exp => (exp.ObjectFlags & Branch.EnumFlagsMap[typeof(ObjectFlag)][(int)ObjectFlag.TemplateObject]) != 0)
+                    ))
+                {
+                    internalClassType = typeof(UComponent);
+                }
             }
 
             var obj = (UObject)Activator.CreateInstance(internalClassType);
             Debug.Assert(obj != null);
             obj.Name = objName;
-            obj.ObjectFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
+            obj.ObjectFlags = objFlags;
             obj.Package = this;
             obj.PackageIndex = export.Index + 1;
             obj.PackageResource = export;

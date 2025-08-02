@@ -7,7 +7,5 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UTexture2DDynamic : UTexture
-    {
-    }
+    public class UTexture2DDynamic : UTexture;
 }

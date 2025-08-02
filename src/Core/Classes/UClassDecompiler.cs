@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UELib.Annotations;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -174,12 +173,12 @@ namespace UELib.Core
         {
             var output = string.Empty;
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.Abstract) != 0)
+            if (HasClassFlag(ClassFlag.Abstract))
             {
                 output += "\r\n\tabstract";
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.Transient) != 0)
+            if (HasClassFlag(ClassFlag.Transient))
             {
                 output += "\r\n\ttransient";
             }
@@ -187,13 +186,13 @@ namespace UELib.Core
             {
                 // Only do if parent had Transient
                 var parentClass = (UClass)Super;
-                if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.Transient) != 0)
+                if (parentClass != null && parentClass.HasClassFlag(ClassFlag.Transient))
                 {
                     output += "\r\n\tnotransient";
                 }
             }
 
-            if (ObjectFlags.HasFlag(ObjectFlag.Native))
+            if (HasObjectFlag(ObjectFlag.Native))
             {
                 output += "\r\n\t" + FormatNative();
                 if (NativeHeaderName.Length != 0)
@@ -202,33 +201,36 @@ namespace UELib.Core
                 }
             }
 
-            if (HasClassFlag(Flags.ClassFlags.NativeOnly))
+            if (HasClassFlag(ClassFlag.NativeOnly))
             {
                 output += "\r\n\tnativeonly";
             }
 
-            if (HasClassFlag(Flags.ClassFlags.NativeReplication))
+            if (HasClassFlag(ClassFlag.NativeReplication))
             {
                 output += "\r\n\tnativereplication";
             }
 
             // BTClient.Menu.uc has Config(ClientBtimes) and this flag is not true???
-            if ((ClassFlags & (uint)Flags.ClassFlags.Config) != 0)
+            if (HasClassFlag(ClassFlag.Config))
             {
                 string inner = ClassConfigName;
                 if (ClassConfigName == UnrealName.None || ClassConfigName == UnrealName.System)
                 {
                     output += "\r\n\tconfig";
                 }
-                else output += $"\r\n\tconfig({inner})";
+                else
+                {
+                    output += $"\r\n\tconfig({inner})";
+                }
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.ParseConfig) != 0)
+            if (HasAnyClassFlags((ulong)Flags.ClassFlags.ParseConfig))
             {
                 output += "\r\n\tparseconfig";
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.PerObjectConfig) != 0)
+            if (HasClassFlag(ClassFlag.PerObjectConfig))
             {
                 output += "\r\n\tperobjectconfig";
             }
@@ -236,7 +238,7 @@ namespace UELib.Core
             {
                 // Only do if parent had PerObjectConfig
                 var parentClass = (UClass)Super;
-                if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.PerObjectConfig) != 0)
+                if (parentClass != null && parentClass.HasClassFlag(ClassFlag.PerObjectConfig))
                 {
                     output += "\r\n\tnoperobjectconfig";
                 }
@@ -245,7 +247,7 @@ namespace UELib.Core
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                if (HasClassFlag(0x00001000U))
+                if (HasAnyClassFlags(0x00001000U))
                 {
                     output += "\r\n\tobsolete";
                 }
@@ -253,7 +255,7 @@ namespace UELib.Core
             else
 #endif
             {
-                if ((ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0)
+                if (HasClassFlag(ClassFlag.EditInlineNew))
                 {
                     output += "\r\n\teditinlinenew";
                 }
@@ -261,14 +263,14 @@ namespace UELib.Core
                 {
                     // Only do if parent had EditInlineNew
                     var parentClass = (UClass)Super;
-                    if (parentClass != null && (parentClass.ClassFlags & (uint)Flags.ClassFlags.EditInlineNew) != 0)
+                    if (parentClass != null && parentClass.HasClassFlag(ClassFlag.EditInlineNew))
                     {
                         output += "\r\n\tnoteditinlinenew";
                     }
                 }
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.CollapseCategories) != 0)
+            if (HasClassFlag(ClassFlag.CollapseCategories))
             {
                 output += "\r\n\tcollapsecategories";
             }
@@ -276,7 +278,7 @@ namespace UELib.Core
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
             {
-                if (HasClassFlag(0x00004000))
+                if (HasAnyClassFlags(0x00004000))
                 {
                     output += "\r\n\teditinlinenew";
                 }
@@ -284,7 +286,7 @@ namespace UELib.Core
                 {
                     // Only do if parent had EditInlineNew
                     var parentClass = (UClass)Super;
-                    if (parentClass != null && (parentClass.ClassFlags & 0x00004000) != 0)
+                    if (parentClass != null && parentClass.HasAnyClassFlags(0x00004000))
                     {
                         output += "\r\n\tnoteditinlinenew";
                     }
@@ -292,13 +294,13 @@ namespace UELib.Core
             }
             else
 #endif
-            // TODO: Might indicate "Interface" in later versions
-            if (HasClassFlag(Flags.ClassFlags.ExportStructs) && Package.Version < 300)
+                // TODO: Might indicate "Interface" in later versions
+            if (HasClassFlag(ClassFlag.ExportStructs))
             {
                 output += "\r\n\texportstructs";
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.NoExport) != 0)
+            if (HasClassFlag(ClassFlag.NoExport))
             {
                 output += "\r\n\tnoexport";
             }
@@ -308,7 +310,7 @@ namespace UELib.Core
 #if DNF
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                 {
-                    if (HasClassFlag(0x02000))
+                    if (HasAnyClassFlags(0x02000))
                     {
                         output += "\r\n\tplaceable";
                     }
@@ -320,51 +322,54 @@ namespace UELib.Core
                 else
 #endif
                 {
-                    if (Package.Version >= PlaceableVersion)
-                    {
-                        output += (ClassFlags & (uint)Flags.ClassFlags.Placeable) != 0
-                            ? "\r\n\tplaceable"
-                            : "\r\n\tnotplaceable";
-                    }
-                    else if ((ClassFlags & (uint)Flags.ClassFlags.NoUserCreate) != 0)
+                    if (HasClassFlag(ClassFlag.NoUserCreate))
                     {
                         output += "\r\n\tnousercreate";
+                    }
+                    else
+                    {
+                        output += HasClassFlag(ClassFlag.Placeable)
+                            ? "\r\n\tplaceable"
+                            : "\r\n\tnotplaceable";
                     }
                 }
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.SafeReplace) != 0)
+            if (HasClassFlag(ClassFlag.SafeReplace))
             {
                 output += "\r\n\tsafereplace";
             }
 
-            // Approx version
-            if ((ClassFlags & (uint)Flags.ClassFlags.Instanced) != 0 && Package.Version < 150)
+            // FIXME: Distinguish 'Instanced' (the modifier) from HasInstancedProps
+            if (HasAnyClassFlags((ulong)Flags.ClassFlags.Instanced) && Package.Version < 150)
             {
                 output += "\r\n\tinstanced";
             }
 
-            if ((ClassFlags & (uint)Flags.ClassFlags.HideDropDown) != 0)
+            if (HasClassFlag(ClassFlag.HideDropDown))
             {
                 output += "\r\n\thidedropdown";
             }
 
             if (Package.Build == UnrealPackage.GameBuild.BuildName.UT2004)
             {
-                if (HasClassFlag(Flags.ClassFlags.CacheExempt))
+                if (HasAnyClassFlags((ulong)Flags.ClassFlags.CacheExempt))
                 {
                     output += "\r\n\tcacheexempt";
                 }
             }
 
-            if (Package.Version >= 749 && Super != null)
+            if (ForceScriptOrder.HasValue)
             {
-                if (ForceScriptOrder && !((UClass)Super).ForceScriptOrder)
+                bool forceScriptOrder = ForceScriptOrder.Value;
+                if (forceScriptOrder && !((UClass)Super).ForceScriptOrder.Value)
                 {
                     output += "\r\n\tforcescriptorder(true)";
                 }
-                else if (!ForceScriptOrder && ((UClass)Super).ForceScriptOrder)
+                else if (!forceScriptOrder && ((UClass)Super).ForceScriptOrder.Value)
+                {
                     output += "\r\n\tforcescriptorder(false)";
+                }
             }
 
             if (DLLBindName != UnrealName.None)
@@ -397,19 +402,19 @@ namespace UELib.Core
                 //{
                 //    output += "\r\n\tobsolete";
                 //}
-                if (HasClassFlag(0x2000000))
+                if (HasAnyClassFlags(0x2000000))
                 {
                     output += "\r\n\tnativedestructor";
                 }
 
-                if (HasClassFlag(0x1000000))
+                if (HasAnyClassFlags(0x1000000))
                 {
                     output += "\r\n\tnotlistable";
                 }
                 else
                 {
                     var parentClass = (UClass)Super;
-                    if (parentClass != null && parentClass.HasClassFlag(0x1000000))
+                    if (parentClass != null && parentClass.HasAnyClassFlags(0x1000000))
                     {
                         output += "\r\n\tlistable";
                     }
@@ -432,6 +437,7 @@ namespace UELib.Core
                 {
                     output += "\r\n\tAlwaysLoaded";
                 }
+
                 if ((ClassFlags & (uint)Flags.ClassFlags.AHIT_IterOptimized) != 0)
                 {
                     output += "\r\n\tIterationOptimized";
@@ -450,7 +456,10 @@ namespace UELib.Core
             }
             else
 #endif
-                output += FormatObjectGroup("implements", ImplementedInterfaces.Select(UObject (scriptInterface) => scriptInterface.InterfaceClass).ToList());
+                output += FormatObjectGroup("implements",
+                                            ImplementedInterfaces
+                                                .Select(UObject (scriptInterface) => scriptInterface.InterfaceClass)
+                                                .ToList());
 
             return output + ";\r\n";
         }

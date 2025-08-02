@@ -10,6 +10,5 @@ namespace UELib.Engine
     public class UBrushComponent : UPrimitiveComponent
     {
         // TODO: CachedPhysBrushData
-        protected override void Deserialize() => base.Deserialize();
     }
 }

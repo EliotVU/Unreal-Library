@@ -1,5 +1,6 @@
 ﻿using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -10,21 +11,40 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class ULightComponent : UActorComponent
     {
-        public UArray<UConvexVolume> InclusionConvexVolumes;
-        public UArray<UConvexVolume> ExclusionConvexVolumes;
+        #region Serialized Members
 
-        protected override void Deserialize()
+        [StreamRecord]
+        public UArray<UConvexVolume> InclusionConvexVolumes { get; set; }
+
+        [StreamRecord]
+        public UArray<UConvexVolume> ExclusionConvexVolumes { get; set; }
+
+        #endregion
+
+        public override void Deserialize(IUnrealStream stream)
         {
-            base.Deserialize();
+            base.Deserialize(stream);
 
-            if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedConvexVolumes &&
-                _Buffer.Version < (uint)PackageObjectLegacyVersion.RemovedConvexVolumes)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedConvexVolumes &&
+                stream.Version < (uint)PackageObjectLegacyVersion.RemovedConvexVolumes)
             {
-                _Buffer.ReadArray(out InclusionConvexVolumes);
-                Record(nameof(InclusionConvexVolumes), InclusionConvexVolumes);
+                InclusionConvexVolumes = stream.ReadArray<UConvexVolume>();
+                stream.Record(nameof(InclusionConvexVolumes), InclusionConvexVolumes);
 
-                _Buffer.ReadArray(out ExclusionConvexVolumes);
-                Record(nameof(ExclusionConvexVolumes), ExclusionConvexVolumes);
+                ExclusionConvexVolumes = stream.ReadArray<UConvexVolume>();
+                stream.Record(nameof(ExclusionConvexVolumes), ExclusionConvexVolumes);
+            }
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedConvexVolumes &&
+                stream.Version < (uint)PackageObjectLegacyVersion.RemovedConvexVolumes)
+            {
+                stream.WriteArray(InclusionConvexVolumes);
+                stream.WriteArray(ExclusionConvexVolumes);
             }
         }
     }
@@ -34,9 +54,7 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UDirectionalLightComponent : ULightComponent
-    {
-    }
+    public class UDirectionalLightComponent : ULightComponent;
 
     /// <summary>
     ///     Implements UDominantDirectionalLightComponent/Engine.DominantDirectionalLightComponent
@@ -45,17 +63,32 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UDominantDirectionalLightComponent : UDirectionalLightComponent
     {
-        public UArray<ushort> DominantLightShadowMap;
+        #region Serialized Members
+
+        [StreamRecord]
+        public UArray<ushort> DominantLightShadowMap { get; set; }
+
+        #endregion
 
         public override void Deserialize(IUnrealStream stream)
         {
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent)
             {
-                stream.Read(out DominantLightShadowMap);
-                Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
+                DominantLightShadowMap = stream.ReadUShortArray();
+                stream.Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
             }
 
             base.Deserialize(stream);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent)
+            {
+                stream.Write(DominantLightShadowMap);
+            }
+
+            base.Serialize(stream);
         }
     }
 
@@ -64,9 +97,7 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UDominantPointLightComponent : UPointLightComponent
-    {
-    }
+    public class UDominantPointLightComponent : UPointLightComponent;
 
     /// <summary>
     ///     Implements UDominantSpotLightComponent/Engine.DominantSpotLightComponent
@@ -75,17 +106,33 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UDominantSpotLightComponent : UPointLightComponent
     {
-        public UArray<ushort> DominantLightShadowMap;
+        #region Serialized Members
+
+        [StreamRecord]
+        public UArray<ushort> DominantLightShadowMap { get; set; }
+
+        #endregion
 
         public override void Deserialize(IUnrealStream stream)
         {
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToUDominantSpotLightComponent)
             {
-                stream.Read(out DominantLightShadowMap);
-                Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
+                DominantLightShadowMap = stream.ReadUShortArray();
+                stream.Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
             }
 
             base.Deserialize(stream);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToUDominantSpotLightComponent)
+            {
+                stream.Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
+                stream.Write(DominantLightShadowMap);
+            }
+
+            base.Serialize(stream);
         }
     }
 
@@ -94,34 +141,26 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UPointLightComponent : ULightComponent
-    {
-    }
+    public class UPointLightComponent : ULightComponent;
 
     /// <summary>
     ///     Implements USpotLightComponent/Engine.SpotLightComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USpotLightComponent : UPointLightComponent
-    {
-    }
+    public class USpotLightComponent : UPointLightComponent;
 
     /// <summary>
     ///     Implements USkyLightComponent/Engine.SkyLightComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USkyLightComponent : ULightComponent
-    {
-    }
+    public class USkyLightComponent : ULightComponent;
 
     /// <summary>
     ///     Implements USphericalHarmonicLightComponent/Engine.SphericalHarmonicLightComponent
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class USphericalHarmonicLightComponent : ULightComponent
-    {
-    }
+    public class USphericalHarmonicLightComponent : ULightComponent;
 }
