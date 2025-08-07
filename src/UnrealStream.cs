@@ -585,7 +585,7 @@ public static class UnrealStreamImplementations
         {
             Read(stream, out ushort key);
             Read(stream, out ushort value);
-            map.Add(key, value);
+            map[key] = value; // use index, in case that the key already exists, it will be replaced (attested case with RoboGame)
         }
     }
 
@@ -599,7 +599,7 @@ public static class UnrealStreamImplementations
         {
             Read(stream, out UName key);
             Read(stream, out TValue value);
-            map.Add(key, value);
+            map[key] = value; // use index, in case that the key already exists, it will be replaced (attested case with RoboGame)
         }
     }
 
@@ -612,7 +612,7 @@ public static class UnrealStreamImplementations
         {
             Read(stream, out string key);
             ReadArray(stream, out UArray<string> value);
-            map.Add(key, value);
+            map[key] = value; // use index, in case that the key already exists, it will be replaced (attested case with RoboGame)
         }
     }
 
@@ -625,7 +625,7 @@ public static class UnrealStreamImplementations
         {
             Read(stream, out UObject key);
             Read(stream, out UName value);
-            map.Add(key, value);
+            map[key] = value; // use index, in case that the key already exists, it will be replaced (attested case with RoboGame)
         }
     }
 
@@ -647,7 +647,7 @@ public static class UnrealStreamImplementations
         {
             ReadTyped(stream, out TKey key);
             ReadTyped(stream, out TValue value);
-            map.Add(key, value);
+            map[key] = value; // use index, in case that the key already exists, it will be replaced (attested case with RoboGame)
         }
 
         return map;
@@ -664,7 +664,7 @@ public static class UnrealStreamImplementations
         {
             var key = keySelector();
             var value = valueSelector();
-            map.Add(key, value);
+            map[key] = value; // use index, in case that the key already exists, it will be replaced (attested case with RoboGame)
         }
 
         return map;
