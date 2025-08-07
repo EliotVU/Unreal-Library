@@ -317,6 +317,8 @@ namespace UELib.Branch
         AddedDingoSoundData = 593,
         AddedOrbisSoundData = 594,
 
+        AddedObjectClassNameToThumbnail = 597,
+
         LightmassAdded = 600,
 
         AddedDontSortCategoriesToUClass = 603,

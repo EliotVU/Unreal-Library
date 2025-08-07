@@ -1,3 +1,4 @@
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib;
@@ -13,14 +14,22 @@ public class UObjectThumbnailTableItem : UTableItem, IUnrealSerializableClass
 
     public void Deserialize(IUnrealStream stream)
     {
-        stream.Read(out ObjectClassName);
+        if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedObjectClassNameToThumbnail)
+        {
+            stream.Read(out ObjectClassName);
+        }
+
         stream.Read(out ObjectPath);
         stream.Read(out ThumbnailOffset);
     }
 
     public void Serialize(IUnrealStream stream)
     {
-        stream.Write(ObjectClassName);
+        if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedObjectClassNameToThumbnail)
+        {
+            stream.Write(ObjectClassName);
+        }
+
         stream.Write(ObjectPath);
         stream.Write(ThumbnailOffset);
     }
