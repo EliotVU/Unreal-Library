@@ -29,6 +29,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Devastation,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"UT2004\",
+            BuildName.UT2004,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"America's Army 2\2_5\",
             BuildName.AA2_2_5,
             BuildPlatform.Undetermined,
@@ -121,6 +125,14 @@ namespace Eliot.UELib.Test.Builds
             BuildName.EndWar,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"MedalOfHonor2010\",
+            BuildName.MoH,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"MedalOfHonorAirborne\",
+            BuildName.MoHA,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Mirrors Edge\",
             BuildName.MirrorsEdge,
             BuildPlatform.Undetermined
@@ -167,6 +179,22 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"Tom Clancy's Splinter Cell Chaos Theory\", // Full Offline version
             BuildName.SCCT_Offline,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Tom Clancy's Splinter Cell Double Agent\SCDA-Offline\",
+            BuildName.SCDA_Offline,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Tom Clancy's Splinter Cell Double Agent\SCDA-Online\",
+            BuildName.SCDA_Online,
+            BuildPlatform.Undetermined
+        )]
+        //[DataRow(@"Tom Clancy's Splinter Cell Conviction\",
+        //    BuildName.SCBL,
+        //    BuildPlatform.Undetermined
+        //)]
+        [DataRow(@"Tom Clancy's Splinter Cell® Blacklist\",
+            BuildName.SCBL,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"Warmonger\",
@@ -334,7 +362,7 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Default, // v664
             BuildPlatform.Undetermined
         )]
-        // 01-04 no difference in package format.
+        // 01-04 ??
         [DataRow(@"UDK-2010-05\", // Also includes (Updated) The Ball (Game)
             BuildName.Default, // v706
             BuildPlatform.Undetermined
@@ -400,6 +428,22 @@ namespace Eliot.UELib.Test.Builds
         // 06 no difference in package format.
         [DataRow(@"UDK-2012-07\", // AOC (Chivalry: Medieval Warfare), Hawken (Modified)
             BuildName.Default, // v860
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2012-11\",
+            BuildName.Default,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2013-02\",
+            BuildName.Default,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2013-07\",
+            BuildName.Default,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2014-02\",
+            BuildName.Default,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"UDK-2015-02\", // 29 january 2015
@@ -525,11 +569,11 @@ namespace Eliot.UELib.Test.Builds
 
         private static readonly HashSet<Type> s_incompleteTypes =
         [
-            typeof(UClass),
             typeof(UModel),
             typeof(UModelComponent),
-            typeof(UPolys),
+            typeof(UStaticMeshComponent),
             typeof(UMaterial),
+            typeof(ABrush),
         ];
 
         private static void AssertPackageSerialization(UnrealPackage package)
@@ -586,6 +630,12 @@ namespace Eliot.UELib.Test.Builds
                 }
 
                 if (s_incompleteTypes.Contains(obj.GetType()))
+                {
+                    continue;
+                }
+
+                // skip objects with bulk data.
+                if (obj is USurface or USoundNodeWave or UComponent or AActor)
                 {
                     continue;
                 }

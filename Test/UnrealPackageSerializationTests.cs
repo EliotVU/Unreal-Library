@@ -16,7 +16,7 @@ namespace Eliot.UELib.Test;
 [TestClass]
 public class UnrealPackageSerializationTests
 {
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.LowestVersion)]
     [DataRow(PackageObjectLegacyVersion.Release64)]
     [DataRow(PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)]
@@ -53,7 +53,7 @@ public class UnrealPackageSerializationTests
         Assert.AreEqual(endPosition, stream.Position);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     // No direct changes, only the serialization of UName and UIndex have changed but this is not the test for that.
     [DataRow(PackageObjectLegacyVersion.UE3)]
     [DataRow(PackageObjectLegacyVersion.HighestVersion)]
@@ -90,7 +90,7 @@ public class UnrealPackageSerializationTests
         Assert.AreEqual(endPosition, stream.Position);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.LowestVersion)]
     [DataRow(PackageObjectLegacyVersion.CompactIndexDeprecated)]
     [DataRow(PackageObjectLegacyVersion.NumberAddedToName)]
@@ -145,7 +145,7 @@ public class UnrealPackageSerializationTests
         Assert.AreEqual(endPosition, stream.Position);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(PackageObjectLegacyVersion.LowestVersion)] // Heritages test
     [DataRow(PackageObjectLegacyVersion.HeritageTableDeprecated)] // Generations test
     [DataRow(PackageObjectLegacyVersion.AddedDependsTable)]
@@ -305,14 +305,14 @@ public class UnrealPackageSerializationTests
             // Objects that must be serialized at the last known offset.
             var objectsInPlace = exports
                 .Where(
-                    obj => obj.ExportTable.SerialOffset > 0 /*&& obj.ExportTable.SerialSize <= obj.DeserializedSize*/);
+                    obj => obj.ExportResource.SerialOffset > 0 /*&& obj.ExportTable.SerialSize <= obj.DeserializedSize*/);
 
             long longestPosition = stream.Position;
 
             foreach (var obj in objectsInPlace)
             {
-                int desiredOffset = obj.ExportTable.SerialOffset;
-                int desiredSize = obj.ExportTable.SerialSize;
+                int desiredOffset = obj.ExportResource.SerialOffset;
+                int desiredSize = obj.ExportResource.SerialSize;
 
                 // Re-write in bulk, no modifications are persisted.
                 byte[] buffer = obj.CopyBuffer();
@@ -343,7 +343,7 @@ public class UnrealPackageSerializationTests
             // Objects that must be serialized at the end of the package file.
             // Which are new objects or objects that have increased in size (programmatically)
             var objectsOutOfPlace = exports
-                .Where(obj => obj.ExportTable.SerialOffset == 0
+                .Where(obj => obj.ExportResource.SerialOffset == 0
                     /*|| obj.ExportTable.SerialSize > obj.DeserializedSize*/);
 
             // Serialize at the end of the stream.
@@ -363,8 +363,8 @@ public class UnrealPackageSerializationTests
                 stream.Write(buffer, 0, buffer.Length);
                 long newSerializedSize = stream.Position - newSerializedOffset;
 
-                obj.ExportTable.SerialOffset = (int)newSerializedOffset;
-                obj.ExportTable.SerialSize = (int)newSerializedSize;
+                obj.ExportResource.SerialOffset = (int)newSerializedOffset;
+                obj.ExportResource.SerialSize = (int)newSerializedSize;
             }
 
             // TODO update generations
@@ -452,19 +452,19 @@ public class UnrealPackageSerializationTests
                 switch ((int)value)
                 {
                     case > 0:
-                        if (ExportToIndexMap.TryGetValue(value!.ExportTable!, out index) == false)
+                        if (ExportToIndexMap.TryGetValue(value!.ExportResource!, out index) == false)
                         {
                             index = ExportToIndexMap.Count + 1;
-                            ExportToIndexMap.Add(value.ExportTable!, index);
+                            ExportToIndexMap.Add(value.ExportResource!, index);
                         }
 
                         break;
 
                     case < 0:
-                        if (ImportToIndexMap.TryGetValue(value!.ImportTable!, out index) == false)
+                        if (ImportToIndexMap.TryGetValue(value!.ImportResource!, out index) == false)
                         {
                             index = -(ImportToIndexMap.Count + 1);
-                            ImportToIndexMap.Add(value.ImportTable!, index);
+                            ImportToIndexMap.Add(value.ImportResource!, index);
                         }
 
                         break;

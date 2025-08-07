@@ -8,12 +8,16 @@ public class TestLogService : ILogService
 {
     public void Log(string text)
     {
-        //Console.WriteLine(text);
+#if DEBUG
+        Console.WriteLine(text);
+#endif
     }
 
-    public void Log(string format, params object[] arg)
+    public void Log(string format, params object?[] arg)
     {
-        //Console.WriteLine(format, arg);
+#if DEBUG
+        Console.WriteLine(format, arg);
+#endif
     }
 
     public void SilentException(Exception exception)
@@ -21,7 +25,7 @@ public class TestLogService : ILogService
         Assert.Fail(exception.ToString());
     }
 
-    public void SilentAssert(bool assert, string message)
+    public void SilentAssert(bool assert, string? message)
     {
         if (!assert) Console.Error.WriteLine(message);
         //Assert.IsTrue(assert, message);
