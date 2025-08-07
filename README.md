@@ -80,8 +80,8 @@ UELib supports these kinds of content, but may vary from game to game:
 > [!IMPORTANT]
 > Audio and Textures are expected to work for most games, but has not been confirmed.
 
-| Name                  | Engine:Branch    | Package/Licensee    | Support State     | Script | Audio | Texture 
-| --------------------- | ---------------- | ------------------- | ----------------- | ------ | ----- | --------
+| Name                  | Engine    | Package    | State     | Script | Audio | Texture 
+| --------------------- | ------    | --------   | -----     | ------ | ----- | -------
 |     |     |     |     |
 | **Unreal Engine 1**    |     |     |     | ✅ | ✅ | ✅ |
 |     |     |     |     |
