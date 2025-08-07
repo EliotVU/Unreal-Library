@@ -121,6 +121,11 @@ namespace UELib.Core
                 copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.AlwaysInit);
             }
 
+            if (HasPropertyFlag(PropertyFlag.CtorLink))
+            {
+                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.CtorLink);
+            }
+
             /** Flags that are valid as parameters only */
             if (Outer is UFunction && HasPropertyFlag(PropertyFlag.Parm))
             {

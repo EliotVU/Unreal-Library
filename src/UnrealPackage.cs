@@ -774,6 +774,16 @@ namespace UELib
                 Borderlands2,
 
                 /// <summary>
+                /// Gears of War: Ultimate Edition / Reloaded
+                ///
+                /// 835/56, 835/76
+                /// </summary>
+                [Build(835, 56)] // Ultimate Edition
+                [Build(835, 76)] // Reloaded
+                [OverridePackageVersion(490, 10)]
+                GoWUE,
+
+                /// <summary>
                 /// 842-864/001
                 /// </summary>
                 [Build(842, 1, BuildFlags.ConsoleCooked)]

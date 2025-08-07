@@ -72,7 +72,11 @@ namespace UELib.Engine
 
         public override void Deserialize(IUnrealStream stream)
         {
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent
+#if GOWUE
+                || stream.Package.Build == UnrealPackage.GameBuild.BuildName.GoWUE
+#endif
+                )
             {
                 DominantLightShadowMap = stream.ReadUShortArray();
                 stream.Record(nameof(DominantLightShadowMap), DominantLightShadowMap);
@@ -83,7 +87,11 @@ namespace UELib.Engine
 
         public override void Serialize(IUnrealStream stream)
         {
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDominantLightShadowMapToDominantDirectionalLightComponent
+#if GOWUE
+                || stream.Package.Build == UnrealPackage.GameBuild.BuildName.GoWUE
+#endif
+                )
             {
                 stream.Write(DominantLightShadowMap);
             }
