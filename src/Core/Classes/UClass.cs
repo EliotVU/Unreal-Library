@@ -592,9 +592,9 @@ namespace UELib.Core
 #if REMEMBERME
             if (stream.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
             {
-                var unknownName = stream.ReadName();
-                stream.Record("Unknown:RememberMe", unknownName);
-                if (unknownName != UnrealName.None) LibServices.Debug(GetReferencePath() + ":unknownName", unknownName);
+                var v160 = stream.ReadName();
+                stream.Record(nameof(v160), v160);
+                if (v160 != UnrealName.None) LibServices.Debug(GetReferencePath() + ":v160", v160);
             }
 #endif
 #if DISHONORED
@@ -1027,7 +1027,7 @@ namespace UELib.Core
                    )
                 {
                     // bForceScriptOrder
-                    stream.Write(ForceScriptOrder.Value);
+                    stream.Write(ForceScriptOrder ?? false);
                 }
 #if DD2
                 // DD2 doesn't use a LicenseeVersion, maybe a merged standard feature (bForceScriptOrder?).
@@ -1139,8 +1139,8 @@ namespace UELib.Core
 #if REMEMBERME
             if (stream.Build == UnrealPackage.GameBuild.BuildName.RememberMe)
             {
-                throw new NotSupportedException("This package version is not supported!");
-                //stream.WriteName(var unknownName);
+                var v160 = UnrealName.None; // Never attested as anything but None.
+                stream.WriteName(v160);
             }
 #endif
 #if DISHONORED
@@ -1247,7 +1247,7 @@ namespace UELib.Core
             if (stream.IsUE4())
             {
                 stream.WriteName(UnrealName.None);
-                stream.Write(IsCooked.Value);
+                stream.Write(IsCooked ?? false);
             }
 #endif
         scriptProperties:

@@ -14,6 +14,12 @@ namespace UELib.Engine
         [MarshalAs(UnmanagedType.I1)] public bool ShadowIndirectOnly;
         [MarshalAs(UnmanagedType.I1)] public bool UseEmissiveForStaticLighting;
 
+#if REMEMBERME
+        // RememberMe: Engine.EngineTypes.LightmassPrimitiveSettings.bAllowGeneratedMeshAreaLight
+        [Build(UnrealPackage.GameBuild.BuildName.RememberMe)]
+        [MarshalAs(UnmanagedType.I1)] public bool AllowGeneratedMeshAreaLight;
+#endif
+
         public float EmissiveLightFalloffExponent;
         public float EmissiveLightExplicitInfluenceRadius;
         public float EmissiveBoost;
@@ -30,7 +36,13 @@ namespace UELib.Engine
                 stream.Read(out ShadowIndirectOnly);
                 stream.Read(out FullyOccludedSamplesFraction);
             }
-
+#if REMEMBERME
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RememberMe &&
+                stream.LicenseeVersion >= 10)
+            {
+                stream.Read(out AllowGeneratedMeshAreaLight); // third bool, but we'll store it as the fourth field
+            }
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.LightmassAdded)
             {
                 stream.Read(out UseEmissiveForStaticLighting);
@@ -55,7 +67,13 @@ namespace UELib.Engine
                 stream.Write(ShadowIndirectOnly);
                 stream.Write(FullyOccludedSamplesFraction);
             }
-
+#if REMEMBERME
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.RememberMe &&
+                stream.LicenseeVersion >= 10)
+            {
+                stream.Write(AllowGeneratedMeshAreaLight);
+            }
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.LightmassAdded)
             {
                 stream.Write(UseEmissiveForStaticLighting);

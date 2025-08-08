@@ -33,29 +33,39 @@ namespace UELib.Engine
             ShouldDeserializeOnDemand = true;
         }
 
-        public override void Serialize(IUnrealStream stream)
-        {
-            base.Serialize(stream);
-
-            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked))
-            {
-                return;
-            }
-
-            stream.WriteMap(EditorData, key => stream.WriteObject(key.Item1), stream.WriteStruct);
-        }
-
         public override void Deserialize(IUnrealStream stream)
         {
             base.Deserialize(stream);
 
-            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked))
+            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked)
+#if REMEMBERME
+                // Early builds are missing the cooked guard.
+                && stream.Build != UnrealPackage.GameBuild.BuildName.RememberMe
+#endif
+            )
             {
                 return;
             }
 
             EditorData = stream.ReadMap(() => ValueTuple.Create(stream.ReadObject()), stream.ReadStruct<NodeEditorData>);
             stream.Record(nameof(EditorData), EditorData);
+        }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Serialize(stream);
+
+            if (Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked)
+#if REMEMBERME
+                // Early builds are missing the cooked guard.
+                && stream.Build != UnrealPackage.GameBuild.BuildName.RememberMe
+#endif
+            )
+            {
+                return;
+            }
+
+            stream.WriteMap(EditorData, key => stream.WriteObject(key.Item1), stream.WriteStruct);
         }
 
         /// <summary>

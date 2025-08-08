@@ -249,9 +249,12 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Dishonored,
             BuildPlatform.Undetermined
         )]
-        [DataRow(@"RememberMe\",
+        [DataRow(@"Remember Me\",
             BuildName.RememberMe,
-            BuildPlatform.Undetermined
+            BuildPlatform.Undetermined,
+            BuildName.Unset,
+            BuildGeneration.Undefined,
+            true
         )]
         [DataRow(@"Hawken\",
             BuildName.Hawken,
