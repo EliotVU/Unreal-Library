@@ -17,6 +17,7 @@ public sealed class UnrealPackageReader(UnrealPackageArchive archive, BinaryRead
     /// <returns>A unique UName representing the number and index to a <seealso cref="UNameTableItem" /></returns>
     public override UName ReadName()
     {
+        UName name;
         int index, number;
 #if R6 || LEAD
         if (archive.Build == UnrealPackage.GameBuild.BuildName.R6Vegas ||
@@ -25,10 +26,12 @@ public sealed class UnrealPackageReader(UnrealPackageArchive archive, BinaryRead
             // Some changes were made with licensee version 71, but I couldn't make much sense of it.
             index = _BaseReader.ReadInt32();
             number = index >> 18;
-            index &= 0x3FFFF;
+            index &= 0x3FFFF; // only the 18 lower bits are used.
 
-            // only the 18 lower bits are used.
-            return new UName(archive.Package.Names[index], number);
+            name = new UName(archive.Package.Names[index], number);
+            archive.NameIndices[name.Index] = index; // for re-writing purposes.
+
+            return name;
         }
 #endif
         index = ReadIndex();
@@ -49,6 +52,9 @@ public sealed class UnrealPackageReader(UnrealPackageArchive archive, BinaryRead
             number = _BaseReader.ReadInt32();
         }
 
-        return new UName(archive.Package.Names[index], number);
+        name = new UName(archive.Package.Names[index], number);
+        archive.NameIndices[name.Index] = index; // for re-writing purposes.
+
+        return name;
     }
 }

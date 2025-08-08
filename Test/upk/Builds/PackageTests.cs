@@ -601,11 +601,11 @@ namespace Eliot.UELib.Test.Builds
             using var memoryStream = new MemoryStream((int)package.Archive.Stream.Length);
             using var tempStream = new UnrealPackageStream(package.Archive, memoryStream);
 
-            // Rebuild the name indices (name hash to package index).
-            for (int i = 0; i < package.Names.Count; i++)
-            {
-                package.Archive.NameIndices.Add(((IndexName)package.Names[i])!.Index, i);
-            }
+            //// Rebuild the name indices (name hash to package index).
+            //for (int i = 0; i < package.Names.Count; i++)
+            //{
+            //    package.Archive.NameIndices.Add(((IndexName)package.Names[i])!.Index, i);
+            //}
 
             // Ensure we have loaded all the thumbnail data, in order to verify that serialize and deserialize are in sync.
             package.ObjectThumbnails.ForEach(item =>
