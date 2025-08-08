@@ -153,9 +153,9 @@ namespace UELib
             return a.Index;
         }
 
-        public static explicit operator IndexName?(UNameTableItem a)
+        public static explicit operator IndexName(UNameTableItem a)
         {
-            return a.IndexName;
+            return a.IndexName!;
         }
     }
 }

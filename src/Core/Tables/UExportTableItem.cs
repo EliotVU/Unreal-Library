@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Flags;
@@ -105,7 +106,6 @@ namespace UELib
         /// </summary>
         [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
         public uint PackageFlags;
-        //public UnrealFlags<PackageFlag> PackageFlags;
 
         [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForServer;
         [BuildGeneration(BuildGeneration.UE4)] public bool IsNotForClient;
@@ -118,6 +118,32 @@ namespace UELib
         [BuildGeneration(BuildGeneration.UE4)] public int CreateBeforeSerializationDependencies;
         [BuildGeneration(BuildGeneration.UE4)] public int SerializationBeforeCreateDependencies;
         [BuildGeneration(BuildGeneration.UE4)] public int CreateBeforeCreateDependencies;
+
+        public UExportTableItem() { }
+        public UExportTableItem(UObject @object)
+        {
+            var package = @object.Package;
+
+            ObjectName = @object.Name;
+            OuterIndex = @object.Outer == package.RootPackage // RootPackage is always null
+                ? UPackageIndex.Null
+                : @object.Outer;
+
+            ClassIndex = @object.Class;
+            if (@object is UStruct uStruct)
+            {
+                SuperIndex = uStruct.Super;
+            }
+
+            TemplateIndex = UPackageIndex.Null; // TODO: Add support for UE4 templates.
+            ArchetypeIndex = @object.Archetype;
+            ObjectFlags = @object.ObjectFlags;
+
+            // TODO: Forced export variables.
+            //GenerationNetObjectCount = new UArray<int>(package.Summary.Generations.Select(gen => gen.NetObjectCount));
+            //PackageGuid = package.Summary.Guid;
+            //PackageFlags = package.Summary.PackageFlags;
+        }
 
         /// <summary>
         /// Deserializes the export from a stream.

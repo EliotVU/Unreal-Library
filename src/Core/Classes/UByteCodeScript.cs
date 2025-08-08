@@ -38,6 +38,11 @@ public sealed class UByteCodeScript(UStruct source, int memorySize, int storageS
 
     public UStruct Source => source;
 
+    public UByteCodeScript(UStruct source, List<UStruct.UByteCodeDecompiler.Token> statements) : this(source, 0, 0)
+    {
+        Statements = statements ?? throw new ArgumentNullException(nameof(statements));
+    }
+
     /// <summary>
     /// Deserializes the script from a stream.
     /// </summary>

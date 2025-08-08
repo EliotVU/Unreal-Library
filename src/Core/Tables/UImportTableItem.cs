@@ -32,6 +32,18 @@ namespace UELib
             set => _ClassName = value;
         }
 
+        public UImportTableItem() { }
+        public UImportTableItem(UObject @object)
+        {
+            var package = @object.Package;
+            OuterIndex = @object.Outer == package.RootPackage // RootPackage is always null
+                ? UPackageIndex.Null
+                : @object.Outer;
+
+            ClassPackageName = @object.Class?.Package.RootPackage.Name ?? UnrealName.Core;
+            ClassName = @object.Class?.Name ?? UnrealName.Class;
+        }
+
         /// <summary>
         /// Deserializes the import from a stream.
         /// 

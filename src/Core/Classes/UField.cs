@@ -29,7 +29,7 @@ namespace UELib.Core
         ///     The chain starts at <seealso cref="UStruct.get_Children" />
         /// </summary>
         [StreamRecord]
-        public UField? NextField { get; set; }
+        public UField? NextField { get; internal set; }
 
         #endregion
 

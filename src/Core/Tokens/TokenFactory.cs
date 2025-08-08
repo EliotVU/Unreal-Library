@@ -41,20 +41,51 @@ namespace UELib.Core.Tokens
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public byte GetOpCodeFromTokenType<T>()
+            where T : Token
+        {
+            return GetOpCodeFromTokenType(typeof(T));
+        }
+
+        // Slow, but this will do for now.
+        public byte GetOpCodeFromTokenType(Type tokenType)
+        {
+            foreach (var tokenPair in TokenMap)
+            {
+                if (tokenPair.Value == tokenType)
+                {
+                    return tokenPair.Key;
+                }
+            }
+
+            throw new InvalidOperationException($"Token type {tokenType} not found in {nameof(TokenMap)}");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T CreateToken<T>(byte opCode)
             where T : Token
         {
             var tokenType = GetTokenTypeFromOpCode(opCode);
             var token = (T)Activator.CreateInstance(tokenType);
             token.OpCode = opCode;
+
             return token;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T CreateToken<T>(Type tokenType)
+        public T CreateToken<T>()
             where T : Token
         {
-            return (T)Activator.CreateInstance(tokenType);
+            return CreateToken<T>(typeof(T));
+        }
+
+        public T CreateToken<T>(Type tokenType)
+            where T : Token
+        {
+            var token = (T)Activator.CreateInstance(tokenType);
+            token.OpCode = GetOpCodeFromTokenType(tokenType);
+
+            return (T)token;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

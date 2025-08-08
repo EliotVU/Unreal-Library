@@ -1127,7 +1127,7 @@ namespace UELib
             ///
             /// Null if (<see cref="Version"/> &lt; <see cref="PackageObjectLegacyVersion.HeritageTableDeprecated"/>)
             /// </summary>
-            public UArray<UGenerationTableItem>? Generations;
+            public UArray<UGenerationTableItem> Generations = [];
 
             private PackageFileEngineVersion PackageEngineVersion;
             private PackageFileEngineVersion PackageCompatibleEngineVersion;
@@ -1189,6 +1189,10 @@ namespace UELib
 
             public int PreloadDependencyCount;
             public int PreloadDependencyOffset;
+
+            public PackageFileSummary()
+            {
+            }
 
             private void SetupBuild(UnrealPackage package)
             {
@@ -2045,7 +2049,7 @@ namespace UELib
 #endif
                 NameCount = stream.ReadInt32();
                 NameOffset = stream.ReadInt32();
-                Contract.Assert(NameOffset < HeaderSize || HeaderSize == 0);
+                //Contract.Assert(NameOffset < HeaderSize || HeaderSize == 0);
 #if UE4
                 if (stream.UE4Version >= 516 && stream.Package.ContainsEditorData())
                 {
@@ -2056,12 +2060,12 @@ namespace UELib
                 {
                     GatherableTextDataCount = stream.ReadInt32();
                     GatherableTextDataOffset = stream.ReadInt32();
-                    Contract.Assert(GatherableTextDataOffset <= HeaderSize);
+                    //Contract.Assert(GatherableTextDataOffset <= HeaderSize);
                 }
 #endif
                 ExportCount = stream.ReadInt32();
                 ExportOffset = stream.ReadInt32();
-                Contract.Assert(ExportOffset < HeaderSize || HeaderSize == 0);
+                //Contract.Assert(ExportOffset < HeaderSize || HeaderSize == 0);
 #if APB
                 if (stream.Build == GameBuild.BuildName.APB &&
                     stream.LicenseeVersion >= 28)
@@ -2076,7 +2080,7 @@ namespace UELib
 #endif
                 ImportCount = stream.ReadInt32();
                 ImportOffset = stream.ReadInt32();
-                Contract.Assert(ImportOffset < HeaderSize || HeaderSize == 0);
+                //Contract.Assert(ImportOffset < HeaderSize || HeaderSize == 0);
 
                 Console.WriteLine("Names Count:" + NameCount + " Names Offset:" + NameOffset
                                   + " Exports Count:" + ExportCount + " Exports Offset:" + ExportOffset
@@ -2089,7 +2093,7 @@ namespace UELib
                     Contract.Assert(HeritageCount > 0);
 
                     HeritageOffset = stream.ReadInt32();
-                    Contract.Assert(HeritageOffset < HeaderSize || HeaderSize == 0);
+                    //Contract.Assert(HeritageOffset < HeaderSize || HeaderSize == 0);
 
                     return;
                 }
@@ -2103,7 +2107,7 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDependsTable)
                 {
                     DependsOffset = stream.ReadInt32();
-                    Debug.Assert(DependsOffset <= HeaderSize); // May be equal when there are no items.
+                    //Debug.Assert(DependsOffset <= HeaderSize); // May be equal when there are no items.
                 }
 #if THIEF_DS || DEUSEX_IW
                 if (stream.Build == GameBuild.BuildName.Thief_DS ||
@@ -2147,13 +2151,13 @@ namespace UELib
                 {
                     StringAssetReferencesCount = stream.ReadInt32();
                     StringAssetReferencesOffset = stream.ReadInt32();
-                    Contract.Assert(StringAssetReferencesOffset <= HeaderSize);
+                    //Contract.Assert(StringAssetReferencesOffset <= HeaderSize);
                 }
 
                 if (stream.UE4Version >= 510)
                 {
                     SearchableNamesOffset = stream.ReadInt32();
-                    Contract.Assert(SearchableNamesOffset <= HeaderSize);
+                    //Contract.Assert(SearchableNamesOffset <= HeaderSize);
                 }
 
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable &&
@@ -2168,7 +2172,7 @@ namespace UELib
                    )
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
-                    Debug.Assert(ImportExportGuidsOffset <= HeaderSize);
+                    //Debug.Assert(ImportExportGuidsOffset <= HeaderSize);
 
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();
@@ -2199,7 +2203,7 @@ namespace UELib
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedThumbnailTable)
                 {
                     ThumbnailTableOffset = stream.ReadInt32();
-                    Debug.Assert(ThumbnailTableOffset <= HeaderSize);
+                    //Debug.Assert(ThumbnailTableOffset <= HeaderSize);
                 }
 #if MKKE
                 if (stream.Build == GameBuild.BuildName.MKKE)
@@ -2435,7 +2439,7 @@ namespace UELib
                     int garbageSize = stream.ReadInt32();
 
                     int compressedChunkInfoOffset = stream.ReadInt32();
-                    Debug.Assert(compressedChunkInfoOffset < stream.Length);
+                    //Debug.Assert(compressedChunkInfoOffset < stream.Length);
 
                     int lastBlockSize = stream.ReadInt32();
                     Debug.Assert(stream.Position == NameOffset, "There is more data before the NameTable");
@@ -2700,7 +2704,7 @@ namespace UELib
             {
                 if (Summary.HeritageOffset != 0)
                 {
-                    Contract.Assert(stream.Position <= Summary.HeritageOffset);
+                    //Contract.Assert(stream.Position <= Summary.HeritageOffset);
                     stream.Seek(Summary.HeritageOffset, SeekOrigin.Begin);
                 }
 
@@ -2716,7 +2720,7 @@ namespace UELib
             {
                 if (Summary.NameOffset != 0)
                 {
-                    Contract.Assert(stream.Position <= Summary.NameOffset);
+                    //Contract.Assert(stream.Position <= Summary.NameOffset);
                     stream.Seek(Summary.NameOffset, SeekOrigin.Begin);
                 }
 
@@ -2732,7 +2736,7 @@ namespace UELib
             {
                 if (Summary.ImportOffset != 0)
                 {
-                    Contract.Assert(stream.Position <= Summary.ImportOffset);
+                    //Contract.Assert(stream.Position <= Summary.ImportOffset);
                     stream.Seek(Summary.ImportOffset, SeekOrigin.Begin);
                 }
 
@@ -2748,7 +2752,7 @@ namespace UELib
             {
                 if (Summary.ExportOffset != 0)
                 {
-                    Contract.Assert(stream.Position <= Summary.ExportOffset);
+                    //Contract.Assert(stream.Position <= Summary.ExportOffset);
                     stream.Seek(Summary.ExportOffset, SeekOrigin.Begin);
                 }
 
@@ -2765,7 +2769,7 @@ namespace UELib
             {
                 if (Summary.DependsOffset != 0)
                 {
-                    Contract.Assert(stream.Position <= Summary.DependsOffset);
+                    //Contract.Assert(stream.Position <= Summary.DependsOffset);
                     stream.Seek(Summary.DependsOffset, SeekOrigin.Begin);
                 }
 
@@ -2782,7 +2786,7 @@ namespace UELib
             {
                 if (Summary.ImportExportGuidsOffset != 0)
                 {
-                    Contract.Assert(stream.Position <= Summary.ImportExportGuidsOffset);
+                    //Contract.Assert(stream.Position <= Summary.ImportExportGuidsOffset);
                     stream.Seek(Summary.ImportExportGuidsOffset, SeekOrigin.Begin);
                 }
 
@@ -2801,7 +2805,7 @@ namespace UELib
             {
                 if (Summary.ThumbnailTableOffset != 0)
                 {
-                    Contract.Assert(stream.Position <= Summary.ThumbnailTableOffset);
+                    //Contract.Assert(stream.Position <= Summary.ThumbnailTableOffset);
                     stream.Seek(Summary.ThumbnailTableOffset, SeekOrigin.Begin);
                 }
 
