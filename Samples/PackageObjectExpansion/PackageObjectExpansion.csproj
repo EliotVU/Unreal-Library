@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <None Update="Assets\TestUC3.u">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
