@@ -129,7 +129,6 @@ UELib supports these kinds of content, but may vary from game to game:
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | | ✅ | ✅ |
 | Killing Floor | 3369 | 128/029 | | ✅ | ✅ |
-| Battle Territory: Battery | 3369 | 128/029? | | ✅ |
 | Shadow Ops: Red Mercury | 2110 | 129/010 | | ✅ |
 | Vanguard: Saga of Heroes | 2226 | 129/035 | | ✅ |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) | ✅ |
@@ -140,11 +139,12 @@ UELib supports these kinds of content, but may vary from game to game:
 | Stargate SG1: The Alliance | 4180 | 130/004 | | ✅ |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | | ✅ |
 | Bioshock | 2226:Vengeance | 130-141/056 | | ✅ |
+| Arctic Combat | 3369 | 134/038-039 | Thanks to @EDITzDev. Third-party decompression is required | ✅ | ✅ | ✅ |
+| Star Wars: Republic Commando | 2226 | 134-159/001 | | ✅ |
 | Men of Valor | 926 | 137/000 | PC | ✅ |
 | Bioshock 2 | 2226:Vengeance | 143/059 | | ✅ |
 | Advent Rising | 2226 | 143-146/007 | | ✅ | ✅ |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) | ✅ |
-| Star Wars: Republic Commando | 2226 | 134-159/001 | | ✅ |
 | The Chronicles of Spellborn | 3323 | 159/029 | | ✅ |
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) | ✅ |
 |     |     |     |     |
