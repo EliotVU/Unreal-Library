@@ -277,6 +277,7 @@ Want to add support for a game? See [adding support for new Unreal classes](http
 * [Duke Nukem Forever: Enhanced](https://www.moddb.com/mods/duke-nukem-forever-enhanced)
 * [UE3 Shader Cache Patcher](https://github.com/tuokri/UE3ShaderCachePatcher)
 * [UnrealFlagEditor](https://github.com/Un-Drew/UnrealFlagEditor)
+* [Mir Eternal](https://github.com/mir-ethernity/mir-eternal) - Modified UELib with support for saving properties.
 
 ## Special thanks to
 
