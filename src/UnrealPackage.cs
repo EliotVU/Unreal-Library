@@ -383,6 +383,14 @@ namespace UELib
                 BioShock,
 
                 /// <summary>
+                /// Arctic Combat aka Battle Territory: Battery
+                /// 
+                /// 134/038:039
+                /// </summary>
+                [Build(134, 134, 38u, 39u, BuildGeneration.UE2_5)]
+                ArcticCombat,
+
+                /// <summary>
                 /// Men of Valor
                 /// 
                 /// 137/000
