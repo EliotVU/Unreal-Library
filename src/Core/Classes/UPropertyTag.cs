@@ -151,7 +151,7 @@ public record struct UPropertyTag : IUnrealSerializableClass
         switch (packedSize)
         {
             case 0x50: stream.Write((byte)Size); break;
-            case 0x60: stream.Write((short)Size); break;
+            case 0x60: stream.Write((ushort)Size); break;
             case 0x70: stream.Write(Size); break;
         }
     }
@@ -166,7 +166,7 @@ public record struct UPropertyTag : IUnrealSerializableClass
             0x30 => 12,
             0x40 => 16,
             0x50 => stream.ReadByte(),
-            0x60 => stream.ReadInt16(),
+            0x60 => stream.ReadUInt16(),
             0x70 => stream.ReadInt32(),
             // We covered all possible bits for 0x70
             // anything else must be a mixture which is not allowed.
