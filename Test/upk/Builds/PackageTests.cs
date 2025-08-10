@@ -64,6 +64,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.SWRepublicCommando,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"ArcticCombat\",
+            BuildName.ArcticCombat,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Huxley\",
             BuildName.Huxley,
             BuildPlatform.Undetermined
