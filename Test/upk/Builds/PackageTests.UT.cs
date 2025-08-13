@@ -97,7 +97,7 @@ namespace Eliot.UELib.Test.Builds
                     "YAxis=(X=0.0000000,Y=1.0000000,Z=0.0000000)," +
                     "ZAxis=(X=0.0000000,Y=0.0000000,Z=1.0000000))");
                 AssertPropertyTagFormat(defaults, "Scale",
-                    "(Scale=(X=1.0000000,Y=2.0000000,Z=3.0000000),SheerRate=5.0000000,SheerAxis=6)");
+                    "(Scale=(X=1.0000000,Y=2.0000000,Z=3.0000000),SheerRate=5.0000000,SheerAxis=ZY)");
                 AssertPropertyTagFormat(defaults, "Color",
                     "(R=80,G=40,B=20,A=160)");
             }
