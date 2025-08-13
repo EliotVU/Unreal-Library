@@ -470,6 +470,16 @@ namespace UELib.Core
                             goto skipClassGroups;
                         }
 #endif
+#if SA2
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.SA2)
+                        {
+                            if (_Buffer.LicenseeVersion >= 100)
+                            {
+                                int unk = _Buffer.ReadInt32();
+                                Record(nameof(unk), unk);
+                            }
+                        }
+#endif
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)
                         {
                             ClassGroups = DeserializeGroup("ClassGroups");

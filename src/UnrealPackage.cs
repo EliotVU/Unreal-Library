@@ -25,6 +25,7 @@ using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.R6;
 using UELib.Branch.UE3.RL;
 using UELib.Branch.UE3.RSS;
+using UELib.Branch.UE3.SA2;
 using UELib.Branch.UE3.SFX;
 using UELib.Branch.UE3.Willow;
 using UELib.Branch.UE4;
@@ -877,6 +878,15 @@ namespace UELib
                 [Build(867, 868, 9u, 32u)]
                 [BuildEngineBranch(typeof(EngineBranchRL))]
                 RocketLeague,
+
+                /// <summary>
+                /// Sudden Attack 2
+                ///
+                /// 870/108
+                /// </summary>
+                [Build(870, 108u, BuildGeneration.UE3)]
+                [BuildEngineBranch(typeof(EngineBranchSA2))]
+                SA2,
 
                 /// <summary>
                 /// Battleborn
