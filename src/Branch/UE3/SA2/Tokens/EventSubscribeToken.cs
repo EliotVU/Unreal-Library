@@ -9,11 +9,9 @@ namespace UELib.Branch.UE3.SA2.Tokens
 
         public override void Deserialize(IUnrealStream stream)
         {
-            DeserializeNext<ContextToken>();
+            DeserializeNext();
 
             EventName = DeserializeNext<InstanceDelegateToken>().DelegateName;
-
-            DeserializeNext<EndFunctionParmsToken>();
         }
 
         public override string Decompile()
