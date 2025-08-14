@@ -122,7 +122,7 @@ namespace UELib.Core
                 uint functionFlags2 = _Buffer.ReadUInt32();
                 Record(nameof(functionFlags2), functionFlags2);
 
-                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)functionFlags2 << 32);
+                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)functionFlags2 << 32, FunctionFlags.FlagsMap);
             }
 #endif
         skipFunctionFlags:
