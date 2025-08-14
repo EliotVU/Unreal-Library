@@ -1789,6 +1789,13 @@ namespace UELib
                     //// Data after this is encrypted
                 }
 #endif
+#if SA2
+                if (stream.Package.Build == GameBuild.BuildName.SA2 &&
+                    stream.LicenseeVersion >= 107)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
 #if UE4
                 if (stream.UE4Version >= 112)
                 {
@@ -2424,6 +2431,14 @@ namespace UELib
                     // Data after this is encrypted
                 }
 #endif
+#if SA2
+                if (stream.Package.Build == GameBuild.BuildName.SA2 &&
+                    stream.LicenseeVersion >= 107)
+                {
+                    int count = stream.ReadInt32(); // v2e
+                    int offset = stream.ReadInt32(); // v2f
+                }
+#endif
 #if UE4
                 if (stream.UE4Version >= 112)
                 {
@@ -2914,7 +2929,7 @@ namespace UELib
 
             if (Summary.HeaderSize != stream.Position)
             {
-                LibServices.LogService.SilentException(new UnrealException("Missing package header data, serialization may fail."));
+                //LibServices.LogService.SilentException(new UnrealException("Missing package header data, serialization may fail."));
             }
         }
 

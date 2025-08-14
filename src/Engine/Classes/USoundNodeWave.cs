@@ -156,7 +156,13 @@ namespace UELib.Core
             {
                 stream.Write(ref CompressedPCData);
             }
-
+#if SA2
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SA2 &&
+                stream.LicenseeVersion >= 105)
+            {
+                return;
+            }
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedXenonSoundData)
             {
                 stream.Write(ref CompressedXbox360Data);
@@ -266,7 +272,13 @@ namespace UELib.Core
                 stream.Read(out CompressedPCData);
                 stream.Record(nameof(CompressedPCData), CompressedPCData);
             }
-
+#if SA2
+            if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.SA2 &&
+                stream.LicenseeVersion >= 105)
+            {
+                return;
+            }
+#endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedXenonSoundData)
             {
                 stream.Read(out CompressedXbox360Data);

@@ -31,14 +31,6 @@ namespace UELib.Engine
             {
                 _Buffer.ReadStruct(out UGuid guid);
             }
-
-#if SA2
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.SA2)
-            {
-                var unk = _Buffer.ReadObject();
-                Record(nameof(unk), unk);
-            }
-#endif
         }
     }
 

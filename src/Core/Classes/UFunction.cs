@@ -111,18 +111,15 @@ namespace UELib.Core
             {
                 // HO:0x04 = Constructor
                 uint v134 = _Buffer.ReadUInt32();
-                Record(nameof(v134), v134);
-
                 FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)v134 << 32);
             }
 #endif
 #if SA2
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.SA2 && _Buffer.Version >= 869)
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.SA2 &&
+                _Buffer.Version >= 869)
             {
-                uint functionFlags2 = _Buffer.ReadUInt32();
-                Record(nameof(functionFlags2), functionFlags2);
-
-                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)functionFlags2 << 32);
+                uint v4d = _Buffer.ReadUInt32();
+                Record(nameof(v4d), v4d); // merging this with FunctionFlags causes an overlap with FunctionFlag.Net
             }
 #endif
         skipFunctionFlags:
