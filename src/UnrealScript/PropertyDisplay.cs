@@ -91,15 +91,21 @@ namespace UELib.UnrealScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string FormatLiteral(long input)
+        public static string FormatLiteral(double input)
         {
             return input.ToString("F15", CultureInfo.InvariantCulture);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatLiteral(long input)
+        {
+            return input.ToString("D", CultureInfo.InvariantCulture);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatLiteral(ulong input)
         {
-            return input.ToString("F15", CultureInfo.InvariantCulture);
+            return input.ToString("D", CultureInfo.InvariantCulture);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

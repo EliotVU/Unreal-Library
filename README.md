@@ -247,6 +247,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) | ✅ |
 | Bombshell | 11767 | 870/000 | | ✅ |
 | Orcs Must Die! Unchained | 20430 | 870/000 | | ✅ |
+| Sudden Attack 2 | 10897 | 870/108 | | ✅ | ✅ | ✅ |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | | ✅ |
 | Battleborn | 8623/1055 | 874/078 | | ✅ |
 | A Hat in Time | 12097 | 877-893/005 | Contributed by @Un-Drew | ✅ |

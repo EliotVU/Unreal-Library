@@ -1071,6 +1071,15 @@ namespace UELib.Core
                 case PropertyType.CppCopyStructProperty:
                     return LegacyDeserializeDefaultPropertyValue(PropertyType.StructProperty, deserializeFlags);
 #endif
+#if SA2
+                case PropertyType.Int64Property:
+                    {
+                        long value = _Buffer.ReadInt64();
+                        Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
+                        break;
+                    }
+#endif
                 default:
                     throw new Exception($"Unsupported property tag type {Type}");
             }

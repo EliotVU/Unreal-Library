@@ -43,6 +43,9 @@
 #if BULLETSTORM
         CppCopyStructProperty,
 #endif
+#if SA2
+        Int64Property,
+#endif
 
         InterfaceProperty,  // >= UE3, displaced FixedArrayProperty, actual value 15, but we don't need the value for UE3 types.
         ComponentProperty,	// >= UE3

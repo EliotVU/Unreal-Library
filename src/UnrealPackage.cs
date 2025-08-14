@@ -25,6 +25,7 @@ using UELib.Branch.UE3.MOH;
 using UELib.Branch.UE3.R6;
 using UELib.Branch.UE3.RL;
 using UELib.Branch.UE3.RSS;
+using UELib.Branch.UE3.SA2;
 using UELib.Branch.UE3.SFX;
 using UELib.Branch.UE3.Willow;
 using UELib.Branch.UE4;
@@ -877,6 +878,15 @@ namespace UELib
                 [Build(867, 868, 9u, 32u)]
                 [BuildEngineBranch(typeof(EngineBranchRL))]
                 RocketLeague,
+
+                /// <summary>
+                /// Sudden Attack 2
+                ///
+                /// 870/108
+                /// </summary>
+                [Build(870, 108u, BuildGeneration.UE3)]
+                [BuildEngineBranch(typeof(EngineBranchSA2))]
+                SA2,
 
                 /// <summary>
                 /// Battleborn
@@ -1779,6 +1789,13 @@ namespace UELib
                     //// Data after this is encrypted
                 }
 #endif
+#if SA2
+                if (stream.Package.Build == GameBuild.BuildName.SA2 &&
+                    stream.LicenseeVersion >= 107)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
 #if UE4
                 if (stream.UE4Version >= 112)
                 {
@@ -2414,6 +2431,14 @@ namespace UELib
                     // Data after this is encrypted
                 }
 #endif
+#if SA2
+                if (stream.Package.Build == GameBuild.BuildName.SA2 &&
+                    stream.LicenseeVersion >= 107)
+                {
+                    int count = stream.ReadInt32(); // v2e
+                    int offset = stream.ReadInt32(); // v2f
+                }
+#endif
 #if UE4
                 if (stream.UE4Version >= 112)
                 {
@@ -2904,7 +2929,7 @@ namespace UELib
 
             if (Summary.HeaderSize != stream.Position)
             {
-                LibServices.LogService.SilentException(new UnrealException("Missing package header data, serialization may fail."));
+                //LibServices.LogService.SilentException(new UnrealException("Missing package header data, serialization may fail."));
             }
         }
 
