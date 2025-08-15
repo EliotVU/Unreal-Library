@@ -60,8 +60,6 @@ namespace UELib.Core
                 }
             }
 
-#if DECOMPILE
-
             #region Decompile
 
             public class NestManager
@@ -337,6 +335,9 @@ namespace UELib.Core
 
             public string Decompile()
             {
+#if !DECOMPILE
+                return string.Empty;
+#else
                 // Ensure we have deserialized tokens to work with.
                 Deserialize();
 
@@ -634,6 +635,7 @@ namespace UELib.Core
                 }
 
                 return output.ToString();
+#endif
             }
 
             private readonly List<NestManager.Nest> _NestChain = [];
@@ -790,7 +792,6 @@ namespace UELib.Core
             }
 
             #endregion
-#endif
         }
     }
 }

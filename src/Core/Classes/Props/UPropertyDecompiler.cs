@@ -1,5 +1,4 @@
-﻿#if DECOMPILE
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
 using UELib.Branch;
@@ -10,6 +9,7 @@ namespace UELib.Core
 {
     public partial class UProperty
     {
+#if DECOMPILE
         // Called before the var () is printed.
         public virtual string PreDecompile()
         {
@@ -567,6 +567,8 @@ namespace UELib.Core
             //return "/*" + UnrealMethods.FlagToString( PropertyFlags ) + "*/ " + output;
             return copyFlags != 0 ? "/*" + UnrealMethods.FlagToString(copyFlags) + "*/ " + output : output;
         }
+#else
+        public string FormatFlags() => string.Empty;
+#endif
     }
 }
-#endif

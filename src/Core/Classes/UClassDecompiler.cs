@@ -1,4 +1,3 @@
-#if DECOMPILE
 using System.Text;
 using System;
 using System.Collections.Generic;
@@ -10,6 +9,7 @@ namespace UELib.Core
 {
     public partial class UClass
     {
+#if DECOMPILE
         protected override string CPPTextKeyword => "cpptext";
 
         /**
@@ -611,7 +611,7 @@ namespace UELib.Core
 
             return output;
         }
-
+#endif
         public IEnumerable<string> ExportableExtensions => new List<string> { "uc" };
 
         public bool CanExport()
@@ -627,4 +627,3 @@ namespace UELib.Core
         }
     }
 }
-#endif

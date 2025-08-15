@@ -1,4 +1,5 @@
-﻿namespace UELib.Core
+﻿#if DECOMPILE
+namespace UELib.Core
 {
     public partial class UTextBuffer
     {
@@ -40,3 +41,4 @@
         }
     }
 }
+#endif
