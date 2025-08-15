@@ -360,6 +360,7 @@ namespace UELib.Core
                     copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditConst);
                 }
 
+#if UE2 && UT
                 // Properties flagged with automated, automatically get those flags added by the compiler.
                 if (Package.Build == BuildGeneration.UE2_5 && (PropertyFlags & (ulong)PropertyFlagsLO.Automated) != 0)
                 {
@@ -372,6 +373,7 @@ namespace UELib.Core
                                    | (ulong)PropertyFlagsLO.ExportObject);
                 }
                 else // Not Automated
+#endif
                 {
                     if (HasPropertyFlag(PropertyFlag.NoExport)
 #if DNF
@@ -467,7 +469,7 @@ namespace UELib.Core
                     else
                     {
 #endif
-                        output += "config ";
+                    output += "config ";
 #if XCOM2
                     }
 #endif
@@ -480,6 +482,7 @@ namespace UELib.Core
                     copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Localized);
                 }
 
+#if UE2 && UT
                 // Assuming UE2.5 (introduced with UT2004 but is also used in SG1)
                 if (Package.Build == BuildGeneration.UE2_5)
                 {
@@ -489,6 +492,7 @@ namespace UELib.Core
                         output += "cache ";
                     }
                 }
+#endif
 
                 if (HasPropertyFlag(PropertyFlag.Transient))
                 {

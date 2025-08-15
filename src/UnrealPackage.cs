@@ -3875,7 +3875,11 @@ namespace UELib
         [Obsolete]
         public bool IsMap()
         {
+#if UE3
             return Summary.PackageFlags.HasFlag(PackageFlag.ContainsMap);
+#else
+            return false; // search classes?
+#endif
         }
 
         /// <summary>
@@ -3885,7 +3889,11 @@ namespace UELib
         [Obsolete]
         public bool IsScript()
         {
+#if UE3
             return Summary.PackageFlags.HasFlag(PackageFlag.ContainsScript);
+#else
+            return false; // search classes?
+#endif
         }
 
         /// <summary>
@@ -3895,7 +3903,11 @@ namespace UELib
         [Obsolete]
         public bool IsDebug()
         {
+#if UE3
             return Summary.PackageFlags.HasFlag(PackageFlag.ContainsDebugData);
+#else
+            return false;
+#endif
         }
 
         /// <summary>
@@ -3905,7 +3917,11 @@ namespace UELib
         [Obsolete]
         public bool IsStripped()
         {
+#if UE3
             return Summary.PackageFlags.HasFlag(PackageFlag.StrippedSource);
+#else
+            return false; // search classes?
+#endif
         }
 
         /// <summary>
@@ -3921,7 +3937,11 @@ namespace UELib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsEditorData()
         {
+#if UE4
             return Summary.UE4Version > 0 && !Summary.PackageFlags.HasFlag(PackageFlag.FilterEditorOnly);
+#else
+            return true;
+#endif
         }
 
         #region IBuffered
@@ -3977,6 +3997,6 @@ namespace UELib
             Stream?.Dispose();
         }
 
-        #endregion
+#endregion
     }
 }

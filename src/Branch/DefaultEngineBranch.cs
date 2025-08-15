@@ -153,7 +153,7 @@ namespace UELib.Branch
             if (linker.Version > 61 && linker.Version <= 69) // <= UT99
                 PackageFlags[(int)PackageFlag.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
 #endif
-#if UE2
+#if UE2 && UT
             if (linker.Build == BuildGeneration.UE2_5)
                 PackageFlags[(int)PackageFlag.Official] = (uint)PackageFlagsUE2.Official;
 #endif

@@ -94,8 +94,10 @@ namespace UELib.Core
                 PropertyType.MapProperty => typeof(UMap<,>),
                 PropertyType.FixedArrayProperty => typeof(Array),
                 PropertyType.PointerProperty => typeof(IntPtr),
+#if BIOSHOCK
                 PropertyType.QwordProperty => typeof(long),
                 //PropertyType.XWeakReferenceProperty => typeof(UXWeakReferenceProperty.PropertyValue),
+#endif
 #if GIGANTIC
                 //PropertyType.JsonRefProperty => typeof(UJsonRefProperty.PropertyValue),
 #endif

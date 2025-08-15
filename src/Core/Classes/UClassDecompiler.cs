@@ -350,7 +350,7 @@ namespace UELib.Core
             {
                 output += "\r\n\thidedropdown";
             }
-
+#if UE2 && UT
             if (Package.Build == UnrealPackage.GameBuild.BuildName.UT2004)
             {
                 if (HasAnyClassFlags((ulong)Flags.ClassFlags.CacheExempt))
@@ -358,7 +358,7 @@ namespace UELib.Core
                     output += "\r\n\tcacheexempt";
                 }
             }
-
+#endif
             if (ForceScriptOrder.HasValue)
             {
                 bool forceScriptOrder = ForceScriptOrder.Value;

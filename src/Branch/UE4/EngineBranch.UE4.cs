@@ -74,11 +74,13 @@ public class EngineBranchUE4 : EngineBranch
             (uint)DefaultEngineBranch.PackageFlagsDefault.ClientOptional;
         PackageFlags[(int)PackageFlag.ServerSideOnly] =
             (uint)DefaultEngineBranch.PackageFlagsDefault.ServerSideOnly;
+#if UE4
         PackageFlags[(int)PackageFlag.EditorOnly] = (uint)PackageFlagsUE4.EditorOnly;
         PackageFlags[(int)PackageFlag.Cooked] = (uint)PackageFlagsUE4.Cooked;
         PackageFlags[(int)PackageFlag.UnversionedProperties] = (uint)PackageFlagsUE4.UnversionedProperties;
         PackageFlags[(int)PackageFlag.ReloadingForCooker] = (uint)PackageFlagsUE4.ReloadingForCooker;
         PackageFlags[(int)PackageFlag.FilterEditorOnly] = (uint)PackageFlagsUE4.FilterEditorOnly;
+#endif
     }
 
     protected override void SetupSerializer(UnrealPackage linker) => SetupSerializer<PackageSerializerUE4>();
