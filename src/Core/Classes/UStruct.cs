@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using UELib.Branch;
 using UELib.Branch.UE2.Eon;
 using UELib.Core.Tokens;
@@ -682,8 +684,7 @@ namespace UELib.Core
 
                 properties.Add(scriptProperty);
 
-                // Serialize the actual data and value
-                scriptProperty.Deserialize(stream);
+                scriptProperty.Deserialize(stream); // tag
             }
 
             return properties;
@@ -711,7 +712,7 @@ namespace UELib.Core
                 foreach (var tag in properties)
                 {
                     SerializeNextScriptProperty(stream, tag, propertySource, tagSource);
-                    tag.Serialize(stream);
+                    tag.Serialize(stream); // tag and value
                 }
             }
 
@@ -776,16 +777,55 @@ namespace UELib.Core
                 ? CreateScriptProperty(name, PropertyType.None)
                 : null;
 
-            UDefaultProperty CreateScriptProperty(in UName propertyName, PropertyType propertyType)
+            UDefaultProperty CreateScriptProperty(UName propertyName, PropertyType propertyType)
             {
-                UProperty? property = null;
+                UProperty property = null;
                 var destPtr = IntPtr.Zero;
 
-                var tag = new UPropertyTag(propertyName, propertyType);
+                UPropertyTag? tag = null;
 
-                // ... tag linking code
+                if (tagSource != null && tagSource.InternalFlags.HasFlag(InternalClassFlags.LinkTaggedProperties))
+                {
+                    property = propertySource?.FindProperty<UProperty>(propertyName);
+                    if (property != null)
+                    {
+                        tag = new UPropertyTag(property);
+                    }
+                }
 
-                return new UDefaultProperty(tagSource, propertySource, ref tag, destPtr);
+                if (tagSource != null && tagSource.InternalFlags.HasFlag(InternalClassFlags.LinkAttributedProperties))
+                {
+                    // TODO: Source generator, map by name offsets.
+
+                    var internalClassType = tagSource.GetType();
+                    var unrealMembers = internalClassType.FindMembers(
+                        MemberTypes.Field | MemberTypes.Property,
+                        BindingFlags.GetField,
+                        (info, criteria) =>
+                        {
+                            var attr = info.GetCustomAttribute<UnrealPropertyAttribute>();
+                            if (attr == null)
+                            {
+                                return false;
+                            }
+
+                            var scriptName = attr.Name ?? info.Name;
+                            return criteria == scriptName;
+                        },
+                        propertyName
+                    );
+
+                    var fieldMember = unrealMembers.FirstOrDefault();
+                    destPtr = fieldMember != null
+                        ? Marshal.UnsafeAddrOfPinnedArrayElement([fieldMember], 0)
+                        : IntPtr.Zero;
+                }
+
+                UPropertyTag propertyTag = tag ?? new UPropertyTag(propertyName, propertyType);
+
+                return property == null
+                    ? new UDefaultProperty(tagSource, propertySource, ref propertyTag, destPtr)
+                    : new UDefaultProperty(tagSource, property, ref propertyTag, destPtr);
             }
         }
 

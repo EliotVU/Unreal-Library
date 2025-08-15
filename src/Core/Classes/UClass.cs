@@ -17,6 +17,8 @@ namespace UELib.Core
     [UnrealRegisterClass]
     public partial class UClass : UState, IUnrealExportable
     {
+        internal Type _InternalType;
+
         #region Serialized Members
 
         /// <summary>
@@ -1332,6 +1334,11 @@ namespace UELib.Core
         public bool IsClassWithin()
         {
             return ClassWithin != null && ClassWithin.Name != UnrealName.Object;
+        }
+
+        public static explicit operator Type?(UClass? @this)
+        {
+            return @this?._InternalType;
         }
 
         [Obsolete("Use ComponentDefaultObjectMap", true)]

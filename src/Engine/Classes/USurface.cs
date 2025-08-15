@@ -1,5 +1,6 @@
 ﻿using UELib.Branch;
 using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {
@@ -13,6 +14,7 @@ namespace UELib.Engine
         public USurface()
         {
             ShouldDeserializeOnDemand = true;
+            InternalFlags |= InternalClassFlags.LinkAttributedProperties;
         }
     }
 }

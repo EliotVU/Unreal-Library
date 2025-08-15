@@ -60,7 +60,7 @@ namespace UELib
         public UObjectTableItem? Archetype => Package.IndexToObjectResource(_ArchetypeIndex);
 
         /// <summary>
-        /// The object flags <see cref="ObjectFlagsLO"/>
+        /// The object flags <see cref="ObjectFlagsLO"/> and <seealso cref="ObjectFlagsHO"/>
         /// </summary>
         public ulong ObjectFlags;
 
@@ -357,7 +357,7 @@ namespace UELib
                 stream.Write((int)_ArchetypeIndex);
             }
 #if BATMAN
-            if (stream.Build == BuildGeneration.RSS)
+            if (stream.Build == BuildGeneration.RSS && stream.LicenseeVersion > 21)
             {
                 LibServices.LogService.SilentException(
                     new NotSupportedException("Missing an integer at " + stream.Position));

@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UELib.Branch;
 using UELib.IO;
+using UELib.ObjectModel.Annotations;
 using UELib.Services;
 using UELib.Types;
 using UELib.UnrealScript;
@@ -285,11 +286,18 @@ namespace UELib.Core
             _TagPosition = stream.Position;
 
             _Tag.Deserialize(stream);
-            _PropertyValuePosition = stream.Position;
-            stream.Seek(_PropertyValuePosition + Size, SeekOrigin.Begin); // lazy load, call DeserializeProperty to deserialize the value.
 
-            //DeserializeProperty(stream);
-            //Debug.Assert(stream.Position == _PropertyValuePosition + Size);
+            if (_TagSource == null || _TagSource.InternalFlags.HasFlag(InternalClassFlags.PreloadTaggedProperties))
+            {
+                DeserializeProperty(stream);
+                Debug.Assert(stream.Position == _PropertyValuePosition + Size);
+
+                return;
+            }
+
+            // skip the value
+            _PropertyValuePosition = stream.Position;
+            stream.Seek(_PropertyValuePosition + Size, SeekOrigin.Begin); // lazy load, call DeserializeProperty to deserialize the value
         }
 
         /// <summary>

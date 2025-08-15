@@ -34,6 +34,8 @@ using UELib.Decoding;
 using UELib.Flags;
 using UELib.Services;
 using UELib.IO;
+using UELib.ObjectModel;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib
 {
@@ -68,18 +70,6 @@ namespace UELib
     /// event of a UELib.Core.UObject update.
     /// </summary>
     public delegate void NotifyUpdateEvent();
-
-    /// <summary>
-    /// Registers the class as an Unreal class. The class's name is required to begin with the letter "U".
-    /// When an Unreal Package is initializing, all described objects will be initialized as the registered class if its name matches as described by its export item.
-    /// 
-    /// Note: Usage restricted to the executing assembly(UELib) only!
-    /// </summary>
-    [MeansImplicitUse]
-    [AttributeUsage(AttributeTargets.Class)]
-    public sealed class UnrealRegisterClassAttribute : Attribute
-    {
-    }
 
     /// <summary>
     /// An Unreal package i.e. a file ending in .upk, .u, or others like .utx, .uax, and .ut2 etc.
@@ -3643,6 +3633,11 @@ namespace UELib
 
             AddToObjects(obj);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+
+            if (obj.InternalFlags.HasFlag(InternalClassFlags.Preload))
+            {
+                obj.Load();
+            }
 
             return obj;
         }

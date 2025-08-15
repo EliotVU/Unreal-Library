@@ -12,13 +12,20 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UTexture2D : UTexture
     {
-        #region Serialized Members
+        #region Script Members
 
         [StreamRecord, UnrealProperty]
         public uint SizeX { get; set; }
 
         [StreamRecord, UnrealProperty]
         public uint SizeY { get; set; }
+
+        [UnrealProperty]
+        public UName TextureFileCacheName { get; set; }
+
+        #endregion
+
+        #region Serialized Members
 
         [StreamRecord]
         public UArray<MipMap2D> Mips { get; set; } = [];

@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using UELib.Branch;
 using UELib.Flags;
@@ -23,6 +24,8 @@ namespace UELib.Core
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable,
                                    IComparable
     {
+        public InternalClassFlags InternalFlags { get; set; } = InternalClassFlags.Default;
+
         /// <summary>
         ///     The name for this object.
         /// </summary>
@@ -147,6 +150,8 @@ namespace UELib.Core
 
         public UObject()
         {
+            // TODO: Source generator or copy the internals from the static class.
+            InternalFlags = GetType().GetCustomAttributes<UnrealClassAttribute>().LastOrDefault()?.InternalClassFlags ?? InternalClassFlags.Default;
         }
 
         public UObject(UnrealPackage package, UPackageIndex packageIndex) : this()
