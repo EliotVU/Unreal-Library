@@ -174,12 +174,8 @@ namespace UELib.Core
             }
 #endif
 
-            if ((stream.Version >= (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction &&
-                 stream.ContainsEditorOnlyData()
-#if TRANSFORMERS
-                 // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
-                 && stream.Build != BuildGeneration.HMS)
-#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction &&
+                stream.ContainsEditorOnlyData()
 #if MKKE
                 // Cooked and stripped, but FriendlyName still remains
                 || stream.Build == UnrealPackage.GameBuild.BuildName.MKKE
@@ -190,6 +186,10 @@ namespace UELib.Core
 #endif
                )
             {
+#if TRANSFORMERS
+                // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
+                if (stream.Build == BuildGeneration.HMS) return;
+#endif
                 FriendlyName = stream.ReadName();
                 stream.Record(nameof(FriendlyName), FriendlyName);
 
@@ -299,11 +299,8 @@ namespace UELib.Core
             }
 #endif
 
-            if ((stream.Version >= (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction &&
-                 stream.ContainsEditorOnlyData()
-#if TRANSFORMERS
-                 && stream.Build != BuildGeneration.HMS)
-#endif
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction &&
+                stream.ContainsEditorOnlyData()
 #if MKKE
                 || stream.Build == UnrealPackage.GameBuild.BuildName.MKKE
 #endif
@@ -312,6 +309,10 @@ namespace UELib.Core
 #endif
                )
             {
+#if TRANSFORMERS
+                // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
+                if (stream.Build == BuildGeneration.HMS) return;
+#endif
                 Contract.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
                 stream.Write(FriendlyName);
             }
