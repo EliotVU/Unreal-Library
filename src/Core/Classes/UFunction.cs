@@ -129,10 +129,18 @@ namespace UELib.Core
             if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                 stream.LicenseeVersion >= 24)
             {
+                // HO:0x04 = Constructor
                 uint v134 = stream.ReadUInt32();
-                stream.Record(nameof(v134), v134);
-
-                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | ((ulong)v134 << 32));
+                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)v134 << 32, FunctionFlags.FlagsMap);
+            }
+#endif
+#if SA2
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SA2 &&
+                stream.Version >= 869)
+            {
+                uint v4d = stream.ReadUInt32();
+                stream.Record(nameof(v4d), v4d);
+                FunctionFlags = new UnrealFlags<FunctionFlag>(FunctionFlags | (ulong)v4d << 32, FunctionFlags.FlagsMap);
             }
 #endif
         skipFunctionFlags:
@@ -256,6 +264,14 @@ namespace UELib.Core
                 stream.LicenseeVersion >= 24)
             {
                 // v134
+                stream.Write((uint)((ulong)FunctionFlags >> 32));
+            }
+#endif
+#if SA2
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.SA2 &&
+                stream.Version >= 869)
+            {
+                // v4d
                 stream.Write((uint)((ulong)FunctionFlags >> 32));
             }
 #endif

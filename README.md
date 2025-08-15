@@ -129,7 +129,6 @@ UELib supports these kinds of content, but may vary from game to game:
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | | ✅ | ✅ |
 | Killing Floor | 3369 | 128/029 | | ✅ | ✅ |
-| Battle Territory: Battery | 3369 | 128/029? | | ✅ |
 | Shadow Ops: Red Mercury | 2110 | 129/010 | | ✅ |
 | Vanguard: Saga of Heroes | 2226 | 129/035 | | ✅ |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) | ✅ |
@@ -140,11 +139,12 @@ UELib supports these kinds of content, but may vary from game to game:
 | Stargate SG1: The Alliance | 4180 | 130/004 | | ✅ |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | | ✅ |
 | Bioshock | 2226:Vengeance | 130-141/056 | | ✅ |
+| Arctic Combat | 3369 | 134/038-039 | Thanks to @EDITzDev. Third-party decompression is required | ✅ | ✅ | ✅ |
+| Star Wars: Republic Commando | 2226 | 134-159/001 | | ✅ |
 | Men of Valor | 926 | 137/000 | PC | ✅ |
 | Bioshock 2 | 2226:Vengeance | 143/059 | | ✅ |
 | Advent Rising | 2226 | 143-146/007 | | ✅ | ✅ |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) | ✅ |
-| Star Wars: Republic Commando | 2226 | 134-159/001 | | ✅ |
 | The Chronicles of Spellborn | 3323 | 159/029 | | ✅ |
 | Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) | ✅ |
 |     |     |     |     |
@@ -247,6 +247,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | [Might & Magic Heroes VII](https://en.wikipedia.org/wiki/Might_%26_Magic_Heroes_VII) | 12161 | 868/004 | (Signature and custom features are not supported) | ✅ |
 | Bombshell | 11767 | 870/000 | | ✅ |
 | Orcs Must Die! Unchained | 20430 | 870/000 | | ✅ |
+| Sudden Attack 2 | 10897 | 870/108 | | ✅ | ✅ | ✅ |
 | Gal\*Gun: Double Peace | 10897 | 871/000 | | ✅ |
 | Battleborn | 8623/1055 | 874/078 | | ✅ |
 | A Hat in Time | 12097 | 877-893/005 | Contributed by @Un-Drew | ✅ |
@@ -277,6 +278,7 @@ Want to add support for a game? See [adding support for new Unreal classes](http
 * [Duke Nukem Forever: Enhanced](https://www.moddb.com/mods/duke-nukem-forever-enhanced)
 * [UE3 Shader Cache Patcher](https://github.com/tuokri/UE3ShaderCachePatcher)
 * [UnrealFlagEditor](https://github.com/Un-Drew/UnrealFlagEditor)
+* [Mir Eternal](https://github.com/mir-ethernity/mir-eternal) - Modified UELib with support for saving properties.
 
 ## Special thanks to
 

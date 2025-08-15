@@ -161,6 +161,78 @@ namespace UELib.Core
                             }
                         }
 #endif
+#if SA2
+                        if (decompiler.Package.Build == UnrealPackage.GameBuild.BuildName.SA2)
+                        {
+                            switch ((uint)CastOpCode)
+                            {
+                                // Int64ToString
+                                case 0x61:
+                                    castTypeName = "string";
+                                    break;
+
+                                // IntToInt64
+                                case 0x62:
+                                    castTypeName = "int64";
+                                    break;
+
+                                // Int64ToInt
+                                case 0x63:
+                                    castTypeName = "int";
+                                    break;
+
+                                // StringToInt64
+                                case 0x64:
+                                    castTypeName = "int64";
+                                    break;
+
+                                // Int64ToByte
+                                case 0x65:
+                                    castTypeName = "byte";
+                                    break;
+
+                                // Int64ToBool
+                                case 0x66:
+                                    castTypeName = "bool";
+                                    break;
+
+                                // Int64ToFloat
+                                case 0x67:
+                                    castTypeName = "float";
+                                    break;
+
+                                // BoolToShort
+                                case 0x68:
+                                    castTypeName = "short";
+                                    break;
+
+                                // FloatToShort
+                                case 0x69:
+                                    castTypeName = "short";
+                                    break;
+
+                                // IntToMemCrypt
+                                case 0x6A:
+                                    castTypeName = "MemCrypt<int>";
+                                    break;
+
+                                // FloatToMemCrypt
+                                case 0x6B:
+                                    castTypeName = "MemCrypt<float>";
+                                    break;
+
+                                // StringToMemCrypt
+                                case 0x6C:
+                                    castTypeName = "MemCrypt<string>";
+                                    break;
+
+                                // Int64ToMemCrypt
+                                case 0x6D:
+                                    castTypeName = "MemCrypt<int64>";
+                                    break;
+                            }
+                        }
+#endif
                     }
 
                     Services.LibServices.LogService.SilentAssert(castTypeName != null, $"Detected an unresolved token '0x{CastOpCode:X}'.");

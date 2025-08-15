@@ -260,6 +260,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Hawken,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"SuddenAttack2\",
+            BuildName.SA2,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"A Hat in Time\",
             BuildName.AHIT,
             BuildPlatform.Undetermined

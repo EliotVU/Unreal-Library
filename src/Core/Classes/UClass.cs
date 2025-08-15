@@ -498,6 +498,15 @@ namespace UELib.Core
                     goto skipClassGroups;
                 }
 #endif
+#if SA2
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.SA2 &&
+                    stream.LicenseeVersion >= 100)
+                {
+                    int v1d4 = stream.ReadInt32();
+                    stream.Record(nameof(v1d4), v1d4);
+                    if (v1d4 != 0) LibServices.Debug(GetReferencePath() + ":v1d4 {0}", v1d4);
+                }
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)
                 {
                     ClassGroups = stream.ReadNameArray();
@@ -1058,6 +1067,14 @@ namespace UELib.Core
                     stream.WriteString(NativeHeaderName);
 
                     goto skipClassGroups;
+                }
+#endif
+#if SA2
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.SA2 &&
+                    stream.LicenseeVersion >= 100)
+                {
+                    throw new NotSupportedException("This package version is not supported!");
+                    //stream.Write(0); // v1d4
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)

@@ -719,7 +719,7 @@ namespace UELib.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SerializeNextScriptProperty(
+        internal static void SerializeNextScriptProperty(
             IUnrealStream stream,
             UDefaultProperty? scriptProperty,
             UStruct? propertySource,
@@ -750,7 +750,7 @@ namespace UELib.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static UDefaultProperty? DeserializeNextScriptProperty(
+        internal static UDefaultProperty? DeserializeNextScriptProperty(
             IUnrealStream stream,
             UStruct? propertySource,
             UObject? tagSource
@@ -785,7 +785,7 @@ namespace UELib.Core
 
                 // ... tag linking code
 
-                return new UDefaultProperty(tagSource, property, ref tag, destPtr);
+                return new UDefaultProperty(tagSource, propertySource, ref tag, destPtr);
             }
         }
 

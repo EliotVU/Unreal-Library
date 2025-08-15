@@ -34,9 +34,6 @@ namespace UELib.Core
         private readonly UObject _TagSource;
         private UStruct? _PropertySource;
 
-        // Temporary solution, needed so we can lazy-load the property value.
-        private IUnrealStream _Buffer { get; set; }
-
         internal long _TagPosition { get; set; }
         internal long _PropertyValuePosition { get; set; }
 
@@ -49,7 +46,20 @@ namespace UELib.Core
         ///     Serves as a temporary workaround, don't rely on it.
         /// </summary>
         [Obsolete("Will be deprecated when DeserializePropertyValue is fully implemented.")]
-        public string Value { get; private set; }
+        public string Value
+        {
+            get
+            {
+                if (_Value == null)
+                {
+                    _Value = DeserializeValue();
+                }
+
+                return _Value;
+            }
+        }
+
+        private string? _Value = null;
 
         /// <summary>
         /// A <see cref="UProperty"/> containing the deserialized property's value.
@@ -85,17 +95,30 @@ namespace UELib.Core
                 PropertyType.PointerProperty => typeof(IntPtr),
                 PropertyType.QwordProperty => typeof(long),
                 //PropertyType.XWeakReferenceProperty => typeof(UXWeakReferenceProperty.PropertyValue),
+#if GIGANTIC
                 //PropertyType.JsonRefProperty => typeof(UJsonRefProperty.PropertyValue),
+#endif
+#if MASS_EFFECT
                 PropertyType.StringRefProperty => typeof(int),
                 PropertyType.BioMask4Property => typeof(byte),
+#endif
                 PropertyType.InterfaceProperty => typeof(UClass),
                 PropertyType.ComponentProperty => typeof(UObject),
+#if MKKE
                 //PropertyType.MKItemProperty => expr,
                 //PropertyType.MkItemNoDestroyProperty => expr,
+#endif
+#if BORDERLANDS2 || BATTLEBORN
                 PropertyType.ByteAttributeProperty => typeof(byte),
                 PropertyType.FloatAttributeProperty => typeof(float),
                 PropertyType.IntAttributeProperty => typeof(int),
+#endif
+#if SA2
+                PropertyType.Int64Property => typeof(long),
+#endif
+#if BULLETSTORM
                 PropertyType.CppCopyStructProperty => typeof(IUnrealSerializableClass),
+#endif
                 PropertyType.None => throw new NotSupportedException("Cannot handle property tag type 'None'"),
                 _ => throw new NotImplementedException("Unrecognized property tag type")
             };
@@ -182,59 +205,6 @@ namespace UELib.Core
                 : $"{expr}={value}";
         }
 
-        private T? FindProperty<T>(out UStruct? outer)
-            where T : UProperty
-        {
-            UProperty property = null;
-            outer = _PropertySource ?? (UStruct)_TagSource.Class ?? (UClass)_TagSource;
-            Debug.Assert(outer != null, nameof(outer) + " != null");
-            foreach (var super in UField.EnumerateSuper(outer))
-            {
-                foreach (var field in super
-                                      .EnumerateFields()
-                                      .OfType<UProperty>())
-                {
-                    if (field.Name != Name)
-                    {
-                        continue;
-                    }
-
-                    property = field;
-                    outer = super;
-                    break;
-                }
-
-                if (property == null)
-                {
-                    continue;
-                }
-
-                switch (property.Type)
-                {
-                    case PropertyType.StructProperty:
-                        outer = ((UStructProperty)property).Struct;
-                        break;
-
-                    case PropertyType.ArrayProperty:
-                        var arrayField = (UArrayProperty)property;
-                        Debug.Assert(arrayField != null, "arrayField != null");
-
-                        // May be null if deserialization failed
-                        var arrayInnerField = arrayField.InnerProperty;
-                        if (arrayInnerField?.Type == PropertyType.StructProperty)
-                        {
-                            outer = ((UStructProperty)arrayInnerField).Struct;
-                        }
-
-                        break;
-                }
-
-                break;
-            }
-
-            return (T?)property;
-        }
-
         private IntPtr _InternalValuePtr;
         private PropertyValueUnion _ValueRef;
 
@@ -243,8 +213,6 @@ namespace UELib.Core
             _TagSource = tagSource;
             _PropertySource = tagSource as UStruct ?? (UStruct)tagSource.Class;
             _Tag = new UPropertyTag();
-
-            _Buffer = tagSource.Buffer;
         }
 
         public UDefaultProperty(
@@ -259,8 +227,6 @@ namespace UELib.Core
             _PropertySource = propertySource;
             _Tag = tag;
             _Property = null;
-
-            _Buffer = tagSource.Buffer;
         }
 
         // FIXME: Re-do when we merge UELib 2.0 UObject construction, where we have proper object references.
@@ -278,22 +244,21 @@ namespace UELib.Core
             _Property = property;
             _InternalValuePtr = internalValueDestPtr;
             if (tag.Type != PropertyType.None) _InternalValueType = ToInternalValueType(tag.Type);
-
-            _Buffer = null;
         }
 
         [Obsolete("See overload")]
         public bool Deserialize()
         {
-            _TagPosition = _Buffer.Position;
+            var stream = _TagSource.LoadBuffer();
+            _TagPosition = stream.Position;
 
             if (Name.IsNone())
             {
                 return false;
             }
 
-            _Tag.Deserialize(_Buffer);
-            DeserializeProperty(_Buffer);
+            _Tag.Deserialize(stream);
+            DeserializeProperty(stream);
 
             return true;
         }
@@ -312,7 +277,7 @@ namespace UELib.Core
         }
 
         /// <summary>
-        /// Deserializes a property tag and value from a stream.
+        /// Deserializes a property tag and skips ahead of the value from a stream.
         /// </summary>
         /// <param name="stream">the input stream.</param>
         public void Deserialize(IUnrealStream stream)
@@ -320,8 +285,11 @@ namespace UELib.Core
             _TagPosition = stream.Position;
 
             _Tag.Deserialize(stream);
-            DeserializeProperty(stream);
-            Debug.Assert(stream.Position == _PropertyValuePosition + Size);
+            _PropertyValuePosition = stream.Position;
+            stream.Seek(_PropertyValuePosition + Size, SeekOrigin.Begin); // lazy load, call DeserializeProperty to deserialize the value.
+
+            //DeserializeProperty(stream);
+            //Debug.Assert(stream.Position == _PropertyValuePosition + Size);
         }
 
         /// <summary>
@@ -389,7 +357,7 @@ namespace UELib.Core
             }
             catch (Exception exception)
             {
-                LibServices.Debug($"Couldn't deserialize tagged value for '{Name}'");
+                LibServices.Debug($"Couldn't deserialize tagged value for '{Name}' in object '{TagSource.GetPath()}'");
                 //LibServices.LogService.SilentException(
                 //new Exception($"Couldn't deserialize tagged value for '{Name}'", exception));
             }
@@ -412,7 +380,7 @@ namespace UELib.Core
         private void DeserializePropertyValue(IUnrealStream stream, PropertyType type)
         {
             var flags = DeserializeFlags.None;
-            Value = TryLegacyDeserializeDefaultPropertyValue(stream, type, ref flags);
+            _Value = TryLegacyDeserializeDefaultPropertyValue(stream, type, flags, Property);
         }
 
         /// <summary>
@@ -423,28 +391,41 @@ namespace UELib.Core
         /// <returns>The deserialized value if any.</returns>
         public string DeserializeValue(DeserializeFlags deserializeFlags = DeserializeFlags.None)
         {
-            if (string.IsNullOrEmpty(Value) == false && (deserializeFlags & DeserializeFlags.Decompiling) == 0)
+            if (string.IsNullOrEmpty(_Value) == false && (deserializeFlags & DeserializeFlags.Decompiling) == 0)
             {
-                return Value;
+                return _Value;
             }
 
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
-            _Buffer ??= _TagSource.LoadBuffer();
-            _Buffer.Seek(_PropertyValuePosition, SeekOrigin.Begin);
-            string output = TryLegacyDeserializeDefaultPropertyValue(_Buffer, Type, ref deserializeFlags);
+            var stream = _TagSource.LoadBuffer();
+            stream.Seek(_PropertyValuePosition, SeekOrigin.Begin);
 
-            LibServices.LogService.SilentAssert(_Buffer.Position == _PropertyValuePosition + Size,
-                                                $"PropertyTag value deserialization error for '{Name}: {_Buffer.Position} != {_PropertyValuePosition + Size}");
+            // Temporary, this should be handled in the linking phase during the construction of property tags.
+            UProperty? tagProperty = Property ?? Type switch
+            {
+                PropertyType.StructProperty => _PropertySource?.FindProperty<UStructProperty?>(Name),
+                PropertyType.ArrayProperty => _PropertySource?.FindProperty<UArrayProperty?>(Name),
+                PropertyType.FixedArrayProperty => _PropertySource?.FindProperty<UFixedArrayProperty?>(Name),
+                PropertyType.MapProperty => _PropertySource?.FindProperty<UMapProperty?>(Name),
+                _ => null
+            };
+
+            string output = TryLegacyDeserializeDefaultPropertyValue(stream, Type, deserializeFlags, tagProperty);
+
+            LibServices.LogService.SilentAssert(stream.Position == _PropertyValuePosition + Size,
+                $"PropertyTag value size error for '{TagSource.GetPath()}.{Name}: Expected: {Size}, Actual: {stream.Position - _PropertyValuePosition}");
 
             return output;
         }
 
-        private string TryLegacyDeserializeDefaultPropertyValue(IUnrealStream stream, PropertyType type,
-                                                                ref DeserializeFlags deserializeFlags)
+        private string TryLegacyDeserializeDefaultPropertyValue(IUnrealStream stream,
+                                                                PropertyType type,
+                                                                DeserializeFlags deserializeFlags,
+                                                                UProperty? property = null)
         {
             try
             {
-                return LegacyDeserializeDefaultPropertyValue(stream, type, ref deserializeFlags);
+                return LegacyDeserializeDefaultPropertyValue(stream, type, deserializeFlags, property);
             }
             catch (EndOfStreamException)
             {
@@ -470,8 +451,10 @@ namespace UELib.Core
         /// </summary>
         /// <param name="type">Kind of type to deserialize.</param>
         /// <returns>The deserialized value if any.</returns>
-        private string LegacyDeserializeDefaultPropertyValue(IUnrealStream stream, PropertyType type,
-                                                       ref DeserializeFlags deserializeFlags)
+        private string LegacyDeserializeDefaultPropertyValue(IUnrealStream stream,
+                                                             PropertyType type,
+                                                             DeserializeFlags deserializeFlags,
+                                                             UProperty? property = null)
         {
             var orgOuter = _PropertySource;
             var propertyValue = string.Empty;
@@ -699,251 +682,73 @@ namespace UELib.Core
                         break;
                     }
 
-                #region HardCoded Struct Types
-
-                case PropertyType.Color:
-                    {
-                        stream.ReadStructMarshal(out UColor color);
-                        propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
-                                         $"G={PropertyDisplay.FormatLiteral(color.G)}," +
-                                         $"B={PropertyDisplay.FormatLiteral(color.B)}," +
-                                         $"A={PropertyDisplay.FormatLiteral(color.A)}";
-                        break;
-                    }
-
-                case PropertyType.LinearColor:
-                    {
-                        stream.ReadStructMarshal(out ULinearColor color);
-                        propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
-                                         $"G={PropertyDisplay.FormatLiteral(color.G)}," +
-                                         $"B={PropertyDisplay.FormatLiteral(color.B)}," +
-                                         $"A={PropertyDisplay.FormatLiteral(color.A)}";
-                        break;
-                    }
-
-                case PropertyType.Vector2D:
-                    {
-                        stream.ReadStructMarshal(out UVector2D vector);
-                        propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
-                                         $"Y={PropertyDisplay.FormatLiteral(vector.Y)}";
-                        break;
-                    }
-
-                case PropertyType.Vector:
-                    {
-                        stream.ReadStructMarshal(out UVector vector);
-                        propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
-                                         $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
-                                         $"Z={PropertyDisplay.FormatLiteral(vector.Z)}";
-                        break;
-                    }
-
-                case PropertyType.Vector4:
-                    {
-                        stream.ReadStructMarshal(out UVector4 vector);
-                        propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
-                                         $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
-                                         $"Z={PropertyDisplay.FormatLiteral(vector.Z)}," +
-                                         $"W={PropertyDisplay.FormatLiteral(vector.W)}";
-                        break;
-                    }
-
-                case PropertyType.TwoVectors:
-                    {
-                        string v1 = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Vector, ref deserializeFlags);
-                        string v2 = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Vector, ref deserializeFlags);
-                        propertyValue += $"v1=({v1})," +
-                                         $"v2=({v2})";
-                        break;
-                    }
-
-                case PropertyType.Rotator:
-                    {
-                        stream.ReadStructMarshal(out URotator rotator);
-                        propertyValue += $"Pitch={rotator.Pitch}," +
-                                         $"Yaw={rotator.Yaw}," +
-                                         $"Roll={rotator.Roll}";
-                        break;
-                    }
-
-                case PropertyType.Guid:
-                    {
-                        stream.ReadStructMarshal(out UGuid guid);
-                        propertyValue += $"A={guid.A}," +
-                                         $"B={guid.B}," +
-                                         $"C={guid.C}," +
-                                         $"D={guid.D}";
-                        break;
-                    }
-
-                case PropertyType.Sphere:
-                    {
-                        AssertFastSerialize(stream);
-                        stream.ReadStructMarshal(out USphere sphere);
-                        propertyValue += $"W={PropertyDisplay.FormatLiteral(sphere.W)}," +
-                                         $"X={PropertyDisplay.FormatLiteral(sphere.X)}," +
-                                         $"Y={PropertyDisplay.FormatLiteral(sphere.Y)}," +
-                                         $"Z={PropertyDisplay.FormatLiteral(sphere.Z)}";
-
-                        break;
-                    }
-
-                case PropertyType.Plane:
-                    {
-                        AssertFastSerialize(stream);
-                        stream.ReadStructMarshal(out UPlane plane);
-                        propertyValue += $"W={PropertyDisplay.FormatLiteral(plane.W)}," +
-                                         $"X={PropertyDisplay.FormatLiteral(plane.X)}," +
-                                         $"Y={PropertyDisplay.FormatLiteral(plane.Y)}," +
-                                         $"Z={PropertyDisplay.FormatLiteral(plane.Z)}";
-                        break;
-                    }
-
-                case PropertyType.Scale:
-                    {
-                        stream.ReadStructMarshal(out UScale scale);
-                        propertyValue += "Scale=(" +
-                                         $"X={PropertyDisplay.FormatLiteral(scale.Scale.X)}," +
-                                         $"Y={PropertyDisplay.FormatLiteral(scale.Scale.Y)}," +
-                                         $"Z={PropertyDisplay.FormatLiteral(scale.Scale.Z)})," +
-                                         $"SheerRate={PropertyDisplay.FormatLiteral(scale.SheerRate)}," +
-                                         $"SheerAxis={scale.SheerAxis}";
-                        break;
-                    }
-
-                case PropertyType.Box:
-                    {
-                        AssertFastSerialize(stream);
-                        string min = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Vector, ref deserializeFlags);
-                        string max = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Vector, ref deserializeFlags);
-                        string isValid =
-                            LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, ref deserializeFlags);
-                        propertyValue += $"Min=({min})," +
-                                         $"Max=({max})," +
-                                         $"IsValid={isValid}";
-                        break;
-                    }
-
-                case PropertyType.Quat:
-                    {
-                        AssertFastSerialize(stream);
-                        stream.ReadStructMarshal(out UQuat quat);
-                        propertyValue += $"X={PropertyDisplay.FormatLiteral(quat.X)}," +
-                                         $"Y={PropertyDisplay.FormatLiteral(quat.Y)}," +
-                                         $"Z={PropertyDisplay.FormatLiteral(quat.Z)}," +
-                                         $"W={PropertyDisplay.FormatLiteral(quat.W)}";
-                        break;
-                    }
-
-                case PropertyType.Matrix:
-                    {
-                        AssertFastSerialize(stream);
-                        //stream.ReadAtomicStruct(out UMatrix matrix);
-                        string xPlane = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Plane, ref deserializeFlags);
-                        string yPlane = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Plane, ref deserializeFlags);
-                        string zPlane = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Plane, ref deserializeFlags);
-                        string wPlane = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.Plane, ref deserializeFlags);
-                        propertyValue += $"XPlane=({xPlane}),YPlane=({yPlane}),ZPlane=({zPlane}),WPlane=({wPlane})";
-                        break;
-                    }
-
-                case PropertyType.IntPoint:
-                    {
-                        string x = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, ref deserializeFlags);
-                        string y = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, ref deserializeFlags);
-                        propertyValue += $"X={x},Y={y}";
-                        break;
-                    }
-
-                case PropertyType.PointRegion:
-                    {
-                        string zone =
-                            LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ObjectProperty, ref deserializeFlags);
-                        string iLeaf =
-                            LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, ref deserializeFlags);
-                        string zoneNumber =
-                            LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, ref deserializeFlags);
-                        propertyValue += $"Zone={zone},iLeaf={iLeaf},ZoneNumber={zoneNumber}";
-                        break;
-                    }
-
-                #endregion
-
                 case PropertyType.StructProperty:
                     {
+                        // For arrays within a struct.
+                        var structProperty = (UStructProperty?)property;
+                        UStruct? structPropertySource = structProperty?.Struct;
+
                         deserializeFlags |= DeserializeFlags.WithinStruct;
-#if DNF
-                        if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
-                        {
-                            goto nonAtomic;
-                        }
-#endif
-                        // Ugly hack, but this will do for now until this entire function gets "rewritten" :D
-                        if (Enum.TryParse(StructName, out PropertyType structPropertyType))
-                        {
-                            // Not atomic if <=UE2,
-                            // TODO: Figure out all non-atomic structs
-                            if (stream.Version < (uint)PackageObjectLegacyVersion.FastSerializeStructs)
-                            {
-                                switch (structPropertyType)
-                                {
-                                    case PropertyType.Quat:
-                                    case PropertyType.Scale: // not available in UE3
-                                    case PropertyType.Matrix:
-                                    case PropertyType.Box:
-                                    case PropertyType.Plane:
-                                        goto nonAtomic;
 
-                                    // None of these exist in older packages (UE2 or older). 
-                                    case PropertyType.LinearColor:
-                                    case PropertyType.Vector2D:
-                                    case PropertyType.Vector4:
-                                        goto nonAtomic;
-                                }
-                            }
-                            else
+                        if (UStructProperty.PropertyValueSerializer.CanSerializeStructUsingBinary(stream))
+                        {
+                            // Some structs are serialized using tags.
+                            // Let's find out if this is one of them.
+                            Enum.TryParse(StructName, out UStructProperty.PropertyValueSerializer.BinaryStructType binaryStructType);
+                            if (UStructProperty.PropertyValueSerializer.IsStructImmutable(stream, structPropertySource, binaryStructType))
                             {
-                                switch (structPropertyType)
-                                {
-                                    //case PropertyType.Coords:
-                                    //case PropertyType.Range:
-                                    // Deprecated in UDK
-                                    case PropertyType.PointRegion:
-                                        goto nonAtomic;
-                                }
+                                // Deserialize using the atomic serializer.
+                                propertyValue += LegacyDeserializeDefaultBinaryStructValue(stream, binaryStructType, deserializeFlags);
+
+                                goto output;
                             }
 
-                            propertyValue +=
-                                LegacyDeserializeDefaultPropertyValue(stream, structPropertyType, ref deserializeFlags);
-                            goto output;
+                            // fall-back to non-atomic struct deserialization; may fail if the struct is an unknown immutable/atomic struct.
                         }
 
                     nonAtomic:
-                        // We have to modify the outer so that dynamic arrays within this struct
-                        // will be able to find its variables to determine the array type.
-                        FindProperty<UProperty>(out var structPropertySource);
-                        var structProperties = UStruct.DeserializeScriptProperties(stream, structPropertySource, _TagSource);
-                        foreach (var tag in structProperties)
+                        var scriptProperty = UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource);
+                        if (scriptProperty == null)
                         {
-                            string tagExpr = tag.Name;
-                            if (tag.ArrayIndex > 0)
+                            return "()";
+                        }
+
+                        propertyValue += DecompileTag(scriptProperty);
+                        while ((scriptProperty = UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource)) != null)
+                        {
+                            propertyValue += ",";
+                            propertyValue += DecompileTag(scriptProperty);
+                        }
+
+                        string DecompileTag(UDefaultProperty scriptProperty)
+                        {
+                            scriptProperty.Deserialize(stream);
+
+                            UProperty? structMemberProperty = scriptProperty.Type switch
                             {
-                                tagExpr += PropertyDisplay.FormatT3DElementAccess(tag.ArrayIndex.ToString(),
-                                                                                  stream.Version);
+                                PropertyType.StructProperty => structPropertySource?.FindProperty<UStructProperty?>(scriptProperty.Name),
+                                PropertyType.ArrayProperty => structPropertySource?.FindProperty<UArrayProperty?>(scriptProperty.Name),
+                                PropertyType.FixedArrayProperty => structPropertySource?.FindProperty<UFixedArrayProperty?>(scriptProperty.Name),
+                                PropertyType.MapProperty => structPropertySource?.FindProperty<UMapProperty?>(scriptProperty.Name),
+                                _ => null
+                            };
+
+                            string tagExpr = scriptProperty.Name;
+                            if (structMemberProperty?.ElementSize > 1 || scriptProperty.ArrayIndex > 0)
+                            {
+                                tagExpr += PropertyDisplay.FormatT3DElementAccess(scriptProperty.ArrayIndex.ToString(), stream.Version);
                             }
 
-                            propertyValue += $"{tagExpr}={tag.Value}";
+                            stream.Seek(scriptProperty._PropertyValuePosition, SeekOrigin.Begin);
+                            string value = scriptProperty.TryLegacyDeserializeDefaultPropertyValue(
+                                stream, scriptProperty.Type,
+                                deserializeFlags, structMemberProperty);
 
-                            if (tag != structProperties.Last())
-                            {
-                                propertyValue += ",";
-                            }
+                            return $"{tagExpr}={value}";
                         }
 
                     output:
-                        propertyValue = propertyValue.Length != 0
-                            ? $"({propertyValue})"
-                            : "none";
+                        propertyValue = $"({propertyValue})";
                         break;
                     }
 
@@ -957,48 +762,41 @@ namespace UELib.Core
                             break;
                         }
 
-                        var arrayType = PropertyType.None;
-                        if (!InnerTypeName.IsNone() && !Enum.TryParse(InnerTypeName, out arrayType))
+                        var innerArrayType = PropertyType.None;
+                        if (!InnerTypeName.IsNone() && !Enum.TryParse(InnerTypeName, out innerArrayType))
                         {
                             throw new Exception(
                                 $"Couldn't convert InnerTypeName \"{InnerTypeName}\" to PropertyType");
                         }
 
-                        // Find the property within the outer/owner or its inheritances.
-                        // If found it has to modify the outer so structs within this array can find their array variables.
-                        // Additionally, we need to know the property to determine the array's type.
-                        if (arrayType == PropertyType.None)
+                        var arrayProperty = (UArrayProperty?)property;
+                        var innerArrayProperty = arrayProperty?.InnerProperty;
+                        if (innerArrayType == PropertyType.None)
                         {
-                            var property = FindProperty<UArrayProperty>(out var arrayPropertySource);
-                            if (property?.InnerProperty != null)
-                            {
-                                arrayType = property.InnerProperty.Type;
+                            innerArrayType = innerArrayProperty?.Type ?? PropertyType.None;
 
-                                if (arrayType == PropertyType.StructProperty)
-                                {
-                                    _Tag.TypeData =
-                                        new UPropertyTag.PropertyTypeData(
-                                            ((UStructProperty)property.InnerProperty).Struct.Name);
-                                }
-                            }
                             // If we did not find a reference to the associated property(because of imports)
                             // then try to determine the array's type by scanning the defined array types.
-                            else if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.TryGetValue(Name, out var varTuple))
+                            if (innerArrayType == PropertyType.None &&
+                                UnrealConfig.VariableTypes != null &&
+                                UnrealConfig.VariableTypes.TryGetValue(Name, out var varTuple))
                             {
-                                arrayType = varTuple.Item2;
+                                innerArrayType = varTuple.Item2;
                             }
                         }
 
                         // Hardcoded fix for InterpCurve and InterpCurvePoint.
-                        if (arrayType == PropertyType.None
+                        if (innerArrayType == PropertyType.None
                             && (deserializeFlags & DeserializeFlags.WithinStruct) != 0
                             && string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
                         {
-                            arrayType = PropertyType.StructProperty;
+                            innerArrayType = PropertyType.StructProperty;
                         }
 
-                        if (arrayType == PropertyType.None)
+                        if (innerArrayType == PropertyType.None)
                         {
+                            LibServices.LogService.Log($"Couldn't acquire array type for property tag '{Name}' in {TagSource.GetReferencePath()}.");
+
                             propertyValue = "/* Array type was not detected. */";
                             break;
                         }
@@ -1008,7 +806,7 @@ namespace UELib.Core
                         {
                             for (var i = 0; i < arraySize; ++i)
                             {
-                                propertyValue += LegacyDeserializeDefaultPropertyValue(stream, arrayType, ref deserializeFlags)
+                                propertyValue += LegacyDeserializeDefaultPropertyValue(stream, innerArrayType, deserializeFlags, innerArrayProperty)
                                                  + (i != arraySize - 1 ? "," : string.Empty);
                             }
 
@@ -1021,7 +819,7 @@ namespace UELib.Core
                                 string elementAccessText =
                                     PropertyDisplay.FormatT3DElementAccess(i.ToString(), stream.Version);
                                 string elementValue =
-                                    LegacyDeserializeDefaultPropertyValue(stream, arrayType, ref deserializeFlags);
+                                    LegacyDeserializeDefaultPropertyValue(stream, innerArrayType, deserializeFlags, innerArrayProperty);
                                 if ((_TempFlags & ReplaceNameMarker) != 0)
                                 {
                                     propertyValue += elementValue.Replace("%ARRAYNAME%", $"{Name}{elementAccessText}");
@@ -1050,8 +848,8 @@ namespace UELib.Core
                         int count = stream.ReadLength();
                         stream.Record(nameof(count), count);
 
-                        var property = FindProperty<UMapProperty>(out var mapPropertySource);
-                        if (property == null)
+                        var mapProperty = (UMapProperty?)property;
+                        if (mapProperty == null)
                         {
                             propertyValue = "// Unable to decompile Map data.";
                             break;
@@ -1061,7 +859,7 @@ namespace UELib.Core
                         for (int i = 0; i < count; ++i)
                         {
                             propertyValue +=
-                                LegacyDeserializeDefaultPropertyValue(stream, property.ValueProperty.Type, ref deserializeFlags);
+                                LegacyDeserializeDefaultPropertyValue(stream, mapProperty.ValueProperty.Type, deserializeFlags, mapProperty.ValueProperty);
                             if (i + 1 != count)
                             {
                                 propertyValue += ",";
@@ -1075,19 +873,19 @@ namespace UELib.Core
                 case PropertyType.FixedArrayProperty:
                     {
                         // We require the InnerProperty to properly deserialize this data type.
-                        var property = FindProperty<UFixedArrayProperty>(out var fixedPropertySource);
-                        if (property == null)
+                        var fixedArrayProperty = (UFixedArrayProperty?)property;
+                        if (fixedArrayProperty == null)
                         {
                             propertyValue = "// Unable to decompile FixedArray data.";
                             break;
                         }
 
-                        var innerType = property.InnerProperty.Type;
+                        var innerType = fixedArrayProperty.InnerProperty.Type;
                         propertyValue = "(";
-                        for (int i = 0; i < property.Count; ++i)
+                        for (int i = 0; i < fixedArrayProperty.Count; ++i)
                         {
-                            propertyValue += LegacyDeserializeDefaultPropertyValue(stream, innerType, ref deserializeFlags);
-                            if (i + 1 != property.Count)
+                            propertyValue += LegacyDeserializeDefaultPropertyValue(stream, innerType, deserializeFlags, fixedArrayProperty.InnerProperty);
+                            if (i + 1 != fixedArrayProperty.Count)
                             {
                                 propertyValue += ",";
                             }
@@ -1104,25 +902,265 @@ namespace UELib.Core
                         propertyValue = PropertyDisplay.FormatLiteral(offset);
                         break;
                     }
+
+                // Legacy fall-back for batman etc
+                case PropertyType.Vector:
+                    {
+                        propertyValue = LegacyDeserializeDefaultBinaryStructValue(
+                            stream,
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        break;
+                    }
+
+                // Legacy fall-back for batman etc
+                case PropertyType.Rotator:
+                    {
+                        propertyValue = LegacyDeserializeDefaultBinaryStructValue(
+                            stream,
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Rotator, deserializeFlags);
+                        break;
+                    }
+
 #if BORDERLANDS2 || BATTLEBORN
                 case PropertyType.ByteAttributeProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, ref deserializeFlags);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, deserializeFlags, property);
 
                 case PropertyType.IntAttributeProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, ref deserializeFlags);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, deserializeFlags, property);
 
                 case PropertyType.FloatAttributeProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.FloatProperty, ref deserializeFlags);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.FloatProperty, deserializeFlags, property);
 #endif
 #if BULLETSTORM
                 case PropertyType.CppCopyStructProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.StructProperty, ref deserializeFlags);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.StructProperty, deserializeFlags, property);
+#endif
+#if SA2
+                case PropertyType.Int64Property:
+                    {
+                        long value = stream.ReadInt64();
+                        stream.Record(nameof(value), value);
+                        propertyValue = PropertyDisplay.FormatLiteral(value);
+                        break;
+                    }
 #endif
                 default:
                     throw new Exception($"Unsupported property tag type {type}");
             }
 
             _PropertySource = orgOuter;
+            return propertyValue;
+        }
+
+        private string LegacyDeserializeDefaultBinaryStructValue(
+            IUnrealStream stream,
+            UStructProperty.PropertyValueSerializer.BinaryStructType structType,
+            DeserializeFlags deserializeFlags)
+        {
+            string propertyValue = string.Empty;
+
+            switch (structType)
+            {
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Color:
+                    {
+                        stream.ReadStructMarshal(out UColor color);
+                        if (stream.Version > 69) // FIXME: Version, may need adjustments for UE1
+                        {
+                            propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
+                                             $"G={PropertyDisplay.FormatLiteral(color.G)}," +
+                                             $"B={PropertyDisplay.FormatLiteral(color.B)}," +
+                                             $"A={PropertyDisplay.FormatLiteral(color.A)}";
+                        }
+                        else
+                        {
+                            // old UE1 order swap B and R
+                            propertyValue += $"R={PropertyDisplay.FormatLiteral(color.B)}," +
+                                             $"G={PropertyDisplay.FormatLiteral(color.G)}," +
+                                             $"B={PropertyDisplay.FormatLiteral(color.R)}," +
+                                             $"A={PropertyDisplay.FormatLiteral(color.A)}";
+                        }
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Coords:
+                    {
+                        string origin = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        string xAxis = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        string yAxis = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        string zAxis = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+
+                        propertyValue += $"Origin=({origin})," +
+                                         $"XAxis=({xAxis})," +
+                                         $"YAxis=({yAxis})," +
+                                         $"ZAxis=({zAxis})";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.LinearColor:
+                    {
+                        stream.ReadStructMarshal(out ULinearColor color);
+                        propertyValue += $"R={PropertyDisplay.FormatLiteral(color.R)}," +
+                                         $"G={PropertyDisplay.FormatLiteral(color.G)}," +
+                                         $"B={PropertyDisplay.FormatLiteral(color.B)}," +
+                                         $"A={PropertyDisplay.FormatLiteral(color.A)}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Vector2D:
+                    {
+                        stream.ReadStructMarshal(out UVector2D vector);
+                        propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
+                                         $"Y={PropertyDisplay.FormatLiteral(vector.Y)}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Vector:
+                    {
+                        stream.ReadStructMarshal(out UVector vector);
+                        propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
+                                         $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
+                                         $"Z={PropertyDisplay.FormatLiteral(vector.Z)}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Vector4:
+                    {
+                        stream.ReadStructMarshal(out UVector4 vector);
+                        propertyValue += $"X={PropertyDisplay.FormatLiteral(vector.X)}," +
+                                         $"Y={PropertyDisplay.FormatLiteral(vector.Y)}," +
+                                         $"Z={PropertyDisplay.FormatLiteral(vector.Z)}," +
+                                         $"W={PropertyDisplay.FormatLiteral(vector.W)}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.TwoVectors:
+                    {
+                        string v1 = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        string v2 = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        propertyValue += $"v1=({v1})," +
+                                         $"v2=({v2})";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Rotator:
+                    {
+                        stream.ReadStructMarshal(out URotator rotator);
+                        propertyValue += $"Pitch={rotator.Pitch}," +
+                                         $"Yaw={rotator.Yaw}," +
+                                         $"Roll={rotator.Roll}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Guid:
+                    {
+                        stream.ReadStructMarshal(out UGuid guid);
+                        propertyValue += $"A={guid.A}," +
+                                         $"B={guid.B}," +
+                                         $"C={guid.C}," +
+                                         $"D={guid.D}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Sphere:
+                    {
+                        stream.ReadStructMarshal(out USphere sphere);
+                        propertyValue += $"W={PropertyDisplay.FormatLiteral(sphere.W)}," +
+                                         $"X={PropertyDisplay.FormatLiteral(sphere.X)}," +
+                                         $"Y={PropertyDisplay.FormatLiteral(sphere.Y)}," +
+                                         $"Z={PropertyDisplay.FormatLiteral(sphere.Z)}";
+
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Plane:
+                    {
+                        stream.ReadStructMarshal(out UPlane plane);
+                        propertyValue += $"W={PropertyDisplay.FormatLiteral(plane.W)}," +
+                                         $"X={PropertyDisplay.FormatLiteral(plane.X)}," +
+                                         $"Y={PropertyDisplay.FormatLiteral(plane.Y)}," +
+                                         $"Z={PropertyDisplay.FormatLiteral(plane.Z)}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Scale:
+                    {
+                        stream.ReadStructMarshal(out UScale scale);
+                        propertyValue += "Scale=(" +
+                                         $"X={PropertyDisplay.FormatLiteral(scale.Scale.X)}," +
+                                         $"Y={PropertyDisplay.FormatLiteral(scale.Scale.Y)}," +
+                                         $"Z={PropertyDisplay.FormatLiteral(scale.Scale.Z)})," +
+                                         $"SheerRate={PropertyDisplay.FormatLiteral(scale.SheerRate)}," +
+                                         $"SheerAxis={scale.SheerAxis}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Box:
+                    {
+                        string min = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        string max = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        string isValid = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, deserializeFlags);
+                        propertyValue += $"Min=({min})," +
+                                         $"Max=({max})," +
+                                         $"IsValid={isValid}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Quat:
+                    {
+                        stream.ReadStructMarshal(out UQuat quat);
+                        propertyValue += $"X={PropertyDisplay.FormatLiteral(quat.X)}," +
+                                         $"Y={PropertyDisplay.FormatLiteral(quat.Y)}," +
+                                         $"Z={PropertyDisplay.FormatLiteral(quat.Z)}," +
+                                         $"W={PropertyDisplay.FormatLiteral(quat.W)}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Range:
+                    {
+                        string min = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.FloatProperty, deserializeFlags);
+                        string max = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.FloatProperty, deserializeFlags);
+                        propertyValue += $"A={min},B={max}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.RangeVector:
+                    {
+                        string x = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Range, deserializeFlags);
+                        string y = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Range, deserializeFlags);
+                        string z = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Range, deserializeFlags);
+                        propertyValue += $"X=({x}),Y=({y}),Z=({z})";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.Matrix:
+                    {
+                        //stream.ReadAtomicStruct(out UMatrix matrix);
+                        string xPlane = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Plane, deserializeFlags);
+                        string yPlane = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Plane, deserializeFlags);
+                        string zPlane = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Plane, deserializeFlags);
+                        string wPlane = LegacyDeserializeDefaultBinaryStructValue(stream, UStructProperty.PropertyValueSerializer.BinaryStructType.Plane, deserializeFlags);
+                        propertyValue += $"XPlane=({xPlane}),YPlane=({yPlane}),ZPlane=({zPlane}),WPlane=({wPlane})";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.IntPoint:
+                    {
+                        string x = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, deserializeFlags);
+                        string y = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, deserializeFlags);
+                        propertyValue += $"X={x},Y={y}";
+                        break;
+                    }
+
+                case UStructProperty.PropertyValueSerializer.BinaryStructType.PointRegion:
+                    {
+                        string zone = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ObjectProperty, deserializeFlags);
+                        string iLeaf = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, deserializeFlags);
+                        string zoneNumber = LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, deserializeFlags);
+                        propertyValue += $"Zone={zone},iLeaf={iLeaf},ZoneNumber={zoneNumber}";
+                        break;
+                    }
+            }
+
             return propertyValue;
         }
 
