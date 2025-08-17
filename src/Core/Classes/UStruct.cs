@@ -908,6 +908,58 @@ namespace UELib.Core
             return null;
         }
 
+        public void AddField(UField field)
+        {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(field);
+#endif
+            if (field.Outer == null)
+            {
+                field.Outer = this;
+            }
+
+            // Could it be possible for a field to have the wrong outer, like how many objects in general do?
+            Contract.Assert(field.Outer == this);
+            if (_Children == null)
+            {
+                _Children = field;
+
+                return;
+            }
+
+            field.NextField = _Children;
+            _Children = field;
+        }
+
+        public void RemoveField(UField field)
+        {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(field);
+#endif
+            // Could it be possible for a field to have the wrong outer, like how many objects in general do?
+            Contract.Assert(field.Outer == this);
+            if (_Children == field)
+            {
+                _Children = field.NextField;
+                field.Outer = null;
+
+                return;
+            }
+
+            for (var child = _Children; child != null; child = child.NextField)
+            {
+                if (child.NextField == field)
+                {
+                    child.NextField = field.NextField;
+                    field.Outer = null;
+
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException("Attempted to remove a field from a struct that is not part of the struct.");
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TokenFactory GetTokenFactory()
         {
