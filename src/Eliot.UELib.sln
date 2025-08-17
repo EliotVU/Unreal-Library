@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{02EA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageObjectExpansion", "..\Samples\PackageObjectExpansion\PackageObjectExpansion.csproj", "{56B352BB-2DDE-CE61-421C-BB143498FCAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageObjectAddition", "..\Samples\PackageObjectAddition\PackageObjectAddition.csproj", "{028AF2EB-E890-4345-962A-0780A5A01247}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,12 +45,17 @@ Global
 		{56B352BB-2DDE-CE61-421C-BB143498FCAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56B352BB-2DDE-CE61-421C-BB143498FCAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56B352BB-2DDE-CE61-421C-BB143498FCAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{028AF2EB-E890-4345-962A-0780A5A01247}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{028AF2EB-E890-4345-962A-0780A5A01247}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{028AF2EB-E890-4345-962A-0780A5A01247}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{028AF2EB-E890-4345-962A-0780A5A01247}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{56B352BB-2DDE-CE61-421C-BB143498FCAA} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{028AF2EB-E890-4345-962A-0780A5A01247} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {64004BC4-798F-4D4E-BD42-3EA400109093}
