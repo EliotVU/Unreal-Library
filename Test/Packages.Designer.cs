@@ -70,7 +70,7 @@ namespace Eliot.UELib.Test {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to D:\Games\Unreal Engine\.
+        ///   Looks up a localized string similar to %UEGamesTestDirectory%.
         /// </summary>
         public static string UnrealEngineGamesPath {
             get {
