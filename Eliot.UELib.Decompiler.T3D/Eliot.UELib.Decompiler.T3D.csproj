@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;netstandard2.0;netstandard2.1;net8.0;net9.0</TargetFrameworks>
+    <LangVersion>13</LangVersion>
+    <OutputType>Library</OutputType>
+    <RootNamespace>UELib.Decompiler.T3D</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\Eliot.UELib.csproj" />
+    <ProjectReference Include="..\Eliot.UELib.Decompiler\Eliot.UELib.Decompiler.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.DependencyValidation.Analyzers" Version="0.11.0" />
+  </ItemGroup>
+</Project>

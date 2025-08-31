@@ -17,6 +17,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{02EA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageObjectExpansion", "..\Samples\PackageObjectExpansion\PackageObjectExpansion.csproj", "{56B352BB-2DDE-CE61-421C-BB143498FCAA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Decompilers", "Decompilers", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib.Decompiler", "..\Eliot.UELib.Decompiler\Eliot.UELib.Decompiler.csproj", "{C46032FD-D3AC-8E12-A8D5-E858E0C6A0EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib.Decompiler.T3D", "..\Eliot.UELib.Decompiler.T3D\Eliot.UELib.Decompiler.T3D.csproj", "{693D1121-97DC-9660-04E4-4AFD57C10C8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib.Decompiler.T3D.Test", "..\Eliot.UELib.Decompiler.T3D.Test\Eliot.UELib.Decompiler.T3D.Test.csproj", "{180CB18F-6596-1681-D9D1-E8F1B43771A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib.Decompiler.Test", "..\Eliot.UELib.Decompiler.Test\Eliot.UELib.Decompiler.Test.csproj", "{8D3E9739-222A-4F47-890C-995FA6697C9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
