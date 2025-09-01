@@ -10,11 +10,9 @@ public class ArchetypeBuilderUPolys : INodeBuilder<Node, UPolys>
 {
     public Node Build(UPolys obj, IVisitor<Node> visitor)
     {
-        Node[]? childNodes = null;
-        if (obj.Element != null)
-            childNodes = obj.Element
-                .Select(poly => poly.Accept(visitor))
-                .ToArray();
+        var childNodes = obj.Element
+            .Select(poly => poly.Accept(visitor))
+            .ToArray();
 
         return new ArchetypeConstructionNode(obj,
             new UName("PolyList"),

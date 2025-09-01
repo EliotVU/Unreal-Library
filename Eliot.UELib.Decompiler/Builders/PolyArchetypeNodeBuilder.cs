@@ -25,12 +25,11 @@ public class PolyArchetypeNodeBuilder : INodeBuilder<Node, Poly>
 
         return new ArchetypeConstructionNode(poly, new UName("Polygon"), paramNodes, propertyNodes);
 
-        return new ArchetypeConstructionNode(poly, new UName("Polygon"), new[]
-        {
+        return new ArchetypeConstructionNode(poly, new UName("Polygon"), [
             new ArchetypeParameterAssignmentNode
             {
                 LValue = new MemberInfoReferenceNode(typeof(Poly).GetField("ItemName")),
-                RValue = poly.ItemName != null && !poly.ItemName.IsNone()
+                RValue = !poly.ItemName.IsNone()
                     ? new NameLiteralNode(poly.ItemName)
                     : null
             },
@@ -55,8 +54,7 @@ public class PolyArchetypeNodeBuilder : INodeBuilder<Node, Poly>
                     ? new NumberLiteralNode(poly.Link)
                     : null
             }
-        }, new Node[]
-        {
+        ], [
             new ArchetypeShorthandAssignmentNode
             {
                 LValue = new MemberInfoReferenceNode(typeof(Poly).GetField("Base")),
@@ -71,8 +69,7 @@ public class PolyArchetypeNodeBuilder : INodeBuilder<Node, Poly>
             {
                 LValue = new IdentifierNode(new UName("Pan")),
                 RValue = poly.PanU != 0 || poly.PanV != 0
-                    ? new MultiNode(new Node[]
-                    {
+                    ? new MultiNode([
                         new ArchetypeParameterAssignmentNode
                         {
                             LValue = new MemberInfoReferenceNode(typeof(Poly).GetField("PanU")),
@@ -82,8 +79,8 @@ public class PolyArchetypeNodeBuilder : INodeBuilder<Node, Poly>
                         {
                             LValue = new MemberInfoReferenceNode(typeof(Poly).GetField("PanV")),
                             RValue = new NumberLiteralNode(poly.PanV)
-                        },
-                    })
+                        }
+                    ])
                     : null
             },
             new ArchetypeShorthandAssignmentNode
@@ -95,13 +92,13 @@ public class PolyArchetypeNodeBuilder : INodeBuilder<Node, Poly>
             {
                 LValue = new MemberInfoReferenceNode(typeof(Poly).GetField("TextureV")),
                 RValue = new StructLiteralNode<UVector>(ref poly.TextureV)
-            },
+            }
             //new LineSeparatorNode(),
             //for (var i = 0; i < poly.NumVertices; i++)
             //{
             //    var vertex = poly.Vertex[i];
             //    _Output.WriteLine($"Vertex   {PropertyDisplay.FormatExport(vertex)}");
             //}
-        });
+        ]);
     }
 }
