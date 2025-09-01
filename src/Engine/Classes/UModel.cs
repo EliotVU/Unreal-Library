@@ -11,7 +11,7 @@ namespace UELib.Engine
     {
         #region Script Properties
 
-        [UnrealProperty, Output] public UPolys Polys;
+        [UnrealProperty, Output] public UPolys? Polys;
 
         #endregion
 
