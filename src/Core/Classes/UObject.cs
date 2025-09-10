@@ -68,7 +68,7 @@ namespace UELib.Core
         ///     Null for imports and UClass objects.
         /// </summary>
         [Output(OutputSlot.Parameter)]
-        public UClass? Class { get; set; }
+        public UClass Class { get; set; }
 
         /// <summary>
         ///     The outer for this object, if any.
