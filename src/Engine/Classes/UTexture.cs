@@ -54,8 +54,7 @@ namespace UELib.Engine
                 }
             }
 
-            var legacyMipMaps = Mips;
-            stream.ReadArray(out legacyMipMaps);
+            Mips = stream.ReadArray<LegacyMipMap>();
             stream.Record(nameof(Mips), Mips);
         }
 
