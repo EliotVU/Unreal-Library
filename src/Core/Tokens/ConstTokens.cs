@@ -207,6 +207,8 @@ namespace UELib.Core
             {
                 public UObject Value;
 
+                [Obsolete("Use Value instead")] public UObject ObjectRef => Value;
+
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadObject();
@@ -229,6 +231,8 @@ namespace UELib.Core
             public class NameConstToken : Token
             {
                 public UName Value;
+
+                [Obsolete("Use Value instead")] public UName Name => Value;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
