@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -138,6 +139,12 @@ public readonly struct UName : IEquatable<UName>
         throw new NotImplementedException();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator bool(UName name)
+    {
+        return name.IsNone() == false;
+    }
+
     public override bool Equals(object? obj)
     {
         if (obj is UName other)
@@ -168,13 +175,15 @@ internal static class IndexNameMap
 {
     private static readonly IndexName s_noneIndex = new("None", 0);
 
-    private static readonly Dictionary<int, IndexName> s_byIndex = new(4096)
-    {
-        // Ensure that non-initialized UName are always "None" with index 0.
-        { 0, s_noneIndex },
-        // Map the actual hash to the hardcoded 0 index.
-        { IndexName.ToIndex("None"), s_noneIndex },
-    };
+    private static readonly ConcurrentDictionary<int, IndexName> s_byIndex = new(
+        new Dictionary<int, IndexName>(4096)
+        {
+            // Ensure that non-initialized UName are always "None" with index 0.
+            { 0, s_noneIndex },
+            // Map the actual hash to the hardcoded 0 index.
+            { IndexName.ToIndex("None"), s_noneIndex },
+        }
+    );
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IndexName GetByIndex(int index)
@@ -191,7 +200,7 @@ internal static class IndexNameMap
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Add(IndexName item)
     {
-        s_byIndex.Add(item.Index, item);
+        s_byIndex.TryAdd(item.Index, item);
     }
 }
 
