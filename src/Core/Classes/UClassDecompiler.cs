@@ -452,14 +452,15 @@ namespace UELib.Core
             if (Package.Build == BuildGeneration.Vengeance)
             {
                 if (ImplementedInterfaces != null && ImplementedInterfaces.Any())
-                    output += $" implements {string.Join(", ", ImplementedInterfaces.Select(i => i.InterfaceClass.Name))}";
+                    output +=
+                        $" implements {string.Join(", ", ImplementedInterfaces.Select(i => i.InterfaceClass.Name))}";
             }
             else
 #endif
                 output += FormatObjectGroup("implements",
-                                            ImplementedInterfaces
-                                                .Select(UObject (scriptInterface) => scriptInterface.InterfaceClass)
-                                                .ToList());
+                    ImplementedInterfaces
+                        ?.Select(UObject (scriptInterface) => scriptInterface.InterfaceClass)
+                        .ToList());
 
             return output + ";\r\n";
         }
