@@ -214,7 +214,8 @@ namespace Eliot.UELib.Test.Builds
             BuildName forcedBuild = BuildName.Unset,
             BuildGeneration forcedGeneration = BuildGeneration.Undefined)
         {
-            packagesPath = Path.Join(Packages.UnrealEngineGamesPath, packagesPath);
+            string? gamesPath = Environment.GetEnvironmentVariable("UEGamesTestDirectory");
+            packagesPath = Path.Join(gamesPath, packagesPath);
             if (!Directory.Exists(packagesPath))
             {
                 Assert.Inconclusive($"Couldn't find directory '{packagesPath}'");
