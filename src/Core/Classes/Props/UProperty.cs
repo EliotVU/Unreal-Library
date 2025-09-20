@@ -343,6 +343,21 @@ namespace UELib.Core
                 RepOffset = _Buffer.ReadUShort();
                 Record(nameof(RepOffset), RepOffset);
             }
+#if BATTLEBORN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn
+                // NetVersion
+                && Package.Summary.EngineVersion >> 16 >= 1046)
+            {
+                if (PropertyFlags.HasFlag(PropertyFlag.Net) &&
+                    PropertyFlags.HasFlag(PropertyFlag.RepNotify))
+                {
+                    var v78 = _Buffer.ReadObject();
+                    Record(nameof(v78), v78);
+
+                    RepNotifyFuncName = v78?.Name;
+                }
+            }
+#endif
 #if HUXLEY
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {

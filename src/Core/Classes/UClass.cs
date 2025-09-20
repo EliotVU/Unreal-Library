@@ -423,6 +423,8 @@ namespace UELib.Core
 #if BIOSHOCK
                             // Partially upgraded
                             && Package.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
+                            && (Package.Build != UnrealPackage.GameBuild.BuildName.Battleborn ||
+                                _Buffer.LicenseeVersion < 57)
 #endif
                            )
                         {
@@ -446,19 +448,13 @@ namespace UELib.Core
                         }
 #endif
 #if BATTLEBORN
-                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                            _Buffer.LicenseeVersion >= 57)
                         {
-                            // Usually 0x03
-                            byte unknownByte = _Buffer.ReadByte();
-                            Record("Unknown:Battleborn", unknownByte);
+                            byte v208 = _Buffer.ReadByte(); // v208
+                            Record(nameof(v208), v208);
 
-                            NativeClassName = _Buffer.ReadString();
-                            Record(nameof(NativeClassName), NativeClassName);
-
-                            // not verified
-                            ClassGroups = DeserializeGroup("ClassGroups");
-
-                            goto skipClassGroups;
+                            ForceScriptOrder = v208 != 0;
                         }
 #endif
 #if DISHONORED
@@ -491,8 +487,15 @@ namespace UELib.Core
                             Record(nameof(NativeClassName), NativeClassName);
                         }
 
-                    skipClassGroups:;
-
+                    skipClassGroups: ;
+#if BATTLEBORN
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                            Package.Summary.EngineVersion >> 16 >= 1053)
+                        {
+                            _Buffer.ReadArray(out UArray<UName> v1a8);
+                            Record(nameof(v1a8), v1a8);
+                        }
+#endif
                         // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
                         // TODO: Corrigate Version
                         if (_Buffer.Version > 575 && _Buffer.Version < 673
@@ -583,6 +586,7 @@ namespace UELib.Core
                         _Buffer.LicenseeVersion >= 45
                        )
                     {
+                        // v2f0 (Battleborn)
                         _Buffer.Read(out byte v1cc); // usually 0x01, sometimes 0x02?
                         _Buffer.Record("v1cc", v1cc);
                     }

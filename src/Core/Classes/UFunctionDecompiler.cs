@@ -34,23 +34,24 @@ namespace UELib.Core
             var output = string.Empty;
             var isNormalFunction = true;
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Private))
+            if (HasFunctionFlag(FunctionFlag.Private))
             {
                 output += "private ";
             }
-            else if (HasFunctionFlag(Flags.FunctionFlags.Protected))
+            else if (HasFunctionFlag(FunctionFlag.Protected))
             {
                 output += "protected ";
             }
 
-            if (Package.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature && HasFunctionFlag(Flags.FunctionFlags.DLLImport))
+            if (Package.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature &&
+                HasFunctionFlag(FunctionFlag.DLLImport))
             {
                 output += "dllimport ";
             }
 
-            if (Package.Version > 180 && HasFunctionFlag(Flags.FunctionFlags.Net))
+            if (Package.Version > 180 && HasFunctionFlag(FunctionFlag.Net))
             {
-                if (HasFunctionFlag(Flags.FunctionFlags.NetReliable))
+                if (HasFunctionFlag(FunctionFlag.NetReliable))
                 {
                     output += "reliable ";
                 }
@@ -59,28 +60,28 @@ namespace UELib.Core
                     output += "unreliable ";
                 }
 
-                if (HasFunctionFlag(Flags.FunctionFlags.NetClient))
+                if (HasFunctionFlag(FunctionFlag.NetClient))
                 {
                     output += "client ";
                 }
 
-                if (HasFunctionFlag(Flags.FunctionFlags.NetServer))
+                if (HasFunctionFlag(FunctionFlag.NetServer))
                 {
                     output += "server ";
                 }
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Native))
+            if (HasFunctionFlag(FunctionFlag.Native))
             {
                 output += NativeToken > 0 ? $"{FormatNative()}({NativeToken}) " : $"{FormatNative()} ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Static))
+            if (HasFunctionFlag(FunctionFlag.Static))
             {
                 output += "static ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Final))
+            if (HasFunctionFlag(FunctionFlag.Final))
             {
                 output += "final ";
             }
@@ -96,7 +97,7 @@ namespace UELib.Core
             // NoExport is no longer available in UE3+ builds,
             // - instead it is replaced with (FunctionFlags.OptionalParameters)
             // - as an indicator that the function has optional parameters.
-            if (HasFunctionFlag(Flags.FunctionFlags.NoExport) && Package.Version <= 220)
+            if (HasFunctionFlag(FunctionFlag.NoExport) && Package.Version <= 220)
             {
                 output += "noexport ";
             }
@@ -129,17 +130,17 @@ namespace UELib.Core
 #endif
                )
             {
-                if (HasFunctionFlag(Flags.FunctionFlags.K2Call))
+                if (HasFunctionFlag(FunctionFlag.K2Call))
                 {
                     output += "k2call ";
                 }
 
-                if (HasFunctionFlag(Flags.FunctionFlags.K2Override))
+                if (HasFunctionFlag(FunctionFlag.K2Override))
                 {
                     output += "k2override ";
                 }
 
-                if (HasFunctionFlag(Flags.FunctionFlags.K2Pure))
+                if (HasFunctionFlag(FunctionFlag.K2Pure))
                 {
                     output += "k2pure ";
                 }
@@ -175,37 +176,37 @@ namespace UELib.Core
                 }
             }
 #endif
-            if (HasFunctionFlag(Flags.FunctionFlags.Invariant))
+            if (HasFunctionFlag(FunctionFlag.Invariant))
             {
                 output += "invariant ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Iterator))
+            if (HasFunctionFlag(FunctionFlag.Iterator))
             {
                 output += "iterator ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Latent))
+            if (HasFunctionFlag(FunctionFlag.Latent))
             {
                 output += "latent ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Singular))
+            if (HasFunctionFlag(FunctionFlag.Singular))
             {
                 output += "singular ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Simulated))
+            if (HasFunctionFlag(FunctionFlag.Simulated))
             {
                 output += "simulated ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Exec))
+            if (HasFunctionFlag(FunctionFlag.Exec))
             {
                 output += "exec ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlags.Event))
+            if (HasFunctionFlag(FunctionFlag.Event))
             {
                 output += "event ";
                 isNormalFunction = false;

@@ -2361,6 +2361,28 @@ namespace UELib
                     return;
                 }
 #endif
+#if BATTLEBORN
+                //if (stream.Package.Build == GameBuild.BuildName.Battleborn &&
+                //    stream.Version >= 833)
+                //{
+                //    int count = stream.ReadInt32();
+
+                //    AdditionalPackagesToCook = new UArray<string>(count);
+                //    for (int i = 0; i < AdditionalPackagesToCook.Count; i++)
+                //    {
+                //        AdditionalPackagesToCook[i] = stream.ReadString();
+                //        if (stream.LicenseeVersion < 57)
+                //        {
+                //            stream.ReadInt32();
+                //        }
+                //        else
+                //        {
+                //            stream.ReadByte();
+                //        }
+                //    }
+                //}
+                //else
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedAdditionalPackagesToCook)
                 {
 #if TRANSFORMERS
@@ -2396,12 +2418,20 @@ namespace UELib
                 }
 #endif
 #if BATTLEBORN
-                if (stream.Package.Build == GameBuild.BuildName.Battleborn)
+                if (stream.Package.Build == GameBuild.BuildName.Battleborn &&
+                    stream.LicenseeVersion >= 61)
                 {
-                    // FIXME: Package format is being deserialized incorrectly and fails here.
-                    stream.ReadUInt32();
+                    // ReSharper disable once InconsistentNaming
+                    stream.Read(out int DAT_143276568); // global constant always '1' when saving.
 
-                    return;
+                    // ReSharper disable once InconsistentNaming
+                    var stack_58 = new UMap<string, int>(stream.ReadInt32());
+                    for (int i = 0; i < stack_58.Count; i++)
+                    {
+                        string key = stream.ReadString();
+                        int value = stream.ReadInt32();
+                        stack_58[key] = value;
+                    }
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTextureAllocations)
@@ -2417,6 +2447,16 @@ namespace UELib
                             exception));
                     }
                 }
+#if BATTLEBORN
+                if (stream.Package.Build == GameBuild.BuildName.Battleborn &&
+                    (PackageFlags & 0x08) == 0 &&
+                    // NetVersion
+                    EngineVersion >> 16 >= 1055)
+                {
+                    // ReSharper disable once InconsistentNaming
+                    stream.ReadStruct<UGuid>(out var GStack_68); // always zero
+                }
+#endif
 #if ROCKETLEAGUE
                 if (stream.Package.Build == GameBuild.BuildName.RocketLeague
                     && PackageFlags.HasFlag(PackageFlag.Cooked))
