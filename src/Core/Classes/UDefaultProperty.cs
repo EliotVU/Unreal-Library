@@ -833,13 +833,17 @@ namespace UELib.Core
                 case PropertyType.StructProperty:
                     {
                         deserializeFlags |= DeserializeFlags.WithinStruct;
+                        FindProperty<UProperty>(out var propertySource);
 
                         if (UStructProperty.PropertyValueSerializer.CanSerializeStructUsingBinary(_Buffer))
                         {
                             // Some structs are serialized using tags.
                             // Let's find out if this is one of them.
                             Enum.TryParse(_TypeData.StructName, out UStructProperty.PropertyValueSerializer.BinaryStructType binaryStructType);
-                            if (UStructProperty.PropertyValueSerializer.IsStructImmutable(_Buffer, _Outer, binaryStructType))
+                            if (UStructProperty.PropertyValueSerializer.IsStructImmutable(
+                                    _Buffer,
+                                    propertySource,
+                                    binaryStructType))
                             {
                                 // Deserialize using the atomic serializer.
                                 propertyValue += LegacyDeserializeDefaultBinaryStructValue(binaryStructType, deserializeFlags);
@@ -851,7 +855,6 @@ namespace UELib.Core
                         }
 
                     nonAtomic:
-                        FindProperty<UProperty>(out var propertySource);
                         var tag = new UDefaultProperty(_Container, propertySource);
                         if (!tag.Deserialize())
                         {
