@@ -3532,18 +3532,21 @@ namespace UELib
             Debug.Assert(export.Object == null);
 
             var objName = export.ObjectName;
-            var objSuper = IndexToObject<UStruct>(export.SuperIndex);
 
-            var objOuter = IndexToObject<UObject>(export.OuterIndex);
-            if (objOuter == null && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
+            var objClass = IndexToObject<UClass>(export.ClassIndex);
+            if (export.OuterIndex.IsNull && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
             {
-                var pkg = FindObject<UPackage>(objName) ?? CreateObject<UPackage>(objName);
+                // Always create, because there's nothing to find, after all, packages are not yet being linked.
+                var pkg = /*FindObject<UPackage>(objName) ??*/ CreateObject<UPackage>(objName);
+                pkg.PackageIndex = export.Index + 1;
+                pkg.Table = export;
+                pkg.Class = objClass;
                 export.Object = pkg;
 
                 return pkg;
             }
 
-            var objClass = IndexToObject<UClass>(export.ClassIndex);
+            var objOuter = IndexToObject<UObject>(export.OuterIndex);
 
             var internalClassType = GetClassType(objClass?.Name ?? "Class");
             if (objClass != null && internalClassType == typeof(UnknownObject) && (int)objClass > 0)
@@ -3567,6 +3570,8 @@ namespace UELib
 
             if (obj is UStruct uStruct)
             {
+                var objSuper = IndexToObject<UStruct>(export.SuperIndex);
+
                 uStruct.Super = objSuper;
             }
 
