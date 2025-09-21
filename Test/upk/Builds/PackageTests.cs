@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UELib;
+﻿using UELib;
 using UELib.Core;
 using UELib.Services;
 using static UELib.UnrealPackage.GameBuild;
@@ -15,7 +9,15 @@ namespace Eliot.UELib.Test.Builds
     public class PackageTests
     {
         // .upk packages are assumed to be decompressed.
-        [DataTestMethod]
+        [TestMethod]
+        [DataRow(@"Unreal\",
+            BuildName.Unreal1,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UnrealTournament\",
+            BuildName.UT,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"X-COM-Alliance\",
             BuildName.Unreal1,
             BuildPlatform.Undetermined
@@ -26,6 +28,10 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"Devastation\",
             BuildName.Devastation,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UT2004\",
+            BuildName.UT2004,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"America's Army 2\2_5\",
@@ -106,6 +112,10 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"Clive Barker's Undying\",
             BuildName.Undying,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Unreal 2\",
+            BuildName.Unreal2,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"DCUO\",
@@ -198,6 +208,38 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"SuddenAttack2\",
             BuildName.SA2,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"CrimeCraft\",
+            BuildName.CrimeCraft,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Asylum\",
+            BuildName.Batman1,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Knight\",
+            BuildName.Batman4,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Singularity\",
+            BuildName.Singularity,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"BioShockInfinite\",
+            BuildName.Bioshock_Infinite,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Dishonored\",
+            BuildName.Dishonored,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Remember Me\",
+            BuildName.RememberMe,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Hawken\",
+            BuildName.Hawken,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"A Hat in Time\",
