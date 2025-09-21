@@ -16,13 +16,21 @@ namespace UELib.Engine
         protected override void Deserialize()
         {
             base.Deserialize();
+#if BATTLEBORN
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                _Buffer.LicenseeVersion >= 47)
+            {
+                DeserializeTextureBaseGbx(_Buffer);
 
+                return;
+            }
+#endif
             _Buffer.Read(out SizeX);
             Record(nameof(SizeX), SizeX);
-            
+
             _Buffer.Read(out SizeY);
             Record(nameof(SizeY), SizeY);
-            
+
             _Buffer.Read(out int format);
             Format = (TextureFormat)format;
             Record(nameof(Format), Format);

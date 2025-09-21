@@ -1,4 +1,5 @@
-﻿using UELib.Branch;
+﻿using System.IO;
+using UELib.Branch;
 using UELib.Core;
 
 namespace UELib.Engine
@@ -37,7 +38,15 @@ namespace UELib.Engine
         protected override void Deserialize()
         {
             base.Deserialize();
+#if BATTLEBORN
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                _Buffer.LicenseeVersion >= 47) // version 47-49 is not properly supported.
+            {
+                DeserializeTextureBaseGbx(_Buffer);
 
+                return;
+            }
+#endif
             // These properties have been moved to ScriptProperties.
             if (_Buffer.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
             {
@@ -52,15 +61,18 @@ namespace UELib.Engine
                 Record(nameof(Format), Format);
             }
 #if TERA
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Tera)
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Tera &&
+                _Buffer.LicenseeVersion >= 3)
             {
-                // TODO: Not yet supported.
-                return;
+                _Buffer.Read(out string fileSourcePath);
+                Record(nameof(fileSourcePath), fileSourcePath);
             }
 #endif
 #if BORDERLANDS
-            if (_Buffer.Package.Build == BuildGeneration.GB &&
-                _Buffer.LicenseeVersion >= 55)
+            if ((_Buffer.Package.Build == BuildGeneration.GB &&
+                 _Buffer.LicenseeVersion >= 55) ||
+                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                _Buffer.LicenseeVersion < 49)
             {
                 _Buffer.ReadStruct(out UGuid constantGuid);
                 Record(nameof(constantGuid), constantGuid);
@@ -70,8 +82,9 @@ namespace UELib.Engine
             Record(nameof(Mips), Mips);
 #if BORDERLANDS || BORDERLANDS2
             if (_Buffer.Package.Build == BuildGeneration.GB ||
-                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*no version check*/ ||
-                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 /*no version check*/ ||
+                (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                 _Buffer.LicenseeVersion < 49))
             {
                 _Buffer.ReadStruct(out UGuid constantGuid);
                 Record(nameof(constantGuid), constantGuid);
@@ -95,7 +108,7 @@ namespace UELib.Engine
                 Record(nameof(CachedPVRTCMips), CachedPVRTCMips);
             }
 #if BORDERLANDS2 || BATTLEBORN
-            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*VR*/ ||
+            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 /*VR*/ ||
                 _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
                 // Missed UDK upgrades?
