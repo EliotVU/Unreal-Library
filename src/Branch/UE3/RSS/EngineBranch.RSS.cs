@@ -14,7 +14,11 @@ namespace UELib.Branch.UE3.RSS
         {
             base.SetupEnumObjectFlags(linker);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Batman2)
+            {
+                ObjectFlags[(int)ObjectFlag.Public] = 0x10000000000000UL; // Fixes false 'Private' modifier on properties.
+            }
+            else if (linker.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
                 ObjectFlags[(int)ObjectFlag.Public] = 0x1000U;
 
@@ -28,9 +32,25 @@ namespace UELib.Branch.UE3.RSS
         {
             base.SetupEnumPropertyFlags(linker);
 
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Batman2)
+            {
+
+                PropertyFlags[(int)PropertyFlag.EditConst] = PropertyFlags[(int)PropertyFlag.DuplicateTransient];
+                PropertyFlags[(int)PropertyFlag.DuplicateTransient] = 0; // ??
+
+                PropertyFlags[(int)PropertyFlag.EditorOnly] = 0x1UL << 32;
+            }
+
             if (linker.LicenseeVersion >= 101)
             {
-                //PropertyFlags[(int)PropertyFlag.Net] = 0x4000000;
+                PropertyFlags[(int)PropertyFlag.RepNotify] = PropertyFlags[(int)PropertyFlag.EditInline];
+                PropertyFlags[(int)PropertyFlag.EditInline] = 0; // ??
+
+                PropertyFlags[(int)PropertyFlag.Editable] = PropertyFlags[(int)PropertyFlag.EditFixedSize];
+                PropertyFlags[(int)PropertyFlag.EditFixedSize] = 0; // ??
+
+                PropertyFlags[(int)PropertyFlag.Net] = PropertyFlags[(int)PropertyFlag.Interp];
+                PropertyFlags[(int)PropertyFlag.Interp] = 0; // ??
             }
         }
 
