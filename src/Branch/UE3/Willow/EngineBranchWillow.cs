@@ -2,6 +2,7 @@
 using UELib.Branch.UE3.Willow.Tokens;
 using UELib.Core;
 using UELib.Core.Tokens;
+using UELib.Flags;
 
 namespace UELib.Branch.UE3.Willow
 {
@@ -29,6 +30,18 @@ namespace UELib.Branch.UE3.Willow
                 linker.AddClassType("ByteAttributeProperty", typeof(UByteAttributeProperty));
                 linker.AddClassType("FloatAttributeProperty", typeof(UFloatAttributeProperty));
                 linker.AddClassType("IntAttributeProperty", typeof(UIntAttributeProperty));
+            }
+        }
+
+        protected override void SetupEnumFunctionFlags(UnrealPackage linker)
+        {
+            base.SetupEnumFunctionFlags(linker);
+
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            {
+                // Something else in Battleborn
+                FunctionFlags[(int)FunctionFlag.K2Pure] = 0;
+                FunctionFlags[(int)FunctionFlag.DLLImport] = 0;
             }
         }
 
@@ -63,6 +76,12 @@ namespace UELib.Branch.UE3.Willow
                 // Same serialization route as 0x0, 0x1, 0x2, 0x20 and 0x48
                 tokenMap[0x5E] = typeof(AttributeVariableToken);
                 tokenMap[0x5F] = typeof(LetAttributeToken);
+            }
+
+            if (linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            {
+                // 0x5A = FilterEditorOnlyToken
+                tokenMap[0x5B] = typeof(ScriptConversionConstToken);
             }
 
             return tokenMap;

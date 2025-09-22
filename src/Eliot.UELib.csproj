@@ -45,7 +45,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.5" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.9" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Branch\UE3\HMS\" />
@@ -78,7 +78,7 @@
   <PropertyGroup>
     <AssemblyName>Eliot.UELib</AssemblyName>
     <PackageId>$(AssemblyName)</PackageId>
-    <Version>$(VersionPrefix)1.11.1</Version>
+    <Version>$(VersionPrefix)1.12.0</Version>
     <Authors>EliotVU</Authors>
     <Title>$(AssemblyName)</Title>
     <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>

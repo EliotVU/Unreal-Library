@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UELib;
+﻿using UELib;
 using UELib.Core;
 using UELib.Services;
 using static UELib.UnrealPackage.GameBuild;
@@ -15,7 +9,15 @@ namespace Eliot.UELib.Test.Builds
     public class PackageTests
     {
         // .upk packages are assumed to be decompressed.
-        [DataTestMethod]
+        [TestMethod]
+        [DataRow(@"Unreal\",
+            BuildName.Unreal1,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UnrealTournament\",
+            BuildName.UT,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"X-COM-Alliance\",
             BuildName.Unreal1,
             BuildPlatform.Undetermined
@@ -26,6 +28,10 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"Devastation\",
             BuildName.Devastation,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UT2004\",
+            BuildName.UT2004,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"America's Army 2\2_5\",
@@ -62,6 +68,10 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"Star Wars - Republic Commando\",
             BuildName.SWRepublicCommando,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"ArcticCombat\",
+            BuildName.ArcticCombat,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"Huxley\",
@@ -104,6 +114,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Undying,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Unreal 2\",
+            BuildName.Unreal2,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"DCUO\",
             BuildName.DCUO,
             BuildPlatform.Undetermined
@@ -134,6 +148,14 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"Gears of War Reloaded Beta\", // Steam
             BuildName.GoWUE,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"MedalOfHonorAirborne\",
+            BuildName.MoHA,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"MedalOfHonor2010\",
+            BuildName.MoH,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"Mirrors Edge\",
@@ -184,6 +206,22 @@ namespace Eliot.UELib.Test.Builds
             BuildName.SCCT_Offline,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Tom Clancy's Splinter Cell Double Agent\SCDA-Offline\",
+            BuildName.SCDA_Offline,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Tom Clancy's Splinter Cell Double Agent\SCDA-Online\",
+            BuildName.SCDA_Online,
+            BuildPlatform.Undetermined
+        )]
+        //[DataRow(@"Tom Clancy's Splinter Cell Conviction\",
+        //    BuildName.SCBL,
+        //    BuildPlatform.Undetermined
+        //)]
+        [DataRow(@"Tom Clancy's Splinter Cell® Blacklist\",
+            BuildName.SCBL,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Warmonger\",
             BuildName.Default,
             BuildPlatform.Undetermined
@@ -194,6 +232,46 @@ namespace Eliot.UELib.Test.Builds
         )]
         [DataRow(@"SuddenAttack2\",
             BuildName.SA2,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"CrimeCraft\",
+            BuildName.CrimeCraft,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Asylum\",
+            BuildName.Batman1,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman City\",
+            BuildName.Batman2,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Origins\",
+            BuildName.Batman3,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Knight\",
+            BuildName.Batman4,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Singularity\",
+            BuildName.Singularity,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"BioShockInfinite\",
+            BuildName.Bioshock_Infinite,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Dishonored\",
+            BuildName.Dishonored,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Remember Me\",
+            BuildName.RememberMe,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Hawken\",
+            BuildName.Hawken,
             BuildPlatform.Undetermined
         )]
         [DataRow(@"A Hat in Time\",
@@ -208,9 +286,11 @@ namespace Eliot.UELib.Test.Builds
             BuildPlatform packagesPlatform = BuildPlatform.Undetermined,
             // The forced build name for the package.
             BuildName forcedBuild = BuildName.Unset,
-            BuildGeneration forcedGeneration = BuildGeneration.Undefined)
+            BuildGeneration forcedGeneration = BuildGeneration.Undefined,
+            bool shouldTestSerialization = false)
         {
-            packagesPath = Path.Join(Packages.UnrealEngineGamesPath, packagesPath);
+            string? gamesPath = Environment.GetEnvironmentVariable("UEGamesTestDirectory");
+            packagesPath = Path.Join(gamesPath, packagesPath);
             if (!Directory.Exists(packagesPath))
             {
                 Assert.Inconclusive($"Couldn't find directory '{packagesPath}'");
@@ -274,6 +354,13 @@ namespace Eliot.UELib.Test.Builds
                             Assert.AreEqual(packagesPlatform, linker.CookerPlatform);
                         }
 
+                        if (linker.Summary.CompressedChunks?.Count > 0)
+                        {
+                            Console.WriteLine($@"Skipping analysis for compressed package '{filePath}'");
+
+                            return;
+                        }
+
                         AssertPackage(linker, exceptions);
                     }, TaskCreationOptions.LongRunning))
                     //.Select(task => task.WaitAsync(TimeSpan.FromSeconds(20)))
@@ -284,7 +371,7 @@ namespace Eliot.UELib.Test.Builds
 
             Console.WriteLine($@"Unique package versions: [{string.Join(',', versions.Select(v => $"{(ushort)(v >> 16)}/{(ushort)v}"))}]");
 
-            Assert.IsFalse(exceptions.Any(), $"{exceptions.Count} exceptions: {string.Join('\n', exceptions)}");
+            Assert.AreEqual(0, exceptions.Count, $"{exceptions.Count} exceptions: {string.Join('\n', exceptions)}");
         }
 
         private static void AssertPackage(UnrealPackage linker, List<Exception> exceptions)
@@ -374,6 +461,116 @@ namespace Eliot.UELib.Test.Builds
                 // Commented out, because it gets too long.
                 //Console.Write($@"{string.Join(';', incompatibleExports.Select(exp => exp.GetReferencePath()))}");
             }
+        }
+
+        [TestMethod]
+        // All (non-cooked) UDK builds that differ in package format.
+        [DataRow(@"UDK-2009-11\", // Also includes The Ball (Game)
+            BuildName.Default, // v648
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2009-12\",
+            BuildName.Default, // v664
+            BuildPlatform.Undetermined
+        )]
+        // 01-04 ??
+        [DataRow(@"UDK-2010-05\", // Also includes (Updated) The Ball (Game)
+            BuildName.Default, // v706
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-06\", // BioShock Infinite (but, heavily modified)
+            BuildName.Default, // v727
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-07\",
+            BuildName.Default, // v737
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-08\",
+            BuildName.Default, // v756
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-09\",
+            BuildName.Default, // v765
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-10\",
+            BuildName.Default, // v787
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-11\",
+            BuildName.Default, // v799
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2010-12\",
+            BuildName.Default, // v803
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-01\", // Rock of Ages, Tribes (Modified), Batman Asylum (Heavily modified)
+            BuildName.Default, // v805
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-02\", // Sanctum
+            BuildName.Default, // v810
+            BuildPlatform.Undetermined
+        )]
+        // 03 no difference in package format.
+        [DataRow(@"UDK-2011-04\",
+            BuildName.Default, // v813
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-06\", // Remember Me (Modified), Borderlands 2 (Heavily modified), Quantum (Modified)
+            BuildName.Default, // v832
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-07\",
+            BuildName.Default, // v840
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2011-08\", // FoxGame
+            BuildName.Default, // v841
+            BuildPlatform.Undetermined
+        )]
+        // 2011/09 - 2012/04 no difference in package format.
+        [DataRow(@"UDK-2012-05\", // PainKillerHD
+            BuildName.Default, // v860
+            BuildPlatform.Undetermined
+        )]
+        // 06 no difference in package format.
+        [DataRow(@"UDK-2012-07\", // AOC (Chivalry: Medieval Warfare), Hawken (Modified)
+            BuildName.Default, // v860
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2012-11\",
+            BuildName.Default,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2013-02\",
+            BuildName.Default,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2013-07\",
+            BuildName.Default,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2014-02\",
+            BuildName.Default,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UDK-2015-02\", // 29 january 2015
+            BuildName.Default, // v868
+            BuildPlatform.Undetermined
+        )]
+        public async Task TestUDKPackages(
+            string packagesPath,
+            BuildName packagesBuild = BuildName.Unset,
+            BuildPlatform packagesPlatform = BuildPlatform.Undetermined,
+            BuildName forcedBuild = BuildName.Unset,
+            BuildGeneration forcedGeneration = BuildGeneration.Undefined,
+            bool shouldTestSerialization = true)
+        {
+            await TestPackages(packagesPath, packagesBuild, packagesPlatform, forcedBuild, forcedGeneration,
+                shouldTestSerialization);
         }
     }
 }

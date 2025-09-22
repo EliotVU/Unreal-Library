@@ -46,7 +46,9 @@
 #if SA2
         Int64Property,
 #endif
-
+#if BATMAN
+        GuidProperty,
+#endif
         InterfaceProperty,  // >= UE3, displaced FixedArrayProperty, actual value 15, but we don't need the value for UE3 types.
         ComponentProperty,	// >= UE3
 
@@ -55,26 +57,8 @@
         // Helpers for serializing hardcoded structs.
         Vector				= (2 + StructOffset),
         Rotator				= (3 + StructOffset),
-        Color				= (4 + StructOffset),
-        Vector2D			= (5 + StructOffset),
-        Vector4				= (6 + StructOffset),
-        Guid				= (7 + StructOffset),
-        Plane				= (8 + StructOffset),
-        Sphere				= (9 + StructOffset),
-        Scale				= (10 + StructOffset),
-        Box					= (11 + StructOffset),
-        //BoxSphereBound		= (12 + StructOffset),
-        Quat				= (12 + StructOffset),
-        Matrix				= (13 + StructOffset),
-        LinearColor			= (14 + StructOffset),
-        IntPoint			= (15 + StructOffset),
-        TwoVectors			= (16 + StructOffset),
-        //InterpCurve		= (17 + PropertyType.StructOffset)
-        //InterpCurvePoint	= (18 + PropertyType.StructOffset)
-        PointRegion         = (19 + StructOffset),
 
         // Auto-conversions for old (<= 61) "StructName"s
         Rotation = Rotator,
-        Region = PointRegion,
     }
 }

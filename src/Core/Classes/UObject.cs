@@ -467,6 +467,12 @@ namespace UELib.Core
                 {
                     case UComponent component:
                         DeserializeTemplate(_Buffer, component);
+#if BATMAN
+                        if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman2)
+                        {
+                            goto skipNetIndex;
+                        }
+#endif
                         break;
 
                     // HACK: Ugly work around for unregistered component classes...
@@ -493,13 +499,19 @@ namespace UELib.Core
 
                                 // ISSUE: If the above recorded any data, the data will not be undone.
                             }
-
+#if BATMAN
+                            if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman2)
+                            {
+                                goto skipNetIndex;
+                            }
+#endif
                             break;
                         }
                 }
             }
 
             DeserializeNetIndex(_Buffer);
+        skipNetIndex:
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
             if (Package.Build == BuildGeneration.Flesh && GetType() != typeof(UnknownObject))

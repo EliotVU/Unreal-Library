@@ -1,5 +1,33 @@
 #
 
+## [1.12.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.12.0)
+
+* Support for Sudden Attack 2 (a66323c4, #117 thanks to @EDITzDev)
+* Support for Arctic Combat (e2e14c92, #115 thanks to @EDITzDev)
+
+* Improved support for Battleborn (e3b73d08, #113)
+* Improved support for Batman series:
+
+  * Support for Rotator property type
+  * Support for ObjectProperty and ObjectNCRProperty (ComponentProperty)
+  * Support for GuidProperty
+  * Support for InterfaceProperty
+  * Support for StructProperty when the tagged property and its referenced struct are in the same package as the tag.
+
+  * Fixed deserialization for BoolProperty (but the value is likely wrong (may require bitmask shifting)
+  * Fixed StrProperty size
+  * Fixed 'Public' object flag for Batman 2
+  * Fixed several property flags for Batman (version >= 101)
+  * Fixed the deserialization of component archetypes for Batman 2 (Skips the NetIndex under a specific circumstance)
+  * Fixed UClass deserialization
+
+* Fixed some issues with the decompilation of tagged/binary struct properties (ef9cd545, #114)
+* Fixed a performance regression that was caused when a package has a significant amount of 'forced' export packages (b79d32af)
+* Fixed a decompilation regression with {UMoJsonObject} (eb9843da, #91)
+* Fixed a decompilation regression where a {UState} "ignored" some functions (bfd571ce)
+
+* Added a T3DDecompiler framework (aee36db9, WIP)
+
 ## [1.11.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.11.1)
 
 * Support for Gears of War: Ultimate Edition and Reloaded (thanks to @PaoloTK)

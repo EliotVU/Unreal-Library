@@ -42,17 +42,17 @@ namespace UELib.Core
 
         private string GetAuto()
         {
-            return HasStateFlag(Flags.StateFlags.Auto) ? "auto " : string.Empty;
+            return HasStateFlag(StateFlag.Auto) ? "auto " : string.Empty;
         }
 
         private string GetSimulated()
         {
-            return HasStateFlag(Flags.StateFlags.Simulated) ? "simulated " : string.Empty;
+            return HasStateFlag(StateFlag.Simulated) ? "simulated " : string.Empty;
         }
 
         private string GetEdit()
         {
-            return HasStateFlag(Flags.StateFlags.Editable) ? "()" : string.Empty;
+            return HasStateFlag(StateFlag.Editable) ? "()" : string.Empty;
         }
 
         public override string FormatHeader()
@@ -74,22 +74,22 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-            var definedFunctions = EnumerateFields<UFunction>()
-                .Where(field => field.FunctionFlags.HasFlag(FunctionFlag.Defined))
-                .ToList();
+            var ignoredFunctions = EnumerateFields<UFunction>()
+                                   .Where(field => !field.FunctionFlags.HasFlag(FunctionFlag.Defined))
+                                   .ToList();
 
-            if (definedFunctions.Count == 0)
+            if (ignoredFunctions.Count == 0)
             {
                 return string.Empty;
             }
 
             var output = $"\r\n{UDecompilingState.Tabs}ignores ";
-            for (var i = 0; i < definedFunctions.Count; ++i)
+            for (var i = 0; i < ignoredFunctions.Count; ++i)
             {
                 const int ignoresPerRow = 5;
-                output += definedFunctions[i].Name +
+                output += ignoredFunctions[i].Name +
                           (
-                              definedFunctions[i] != definedFunctions.Last()
+                              ignoredFunctions[i] != ignoredFunctions.Last()
                                   ? ", " +
                                     (
                                         i % ignoresPerRow == 0 && i >= ignoresPerRow

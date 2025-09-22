@@ -201,6 +201,12 @@ namespace UELib.Core
                 {
                     output += "repnotify ";
                     copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.RepNotify);
+
+                    // (pseudo syntax) For BattleBorn, and possible other builds?
+                    if (RepNotifyFuncName?.IsNone() == false)
+                    {
+                        output += $"({RepNotifyFuncName}) ";
+                    }
                 }
 
                 if (HasPropertyFlag(PropertyFlag.NoClear))
