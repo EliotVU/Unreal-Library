@@ -415,32 +415,41 @@ namespace UELib.Core
         private bool DeserializeTagByOffset()
         {
             Type = (PropertyType)_Buffer.ReadInt16();
-            Record(nameof(Type), Type.ToString());
             if (Type == PropertyType.None)
             {
+                Record(nameof(Type), Type.ToString());
                 return true;
             }
 
             if (_Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Batman3MP)
             {
+                Type = (int)Type switch
+                {
+                    5 => PropertyType.ObjectProperty,
+
+                    11 => PropertyType.Vector,
+                    12 => PropertyType.Rotator,
+
+                    15 => PropertyType.InterfaceProperty,
+                    // ObjectNCRProperty (ComponentProperty doesn't appear to exist, so let's assume it has been renamed)
+                    16 => PropertyType.ComponentProperty,
+                    17 => PropertyType.GuidProperty,
+                    _ => Type
+                };
+
+                Record(nameof(Type), Type.ToString());
+
                 ushort offset = _Buffer.ReadUInt16();
                 Record(nameof(offset), offset);
 
-                // TODO: Incomplete, PropertyTypes' have shifted.
-                if ((int)Type == 11)
-                {
-                    Type = PropertyType.Vector;
-                }
-
-                // This may actually be determined by the property's flags, but we don't calculate the offset of properties :/
-                // TODO: Incomplete
                 if (Type == PropertyType.StrProperty ||
                     Type == PropertyType.NameProperty ||
                     Type == PropertyType.IntProperty ||
                     Type == PropertyType.FloatProperty ||
-                    Type == PropertyType.StructProperty ||
                     Type == PropertyType.Vector ||
                     Type == PropertyType.Rotator ||
+                    Type == PropertyType.ComponentProperty ||
+                    Type == PropertyType.GuidProperty ||
                     (Type == PropertyType.BoolProperty &&
                      _Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4))
                 {
@@ -453,12 +462,16 @@ namespace UELib.Core
 
                         case PropertyType.IntProperty:
                         case PropertyType.FloatProperty:
-                        case PropertyType.StructProperty:
-                            //case PropertyType.ObjectProperty:
-                            //case PropertyType.InterfaceProperty:
-                            //case PropertyType.ComponentProperty:
-                            //case PropertyType.ClassProperty:
+                        case PropertyType.ComponentProperty:
                             Size = 4;
+                            break;
+
+                        case PropertyType.StrProperty:
+                            Size = _Buffer.ReadInt32() + sizeof(int); // Size of the characters and the length variable.
+                            Record(nameof(Size), Size);
+                            Debug.Assert(Size >= 0);
+                            // dirty hack, so we won't have to deal with changes to ReadString() below.
+                            _Buffer.Position -= 4;
                             break;
 
                         case PropertyType.NameProperty:
@@ -466,7 +479,11 @@ namespace UELib.Core
                             break;
 
                         case PropertyType.BoolProperty:
-                            Size = sizeof(byte);
+                            Size = 0; // Actually 4, but by doing this we can cheat a little bit.
+                            break;
+
+                        case PropertyType.GuidProperty:
+                            Size = 16;
                             break;
                     }
 
@@ -495,6 +512,20 @@ namespace UELib.Core
             switch (Type)
             {
                 case PropertyType.StructProperty:
+#if BATMAN
+                    if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                        _Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Batman3MP)
+                    {
+                        // Dirty hack...
+                        var prop = FindProperty<UProperty>(out var propertySource);
+                        if (((UStructProperty)prop)?.Struct != null)
+                        {
+                            _TypeData.StructName = ((UStructProperty)prop).Struct.Name;
+                        }
+
+                        break;
+                    }
+#endif
                     _Buffer.Read(out _TypeData.StructName);
                     Record(nameof(_TypeData.StructName), _TypeData.StructName);
 #if UE4
@@ -524,6 +555,9 @@ namespace UELib.Core
 #if BORDERLANDS
                         // GOTYE didn't apply this upgrade, but did the EnumName update? ...
                         && _Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE
+#endif
+#if BATMAN
+                        && _Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Batman4
 #endif
                        )
                     {
@@ -833,16 +867,22 @@ namespace UELib.Core
                 case PropertyType.StructProperty:
                     {
                         deserializeFlags |= DeserializeFlags.WithinStruct;
+                        FindProperty<UProperty>(out var propertySource);
 
                         if (UStructProperty.PropertyValueSerializer.CanSerializeStructUsingBinary(_Buffer))
                         {
                             // Some structs are serialized using tags.
                             // Let's find out if this is one of them.
-                            Enum.TryParse(_TypeData.StructName, out UStructProperty.PropertyValueSerializer.BinaryStructType binaryStructType);
-                            if (UStructProperty.PropertyValueSerializer.IsStructImmutable(_Buffer, _Outer, binaryStructType))
+                            Enum.TryParse(_TypeData.StructName,
+                                out UStructProperty.PropertyValueSerializer.BinaryStructType binaryStructType);
+                            if (UStructProperty.PropertyValueSerializer.IsStructImmutable(
+                                    _Buffer,
+                                    propertySource,
+                                    binaryStructType))
                             {
                                 // Deserialize using the atomic serializer.
-                                propertyValue += LegacyDeserializeDefaultBinaryStructValue(binaryStructType, deserializeFlags);
+                                propertyValue +=
+                                    LegacyDeserializeDefaultBinaryStructValue(binaryStructType, deserializeFlags);
 
                                 goto output;
                             }
@@ -851,7 +891,6 @@ namespace UELib.Core
                         }
 
                     nonAtomic:
-                        FindProperty<UProperty>(out var propertySource);
                         var tag = new UDefaultProperty(_Container, propertySource);
                         if (!tag.Deserialize())
                         {
@@ -870,7 +909,8 @@ namespace UELib.Core
                             string tagExpr = tag.Name;
                             if (tag.ArrayIndex > 0)
                             {
-                                tagExpr += PropertyDisplay.FormatT3DElementAccess(tag.ArrayIndex.ToString(), _Buffer.Version);
+                                tagExpr += PropertyDisplay.FormatT3DElementAccess(tag.ArrayIndex.ToString(),
+                                    _Buffer.Version);
                             }
 
                             _Buffer.Seek(tag._PropertyValuePosition, SeekOrigin.Begin);
@@ -933,7 +973,8 @@ namespace UELib.Core
 
                         if (arrayType == PropertyType.None)
                         {
-                            LibServices.LogService.Log($"Couldn't acquire array type for property tag '{Name}' in {_Outer.GetReferencePath()}.");
+                            LibServices.LogService.Log(
+                                $"Couldn't acquire array type for property tag '{Name}' in {_Outer.GetReferencePath()}.");
 
                             propertyValue = "/* Array type was not detected. */";
                             break;
@@ -942,7 +983,6 @@ namespace UELib.Core
                         deserializeFlags |= DeserializeFlags.WithinArray;
                         if ((deserializeFlags & DeserializeFlags.WithinStruct) != 0)
                         {
-
                             for (var i = 0; i < arraySize; ++i)
                             {
                                 propertyValue += LegacyDeserializeDefaultPropertyValue(arrayType, deserializeFlags)
@@ -957,7 +997,8 @@ namespace UELib.Core
                             {
                                 string elementAccessText =
                                     PropertyDisplay.FormatT3DElementAccess(i.ToString(), _Buffer.Version);
-                                string elementValue = LegacyDeserializeDefaultPropertyValue(arrayType, deserializeFlags);
+                                string elementValue =
+                                    LegacyDeserializeDefaultPropertyValue(arrayType, deserializeFlags);
                                 if ((_TempFlags & ReplaceNameMarker) != 0)
                                 {
                                     propertyValue += elementValue.Replace("%ARRAYNAME%", $"{Name}{elementAccessText}");
@@ -1044,16 +1085,16 @@ namespace UELib.Core
                 // Legacy fall-back for batman etc
                 case PropertyType.Vector:
                     {
-                        propertyValue = LegacyDeserializeDefaultBinaryStructValue(
-                            UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                        propertyValue = $"({LegacyDeserializeDefaultBinaryStructValue(
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags)})";
                         break;
                     }
 
                 // Legacy fall-back for batman etc
                 case PropertyType.Rotator:
                     {
-                        propertyValue = LegacyDeserializeDefaultBinaryStructValue(
-                            UStructProperty.PropertyValueSerializer.BinaryStructType.Rotator, deserializeFlags);
+                        propertyValue = $"({LegacyDeserializeDefaultBinaryStructValue(
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Rotator, deserializeFlags)})";
                         break;
                     }
 
@@ -1077,6 +1118,14 @@ namespace UELib.Core
                         long value = _Buffer.ReadInt64();
                         Record(nameof(value), value);
                         propertyValue = PropertyDisplay.FormatLiteral(value);
+                        break;
+                    }
+#endif
+#if BATMAN
+                case PropertyType.GuidProperty:
+                    {
+                        propertyValue = LegacyDeserializeDefaultBinaryStructValue(
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Guid, deserializeFlags);
                         break;
                     }
 #endif

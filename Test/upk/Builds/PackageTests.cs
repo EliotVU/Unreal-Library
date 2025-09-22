@@ -242,6 +242,14 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Batman1,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Batman City\",
+            BuildName.Batman2,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Origins\",
+            BuildName.Batman3,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Batman Knight\",
             BuildName.Batman4,
             BuildPlatform.Undetermined

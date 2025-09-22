@@ -476,6 +476,14 @@ namespace UELib.Core
                             }
                         }
 #endif
+#if BATMAN
+                        if (_Buffer.Package.Build == BuildGeneration.RSS &&
+                            _Buffer.LicenseeVersion >= 95)
+                        {
+                            int bm_v174 = _Buffer.ReadInt32();
+                            Record(nameof(bm_v174), bm_v174);
+                        }
+#endif
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)
                         {
                             ClassGroups = DeserializeGroup("ClassGroups");
@@ -521,16 +529,6 @@ namespace UELib.Core
                         }
 #endif
                     }
-#if BATMAN
-                    if (Package.Build == BuildGeneration.RSS)
-                    {
-                        if (_Buffer.LicenseeVersion >= 95)
-                        {
-                            int bm_v174 = _Buffer.ReadInt32();
-                            Record(nameof(bm_v174), bm_v174);
-                        }
-                    }
-#endif
 #if ROCKETLEAGUE
                     if (_Buffer.Package.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                         _Buffer.LicenseeVersion >= 21)
