@@ -563,11 +563,18 @@ namespace UELib.Core
                 {
                     case UComponent component:
                         component.DeserializeTemplate(stream);
+#if BATMAN
+                        if (stream.Build == UnrealPackage.GameBuild.BuildName.Batman2)
+                        {
+                            goto skipNetIndex;
+                        }
+#endif
                         break;
                 }
             }
 
             DeserializeNetIndex(stream);
+        skipNetIndex:
 #if THIEF_DS || DEUSEX_IW
             // FIXME: Not present in all objects, even some classes?
             if (stream.Build == BuildGeneration.Flesh && GetType() != typeof(UnknownObject))

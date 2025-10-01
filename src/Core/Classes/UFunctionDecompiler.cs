@@ -97,7 +97,7 @@ namespace UELib.Core
             // NoExport is no longer available in UE3+ builds,
             // - instead it is replaced with (FunctionFlags.OptionalParameters)
             // - as an indicator that the function has optional parameters.
-            if (HasFunctionFlag(Flags.FunctionFlag.NoExport) && Package.Version <= 220)
+            if (HasFunctionFlag(FunctionFlag.NoExport) && Package.Version <= 220)
             {
                 output += "noexport ";
             }
@@ -130,17 +130,17 @@ namespace UELib.Core
 #endif
                )
             {
-                if (HasFunctionFlag(Flags.FunctionFlag.K2Call))
+                if (HasFunctionFlag(FunctionFlag.K2Call))
                 {
                     output += "k2call ";
                 }
 
-                if (HasFunctionFlag(Flags.FunctionFlag.K2Override))
+                if (HasFunctionFlag(FunctionFlag.K2Override))
                 {
                     output += "k2override ";
                 }
 
-                if (HasFunctionFlag(Flags.FunctionFlag.K2Pure))
+                if (HasFunctionFlag(FunctionFlag.K2Pure))
                 {
                     output += "k2pure ";
                 }
@@ -176,37 +176,37 @@ namespace UELib.Core
                 }
             }
 #endif
-            if (HasFunctionFlag(Flags.FunctionFlag.Invariant))
+            if (HasFunctionFlag(FunctionFlag.Invariant))
             {
                 output += "invariant ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlag.Iterator))
+            if (HasFunctionFlag(FunctionFlag.Iterator))
             {
                 output += "iterator ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlag.Latent))
+            if (HasFunctionFlag(FunctionFlag.Latent))
             {
                 output += "latent ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlag.Singular))
+            if (HasFunctionFlag(FunctionFlag.Singular))
             {
                 output += "singular ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlag.Simulated))
+            if (HasFunctionFlag(FunctionFlag.Simulated))
             {
                 output += "simulated ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlag.Exec))
+            if (HasFunctionFlag(FunctionFlag.Exec))
             {
                 output += "exec ";
             }
 
-            if (HasFunctionFlag(Flags.FunctionFlag.Event))
+            if (HasFunctionFlag(FunctionFlag.Event))
             {
                 output += "event ";
                 isNormalFunction = false;

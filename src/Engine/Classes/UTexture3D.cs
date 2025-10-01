@@ -27,7 +27,15 @@ namespace UELib.Engine
         public override void Deserialize(IUnrealStream stream)
         {
             base.Deserialize(stream);
+#if BATTLEBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                stream.LicenseeVersion >= 47)
+            {
+                DeserializeTextureBaseGbx(stream);
 
+                return;
+            }
+#endif
             SizeX = stream.ReadUInt32();
             stream.Record(nameof(SizeX), SizeX);
 
@@ -45,7 +53,15 @@ namespace UELib.Engine
         public override void Serialize(IUnrealStream stream)
         {
             base.Serialize(stream);
+#if BATTLEBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                stream.LicenseeVersion >= 47)
+            {
+                SerializeTextureBaseGbx(stream);
 
+                return;
+            }
+#endif
             if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
             {
                 stream.Write(SizeX);

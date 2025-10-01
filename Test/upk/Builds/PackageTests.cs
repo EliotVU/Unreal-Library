@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UELib;
+﻿using UELib;
 using UELib.Core;
 using UELib.Engine;
 using UELib.Services;
@@ -17,6 +11,14 @@ namespace Eliot.UELib.Test.Builds
     {
         // .upk packages are assumed to be decompressed.
         [TestMethod]
+        [DataRow(@"Unreal\",
+            BuildName.Unreal1,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"UnrealTournament\",
+            BuildName.UT,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"X-COM-Alliance\",
             BuildName.Unreal1,
             BuildPlatform.Undetermined
@@ -233,6 +235,14 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Batman1,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Batman City\",
+            BuildName.Batman2,
+            BuildPlatform.Undetermined
+        )]
+        [DataRow(@"Batman Origins\",
+            BuildName.Batman3,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Batman Knight\",
             BuildName.Batman4,
             BuildPlatform.Undetermined
@@ -264,6 +274,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.SA2,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Remember Me\",
+            BuildName.RememberMe,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"A Hat in Time\",
             BuildName.AHIT,
             BuildPlatform.Undetermined
@@ -279,7 +293,8 @@ namespace Eliot.UELib.Test.Builds
             BuildGeneration forcedGeneration = BuildGeneration.Undefined,
             bool shouldTestSerialization = false)
         {
-            packagesPath = Path.Join(Packages.UnrealEngineGamesPath, packagesPath);
+            string? gamesPath = Environment.GetEnvironmentVariable("UEGamesTestDirectory");
+            packagesPath = Path.Join(gamesPath, packagesPath);
             if (!Directory.Exists(packagesPath))
             {
                 Assert.Inconclusive($"Couldn't find directory '{packagesPath}'");

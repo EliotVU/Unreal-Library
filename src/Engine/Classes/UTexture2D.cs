@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UELib.Branch;
 using UELib.Core;
 using UELib.ObjectModel.Annotations;
@@ -62,7 +62,15 @@ namespace UELib.Engine
         public override void Deserialize(IUnrealStream stream)
         {
             base.Deserialize(stream);
+#if BATTLEBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                stream.LicenseeVersion >= 47)
+            {
+                DeserializeTextureBaseGbx(stream);
 
+                return;
+            }
+#endif
             // These properties have been moved to ScriptProperties.
             if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
             {
@@ -77,27 +85,30 @@ namespace UELib.Engine
                 stream.Record(nameof(Format), Format);
             }
 #if TERA
-            if (stream.Build == UnrealPackage.GameBuild.BuildName.Tera)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Tera &&
+                stream.LicenseeVersion >= 3)
             {
-                // TODO: Not yet supported.
-                return;
+                stream.Read(out string fileSourcePath);
+                stream.Record(nameof(fileSourcePath), fileSourcePath);
             }
 #endif
 #if BORDERLANDS
-            if (stream.Build == BuildGeneration.GB &&
-                stream.LicenseeVersion >= 55)
+            if ((stream.Build == BuildGeneration.GB &&
+                 stream.LicenseeVersion >= 55) ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                stream.LicenseeVersion < 49)
             {
                 stream.ReadStruct(out UGuid constantGuid);
                 stream.Record(nameof(constantGuid), constantGuid);
             }
 #endif
-            var mipMap2Ds = Mips;
-            stream.ReadArray(out mipMap2Ds);
+            Mips = stream.ReadArray<MipMap2D>();
             stream.Record(nameof(Mips), Mips);
 #if BORDERLANDS || BORDERLANDS2
             if (stream.Build == BuildGeneration.GB ||
-                stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*no version check*/ ||
-                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 /*no version check*/ ||
+                (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                 stream.LicenseeVersion < 49))
             {
                 stream.ReadStruct(out UGuid constantGuid);
                 stream.Record(nameof(constantGuid), constantGuid);
@@ -121,7 +132,7 @@ namespace UELib.Engine
                 stream.Record(nameof(CachedPVRTCMips), CachedPVRTCMips);
             }
 #if BORDERLANDS2 || BATTLEBORN
-            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2/*VR*/ ||
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 /*VR*/ ||
                 stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
                 // Missed UDK upgrades?
@@ -150,7 +161,15 @@ namespace UELib.Engine
         public override void Serialize(IUnrealStream stream)
         {
             base.Serialize(stream);
+#if BATTLEBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                stream.LicenseeVersion >= 47)
+            {
+                SerializeTextureBaseGbx(stream);
 
+                return;
+            }
+#endif
             // These properties have been moved to ScriptProperties.
             if (stream.Version < (uint)PackageObjectLegacyVersion.DisplacedUTextureProperties)
             {
@@ -159,20 +178,22 @@ namespace UELib.Engine
                 stream.Write((int)Format);
             }
 #if TERA
-            if (stream.Build == UnrealPackage.GameBuild.BuildName.Tera)
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Tera &&
+                stream.LicenseeVersion >= 3)
             {
                 throw new NotSupportedException("This package version is not supported!");
             }
 #endif
 #if BORDERLANDS
-            if (stream.Build == BuildGeneration.GB &&
-                stream.LicenseeVersion >= 55)
+            if ((stream.Build == BuildGeneration.GB &&
+                 stream.LicenseeVersion >= 55) ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                stream.LicenseeVersion < 49)
             {
                 stream.WriteStruct(default(UGuid)); // Placeholder, as we don't have the value here
             }
 #endif
-            var mipMap2Ds = Mips;
-            stream.WriteArray(mipMap2Ds);
+            stream.WriteArray(Mips);
 #if BORDERLANDS || BORDERLANDS2
             if (stream.Build == BuildGeneration.GB ||
                 stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||

@@ -41,8 +41,11 @@ namespace Eliot.UELib.Decompiler.Test
 
         private class TestExportClass
         {
-            [Output(OutputSlot.Parameter)] public string StringParameter;
-            [Output(OutputSlot.Property)] public string StringProperty;
+            [Output(OutputSlot.Parameter)]
+            public required string StringParameter;
+
+            [Output(OutputSlot.Property)]
+            public required string StringProperty;
         }
     }
 }

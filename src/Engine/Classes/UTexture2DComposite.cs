@@ -8,7 +8,7 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UTexture2DComposite : UTexture2D
+    public class UTexture2DComposite : UTexture
     {
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         private delegate void _Deserialize(IUnrealStream stream);

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UELib.Branch;
@@ -121,6 +120,9 @@ namespace UELib.Core
 #endif
 #if BULLETSTORM
                 PropertyType.CppCopyStructProperty => typeof(IUnrealSerializableClass),
+#endif
+#if BATMAN
+                PropertyType.GuidProperty => typeof(UGuid),
 #endif
                 PropertyType.None => throw new NotSupportedException("Cannot handle property tag type 'None'"),
                 _ => throw new NotImplementedException("Unrecognized property tag type")
@@ -615,7 +617,7 @@ namespace UELib.Core
                         }
 
                         Debug.Assert(UDecompilingState.s_inlinedSubObjects != null,
-                                     "UDecompilingState.s_inlinedSubObjects != null");
+                            "UDecompilingState.s_inlinedSubObjects != null");
 
                         bool isPendingInline =
                             UDecompilingState.s_inlinedSubObjects.TryGetValue(constantObject, out bool isInlined);
@@ -704,11 +706,15 @@ namespace UELib.Core
                         {
                             // Some structs are serialized using tags.
                             // Let's find out if this is one of them.
-                            Enum.TryParse(StructName, out UStructProperty.PropertyValueSerializer.BinaryStructType binaryStructType);
-                            if (UStructProperty.PropertyValueSerializer.IsStructImmutable(stream, structPropertySource, binaryStructType))
+                            Enum.TryParse(StructName,
+                                out UStructProperty.PropertyValueSerializer.BinaryStructType binaryStructType);
+                            if (UStructProperty.PropertyValueSerializer.IsStructImmutable(stream, structPropertySource,
+                                    binaryStructType))
                             {
                                 // Deserialize using the atomic serializer.
-                                propertyValue += LegacyDeserializeDefaultBinaryStructValue(stream, binaryStructType, deserializeFlags);
+                                propertyValue +=
+                                    LegacyDeserializeDefaultBinaryStructValue(stream, binaryStructType,
+                                        deserializeFlags);
 
                                 goto output;
                             }
@@ -717,14 +723,17 @@ namespace UELib.Core
                         }
 
                     nonAtomic:
-                        var scriptProperty = UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource);
+                        var scriptProperty =
+                            UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource);
                         if (scriptProperty == null)
                         {
                             return "()";
                         }
 
                         propertyValue += DecompileTag(scriptProperty);
-                        while ((scriptProperty = UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource)) != null)
+                        while ((scriptProperty =
+                                   UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource)) !=
+                               null)
                         {
                             propertyValue += ",";
                             propertyValue += DecompileTag(scriptProperty);
@@ -736,17 +745,22 @@ namespace UELib.Core
 
                             UProperty? structMemberProperty = scriptProperty.Type switch
                             {
-                                PropertyType.StructProperty => structPropertySource?.FindProperty<UStructProperty?>(scriptProperty.Name),
-                                PropertyType.ArrayProperty => structPropertySource?.FindProperty<UArrayProperty?>(scriptProperty.Name),
-                                PropertyType.FixedArrayProperty => structPropertySource?.FindProperty<UFixedArrayProperty?>(scriptProperty.Name),
-                                PropertyType.MapProperty => structPropertySource?.FindProperty<UMapProperty?>(scriptProperty.Name),
+                                PropertyType.StructProperty => structPropertySource?.FindProperty<UStructProperty?>(
+                                    scriptProperty.Name),
+                                PropertyType.ArrayProperty => structPropertySource?.FindProperty<UArrayProperty?>(
+                                    scriptProperty.Name),
+                                PropertyType.FixedArrayProperty => structPropertySource
+                                    ?.FindProperty<UFixedArrayProperty?>(scriptProperty.Name),
+                                PropertyType.MapProperty => structPropertySource?.FindProperty<UMapProperty?>(
+                                    scriptProperty.Name),
                                 _ => null
                             };
 
                             string tagExpr = scriptProperty.Name;
                             if (structMemberProperty?.ElementSize > 1 || scriptProperty.ArrayIndex > 0)
                             {
-                                tagExpr += PropertyDisplay.FormatT3DElementAccess(scriptProperty.ArrayIndex.ToString(), stream.Version);
+                                tagExpr += PropertyDisplay.FormatT3DElementAccess(scriptProperty.ArrayIndex.ToString(),
+                                    stream.Version);
                             }
 
                             stream.Seek(scriptProperty._PropertyValuePosition, SeekOrigin.Begin);
@@ -805,7 +819,8 @@ namespace UELib.Core
 
                         if (innerArrayType == PropertyType.None)
                         {
-                            LibServices.LogService.Log($"Couldn't acquire array type for property tag '{Name}' in {TagSource.GetReferencePath()}.");
+                            LibServices.LogService.Log(
+                                $"Couldn't acquire array type for property tag '{Name}' in {TagSource.GetReferencePath()}.");
 
                             propertyValue = "/* Array type was not detected. */";
                             break;
@@ -816,7 +831,8 @@ namespace UELib.Core
                         {
                             for (var i = 0; i < arraySize; ++i)
                             {
-                                propertyValue += LegacyDeserializeDefaultPropertyValue(stream, innerArrayType, deserializeFlags, innerArrayProperty)
+                                propertyValue += LegacyDeserializeDefaultPropertyValue(stream, innerArrayType,
+                                                     deserializeFlags, innerArrayProperty)
                                                  + (i != arraySize - 1 ? "," : string.Empty);
                             }
 
@@ -829,7 +845,8 @@ namespace UELib.Core
                                 string elementAccessText =
                                     PropertyDisplay.FormatT3DElementAccess(i.ToString(), stream.Version);
                                 string elementValue =
-                                    LegacyDeserializeDefaultPropertyValue(stream, innerArrayType, deserializeFlags, innerArrayProperty);
+                                    LegacyDeserializeDefaultPropertyValue(stream, innerArrayType, deserializeFlags,
+                                        innerArrayProperty);
                                 if ((_TempFlags & ReplaceNameMarker) != 0)
                                 {
                                     propertyValue += elementValue.Replace("%ARRAYNAME%", $"{Name}{elementAccessText}");
@@ -869,7 +886,8 @@ namespace UELib.Core
                         for (int i = 0; i < count; ++i)
                         {
                             propertyValue +=
-                                LegacyDeserializeDefaultPropertyValue(stream, mapProperty.ValueProperty.Type, deserializeFlags, mapProperty.ValueProperty);
+                                LegacyDeserializeDefaultPropertyValue(stream, mapProperty.ValueProperty.Type,
+                                    deserializeFlags, mapProperty.ValueProperty);
                             if (i + 1 != count)
                             {
                                 propertyValue += ",";
@@ -894,7 +912,8 @@ namespace UELib.Core
                         propertyValue = "(";
                         for (int i = 0; i < fixedArrayProperty.Count; ++i)
                         {
-                            propertyValue += LegacyDeserializeDefaultPropertyValue(stream, innerType, deserializeFlags, fixedArrayProperty.InnerProperty);
+                            propertyValue += LegacyDeserializeDefaultPropertyValue(stream, innerType, deserializeFlags,
+                                fixedArrayProperty.InnerProperty);
                             if (i + 1 != fixedArrayProperty.Count)
                             {
                                 propertyValue += ",";
@@ -916,34 +935,46 @@ namespace UELib.Core
                 // Legacy fall-back for batman etc
                 case PropertyType.Vector:
                     {
-                        propertyValue = LegacyDeserializeDefaultBinaryStructValue(
+                        propertyValue = $"({LegacyDeserializeDefaultBinaryStructValue(
                             stream,
-                            UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags);
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Vector, deserializeFlags)})";
                         break;
                     }
 
                 // Legacy fall-back for batman etc
                 case PropertyType.Rotator:
                     {
-                        propertyValue = LegacyDeserializeDefaultBinaryStructValue(
+                        propertyValue = $"({LegacyDeserializeDefaultBinaryStructValue(
                             stream,
-                            UStructProperty.PropertyValueSerializer.BinaryStructType.Rotator, deserializeFlags);
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Rotator, deserializeFlags)})";
                         break;
                     }
-
+#if BATMAN
+                case PropertyType.GuidProperty:
+                    {
+                        propertyValue = $"({LegacyDeserializeDefaultBinaryStructValue(
+                            stream,
+                            UStructProperty.PropertyValueSerializer.BinaryStructType.Guid, deserializeFlags)})";
+                        break;
+                    }
+#endif
 #if BORDERLANDS2 || BATTLEBORN
                 case PropertyType.ByteAttributeProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, deserializeFlags, property);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.ByteProperty, deserializeFlags,
+                        property);
 
                 case PropertyType.IntAttributeProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, deserializeFlags, property);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.IntProperty, deserializeFlags,
+                        property);
 
                 case PropertyType.FloatAttributeProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.FloatProperty, deserializeFlags, property);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.FloatProperty, deserializeFlags,
+                        property);
 #endif
 #if BULLETSTORM
                 case PropertyType.CppCopyStructProperty:
-                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.StructProperty, deserializeFlags, property);
+                    return LegacyDeserializeDefaultPropertyValue(stream, PropertyType.StructProperty, deserializeFlags,
+                        property);
 #endif
 #if SA2
                 case PropertyType.Int64Property:

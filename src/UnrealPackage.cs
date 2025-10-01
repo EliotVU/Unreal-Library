@@ -2391,6 +2391,28 @@ namespace UELib
                     return;
                 }
 #endif
+#if BATTLEBORN
+                //if (stream.Package.Build == GameBuild.BuildName.Battleborn &&
+                //    stream.Version >= 833)
+                //{
+                //    int count = stream.ReadInt32();
+
+                //    AdditionalPackagesToCook = new UArray<string>(count);
+                //    for (int i = 0; i < AdditionalPackagesToCook.Count; i++)
+                //    {
+                //        AdditionalPackagesToCook[i] = stream.ReadString();
+                //        if (stream.LicenseeVersion < 57)
+                //        {
+                //            stream.ReadInt32();
+                //        }
+                //        else
+                //        {
+                //            stream.ReadByte();
+                //        }
+                //    }
+                //}
+                //else
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedAdditionalPackagesToCook)
                 {
 #if TRANSFORMERS
@@ -2426,12 +2448,20 @@ namespace UELib
                 }
 #endif
 #if BATTLEBORN
-                if (stream.Build == GameBuild.BuildName.Battleborn)
+                if (stream.Build == GameBuild.BuildName.Battleborn &&
+                    stream.LicenseeVersion >= 61)
                 {
-                    // FIXME: Package format is being deserialized incorrectly and fails here.
-                    stream.ReadUInt32();
+                    // ReSharper disable once InconsistentNaming
+                    stream.Read(out int DAT_143276568); // global constant always '1' when saving.
 
-                    return;
+                    // ReSharper disable once InconsistentNaming
+                    var stack_58 = new UMap<string, int>(stream.ReadInt32());
+                    for (int i = 0; i < stack_58.Count; i++)
+                    {
+                        string key = stream.ReadString();
+                        int value = stream.ReadInt32();
+                        stack_58[key] = value;
+                    }
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedTextureAllocations)
@@ -2447,6 +2477,16 @@ namespace UELib
                             exception));
                     }
                 }
+#if BATTLEBORN
+                if (stream.Build == GameBuild.BuildName.Battleborn &&
+                    (PackageFlags & 0x08) == 0 &&
+                    // NetVersion
+                    EngineVersion >> 16 >= 1055)
+                {
+                    // ReSharper disable once InconsistentNaming
+                    stream.ReadStruct<UGuid>(out var GStack_68); // always zero
+                }
+#endif
 #if ROCKETLEAGUE
                 if (stream.Build == GameBuild.BuildName.RocketLeague
                     && PackageFlags.HasFlag(PackageFlag.Cooked))
@@ -3544,10 +3584,7 @@ namespace UELib
         // Create pseudo objects for imports so that we have non-null references to imports.
         private UObject CreateObject(UImportTableItem import)
         {
-            if (import.Object != null)
-            {
-                return import.Object;
-            }
+            Debug.Assert(import.Object == null);
 
             var classType = GetClassType(import.ClassName);
             var obj = (UObject)Activator.CreateInstance(classType);
@@ -3558,8 +3595,9 @@ namespace UELib
             obj.PackageIndex = -(import.Index + 1);
             obj.PackageResource = import;
             obj.Class = null; // FindObject<UClass> ?? StaticClass
-            obj.Outer = IndexToObject<UObject?>(import.OuterIndex); // ?? ClassPackage
             import.Object = obj;
+
+            obj.Outer = IndexToObject<UObject?>(import.OuterIndex); // ?? ClassPackage
 
             AddToObjects(obj);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
@@ -3573,19 +3611,19 @@ namespace UELib
 
             var objName = export.ObjectName;
             var objFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
-            var objSuper = IndexToObject<UStruct?>(export.SuperIndex);
+            var objClass = IndexToObject<UClass?>(export.ClassIndex);
 
-            var objOuter = IndexToObject<UObject?>(export.OuterIndex);
-            if (objOuter == null && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
+            if (export.OuterIndex.IsNull && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
             {
-                var pkg = FindObject<UPackage?>(objName) ?? CreateObject<UPackage>(objName);
+                // Always create, because there's nothing to find, after all, packages are not yet being linked.
+                var pkg = /*FindObject<UPackage?>(objName) ??*/ CreateObject<UPackage>(objName);
+                pkg.PackageIndex = export.Index + 1;
+                pkg.PackageResource = export;
+                pkg.Class = objClass;
                 export.Object = pkg;
 
                 return pkg;
             }
-
-            var objClass = IndexToObject<UClass?>(export.ClassIndex);
-            var objArchetype = IndexToObject<UObject?>(export.ArchetypeIndex);
 
             var internalClassType = GetClassType(objClass?.Name ?? "Class");
             if (objClass != null && internalClassType == typeof(UnknownObject))
@@ -3621,22 +3659,26 @@ namespace UELib
             obj.PackageIndex = export.Index + 1;
             obj.PackageResource = export;
             obj.Class = objClass; // ?? StaticClass
+            export.Object = obj;
+
+            var objOuter = IndexToObject<UObject?>(export.OuterIndex);
             obj.Outer = objOuter ?? RootPackage;
+
+            var objArchetype = IndexToObject<UObject?>(export.ArchetypeIndex);
             obj.Archetype = objArchetype;
 
             if (obj is UStruct uStruct)
             {
+                var objSuper = IndexToObject<UStruct>(export.SuperIndex);
                 uStruct.Super = objSuper;
             }
-
-            export.Object = obj;
 
             AddToObjects(obj);
             OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
 
             if (obj.InternalFlags.HasFlag(InternalClassFlags.Preload))
             {
-                obj.Load();
+                //obj.Load();
             }
 
             return obj;

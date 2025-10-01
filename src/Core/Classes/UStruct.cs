@@ -731,13 +731,21 @@ namespace UELib.Core
             {
                 if (scriptProperty != null)
                 {
-                    var transformedType = scriptProperty.Type;
-                    if (transformedType == PropertyType.Vector)
+                    uint transformedType = scriptProperty.Type switch
                     {
-                        transformedType = (PropertyType)11;
-                    }
+                        PropertyType.ObjectProperty => 5,
 
-                    stream.Write((uint)transformedType);
+                        PropertyType.Vector => 11,
+                        PropertyType.Rotator => 12,
+
+                        PropertyType.InterfaceProperty => 15,
+                        // ObjectNCRProperty (ComponentProperty doesn't appear to exist, so let's assume it has been renamed)
+                        PropertyType.ComponentProperty => 16,
+                        PropertyType.GuidProperty => 17,
+                        _ => (uint)scriptProperty.Type
+                    };
+
+                    stream.Write(transformedType);
                 }
                 else
                 {
@@ -761,8 +769,21 @@ namespace UELib.Core
 #if BATMAN
             if (stream.Build == BuildGeneration.RSS)
             {
-                var type = (PropertyType)stream.ReadInt16();
-                stream.Record(nameof(type), type.ToString());
+                ushort rawType = stream.ReadUInt16();
+                var type = rawType switch
+                {
+                    5 => PropertyType.ObjectProperty,
+
+                    11 => PropertyType.Vector,
+                    12 => PropertyType.Rotator,
+
+                    15 => PropertyType.InterfaceProperty,
+                    // ObjectNCRProperty (ComponentProperty doesn't appear to exist, so let's assume it has been renamed)
+                    16 => PropertyType.ComponentProperty,
+                    17 => PropertyType.GuidProperty,
+                    _ => (PropertyType)rawType
+                };
+                stream.Record(nameof(type), type);
 
                 return type != PropertyType.None
                     ? CreateScriptProperty(UnrealName.None, type)
@@ -821,7 +842,7 @@ namespace UELib.Core
                         : IntPtr.Zero;
                 }
 
-                UPropertyTag propertyTag = tag ?? new UPropertyTag(propertyName, propertyType);
+                var propertyTag = tag ?? new UPropertyTag(propertyName, propertyType);
 
                 return property == null
                     ? new UDefaultProperty(tagSource, propertySource, ref propertyTag, destPtr)

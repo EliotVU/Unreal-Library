@@ -1,4 +1,5 @@
-﻿using UELib.Branch;
+﻿using System;
+using UELib.Branch;
 using UELib.Core;
 using UELib.ObjectModel.Annotations;
 
@@ -28,8 +29,16 @@ namespace UELib.Engine
             if (stream.Version >= (uint)PackageObjectLegacyVersion.UE3)
             {
 #if BORDERLANDS2 || BATTLEBORN
-                if (this is not UTexture2D && (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                    stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn))
+                if (this is not UTexture2D && (
+                        stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                        stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn))
+                {
+                    return;
+                }
+
+
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                    stream.LicenseeVersion >= 47)
                 {
                     return;
                 }
@@ -92,7 +101,66 @@ namespace UELib.Engine
 
             stream.Write(Mips);
         }
+#if BATTLEBORN
+        // Deserializer for UTextureBaseGBX (the base for UTexture types starting with version 47)
+        protected void DeserializeTextureBaseGbx(IUnrealStream stream)
+        {
+            // < 49
+            // << constantGuid
 
+            // >= 47
+            // TextureBaseGBX.TextureArray
+            int count = stream.ReadInt32();
+            var v70 = new UArray<UArray<UTexture3D.MipMap3D>>(count);
+            for (int i = 0; i < count; i++)
+            {
+                int c = stream.ReadInt32();
+                var mips = new UArray<UTexture3D.MipMap3D>(c);
+                for (int j = 0; j < c; ++j)
+                {
+                    var element = new UTexture3D.MipMap3D();
+                    stream.Read(out element.Data);
+                    stream.Read(out element.SizeX);
+                    stream.Read(out element.SizeY);
+
+                    if (stream.LicenseeVersion >= 47)
+                    {
+                        stream.Read(out element.SizeZ); // v50
+                        stream.Read(out int v54);
+                        stream.Read(out int v58);
+                        stream.Read(out byte v5c);
+                    }
+
+                    mips.Add(element);
+                }
+
+                v70.Add(mips);
+            }
+
+            stream.Record(nameof(v70), v70);
+            // else << mips
+
+            // << v80 (ResourceInterface?)
+            if (stream.LicenseeVersion >= 52)
+            {
+                // 2 for T2D, 3 for T3D.
+                byte textureType = stream.ReadByte();
+                stream.Record(nameof(textureType), textureType);
+
+                // incomplete...
+            }
+
+            // < 49
+            // << TextureFileCacheGuid
+            // < 47
+            // << CachedPVRTCMips
+        }
+
+        protected void SerializeTextureBaseGbx(IUnrealStream stream)
+        {
+            throw new NotSupportedException("This package version is not supported!");
+        }
+#endif
         public struct LegacyMipMap : IUnrealSerializableClass
         {
             public UBulkData<byte> Data;

@@ -278,17 +278,17 @@ public record struct UPropertyTag : IUnrealSerializableClass
                 break;
 
             case PropertyType.ArrayProperty:
-            {
-#if DNF
-                if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF &&
-                    stream.Version >= 124)
                 {
-                    stream.Read(out TypeData.InnerTypeName);
-                    stream.Record(nameof(TypeData.InnerTypeName), TypeData.InnerTypeName);
-                }
+#if DNF
+                    if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF &&
+                        stream.Version >= 124)
+                    {
+                        stream.Read(out TypeData.InnerTypeName);
+                        stream.Record(nameof(TypeData.InnerTypeName), TypeData.InnerTypeName);
+                    }
 #endif
-                break;
-            }
+                    break;
+                }
         }
 
         DeserializeSize(stream, (byte)(info & InfoSizeMask));
@@ -342,6 +342,9 @@ public record struct UPropertyTag : IUnrealSerializableClass
         switch (Type)
         {
             case PropertyType.StructProperty:
+#if BATMAN
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Batman4) break;
+#endif
                 Debug.Assert(TypeData.StructName.IsNone() == false, "StructName is required");
                 stream.Write(TypeData.StructName);
 #if UE4
@@ -355,7 +358,7 @@ public record struct UPropertyTag : IUnrealSerializableClass
 
             case PropertyType.ByteProperty:
 #if BATMAN
-                if (stream.Build == BuildGeneration.RSS) break;
+                if (stream.Build == BuildGeneration.RSS && stream.LicenseeVersion >= 22) break;
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag)
                 {
@@ -365,6 +368,14 @@ public record struct UPropertyTag : IUnrealSerializableClass
                 break;
 
             case PropertyType.BoolProperty:
+#if BATMAN
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                {
+                    stream.Write(BoolValue);
+
+                    break;
+                }
+#endif
 #if BORDERLANDS
                 // GOTYE didn't apply this upgrade, but did the EnumName update? ...
                 if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE)
@@ -403,6 +414,15 @@ public record struct UPropertyTag : IUnrealSerializableClass
         switch (Type)
         {
             case PropertyType.StructProperty:
+#if BATMAN
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                {
+                    // FIXME: Assign struct name from the resolved property's struct reference.
+                    TypeData.StructName = UnrealName.None;
+
+                    break;
+                }
+#endif
                 stream.Read(out TypeData.StructName);
                 stream.Record(nameof(TypeData.StructName), TypeData.StructName);
 #if UE4
@@ -416,7 +436,7 @@ public record struct UPropertyTag : IUnrealSerializableClass
 
             case PropertyType.ByteProperty:
 #if BATMAN
-                if (stream.Build == BuildGeneration.RSS) break;
+                if (stream.Build == BuildGeneration.RSS && stream.LicenseeVersion >= 22) break;
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.EnumNameAddedToBytePropertyTag)
                 {
@@ -427,6 +447,14 @@ public record struct UPropertyTag : IUnrealSerializableClass
                 break;
 
             case PropertyType.BoolProperty:
+#if BATMAN
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+                {
+                    BoolValue = stream.ReadBool();
+
+                    break;
+                }
+#endif
 #if BORDERLANDS
                 // GOTYE didn't apply this upgrade, but did the EnumName update? ...
                 if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE)
@@ -442,7 +470,7 @@ public record struct UPropertyTag : IUnrealSerializableClass
                 }
                 else
                 {
-                    BoolValue = stream.ReadInt32() > 0;
+                    BoolValue = stream.ReadBool();
                 }
 
                 stream.Record(nameof(BoolValue), BoolValue);
@@ -469,16 +497,17 @@ public record struct UPropertyTag : IUnrealSerializableClass
             throw new NotSupportedException("Cannot serialize property tags by offset.");
             //stream.Write(ushort offset);
 
-            // No serialized size for these types (and possible more)
+            // No serialized size for these types
             if (Type == PropertyType.StrProperty ||
                 Type == PropertyType.NameProperty ||
                 Type == PropertyType.IntProperty ||
                 Type == PropertyType.FloatProperty ||
-                Type == PropertyType.StructProperty ||
                 Type == PropertyType.Vector ||
                 Type == PropertyType.Rotator ||
+                Type == PropertyType.ComponentProperty ||
+                Type == PropertyType.GuidProperty ||
                 (Type == PropertyType.BoolProperty &&
-                 stream.Build == UnrealPackage.GameBuild.BuildName.Batman4))
+                 stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4))
             {
                 SerializeTypeDataNew(stream);
 
@@ -486,6 +515,7 @@ public record struct UPropertyTag : IUnrealSerializableClass
             }
         }
 
+        stream.Write(Name);
         stream.Write(Size);
         stream.Write(ArrayIndex);
 
@@ -499,19 +529,17 @@ public record struct UPropertyTag : IUnrealSerializableClass
             stream.Read(out ushort offset);
             stream.Record(nameof(offset), offset);
 
-            // TODO: Incomplete, PropertyTypes' have shifted.
-            if ((int)Type == 11) Type = PropertyType.Vector;
-
-            // No serialized size for these types (and possible more)
+            // No serialized size for these types
             if (Type == PropertyType.StrProperty ||
                 Type == PropertyType.NameProperty ||
                 Type == PropertyType.IntProperty ||
                 Type == PropertyType.FloatProperty ||
-                Type == PropertyType.StructProperty ||
                 Type == PropertyType.Vector ||
                 Type == PropertyType.Rotator ||
+                Type == PropertyType.ComponentProperty ||
+                Type == PropertyType.GuidProperty ||
                 (Type == PropertyType.BoolProperty &&
-                 stream.Build == UnrealPackage.GameBuild.BuildName.Batman4))
+                 stream.Package.Build == UnrealPackage.GameBuild.BuildName.Batman4))
             {
                 switch (Type)
                 {
@@ -520,22 +548,27 @@ public record struct UPropertyTag : IUnrealSerializableClass
                         Size = 12;
                         break;
 
+                    case PropertyType.BoolProperty:
                     case PropertyType.IntProperty:
                     case PropertyType.FloatProperty:
-                    case PropertyType.StructProperty:
-                        //case PropertyType.ObjectProperty:
-                        //case PropertyType.InterfaceProperty:
-                        //case PropertyType.ComponentProperty:
-                        //case PropertyType.ClassProperty:
+                    case PropertyType.ComponentProperty:
                         Size = 4;
+                        break;
+
+                    case PropertyType.StrProperty:
+                        Size = stream.ReadInt32() + sizeof(int); // Size of the characters and the length variable.
+                        stream.Record(nameof(Size), Size);
+                        Debug.Assert(Size >= 0);
+                        // dirty hack, so we won't have to deal with changes to ReadString() below.
+                        stream.Position -= 4;
                         break;
 
                     case PropertyType.NameProperty:
                         Size = 8;
                         break;
 
-                    case PropertyType.BoolProperty:
-                        Size = sizeof(byte);
+                    case PropertyType.GuidProperty:
+                        Size = 16;
                         break;
                 }
 
@@ -545,6 +578,9 @@ public record struct UPropertyTag : IUnrealSerializableClass
                 return;
             }
         }
+
+        Name = stream.ReadName();
+        stream.Record(nameof(Name), Name);
 
         stream.Read(out Size);
         stream.Record(nameof(Size), Size);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.IO;
@@ -371,6 +372,21 @@ namespace UELib.Core
                 RepOffset = stream.ReadUShort();
                 stream.Record(nameof(RepOffset), RepOffset);
             }
+#if BATTLEBORN
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn
+                // NetVersion
+                && Package.Summary.EngineVersion >> 16 >= 1046)
+            {
+                if (PropertyFlags.HasFlag(PropertyFlag.Net) &&
+                    PropertyFlags.HasFlag(PropertyFlag.RepNotify))
+                {
+                    var v78 = stream.ReadObject();
+                    stream.Record(nameof(v78), v78);
+
+                    RepNotifyFuncName = v78?.Name ?? UnrealName.None;
+                }
+            }
+#endif
 #if HUXLEY
             if (stream.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {
@@ -682,6 +698,20 @@ namespace UELib.Core
             {
                 stream.Write(RepOffset);
             }
+#if BATTLEBORN
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn
+                // NetVersion
+                && Package.Summary.EngineVersion >> 16 >= 1046)
+            {
+                if (PropertyFlags.HasFlag(PropertyFlag.Net) &&
+                    PropertyFlags.HasFlag(PropertyFlag.RepNotify))
+                {
+                    // TODO: Look up by name, or, preserve the rep function object.
+                    Contract.Assert(RepNotifyFuncName.IsNone() == false);
+                    stream.WriteObject<UObject>(null); // v78
+                }
+            }
+#endif
 #if HUXLEY
             if (stream.Build == UnrealPackage.GameBuild.BuildName.Huxley)
             {

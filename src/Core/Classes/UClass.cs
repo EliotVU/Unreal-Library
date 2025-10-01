@@ -216,7 +216,8 @@ namespace UELib.Core
                     // platform specifier like 'platform(PC, Linux)'.
                     byte classPlatformFlags = stream.ReadByte();
                     stream.Record(nameof(classPlatformFlags), classPlatformFlags);
-                    if (classPlatformFlags != 0) LibServices.Debug(GetReferencePath() + ":classPlatformFlags", classPlatformFlags);
+                    if (classPlatformFlags != 0)
+                        LibServices.Debug(GetReferencePath() + ":classPlatformFlags", classPlatformFlags);
                 }
             }
             else
@@ -451,6 +452,10 @@ namespace UELib.Core
                     // Partially upgraded
                     && stream.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
 #endif
+#if BATTLEBORN
+                    && (stream.Build != UnrealPackage.GameBuild.BuildName.Battleborn ||
+                        stream.LicenseeVersion < 57)
+#endif
                    )
                 {
                     // bForceScriptOrder
@@ -467,21 +472,13 @@ namespace UELib.Core
                 }
 #endif
 #if BATTLEBORN
-                if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                    stream.LicenseeVersion >= 57)
                 {
-                    // Usually 0x03
-                    byte unknownByte = stream.ReadByte();
-                    stream.Record("Unknown:Battleborn", unknownByte);
-                    if (unknownByte != 0) LibServices.Debug(GetReferencePath() + ":unknownByte", unknownByte);
+                    byte v208 = stream.ReadByte(); // v208
+                    stream.Record(nameof(v208), v208);
 
-                    NativeHeaderName = stream.ReadString();
-                    stream.Record(nameof(NativeHeaderName), NativeHeaderName);
-
-                    // not verified
-                    ClassGroups = stream.ReadNameArray();
-                    stream.Record(nameof(ClassGroups), ClassGroups);
-
-                    goto skipClassGroups;
+                    ForceScriptOrder = v208 != 0;
                 }
 #endif
 #if DISHONORED
@@ -509,6 +506,15 @@ namespace UELib.Core
                     if (v1d4 != 0) LibServices.Debug(GetReferencePath() + ":v1d4 {0}", v1d4);
                 }
 #endif
+#if BATMAN
+                if (stream.Package.Build == BuildGeneration.RSS &&
+                    stream.LicenseeVersion >= 95)
+                {
+                    int bm_v174 = stream.ReadInt32();
+                    stream.Record(nameof(bm_v174), bm_v174);
+                    if (bm_v174 != 0) LibServices.Debug(GetReferencePath() + ":bm_v174 {0}", bm_v174);
+                }
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)
                 {
                     ClassGroups = stream.ReadNameArray();
@@ -521,8 +527,15 @@ namespace UELib.Core
                     stream.Record(nameof(NativeHeaderName), NativeHeaderName);
                 }
 
-            skipClassGroups:;
-
+            skipClassGroups: ;
+#if BATTLEBORN
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                    stream.Package.Summary.EngineVersion >> 16 >= 1053)
+                {
+                    stream.ReadArray(out UArray<UName> v1a8);
+                    stream.Record(nameof(v1a8), v1a8);
+                }
+#endif
                 // FIXME: Attested in many builds between 575 and 673 (UDK-2009), coincides with FPropertyTag bool change.
                 // This is apparently 'AutoCollapseCategories' (Confirmed to exist in UDK-2009 which has a lower version than the one that we currently have)
                 // However, need to run full tests on this for the special case 'builds'
@@ -548,17 +561,6 @@ namespace UELib.Core
                 }
 #endif
             }
-#if BATMAN
-            if (stream.Build == BuildGeneration.RSS)
-            {
-                if (stream.LicenseeVersion >= 95)
-                {
-                    int bm_v174 = stream.ReadInt32();
-                    stream.Record(nameof(bm_v174), bm_v174);
-                    if (bm_v174 != 0) LibServices.Debug(GetReferencePath() + ":bm_v174", bm_v174);
-                }
-            }
-#endif
 #if ROCKETLEAGUE
             if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                 stream.LicenseeVersion >= 21)
@@ -1035,6 +1037,10 @@ namespace UELib.Core
                     // Partially upgraded
                     && stream.Build != UnrealPackage.GameBuild.BuildName.Bioshock_Infinite
 #endif
+#if BATTLEBORN
+                    && (stream.Build != UnrealPackage.GameBuild.BuildName.Battleborn ||
+                        stream.LicenseeVersion < 57)
+#endif
                    )
                 {
                     // bForceScriptOrder
@@ -1049,17 +1055,10 @@ namespace UELib.Core
                 }
 #endif
 #if BATTLEBORN
-                if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                    stream.LicenseeVersion >= 57)
                 {
-                    // Usually 0x03
-                    stream.Write((byte)0x3);
-
-                    stream.WriteString(NativeHeaderName);
-
-                    // not verified
-                    stream.WriteArray(ClassGroups);
-
-                    goto skipClassGroups;
+                    stream.Write(ForceScriptOrder.Value ? 1 : 0); // v208
                 }
 #endif
 #if DISHONORED
@@ -1079,6 +1078,14 @@ namespace UELib.Core
                     //stream.Write(0); // v1d4
                 }
 #endif
+#if BATMAN
+                if (stream.Package.Build == BuildGeneration.RSS &&
+                    stream.LicenseeVersion >= 95)
+                {
+                    // bm_v174
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)
                 {
                     stream.WriteArray(ClassGroups);
@@ -1089,8 +1096,15 @@ namespace UELib.Core
                     stream.WriteString(NativeHeaderName);
                 }
 
-            skipClassGroups:;
-
+            skipClassGroups: ;
+#if BATTLEBORN
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn &&
+                    stream.Package.Summary.EngineVersion >> 16 >= 1053)
+                {
+                    // v1a8
+                    throw new NotSupportedException("This package version is not supported!");
+                }
+#endif
                 // FIXME: Attested in many builds between 575 and 673.
                 if (stream.Version > 575 && stream.Version < 673
 #if TERA
@@ -1114,16 +1128,6 @@ namespace UELib.Core
                 }
 #endif
             }
-#if BATMAN
-            if (stream.Build == BuildGeneration.RSS)
-            {
-                if (stream.LicenseeVersion >= 95)
-                {
-                    throw new NotSupportedException("This package version is not supported!");
-                    //stream.Write(int bm_v174);
-                }
-            }
-#endif
 #if ROCKETLEAGUE
             if (stream.Build == UnrealPackage.GameBuild.BuildName.RocketLeague &&
                 stream.LicenseeVersion >= 21)
@@ -1171,7 +1175,7 @@ namespace UELib.Core
 #if BORDERLANDS2 || BATTLEBORN
             if ((stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
                  stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn) &&
-                 stream.LicenseeVersion >= 45
+                stream.LicenseeVersion >= 45
                )
             {
                 throw new NotSupportedException("This package version is not supported!");
