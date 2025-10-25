@@ -25,7 +25,8 @@ namespace UELib.Branch.UE3.Willow
             base.PostDeserializePackage(linker, stream);
 
             if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                linker.Build == UnrealPackage.GameBuild.BuildName.ACM)
             {
                 linker.AddClassType("ByteAttributeProperty", typeof(UByteAttributeProperty));
                 linker.AddClassType("FloatAttributeProperty", typeof(UFloatAttributeProperty));
@@ -63,7 +64,8 @@ namespace UELib.Branch.UE3.Willow
             }
             else if (
                 linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                linker.Build == UnrealPackage.GameBuild.BuildName.ACM)
             {
                 tokenMap[0x4C] = typeof(LocalVariableToken<int>);
                 tokenMap[0x4D] = typeof(LocalVariableToken<float>);

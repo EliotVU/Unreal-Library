@@ -734,6 +734,15 @@ namespace UELib
                 Bulletstorm,
 
                 /// <summary>
+                /// Aliens: Colonial Marines
+                ///
+                /// 787/047
+                /// </summary>
+                [Build(787, 47)]
+                [BuildEngineBranch(typeof(EngineBranchWillow))]
+                ACM,
+
+                /// <summary>
                 /// 801/030
                 /// </summary>
                 [Build(801, 30)] Dishonored,
@@ -2266,6 +2275,26 @@ namespace UELib
                     }
                 }
 #endif
+#if ACM
+                if (stream.Package.Build == GameBuild.BuildName.ACM)
+                {
+                    short v64 = stream.ReadInt16();
+                    ushort v66 = stream.ReadUInt16();
+                    if ((v66 & 0x8000) != 0) // Always written with a | of 0x8000 (likely a compile-time constant)
+                    {
+                        short v68 = stream.ReadInt16();
+                        // Makes sense, very close to all UE3 games of the same package version.
+                        EngineVersion = v64;
+                    }
+                    else
+                    {
+                        // Hardcoded (base engine version?)
+                        EngineVersion = 4170;
+                    }
+
+                    goto skipEngineVersion;
+                }
+#endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedEngineVersion &&
                     stream.UE4Version == 0)
                 {
@@ -2273,6 +2302,7 @@ namespace UELib
                     EngineVersion = stream.ReadInt32();
                     Console.WriteLine("EngineVersion:" + EngineVersion);
                 }
+            skipEngineVersion:
 #if UE4
                 if (stream.UE4Version >= 336)
                 {
@@ -2447,6 +2477,13 @@ namespace UELib
                             exception));
                     }
                 }
+#if ACM
+                if (stream.Package.Build == GameBuild.BuildName.ACM &&
+                    stream.LicenseeVersion >= 38)
+                {
+                    int va8 = stream.ReadInt32();
+                }
+#endif
 #if BATTLEBORN
                 if (stream.Package.Build == GameBuild.BuildName.Battleborn &&
                     (PackageFlags & 0x08) == 0 &&
