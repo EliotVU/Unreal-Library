@@ -617,6 +617,16 @@ namespace UELib.Core
                 stream.Record(nameof(ClassGroups), ClassGroups);
             }
 #endif
+#if ACM
+            // Likely the same feature as seen with Borderlands
+            if (stream.Build == UnrealPackage.GameBuild.BuildName.ACM &&
+                stream.LicenseeVersion >= 47)
+            {
+                // '1' most of the time, but for the AttributeModifier class it is set at 44
+                byte v1c4 = stream.ReadByte();
+                stream.Record(nameof(v1c4), v1c4);
+            }
+#endif
 #if BORDERLANDS2 || BATTLEBORN
             if ((stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
                  stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn) &&

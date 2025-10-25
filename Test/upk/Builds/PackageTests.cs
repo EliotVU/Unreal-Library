@@ -282,6 +282,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.AHIT,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"Aliens Colonial Marines\",
+            BuildName.ACM,
+            BuildPlatform.Undetermined
+        )]
         public async Task TestPackages(
             string packagesPath,
             // The expected build name of the package.

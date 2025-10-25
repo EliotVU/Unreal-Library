@@ -63,11 +63,12 @@ namespace UELib.Core
         {
 #if BORDERLANDS2
             if (stream.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                stream.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                stream.Build == UnrealPackage.GameBuild.BuildName.ACM)
             {
                 ushort size = stream.ReadUShort();
                 stream.Skip(size * 2);
-                stream.Record("Unknown:Borderlands2", size);
+                stream.Record("SimpleLocalsOffsets", size);
             }
 #endif
             base.Deserialize(stream);

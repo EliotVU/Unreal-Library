@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageObjectExpansion", ".
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageObjectAddition", "..\Samples\PackageObjectAddition\PackageObjectAddition.csproj", "{028AF2EB-E890-4345-962A-0780A5A01247}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Decompilers", "Decompilers", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Decompilers", "Decompilers", "{ED71F387-04C3-4C20-80C7-2ACD07C00D11}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib.Decompiler", "..\Eliot.UELib.Decompiler\Eliot.UELib.Decompiler.csproj", "{C46032FD-D3AC-8E12-A8D5-E858E0C6A0EA}"
 EndProject
@@ -59,6 +59,22 @@ Global
 		{028AF2EB-E890-4345-962A-0780A5A01247}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{028AF2EB-E890-4345-962A-0780A5A01247}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{028AF2EB-E890-4345-962A-0780A5A01247}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C46032FD-D3AC-8E12-A8D5-E858E0C6A0EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C46032FD-D3AC-8E12-A8D5-E858E0C6A0EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C46032FD-D3AC-8E12-A8D5-E858E0C6A0EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C46032FD-D3AC-8E12-A8D5-E858E0C6A0EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{693D1121-97DC-9660-04E4-4AFD57C10C8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{693D1121-97DC-9660-04E4-4AFD57C10C8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{693D1121-97DC-9660-04E4-4AFD57C10C8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{693D1121-97DC-9660-04E4-4AFD57C10C8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{180CB18F-6596-1681-D9D1-E8F1B43771A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{180CB18F-6596-1681-D9D1-E8F1B43771A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{180CB18F-6596-1681-D9D1-E8F1B43771A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{180CB18F-6596-1681-D9D1-E8F1B43771A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D3E9739-222A-4F47-890C-995FA6697C9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D3E9739-222A-4F47-890C-995FA6697C9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D3E9739-222A-4F47-890C-995FA6697C9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D3E9739-222A-4F47-890C-995FA6697C9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
