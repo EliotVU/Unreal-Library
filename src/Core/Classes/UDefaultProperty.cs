@@ -32,8 +32,8 @@ namespace UELib.Core
         private const byte DoNotAppendName = 0x01;
         private const byte ReplaceNameMarker = 0x02;
 
-        private readonly UObject _Container;
-        private UStruct _Outer;
+        private readonly UObject _Container; // tag source
+        private UStruct _Outer; // class/struct of the tag source
         private bool _RecordingEnabled = true;
 
         // Temporary solution, needed so we can lazy-load the property value.
@@ -108,12 +108,11 @@ namespace UELib.Core
                 : $"{expr}={value}";
         }
 
-        private T? FindProperty<T>(out UStruct? outer)
+        private T? FindProperty<T>(UStruct outer, out UStruct? propertySource)
             where T : UProperty
         {
             UProperty property = null;
-            outer = _Outer ?? (UStruct)_Container.Class;
-            Debug.Assert(outer != null, nameof(outer) + " != null");
+            propertySource = null;
             foreach (var super in outer.EnumerateSuper(outer))
             {
                 foreach (var field in super
@@ -126,7 +125,7 @@ namespace UELib.Core
                     }
 
                     property = field;
-                    outer = super;
+                    propertySource = super;
                     break;
                 }
 
@@ -138,7 +137,7 @@ namespace UELib.Core
                 switch (property.Type)
                 {
                     case PropertyType.StructProperty:
-                        outer = ((UStructProperty)property).Struct;
+                        propertySource = ((UStructProperty)property).Struct;
                         break;
 
                     case PropertyType.ArrayProperty:
@@ -149,7 +148,7 @@ namespace UELib.Core
                         var arrayInnerField = arrayField.InnerProperty;
                         if (arrayInnerField?.Type == PropertyType.StructProperty)
                         {
-                            outer = ((UStructProperty)arrayInnerField).Struct;
+                            propertySource = ((UStructProperty)arrayInnerField).Struct;
                         }
 
                         break;
@@ -228,11 +227,12 @@ namespace UELib.Core
 
         #region Constructors
 
-        public UDefaultProperty(UObject owner, UStruct outer = null)
+        public UDefaultProperty(UObject owner, UStruct? outer = null)
         {
             _Container = owner;
-            _Outer = (outer ?? _Container as UStruct) ?? _Container.Outer as UStruct;
-
+            _Outer = outer ?? (UStruct)(_Container.Class ?? _Container);
+            Debug.Assert(_Outer != null);
+            
             Debug.Assert(owner.Buffer != null);
             _Buffer = owner.Buffer;
         }
@@ -517,7 +517,7 @@ namespace UELib.Core
                         _Buffer.Package.Build != UnrealPackage.GameBuild.BuildName.Batman3MP)
                     {
                         // Dirty hack...
-                        var prop = FindProperty<UProperty>(out var propertySource);
+                        var prop = FindProperty<UProperty>(_Outer, out _);
                         if (((UStructProperty)prop)?.Struct != null)
                         {
                             _TypeData.StructName = ((UStructProperty)prop).Struct.Name;
@@ -867,7 +867,7 @@ namespace UELib.Core
                 case PropertyType.StructProperty:
                     {
                         deserializeFlags |= DeserializeFlags.WithinStruct;
-                        FindProperty<UProperty>(out var propertySource);
+                        FindProperty<UProperty>(_Outer, out var propertySource);
 
                         if (UStructProperty.PropertyValueSerializer.CanSerializeStructUsingBinary(_Buffer))
                         {
@@ -891,7 +891,7 @@ namespace UELib.Core
                         }
 
                     nonAtomic:
-                        var tag = new UDefaultProperty(_Container, propertySource);
+                        var tag = new UDefaultProperty(_Container, propertySource ?? _Outer);
                         if (!tag.Deserialize())
                         {
                             return "()";
@@ -946,7 +946,7 @@ namespace UELib.Core
                         // Additionally we need to know the property to determine the array's type.
                         if (arrayType == PropertyType.None)
                         {
-                            var property = FindProperty<UArrayProperty>(out _Outer);
+                            var property = FindProperty<UArrayProperty>(_Outer, out _);
                             if (property?.InnerProperty != null)
                             {
                                 arrayType = property.InnerProperty.Type;
@@ -1027,7 +1027,7 @@ namespace UELib.Core
                         int count = _Buffer.ReadIndex();
                         Record(nameof(count), count);
 
-                        var property = FindProperty<UMapProperty>(out _Outer);
+                        var property = FindProperty<UMapProperty>(_Outer, out _);
                         if (property == null)
                         {
                             propertyValue = "// Unable to decompile Map data.";
@@ -1052,7 +1052,7 @@ namespace UELib.Core
                 case PropertyType.FixedArrayProperty:
                     {
                         // We require the InnerProperty to properly deserialize this data type.
-                        var property = FindProperty<UFixedArrayProperty>(out _Outer);
+                        var property = FindProperty<UFixedArrayProperty>(_Outer, out _);
                         if (property == null)
                         {
                             propertyValue = "// Unable to decompile FixedArray data.";
