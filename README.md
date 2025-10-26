@@ -196,7 +196,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Bulletstorm | 7052 | 742/029 | | ✅ |
 | Red Orchestra 2: Heroes of Stalingrad | 7258 | 765/Unknown | | ✅ |
 | Rising Storm 2: Vietnam | 7258 | 765/771 | | ✅ |
-| Aliens: Colonial Marines | 4170 | 787/047 | | ✅ |
+| Aliens: Colonial Marines | 7422 | 787/047 | | ✅ | | ✅ |
 | Infinity Blade 1 | 7595 | 788/001 | Console | ✅ |
 | [Dishonored](http://www.dishonored.com/) | 9099 | 801/030 |     | ✅ |
 | Tribes: Ascend | 7748 | 805/Unknown |     | ✅ |

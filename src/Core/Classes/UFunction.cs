@@ -45,13 +45,15 @@ namespace UELib.Core
 
         protected override void Deserialize()
         {
-#if BORDERLANDS2
+#if BORDERLANDS2 || ACM
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+                Package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                Package.Build == UnrealPackage.GameBuild.BuildName.ACM)
             {
+                // ACM: vb0 - SimpleLocalsOffsets
                 ushort size = _Buffer.ReadUShort();
                 _Buffer.Skip(size * 2);
-                Record("Unknown:Borderlands2", size);
+                Record("SimpleLocalsOffsets", size);
             }
 #endif
             base.Deserialize();
