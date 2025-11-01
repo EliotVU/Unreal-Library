@@ -50,7 +50,7 @@ jobs:
         NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
 
     - name: Publish Eliot.UELib to GitHub
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: Eliot.UELib
         path: ${{ steps.nuget.outputs.PACKAGE_PATH }}/${{ steps.nuget.outputs.PACKAGE_NAME }}
