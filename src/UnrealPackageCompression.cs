@@ -97,7 +97,7 @@ namespace UELib
         {
             Tag = stream.ReadUInt32();
             ChunkSize = stream.ReadInt32();
-            if ((uint)ChunkSize == UnrealPackage.Signature)
+            if ((uint)ChunkSize == UnrealFile.Signature)
             {
                 ChunkSize = 0x20000;
             }

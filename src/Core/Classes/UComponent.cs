@@ -1,6 +1,4 @@
-﻿using UELib;
-using UELib.Branch;
-using UELib.Core;
+﻿using UELib.Branch;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
 
@@ -52,18 +50,18 @@ namespace UELib.Core
             }
         }
     }
+
+    /// <summary>
+    ///     Implements UDistributionFloat/Core.DistributionFloat
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UDistributionFloat : UComponent;
+
+    /// <summary>
+    ///     Implements UDistributionVector/Core.DistributionVector
+    /// </summary>
+    [UnrealRegisterClass]
+    [BuildGeneration(BuildGeneration.UE3)]
+    public class UDistributionVector : UComponent;
 }
-
-/// <summary>
-///     Implements UDistributionFloat/Core.DistributionFloat
-/// </summary>
-[UnrealRegisterClass]
-[BuildGeneration(BuildGeneration.UE3)]
-public class UDistributionFloat : UComponent;
-
-/// <summary>
-///     Implements UDistributionVector/Core.DistributionVector
-/// </summary>
-[UnrealRegisterClass]
-[BuildGeneration(BuildGeneration.UE3)]
-public class UDistributionVector : UComponent;

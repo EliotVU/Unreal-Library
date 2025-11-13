@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using UELib;
+﻿using UELib;
 using UELib.Branch;
 using UELib.Core;
 using UELib.Decoding;

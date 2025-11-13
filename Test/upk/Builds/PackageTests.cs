@@ -1,6 +1,7 @@
 ﻿using UELib;
 using UELib.Core;
 using UELib.Engine;
+using UELib.ObjectModel.Annotations;
 using UELib.Services;
 using static UELib.UnrealPackage.GameBuild;
 
@@ -321,6 +322,11 @@ namespace Eliot.UELib.Test.Builds
 
             var versions = new SortedSet<uint>();
 
+            var environment = new UnrealPackageEnvironment(Path.GetDirectoryName(packagesPath), [packagesPath]);
+            environment.AddUnrealClasses();
+
+            var fileProvider = new UnrealFilePackageProvider(environment, UnrealExtensions.Common);
+
 #if DEBUG
             const int maxTasks = 1;
 #else
@@ -341,11 +347,10 @@ namespace Eliot.UELib.Test.Builds
                         }
 
                         using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        using var package = new UnrealPackage(fileStream, filePath)
-                        {
-                            BuildTarget = forcedBuild
-                        };
+                        using var archive = new UnrealPackageArchive(fileStream, filePath, environment);
 
+                        var package = archive.Package;
+                        package.BuildTarget = forcedBuild;
                         package.Deserialize();
 
                         versions.Add((package.Summary.Version << 16) | package.Summary.LicenseeVersion);
@@ -377,7 +382,8 @@ namespace Eliot.UELib.Test.Builds
                             return;
                         }
 
-                        AssertPackage(package, exceptions);
+                        var linker = new UnrealPackageLinker(package, fileProvider);
+                        AssertPackage(package, linker, exceptions);
 
                         // Re-serialize the package to test serialization.
                         if (shouldTestSerialization)
@@ -523,38 +529,37 @@ namespace Eliot.UELib.Test.Builds
             await TestPackages(packagesPath, packagesBuild, packagesPlatform, forcedBuild, forcedGeneration, shouldTestSerialization);
         }
 
-        private static void AssertPackage(UnrealPackage linker, List<Exception> exceptions)
+        private static void AssertPackage(UnrealPackage package, UnrealPackageLinker linker, List<Exception> exceptions)
         {
             try
             {
-                linker.InitializePackage(UnrealPackage.InitFlags.Construct |
-                                         UnrealPackage.InitFlags.RegisterClasses);
+                linker.Preload(InternalClassFlags.Default); // just construct
             }
             catch (Exception exception)
             {
-                exceptions.Add(new NotSupportedException($"'{linker.FullPackageName}' package exception", exception));
+                exceptions.Add(new NotSupportedException($"'{package.FullPackageName}' package exception", exception));
 
                 return;
             }
 
-            AssertObjects(linker.Objects.Where(obj => (int)obj > 0));
+            AssertObjects(package.Objects.Where(obj => ((UPackageIndex)obj).IsExport));
 
-            exceptions.AddRange(linker.Objects
+            exceptions.AddRange(package.Objects
                 .Where(obj => obj.ThrownException != null)
-                .Select(obj => new NotSupportedException($"'{linker.FullPackageName}' object exception", obj.ThrownException)));
+                .Select(obj => new NotSupportedException($"'{package.FullPackageName}' object exception", obj.ThrownException)));
 
             return;
 
             void TryLoadObject(UObject obj)
             {
-                if (obj.DeserializationState != 0)
+                if (obj.DeserializationState != default)
                 {
                     return;
                 }
 
                 //try
                 //{
-                obj.Load();
+                linker.Preload(obj);
                 //}
                 //catch (Exception exception)
                 //{
@@ -586,13 +591,13 @@ namespace Eliot.UELib.Test.Builds
             {
                 var exportObjects = objects.ToList();
                 var compatibleExports = exportObjects
-                    .Where(exp => exp is not UnknownObject)
+                    .Where(obj => obj is not UnknownObject)
                     .ToList();
 
                 compatibleExports.ForEach(TryLoadObject);
 
                 var incompatibleExports = exportObjects
-                    .Where(exp => exp is UnknownObject)
+                    .Where(obj => obj is UnknownObject)
                     .ToList();
 
                 if (incompatibleExports.Count == 0)
@@ -600,7 +605,7 @@ namespace Eliot.UELib.Test.Builds
                     return;
                 }
 
-                Console.WriteLine($@"Found {incompatibleExports.Count} unrecognized exports in '{linker.FullPackageName}'");
+                Console.WriteLine($@"Found {incompatibleExports.Count} unrecognized exports in '{package.FullPackageName}'");
 
                 var incompatibleClasses =
                     incompatibleExports

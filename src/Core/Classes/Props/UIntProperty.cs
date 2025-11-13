@@ -1,3 +1,4 @@
+using UELib.ObjectModel.Annotations;
 using UELib.Types;
 
 namespace UELib.Core

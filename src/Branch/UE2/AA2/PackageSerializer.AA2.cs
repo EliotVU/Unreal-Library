@@ -76,26 +76,36 @@ namespace UELib.Branch.UE2.AA2
         {
             item.ClassPackageName = stream.ReadName();
             item.ClassName = stream.ReadName();
-            byte unkByte = stream.ReadByte();
-            Debug.WriteLine(unkByte, "unkByte");
-            item.ObjectName = stream.ReadName();
+            
+            // FNameEntry* Entry = GNames[ClassName.Index];
+            // ushort checkVal   = *(ushort*)((byte*)Entry + 0xC);
+
+            // b = (byte)checkVal;
+            // Ar << b;
+
+            // if (b != ((byte)(checkVal)))
+            // {
+            //     exit(0);
+            // }
+            byte classNameHashByte = stream.ReadByte(); // 80 for RootPackage, 67 for others
+            
+            item.ObjectName = stream.ReadName(); // 0xC
             item.OuterIndex = stream.ReadInt32();
+
+            // C# CRC32 is no exact match to the UE's implementation.
+            Debug.WriteLine($"ClassName hash {item.ObjectName} {classNameHashByte}/{(byte)item.ClassName.Index}");
         }
 
         public override void Serialize(IUnrealStream stream, UExportTableItem item)
         {
             stream.WriteIndex(item.SuperIndex);
-
-            LibServices.LogService.SilentException(
-                new NotSupportedException("Missing an integer at " + stream.Position));
-            stream.Skip(4);
-
+            stream.Write((uint)((int)DateTime.Now.ToFileTime() + new Random().Next())); // v0c
             stream.WriteIndex(item.ClassIndex);
             stream.Write((int)item.OuterIndex);
             stream.Write(~(uint)item.ObjectFlags);
             stream.Write(item.ObjectName);
             stream.WriteIndex(item.SerialSize);
-            if (item.SerialSize > 0)
+            if (item.SerialSize != 0)
             {
                 stream.WriteIndex(item.SerialOffset);
             }
@@ -104,14 +114,13 @@ namespace UELib.Branch.UE2.AA2
         public override void Deserialize(IUnrealStream stream, UExportTableItem item)
         {
             item.SuperIndex = stream.ReadIndex();
-            int unkInt = stream.ReadInt32();
-            Debug.WriteLine(unkInt, "unkInt");
+            stream.ReadUInt32(); // v0c: time() + rand()
             item.ClassIndex = stream.ReadIndex();
             item.OuterIndex = stream.ReadInt32();
             item.ObjectFlags = ~stream.ReadUInt32();
             item.ObjectName = stream.ReadName();
             item.SerialSize = stream.ReadIndex();
-            if (item.SerialSize > 0)
+            if (item.SerialSize != 0)
             {
                 item.SerialOffset = stream.ReadIndex();
             }

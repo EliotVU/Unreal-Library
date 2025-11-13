@@ -20,18 +20,34 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
     /// </summary>
     public Dictionary<int, int> NameIndices { get; } = new(1000);
 
-    public UnrealPackageArchive(UnrealPackage package) => Package = package;
-
-    public UnrealPackageArchive(FileStream stream)
+    public UnrealPackageArchive(UnrealPackage package, UnrealPackageEnvironment environment)
     {
-        Package = new UnrealPackage(this, stream.Name);
-        Stream = new UnrealPackageStream(this, stream);
+        Package = package;
+        Environment = environment;
     }
 
     public UnrealPackageArchive(Stream stream, string fileName)
     {
-        Package = new UnrealPackage(this, fileName);
         Stream = new UnrealPackageStream(this, stream);
+        Environment = new UnrealPackageEnvironment(fileName, [Path.GetDirectoryName(fileName)]);
+        Package = new UnrealPackage(this, fileName);
+
+        if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
+        {
+            Flags |= UnrealArchiveFlags.BigEndian;
+        }
+    }
+
+    public UnrealPackageArchive(Stream stream, string fileName, UnrealPackageEnvironment environment)
+    {
+        Stream = new UnrealPackageStream(this, stream);
+        Environment = environment;
+        Package = new UnrealPackage(this, fileName);
+
+        if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
+        {
+            Flags |= UnrealArchiveFlags.BigEndian;
+        }
     }
 
     public IBufferDecoder? Decoder
@@ -55,6 +71,7 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
     public UnrealPackageStream Stream { get; set; }
 
     public UnrealPackage Package { get; }
+    public UnrealPackageEnvironment Environment { get; }
 
     public uint Version => Package.Summary.Version;
     public uint LicenseeVersion => Package.Summary.LicenseeVersion;
@@ -67,6 +84,8 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
 
     public void Dispose()
     {
-        Package.Dispose(); // Will also depose the stream.
+        Stream?.Dispose();
+
+        Package.Dispose();
     }
 }

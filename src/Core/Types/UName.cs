@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.Hashing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -212,10 +213,12 @@ public sealed class IndexName(string text, int index)
 
     internal static int ToIndex(string text)
     {
-#if NETCOREAPP2_1_OR_GREATER
-        return text.GetHashCode(StringComparison.OrdinalIgnoreCase);
-#else
-        return text.ToLowerInvariant().GetHashCode();
+        Span<byte> dest = stackalloc byte[4];
+        Crc32.Hash(UnrealEncoding.ANSI.GetBytes(text), dest);
+        int checksum = BitConverter.ToInt32(dest.ToArray(), 0);
+        return checksum;
+#if false
+        return StringComparer.OrdinalIgnoreCase.GetHashCode(text);
 #endif
     }
 

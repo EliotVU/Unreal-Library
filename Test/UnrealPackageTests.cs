@@ -1,18 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Reflection;
 using UELib;
 using UELib.Core;
 using UELib.Engine;
+using UELib.ObjectModel.Annotations;
 
 namespace Eliot.UELib.Test
 {
+    [UnrealRegisterClass]
+    public class UMyClass: UClass;
+    
     [TestClass]
     public class UnrealPackageTests
     {
         public class MyUModel : UModel;
 
+        // Legacy approach
         [TestMethod]
         public void TestClassTypeOverride()
         {
@@ -32,126 +34,55 @@ namespace Eliot.UELib.Test
             Assert.IsTrue(package2.GetClassType("Model") == typeof(UModel));
             package2.AddClassType("Model", typeof(MyUModel));
             Assert.IsTrue(package2.GetClassType("Model") == typeof(MyUModel));
+
+            // Using attributes in a custom assembly.
+            package2.Archive.Environment.AddUnrealClasses(Assembly.GetExecutingAssembly());
+            Assert.AreEqual(typeof(UMyClass), package2.GetClassType("MyClass"));
         }
 
-        internal static void AssertTestClass(UnrealPackage linker)
+        [TestMethod]
+        public void TestClassTypeOverrideUsingEnvironment()
         {
-            var testClass = linker.FindObject<UClass>("Test");
+            using var assemblyEnvironment = new UnrealPackageEnvironment("", []);
+
+            assemblyEnvironment.AddUnrealClasses(Assembly.GetExecutingAssembly());
+            Assert.AreEqual(typeof(UMyClass), (Type)assemblyEnvironment.ObjectContainer.Find<UClass>(new UName("MyClass"))!);
+            
+            using var manualEnvironment = new UnrealPackageEnvironment("", []);
+
+            // With class attribute
+            manualEnvironment.AddUnrealClass<UMyClass>();
+            Assert.AreEqual(typeof(UMyClass), (Type)manualEnvironment.ObjectContainer.Find<UClass>(new UName("MyClass"))!);
+
+            // Without class attribute
+            manualEnvironment.AddUnrealClasses(Assembly.GetAssembly(typeof(UnrealPackage))!); // Required base classes
+            manualEnvironment.AddUnrealClass<MyUModel>("Model", "Engine", "Object");
+            Assert.AreEqual(typeof(MyUModel), (Type)manualEnvironment.ObjectContainer.Find<UClass>(new UName("Model"))!);
+        }
+
+        internal static void AssertTestClass(UnrealPackage package)
+        {
+            var testClass = package.FindObject<UClass>("Test");
             Assert.IsNotNull(testClass);
 
             // Validate that Public/Protected/Private are correct and distinguishable.
-            var publicProperty = linker.FindObject<UIntProperty>("Public");
+            var publicProperty = package.FindObject<UIntProperty>("Public");
             Assert.IsNotNull(publicProperty);
             Assert.IsTrue(publicProperty.IsPublic());
             Assert.IsFalse(publicProperty.IsProtected());
             Assert.IsFalse(publicProperty.IsPrivate());
 
-            var protectedProperty = linker.FindObject<UIntProperty>("Protected");
+            var protectedProperty = package.FindObject<UIntProperty>("Protected");
             Assert.IsNotNull(protectedProperty);
             Assert.IsTrue(protectedProperty.IsPublic());
             Assert.IsTrue(protectedProperty.IsProtected());
             Assert.IsFalse(protectedProperty.IsPrivate());
 
-            var privateProperty = linker.FindObject<UIntProperty>("Private");
+            var privateProperty = package.FindObject<UIntProperty>("Private");
             Assert.IsNotNull(privateProperty);
             Assert.IsFalse(privateProperty.IsPublic());
             Assert.IsFalse(privateProperty.IsProtected());
             Assert.IsTrue(privateProperty.IsPrivate());
-        }
-
-        internal static void AssertScriptDecompile(UStruct scriptInstance)
-        {
-            try
-            {
-                var decompiler = new UStruct.UByteCodeDecompiler(scriptInstance);
-                decompiler.Decompile();
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(
-                    $"Token decompilation exception in script instance {scriptInstance.GetReferencePath()}: {ex.Message}");
-            }
-
-            foreach (var subScriptInstance in scriptInstance
-                         .EnumerateFields()
-                         .OfType<UStruct>())
-            {
-                try
-                {
-                    // ... for states
-                    AssertScriptDecompile(subScriptInstance);
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail($"Token decompilation exception in script instance {subScriptInstance.GetReferencePath()}: {ex.Message}");
-                }
-            }
-        }
-
-        internal static UObject AssertDefaultPropertiesClass(UnrealPackage linker)
-        {
-            var testClass = linker.FindObject<UClass>("DefaultProperties");
-            Assert.IsNotNull(testClass);
-
-            var defaults = testClass.Default ?? testClass;
-            defaults.Load();
-
-            return defaults;
-        }
-
-        internal static void AssertPropertyTagFormat(UObject obj, string tagName, string expectedFormat)
-        {
-            Assert.IsNotNull(obj.Properties);
-            var tag = obj.Properties.Find(tagName);
-            Assert.IsNotNull(tag, $"Couldn't find property tag of '{tagName}'");
-            string colorValue = tag.DeserializeValue();
-            Assert.AreEqual(expectedFormat, colorValue, $"tag '{tagName}'");
-        }
-
-        internal static void AssertExportsOfType<T>(IEnumerable<UObject> objects)
-            where T : UObject
-        {
-            var textures = objects.OfType<T>()
-                .ToList();
-            Assert.IsTrue(textures.Any());
-            textures.ForEach(AssertObjectDeserialization);
-        }
-
-        internal static void AssertExports(IEnumerable<UObject> objects)
-        {
-            var compatibleExports = objects.Where(exp => exp is not UnknownObject)
-                .ToList();
-            Assert.IsTrue(compatibleExports.Any());
-            compatibleExports.ForEach(AssertObjectDeserialization);
-        }
-
-        internal static void AssertObjectDeserialization(UObject obj)
-        {
-            if (obj.DeserializationState == 0)
-            {
-                obj.Load();
-            }
-
-            Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialized, obj.GetReferencePath());
-        }
-
-        internal static void AssertTokenType<T>(UStruct.UByteCodeDecompiler.Token token)
-            where T : UStruct.UByteCodeDecompiler.Token
-        {
-            Assert.AreEqual(typeof(T), token.GetType());
-        }
-
-        internal static void AssertTokenType(UStruct.UByteCodeDecompiler.Token token, Type tokenType)
-        {
-            Assert.AreEqual(tokenType, token.GetType());
-        }
-
-        internal static void AssertTokens(UStruct.UByteCodeDecompiler decompiler, params Type[] tokenTypesSequence)
-        {
-            foreach (var tokenType in tokenTypesSequence)
-            {
-                AssertTokenType(decompiler.NextToken, tokenType);
-            }
         }
     }
 }

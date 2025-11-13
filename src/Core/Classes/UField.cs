@@ -33,11 +33,6 @@ namespace UELib.Core
 
         #endregion
 
-        public UField() : base()
-        {
-            InternalFlags |= InternalClassFlags.Preload;
-        }
-
         public override void Deserialize(IUnrealStream stream)
         {
             base.Deserialize(stream);

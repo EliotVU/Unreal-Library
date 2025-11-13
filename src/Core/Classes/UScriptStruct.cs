@@ -1,5 +1,6 @@
 using UELib.Branch;
 using UELib.Flags;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Core
 {

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.IO;
-using System.Linq;
+﻿using System.Diagnostics.Contracts;
 using Eliot.UELib.Test.Builds;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Branch;
 using UELib.Core;
@@ -23,7 +18,7 @@ public class UnrealPackageSerializationTests
     [DataRow(PackageObjectLegacyVersion.HighestVersion)]
     public void TestPackageNamesSerialization(PackageObjectLegacyVersion version)
     {
-        using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
+        using var sourcePackage = PackageTestsUDK.GetScriptPackage();
         Assert.IsNotNull(sourcePackage);
 
         using var archive = UnrealPackageUtilities.CreateTempArchive(version);
@@ -59,7 +54,7 @@ public class UnrealPackageSerializationTests
     [DataRow(PackageObjectLegacyVersion.HighestVersion)]
     public void TestPackageImportsSerialization(PackageObjectLegacyVersion version)
     {
-        using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
+        using var sourcePackage = PackageTestsUDK.GetScriptPackage();
         Assert.IsNotNull(sourcePackage);
 
         using var archive = UnrealPackageUtilities.CreateTempArchive(version);
@@ -104,7 +99,7 @@ public class UnrealPackageSerializationTests
     [DataRow(PackageObjectLegacyVersion.HighestVersion)]
     public void TestPackageExportsSerialization(PackageObjectLegacyVersion version)
     {
-        using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
+        using var sourcePackage = PackageTestsUDK.GetScriptPackage();
         Assert.IsNotNull(sourcePackage);
 
         using var archive = UnrealPackageUtilities.CreateTempArchive(version);
@@ -156,7 +151,7 @@ public class UnrealPackageSerializationTests
     [DataRow(PackageObjectLegacyVersion.HighestVersion)]
     public void TestPackageSerialization(PackageObjectLegacyVersion version)
     {
-        using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
+        using var sourcePackage = PackageTestsUDK.GetScriptPackage();
         Assert.IsNotNull(sourcePackage);
 
         using var archive = UnrealPackageUtilities.CreateTempArchive(version);
@@ -195,7 +190,7 @@ public class UnrealPackageSerializationTests
     [TestMethod]
     public void TestPackageSaving()
     {
-        using var sourcePackage = PackageTestsUDK.GetScriptPackageLinker();
+        using var sourcePackage = PackageTestsUDK.GetScriptPackage();
         Assert.IsNotNull(sourcePackage);
 
         // Create a new temporary package to contain a copy of the test package.

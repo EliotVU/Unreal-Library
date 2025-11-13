@@ -12,12 +12,12 @@ public enum InternalClassFlags
     Default = LazyLoad,
 
     /// <summary>
-    /// The object should not be pre-loaded, instead a manual call to <see cref="UObject.Load"/> is required.
+    /// The object should not be preloaded, instead a manual call to <see cref="UObject.Load"/> is required.
     /// </summary>
     LazyLoad = 0,
 
     /// <summary>
-    /// The object should be pre-loaded using an ordinary call to <see cref="UObject.Load"/> as soon as the object is constructed from an export.
+    /// The object should be preloaded using an ordinary call to <see cref="UObject.Load"/> as soon as the object is constructed from an export.
     /// </summary>
     Preload = 1 << 0,
 
@@ -39,9 +39,11 @@ public enum InternalClassFlags
     PreloadTaggedProperties = 1 << 3,
 
     /// <summary>
-    /// An intrinsic class, objects of this class are crucial to the inner-workings of objects, and must be pre-loaded.
+    /// An intrinsic class, objects of this class are crucial to the inner-workings of objects, and must be preloaded.
     /// </summary>
     Intrinsic = Preload,
+
+    Inherit = LinkAttributedProperties | LinkTaggedProperties | PreloadTaggedProperties,
 }
 
 /// <summary>
@@ -54,71 +56,67 @@ public enum InternalClassFlags
 public class UnrealClassAttribute : Attribute
 {
     public readonly UName ClassName;
-    public readonly UName SuperName;
-    public readonly UName PackageName;
+    public readonly UName ClassPackageName;
+    public readonly UName SuperClassName;
     public readonly InternalClassFlags InternalClassFlags;
     public readonly ClassFlag[] ClassFlags;
-
-    // FIXME: Convenient, but this data is not preserved when retrying an attribute by using the GetCustomAttribute method.
-    private UClass _StaticClass;
 
     public UnrealClassAttribute()
     {
         InternalClassFlags = InternalClassFlags.Default;
         ClassFlags = [ClassFlag.Intrinsic];
     }
-
+    
+    public UnrealClassAttribute(
+        InternalClassFlags internalClassFlags = InternalClassFlags.Default,
+        params ClassFlag[] classFlags)
+    {
+        InternalClassFlags = internalClassFlags;
+        ClassFlags = [ClassFlag.Intrinsic, .. classFlags];
+    }
+    
     public UnrealClassAttribute(
         string className,
-        string packageName,
+        string classPackageName,
         InternalClassFlags internalClassFlags = InternalClassFlags.Default,
         params ClassFlag[] classFlags)
     {
         Debug.Assert(!string.IsNullOrEmpty(className));
-        Debug.Assert(!string.IsNullOrEmpty(packageName));
+        Debug.Assert(!string.IsNullOrEmpty(classPackageName));
 
         ClassName = new UName(className);
-        SuperName = UnrealName.None;
-        PackageName = new UName(packageName);
+        ClassPackageName = new UName(classPackageName);
         InternalClassFlags = internalClassFlags;
         ClassFlags = [ClassFlag.Intrinsic, .. classFlags];
     }
 
     public UnrealClassAttribute(
         string className,
+        string classPackageName,
         string superName,
-        string packageName,
         InternalClassFlags internalClassFlags = InternalClassFlags.Default,
         params ClassFlag[] classFlags)
     {
         Debug.Assert(!string.IsNullOrEmpty(className));
         Debug.Assert(!string.IsNullOrEmpty(superName));
-        Debug.Assert(!string.IsNullOrEmpty(packageName));
+        Debug.Assert(!string.IsNullOrEmpty(classPackageName));
 
         ClassName = new UName(className);
-        SuperName = new UName(superName);
-        PackageName = new UName(packageName);
+        ClassPackageName = new UName(classPackageName);
+        SuperClassName = new UName(superName);
         InternalClassFlags = internalClassFlags;
         ClassFlags = [ClassFlag.Intrinsic, .. classFlags];
     }
 
-    public UClass GetStaticClass()
-    {
-        Debug.Assert(_StaticClass != null);
-        return _StaticClass;
-    }
-
     public UClass CreateStaticClass(Type internalClassType, UName className)
     {
-        Debug.Assert(_StaticClass == null);
         var staticClass = new UClass
         {
-            _InternalType = internalClassType,
             Name = className,
             InternalFlags = InternalClassFlags,
+            InternalType = internalClassType,
         };
 
-        _StaticClass = staticClass;
         return staticClass;
     }
 }

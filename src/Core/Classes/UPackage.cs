@@ -1,3 +1,5 @@
+using UELib.ObjectModel.Annotations;
+
 namespace UELib.Core
 {
     /// <summary>

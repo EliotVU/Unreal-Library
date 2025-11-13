@@ -1,4 +1,5 @@
 ﻿using UELib.Core;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Branch.UE3.SFX.Classes
 {

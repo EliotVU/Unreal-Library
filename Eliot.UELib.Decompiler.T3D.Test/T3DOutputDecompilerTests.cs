@@ -14,7 +14,7 @@ namespace Eliot.UELib.Decompiler.T3D.Test
         [TestMethod]
         public void DecompileObjectToT3DTest()
         {
-            using var linker = PackageTestsUT2004.GetMapPackageLinker("DM-Rankin.ut2");
+            using var linker = PackageTestsUT2004.GetMapPackage("DM-Rankin.ut2");
             linker.InitializePackage();
 
             var polysObjects = linker.Objects.OfType<UPolys>();
@@ -34,7 +34,7 @@ namespace Eliot.UELib.Decompiler.T3D.Test
         [TestMethod]
         public void ObjectTo3DTreeTest()
         {
-            using var linker = PackageTestsUT2004.GetMapPackageLinker("DM-Rankin.ut2");
+            using var linker = PackageTestsUT2004.GetMapPackage("DM-Rankin.ut2");
             linker.InitializePackage();
 
             var polysObjects = linker.Objects.OfType<UPolys>();

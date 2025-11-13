@@ -14,9 +14,9 @@ namespace UELib
         public static UnrealPackage LoadPackage(FileStream fileStream)
         {
             string packagePath = fileStream.Name;
-            var package = new UnrealPackage(fileStream, packagePath);
-            package.Deserialize();
-            return package;
+            var archive = new UnrealPackageArchive(fileStream, packagePath);
+            archive.Package.Deserialize();
+            return archive.Package;
         }
 
         public static UnrealPackage LoadPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
@@ -32,10 +32,10 @@ namespace UELib
             FileAccess fileAccess = FileAccess.Read)
         {
             var fileStream = new FileStream(packagePath, FileMode.Open, fileAccess, FileShare.Read);
-            var package = new UnrealPackage(fileStream, packagePath);
-            package.BuildTarget = buildTarget;
-            package.Deserialize();
-            return package;
+            var archive = new UnrealPackageArchive(fileStream, packagePath);
+            archive.Package.BuildTarget = buildTarget;
+            archive.Package.Deserialize();
+            return archive.Package;
         }
 
         /// <summary>
@@ -47,9 +47,9 @@ namespace UELib
         {
             var fileStream = new FileStream(packagePath, FileMode.Open, fileAccess, FileShare.Read);
             var encodedStream = new EncodedStream(fileStream, decoder);
-            var package = new UnrealPackage(encodedStream, packagePath);
-            package.Deserialize();
-            return package;
+            var archive = new UnrealPackageArchive(encodedStream, packagePath);
+            archive.Package.Deserialize();
+            return archive.Package;
         }
 
         /// <summary>

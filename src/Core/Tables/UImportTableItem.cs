@@ -36,8 +36,8 @@ namespace UELib
         public UImportTableItem(UObject @object)
         {
             var package = @object.Package;
-            OuterIndex = @object.Outer == package.RootPackage // RootPackage is always null
-                ? UPackageIndex.Null
+            OuterIndex = @object.Outer == package.RootPackage
+                ? UPackageIndex.Null // RootPackage is always null
                 : @object.Outer;
 
             ClassPackageName = @object.Class?.Package.RootPackage.Name ?? UnrealName.Core;

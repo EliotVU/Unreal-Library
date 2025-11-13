@@ -24,7 +24,7 @@ namespace UELib.Core
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable,
                                    IComparable
     {
-        public InternalClassFlags InternalFlags { get; set; } = InternalClassFlags.Default;
+        internal InternalClassFlags InternalFlags { get; set; } = InternalClassFlags.Default;
 
         /// <summary>
         ///     The name for this object.
@@ -148,11 +148,7 @@ namespace UELib.Core
 
         #endregion
 
-        public UObject()
-        {
-            // TODO: Source generator or copy the internals from the static class.
-            InternalFlags = GetType().GetCustomAttributes<UnrealClassAttribute>().LastOrDefault()?.InternalClassFlags ?? InternalClassFlags.Default;
-        }
+        public UObject() { }
 
         public UObject(UnrealPackage package, UPackageIndex packageIndex) : this()
         {
@@ -808,9 +804,25 @@ namespace UELib.Core
                 return $"{ImportResource.ClassName}'{GetPath()}'";
             }
 
-            return Class != null
-                ? $"{Class.Name}'{GetPath()}'"
-                : $"Class'{GetPath()}'";
+            Debug.Assert(Class != null, "Class cannot be null");
+            return $"{Class.Name}'{GetPath()}'";
+        }
+
+        public bool InheritsStaticClass(UClass superClass)
+        {
+#if NET5_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(superClass, nameof(superClass));
+#endif
+            Debug.Assert(Class != null);
+            for (var @class = Class; @class != null; @class = (UClass)@class.Super)
+            {
+                if (ReferenceEquals(@class, superClass))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         #region IBuffered
@@ -875,7 +887,7 @@ namespace UELib.Core
         public override int GetHashCode()
         {
             // ReSharper disable once NonReadonlyMemberInGetHashCode
-            return PackageIndex;
+            return Name.GetHashCode();
         }
 
         public void Dispose()

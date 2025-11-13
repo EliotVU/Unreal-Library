@@ -7,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using UELib.Annotations;
 using UELib.Branch;
 using UELib.Branch.UE2.AA2;
 using UELib.Branch.UE2.CT;
@@ -34,19 +33,13 @@ using UELib.Decoding;
 using UELib.Flags;
 using UELib.Services;
 using UELib.IO;
-using UELib.ObjectModel;
 using UELib.ObjectModel.Annotations;
 
 namespace UELib
 {
-    public class ObjectEventArgs : EventArgs
+    public class ObjectEventArgs(UObject objectRef) : EventArgs
     {
-        public UObject ObjectRef { get; }
-
-        public ObjectEventArgs(UObject objectRef)
-        {
-            ObjectRef = objectRef;
-        }
+        public UObject ObjectRef { get; } = objectRef;
     }
 
     /// <summary>
@@ -76,7 +69,10 @@ namespace UELib
     /// </summary>
     public sealed partial class UnrealPackage : IDisposable, IBinaryData
     {
+        [Obsolete("Use UnrealFile.Signature instead")]
         public const uint Signature = UnrealFile.Signature;
+        
+        [Obsolete("Use UnrealFile.BigEndianSignature instead")]
         public const uint Signature_BigEndian = UnrealFile.BigEndianSignature;
 
         public readonly UPackage RootPackage;
@@ -93,6 +89,22 @@ namespace UELib
         /// This helps make it easier to re-wrap a package stream and keep track of it.
         /// </summary>
         public readonly UnrealPackageArchive Archive;
+
+        private UnrealPackageLinker? _Linker;
+        internal UnrealPackageLinker Linker
+        {
+            private get
+            {
+                // For backward compatibility we create a default linker if none was assigned.
+                return _Linker ??= new UnrealPackageLinker(this,
+                    new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
+            }
+
+            set
+            {
+                _Linker = value;
+            }
+        }
 
         /// <summary>
         /// The full name of this package including directory.
@@ -2589,7 +2601,7 @@ namespace UELib
         /// <summary>
         /// Whether the package was serialized in BigEndian encoding.
         /// </summary>
-        [Obsolete] public bool IsBigEndianEncoded { get; }
+        [Obsolete("Deprecated", true)] public bool IsBigEndianEncoded { get; }
 
         [Obsolete] public const int VSIZEPREFIXDEPRECATED = 64;
 
@@ -2666,11 +2678,6 @@ namespace UELib
         public UArray<UObjectThumbnailTableItem> ObjectThumbnails { get; private set; } = [];
 
         /// <summary>
-        /// Class types that should get added to the ObjectsList.
-        /// </summary>
-        private readonly Dictionary<string, Type> _ClassTypes = new();
-
-        /// <summary>
         /// List of UObjects that were constructed by function ConstructObjects, later deserialized and linked.
         ///
         /// Includes Exports and Imports!.
@@ -2686,7 +2693,6 @@ namespace UELib
         /// A Collection of flags describing how a package should be initialized.
         /// </summary>
         [Flags]
-        [Obfuscation(Exclude = true)]
         public enum InitFlags : ushort
         {
             Construct = 0x0001,
@@ -2697,79 +2703,50 @@ namespace UELib
             RegisterClasses = 0x0010
         }
 
-        [Obsolete]
-        public static UnrealPackage DeserializePackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
-        {
-            var fileStream = new FileStream(packagePath, FileMode.Open, fileAccess);
-            var archive = new UnrealPackageArchive(fileStream, packagePath);
-            archive.Package.Deserialize();
-            return archive.Package;
-        }
-
         private UPackage GetRootPackage(string filePath)
         {
             string packageName = Path.GetFileNameWithoutExtension(filePath);
-            return FindObject<UPackage>(packageName)
-                   ?? CreateObject<UPackage>(new UName(packageName), new UnrealFlags<ObjectFlag>(0));
+            return Linker.GetRootPackage(packageName);
         }
 
         /// <summary>
         /// Constructs a dummy package, the stream has to be initialized manually.
         /// </summary>
-        /// <param name="fileName">the filename used to create the root package.</param>
-        public UnrealPackage(string fileName = "Transient")
+        /// <param name="packageName">the filename used to create the root package.</param>
+        public UnrealPackage(string packageName = "Transient")
         {
-            Archive = new UnrealPackageArchive(this);
+            string[] directory = Directory.Exists(Path.GetDirectoryName(packageName))
+                ? [Path.GetDirectoryName(packageName)]
+                : [];
+            Archive = new UnrealPackageArchive(this, new UnrealPackageEnvironment(packageName, directory));
+            Linker = new UnrealPackageLinker(this,
+                new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
 
-            _FullPackageName = fileName;
-            RootPackage = GetRootPackage(fileName);
+            _FullPackageName = packageName;
+            RootPackage = GetRootPackage(packageName);
         }
 
-        public UnrealPackage(UnrealPackageArchive archive, string fileName)
+        public UnrealPackage(UnrealPackageArchive archive, string packageName)
         {
             Archive = archive;
+            Linker = new UnrealPackageLinker(this, new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
 
-            _FullPackageName = fileName;
-            RootPackage = GetRootPackage(fileName);
+            _FullPackageName = packageName;
+            RootPackage = GetRootPackage(packageName);
         }
 
-        public UnrealPackage(Stream stream, string fileName = "Transient")
+        public UnrealPackage(FileStream stream)
         {
-            Archive = new UnrealPackageArchive(this);
-
-            _FullPackageName = fileName;
-            RootPackage = GetRootPackage(fileName);
-
-            if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
-            {
-                Archive.Flags |= UnrealArchiveFlags.BigEndian;
-                IsBigEndianEncoded = true;
-            }
-
-            var packageStream = stream as UnrealPackageStream ?? new UnrealPackageStream(Archive, stream);
-            Archive.Stream = packageStream;
-        }
-
-        public UnrealPackage(FileStream stream) : this(stream, stream.Name)
-        {
-        }
-
-        [Obsolete("Use an UnrealPackageStream or a FileStream")]
-        public UnrealPackage(UPackageStream stream)
-        {
-            Archive = new UnrealPackageArchive(this);
-
-            _FullPackageName = stream.Name;
-            RootPackage = GetRootPackage(_FullPackageName);
-
-            if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
-            {
-                Archive.Flags |= UnrealArchiveFlags.BigEndian;
-                IsBigEndianEncoded = true;
-            }
+            string packageName = stream.Name;
+            Archive = new UnrealPackageArchive(this, new UnrealPackageEnvironment(packageName, [Path.GetDirectoryName(packageName)]));
 
             var packageStream = new UnrealPackageStream(Archive, stream);
             Archive.Stream = packageStream;
+
+            Linker = new UnrealPackageLinker(this, new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
+
+            _FullPackageName = stream.Name;
+            RootPackage = GetRootPackage(_FullPackageName);
         }
 
         /// <summary>
@@ -3396,35 +3373,23 @@ namespace UELib
                 stream.Position - Summary.ThumbnailTableOffset);
         }
 
-        /// <summary>
-        /// Constructs all export objects.
-        /// </summary>
-        /// <param name="initFlags">Initializing rules such as deserializing and/or linking.</param>
+        [Obsolete("Deprecated", true)]
         public void InitializeExportObjects(InitFlags initFlags = InitFlags.All)
         {
-            Objects = new List<UObject>(Exports.Count);
-            foreach (var exp in Exports) CreateObject(exp);
-
-            if ((initFlags & InitFlags.Deserialize) == 0)
-                return;
-
-            DeserializeObjects();
-            if ((initFlags & InitFlags.Link) != 0) LinkObjects();
         }
 
-        /// <summary>
-        /// Constructs all import objects.
-        /// </summary>
-        /// <param name="initialize">If TRUE initialize all constructed objects.</param>
-        [Obsolete("Pending deprecation")]
+        [Obsolete("Deprecated", true)]
         public void InitializeImportObjects(bool initialize = true)
         {
-            Objects = new List<UObject>(Imports.Count);
-            foreach (var imp in Imports) CreateObject(imp);
+        }
 
-            if (!initialize) return;
-
-            foreach (var obj in Objects) obj.PostInitialize();
+        // For backwards compatibility.
+        private class EventEmitter(UnrealPackage package) : IUnrealPackageEventEmitter
+        {
+            public void OnAdd(UObject obj)
+            {
+                package.AddToObjects(obj);
+            }
         }
 
         /// <summary>
@@ -3434,33 +3399,80 @@ namespace UELib
         /// <example>InitializePackage( UnrealPackage.InitFlags.All )</example>
         public void InitializePackage(InitFlags initFlags = InitFlags.All)
         {
-            if ((initFlags & InitFlags.RegisterClasses) != 0) RegisterExportedClassTypes();
+            // For backwards compatibility.
+            Linker.EventEmitter ??= new EventEmitter(this);
+            InitializePackage(initFlags, Linker);
+        }
+
+        public void InitializePackage(InitFlags initFlags, UnrealPackageLinker linker)
+        {
+            // We'll need this later for object construction.
+            Linker = linker;
+
+            if ((initFlags & InitFlags.RegisterClasses) != 0)
+            {
+                Archive.Environment.AddUnrealClasses();
+            }
 
             if ((initFlags & InitFlags.Construct) == 0)
             {
                 return;
             }
 
-            ConstructObjects();
+            LibServices.Debug("Constructing all package objects", PackageName);
+            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Construct));
+            foreach (var exp in Exports)
+            {
+                try
+                {
+                    if (exp.Object != null) continue;
+                    Linker.CreateObject(exp);
+                }
+                catch (Exception exc)
+                {
+                    throw new UnrealException("couldn't create export object for " + exp, exc);
+                }
+            }
+
+            // Commented out, IndexToObject will create them if necessary
+            //foreach (var imp in Imports)
+            //{
+            //    try
+            //    {
+            //        if (imp.Object != null) continue;
+            //        Linker.CreateObject(imp);
+            //    }
+            //    catch (Exception exc)
+            //    {
+            //        throw new UnrealException("couldn't create import object for " + imp, exc);
+            //    }
+            //}
+
             if ((initFlags & InitFlags.Deserialize) == 0)
                 return;
 
             try
             {
-                DeserializeObjects();
+                LibServices.Debug("Loading all package objects", PackageName);
+
+                // Only exports should be deserialized and PostInitialized!
+                OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Deserialize));
+                foreach (var exp in Exports)
+                {
+                    if (exp.Object is not UnknownObject)
+                    {
+                        if (exp.Object!.DeserializationState == default && !exp.Object.ShouldDeserializeOnDemand)
+                        {
+                            exp.Object.Load();
+                        }
+                    }
+
+                    OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+                }
             }
             catch (Exception ex)
             {
                 throw new UnrealException("Deserialization", ex);
-            }
-
-            try
-            {
-                if ((initFlags & InitFlags.Link) != 0) LinkObjects();
-            }
-            catch (Exception ex)
-            {
-                throw new UnrealException("Linking", ex);
             }
         }
 
@@ -3530,217 +3542,9 @@ namespace UELib
         /// </summary>
         public event NotifyObjectAddedEventHandler? NotifyObjectAdded;
 
-        /// <summary>
-        /// Constructs all the objects based on data from _ExportTableList and _ImportTableList, and
-        /// all constructed objects are added to the _ObjectsList.
-        /// </summary>
-        private void ConstructObjects()
-        {
-            LibServices.Debug("Constructing all package objects", PackageName);
-
-            Objects = new List<UObject>(Imports.Count + Exports.Count);
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Construct));
-            foreach (var imp in Imports)
-                try
-                {
-                    if (imp.Object != null) continue;
-                    CreateObject(imp);
-                }
-                catch (Exception exc)
-                {
-                    throw new UnrealException("couldn't create import object for " + imp, exc);
-                }
-
-            foreach (var exp in Exports)
-                try
-                {
-                    if (exp.Object != null) continue;
-                    CreateObject(exp);
-                }
-                catch (Exception exc)
-                {
-                    throw new UnrealException("couldn't create export object for " + exp, exc);
-                }
-        }
-
-        /// <summary>
-        /// Deserializes all exported objects.
-        /// </summary>
-        private void DeserializeObjects()
-        {
-            LibServices.Debug("Loading all package objects", PackageName);
-
-            // Only exports should be deserialized and PostInitialized!
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Deserialize));
-            foreach (var exp in Exports)
-            {
-                if (exp.Object is not UnknownObject)
-                {
-                    if (exp.Object!.DeserializationState == 0 && !exp.Object.ShouldDeserializeOnDemand)
-                    {
-                        exp.Object.Load();
-                    }
-                }
-
-                OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
-            }
-        }
-
-        /// <summary>
-        /// Initializes all exported objects.
-        /// </summary>
-        private void LinkObjects()
-        {
-            LibServices.Debug("Linking all package objects", PackageName);
-
-            // Notify that deserializing is done on all objects, now objects can read properties that were dependent on deserializing
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Link));
-            foreach (var exp in Exports)
-                try
-                {
-                    if (!(exp.Object is UnknownObject)) exp.Object!.PostInitialize();
-                }
-                finally
-                {
-                    OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
-                }
-        }
-
-        private void RegisterExportedClassTypes()
-        {
-            var exportedTypes = Assembly.GetExecutingAssembly().GetExportedTypes();
-            foreach (var exportedType in exportedTypes)
-            {
-                object[] attributes = exportedType.GetCustomAttributes(typeof(UnrealRegisterClassAttribute), false);
-                if (attributes.Length == 1) AddClassType(exportedType.Name.Substring(1), exportedType);
-            }
-        }
-
         #region Methods
 
         // Create pseudo objects for imports so that we have non-null references to imports.
-        private UObject CreateObject(UImportTableItem import)
-        {
-            Debug.Assert(import.Object == null);
-
-            var classType = GetClassType(import.ClassName);
-            var obj = (UObject)Activator.CreateInstance(classType);
-            Debug.Assert(obj != null);
-            obj.Name = import.ObjectName;
-            obj.ObjectFlags = new UnrealFlags<ObjectFlag>(Branch.EnumFlagsMap[typeof(ObjectFlag)], ObjectFlag.Public);
-            obj.Package = this;
-            obj.PackageIndex = -(import.Index + 1);
-            obj.PackageResource = import;
-            obj.Class = null; // FindObject<UClass> ?? StaticClass
-            import.Object = obj;
-
-            obj.Outer = IndexToObject<UObject?>(import.OuterIndex); // ?? ClassPackage
-
-            AddToObjects(obj);
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
-
-            return obj;
-        }
-
-        private UObject CreateObject(UExportTableItem export)
-        {
-            Debug.Assert(export.Object == null);
-
-            var objName = export.ObjectName;
-            var objFlags = new UnrealFlags<ObjectFlag>(export.ObjectFlags, Branch.EnumFlagsMap[typeof(ObjectFlag)]);
-            var objClass = IndexToObject<UClass?>(export.ClassIndex);
-
-            if (export.OuterIndex.IsNull && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
-            {
-                // Always create, because there's nothing to find, after all, packages are not yet being linked.
-                var pkg = /*FindObject<UPackage?>(objName) ??*/ CreateObject<UPackage>(objName);
-                pkg.PackageIndex = export.Index + 1;
-                pkg.PackageResource = export;
-                pkg.Class = objClass;
-                export.Object = pkg;
-
-                return pkg;
-            }
-
-            var internalClassType = GetClassType(objClass?.Name ?? "Class");
-            if (objClass != null && internalClassType == typeof(UnknownObject))
-            {
-                // Try one of the "super" classes for unregistered classes.
-                internalClassType = objClass
-                    .EnumerateSuper<UClass>()
-                    // Don't fall back to UObject, because we already do for UnknownObject
-                    .TakeWhile(cls => cls.Name != UnrealName.Object)
-                    .Select(cls => GetClassType(cls.Name))
-                    .FirstOrDefault() ?? typeof(UnknownObject);
-
-                // HACK: Workaround for unknown UComponent types.
-                if (internalClassType == typeof(UnknownObject)
-                    // IsTemplate Detects:
-                    && objName.ToString().EndsWith("Component", StringComparison.OrdinalIgnoreCase)
-                    && (objFlags.HasFlag(ObjectFlag.TemplateObject)
-                        || export
-                           .EnumerateOuter()
-                           .Cast<UExportTableItem>()
-                           .Any(exp => (exp.ObjectFlags & Branch.EnumFlagsMap[typeof(ObjectFlag)][(int)ObjectFlag.TemplateObject]) != 0)
-                    ))
-                {
-                    internalClassType = typeof(UComponent);
-                }
-            }
-
-            var obj = (UObject)Activator.CreateInstance(internalClassType);
-            Debug.Assert(obj != null);
-            obj.Name = objName;
-            obj.ObjectFlags = objFlags;
-            obj.Package = this;
-            obj.PackageIndex = export.Index + 1;
-            obj.PackageResource = export;
-            obj.Class = objClass; // ?? StaticClass
-            export.Object = obj;
-
-            var objOuter = IndexToObject<UObject?>(export.OuterIndex);
-            obj.Outer = objOuter ?? RootPackage;
-
-            var objArchetype = IndexToObject<UObject?>(export.ArchetypeIndex);
-            obj.Archetype = objArchetype;
-
-            if (obj is UStruct uStruct)
-            {
-                var objSuper = IndexToObject<UStruct>(export.SuperIndex);
-                uStruct.Super = objSuper;
-            }
-
-            AddToObjects(obj);
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
-
-            if (obj.InternalFlags.HasFlag(InternalClassFlags.Preload))
-            {
-                //obj.Load();
-            }
-
-            return obj;
-        }
-
-        private T CreateObject<T>(in UName objectName) where T : UObject
-        {
-            return CreateObject<T>(objectName, new UnrealFlags<ObjectFlag>());
-        }
-
-        private T CreateObject<T>(in UName objectName, UnrealFlags<ObjectFlag> objectFlags) where T : UObject
-        {
-            var obj = (T)Activator.CreateInstance(typeof(T));
-            Debug.Assert(obj != null);
-            obj.ObjectFlags = objectFlags;
-            obj.Package = this;
-            obj.PackageIndex = 0;
-            obj.PackageResource = null;
-            obj.Name = objectName;
-
-            AddToObjects(obj);
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
-
-            return obj;
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddToObjects(UObject obj)
@@ -3764,18 +3568,19 @@ namespace UELib
 
         public void AddClassType(string className, Type classObject)
         {
-            _ClassTypes[className.ToLower()] = classObject;
+            var staticClass = Linker.CreateObject<UClass>(new UName(className), null);
+            staticClass.InternalFlags |= InternalClassFlags.Intrinsic;
+            staticClass.InternalType = classObject;
         }
 
         public Type GetClassType(string className)
         {
-            _ClassTypes.TryGetValue(className.ToLower(), out var classType);
-            return classType ?? typeof(UnknownObject);
+            return Linker.FindObject<UClass>(className)?.InternalType ?? typeof(UnknownObject);
         }
 
         public bool HasClassType(string className)
         {
-            return _ClassTypes.ContainsKey(className.ToLower());
+            return Linker.FindObject<UClass>(className) != null;
         }
 
         [Obsolete("Use HasClassType")]
@@ -3785,35 +3590,15 @@ namespace UELib
         }
 
         [Obsolete("Use IndexToObject")]
-        public UObject? GetIndexObject(int packageIndex) => IndexToObject<UObject>(packageIndex);
+        public UObject? GetIndexObject(int packageIndex) => Linker.IndexToObject<UObject>(packageIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UObject? IndexToObject(int packageIndex) => IndexToObject<UObject>(packageIndex);
+        public UObject? IndexToObject(int packageIndex) => Linker.IndexToObject<UObject>(packageIndex);
 
         /// <summary>
         /// Returns a <see cref="UObject"/> from a package index.
         /// </summary>
-        public T? IndexToObject<T>(int packageIndex)
-            where T : UObject
-        {
-            switch (packageIndex)
-            {
-                case < 0:
-                    {
-                        var import = Imports[-packageIndex - 1];
-                        return (T?)import.Object ?? (T)CreateObject(import);
-                    }
-
-                case > 0:
-                    {
-                        var export = Exports[packageIndex - 1];
-                        return (T?)export.Object ?? (T)CreateObject(export);
-                    }
-
-                default:
-                    return null;
-            }
-        }
+        public T? IndexToObject<T>(int packageIndex) where T : UObject => Linker.IndexToObject<T>(packageIndex);
 
         [Obsolete]
         public string GetIndexObjectName(int packageIndex)
@@ -4072,10 +3857,8 @@ namespace UELib
                 Objects.Clear();
                 Objects = null;
             }
-
-            Stream?.Dispose();
         }
 
-#endregion
+        #endregion
     }
 }

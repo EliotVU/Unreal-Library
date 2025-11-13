@@ -125,8 +125,8 @@ namespace UELib
             var package = @object.Package;
 
             ObjectName = @object.Name;
-            OuterIndex = @object.Outer == package.RootPackage // RootPackage is always null
-                ? UPackageIndex.Null
+            OuterIndex = @object.Outer == package.RootPackage
+                ? UPackageIndex.Null // RootPackage is always null
                 : @object.Outer;
 
             ClassIndex = @object.Class;

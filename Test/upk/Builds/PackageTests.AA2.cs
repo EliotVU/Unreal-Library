@@ -1,5 +1,4 @@
 ﻿#if AA2
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UELib;
 using UELib.Branch.UE2.AA2;
 

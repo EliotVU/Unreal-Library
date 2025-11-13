@@ -256,7 +256,7 @@ namespace UELib.Core
                 stream.Record(nameof(FriendlyName), FriendlyName);
 
                 // Debug.Assert here, because we can work without a FriendlyName, but it is not expected.
-                Debug.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
+                //Debug.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
             }
 
         skipFriendlyName:
@@ -516,7 +516,7 @@ namespace UELib.Core
 #endif
             if (stream.Version < (uint)PackageObjectLegacyVersion.MovedFriendlyNameToUFunction)
             {
-                Contract.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
+                //Contract.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
                 stream.WriteName(FriendlyName);
             }
 

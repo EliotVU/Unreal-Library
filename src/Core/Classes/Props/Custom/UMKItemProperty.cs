@@ -1,4 +1,6 @@
-﻿#if MKKE
+﻿using UELib.ObjectModel.Annotations;
+
+#if MKKE
 namespace UELib.Core
 {
     /// <summary>

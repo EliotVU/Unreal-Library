@@ -1,4 +1,6 @@
-﻿#if BIOSHOCK
+﻿using UELib.ObjectModel.Annotations;
+
+#if BIOSHOCK
 namespace UELib.Core
 {
     /// <summary>

@@ -1,4 +1,6 @@
-﻿#if TRANSFORMERS
+﻿using UELib.ObjectModel.Annotations;
+
+#if TRANSFORMERS
 namespace UELib.Core
 {
     /// <summary>

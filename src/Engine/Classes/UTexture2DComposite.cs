@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using UELib.Branch;
+using UELib.ObjectModel.Annotations;
 
 namespace UELib.Engine
 {

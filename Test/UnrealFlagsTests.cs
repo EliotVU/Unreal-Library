@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using UELib.Branch;
+﻿using UELib.Branch;
 using UELib.Core;
 using UELib.Flags;
 

@@ -1,4 +1,6 @@
-﻿namespace UELib.Core;
+﻿using UELib.ObjectModel.Annotations;
+
+namespace UELib.Core;
 
 [UnrealRegisterClass]
 public class UBlueprintGeneratedClass : UClass;

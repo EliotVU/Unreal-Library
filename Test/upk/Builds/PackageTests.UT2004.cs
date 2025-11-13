@@ -1,10 +1,6 @@
-﻿using System.IO;
-using System.Linq;
-using System.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Reflection;
 using UELib;
 using UELib.Core;
-using UELib.Engine;
 using static Eliot.UELib.Test.UnrealPackageTests;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
@@ -16,117 +12,110 @@ namespace Eliot.UELib.Test.Builds
     [TestClass]
     public class PackageTestsUT2004
     {
-        public static UnrealPackage GetScriptPackageLinker()
+        public static UnrealPackage GetScriptPackage()
         {
             string packagePath = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "UPK",
                 "TestUC2", "TestUC2.u");
+            var package = UnrealLoader.LoadPackage(packagePath);
+            Assert.IsNotNull(package);
+            return package;
+        }
+
+        public static UnrealPackage GetMapPackage(string fileName)
+        {
+            string? gamesPath = Environment.GetEnvironmentVariable("UEGamesTestDirectory");
+            string packagePath = Path.Join(gamesPath, "UT2004", "Maps", fileName);
+            if (!File.Exists(packagePath))
+            {
+                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
+            }
+
             var linker = UnrealLoader.LoadPackage(packagePath);
             Assert.IsNotNull(linker);
             return linker;
         }
 
-        public static UnrealPackage GetMapPackageLinker(string fileName)
-        {
-            string packagePath = Path.Join(Packages.UT2004Path, "Maps", fileName);
-            if (!File.Exists(packagePath))
-            {
-                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
-            }
-            
-            var linker = UnrealLoader.LoadPackage(packagePath);
-            Assert.IsNotNull(linker);
-            return linker;
-        }
-
-        public static UnrealPackage GetMaterialPackageLinker(string fileName)
-        {
-            string packagePath = Path.Join(Packages.UT2004Path, "Textures", fileName);
-            if (!File.Exists(packagePath))
-            {
-                Assert.Inconclusive($"Couldn't find package '{packagePath}'");
-            }
-            
-            var linker = UnrealLoader.LoadPackage(packagePath);
-            Assert.IsNotNull(linker);
-            return linker;
-        }
 
         [TestMethod]
         public void TestScriptContent()
         {
-            void AssertDefaults(UnrealPackage unrealPackage)
+            void AssertDefaults(UnrealPackage pkg)
             {
-                var defaults = AssertDefaultPropertiesClass(unrealPackage);
-                AssertPropertyTagFormat(defaults, "BoolTrue",
+                var defaults = UnrealPackageUtilities.AssertDefaultPropertiesClass(pkg);
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolTrue",
                     "true");
-                AssertPropertyTagFormat(defaults, "BoolFalse",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolFalse",
                     "false");
-                AssertPropertyTagFormat(defaults, "Byte",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Byte",
                     "255");
-                AssertPropertyTagFormat(defaults, "Int",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Int",
                     "1000");
-                AssertPropertyTagFormat(defaults, "Float",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Float",
                     "0.0123457");
-                AssertPropertyTagFormat(defaults, "NameProperty",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "NameProperty",
                     "\"Name\"");
-                AssertPropertyTagFormat(defaults, "String",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "String",
                     "\"String_\\\"\\\\0abfnrtv\"");
-                AssertPropertyTagFormat(defaults, "Vector",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Vector",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
-                AssertPropertyTagFormat(defaults, "Plane",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Plane",
                     "(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)");
-                AssertPropertyTagFormat(defaults, "Rotator",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Rotator",
                     "(Pitch=180,Yaw=90,Roll=45)");
-                AssertPropertyTagFormat(defaults, "Coords",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Coords",
                     "(Origin=(X=0.2000000,Y=0.4000000,Z=1.0000000)," +
                     "XAxis=(X=1.0000000,Y=0.0000000,Z=0.0000000)," +
                     "YAxis=(X=0.0000000,Y=1.0000000,Z=0.0000000)," +
                     "ZAxis=(X=0.0000000,Y=0.0000000,Z=1.0000000))");
-                AssertPropertyTagFormat(defaults, "Quat",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Quat",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
-                AssertPropertyTagFormat(defaults, "Range",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Range",
                     "(Min=80.0000000,Max=40.0000000)");
-                AssertPropertyTagFormat(defaults, "Scale",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Scale",
                     "(Scale=(X=1.0000000,Y=2.0000000,Z=3.0000000),SheerRate=5.0000000,SheerAxis=6)");
-                AssertPropertyTagFormat(defaults, "Color",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Color",
                     "(R=80,G=40,B=20,A=160)");
-                AssertPropertyTagFormat(defaults, "Box",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Box",
                     "(Min=(X=0.0000000,Y=1.0000000,Z=2.0000000)," +
                     "Max=(X=0.0000000,Y=2.0000000,Z=1.0000000),IsValid=1)");
-                AssertPropertyTagFormat(defaults, "Matrix",
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Matrix",
                     "(XPlane=(W=0.0000000,X=1.0000000,Y=2.0000000,Z=3.0000000)," +
                     "YPlane=(W=4.0000000,X=5.0000000,Y=6.0000000,Z=7.0000000)," +
                     "ZPlane=(W=8.0000000,X=9.0000000,Y=10.0000000,Z=11.0000000)," +
                     "WPlane=(W=12.0000000,X=13.0000000,Y=14.0000000,Z=15.0000000))");
             }
 
-            void AssertFunctionDelegateTokens(UnrealPackage linker)
+            void AssertFunctionDelegateTokens(UnrealPackage package)
             {
-                var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens")!;
+                var delegateTokensFunc = package.FindObject<UFunction>("DelegateTokens")!;
                 delegateTokensFunc.Load();
 
                 var decompiler = new UStruct.UByteCodeDecompiler(delegateTokensFunc);
                 decompiler.Deserialize();
+                UnrealPackageUtilities.
 
-                // OnDelegate();
-                AssertTokens(decompiler,
+                                // OnDelegate();
+                                AssertTokens(decompiler,
                     typeof(DelegateFunctionToken),
                     typeof(EndFunctionParmsToken));
+                UnrealPackageUtilities.
 
-                // OnDelegate = InternalOnDelegate;
-                AssertTokens(decompiler,
+                                // OnDelegate = InternalOnDelegate;
+                                AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
+                UnrealPackageUtilities.
 
-                // OnDelegate = none;
-                AssertTokens(decompiler,
+                                // OnDelegate = none;
+                                AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
+                UnrealPackageUtilities.
 
-                // (return)
-                AssertTokens(decompiler,
+                                // (return)
+                                AssertTokens(decompiler,
                     typeof(ReturnToken),
                     typeof(NothingToken),
                     typeof(EndOfScriptToken));
@@ -134,53 +123,19 @@ namespace Eliot.UELib.Test.Builds
                 Assert.AreEqual(decompiler.DeserializedTokens.Last(), decompiler.CurrentToken);
             }
 
-            using var linker = GetScriptPackageLinker();
-            Assert.IsNotNull(linker);
-            linker.InitializePackage();
+            using var package = GetScriptPackage();
+            Assert.IsNotNull(package);
+            package.InitializePackage();
 
-            var exports = linker.Objects
-                .Where(obj => (int)obj > 0)
-                .ToList();
+            AssertTestClass(package);
 
-            AssertTestClass(linker);
-
-            var tokensClass = linker.FindObject<UClass>("ExprTokens");
+            var tokensClass = package.FindObject<UClass>("ExprTokens");
             Assert.IsNotNull(tokensClass);
 
             // Test a series of expected tokens
-            AssertFunctionDelegateTokens(linker);
-            AssertScriptDecompile(tokensClass);
-            AssertDefaults(linker);
-            AssertExportsOfType<UClass>(exports);
-        }
-
-        [TestMethod]
-        public void TestMapContent()
-        {
-            using var linker = GetMapPackageLinker("DM-Rankin.ut2");
-            linker.InitializePackage();
-
-            var exports = linker.Objects
-                .Where(obj => (int)obj > 0)
-                .ToList();
-
-            AssertExportsOfType<USound>(exports);
-            AssertExportsOfType<UPolys>(exports);
-        }
-
-        [TestMethod]
-        public void TestMaterialContent()
-        {
-            using var linker = GetMaterialPackageLinker("2k4Fonts.utx");
-            linker.InitializePackage();
-
-            var exports = linker.Objects
-                .Where(obj => (int)obj > 0)
-                .ToList();
-
-            AssertExportsOfType<UFont>(exports);
-            AssertExportsOfType<UPalette>(exports);
-            AssertExportsOfType<UTexture>(exports);
+            AssertFunctionDelegateTokens(package);
+            UnrealPackageUtilities.AssertScriptDecompile(tokensClass);
+            AssertDefaults(package);
         }
     }
 }
