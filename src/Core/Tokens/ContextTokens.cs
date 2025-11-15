@@ -17,7 +17,7 @@ namespace UELib.Core
 
                 public ushort SkipSize { get; protected set; }
 
-                public UField? Property;
+                public UObject? Property;
 
                 /// <summary>
                 /// The <see cref="UELib.Types.PropertyType"/> of the property when the <see cref="Property"/> is null.
