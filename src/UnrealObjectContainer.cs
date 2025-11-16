@@ -10,7 +10,7 @@ namespace UELib;
 // <summary>
 ///     An <see cref="UObject"/> container that allows for fast lookups by name.
 /// </summary>
-public sealed class UnrealObjectContainer
+public sealed class UnrealObjectContainer : IDisposable
 {
     /// <summary>
     ///     All persistent objects, mapped by hash
@@ -22,14 +22,31 @@ public sealed class UnrealObjectContainer
     /// <summary>
     ///     Enumerates over all indexed objects.
     /// </summary>
-    public IEnumerable<T> Enumerate<T>() where T : UObject
+    public IEnumerable<UObject> Enumerate()
     {
         foreach (var obj in _ObjectNameHashMap.Values.SelectMany(EnumerateObjectLink))
         {
-            if (obj is T tObj)
+            yield return obj;
+        }
+    }
+
+    /// <summary>
+    ///     Enumerates over all indexed objects that belong to the package.
+    /// </summary>
+    public IEnumerable<UObject> Enumerate(UnrealPackage package)
+    {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(package, nameof(package));
+#endif
+
+        foreach (var obj in _ObjectNameHashMap.Values.SelectMany(EnumerateObjectLink))
+        {
+            if (obj.Package != package)
             {
-                yield return tObj;
+                continue;
             }
+
+            yield return obj;
         }
     }
 
@@ -114,7 +131,9 @@ public sealed class UnrealObjectContainer
 #endif
     public void Add(UObject newObject)
     {
-        Debug.Assert(newObject != null, "Object cannot be null");
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(newObject, nameof(newObject));
+#endif
         int objectHash = newObject.GetHashCode();
 
         if (_ObjectNameHashMap.TryGetValue(objectHash, out var objectLink))
@@ -160,10 +179,101 @@ public sealed class UnrealObjectContainer
         }
     }
 
+    public void Remove(UObject disposedObject)
+    {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(disposedObject, nameof(disposedObject));
+#endif
+
+        int objectHash = disposedObject.GetHashCode();
+        UnlinkFromMap(_ObjectNameHashMap, objectHash, disposedObject);
+
+        if (disposedObject.Outer == null)
+        {
+            return;
+        }
+
+        int outerHash = objectHash ^ disposedObject.Outer.GetHashCode();
+        UnlinkFromMap(_ObjectNameOuterHashMap, outerHash, disposedObject);
+
+        return;
+
+        static void UnlinkFromMap(Dictionary<int, ObjectLink> map, int key, UObject target)
+        {
+            var objectLink = map[key];
+            if (objectLink.Object == target)
+            {
+                if (objectLink.Next == null)
+                {
+                    map.Remove(key);
+
+                    return;
+                }
+
+                // Unshift
+                map[key] = new ObjectLink(objectLink.Next.Object, objectLink.Next.Next);
+
+                return;
+            }
+
+            do
+            {
+                if (objectLink.Next.Object == target)
+                {
+                    // Skip over it.
+                    objectLink.Next = objectLink.Next.Next;
+
+                    return;
+                }
+
+                objectLink = objectLink.Next;
+            } while (objectLink != null);
+
+            throw new InvalidOperationException("Failed to remove the object from its object link.");
+        }
+    }
+
     private sealed class ObjectLink(UObject @object, ObjectLink? next)
     {
         public UObject Object => @object;
+        public ObjectLink? Next { get; internal set; } = next;
+    }
 
-        public ObjectLink? Next => next;
+    public void Dispose()
+    {
+        Trace.WriteLine($"Disposing of {nameof(UnrealObjectContainer)} objects");
+
+        var objectsToDisposeOf = Enumerate().ToArray();
+        foreach (var obj in objectsToDisposeOf)
+        {
+            obj.Dispose();
+
+            if (obj.PackageResource != null)
+            {
+                obj.PackageResource.Object = null;
+            }
+        }
+
+        _ObjectNameHashMap.Clear();
+        _ObjectNameOuterHashMap.Clear();
+    }
+
+    public void Dispose(UnrealPackage package)
+    {
+        Trace.WriteLine($"Disposing of {nameof(UnrealObjectContainer)} objects for package {package.FullPackageName}");
+
+        var objectsToDisposeOf = Enumerate(package).ToArray();
+        foreach (var obj in objectsToDisposeOf)
+        {
+            obj.Dispose();
+
+            if (obj.PackageResource != null)
+            {
+                obj.PackageResource.Object = null;
+            }
+
+            // Remove one by one
+            Remove(obj);
+        }
     }
 }

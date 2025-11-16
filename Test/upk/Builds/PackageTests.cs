@@ -322,10 +322,15 @@ namespace Eliot.UELib.Test.Builds
 
             var versions = new SortedSet<uint>();
 
-            var environment = new UnrealPackageEnvironment(Path.GetDirectoryName(packagesPath), [packagesPath]);
-            environment.AddUnrealClasses();
+            using var packageEnvironment = new UnrealPackageEnvironment(
+                Path.GetDirectoryName(packagesPath),
+                RegisterUnrealClassesStrategy.StandardClasses
+            );
 
-            var fileProvider = new UnrealFilePackageProvider(environment, UnrealExtensions.Common);
+            var packageProvider = new UnrealFilePackageProvider(
+                [packagesPath],
+                [.. UnrealExtensions.Common, .. UnrealExtensions.Legacy]
+            );
 
 #if DEBUG
             const int maxTasks = 1;
@@ -347,9 +352,7 @@ namespace Eliot.UELib.Test.Builds
                         }
 
                         using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        using var archive = new UnrealPackageArchive(fileStream, filePath, environment);
-
-                        var package = archive.Package;
+                        using var package = new UnrealPackage(fileStream, filePath, packageEnvironment);
                         package.BuildTarget = forcedBuild;
                         package.Deserialize();
 
@@ -382,13 +385,15 @@ namespace Eliot.UELib.Test.Builds
                             return;
                         }
 
-                        var linker = new UnrealPackageLinker(package, fileProvider);
-                        AssertPackage(package, linker, exceptions);
+                        // :( Constructing our own linker had some perks, but introduced too much construction complexity internally.
+                        //var linker = new UnrealPackageLinker(package, packageEnvironment, packageProvider);
+                        var packageLinker = package.Linker;
+                        AssertPackage(package, packageLinker, exceptions);
 
                         // Re-serialize the package to test serialization.
                         if (shouldTestSerialization)
                         {
-                            AssertPackageSerialization(package);
+                            AssertPackageSerialization(package, packageLinker);
 
                             Console.WriteLine($@"Successfully serialized package '{filePath}'");
                         }
@@ -529,11 +534,12 @@ namespace Eliot.UELib.Test.Builds
             await TestPackages(packagesPath, packagesBuild, packagesPlatform, forcedBuild, forcedGeneration, shouldTestSerialization);
         }
 
-        private static void AssertPackage(UnrealPackage package, UnrealPackageLinker linker, List<Exception> exceptions)
+        private static void AssertPackage(UnrealPackage package, UnrealPackageLinker packageLinker, List<Exception> exceptions)
         {
             try
             {
-                linker.Preload(InternalClassFlags.Default); // just construct
+                packageLinker.ConstructExports();
+                packageLinker.LoadExports(InternalClassFlags.Default); // just construct
             }
             catch (Exception exception)
             {
@@ -542,9 +548,13 @@ namespace Eliot.UELib.Test.Builds
                 return;
             }
 
-            AssertObjects(package.Objects.Where(obj => ((UPackageIndex)obj).IsExport));
+            var exports = packageLinker
+                .EnumerateObjects<UObject>()
+                .Where(obj => ((UPackageIndex)obj).IsExport)
+                .ToList();
+            AssertObjects(exports);
 
-            exceptions.AddRange(package.Objects
+            exceptions.AddRange(exports
                 .Where(obj => obj.ThrownException != null)
                 .Select(obj => new NotSupportedException($"'{package.FullPackageName}' object exception", obj.ThrownException)));
 
@@ -559,7 +569,7 @@ namespace Eliot.UELib.Test.Builds
 
                 //try
                 //{
-                linker.Preload(obj);
+                packageLinker.LoadObject(obj);
                 //}
                 //catch (Exception exception)
                 //{
@@ -587,16 +597,15 @@ namespace Eliot.UELib.Test.Builds
                 }
             }
 
-            void AssertObjects(IEnumerable<UObject> objects)
+            void AssertObjects(List<UObject> objects)
             {
-                var exportObjects = objects.ToList();
-                var compatibleExports = exportObjects
+                var compatibleExports = objects
                     .Where(obj => obj is not UnknownObject)
                     .ToList();
 
                 compatibleExports.ForEach(TryLoadObject);
 
-                var incompatibleExports = exportObjects
+                var incompatibleExports = objects
                     .Where(obj => obj is UnknownObject)
                     .ToList();
 
@@ -627,9 +636,9 @@ namespace Eliot.UELib.Test.Builds
             typeof(ABrush),
         ];
 
-        private static void AssertPackageSerialization(UnrealPackage package)
+        private static void AssertPackageSerialization(UnrealPackage package, UnrealPackageLinker packageLinker)
         {
-            using var memoryStream = new MemoryStream((int)package.Archive.Stream.Length);
+            using var memoryStream = new MemoryStream((int)package.Stream.Length);
             using var tempStream = new UnrealPackageStream(package.Archive, memoryStream);
 
             //// Rebuild the name indices (name hash to package index).
@@ -660,7 +669,9 @@ namespace Eliot.UELib.Test.Builds
             // Work with a copy, because the linker.Objects list is modified during serialization.
             // Because, the exports and imports have been re-serialized
             // -- which causes the object serialization to invoke a new object creation when the export has no assigned object.
-            var objects = package.Objects.ToList();
+            var objects = packageLinker
+                .EnumerateObjects<UObject>()
+                .ToList();
 
             // Let's serialize all supported objects and re-serialize them.
             foreach (var obj in objects)

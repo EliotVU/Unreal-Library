@@ -17,6 +17,9 @@ public readonly record struct UPackageIndex(int Index)
     [Pure] public bool IsImport => Index < 0;
     [Pure] public bool IsExport => Index > 0;
 
+    [Pure] public int ImportIndex => -Index - 1;
+    [Pure] public int ExportIndex => Index - 1;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator bool(UPackageIndex index)
     {

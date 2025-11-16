@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using UELib.Decoding;
 using UELib.IO;
 
@@ -11,55 +14,91 @@ namespace UELib
     /// </summary>
     public static class UnrealLoader
     {
-        public static UnrealPackage LoadPackage(FileStream fileStream)
+        public static readonly UnrealPackageEnvironment TransientPackageEnvironment = new("Transient", RegisterUnrealClassesStrategy.StandardClasses);
+
+        public static UnrealPackage LoadPackage(
+            FileStream fileStream,
+            UnrealPackageEnvironment? environment = null)
         {
             string packagePath = fileStream.Name;
-            var archive = new UnrealPackageArchive(fileStream, packagePath);
-            archive.Package.Deserialize();
-            return archive.Package;
+
+            var package = new UnrealPackage(fileStream, packagePath, environment ?? TransientPackageEnvironment);
+            package.Deserialize();
+
+            return package;
         }
 
-        public static UnrealPackage LoadPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
+        public static UnrealPackage LoadPackage(
+            string packagePath,
+            FileAccess fileAccess = FileAccess.Read,
+            UnrealPackageEnvironment? environment = null)
         {
-            return LoadPackage(packagePath, UnrealPackage.GameBuild.BuildName.Unset, fileAccess);
-        }
-
-        /// <summary>
-        /// Loads the given file specified by PackagePath and
-        /// returns the serialized UnrealPackage.
-        /// </summary>
-        public static UnrealPackage LoadPackage(string packagePath, UnrealPackage.GameBuild.BuildName buildTarget,
-            FileAccess fileAccess = FileAccess.Read)
-        {
-            var fileStream = new FileStream(packagePath, FileMode.Open, fileAccess, FileShare.Read);
-            var archive = new UnrealPackageArchive(fileStream, packagePath);
-            archive.Package.BuildTarget = buildTarget;
-            archive.Package.Deserialize();
-            return archive.Package;
+            return LoadPackage(
+                packagePath,
+                UnrealPackage.GameBuild.BuildName.Unset,
+                fileAccess,
+                environment
+            );
         }
 
         /// <summary>
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadPackage(string packagePath, IBufferDecoder decoder,
-            FileAccess fileAccess = FileAccess.Read)
+        public static UnrealPackage LoadPackage(
+            string packagePath,
+            UnrealPackage.GameBuild.BuildName buildTarget,
+            FileAccess fileAccess = FileAccess.Read,
+            UnrealPackageEnvironment? environment = null)
         {
             var fileStream = new FileStream(packagePath, FileMode.Open, fileAccess, FileShare.Read);
-            var encodedStream = new EncodedStream(fileStream, decoder);
-            var archive = new UnrealPackageArchive(encodedStream, packagePath);
-            archive.Package.Deserialize();
-            return archive.Package;
+
+            var package = new UnrealPackage(fileStream, packagePath, environment ?? TransientPackageEnvironment);
+            package.BuildTarget = buildTarget;
+            package.Deserialize();
+
+            return package;
+        }
+
+        /// <summary>
+        /// Loads the given file specified by PackagePath and
+        /// returns the serialized UnrealPackage.
+        /// </summary>
+        public static UnrealPackage LoadPackage(
+            string packagePath,
+            IBufferDecoder decoder,
+            FileAccess fileAccess = FileAccess.Read,
+            UnrealPackageEnvironment? environment = null)
+        {
+            var fileStream = new FileStream(packagePath, FileMode.Open, fileAccess, FileShare.Read);
+            var baseStream = new EncodedStream(fileStream, decoder);
+
+            var package = new UnrealPackage(baseStream, packagePath, environment ?? TransientPackageEnvironment);
+            package.Deserialize();
+
+            return package;
         }
 
         /// <summary>
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage with deserialized objects.
         /// </summary>
-        public static UnrealPackage LoadFullPackage(string packagePath, FileAccess fileAccess = FileAccess.Read)
+        public static UnrealPackage LoadFullPackage(
+            string packagePath,
+            FileAccess fileAccess = FileAccess.Read,
+            UnrealPackageEnvironment? environment = null)
         {
-            var package = LoadPackage(packagePath, fileAccess);
-            package?.InitializePackage();
+            var package = LoadPackage(packagePath, fileAccess, environment);
+
+            string? packageDirectory = Path.GetDirectoryName(packagePath);
+            string[] packageDirectories = packageDirectory != null
+                ? package.Linker.PackageEnvironment.Directories.Concat([packageDirectory]).ToArray()
+                : package.Linker.PackageEnvironment.Directories;
+
+            // TODO: Acquire extensions from the detected game build.
+
+            var packageProvider = new UnrealFilePackageProvider(packageDirectories, UnrealExtensions.Common);
+            package.InitializePackage(packageProvider);
 
             return package;
         }
@@ -81,7 +120,10 @@ namespace UELib
         public static bool IsUnrealFileExtension(string filePath)
         {
             string fileExt = Path.GetExtension(filePath);
-            return UnrealExtensions.Common.Concat(UnrealExtensions.Legacy).Any(ext => string.Compare(fileExt, ext, StringComparison.OrdinalIgnoreCase) == 0);
+            return UnrealExtensions
+                .Common
+                .Concat(UnrealExtensions.Legacy)
+                .Any(ext => string.Compare(fileExt, ext, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
         /// <summary>

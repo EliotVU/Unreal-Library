@@ -5,6 +5,7 @@ using UELib.Branch;
 using UELib.Core;
 using UELib.Decoding;
 using UELib.IO;
+using UELib.ObjectModel.Annotations;
 
 namespace Eliot.UELib.Test;
 
@@ -19,33 +20,35 @@ public class UnrealPackageSerializationTests
     public void TestPackageNamesSerialization(PackageObjectLegacyVersion version)
     {
         using var sourcePackage = PackageTestsUDK.GetScriptPackage();
-        Assert.IsNotNull(sourcePackage);
 
-        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
-        var package = archive.Package;
-        var stream = archive.Stream;
+        using var outPackage = UnrealPackageUtilities.CreateTempPackage(version);
+        var outStream = outPackage.Stream;
         // write the script packages content to the temp stream
-
-        package.Names.AddRange(sourcePackage.Names);
+        outPackage.Names.AddRange(sourcePackage.Names);
+        // Rebuild the name indices (name hash to package index).
+        for (int i = 0; i < outPackage.Names.Count; i++)
+        {
+            outPackage.Archive.NameIndices.Add(((IndexName)outPackage.Names[i]).Index, i);
+        }
 
         var sizes = new long[sourcePackage.Names.Count];
 
-        stream.Position = 0;
+        outStream.Position = 0;
         sourcePackage.Names.ForEach(name =>
         {
-            long p = stream.Position;
-            name.Serialize(stream);
-            sizes[name.Index] = stream.Position - p;
+            long p = outStream.Position;
+            name.Serialize(outStream);
+            sizes[name.Index] = outStream.Position - p;
         });
-        long endPosition = stream.Position;
-        stream.Position = 0;
+        long endPosition = outStream.Position;
+        outStream.Position = 0;
         sourcePackage.Names.ForEach(name =>
         {
-            long p = stream.Position;
-            name.Deserialize(stream);
-            Assert.AreEqual(sizes[name.Index], stream.Position - p);
+            long p = outStream.Position;
+            name.Deserialize(outStream);
+            Assert.AreEqual(sizes[name.Index], outStream.Position - p);
         });
-        Assert.AreEqual(endPosition, stream.Position);
+        Assert.AreEqual(endPosition, outStream.Position);
     }
 
     [TestMethod]
@@ -55,34 +58,36 @@ public class UnrealPackageSerializationTests
     public void TestPackageImportsSerialization(PackageObjectLegacyVersion version)
     {
         using var sourcePackage = PackageTestsUDK.GetScriptPackage();
-        Assert.IsNotNull(sourcePackage);
 
-        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
-        var linker = archive.Package;
-        var stream = archive.Stream;
+        using var outPackage = UnrealPackageUtilities.CreateTempPackage(version);
+        var outStream = outPackage.Stream;
         // write the script packages content to the temp stream
-
-        linker.Names.AddRange(sourcePackage.Names);
-        linker.Imports.AddRange(sourcePackage.Imports);
+        outPackage.Names.AddRange(sourcePackage.Names);
+        // Rebuild the name indices (name hash to package index).
+        for (int i = 0; i < outPackage.Names.Count; i++)
+        {
+            outPackage.Archive.NameIndices.Add(((IndexName)outPackage.Names[i]).Index, i);
+        }
+        outPackage.Imports.AddRange(sourcePackage.Imports);
 
         var sizes = new long[sourcePackage.Imports.Count];
 
-        stream.Position = 0;
+        outStream.Position = 0;
         sourcePackage.Imports.ForEach(imp =>
         {
-            long p = stream.Position;
-            imp.Serialize(stream);
-            sizes[imp.Index] = stream.Position - p;
+            long p = outStream.Position;
+            imp.Serialize(outStream);
+            sizes[imp.Index] = outStream.Position - p;
         });
-        long endPosition = stream.Position;
-        stream.Position = 0;
+        long endPosition = outStream.Position;
+        outStream.Position = 0;
         sourcePackage.Imports.ForEach(imp =>
         {
-            long p = stream.Position;
-            imp.Deserialize(stream);
-            Assert.AreEqual(sizes[imp.Index], stream.Position - p);
+            long p = outStream.Position;
+            imp.Deserialize(outStream);
+            Assert.AreEqual(sizes[imp.Index], outStream.Position - p);
         });
-        Assert.AreEqual(endPosition, stream.Position);
+        Assert.AreEqual(endPosition, outStream.Position);
     }
 
     [TestMethod]
@@ -100,35 +105,38 @@ public class UnrealPackageSerializationTests
     public void TestPackageExportsSerialization(PackageObjectLegacyVersion version)
     {
         using var sourcePackage = PackageTestsUDK.GetScriptPackage();
-        Assert.IsNotNull(sourcePackage);
 
-        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
-        var linker = archive.Package;
-        var stream = archive.Stream;
+        using var outArchive = UnrealPackageUtilities.CreateTempPackage(version);
+        var outPackage = outArchive;
+        var outStream = outArchive.Stream;
         // write the script packages content to the temp stream
-
-        linker.Names.AddRange(sourcePackage.Names);
-        linker.Exports.AddRange(sourcePackage.Exports);
+        outPackage.Names.AddRange(sourcePackage.Names);
+        // Rebuild the name indices (name hash to package index).
+        for (int i = 0; i < outPackage.Names.Count; i++)
+        {
+            outPackage.Archive.NameIndices.Add(((IndexName)outPackage.Names[i]).Index, i);
+        }
+        outPackage.Exports.AddRange(sourcePackage.Exports);
 
         var sizes = new long[sourcePackage.Exports.Count];
         var flags = new ulong[sourcePackage.Exports.Count];
 
-        stream.Position = 0;
+        outStream.Position = 0;
         sourcePackage.Exports.ForEach(exp =>
         {
-            long p = stream.Position;
-            exp.Serialize(stream);
-            sizes[exp.Index] = stream.Position - p;
+            long p = outStream.Position;
+            exp.Serialize(outStream);
+            sizes[exp.Index] = outStream.Position - p;
             flags[exp.Index] = exp.ObjectFlags;
         });
-        long endPosition = stream.Position;
-        stream.Position = 0;
+        long endPosition = outStream.Position;
+        outStream.Position = 0;
         sourcePackage.Exports.ForEach(exp =>
         {
-            long p = stream.Position;
-            exp.Deserialize(stream);
-            Assert.AreEqual(sizes[exp.Index], stream.Position - p);
-            if (stream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
+            long p = outStream.Position;
+            exp.Deserialize(outStream);
+            Assert.AreEqual(sizes[exp.Index], outStream.Position - p);
+            if (outStream.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
             {
                 Assert.AreEqual(flags[exp.Index], exp.ObjectFlags);
             }
@@ -137,7 +145,7 @@ public class UnrealPackageSerializationTests
                 Assert.AreEqual((uint)flags[exp.Index], (uint)exp.ObjectFlags);
             }
         });
-        Assert.AreEqual(endPosition, stream.Position);
+        Assert.AreEqual(endPosition, outStream.Position);
     }
 
     [TestMethod]
@@ -152,15 +160,21 @@ public class UnrealPackageSerializationTests
     public void TestPackageSerialization(PackageObjectLegacyVersion version)
     {
         using var sourcePackage = PackageTestsUDK.GetScriptPackage();
-        Assert.IsNotNull(sourcePackage);
 
-        using var archive = UnrealPackageUtilities.CreateTempArchive(version);
-        var linker = archive.Package;
-        var stream = archive.Stream;
+        using var outArchive = UnrealPackageUtilities.CreateTempPackage(version);
+        var outPackage = outArchive;
+        var outStream = outArchive.Stream;
+
+        outPackage.Names.AddRange(sourcePackage.Names);
+        // Rebuild the name indices (name hash to package index).
+        for (int i = 0; i < outPackage.Names.Count; i++)
+        {
+            outPackage.Archive.NameIndices.Add(((IndexName)outPackage.Names[i]).Index, i);
+        }
 
         // Version is serialized from the summary instead of the stream version.
-        sourcePackage.Summary.Version = linker.Version;
-        sourcePackage.Summary.LicenseeVersion = linker.LicenseeVersion;
+        sourcePackage.Summary.Version = outPackage.Version;
+        sourcePackage.Summary.LicenseeVersion = outPackage.LicenseeVersion;
 
         // We expect the offset to CHANGE
         // - so we must set them to 0 to indicate that we don't want to serialize the table data at the last position.
@@ -173,36 +187,40 @@ public class UnrealPackageSerializationTests
         sourcePackage.Summary.ThumbnailTableOffset = 0;
 
         // Copy the entire package to the temp stream (minus objects)
-        stream.Position = 0;
-        sourcePackage.Serialize(stream);
-        long endPosition = stream.Position;
+        outStream.Position = 0;
+        sourcePackage.Serialize(outStream);
+        long endPosition = outStream.Position;
 
         // Now that we know the correct table offsets, re-write it with the correct offsets.
-        stream.Position = 0;
-        sourcePackage.Summary.Serialize(stream);
+        outStream.Position = 0;
+        sourcePackage.Summary.Serialize(outStream);
 
         // re-deserialize from our temp copy to see if it all aligns.
-        stream.Position = 0;
-        linker.Deserialize(stream);
-        Assert.AreEqual(endPosition, stream.Position);
+        outStream.Position = 0;
+        outPackage.Deserialize(outStream);
+        Assert.AreEqual(endPosition, outStream.Position);
     }
 
     [TestMethod]
     public void TestPackageSaving()
     {
         using var sourcePackage = PackageTestsUDK.GetScriptPackage();
-        Assert.IsNotNull(sourcePackage);
+        sourcePackage.InitializePackage(null, InternalClassFlags.Default);
 
         // Create a new temporary package to contain a copy of the test package.
-        using var archive = UnrealPackageUtilities.CreateTempArchive(
+        using var outPackage = UnrealPackageUtilities.CreateTempPackage(
             (PackageObjectLegacyVersion)sourcePackage.Version,
-            sourcePackage.LicenseeVersion
+            sourcePackage.LicenseeVersion,
+            sourcePackage.Linker.PackageEnvironment
         );
-        var linker = archive.Package;
-        var stream = archive.Stream;
+        var outStream = outPackage.Stream;
 
-        sourcePackage.InitializePackage();
-
+        outPackage.Names.AddRange(sourcePackage.Names);
+        // Rebuild the name indices (name hash to package index).
+        for (int i = 0; i < outPackage.Names.Count; i++)
+        {
+            outPackage.Archive.NameIndices.Add(((IndexName)outPackage.Names[i]).Index, i);
+        }
         // just for fun, let's double the function sizes
         // FIXME: Not possible yet, we need to preserve the old bulk data for which we need to preserve the SerialOffset :/
 
@@ -215,10 +233,10 @@ public class UnrealPackageSerializationTests
         //}
 
         using var packageSaver = new UnrealPackageSaver();
-        using var saveStream = packageSaver.Save(sourcePackage, stream);
+        using var saveStream = packageSaver.Save(sourcePackage, outStream);
 
-        linker.Deserialize(stream);
-        linker.InitializePackage();
+        outPackage.Deserialize(outStream);
+        outPackage.InitializePackage(null, InternalClassFlags.Default);
 
         //tempStream.Flush();
     }
@@ -272,7 +290,11 @@ public class UnrealPackageSerializationTests
             // Objects position
             stream.Seek(newHeaderSize, SeekOrigin.Begin);
 
-            var exports = sourcePackage.Objects
+            var exports = sourcePackage
+                .Linker
+                .PackageEnvironment
+                .ObjectContainer
+                .Enumerate(sourcePackage)
                 .Where(IsExportableObject)
                 .ToList();
 

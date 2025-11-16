@@ -24,9 +24,9 @@ namespace Eliot.UELib.Test.Builds
         [TestMethod]
         public void TestScriptContent()
         {
-            void AssertDefaults(UnrealPackage unrealPackage)
+            void AssertDefaults(UnrealPackageLinker packageLinker)
             {
-                var defaults = UnrealPackageUtilities.AssertDefaultPropertiesClass(unrealPackage);
+                var defaults = UnrealPackageUtilities.AssertDefaultPropertiesClass(packageLinker);
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolTrue",
                     "true");
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolFalse",
@@ -39,10 +39,9 @@ namespace Eliot.UELib.Test.Builds
                     "0.0123457");
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "NameProperty",
                     "\"Name\"");
-                UnrealPackageUtilities.
-                                //UnrealPackageTests.AssertPropertyTagFormat(defaults, "String",
-                                //    "\"String_\\\"\\\\0abf\\\\n\\\\rtv\"");
-                                AssertPropertyTagFormat(defaults, "Vector",
+                //UnrealPackageTests.AssertPropertyTagFormat(defaults, "String",
+                //    "\"String_\\\"\\\\0abf\\\\n\\\\rtv\"");
+                UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Vector",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000)");
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "Vector4",
                     "(X=1.0000000,Y=2.0000000,Z=3.0000000,W=4.0000000)");
@@ -68,82 +67,65 @@ namespace Eliot.UELib.Test.Builds
                     "WPlane=(W=12.0000000,X=13.0000000,Y=14.0000000,Z=15.0000000))");
             }
 
-            void AssertFunctionDelegateTokens(UnrealPackage linker)
+            void AssertFunctionDelegateTokens(UnrealPackageLinker packageLinker)
             {
-                var delegateTokensFunc = linker.FindObject<UFunction>("DelegateTokens")!;
-                delegateTokensFunc.Load();
+                var delegateTokensFunc = packageLinker.FindObject<UFunction>("DelegateTokens")!;
+                packageLinker.LoadObject(delegateTokensFunc);
 
                 var decompiler = new UStruct.UByteCodeDecompiler(delegateTokensFunc);
                 decompiler.Deserialize();
-                UnrealPackageUtilities.
 
-                                // OnDelegate();
-                                AssertTokens(decompiler,
+                // OnDelegate();
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(DelegateFunctionToken),
                     typeof(EndFunctionParmsToken));
-                UnrealPackageUtilities.
-
-                                // OnDelegate = InternalOnDelegate;
-                                AssertTokens(decompiler,
+                // OnDelegate = InternalOnDelegate;
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
-                UnrealPackageUtilities.
-
-                                // OnDelegate = none;
-                                AssertTokens(decompiler,
+                // OnDelegate = none;
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
-                UnrealPackageUtilities.
-
-                                // if (OnDelegate == InstanceDelegate);
-                                AssertTokens(decompiler,
+                // if (OnDelegate == InstanceDelegate);
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateCmpEqToken),
                     typeof(InstanceVariableToken),
                     typeof(InstanceVariableToken),
                     typeof(EndFunctionParmsToken));
-                UnrealPackageUtilities.
-
-                                // if (OnDelegate != InstanceDelegate);
-                                AssertTokens(decompiler,
+                // if (OnDelegate != InstanceDelegate);
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateCmpNeToken),
                     typeof(InstanceVariableToken),
                     typeof(InstanceVariableToken),
                     typeof(EndFunctionParmsToken));
-                UnrealPackageUtilities.
-
-                                // if (OnDelegate == InternalOnDelegate);
-                                AssertTokens(decompiler,
+                // if (OnDelegate == InternalOnDelegate);
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateFunctionCmpEqToken),
                     typeof(InstanceVariableToken),
                     typeof(InstanceDelegateToken),
                     typeof(EndFunctionParmsToken));
-                UnrealPackageUtilities.
-
-                                // if (OnDelegate != InternalOnDelegate);
-                                AssertTokens(decompiler,
+                // if (OnDelegate != InternalOnDelegate);
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateFunctionCmpNeToken),
                     typeof(InstanceVariableToken),
                     typeof(InstanceDelegateToken),
                     typeof(EndFunctionParmsToken));
-                UnrealPackageUtilities.
-
-                                // if (OnDelegate == none);
-                                AssertTokens(decompiler,
+                // if (OnDelegate == none);
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(JumpIfNotToken),
                     typeof(DelegateCmpEqToken),
                     typeof(InstanceVariableToken),
                     typeof(EmptyDelegateToken),
                     typeof(EndFunctionParmsToken));
-                UnrealPackageUtilities.
-
-                                // (return)
-                                AssertTokens(decompiler,
+                // (return)
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(ReturnToken),
                     typeof(NothingToken),
                     typeof(EndOfScriptToken));
@@ -152,17 +134,17 @@ namespace Eliot.UELib.Test.Builds
             }
 
             using var package = GetScriptPackage();
-            Assert.IsNotNull(package);
-            package.InitializePackage();
-            AssertTestClass(package);
+            var packageLinker = package.Linker;
+            package.InitializePackage(null);
+            AssertTestClass(packageLinker);
 
-            var tokensClass = package.FindObject<UClass>("ExprTokens");
+            var tokensClass = packageLinker.FindObject<UClass>("ExprTokens");
             Assert.IsNotNull(tokensClass);
 
             // Test a series of expected tokens
-            AssertFunctionDelegateTokens(package);
+            AssertFunctionDelegateTokens(packageLinker);
             UnrealPackageUtilities.AssertScriptDecompile(tokensClass);
-            AssertDefaults(package);
+            AssertDefaults(packageLinker);
         }
     }
 }

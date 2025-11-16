@@ -37,7 +37,7 @@ public class UnrealStreamBenchmark
     //| WriteMatrix            | 119.797 ns | 3.9709 ns | 11.5834 ns | 117.552 ns |
     //| ReadMatrixMarshal      |  18.508 ns | 0.3762 ns |  0.9507 ns |  18.262 ns |
     //| WriteMatrixMarshal     |  20.775 ns | 1.1954 ns |  3.5245 ns |  19.036 ns |
-    private readonly UnrealPackageArchive _Archive;
+    private readonly UnrealPackage _Package;
     private readonly IUnrealStream _Stream;
 
     private int _CompactIndex1 = 0x40 - 1;
@@ -64,11 +64,11 @@ public class UnrealStreamBenchmark
 
     public UnrealStreamBenchmark()
     {
-        _Archive = UnrealPackageUtilities.CreateMemoryArchive(100);
-        _Archive.Package.Names.Add(new UNameTableItem(_Name)); // Ensure that index 0 exists for ReadName
-        _Archive.NameIndices.Add(_Name.Index, 0);
+        _Package = UnrealPackageUtilities.CreateMemoryPackage(100);
+        _Package.Names.Add(new UNameTableItem(_Name)); // Ensure that index 0 exists for ReadName
+        _Package.Archive.NameIndices.Add(_Name.Index, 0);
 
-        _Stream = _Archive.Stream;
+        _Stream = _Package.Stream;
 
         _Int32Position = _Stream.Position;
         _Stream.WriteIndex(_Int32);
@@ -104,7 +104,7 @@ public class UnrealStreamBenchmark
         _Stream.WriteStruct(ref _Matrix);
     }
 
-    ~UnrealStreamBenchmark() => _Archive.Dispose();
+    ~UnrealStreamBenchmark() => _Package.Dispose();
 
     [Benchmark]
     public void ReadInt32()

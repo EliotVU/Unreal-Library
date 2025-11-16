@@ -6,8 +6,6 @@ namespace Eliot.UELib.Test
 {
     public static class UnrealPackageUtilities
     {
-        internal static UnrealPackageEnvironment s_environment = new("Transient", []);
-        
         public static FileStream CreateTempPackageStream()
         {
             string tempFilePath = Path.Join(Path.GetTempFileName());
@@ -16,14 +14,21 @@ namespace Eliot.UELib.Test
             return fileStream;
         }
 
-        public static UnrealPackageArchive CreateTempArchive(PackageObjectLegacyVersion version,
-            ushort licenseeVersion = 0) => CreateTempArchive((uint)version, licenseeVersion);
-        public static UnrealPackageArchive CreateTempArchive(uint version, ushort licenseeVersion = 0)
+        public static UnrealPackage CreateTempPackage(
+            PackageObjectLegacyVersion version,
+            ushort licenseeVersion = 0,
+            UnrealPackageEnvironment? packageEnvironment = null)
+            => CreateTempPackage((uint)version, licenseeVersion, packageEnvironment);
+
+        public static UnrealPackage CreateTempPackage(
+            uint version,
+            ushort licenseeVersion = 0,
+            UnrealPackageEnvironment? packageEnvironment = null)
         {
+            packageEnvironment ??= new UnrealPackageEnvironment("Temp", RegisterUnrealClassesStrategy.None);
+
             var fileStream = CreateTempPackageStream();
-
-            var archive = new UnrealPackageArchive(fileStream, fileStream.Name);
-            var package = archive.Package;
+            var package = new UnrealPackage(fileStream, fileStream.Name, packageEnvironment);
             package.Build = new UnrealPackage.GameBuild(package);
             package.Summary = new UnrealPackage.PackageFileSummary
             {
@@ -31,16 +36,24 @@ namespace Eliot.UELib.Test
                 LicenseeVersion = licenseeVersion
             };
 
-            return archive;
+            return package;
         }
-        
-        public static UnrealPackageArchive CreateMemoryArchive(PackageObjectLegacyVersion version,
-            ushort licenseeVersion = 0) => CreateMemoryArchive((uint)version, licenseeVersion);
-        public static UnrealPackageArchive CreateMemoryArchive(uint version, ushort licenseeVersion = 0)
+
+        public static UnrealPackage CreateMemoryPackage(
+            PackageObjectLegacyVersion version,
+            ushort licenseeVersion = 0,
+            UnrealPackageEnvironment? packageEnvironment = null)
+            => CreateMemoryPackage((uint)version, licenseeVersion, packageEnvironment);
+
+        public static UnrealPackage CreateMemoryPackage(
+            uint version,
+            ushort licenseeVersion = 0,
+            UnrealPackageEnvironment? packageEnvironment = null)
         {
+            packageEnvironment ??= new UnrealPackageEnvironment("Temp", RegisterUnrealClassesStrategy.None);
+
             var memoryStream = new MemoryStream();
-            var archive = new UnrealPackageArchive(memoryStream, "Transient");
-            var package = archive.Package;
+            var package = new UnrealPackage(memoryStream, "Transient", packageEnvironment);
             package.Build = new UnrealPackage.GameBuild(package);
             package.Summary = new UnrealPackage.PackageFileSummary
             {
@@ -48,7 +61,7 @@ namespace Eliot.UELib.Test
                 LicenseeVersion = licenseeVersion
             };
 
-            return archive;
+            return package;
         }
 
         internal static void AssertScriptDecompile(UStruct scriptInstance)
@@ -81,13 +94,13 @@ namespace Eliot.UELib.Test
             }
         }
 
-        internal static UObject AssertDefaultPropertiesClass(UnrealPackage linker)
+        internal static UObject AssertDefaultPropertiesClass(UnrealPackageLinker packageLinker)
         {
-            var testClass = linker.FindObject<UClass>("DefaultProperties");
+            var testClass = packageLinker.FindObject<UClass>("DefaultProperties");
             Assert.IsNotNull(testClass);
 
             var defaults = testClass.Default ?? testClass;
-            defaults.Load();
+            packageLinker.LoadObject(defaults);
 
             return defaults;
         }
@@ -104,17 +117,19 @@ namespace Eliot.UELib.Test
         internal static void AssertExportsOfType<T>(IEnumerable<UObject> objects)
             where T : UObject
         {
-            var textures = objects.OfType<T>()
+            var textures = objects
+                .OfType<T>()
                 .ToList();
-            Assert.IsTrue(textures.Any());
+            Assert.AreNotEqual(0, textures.Count);
             textures.ForEach(AssertObjectDeserialization);
         }
 
         internal static void AssertExports(IEnumerable<UObject> objects)
         {
-            var compatibleExports = objects.Where(exp => exp is not UnknownObject)
+            var compatibleExports = objects
+                .Where(exp => exp is not UnknownObject)
                 .ToList();
-            Assert.IsTrue(compatibleExports.Any());
+            Assert.AreNotEqual(0, compatibleExports.Count);
             compatibleExports.ForEach(AssertObjectDeserialization);
         }
 
@@ -125,7 +140,7 @@ namespace Eliot.UELib.Test
                 obj.Load();
             }
 
-            Assert.IsTrue(obj.DeserializationState == UObject.ObjectState.Deserialized, obj.GetReferencePath());
+            Assert.AreEqual(UObject.ObjectState.Deserialized, obj.DeserializationState, obj.GetReferencePath());
         }
 
         internal static void AssertTokenType<T>(UStruct.UByteCodeDecompiler.Token token)

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
+using System.Linq;
 using UELib.Decoding;
 using UELib.IO;
 
@@ -11,6 +13,11 @@ internal interface IUnrealPackageArchive : IUnrealArchive
     UnrealPackage Package { get; }
 }
 
+/// <summary>
+/// An archive for <see cref="UnrealPackage"/> to manage and dispose of a <see cref="UnrealPackageStream"/>
+///
+/// It is also used to expose package versioning to its stream, as well as track the encoding and serialization state.
+/// </summary>
 public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
 {
     private IBufferDecoder? _Decoder;
@@ -20,34 +27,23 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
     /// </summary>
     public Dictionary<int, int> NameIndices { get; } = new(1000);
 
-    public UnrealPackageArchive(UnrealPackage package, UnrealPackageEnvironment environment)
+    public UnrealPackageArchive(UnrealPackage package, Stream? baseStream = null)
     {
         Package = package;
-        Environment = environment;
-    }
 
-    public UnrealPackageArchive(Stream stream, string fileName)
-    {
-        Stream = new UnrealPackageStream(this, stream);
-        Environment = new UnrealPackageEnvironment(fileName, [Path.GetDirectoryName(fileName)]);
-        Package = new UnrealPackage(this, fileName);
-
-        if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
+        if (baseStream == null)
         {
+            return;
+        }
+
+        if (UnrealFile.GetSignature(baseStream) == UnrealFile.BigEndianSignature)
+        {
+            // Move this to the setter of 'Stream'?
+            //Contract.Assert((Flags & UnrealArchiveFlags.BigEndian) == 0, "Archive is already marked with 'BigEndian'");
             Flags |= UnrealArchiveFlags.BigEndian;
         }
-    }
 
-    public UnrealPackageArchive(Stream stream, string fileName, UnrealPackageEnvironment environment)
-    {
-        Stream = new UnrealPackageStream(this, stream);
-        Environment = environment;
-        Package = new UnrealPackage(this, fileName);
-
-        if (UnrealFile.GetSignature(stream) == UnrealFile.BigEndianSignature)
-        {
-            Flags |= UnrealArchiveFlags.BigEndian;
-        }
+        Stream = new UnrealPackageStream(this, baseStream);
     }
 
     public IBufferDecoder? Decoder
@@ -68,10 +64,16 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
         }
     }
 
-    public UnrealPackageStream Stream { get; set; }
+    /// <summary>
+    /// May be null briefly, or if the <see cref="Package"/> is a transient package.
+    /// </summary>
+    public UnrealPackageStream Stream
+    {
+        get;
+        set;
+    }
 
     public UnrealPackage Package { get; }
-    public UnrealPackageEnvironment Environment { get; }
 
     public uint Version => Package.Summary.Version;
     public uint LicenseeVersion => Package.Summary.LicenseeVersion;
@@ -85,7 +87,5 @@ public sealed class UnrealPackageArchive : IUnrealPackageArchive, IDisposable
     public void Dispose()
     {
         Stream?.Dispose();
-
-        Package.Dispose();
     }
 }

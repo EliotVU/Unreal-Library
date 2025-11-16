@@ -71,39 +71,25 @@ namespace UELib
     {
         [Obsolete("Use UnrealFile.Signature instead")]
         public const uint Signature = UnrealFile.Signature;
-        
+
         [Obsolete("Use UnrealFile.BigEndianSignature instead")]
         public const uint Signature_BigEndian = UnrealFile.BigEndianSignature;
 
         public readonly UPackage RootPackage;
 
-        public UnrealPackageStream Stream
-        {
-            get => Archive.Stream;
-            set => Archive.Stream = value;
-        }
+        public UnrealPackageLinker Linker { get; }
 
         /// <summary>
         /// A package archive to represent the package version and active stream.
         ///
         /// This helps make it easier to re-wrap a package stream and keep track of it.
         /// </summary>
-        public readonly UnrealPackageArchive Archive;
+        public UnrealPackageArchive Archive { get; }
 
-        private UnrealPackageLinker? _Linker;
-        internal UnrealPackageLinker Linker
+        public UnrealPackageStream Stream
         {
-            private get
-            {
-                // For backward compatibility we create a default linker if none was assigned.
-                return _Linker ??= new UnrealPackageLinker(this,
-                    new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
-            }
-
-            set
-            {
-                _Linker = value;
-            }
+            get => Archive.Stream;
+            set => Archive.Stream = value;
         }
 
         /// <summary>
@@ -115,7 +101,11 @@ namespace UELib
         public string PackageName => Path.GetFileNameWithoutExtension(_FullPackageName);
         public string PackageDirectory => Path.GetDirectoryName(_FullPackageName)!;
 
-        public static readonly UnrealPackage TransientPackage = new("Transient");
+        public static readonly UnrealPackage TransientPackage = new("Transient")
+        {
+            Build = new GameBuild(0, 0, BuildGeneration.Undefined, null, 0),
+            Branch = new DefaultEngineBranch(BuildGeneration.Undefined)
+        };
 
         public BinaryMetaData BinaryMetaData { get; } = new();
 
@@ -2678,20 +2668,20 @@ namespace UELib
         public UArray<UObjectThumbnailTableItem> ObjectThumbnails { get; private set; } = [];
 
         /// <summary>
-        /// List of UObjects that were constructed by function ConstructObjects, later deserialized and linked.
-        ///
-        /// Includes Exports and Imports!.
+        /// Enumerates over all objects that belong to this package.
         /// </summary>
-        public List<UObject> Objects { get; private set; } = [];
+        /// <returns>The enumerable objects in this package.</returns>
+        public IEnumerable<UObject> EnumerateObjects() => Linker.EnumerateObjects<UObject>();
+
+        [Obsolete("Use EnumerateObjects()")]
+        public IEnumerable<UObject> Objects => EnumerateObjects();
 
         public NativesTablePackage NTLPackage;
 
         [Obsolete("Replaced with an encoded stream", true)]
         public IBufferDecoder Decoder;
 
-        /// <summary>
-        /// A Collection of flags describing how a package should be initialized.
-        /// </summary>
+        [Obsolete]
         [Flags]
         public enum InitFlags : ushort
         {
@@ -2703,51 +2693,27 @@ namespace UELib
             RegisterClasses = 0x0010
         }
 
-        private UPackage GetRootPackage(string filePath)
+        public UnrealPackage(
+            Stream baseStream,
+            string packageName,
+            UnrealPackageEnvironment? packageEnvironment = null)
         {
-            string packageName = Path.GetFileNameWithoutExtension(filePath);
-            return Linker.GetRootPackage(packageName);
-        }
-
-        /// <summary>
-        /// Constructs a dummy package, the stream has to be initialized manually.
-        /// </summary>
-        /// <param name="packageName">the filename used to create the root package.</param>
-        public UnrealPackage(string packageName = "Transient")
-        {
-            string[] directory = Directory.Exists(Path.GetDirectoryName(packageName))
-                ? [Path.GetDirectoryName(packageName)]
-                : [];
-            Archive = new UnrealPackageArchive(this, new UnrealPackageEnvironment(packageName, directory));
-            Linker = new UnrealPackageLinker(this,
-                new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
-
             _FullPackageName = packageName;
-            RootPackage = GetRootPackage(packageName);
+            var rootPackageName = new UName(Path.GetFileNameWithoutExtension(packageName));
+
+            // If null, use a unique environment for each package, to emulate the legacy behavior before package linking was added.
+            packageEnvironment ??= new UnrealPackageEnvironment(packageName, RegisterUnrealClassesStrategy.None);
+            Archive = new UnrealPackageArchive(this, baseStream);
+            Linker = new UnrealPackageLinker(this, packageEnvironment);
+
+            RootPackage = Linker.GetRootPackage(rootPackageName);
         }
 
-        public UnrealPackage(UnrealPackageArchive archive, string packageName)
-        {
-            Archive = archive;
-            Linker = new UnrealPackageLinker(this, new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
-
-            _FullPackageName = packageName;
-            RootPackage = GetRootPackage(packageName);
-        }
-
-        public UnrealPackage(FileStream stream)
-        {
-            string packageName = stream.Name;
-            Archive = new UnrealPackageArchive(this, new UnrealPackageEnvironment(packageName, [Path.GetDirectoryName(packageName)]));
-
-            var packageStream = new UnrealPackageStream(Archive, stream);
-            Archive.Stream = packageStream;
-
-            Linker = new UnrealPackageLinker(this, new UnrealFilePackageProvider(Archive.Environment, UnrealExtensions.Common));
-
-            _FullPackageName = stream.Name;
-            RootPackage = GetRootPackage(_FullPackageName);
-        }
+        // For transient and testing packages. 
+        public UnrealPackage(
+            string packageName,
+            UnrealPackageEnvironment? packageEnvironment = null
+        ) : this(baseStream: null, packageName, packageEnvironment) { }
 
         /// <summary>
         /// Serializes the package header to the stream.
@@ -3384,34 +3350,57 @@ namespace UELib
         }
 
         // For backwards compatibility.
-        private class EventEmitter(UnrealPackage package) : IUnrealPackageEventEmitter
+        private class PackageEventEmitter(UnrealPackage package) : IUnrealPackageEventEmitter
         {
-            public void OnAdd(UObject obj)
+            public void OnAdded(UObject obj)
             {
-                package.AddToObjects(obj);
+                package.NotifyObjectAdded?.Invoke(this, new ObjectEventArgs(obj));
+            }
+
+            public void OnLoaded(UObject obj)
+            {
+                package.NotifyPackageEvent?.Invoke(this, new PackageEventArgs(PackageEventArgs.Id.Deserialize));
             }
         }
 
         /// <summary>
-        /// Initializes all the objects that resist in this package as well tries to import deserialized data from imported objects.
+        /// Initializes the package contents using a provided linker.
+        ///
+        /// This invokes the linker to construct, link and load all eligible exports that satisfy the load flags.
         /// </summary>
-        /// <param name="initFlags">A collection of initializing flags to notify what should be initialized.</param>
-        /// <example>InitializePackage( UnrealPackage.InitFlags.All )</example>
+        /// <param name="packageProvider">The package provider to handle root imports during initialization.</param>
+        /// <param name="loadFlags">The flags that an object class must satisfy.</param>
+        public void InitializePackage(IUnrealPackageProvider? packageProvider, InternalClassFlags loadFlags = InternalClassFlags.Preload)
+        {
+            Linker.PackageProvider = packageProvider;
+            Linker.ConstructExports();
+
+            if (loadFlags != InternalClassFlags.Default)
+            {
+                Linker.LoadExports(loadFlags);
+            }
+            else
+            {
+                Linker.LoadExports();
+            }
+        }
+
+        /// <summary>
+        /// Initializes the package by registering all internal class types,
+        /// constructing all export/import objects,
+        /// and finally deserializes all the eligible objects.
+        /// </summary>
+        [Obsolete("User Linker or InitializePackage(null)")]
         public void InitializePackage(InitFlags initFlags = InitFlags.All)
         {
             // For backwards compatibility.
-            Linker.EventEmitter ??= new EventEmitter(this);
-            InitializePackage(initFlags, Linker);
-        }
-
-        public void InitializePackage(InitFlags initFlags, UnrealPackageLinker linker)
-        {
-            // We'll need this later for object construction.
-            Linker = linker;
-
+            Linker.EventEmitter ??= new PackageEventEmitter(this);
             if ((initFlags & InitFlags.RegisterClasses) != 0)
             {
-                Archive.Environment.AddUnrealClasses();
+                if (Linker.PackageEnvironment != UnrealLoader.TransientPackageEnvironment)
+                {
+                    Linker.PackageEnvironment.AddUnrealClasses();
+                }
             }
 
             if ((initFlags & InitFlags.Construct) == 0)
@@ -3420,7 +3409,7 @@ namespace UELib
             }
 
             LibServices.Debug("Constructing all package objects", PackageName);
-            OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Construct));
+            NotifyPackageEvent?.Invoke(this, new PackageEventArgs(PackageEventArgs.Id.Construct));
             foreach (var exp in Exports)
             {
                 try
@@ -3456,7 +3445,7 @@ namespace UELib
                 LibServices.Debug("Loading all package objects", PackageName);
 
                 // Only exports should be deserialized and PostInitialized!
-                OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Deserialize));
+                NotifyPackageEvent?.Invoke(this, new PackageEventArgs(PackageEventArgs.Id.Deserialize));
                 foreach (var exp in Exports)
                 {
                     if (exp.Object is not UnknownObject)
@@ -3467,7 +3456,7 @@ namespace UELib
                         }
                     }
 
-                    OnNotifyPackageEvent(new PackageEventArgs(PackageEventArgs.Id.Object));
+                    NotifyPackageEvent?.Invoke(this, new PackageEventArgs(PackageEventArgs.Id.Object));
                 }
             }
             catch (Exception ex)
@@ -3476,9 +3465,7 @@ namespace UELib
             }
         }
 
-        /// <summary>
-        ///
-        /// </summary>
+        [Obsolete]
         public class PackageEventArgs : EventArgs
         {
             /// <summary>
@@ -3527,31 +3514,16 @@ namespace UELib
             }
         }
 
-        /// <summary>
-        ///
-        /// </summary>
+        [Obsolete("Use a UnrealPackageLinker with an EventEmitter")]
         public event PackageEventHandler? NotifyPackageEvent;
-
-        private void OnNotifyPackageEvent(PackageEventArgs e)
-        {
-            NotifyPackageEvent?.Invoke(this, e);
-        }
 
         /// <summary>
         /// Called when an object is added to the ObjectsList via the AddObject function.
         /// </summary>
+        [Obsolete("Use a UnrealPackageLinker with an EventEmitter")]
         public event NotifyObjectAddedEventHandler? NotifyObjectAdded;
 
         #region Methods
-
-        // Create pseudo objects for imports so that we have non-null references to imports.
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddToObjects(UObject obj)
-        {
-            Objects.Add(obj);
-            NotifyObjectAdded?.Invoke(this, new ObjectEventArgs(obj));
-        }
 
         [Obsolete("Use Summary.Serialize")]
         public void WritePackageFlags()
@@ -3561,16 +3533,16 @@ namespace UELib
         }
 
         [Obsolete("Use AddClassType")]
-        public void RegisterClass(string className, Type classObject)
+        public void RegisterClass(string className, Type internalClassType)
         {
-            AddClassType(className, classObject);
+            AddClassType(className, internalClassType);
         }
 
-        public void AddClassType(string className, Type classObject)
+        public void AddClassType(string className, Type internalClassType)
         {
-            var staticClass = Linker.CreateObject<UClass>(new UName(className), null);
+            var staticClass = Linker.CreateObject<UClass>(new UName(className), Linker.GetStaticClass(UnrealName.Class));
             staticClass.InternalFlags |= InternalClassFlags.Intrinsic;
-            staticClass.InternalType = classObject;
+            staticClass.InternalType = internalClassType;
         }
 
         public Type GetClassType(string className)
@@ -3628,25 +3600,45 @@ namespace UELib
             };
         }
 
-        [Obsolete("See below")]
+        /// <summary>
+        /// Finds an object by name.
+        /// Will return null if using PreloadPackage()
+        /// </summary>
+        [Obsolete("Use UnrealPackageLinker.FindObject")]
         public UObject? FindObject(string objectName, Type classType, bool checkForSubclass = false)
         {
-            var obj = Objects.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
-                                        (checkForSubclass
-                                            ? o.GetType().IsSubclassOf(classType)
-                                            : o.GetType() == classType));
+            var objName = new UName(objectName);
+            var obj = EnumerateObjects()
+                .FirstOrDefault(subject => subject.Name == objName &&
+                    (checkForSubclass
+                        ? subject.GetType().IsSubclassOf(classType)
+                        : subject.GetType() == classType)
+                );
             return obj;
         }
 
+        /// <summary>
+        /// Finds an object by name.
+        /// Will return null if using PreloadPackage()
+        /// </summary>
+        [Obsolete("Use UnrealPackageLinker.FindObject")]
         public T? FindObject<T>(string objectName, bool checkForSubclass = false) where T : UObject
         {
-            var obj = Objects.Find(o => string.Compare(o.Name, objectName, StringComparison.OrdinalIgnoreCase) == 0 &&
-                                        (checkForSubclass
-                                            ? o.GetType().IsSubclassOf(typeof(T))
-                                            : o.GetType() == typeof(T)));
-            return (T)obj;
+            var objName = new UName(objectName);
+            var obj = EnumerateObjects()
+                .FirstOrDefault(subject => subject.Name == objName &&
+                    (checkForSubclass
+                        ? subject.GetType().IsSubclassOf(typeof(T))
+                        : subject.GetType() == typeof(T))
+                );
+            return (T?)obj;
         }
 
+        /// <summary>
+        /// Finds an object by path.
+        /// Will return null if using PreloadPackage()
+        /// </summary>
+        [Obsolete("Use UnrealPackageLinker.FindObject")]
         public UObject? FindObjectByGroup(string objectGroup)
         {
             string[] groups = objectGroup.Split('.');
@@ -3657,14 +3649,15 @@ namespace UELib
             }
 
             groups = groups.Take(groups.Length - 1).Reverse().ToArray();
-            var foundObj = Objects.Find(obj =>
+            var objName = new UName(objectName);
+            var foundObj = EnumerateObjects().FirstOrDefault(subject =>
             {
-                if (string.Compare(obj.Name, objectName, StringComparison.OrdinalIgnoreCase) != 0)
+                if (subject.Name != objName)
                 {
                     return false;
                 }
 
-                var outer = obj.Outer;
+                var outer = subject.Outer;
                 foreach (string group in groups)
                 {
                     if (outer == null)
@@ -3841,6 +3834,8 @@ namespace UELib
 
         #endregion
 
+        #endregion
+
         /// <inheritdoc/>
         public override string ToString()
         {
@@ -3850,15 +3845,8 @@ namespace UELib
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (Objects != null && Objects.Any())
-            {
-                foreach (var obj in Objects) obj.Dispose();
-
-                Objects.Clear();
-                Objects = null;
-            }
+            Linker.PackageEnvironment.ObjectContainer.Dispose(this);
+            Archive.Dispose();
         }
-
-        #endregion
     }
 }

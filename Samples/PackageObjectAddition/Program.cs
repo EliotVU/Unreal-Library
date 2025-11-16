@@ -1,29 +1,34 @@
 ﻿// Adds a new function to an existing class, by appending it to the end of the package file.
 
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using UELib;
 using UELib.Core;
 using UELib.Flags;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
 // Has to be a decompressed(and decrypted if any) package!
-const string packagePath = "Assets/TestUC3.u";
+string packagePath = Path.Combine("Assets", "TestUC3.u");
+
+using var packageEnvironment = new UnrealPackageEnvironment(Path.GetDirectoryName(packagePath)!, RegisterUnrealClassesStrategy.StandardClasses);
 
 using var fileStream = new FileStream(packagePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-using var package = new UnrealPackage(fileStream);
+using var package = new UnrealPackage(fileStream, packageEnvironment);
 
 var packageStream = package.Stream;
 package.BuildTarget = UnrealPackage.GameBuild.BuildName.Unset;
 package.Deserialize(packageStream);
 
+var packageLinker = new UnrealPackageLinker(package);
+
 // In order for FindObjectByGroup to work, we need to initialize the export objects.
-package.InitializePackage(UnrealPackage.InitFlags.RegisterClasses | UnrealPackage.InitFlags.Construct);
+package.InitializePackage(null, UELib.ObjectModel.Annotations.InternalClassFlags.Default);
 
 const string objectTarget = "UC3Test";
-var objectResult = package.FindObjectByGroup(objectTarget);
+var objectResult = packageLinker.FindObject<UClass>(objectTarget);
 Console.WriteLine(objectResult == null
     ? $"Object '{objectTarget}' not found in package."
-    : $"Found object: {objectResult.Name} of type {objectResult.Class?.Name ?? "Class"}");
+    : $"Found object: {objectResult.Name} of type {objectResult.Class.Name}");
 
 if (objectResult is UClass targetClass)
 {
@@ -48,15 +53,18 @@ if (objectResult is UClass targetClass)
     var endOfScript = tokenFactory.CreateToken<EndOfScriptToken>();
 
     UnrealPackageBuilder
-        .Operate(package)
+        .Operate(packageLinker)
         .AddName(newFunctionName)
         .AddResource(UnrealObjectBuilder
-                     .CreateFunction(package)
+                     .CreateFunction(packageLinker)
                      .FriendlyName(newFunctionName)
                      .FunctionFlags(FunctionFlag.Public, FunctionFlag.Defined)
                      .Outer(targetClass) // We need to set this before the call to AddResource finalizes.
                      .WithStatements(funcCall, returnToken, endOfScript)
                      .Build(out var newFunction));
+
+    Contract.Assert(newFunction.ExportResource.Class != null, "Couldn't resolve class for export");
+    Contract.Assert(newFunction.ExportResource.Outer != null, "Couldn't resolve outer for export");
 
     // Register the new function in the target class.
     var newClass = UnrealObjectBuilder
@@ -92,5 +100,16 @@ if (objectResult is UClass targetClass)
     // sanity test
     //package.InitializePackage();
 
-    Debug.Assert(package.FindObjectByGroup(newFunctionName) != null, "New function was not added successfully.");
+    var resultingObject = packageLinker.FindObject<UFunction>(newFunctionName);
+    if (resultingObject == null)
+    {
+        Console.WriteLine("New function was not added successfully.");
+
+        return;
+    }
+
+    Contract.Assert(resultingObject is UFunction);
+    Contract.Assert(resultingObject.Outer == objectResult);
+
+    Console.WriteLine($"Successfully added object {resultingObject.GetReferencePath()} to package.");
 }

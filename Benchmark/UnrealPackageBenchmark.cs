@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Reflection;
 using BenchmarkDotNet.Attributes;
 using UELib;
 
@@ -8,32 +7,36 @@ namespace Eliot.UELib.Benchmark
     [BenchmarkCategory("UnrealPackage")]
     public class UnrealPackageBenchmark
     {
-        private readonly UnrealPackage _Linker;
+        private readonly UnrealPackage _Package;
 
         public UnrealPackageBenchmark()
         {
-            var stream =
-                new FileStream(
-                    Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Samples", "TestUC3.u"),
-                    FileMode.Open, FileAccess.Read);
-            _Linker = new UnrealPackage(stream);
-            _Linker.Deserialize();
+            var fileStream = new FileStream(
+                Path.Combine("Samples", "TestUC3.u"),
+                FileMode.Open,
+                FileAccess.Read
+            );
 
-            _Linker.BinaryMetaData?.Fields.Clear();
+            _Package = new UnrealPackage(fileStream, fileStream.Name, null);
+            _Package.Deserialize();
+
+            _Package.BinaryMetaData?.Fields.Clear();
         }
 
         [Benchmark]
         public void PackageDeserialization()
         {
-            _Linker.Stream.Position = 0;
-            _Linker.Deserialize(_Linker.Stream);
-            _Linker.BinaryMetaData?.Fields.Clear();
+            _Package.Stream.Position = 0;
+            _Package.Deserialize(_Package.Stream);
+
+            _Package.BinaryMetaData?.Fields.Clear();
         }
 
         [Benchmark]
         public void PackageInitialization()
         {
-            _Linker.InitializePackage();
+            _Package.InitializePackage(null);
+            _Package.Linker.PackageEnvironment.ObjectContainer.Dispose(_Package);
         }
     }
 }

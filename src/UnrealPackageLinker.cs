@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -13,14 +14,28 @@ namespace UELib;
 
 public interface IUnrealPackageEventEmitter
 {
-    public void OnAdd(UObject obj);
+    public void OnAdded(UObject obj);
+    public void OnLoaded(UObject obj);
 }
 
-public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackageProvider packageProvider)
+// TODO: Remove the @Environment from the archive and pass it to this linker instead.
+// Or require it to be assigned to the UnrealPackage?
+public sealed class UnrealPackageLinker(UnrealPackage package, UnrealPackageEnvironment packageEnvironment, IUnrealPackageProvider? packageProvider = null)
 {
-    private readonly UnrealObjectContainer _ObjectContainer = package.Archive.Environment.ObjectContainer;
+    public UnrealPackage Package { get; } = package;
+    public UnrealPackageEnvironment PackageEnvironment { get; } = packageEnvironment;
 
+    public IUnrealPackageProvider? PackageProvider { get; set; } = packageProvider;
     public IUnrealPackageEventEmitter? EventEmitter { get; set; }
+
+    private InternalClassFlags _InternalPreloadFlags = InternalClassFlags.Default;
+    private readonly UnrealObjectContainer _ObjectContainer = packageEnvironment.ObjectContainer;
+
+#if NET9_0_OR_GREATER
+    private readonly System.Threading.Lock _PreloadLock = new();
+#else
+    private readonly object _PreloadLock = new();
+#endif
 
     public UClass GetStaticClass<T>()
         where T : UObject
@@ -42,46 +57,63 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
         return FindObject<UClass>(className) ?? throw new ArgumentNullException();
     }
 
-    internal UPackage GetRootPackage(string packageName)
+    public UPackage GetRootPackage(in UName packageName)
     {
+        // Caveat: "Core" and "Engine" will return the integrated root packages
         return FindObject<UPackage>(packageName) ?? CreateObject<UPackage>(packageName);
     }
 
-    private UPackage ImportPackage(in UName packageName)
+    private UPackage ImportExternalRootPackage(in UName packageName)
     {
-        var pkg = FindObject<UPackage?>(packageName);
-        return pkg?.Package == null ? packageProvider.GetPackage(packageName, this) : pkg;
+        if (PackageProvider == null)
+        {
+            return GetRootPackage(packageName);
+        }
+
+        // e.g. Engine.u may have a root import dependency on "Engine" (with intrinsic classes as imports)
+        if (packageName == Package.RootPackage.Name)
+        {
+            // Switch the package (assuming that it may have been assigned to the transient package)
+            Package.RootPackage.Package = Package;
+            return Package.RootPackage;
+        }
+
+        var externalRootPackage = FindObject<UPackage?>(packageName);
+        bool isPackageLinked = externalRootPackage?.Package != null;
+        return isPackageLinked
+            ? externalRootPackage
+            : PackageProvider.GetPackage(packageName, this);
     }
 
     // TODO: Cache result
     private ulong[] GetInternalObjectFlagsMap()
     {
-        return package.Branch.EnumFlagsMap[typeof(ObjectFlag)];
+        return Package.Branch.EnumFlagsMap[typeof(ObjectFlag)];
     }
 
     // TODO: Cache result
     private ulong[] GetInternalClassFlagsMap()
     {
-        return package.Branch.EnumFlagsMap[typeof(ClassFlag)];
+        return Package.Branch.EnumFlagsMap[typeof(ClassFlag)];
     }
 
     /// <summary>
     /// Returns a <see cref="UObject"/> from a package index.
     /// </summary>
-    public T? IndexToObject<T>(int packageIndex)
+    public T? IndexToObject<T>(UPackageIndex packageIndex)
         where T : UObject
     {
         switch (packageIndex)
         {
             case < 0:
                 {
-                    var import = package.Imports[-packageIndex - 1];
+                    var import = Package.Imports[packageIndex.ImportIndex];
                     return (T)import.Object ?? (T)CreateObject(import);
                 }
 
             case > 0:
                 {
-                    var export = package.Exports[packageIndex - 1];
+                    var export = Package.Exports[packageIndex.ExportIndex];
                     return (T)export.Object ?? (T)CreateObject(export);
                 }
 
@@ -97,9 +129,9 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
         var objName = import.ObjectName;
         if (import.OuterIndex.IsNull)
         {
-            LibServices.Debug("Root import {0}", import.GetReferencePath());
+            Trace.WriteLine($"Root import {import.GetReferencePath()}");
 
-            var pkg = ImportPackage(objName);
+            var pkg = ImportExternalRootPackage(objName);
             import.Object = pkg;
 
             return pkg;
@@ -141,7 +173,7 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
             return crossObject;
         }
 
-        LibServices.Debug("Creating imposter {0}", import.GetReferencePath());
+        Trace.WriteLine($"Creating imposter {import.GetReferencePath()}");
 
         var internalClassType = objClass.InternalType;
         Debug.Assert(internalClassType != null, "Internal class for imposter should not be null");
@@ -153,7 +185,7 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
         {
             internalClassType = typeof(UnknownObject);
 
-            LibServices.Debug("Binding internal type {0} for imposter user-class {1}", internalClassType.ToString(), objName);
+            Trace.WriteLine($"Binding internal type {internalClassType.ToString()} for imposter user-class {objName}");
             ((UClass)obj).InternalType = internalClassType;
         }
 
@@ -163,14 +195,14 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
 
         obj.Name = objName;
         obj.ObjectFlags = objFlags;
-        obj.Package = package;
+        obj.Package = Package;
         obj.PackageIndex = -(import.Index + 1);
         obj.PackageResource = import;
         obj.Class = objClass;
         obj.Outer = objOuter;
 
         _ObjectContainer.Add(obj);
-        EventEmitter?.OnAdd(obj);
+        EventEmitter?.OnAdded(obj);
 
         return obj;
     }
@@ -182,7 +214,7 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
         var objName = export.ObjectName;
         if (export.OuterIndex.IsNull && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
         {
-            LibServices.Debug("Root export {0}", export.GetReferencePath());
+            Trace.WriteLine($"Root export {export.GetReferencePath()}");
 
             var pkg = FindObject<UPackage?>(objName);
             if (pkg == null)
@@ -210,7 +242,7 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
             objClass = GetStaticClass(UnrealName.Class);
         }
 
-        var objOuter = IndexToObject<UObject?>(export.OuterIndex) ?? package.RootPackage;
+        var objOuter = IndexToObject<UObject?>(export.OuterIndex) ?? Package.RootPackage;
         // May occur if the outer was preloaded and has a dependency on this export.
         if (export.Object != null)
         {
@@ -265,7 +297,7 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
 
             Debug.Assert(internalClassType != null, $"Failed to resolve internal type for user-class {objName}; internal class {internalClass?.GetReferencePath()}");
 
-            LibServices.Debug("Binding internal type {0} for user-class {1}", internalClassType.ToString(), objName);
+            Trace.WriteLine($"Binding internal type {internalClassType.ToString()} for user-class {objName}");
             ((UClass)obj).InternalType = internalClassType;
         }
 
@@ -274,7 +306,7 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
         obj.InternalFlags |= objClass.InternalFlags & InternalClassFlags.Inherit;
         obj.Name = objName;
         obj.ObjectFlags = objFlags;
-        obj.Package = package;
+        obj.Package = Package;
         obj.PackageIndex = export.Index + 1;
         obj.PackageResource = export;
         obj.Class = objClass;
@@ -300,9 +332,9 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
         }
 
         _ObjectContainer.Add(obj);
-        EventEmitter?.OnAdd(obj);
+        EventEmitter?.OnAdded(obj);
 
-        if (objClass.InternalFlags.HasFlag(InternalClassFlags.Preload) || obj is UField)
+        if (objClass.InternalFlags.HasFlag(_InternalPreloadFlags))
         {
             // FIXME: Stackoverflow on UT99
             //Preload(obj);
@@ -314,9 +346,13 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
     public T CreateObject<T>(in UName name, UClass @class, UObject? outer = null)
         where T : UObject, new()
     {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(@class, nameof(@class));
+#endif
+
         var newObject = new T
         {
-            Package = package,
+            Package = Package,
             PackageIndex = UPackageIndex.Null,
 
             Name = name,
@@ -325,7 +361,7 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
         };
 
         _ObjectContainer.Add(newObject);
-        EventEmitter?.OnAdd(newObject);
+        EventEmitter?.OnAdded(newObject);
 
         return newObject;
     }
@@ -384,9 +420,13 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? FindObject<T>(string name, UClass? @class)
+    public T? FindObject<T>(string name, UClass @class)
         where T : UObject
     {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(@class, nameof(@class));
+#endif
+
         return _ObjectContainer.Find<T>(IndexName.ToIndex(name), @class);
     }
 
@@ -400,38 +440,89 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? FindObject<T>(in UName name, UObject? outer, UClass? @class)
+    public T? FindObject<T>(in UName name, UObject? outer, UClass @class)
         where T : UObject
     {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(@class, nameof(@class));
+#endif
+
         return outer == null
             ? _ObjectContainer.Find<T>(name.GetHashCode(), @class)
             : _ObjectContainer.Find<T>(name.GetHashCode(), outer.Name.GetHashCode(), @class);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>
+    /// Enumerates over all objects that belong to this linker associated package.
+    /// </summary>
+    /// <typeparam name="T">The class type to constrain the search to.</typeparam>
+    /// <returns>Enumerable objects</returns>
     public IEnumerable<T> EnumerateObjects<T>()
         where T : UObject
     {
-        return _ObjectContainer.Enumerate<T>();
+        return _ObjectContainer
+            .Enumerate()
+            .OfType<T>()
+            .Where(obj => obj.Package == Package);
+    }
+
+    public void PreloadExports(InternalClassFlags loadFlags = InternalClassFlags.Preload)
+    {
+        Contract.Assert(loadFlags != InternalClassFlags.Default);
+
+        lock (_PreloadLock)
+        {
+            _InternalPreloadFlags = loadFlags;
+
+            // And load!
+            ConstructExports();
+        }
+    }
+
+    public void PreloadExport(UExportTableItem export, InternalClassFlags loadFlags = InternalClassFlags.Preload)
+    {
+        Contract.Assert(export.Object == null);
+        Contract.Assert(loadFlags != InternalClassFlags.Default);
+
+        lock (_PreloadLock)
+        {
+            _InternalPreloadFlags = loadFlags;
+            CreateObject(export);
+        }
     }
 
     /// <summary>
-    /// Preloads all exports in the package that have the <see cref="InternalClassFlags.Preload"/> flag set.
+    /// Constructs all exported objects in the package.
     /// </summary>
-    public void Preload(InternalClassFlags flags = InternalClassFlags.Preload)
+    public void ConstructExports()
     {
-        var exports = package.Exports;
+        ConstructExports(Package.Exports);
+    }
 
-        LibServices.Debug("Loading exports for '{0}'", package.FullPackageName);
+    /// <summary>
+    /// Constructs all exported objects in the package that satisfy the load flags.
+    /// </summary>
+    public void ConstructExports(params ObjectFlag[] loadFlagIndices)
+    {
+        Contract.Assert(loadFlagIndices.Length > 0, "Missing load flags");
+
+        var loadableObjectFlags = new UnrealFlags<ObjectFlag>(GetInternalObjectFlagsMap(), loadFlagIndices);
+        var loadableExports = Package
+            .Exports
+            .Where(exp => loadableObjectFlags.HasFlags(exp.ObjectFlags));
+
+        ConstructExports(loadableExports);
+    }
+
+    /// <summary>
+    /// Constructs all enumerable exports that have not yet been constructed.
+    /// </summary>
+    public void ConstructExports(IEnumerable<UExportTableItem> exports)
+    {
+        LibServices.Debug("Loading exports for '{0}'", Package.FullPackageName);
 
         foreach (var exp in exports)
         {
-            // Skip deleted classes.
-            if (exp.ObjectName == UnrealName.None)
-            {
-                continue;
-            }
-
             try
             {
                 var obj = exp.Object ?? CreateObject(exp);
@@ -441,28 +532,51 @@ public sealed class UnrealPackageLinker(UnrealPackage package, IUnrealPackagePro
                 LibServices.LogService.SilentException(new UnrealException($"Couldn't create object for export '{exp}'", exception));
             }
         }
+    }
+    
+    /// <summary>
+    /// Loads all exported objects in the package that have been constructed.
+    /// </summary>
+    public void LoadExports() =>
+        LoadExports(Package
+            .Exports
+            .Select(exp => exp.Object)
+            .Where<UObject>(obj => obj != null));
+    
+    /// <summary>
+    /// Loads all exported objects in the package that have been constructed and that satisfy the load flags.
+    /// </summary>
+    public void LoadExports(InternalClassFlags loadFlags)
+    {
+        Contract.Assert(loadFlags != InternalClassFlags.Default);
 
-        foreach (var obj in exports
-                            .Select(exp => exp.Object)
-                            .Where(obj => obj != null))
+        var exports = Package
+            .Exports
+            .Select(exp => exp.Object)
+            .Where<UObject>(obj => obj != null && (obj.Class.InternalFlags & loadFlags) != 0);
+        LoadExports(exports);
+    }
+
+    /// <summary>
+    /// Loads all enumerable objects that have not yet been loaded.
+    /// </summary>
+    public void LoadExports(IEnumerable<UObject> exportObjects)
+    {
+        foreach (var obj in exportObjects)
         {
             // Already loaded, skip.
-            if (obj.DeserializationState != default)
+            if (obj.DeserializationState != default || obj.PackageResource == null)
             {
                 continue;
             }
 
-            if ((obj.Class.InternalFlags & flags) != 0)
-            {
-                Preload(obj);
-            }
+            LoadObject(obj);
         }
     }
 
-    public void Preload(UObject obj)
+    public void LoadObject(UObject obj)
     {
-        LibServices.Debug("Preloading {0}", obj.GetReferencePath());
-
         obj.Load();
+        EventEmitter?.OnLoaded(obj);
     }
 }

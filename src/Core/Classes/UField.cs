@@ -8,6 +8,7 @@ namespace UELib.Core
     /// <summary>
     ///     Implements UField/Core.Field
     /// </summary>
+    [UnrealClassFlags(InternalClassFlags.Preload)]
     public partial class UField : UObject
     {
         /// <summary>

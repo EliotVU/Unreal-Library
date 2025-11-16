@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <DefineConstants>DECOMPILE;BINARYMETADATA;UE1;UE2;UE3;UE4;VENGEANCE;SWAT4;UNREAL2;INFINITYBLADE;BORDERLANDS2;GOW2;APB;SPECIALFORCE2;XIII;SINGULARITY;THIEF_DS;DEUSEX_IW;BORDERLANDS;MIRRORSEDGE;BIOSHOCK;HAWKEN;UT;DISHONORED;REMEMBERME;ALPHAPROTOCOL;VANGUARD;TERA;MKKE;TRANSFORMERS;XCOM2;DD2;DCUO;AA2;SPELLBORN;BATMAN;MOH;ROCKETLEAGUE;DNF;LSGAME;UNDYING;HP;DEVASTATION;BATTLEBORN;SPLINTERCELLX;AHIT;GIGANTIC;ENDWAR;SG1;MASS_EFFECT;MOV;MIDWAY;SHADOWSTRIKE;R6;HUXLEY;RM;LEAD;BULLETSTORM;ADVENT;SWRepublicCommando;GOWUE;SA2;ACM</DefineConstants>
     <TargetFrameworks>net48;netstandard2.0;netstandard2.1;net8.0;net9.0</TargetFrameworks>
@@ -75,6 +75,14 @@
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
       <Version>6.1.2</Version>
+    </PackageReference>
+    <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="ErrorProne.NET.Structs" Version="0.6.1-beta.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
   <ProjectExtensions></ProjectExtensions>

@@ -22,9 +22,9 @@ namespace Eliot.UELib.Test.Builds
         [TestMethod]
         public void TestScriptContent()
         {
-            void AssertDefaults(UnrealPackage pkg)
+            void AssertDefaults(UnrealPackageLinker packageLinker)
             {
-                var defaults = UnrealPackageUtilities.AssertDefaultPropertiesClass(pkg);
+                var defaults = UnrealPackageUtilities.AssertDefaultPropertiesClass(packageLinker);
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolTrue",
                     "true");
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolFalse",
@@ -59,16 +59,15 @@ namespace Eliot.UELib.Test.Builds
             }
 
             using var package = GetScriptPackage();
-            Assert.IsNotNull(package);
-            package.InitializePackage();
+            package.InitializePackage(null);
 
-            var tokensClass = package.FindObject<UClass>("ExprTokens");
+            var tokensClass = package.Linker.FindObject<UClass>("ExprTokens");
             Assert.IsNotNull(tokensClass);
             UnrealPackageUtilities.
 
-                        // Test a series of expected tokens
-                        AssertScriptDecompile(tokensClass);
-            AssertDefaults(package);
+            // Test a series of expected tokens
+            AssertScriptDecompile(tokensClass);
+            AssertDefaults(package.Linker);
         }
     }
 }

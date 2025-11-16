@@ -809,14 +809,6 @@ namespace UELib.Core
                             }
                         }
 
-                        // Hardcoded fix for InterpCurve and InterpCurvePoint.
-                        if (innerArrayType == PropertyType.None
-                            && (deserializeFlags & DeserializeFlags.WithinStruct) != 0
-                            && string.Compare(Name, "Points", StringComparison.OrdinalIgnoreCase) == 0)
-                        {
-                            innerArrayType = PropertyType.StructProperty;
-                        }
-
                         if (innerArrayType == PropertyType.None)
                         {
                             LibServices.LogService.Log(

@@ -1,50 +1,11 @@
 using System;
 using System.Diagnostics;
 using UELib.Annotations;
+using UELib.Branch;
 using UELib.Core;
 using UELib.Flags;
 
 namespace UELib.ObjectModel.Annotations;
-
-[Flags]
-public enum InternalClassFlags
-{
-    Default = LazyLoad,
-
-    /// <summary>
-    /// The object should not be preloaded, instead a manual call to <see cref="UObject.Load"/> is required.
-    /// </summary>
-    LazyLoad = 0,
-
-    /// <summary>
-    /// The object should be preloaded using an ordinary call to <see cref="UObject.Load"/> as soon as the object is constructed from an export.
-    /// </summary>
-    Preload = 1 << 0,
-
-    /// <summary>
-    /// The object tagged properties should be linked <see cref="UDefaultProperty.Property"/> to the equivalent class <see cref="UProperty"/>.
-    /// </summary>
-    LinkTaggedProperties = 1 << 1,
-
-    /// <summary>
-    /// The object tagged properties should be linked <see cref="UDefaultProperty._InternalValuePtr"/> to the equivalent attributed property using <see cref="UnrealPropertyAttribute"/>.
-    ///
-    /// TODO: NOT IMPLEMENTED; Merge code from new property binding branch.
-    /// </summary>
-    LinkAttributedProperties = 1 << 2,
-
-    /// <summary>
-    /// The object tagged properties should also preload their value; otherwise a call to <see cref="UDefaultProperty.DeserializeProperty "/> must be invoked manually.
-    /// </summary>
-    PreloadTaggedProperties = 1 << 3,
-
-    /// <summary>
-    /// An intrinsic class, objects of this class are crucial to the inner-workings of objects, and must be preloaded.
-    /// </summary>
-    Intrinsic = Preload,
-
-    Inherit = LinkAttributedProperties | LinkTaggedProperties | PreloadTaggedProperties,
-}
 
 /// <summary>
 /// Registers an internal class as an unreal intrinsic class.
@@ -66,7 +27,7 @@ public class UnrealClassAttribute : Attribute
         InternalClassFlags = InternalClassFlags.Default;
         ClassFlags = [ClassFlag.Intrinsic];
     }
-    
+
     public UnrealClassAttribute(
         InternalClassFlags internalClassFlags = InternalClassFlags.Default,
         params ClassFlag[] classFlags)
@@ -74,7 +35,7 @@ public class UnrealClassAttribute : Attribute
         InternalClassFlags = internalClassFlags;
         ClassFlags = [ClassFlag.Intrinsic, .. classFlags];
     }
-    
+
     public UnrealClassAttribute(
         string className,
         string classPackageName,
@@ -113,8 +74,28 @@ public class UnrealClassAttribute : Attribute
         var staticClass = new UClass
         {
             Name = className,
+            Package = UnrealPackage.TransientPackage,
             InternalFlags = InternalClassFlags,
             InternalType = internalClassType,
+            ClassFlags = new UnrealFlags<ClassFlag>(new ulong[(int)ClassFlag.Max], ClassFlags),
+        };
+
+        return staticClass;
+    }
+
+    public UClass CreateStaticClass(
+        Type internalClassType,
+        UName className,
+        InternalClassFlags internalClassFlags,
+        params ClassFlag[] classFlags)
+    {
+        var staticClass = new UClass
+        {
+            Name = className,
+            Package = UnrealPackage.TransientPackage,
+            InternalFlags = InternalClassFlags | internalClassFlags,
+            InternalType = internalClassType,
+            ClassFlags = new UnrealFlags<ClassFlag>(new ulong[(int)ClassFlag.Max], [.. ClassFlags, .. classFlags])
         };
 
         return staticClass;

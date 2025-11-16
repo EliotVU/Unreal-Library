@@ -80,17 +80,16 @@ public class UnrealStreamTests
     [DataRow(PackageObjectLegacyVersion.NumberAddedToName)]
     public void SerializeName(PackageObjectLegacyVersion version)
     {
-        using var archive = UnrealPackageUtilities.CreateTempArchive((uint)version);
-        var package = archive.Package;
-        var stream = archive.Stream;
+        using var outPackage = UnrealPackageUtilities.CreateTempPackage((uint)version);
+        var stream = outPackage.Stream;
 
         // Ensure the package knows about the name.
-        package.Names.Add(new UNameTableItem("Name"));
-        var writtenName = new UName(package.Names[0]);
+        outPackage.Names.Add(new UNameTableItem("Name"));
+        var writtenName = new UName(outPackage.Names[0]);
 
         // Ensure the stream can retrieve the package name index.
         // Hash -> package name index.
-        archive.NameIndices.Add(writtenName.Index, 0);
+        outPackage.Archive.NameIndices.Add(writtenName.Index, 0);
 
         stream.Seek(0, SeekOrigin.Begin);
         stream.WriteName(writtenName);
@@ -170,14 +169,13 @@ public class UnrealStreamTests
     [DataRow(PackageObjectLegacyVersion.LazyArrayReplacedWithBulkData)]
     public void SerializeBulkData(PackageObjectLegacyVersion version)
     {
-        using var archive = UnrealPackageUtilities.CreateTempArchive((uint)version);
-        var package = archive.Package;
-        var stream = archive.Stream;
+        using var outPackage = UnrealPackageUtilities.CreateTempPackage((uint)version);
+        var stream = outPackage.Stream;
 
         // To ensure that StoragePackageName can be serialized.
-        package.Names.Add(new UNameTableItem(UnrealName.None));
-        var nameInPackage = new UName(package.Names[0]);
-        archive.NameIndices.Add(nameInPackage.Index, 0);
+        outPackage.Names.Add(new UNameTableItem(UnrealName.None));
+        var nameInPackage = new UName(outPackage.Names[0]);
+        outPackage.Archive.NameIndices.Add(nameInPackage.Index, 0);
 
         byte[] rawData = "LET'S PRETEND THAT THIS IS BULK DATA!"u8.ToArray();
         var bulkData = new UBulkData<byte>(0, rawData);
@@ -207,8 +205,8 @@ public class UnrealStreamTests
     [DataRow(PackageObjectLegacyVersion.VerticalOffsetAddedToUFont)]
     public void SerializeDataTypes(PackageObjectLegacyVersion version)
     {
-        using var archive = UnrealPackageUtilities.CreateTempArchive((uint)version);
-        var stream = archive.Stream;
+        using var outPackage = UnrealPackageUtilities.CreateTempPackage((uint)version);
+        var stream = outPackage.Stream;
 
         var fontPage = new UFont.FontPage
         {

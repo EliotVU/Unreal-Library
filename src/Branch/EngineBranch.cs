@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UELib.Core.Tokens;
 using UELib.Decoding;
+using UELib.Flags;
 using UELib.Tokens;
 
 namespace UELib.Branch
@@ -29,15 +30,24 @@ namespace UELib.Branch
         /// See <see cref="DefaultEngineBranch"/> for an implementation.
         /// This field is essential to <seealso cref="UnrealStreamImplementations.ReadFlags32"/>
         /// </summary>
-        public readonly Dictionary<Type, ulong[]> EnumFlagsMap = new();
+        public readonly Dictionary<Type, ulong[]> EnumFlagsMap = new()
+        {
+            { typeof(PackageFlag), new ulong[(int)PackageFlag.Max] },
+            { typeof(ObjectFlag), new ulong[(int)ObjectFlag.Max] },
+            { typeof(PropertyFlag), new ulong[(int)PropertyFlag.Max] },
+            { typeof(StructFlag), new ulong[(int)StructFlag.Max] },
+            { typeof(FunctionFlag), new ulong[(int)FunctionFlag.Max] },
+            { typeof(StateFlag), new ulong[(int)StateFlag.Max] },
+            { typeof(ClassFlag), new ulong[(int)ClassFlag.Max] },
+        };
 
-        protected readonly ulong[] PackageFlags = new ulong[(int)Flags.PackageFlag.Max];
-        protected readonly ulong[] ObjectFlags = new ulong[(int)Flags.ObjectFlag.Max];
-        protected readonly ulong[] PropertyFlags = new ulong[(int)Flags.PropertyFlag.Max];
-        protected readonly ulong[] StructFlags = new ulong[(int)Flags.StructFlag.Max];
-        protected readonly ulong[] FunctionFlags = new ulong[(int)Flags.FunctionFlag.Max];
-        protected readonly ulong[] StateFlags = new ulong[(int)Flags.StateFlag.Max];
-        protected readonly ulong[] ClassFlags = new ulong[(int)Flags.ClassFlag.Max];
+        protected ulong[] PackageFlags => EnumFlagsMap[typeof(PackageFlag)];
+        protected ulong[] ObjectFlags => EnumFlagsMap[typeof(ObjectFlag)];
+        protected ulong[] PropertyFlags => EnumFlagsMap[typeof(PropertyFlag)];
+        protected ulong[] StructFlags => EnumFlagsMap[typeof(StructFlag)];
+        protected ulong[] FunctionFlags => EnumFlagsMap[typeof(FunctionFlag)];
+        protected ulong[] StateFlags => EnumFlagsMap[typeof(StateFlag)];
+        protected ulong[] ClassFlags => EnumFlagsMap[typeof(ClassFlag)];
 
         public EngineBranch()
         {
@@ -93,9 +103,9 @@ namespace UELib.Branch
         protected virtual void SetupTokenFactory(UnrealPackage linker)
         {
             SetupTokenFactory<TokenFactory>(
-                BuildTokenMap(linker), 
+                BuildTokenMap(linker),
                 TokenFactory.FromPackage(linker.NTLPackage),
-                (byte)ExprToken.ExtendedNative, 
+                (byte)ExprToken.ExtendedNative,
                 (byte)ExprToken.FirstNative);
         }
 

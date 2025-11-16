@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UELib.Flags;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -362,13 +363,21 @@ namespace UELib.Core
             if (ForceScriptOrder.HasValue)
             {
                 bool forceScriptOrder = ForceScriptOrder.Value;
-                if (forceScriptOrder && !((UClass)Super).ForceScriptOrder.Value)
+                if (Super != null)
                 {
-                    output += "\r\n\tforcescriptorder(true)";
+                    bool superForceScriptOrder = ((UClass)Super).ForceScriptOrder ?? false;
+                    if (forceScriptOrder && !superForceScriptOrder)
+                    {
+                        output += $"\r\n\tforcescriptorder({PropertyDisplay.FormatLiteral(true)})";
+                    }
+                    else if (!forceScriptOrder && superForceScriptOrder)
+                    {
+                        output += $"\r\n\tforcescriptorder({PropertyDisplay.FormatLiteral(false)})";
+                    }
                 }
-                else if (!forceScriptOrder && ((UClass)Super).ForceScriptOrder.Value)
+                else if (forceScriptOrder) // default is false, so only output if true
                 {
-                    output += "\r\n\tforcescriptorder(false)";
+                    output += $"\r\n\tforcescriptorder({PropertyDisplay.FormatLiteral(forceScriptOrder)})";
                 }
             }
 

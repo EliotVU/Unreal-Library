@@ -30,18 +30,17 @@ namespace Eliot.UELib.Test.Builds
                 Assert.Inconclusive($"Couldn't find package '{packagePath}'");
             }
 
-            var linker = UnrealLoader.LoadPackage(packagePath);
-            Assert.IsNotNull(linker);
-            return linker;
+            var package = UnrealLoader.LoadPackage(packagePath);
+            return package;
         }
 
 
         [TestMethod]
         public void TestScriptContent()
         {
-            void AssertDefaults(UnrealPackage pkg)
+            void AssertDefaults(UnrealPackageLinker packageLinker)
             {
-                var defaults = UnrealPackageUtilities.AssertDefaultPropertiesClass(pkg);
+                var defaults = UnrealPackageUtilities.AssertDefaultPropertiesClass(packageLinker);
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolTrue",
                     "true");
                 UnrealPackageUtilities.AssertPropertyTagFormat(defaults, "BoolFalse",
@@ -85,37 +84,30 @@ namespace Eliot.UELib.Test.Builds
                     "WPlane=(W=12.0000000,X=13.0000000,Y=14.0000000,Z=15.0000000))");
             }
 
-            void AssertFunctionDelegateTokens(UnrealPackage package)
+            void AssertFunctionDelegateTokens(UnrealPackageLinker packageLinker)
             {
-                var delegateTokensFunc = package.FindObject<UFunction>("DelegateTokens")!;
-                delegateTokensFunc.Load();
+                var delegateTokensFunc = packageLinker.FindObject<UFunction>("DelegateTokens")!;
+                packageLinker.LoadObject(delegateTokensFunc);
 
                 var decompiler = new UStruct.UByteCodeDecompiler(delegateTokensFunc);
                 decompiler.Deserialize();
-                UnrealPackageUtilities.
 
-                                // OnDelegate();
-                                AssertTokens(decompiler,
+                // OnDelegate();
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(DelegateFunctionToken),
                     typeof(EndFunctionParmsToken));
-                UnrealPackageUtilities.
-
-                                // OnDelegate = InternalOnDelegate;
-                                AssertTokens(decompiler,
+                // OnDelegate = InternalOnDelegate;
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
-                UnrealPackageUtilities.
-
-                                // OnDelegate = none;
-                                AssertTokens(decompiler,
+                // OnDelegate = none;
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(LetDelegateToken),
                     typeof(InstanceVariableToken),
                     typeof(DelegatePropertyToken));
-                UnrealPackageUtilities.
-
-                                // (return)
-                                AssertTokens(decompiler,
+                // (return)
+                UnrealPackageUtilities.AssertTokens(decompiler,
                     typeof(ReturnToken),
                     typeof(NothingToken),
                     typeof(EndOfScriptToken));
@@ -124,18 +116,17 @@ namespace Eliot.UELib.Test.Builds
             }
 
             using var package = GetScriptPackage();
-            Assert.IsNotNull(package);
-            package.InitializePackage();
+            package.InitializePackage(null);
 
-            AssertTestClass(package);
+            AssertTestClass(package.Linker);
 
-            var tokensClass = package.FindObject<UClass>("ExprTokens");
+            var tokensClass = package.Linker.FindObject<UClass>("ExprTokens");
             Assert.IsNotNull(tokensClass);
 
             // Test a series of expected tokens
-            AssertFunctionDelegateTokens(package);
+            AssertFunctionDelegateTokens(package.Linker);
             UnrealPackageUtilities.AssertScriptDecompile(tokensClass);
-            AssertDefaults(package);
+            AssertDefaults(package.Linker);
         }
     }
 }

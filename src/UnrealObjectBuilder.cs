@@ -9,44 +9,35 @@ namespace UELib;
 
 public static class UnrealPackageBuilder
 {
-    public static PackageBuilder Create(string packageName)
+    public static PackageBuilder Operate(UnrealPackageLinker linker)
     {
-        var package = new UnrealPackage(packageName);
-
-        return new PackageBuilder(package);
+        return new PackageBuilder(linker);
     }
 
-    public static PackageBuilder Operate(UnrealPackage package)
+    public static PackageBuilder Builder(this UnrealPackageLinker linker)
     {
-        return new PackageBuilder(package);
-    }
-
-    public static PackageBuilder Builder(this UnrealPackage package)
-    {
-        return Operate(package);
+        return Operate(linker);
     }
 }
 
 // VERY basic builder for UnrealPackage.
 // We'll add to it as the samples develop.
-public sealed class PackageBuilder(UnrealPackage package)
+public sealed class PackageBuilder(UnrealPackageLinker linker)
 {
-    private readonly UnrealPackage _Linker = package;
-
     public UnrealPackage Get()
     {
-        return package;
+        return linker.Package;
     }
 
     public PackageBuilder AddName(UName name)
     {
-        if (package.Archive.NameIndices.ContainsKey(name.Index))
+        if (linker.Package.Archive.NameIndices.ContainsKey(name.Index))
         {
             return this;
         }
 
-        package.Names.Add(new UNameTableItem(name));
-        package.Archive.NameIndices[name.Index] = package.Names.Count - 1;
+        linker.Package.Names.Add(new UNameTableItem(name));
+        linker.Package.Archive.NameIndices[name.Index] = linker.Package.Names.Count - 1;
 
         return this;
     }
@@ -65,36 +56,42 @@ public sealed class PackageBuilder(UnrealPackage package)
     {
         Contract.Assert(((UPackageIndex)obj).IsNull, "Cannot add an object that has already been indexed.");
 
-        if (obj.Package == package)
+        if (obj.Package == linker.Package)
         {
             Contract.Assert(
-                obj.EnumerateOuter().Last(outer => outer == package.RootPackage) != null,
+                obj.EnumerateOuter().Last(outer => outer == linker.Package.RootPackage) != null,
                 "Object must be part of the package's hierarchy."
             );
 
-            var resource = new UExportTableItem(obj) { Object = obj };
-            package.Exports.Add(resource);
-            obj.PackageIndex = new UPackageIndex(package.Exports.Count);
+            var resource = new UExportTableItem(obj)
+            {
+                Index = linker.Package.Exports.Count,
+                Package = linker.Package,
+                Object = obj,
+            };
+            linker.Package.Exports.Add(resource);
+            obj.PackageIndex = new UPackageIndex(linker.Package.Exports.Count);
             obj.PackageResource = resource;
-            Debug.Assert(_Linker.IndexToObject(obj.PackageIndex) == obj);
+            Debug.Assert(linker.IndexToObject<UObject>(obj.PackageIndex) == obj);
 
             // TODO: Figure this out.
-            package.Dependencies.Add([]);
-
-            package.Objects.Add(obj);
+            linker.Package.Dependencies.Add([]);
 
         }
         else
         {
             // TODO: Import all relevant resources as well!
 
-            var resource = new UImportTableItem(obj) { Object = obj };
-            package.Imports.Add(resource);
-            obj.PackageIndex = new UPackageIndex(-package.Imports.Count);
+            var resource = new UImportTableItem(obj)
+            {
+                Index = linker.Package.Imports.Count,
+                Package = linker.Package,
+                Object = obj,
+            };
+            linker.Package.Imports.Add(resource);
+            obj.PackageIndex = new UPackageIndex(-linker.Package.Imports.Count);
             obj.PackageResource = resource;
-            Debug.Assert(_Linker.IndexToObject(obj.PackageIndex) == obj);
-
-            package.Objects.Add(obj);
+            Debug.Assert(linker.IndexToObject<UObject>(obj.PackageIndex) == obj);
         }
 
         return this;
@@ -103,15 +100,15 @@ public sealed class PackageBuilder(UnrealPackage package)
 
 public static class UnrealObjectBuilder
 {
-    public static UEnumBuilder CreateEnum(UnrealPackage package)
+    public static UEnumBuilder CreateEnum(UnrealPackageLinker linker)
     {
-        var objectClass = package.FindObject<UClass>("Enum");
+        var objectClass = linker.GetStaticClass(UnrealName.Enum);
         return new UEnumBuilder(new UEnum
         {
-            Package = package,
+            Package = linker.Package,
             PackageIndex = UPackageIndex.Null,
             Class = objectClass,
-            Outer = package.RootPackage
+            Outer = linker.Package.RootPackage
         });
     }
 
@@ -120,26 +117,26 @@ public static class UnrealObjectBuilder
         return new UEnumBuilder(obj);
     }
 
-    public static UStructBuilder CreateStruct(UnrealPackage package)
+    public static UStructBuilder CreateStruct(UnrealPackageLinker linker)
     {
-        var objectClass = package.FindObject<UClass>("ScriptStruct") ?? package.FindObject<UClass>("Struct");
+        var objectClass = linker.FindObject<UClass>(UnrealName.ScriptStruct) ?? linker.GetStaticClass(UnrealName.Struct);
         if (objectClass.Name == UnrealName.ScriptStruct)
         {
             return new UStructBuilder(new UScriptStruct
             {
-                Package = package,
+                Package = linker.Package,
                 PackageIndex = UPackageIndex.Null,
                 Class = objectClass,
-                Outer = package.RootPackage
+                Outer = linker.Package.RootPackage
             });
         }
 
         return new UStructBuilder(new UStruct
         {
-            Package = package,
+            Package = linker.Package,
             PackageIndex = UPackageIndex.Null,
             Class = objectClass,
-            Outer = package.RootPackage
+            Outer = linker.Package.RootPackage
         });
     }
 
@@ -148,15 +145,15 @@ public static class UnrealObjectBuilder
         return new UStructBuilder(obj);
     }
 
-    public static UObjectBuilder CreatePackage(UnrealPackage package)
+    public static UObjectBuilder CreatePackage(UnrealPackageLinker linker)
     {
-        var objectClass = package.FindObject<UClass>("Package");
+        var objectClass = linker.GetStaticClass(UnrealName.Package);
         return new UObjectBuilder(new UPackage
         {
-            Package = package,
+            Package = linker.Package,
             PackageIndex = UPackageIndex.Null,
             Class = objectClass,
-            Outer = package.RootPackage
+            Outer = linker.Package.RootPackage
         });
     }
 
@@ -165,15 +162,15 @@ public static class UnrealObjectBuilder
         return new UObjectBuilder(obj);
     }
 
-    public static UFunctionBuilder CreateFunction(UnrealPackage package)
+    public static UFunctionBuilder CreateFunction(UnrealPackageLinker linker)
     {
-        var objectClass = package.FindObject<UClass>("Function");
+        var objectClass = linker.GetStaticClass(UnrealName.Function);
         return new UFunctionBuilder(new UFunction
         {
-            Package = package,
+            Package = linker.Package,
             PackageIndex = UPackageIndex.Null,
             Class = objectClass,
-            Outer = package.RootPackage
+            Outer = linker.Package.RootPackage
         });
     }
 
@@ -182,15 +179,15 @@ public static class UnrealObjectBuilder
         return new UFunctionBuilder(obj);
     }
 
-    public static UStateBuilder CreateState(UnrealPackage package)
+    public static UStateBuilder CreateState(UnrealPackageLinker linker)
     {
-        var objectClass = package.FindObject<UClass>("State");
+        var objectClass = linker.GetStaticClass(UnrealName.State);
         return new UStateBuilder(new UState
         {
-            Package = package,
+            Package = linker.Package,
             PackageIndex = UPackageIndex.Null,
             Class = objectClass,
-            Outer = package.RootPackage
+            Outer = linker.Package.RootPackage
         });
     }
 
@@ -199,15 +196,15 @@ public static class UnrealObjectBuilder
         return new UStateBuilder(obj);
     }
 
-    public static UClassBuilder CreateClass(UnrealPackage package)
+    public static UClassBuilder CreateClass(UnrealPackageLinker linker)
     {
-        var objectClass = package.FindObject<UClass>("Class");
+        var objectClass = linker.GetStaticClass(UnrealName.Class);
         return new UClassBuilder(new UClass
         {
-            Package = package,
+            Package = linker.Package,
             PackageIndex = UPackageIndex.Null,
             Class = objectClass,
-            Outer = package.RootPackage
+            Outer = linker.Package.RootPackage
         });
     }
 
@@ -411,12 +408,14 @@ public abstract class UObjectBuilder<TObject, TBuilder>(TObject obj)
 {
     public TObject Build()
     {
+        obj.Package.Linker.PackageEnvironment.ObjectContainer.Add(obj);
+
         return obj;
     }
 
     public TObject Build(out TObject outObj)
     {
-        outObj = obj;
+        outObj = Build();
 
         return outObj;
     }

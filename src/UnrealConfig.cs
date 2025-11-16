@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using UELib.Core;
 using UELib.Types;
 using UELib.UnrealScript;
 
@@ -30,7 +31,7 @@ namespace UELib
 
         [Obsolete]
         public static CookedPlatform Platform;
-        public static Dictionary<string, Tuple<string, PropertyType>>? VariableTypes;
+        public static Dictionary<UName, Tuple<string, PropertyType>>? VariableTypes;
 
         #endregion
 

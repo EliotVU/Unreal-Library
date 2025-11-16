@@ -133,14 +133,6 @@ namespace UELib.Branch
             SetupEnumFunctionFlags(linker);
             SetupEnumStateFlags(linker);
             SetupEnumClassFlags(linker);
-
-            EnumFlagsMap.Add(typeof(PackageFlag), PackageFlags);
-            EnumFlagsMap.Add(typeof(ObjectFlag), ObjectFlags);
-            EnumFlagsMap.Add(typeof(PropertyFlag), PropertyFlags);
-            EnumFlagsMap.Add(typeof(StructFlag), StructFlags);
-            EnumFlagsMap.Add(typeof(FunctionFlag), FunctionFlags);
-            EnumFlagsMap.Add(typeof(StateFlag), StateFlags);
-            EnumFlagsMap.Add(typeof(ClassFlag), ClassFlags);
         }
 
         protected virtual void SetupEnumPackageFlags(UnrealPackage linker)
