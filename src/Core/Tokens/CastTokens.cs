@@ -173,7 +173,7 @@ namespace UELib.Core
 
                                 // IntToInt64
                                 case 0x62:
-                                    castTypeName = "int64";
+                                    castTypeName = "Int64";
                                     break;
 
                                 // Int64ToInt
@@ -183,7 +183,7 @@ namespace UELib.Core
 
                                 // StringToInt64
                                 case 0x64:
-                                    castTypeName = "int64";
+                                    castTypeName = "Int64";
                                     break;
 
                                 // Int64ToByte
@@ -211,24 +211,74 @@ namespace UELib.Core
                                     castTypeName = "short";
                                     break;
 
-                                // IntToMemCrypt
+                                // XIntToInt
                                 case 0x6A:
-                                    castTypeName = "MemCrypt<int>";
+                                    castTypeName = "int";
                                     break;
 
-                                // FloatToMemCrypt
+                                // XIntToFloat
                                 case 0x6B:
-                                    castTypeName = "MemCrypt<float>";
+                                    castTypeName = "float";
                                     break;
 
-                                // StringToMemCrypt
+                                // XIntToString
                                 case 0x6C:
-                                    castTypeName = "MemCrypt<string>";
+                                    castTypeName = "string";
                                     break;
 
-                                // Int64ToMemCrypt
+                                // IntToXInt
                                 case 0x6D:
-                                    castTypeName = "MemCrypt<int64>";
+                                    castTypeName = "XInt";
+                                    break;
+
+                                // XVectorToVector
+                                case 0x6E:
+                                    castTypeName = "Vector";
+                                    break;
+
+                                // XVectorToString
+                                case 0x6F:
+                                    castTypeName = "string";
+                                    break;
+
+                                // VectorToXVector
+                                case 0x70:
+                                    castTypeName = "XVector";
+                                    break;
+
+                                // XFloatToFloat
+                                case 0x71:
+                                    castTypeName = "float";
+                                    break;
+
+                                // XFloatToString
+                                case 0x72:
+                                    castTypeName = "string";
+                                    break;
+
+                                // FloatToXFloat
+                                case 0x73:
+                                    castTypeName = "XFloat";
+                                    break;
+
+                                // XRotatorToRotator
+                                case 0x74:
+                                    castTypeName = "Rotator";
+                                    break;
+
+                                // XRotatorToString
+                                case 0x75:
+                                    castTypeName = "string";
+                                    break;
+
+                                // XRotatorToBool
+                                case 0x76:
+                                    castTypeName = "bool";
+                                    break;
+
+                                // RotatorToXRotator
+                                case 0x77:
+                                    castTypeName = "XRotator";
                                     break;
                             }
                         }

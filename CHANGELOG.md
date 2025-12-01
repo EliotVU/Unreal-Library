@@ -1,5 +1,10 @@
 #
 
+## [1.12.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.12.1)
+
+* Fixed support for Alien: Colonial Marines
+* Fixed #124; "ArgumentException" when decompiling structs.
+
 ## [1.12.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.12.0)
 
 * Support for Sudden Attack 2 (a66323c4, #117 thanks to @EDITzDev)

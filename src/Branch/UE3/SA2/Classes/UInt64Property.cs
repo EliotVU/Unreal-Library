@@ -8,7 +8,7 @@ namespace UELib.Branch.UE3.SA2.Classes
     {
         public override string GetFriendlyType()
         {
-            return "int64";
+            return "Int64";
         }
     }
 }

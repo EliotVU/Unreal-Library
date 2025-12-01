@@ -896,9 +896,11 @@ namespace UELib
                 /// <summary>
                 /// Sudden Attack 2
                 ///
-                /// 870/108
+                /// 868/103
+                /// 870/108:109
                 /// </summary>
-                [Build(870, 108u, BuildGeneration.UE3)]
+                [Build(868, 103u, BuildGeneration.UE3)]
+                [Build(870, 870, 108u, 109u, BuildGeneration.UE3)]
                 [BuildEngineBranch(typeof(EngineBranchSA2))]
                 SA2,
 
