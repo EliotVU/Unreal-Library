@@ -1,28 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <DefineConstants>DECOMPILE;BINARYMETADATA;UE1;UE2;UE3;UE4;VENGEANCE;SWAT4;UNREAL2;INFINITYBLADE;BORDERLANDS2;GOW2;APB;SPECIALFORCE2;XIII;SINGULARITY;THIEF_DS;DEUSEX_IW;BORDERLANDS;MIRRORSEDGE;BIOSHOCK;HAWKEN;UT;DISHONORED;REMEMBERME;ALPHAPROTOCOL;VANGUARD;TERA;MKKE;TRANSFORMERS;XCOM2;DD2;DCUO;AA2;SPELLBORN;BATMAN;MOH;ROCKETLEAGUE;DNF;LSGAME;UNDYING;HP;DEVASTATION;BATTLEBORN;SPLINTERCELLX;AHIT;GIGANTIC;ENDWAR;SG1;MASS_EFFECT;MOV;MIDWAY;SHADOWSTRIKE;R6;HUXLEY;RM;LEAD;BULLETSTORM;ADVENT;SWRepublicCommando;GOWUE;SA2;ACM</DefineConstants>
-    <TargetFrameworks>net48;netstandard2.0;netstandard2.1;net10.0</TargetFrameworks>
-    <LangVersion>14</LangVersion>
+    <TargetFrameworks>$(UELibTargetFrameworks)</TargetFrameworks>
     <OutputType>Library</OutputType>
+    <AssemblyName>Eliot.UELib</AssemblyName>
     <RootNamespace>UELib</RootNamespace>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>
+    <PackageTags>UnrealEngine;UnrealScript;Decompiler;UPK;Exporter;Bytecode</PackageTags>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>Eliot.UELib.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
+    <TargetFrameworks>net48;$(TargetFrameworks)</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DefineConstants>$(DefineConstants);TRACE;DEBUG;</DefineConstants>
@@ -45,7 +40,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Branch\UE3\HMS\" />
@@ -69,46 +64,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.IO.Hashing" Version="10.0.0" />
-    <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
-      <Version>6.1.2</Version>
-    </PackageReference>
-    <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="ErrorProne.NET.Structs" Version="0.6.1-beta.1">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.CSharp" />
+    <PackageReference Include="System.IO.Hashing" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Numerics.Vectors" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
   </ItemGroup>
-  <ProjectExtensions></ProjectExtensions>
-  <PropertyGroup>
-    <AssemblyName>Eliot.UELib</AssemblyName>
-    <PackageId>$(AssemblyName)</PackageId>
-    <Version>$(VersionPrefix)1.12.1</Version>
-    <Authors>EliotVU</Authors>
-    <Title>$(AssemblyName)</Title>
-    <PackageDescription>UnrealScript decompiler library for Unreal package files (.upk, .u, .uasset; etc), with support for Unreal Engine 1, 2, and 3.</PackageDescription>
-    <PackageTags>UnrealEngine;UnrealScript;Decompiler;UPK;Exporter;Bytecode</PackageTags>
-    <Copyright>2009-2025 Eliot van Uytfanghe. All rights reserved.</Copyright>
-    <PackageProjectUrl>https://github.com/EliotVU/Unreal-Library</PackageProjectUrl>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <RepositoryUrl>https://github.com/EliotVU/Unreal-Library.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <EnableNETAnalyzers>True</EnableNETAnalyzers>
-    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>Eliot.UELib.snk</AssemblyOriginatorKeyFile>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
 </Project>
