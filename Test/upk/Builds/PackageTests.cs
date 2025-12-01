@@ -322,91 +322,125 @@ namespace Eliot.UELib.Test.Builds
 
             var versions = new SortedSet<uint>();
 
-            using var packageEnvironment = new UnrealPackageEnvironment(
-                Path.GetDirectoryName(packagesPath),
+            string packageRoot = packagesPath;
+            var packageEnvironment = new UnrealPackageEnvironment(
+                packageRoot,
                 RegisterUnrealClassesStrategy.StandardClasses
             );
 
             var packageProvider = new UnrealFilePackageProvider(
-                [packagesPath],
+                [packageRoot],
                 [.. UnrealExtensions.Common, .. UnrealExtensions.Legacy]
             );
 
-#if DEBUG
-            const int maxTasks = 1;
-#else
-            const int maxTasks = 3;
-#endif
-            for (int i = 0; i < filePaths.Count; i += maxTasks)
+            try
             {
-                var tasks = filePaths[i..Math.Min(filePaths.Count, i + maxTasks)]
-                    .Select(filePath => Task.Factory.StartNew(() =>
-                    {
-                        Console.WriteLine($@"Validating '{filePath}'");
-
-                        if (Path.GetExtension(filePath) == ".xxx")
+#if DEBUG
+                const int maxTasks = 1;
+#else
+                const int maxTasks = 3;
+#endif
+                for (int i = 0; i < filePaths.Count; i += maxTasks)
+                {
+                    var tasks = filePaths[i..Math.Min(filePaths.Count, i + maxTasks)]
+                        .Select(filePath => Task.Factory.StartNew(() =>
                         {
-                            Console.WriteLine($@"Skipping analysis for fully compressed package '{filePath}'");
+                            ValidatePackage(filePath);
+                        }, TaskCreationOptions.LongRunning))
+                        .ToList();
 
-                            return;
-                        }
-
-                        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        using var package = new UnrealPackage(fileStream, filePath, packageEnvironment);
-                        package.BuildTarget = forcedBuild;
-                        package.Deserialize();
-
-                        versions.Add((package.Summary.Version << 16) | package.Summary.LicenseeVersion);
-
-                        Console.WriteLine($@"Detected build: {package.Build} and expected build: {packagesBuild}");
-
-                        if (forcedBuild != BuildName.Unset)
-                        {
-                            Assert.AreEqual(forcedBuild, package.Build.Name);
-                        }
-
-                        // Commented out, because, UE2 games often contain a mix of UE1 packages.
-                        //Assert.AreEqual(packagesBuild, linker.Build.Name);
-
-                        if (package.CookerPlatform != BuildPlatform.Undetermined)
-                        {
-                            Console.WriteLine($@"Detected cooker platform: {package.CookerPlatform}");
-                        }
-
-                        if (packagesPlatform != BuildPlatform.Undetermined)
-                        {
-                            Assert.AreEqual(packagesPlatform, package.CookerPlatform);
-                        }
-
-                        if (package.Summary.CompressedChunks?.Count > 0)
-                        {
-                            Console.WriteLine($@"Skipping analysis for compressed package '{filePath}'");
-
-                            return;
-                        }
-
-                        // :( Constructing our own linker had some perks, but introduced too much construction complexity internally.
-                        //var linker = new UnrealPackageLinker(package, packageEnvironment, packageProvider);
-                        var packageLinker = package.Linker;
-                        AssertPackage(package, packageLinker, exceptions);
-
-                        // Re-serialize the package to test serialization.
-                        if (shouldTestSerialization)
-                        {
-                            AssertPackageSerialization(package, packageLinker);
-
-                            Console.WriteLine($@"Successfully serialized package '{filePath}'");
-                        }
-                    }, TaskCreationOptions.LongRunning))
-                    //.Select(task => task.WaitAsync(TimeSpan.FromSeconds(20)))
-                    .ToList();
-
-                await Task.WhenAll(tasks);
+                    await Task.WhenAll(tasks);
+                }
+            }
+            finally
+            {
+                packageEnvironment.Dispose();
+                Assert.IsEmpty(packageEnvironment.ObjectContainer.Enumerate()); // Ensure no memory leaks.
             }
 
             Console.WriteLine($@"Unique package versions: [{string.Join(',', versions.Select(v => $"{(ushort)(v >> 16)}/{(ushort)v}"))}]");
 
-            Assert.AreEqual(0, exceptions.Count, $"{exceptions.Count} exceptions: {string.Join('\n', exceptions)}");
+            Assert.IsEmpty(exceptions, $"{exceptions.Count} exceptions: {string.Join('\n', exceptions)}");
+
+            return;
+
+            UnrealPackage LoadPackage(string filePath)
+            {
+                UnrealPackage package;
+
+                var rootPackage = packageEnvironment.ObjectContainer.Find<UPackage>(new UName(Path.GetFileNameWithoutExtension(filePath)));
+                if (rootPackage?.Package == null)
+                {
+                    // Disposed of by the package environment.
+                    var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                    package = new UnrealPackage(fileStream, filePath, packageEnvironment);
+                    package.BuildTarget = forcedBuild;
+                    package.Deserialize();
+                }
+                else
+                {
+                    package = rootPackage.Package;
+                }
+
+                return package;
+            }
+
+            void ValidatePackage(string filePath)
+            {
+                Console.WriteLine($@"Validating '{filePath}'");
+
+                if (Path.GetExtension(filePath) == ".xxx")
+                {
+                    Console.WriteLine($@"Skipping analysis for fully compressed package '{filePath}'");
+
+                    return;
+                }
+
+                var package = LoadPackage(filePath);
+                versions.Add((package.Summary.Version << 16) | package.Summary.LicenseeVersion);
+
+                Console.WriteLine($@"Detected build: {package.Build} and expected build: {packagesBuild}");
+
+                if (forcedBuild != BuildName.Unset)
+                {
+                    Assert.AreEqual(forcedBuild, package.Build.Name);
+                }
+
+                // Commented out, because, UE2 games often contain a mix of UE1 packages.
+                //Assert.AreEqual(packagesBuild, linker.Build.Name);
+
+                if (package.CookerPlatform != BuildPlatform.Undetermined)
+                {
+                    Console.WriteLine($@"Detected cooker platform: {package.CookerPlatform}");
+                }
+
+                if (packagesPlatform != BuildPlatform.Undetermined)
+                {
+                    Assert.AreEqual(packagesPlatform, package.CookerPlatform);
+                }
+
+                if (package.Summary.CompressedChunks?.Count > 0)
+                {
+                    Console.WriteLine($@"Skipping analysis for compressed package '{filePath}'");
+
+                    return;
+                }
+
+                // :( Constructing our own linker had some perks, but introduced too much construction complexity internally.
+                //var linker = new UnrealPackageLinker(package, packageEnvironment, packageProvider);
+                var packageLinker = package.Linker;
+                packageLinker.PackageProvider = packageProvider;
+                AssertPackage(package, packageLinker, exceptions);
+
+                // Re-serialize the package to test serialization.
+                if (shouldTestSerialization)
+                {
+                    AssertPackageSerialization(package, packageLinker);
+
+                    Console.WriteLine($@"Successfully serialized package '{filePath}'");
+                }
+            }
         }
 
         [TestMethod]
@@ -539,7 +573,7 @@ namespace Eliot.UELib.Test.Builds
             try
             {
                 packageLinker.ConstructExports();
-                packageLinker.LoadExports(InternalClassFlags.Default); // just construct
+                packageLinker.LoadExports(); // just construct
             }
             catch (Exception exception)
             {

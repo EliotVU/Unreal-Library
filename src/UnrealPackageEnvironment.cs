@@ -223,12 +223,16 @@ public sealed class UnrealPackageEnvironment : IDisposable
         }
     }
 
+    /// <summary>
+    /// Disposes of all resources used by the environment.
+    /// </summary>
     public void Dispose()
     {
-        foreach (var obj in ObjectContainer.Enumerate())
+        // FIXME: Potential memory leak if a packages objects have been removed already.
+        foreach (var obj in ObjectContainer.Enumerate().OfType<UPackage>())
         {
             // Dispose of all archives (which may have an associated stream).
-            if ((UnrealPackage?)obj.Package != null) // Can be null if the object was created manually.
+            if (obj.Outer == null && (UnrealPackage?)obj.Package != null) // Can be null if the object was created manually.
             {
                 obj.Package.Archive.Dispose();
             }
