@@ -87,7 +87,7 @@ namespace UELib.UnrealScript
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatLiteral(float input)
         {
-            return input.ToString("F7", CultureInfo.InvariantCulture);
+            return input.ToString("F6", CultureInfo.InvariantCulture);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
