@@ -11,7 +11,61 @@ namespace UELib.Core
     {
         public partial class UByteCodeDecompiler(UStruct container, UByteCodeScript script) : IUnrealDecompilable
         {
+            [Flags]
+            public enum ContextFlags
+            {
+                Static = 1 << 0,
+            }
+
+            public class DecompilationContext(UObject? @object, ContextFlags contextFlags = 0)
+            {
+                /// <summary>
+                /// The current object of this context.
+                ///
+                /// e.g. in a 'switch(contextArgument)' this property should keep a reference to the argument,
+                /// if the argument can be resolved to a UObject.
+                /// </summary>
+                public UObject? Object { get; set; } = @object;
+
+                /// <summary>
+                /// The current enum in this context, if any.
+                /// </summary>
+                public UEnum? Enum => (Object as UByteProperty)?.Enum;
+
+                /// <summary>
+                /// The current context flags.
+                /// </summary>
+                public ContextFlags Flags { get; set; } = contextFlags;
+
+                /// <summary>
+                /// Whether the decompilation should append the 'static' keyword preceding a call to a static function.
+                /// </summary>
+                public bool IsStatic
+                {
+                    get
+                    {
+                        return (Flags & ContextFlags.Static) != 0;
+                    }
+
+                    set
+                    {
+                        if (value)
+                        {
+                            Flags |= ContextFlags.Static;
+                        }
+                        else
+                        {
+                            Flags &= ~ContextFlags.Static;
+                        }
+                    }
+                }
+            }
+
             private readonly UStruct _Container = container;
+
+            // TODO: Maybe re-implement as a singular context param to the current 'Decompile' methods.
+            // But, this approach is the most compatible with the current codebase as-is.
+            private readonly Stack<DecompilationContext> _Contexts = new();
 
             public readonly UnrealPackage Package = container.Package;
             public UByteCodeScript Script { get; } = script ?? throw new ArgumentNullException(nameof(script), "Script cannot be null.");
@@ -23,12 +77,9 @@ namespace UELib.Core
             public Token PreviousToken => DeserializedTokens[CurrentTokenIndex - 1];
             public Token CurrentToken => DeserializedTokens[CurrentTokenIndex];
 
-            /// <summary>
-            /// Context hint, a reference to the last relevant-object that was accessed during the decompilation.
-            /// </summary>
-            private UObject? _ObjectHint;
-
-            public UEnum? ContextEnum => (_ObjectHint as UByteProperty)?.Enum;
+            private DecompilationContext Context => _Contexts.Peek();
+            public UObject? ContextObject => Context.Object;
+            public UEnum? ContextEnum => Context.Enum;
 
             public UByteCodeDecompiler(UStruct container) : this(
                 container,
@@ -65,7 +116,7 @@ namespace UELib.Core
             {
                 public UByteCodeDecompiler Decompiler;
 
-                public class Nest : IUnrealDecompilable
+                public abstract class Nest
                 {
                     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design",
                         "CA1008:EnumsShouldHaveZeroValue")]
@@ -89,10 +140,7 @@ namespace UELib.Core
                     public NestType Type;
                     public Token Creator;
 
-                    public virtual string Decompile()
-                    {
-                        return string.Empty;
-                    }
+                    public abstract string Decompile(UByteCodeDecompiler decompiler);
 
                     public bool IsPastOffset(int position)
                     {
@@ -107,8 +155,12 @@ namespace UELib.Core
 
                 public class NestBegin : Nest
                 {
-                    public override string Decompile()
+                    public override string Decompile(UByteCodeDecompiler decompiler)
                     {
+                        if (Type == NestType.Case)
+                        {
+                            decompiler.PushContext(new DecompilationContext(null));
+                        }
 #if DEBUG_NESTS
                         return "\r\n" + UDecompilingState.Tabs + "//<" + Type + ">";
 #else
@@ -123,8 +175,12 @@ namespace UELib.Core
                 {
                     public JumpToken HasElseNest;
 
-                    public override string Decompile()
+                    public override string Decompile(UByteCodeDecompiler decompiler)
                     {
+                        if (Type == NestType.Case)
+                        {
+                            decompiler.PopContext();
+                        }
 #if DEBUG_NESTS
                         return "\r\n" + UDecompilingState.Tabs + "//</" + Type + ">";
 #else
@@ -139,7 +195,7 @@ namespace UELib.Core
 
                 public void AddNest(Nest.NestType type, int position, int endPosition, Token? creator = null)
                 {
-                    creator = creator ?? Decompiler.CurrentToken;
+                    creator ??= Decompiler.CurrentToken;
                     Nests.Add(new NestBegin { Position = position, Type = type, Creator = creator });
                     Nests.Add(new NestEnd { Position = endPosition, Type = type, Creator = creator });
                 }
@@ -202,10 +258,10 @@ namespace UELib.Core
                 _Nester = new NestManager { Decompiler = this };
                 CurrentTokenIndex = -1;
 
-                _ObjectHint = null;
+                _Contexts.Clear();
+                _Contexts.Push(new DecompilationContext(null));
 
                 // Reset these, in case of a loop in the Decompile function that did not finish due exception errors!
-                _IsWithinClassContext = false;
                 _CanAddSemicolon = false;
                 _MustCommentStatement = false;
                 _PostIncrementTabs = 0;
@@ -299,13 +355,6 @@ namespace UELib.Core
                 return DeserializedTokens.Find(t => t.Position == codeOffset);
             }
 
-            /// <summary>
-            /// True if we are currently decompiling within a ClassContext token.
-            ///
-            /// HACK: For static calls -> class'ClassA'.static.FuncA();
-            /// </summary>
-            private bool _IsWithinClassContext;
-
             private bool _CanAddSemicolon;
             private bool _MustCommentStatement;
 
@@ -330,6 +379,17 @@ namespace UELib.Core
             public void MarkCommentStatement()
             {
                 _MustCommentStatement = true;
+            }
+
+            public void PushContext(DecompilationContext context)
+            {
+                _Contexts.Push(context);
+            }
+
+            public void PopContext()
+            {
+                _Contexts.Pop();
+                Debug.Assert(_Contexts.Count > 0); // Never pop the first context.
             }
 
             public string Decompile()
@@ -690,7 +750,7 @@ namespace UELib.Core
             private string DecompileLabelForToken(Token token, bool appendNewline)
             {
                 var output = new StringBuilder();
-                int labelIndex = _TempLabels.FindIndex((l) => l.entry.Position == token.Position);
+                int labelIndex = _TempLabels.FindIndex(l => l.entry.Position == token.Position);
                 if (labelIndex == -1) return string.Empty;
 
                 var labelEntry = _TempLabels[labelIndex].entry;
@@ -716,9 +776,9 @@ namespace UELib.Core
                     if (_Nester.Nests[i] is not NestManager.NestBegin)
                         continue;
 
-                    if (_Nester.Nests[i].IsPastOffset((int)CurrentToken.Position) || outputAllRemainingNests)
+                    if (_Nester.Nests[i].IsPastOffset(CurrentToken.Position) || outputAllRemainingNests)
                     {
-                        output += _Nester.Nests[i].Decompile();
+                        output += _Nester.Nests[i].Decompile(this);
                         UDecompilingState.AddTab();
 
                         _NestChain.Add(_Nester.Nests[i]);
@@ -729,7 +789,7 @@ namespace UELib.Core
                 for (int i = _Nester.Nests.Count - 1; i >= 0; i--)
                     if (_Nester.Nests[i] is NestManager.NestEnd nestEnd
                         && (outputAllRemainingNests ||
-                            nestEnd.IsPastOffset((int)CurrentToken.Position + CurrentToken.Size)))
+                            nestEnd.IsPastOffset(CurrentToken.Position + CurrentToken.Size)))
                     {
                         var topOfStack = _NestChain[_NestChain.Count - 1];
                         if (topOfStack.Type == NestManager.Nest.NestType.Default &&
@@ -758,7 +818,7 @@ namespace UELib.Core
                         }
 
                         UDecompilingState.RemoveTab();
-                        output += nestEnd.Decompile();
+                        output += nestEnd.Decompile(this);
 
                         topOfStack = _NestChain[_NestChain.Count - 1];
                         if (topOfStack.Type != nestEnd.Type)

@@ -29,7 +29,7 @@ namespace UELib.Core
 
                 public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    decompiler._ObjectHint = Object;
+                    decompiler.Context.Object = Object;
 
                     return Object.Name;
                 }

@@ -140,14 +140,14 @@ namespace UELib.Core
 
                 protected string DecompileCall(string functionName, UByteCodeDecompiler decompiler)
                 {
-                    if (decompiler._IsWithinClassContext)
+                    if (decompiler.Context.IsStatic)
                     {
                         functionName = $"static.{functionName}";
 
                         // Set false elsewhere as well but to be sure we set it to false here to avoid getting static calls inside the params.
                         // e.g.
                         // A1233343.DrawText(Class'BTClient_Interaction'.static.A1233332(static.Max(0, A1233328 - A1233322[A1233222].StartTime)), true);
-                        decompiler._IsWithinClassContext = false;
+                        decompiler.Context.IsStatic = false;
                     }
 
                     string arguments = DecompileArguments(decompiler);
@@ -168,7 +168,7 @@ namespace UELib.Core
                         // Pass the context so that we can resolve byte/int literals to their corresponding enum tag.
                         if (parm != null)
                         {
-                            decompiler._ObjectHint = parm;
+                            decompiler.Context.Object = parm;
                             parm = parm.NextField;
                         }
 
@@ -257,7 +257,7 @@ namespace UELib.Core
                     else
                     {
                         // Calling Super??.
-                        if (Function.Name == decompiler._Container.Name && !decompiler._IsWithinClassContext)
+                        if (Function.Name == decompiler._Container.Name && !decompiler.Context.IsStatic)
                         {
                             output = "super";
 

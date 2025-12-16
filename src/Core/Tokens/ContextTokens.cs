@@ -135,9 +135,9 @@ namespace UELib.Core
             {
                 public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    decompiler._IsWithinClassContext = true;
+                    decompiler.Context.IsStatic = true;
                     string output = base.Decompile(decompiler);
-                    decompiler._IsWithinClassContext = false;
+                    decompiler.Context.IsStatic = false;
 
                     return output;
                 }
