@@ -19,7 +19,7 @@ namespace Eliot.UELib.Decompiler.Test
                 MemberTypes.Field | MemberTypes.Property,
                 BindingFlags.Public | BindingFlags.Instance,
                 (info, criteria) => true, null);
-            Assert.AreEqual(2, members.Length, members.ToString());
+            Assert.HasCount(2, members, members.ToString());
             Assert.AreEqual(2, members
                 .Count(m => m.GetCustomAttribute<OutputAttribute>() != null));
 
@@ -27,7 +27,7 @@ namespace Eliot.UELib.Decompiler.Test
             var nodes = ArchetypeNodeFactory
                 .Create(obj)
                 .ToList();
-            Assert.AreEqual(2, nodes.Count, nodes.Count.ToString());
+            Assert.HasCount(2, nodes, nodes.Count.ToString());
         }
 
         [TestMethod]

@@ -29,7 +29,7 @@ namespace UELib.Core
         {
             base.Deserialize(stream);
 
-            MetaClass = stream.ReadObject<UClass>();
+            MetaClass = stream.ReadObject<UClass?>();
             stream.Record(nameof(MetaClass), MetaClass);
         }
 

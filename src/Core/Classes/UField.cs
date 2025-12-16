@@ -8,7 +8,8 @@ namespace UELib.Core
     /// <summary>
     ///     Implements UField/Core.Field
     /// </summary>
-    [UnrealClassFlags(InternalClassFlags.Preload)]
+    [UnrealRegisterClass] // Never instantiated, but, we need to register this so that derived static classes can link correctly.
+    [UnrealClassFlags(InternalClassFlags.Preload)] // inheritable
     public partial class UField : UObject
     {
         /// <summary>

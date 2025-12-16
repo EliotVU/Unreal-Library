@@ -33,15 +33,15 @@ public class UnrealFlagsTests
         Assert.IsFalse(flags.HasFlags((uint)DefaultEngineBranch.PackageFlagsDefault.ClientOptional));
 
         Assert.AreEqual(
-            flags.GetFlag(PackageFlag.AllowDownload), 
-            flagsMap[(int)PackageFlag.AllowDownload]
+            flagsMap[(int)PackageFlag.AllowDownload],
+            flags.GetFlag(PackageFlag.AllowDownload)
         );
         Assert.AreEqual(
-            flags.GetFlags(PackageFlag.AllowDownload, PackageFlag.ServerSideOnly),
-            flagsMap[(int)PackageFlag.AllowDownload] | flagsMap[(int)PackageFlag.ServerSideOnly]
+            flagsMap[(int)PackageFlag.AllowDownload] | flagsMap[(int)PackageFlag.ServerSideOnly],
+            flags.GetFlags(PackageFlag.AllowDownload, PackageFlag.ServerSideOnly)
         );
 
-        Assert.AreEqual(serializedFlags, (ulong)flags);
+        Assert.AreEqual(serializedFlags, flags);
     }
 
     [TestMethod]
@@ -55,7 +55,7 @@ public class UnrealFlagsTests
         // AllowDownload and ClientOptional
         var flags = new UnrealFlags<PackageFlag>(0x3, flagsMap);
         var enumeratedFlags = flags.EnumerateFlags();
-        CollectionAssert.AreEqual(new[] { 0, 1 }, enumeratedFlags.ToArray());
+        CollectionAssert.AreEqual((int[])[0, 1], enumeratedFlags.ToArray());
     }
 
     [TestMethod]
@@ -65,6 +65,6 @@ public class UnrealFlagsTests
 
         var compressionFlags = dataFlags.ToCompressionFlags();
         Assert.IsTrue(compressionFlags.HasFlag(CompressionFlags.ZLX));
-        Assert.IsTrue(compressionFlags == CompressionFlags.ZLX);
+        Assert.AreEqual(CompressionFlags.ZLX, compressionFlags);
     }
 }

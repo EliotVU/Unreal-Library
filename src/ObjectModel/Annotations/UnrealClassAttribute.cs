@@ -42,8 +42,10 @@ public class UnrealClassAttribute : Attribute
         InternalClassFlags internalClassFlags = InternalClassFlags.Default,
         params ClassFlag[] classFlags)
     {
-        Debug.Assert(!string.IsNullOrEmpty(className));
-        Debug.Assert(!string.IsNullOrEmpty(classPackageName));
+#if NET8_0_OR_GREATER
+        ArgumentException.ThrowIfNullOrEmpty(classPackageName);
+        ArgumentException.ThrowIfNullOrEmpty(className);
+#endif
 
         ClassName = new UName(className);
         ClassPackageName = new UName(classPackageName);
@@ -58,9 +60,11 @@ public class UnrealClassAttribute : Attribute
         InternalClassFlags internalClassFlags = InternalClassFlags.Default,
         params ClassFlag[] classFlags)
     {
-        Debug.Assert(!string.IsNullOrEmpty(className));
-        Debug.Assert(!string.IsNullOrEmpty(superName));
-        Debug.Assert(!string.IsNullOrEmpty(classPackageName));
+#if NET8_0_OR_GREATER
+        ArgumentException.ThrowIfNullOrEmpty(className);
+        ArgumentException.ThrowIfNullOrEmpty(superName);
+        ArgumentException.ThrowIfNullOrEmpty(classPackageName);
+#endif
 
         ClassName = new UName(className);
         ClassPackageName = new UName(classPackageName);
@@ -71,12 +75,18 @@ public class UnrealClassAttribute : Attribute
 
     public UClass CreateStaticClass(Type internalClassType, UName className)
     {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(internalClassType);
+        ArgumentException.ThrowIfNullOrEmpty(className);
+#endif
+
         var staticClass = new UClass
         {
             Name = className,
             Package = UnrealPackage.TransientPackage,
             InternalFlags = InternalClassFlags,
             InternalType = internalClassType,
+            ObjectFlags = new UnrealFlags<ObjectFlag>(new ulong[(int)ObjectFlag.Max], ObjectFlag.Public),
             ClassFlags = new UnrealFlags<ClassFlag>(new ulong[(int)ClassFlag.Max], ClassFlags),
         };
 
@@ -89,12 +99,18 @@ public class UnrealClassAttribute : Attribute
         InternalClassFlags internalClassFlags,
         params ClassFlag[] classFlags)
     {
+#if NET8_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(internalClassType);
+        ArgumentException.ThrowIfNullOrEmpty(className);
+#endif
+
         var staticClass = new UClass
         {
             Name = className,
             Package = UnrealPackage.TransientPackage,
             InternalFlags = InternalClassFlags | internalClassFlags,
             InternalType = internalClassType,
+            ObjectFlags = new UnrealFlags<ObjectFlag>(new ulong[(int)ObjectFlag.Max], ObjectFlag.Public),
             ClassFlags = new UnrealFlags<ClassFlag>(new ulong[(int)ClassFlag.Max], [.. ClassFlags, .. classFlags])
         };
 

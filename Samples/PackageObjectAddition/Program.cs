@@ -6,8 +6,6 @@ using static UELib.Core.UStruct.UByteCodeDecompiler;
 
 // Adds a new function to an existing class, by appending it to the end of the package file.
 
-// WARNING: This sample no longer works with the introduction of package linking, it is expected to be updated in the future.
-
 // Has to be a decompressed(and decrypted if any) package!
 string packagePath = Path.Combine("Assets", "TestUC3.u");
 
@@ -20,13 +18,11 @@ var packageStream = package.Stream;
 package.BuildTarget = UnrealPackage.GameBuild.BuildName.Unset;
 package.Deserialize(packageStream);
 
-var packageLinker = package.Linker;
-
 // In order for FindObjectByGroup to work, we need to initialize the export objects.
 package.InitializePackage(null, UELib.ObjectModel.Annotations.InternalClassFlags.Default);
 
 const string objectTarget = "UC3Test";
-var objectResult = packageLinker.FindObject<UClass>(objectTarget);
+var objectResult = packageEnvironment.FindObject<UClass?>(objectTarget);
 Console.WriteLine(objectResult == null
     ? $"Object '{objectTarget}' not found in package."
     : $"Found object: {objectResult.Name} of type {objectResult.Class.Name}");
@@ -38,7 +34,6 @@ if (objectResult != null)
     // Load the fields, so we can modify them.
     objectResult.Load();
 
-    var classExport = objectResult.ExportResource;
     var newFunctionName = new UName("MyNewAddedFunctionName");
     var tokenFactory = package.Branch.GetTokenFactory(package);
     // Let's call a function, recursively!
@@ -54,24 +49,33 @@ if (objectResult != null)
     var endOfScript = tokenFactory.CreateToken<EndOfScriptToken>();
 
     UnrealPackageBuilder
-        .Operate(packageLinker)
-        .AddName(newFunctionName)
+        .Operate(package)
+        .AddName(in newFunctionName)
         .AddResource(UnrealObjectBuilder
-                     .CreateFunction(packageLinker)
-                     .FriendlyName(newFunctionName)
+                     .CreateFunction(package)
+                     .FriendlyName(in newFunctionName)
                      .FunctionFlags(FunctionFlag.Public, FunctionFlag.Defined)
                      .Outer(objectResult) // We need to set this before the call to AddResource finalizes.
                      .WithStatements(funcCall, returnToken, endOfScript)
                      .Build(out var newFunction));
 
-    Contract.Assert(newFunction.ExportResource.Class != null, "Couldn't resolve class for export");
-    Contract.Assert(newFunction.ExportResource.Outer != null, "Couldn't resolve outer for export");
-
     // Register the new function in the target class.
-    var newClass = UnrealObjectBuilder
+    var modifiedClass = UnrealObjectBuilder
                    .Operate(objectResult)
                    .AddField(newFunction)
                    .Build();
+
+    // HACK: Since that we've got static classes implemented, we can no longer rely on the package index of that class.
+    // -- therefor, we have to find the function's import class ourselves to get the proper package index.
+    // NOTE: We shouldn't have to do this if we re-serialize all objects and build an entirely new import table,
+    // -- but, we are editing an existing package, so this is necessary.
+    var functionClassImport = package.Imports.First(imp => imp.ObjectName == UnrealName.Function && imp.ClassName == UnrealName.Class);
+    newFunction.ExportResource.ClassIndex = (int)functionClassImport;
+
+    Contract.Assert(newFunction.ExportResource.Class != null, "Couldn't resolve class for export");
+    Contract.Assert(newFunction.ExportResource.Class == functionClassImport, "Export class mismatch.");
+    Contract.Assert(newFunction.ExportResource.Outer != null, "Couldn't resolve outer for export");
+    Contract.Assert(newFunction.ExportResource.Outer == modifiedClass.PackageResource, "Export outer mismatch.");
 
     // Ensure that the internal UnrealName.None can be mapped back to the existing 'None' index in the current package.
     package.Archive.NameIndices[UnrealName.None.Index] = package.Names.FindIndex(name => ((IndexName)name).Index == UnrealName.None.Index);
@@ -80,8 +84,8 @@ if (objectResult != null)
     package.Serialize(packageStream);
 
     // Re-write the updated class, hopefully the class hasn't changed in size. (for UE2 and older this may cause change in size)
-    packageStream.Seek(newClass.ExportResource.SerialOffset, SeekOrigin.Begin);
-    newClass.Save(packageStream);
+    packageStream.Seek(modifiedClass.ExportResource.SerialOffset, SeekOrigin.Begin);
+    modifiedClass.Save(packageStream);
 
     // Write out the new function to the end of the stream.
     packageStream.Seek(0, SeekOrigin.End);
@@ -101,7 +105,7 @@ if (objectResult != null)
     // sanity test
     //package.InitializePackage();
 
-    var resultingObject = packageLinker.FindObject<UFunction>(newFunctionName);
+    var resultingObject = packageEnvironment.FindObject<UFunction?>(in newFunctionName);
     if (resultingObject == null)
     {
         Console.WriteLine("New function was not added successfully.");
@@ -109,8 +113,7 @@ if (objectResult != null)
         return;
     }
 
-    Contract.Assert(resultingObject is UFunction);
     Contract.Assert(resultingObject.Outer == objectResult);
 
-    Console.WriteLine($"Successfully added object {resultingObject.GetReferencePath()} to package.");
+    Console.WriteLine($"Successfully added object {resultingObject} to package.");
 }

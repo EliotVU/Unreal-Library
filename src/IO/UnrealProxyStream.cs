@@ -37,12 +37,12 @@ public abstract class UnrealProxyStream(IUnrealStream baseStream) : IUnrealStrea
         set => baseStream.AbsolutePosition = value;
     }
 
-    public T? ReadObject<T>() where T : UObject
+    public T ReadObject<T>() where T : UObject?
     {
         return baseStream.ReadObject<T>();
     }
 
-    public void WriteObject<T>(T? value) where T : UObject
+    public void WriteObject<T>(T value) where T : UObject?
     {
         baseStream.WriteObject(value);
     }

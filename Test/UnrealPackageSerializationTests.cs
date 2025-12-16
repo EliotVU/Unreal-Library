@@ -291,10 +291,7 @@ public class UnrealPackageSerializationTests
             stream.Seek(newHeaderSize, SeekOrigin.Begin);
 
             var exports = sourcePackage
-                .Linker
-                .PackageEnvironment
-                .ObjectContainer
-                .Enumerate(sourcePackage)
+                .EnumerateObjects()
                 .Where(IsExportableObject)
                 .ToList();
 
@@ -457,12 +454,12 @@ public class UnrealPackageSerializationTests
                 set => baseStream.AbsolutePosition = value;
             }
 
-            public T? ReadObject<T>() where T : UObject
+            public T ReadObject<T>() where T : UObject?
             {
                 throw new NotImplementedException();
             }
 
-            public void WriteObject<T>(T? value) where T : UObject
+            public void WriteObject<T>(T value) where T : UObject?
             {
                 int index;
 
@@ -503,7 +500,7 @@ public class UnrealPackageSerializationTests
             {
                 if (HashToNameMap.TryGetValue(value.GetHashCode(), out var name))
                 {
-                    Writer.WriteName(name);
+                    Writer.WriteName(in name);
                 }
                 else
                 {
@@ -513,7 +510,7 @@ public class UnrealPackageSerializationTests
                     name = new UName(index, value.Number);
                     HashToNameMap.Add(value.GetHashCode(), name);
 
-                    Writer.WriteName(name);
+                    Writer.WriteName(in name);
                 }
             }
 

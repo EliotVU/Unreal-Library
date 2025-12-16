@@ -1,7 +1,5 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.IO;
 using System.Runtime.CompilerServices;
 using UELib.Branch;
 using UELib.Core;
@@ -30,10 +28,10 @@ public interface IUnrealStream : IUnrealArchive, IDisposable
     long AbsolutePosition { get; set; }
 
     // We need to virtualize this so we can override the logic to track where objects are read.
-    T? ReadObject<T>() where T : UObject;
+    T ReadObject<T>() where T : UObject?;
 
     // We need to virtualize this so we can override the logic to track where objects are written.
-    void WriteObject<T>(T? value) where T : UObject;
+    void WriteObject<T>(T value) where T : UObject?;
 
     // We need to virtualize this so we can override the logic to track where names are read.
     UName ReadName();
@@ -215,11 +213,11 @@ public static class UnrealStreamImplementations
     public static int ReadIndex(this IUnrealStream stream) => stream.UR.ReadIndex();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static UObject? ReadObject(this IUnrealStream stream) => stream.ReadObject<UObject>();
+    public static UObject ReadObject(this IUnrealStream stream) => stream.ReadObject<UObject?>();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T? ReadObject<T>(this IUnrealStream stream)
-        where T : UObject => stream.ReadObject<T>();
+    public static T ReadObject<T>(this IUnrealStream stream)
+        where T : UObject? => stream.ReadObject<T>();
 
     [Obsolete("Use ReadName")]
     public static UName ReadNameReference(this IUnrealStream stream) => stream.ReadName();
@@ -455,7 +453,7 @@ public static class UnrealStreamImplementations
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static UArray<T> ReadObjectArray<T>(this IUnrealStream stream)
-        where T : UObject
+        where T : UObject?
     {
         int c = stream.ReadLength();
         var array = new UArray<T>(c);

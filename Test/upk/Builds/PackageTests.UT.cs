@@ -61,7 +61,7 @@ namespace Eliot.UELib.Test.Builds
             using var package = GetScriptPackage();
             package.InitializePackage(null);
 
-            var tokensClass = package.Linker.FindObject<UClass>("ExprTokens");
+            var tokensClass = package.Environment.FindObject<UClass>("ExprTokens");
             Assert.IsNotNull(tokensClass);
             UnrealPackageUtilities.
 

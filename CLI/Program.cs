@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using UELib.Core;
 
 namespace UELib.CLI
 {
@@ -52,7 +53,7 @@ namespace UELib.CLI
                             {
                                 string parm = cmdArgs.Length > 2 ? cmdArgs[2] : null;
                                 int index = int.Parse(parm);
-                                var obj = pkg.IndexToObject(index);
+                                var obj = pkg.Linker.IndexToObject<UObject?>(index);
                                 if (obj == null)
                                 {
                                     Console.Error.WriteLine("Invalid index");

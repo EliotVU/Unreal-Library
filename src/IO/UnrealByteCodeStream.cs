@@ -22,7 +22,7 @@ public sealed class UnrealByteCodeStream(IUnrealStream baseStream, UByteCodeScri
         token.Serialize(this);
     }
 
-    public T? ReadObject<T>() where T : UObject
+    public T ReadObject<T>() where T : UObject?
     {
         //script.AlignObjectSize();
         return base.ReadObject<T>();

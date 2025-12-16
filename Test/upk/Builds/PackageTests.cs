@@ -1,7 +1,7 @@
-﻿using UELib;
+﻿using System.Diagnostics;
+using UELib;
 using UELib.Core;
 using UELib.Engine;
-using UELib.ObjectModel.Annotations;
 using UELib.Services;
 using static UELib.UnrealPackage.GameBuild;
 
@@ -306,14 +306,12 @@ namespace Eliot.UELib.Test.Builds
             }
 
             var exceptions = new List<Exception>();
-            UnrealConfig.SuppressSignature = true;
-
             var files = Directory
                 .EnumerateFiles(packagesPath, "*.*", SearchOption.AllDirectories)
                 .Where(UnrealLoader.IsUnrealFileExtension);
 
             var filePaths = files.ToList();
-            Console.WriteLine($@"Validating {filePaths.Count} packages");
+            Trace.WriteLine($@"Validating {filePaths.Count} packages");
 
             if (filePaths.Count == 0)
             {
@@ -323,7 +321,7 @@ namespace Eliot.UELib.Test.Builds
             var versions = new SortedSet<uint>();
 
             string packageRoot = packagesPath;
-            var packageEnvironment = new UnrealPackageEnvironment(
+            var packageTestEnvironment = new UnrealPackageEnvironment(
                 packageRoot,
                 RegisterUnrealClassesStrategy.StandardClasses
             );
@@ -335,27 +333,30 @@ namespace Eliot.UELib.Test.Builds
 
             try
             {
-#if DEBUG
+                // More than 1 only works if we use a unique PackageEnvironment for each task.
                 const int maxTasks = 1;
-#else
-                const int maxTasks = 3;
-#endif
-                for (int i = 0; i < filePaths.Count; i += maxTasks)
+
+                int i = 0;
+                for (; i < filePaths.Count; i += maxTasks)
                 {
                     var tasks = filePaths[i..Math.Min(filePaths.Count, i + maxTasks)]
                         .Select(filePath => Task.Factory.StartNew(() =>
                         {
-                            ValidatePackage(filePath);
+                            ValidatePackage(filePath, packageTestEnvironment);
                         }, TaskCreationOptions.LongRunning))
-                        .ToList();
+                        ;
 
                     await Task.WhenAll(tasks);
                 }
+
+                Assert.AreEqual(filePaths.Count, i);
             }
             finally
             {
-                packageEnvironment.Dispose();
-                Assert.IsEmpty(packageEnvironment.ObjectContainer.Enumerate()); // Ensure no memory leaks.
+                Trace.WriteLine("Disposing package environment");
+
+                packageTestEnvironment.Dispose();
+                Assert.IsEmpty(packageTestEnvironment.EnumerateObjects()); // Ensure no memory leaks.
             }
 
             Console.WriteLine($@"Unique package versions: [{string.Join(',', versions.Select(v => $"{(ushort)(v >> 16)}/{(ushort)v}"))}]");
@@ -364,13 +365,16 @@ namespace Eliot.UELib.Test.Builds
 
             return;
 
-            UnrealPackage LoadPackage(string filePath)
+            UnrealPackage LoadPackage(string filePath, UnrealPackageEnvironment packageEnvironment)
             {
                 UnrealPackage package;
 
-                var rootPackage = packageEnvironment.ObjectContainer.Find<UPackage>(new UName(Path.GetFileNameWithoutExtension(filePath)));
-                if (rootPackage?.Package == null)
+                var packageName = new UName(Path.GetFileNameWithoutExtension(filePath));
+                var rootPackage = packageEnvironment.FindObject<UPackage?>(packageName);
+                if (rootPackage == null || rootPackage.Package == UnrealPackage.TransientPackage)
                 {
+                    Trace.WriteLine($@"Loading package '{filePath}'");
+
                     // Disposed of by the package environment.
                     var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
@@ -380,15 +384,17 @@ namespace Eliot.UELib.Test.Builds
                 }
                 else
                 {
+                    Trace.WriteLine($@"Re-using loaded package {rootPackage}");
+
                     package = rootPackage.Package;
                 }
 
                 return package;
             }
 
-            void ValidatePackage(string filePath)
+            void ValidatePackage(string filePath, UnrealPackageEnvironment packageEnvironment)
             {
-                Console.WriteLine($@"Validating '{filePath}'");
+                Trace.WriteLine($@"Validating '{filePath}'");
 
                 if (Path.GetExtension(filePath) == ".xxx")
                 {
@@ -397,7 +403,7 @@ namespace Eliot.UELib.Test.Builds
                     return;
                 }
 
-                var package = LoadPackage(filePath);
+                var package = LoadPackage(filePath, packageEnvironment);
                 versions.Add((package.Summary.Version << 16) | package.Summary.LicenseeVersion);
 
                 Console.WriteLine($@"Detected build: {package.Build} and expected build: {packagesBuild}");
@@ -431,7 +437,7 @@ namespace Eliot.UELib.Test.Builds
                 //var linker = new UnrealPackageLinker(package, packageEnvironment, packageProvider);
                 var packageLinker = package.Linker;
                 packageLinker.PackageProvider = packageProvider;
-                AssertPackage(package, packageLinker, exceptions);
+                AssertPackageInitialization(package, packageLinker, exceptions);
 
                 // Re-serialize the package to test serialization.
                 if (shouldTestSerialization)
@@ -568,12 +574,20 @@ namespace Eliot.UELib.Test.Builds
             await TestPackages(packagesPath, packagesBuild, packagesPlatform, forcedBuild, forcedGeneration, shouldTestSerialization);
         }
 
-        private static void AssertPackage(UnrealPackage package, UnrealPackageLinker packageLinker, List<Exception> exceptions)
+        private static void AssertPackageInitialization(UnrealPackage package, UnrealPackageLinker packageLinker, List<Exception> exceptions)
         {
+            Trace.WriteLine($@"Asserting package '{package.RootPackage}'");
+
             try
             {
                 packageLinker.ConstructExports();
-                packageLinker.LoadExports(); // just construct
+                Assert.IsEmpty(package.Exports.Where(exp => exp.Object == null),
+                    "Not all exports were constructed.");
+
+                packageLinker.LoadExports();
+                Assert.IsEmpty(package.Exports.Where(exp => exp.Object?.DeserializationState == 0),
+                    "Not all exports had invoked 'load'");
+
             }
             catch (Exception exception)
             {
@@ -582,9 +596,11 @@ namespace Eliot.UELib.Test.Builds
                 return;
             }
 
-            var exports = packageLinker
-                .EnumerateObjects<UObject>()
-                .Where(obj => ((UPackageIndex)obj).IsExport)
+            Trace.WriteLine($@"Asserting objects for package '{package.RootPackage}'");
+
+            var exports = package
+                .EnumerateObjects()
+                .Where(obj => obj.PackageIndex.IsExport)
                 .ToList();
             AssertObjects(exports);
 
@@ -624,10 +640,10 @@ namespace Eliot.UELib.Test.Builds
                 }
                 catch (Exception exception)
                 {
-                    exceptions.Add(new DeserializationException($"Script deserialization exception in {obj.GetReferencePath()}", exception));
+                    exceptions.Add(new DeserializationException($"Script deserialization exception in {obj}", exception));
 
                     // Catch, because we don't want to stop the test, not until all objects have been loaded.
-                    LibServices.LogService.Log($"Script deserialization exception {exception} for {obj.GetReferencePath()}");
+                    LibServices.LogService.Log($"Script deserialization exception {exception} for {obj}");
                 }
             }
 
@@ -657,7 +673,7 @@ namespace Eliot.UELib.Test.Builds
                         .ToList();
                 Console.WriteLine($@"Found {incompatibleClasses.Count} unrecognized classes [{string.Join(',', incompatibleClasses)}]");
                 // Commented out, because it gets too long.
-                //Console.Write($@"{string.Join(';', incompatibleExports.Select(exp => exp.GetReferencePath()))}");
+                //Console.Write($@"{string.Join(';', incompatibleExports.Select(exp => exp))}");
             }
         }
 
@@ -703,28 +719,17 @@ namespace Eliot.UELib.Test.Builds
             // Work with a copy, because the linker.Objects list is modified during serialization.
             // Because, the exports and imports have been re-serialized
             // -- which causes the object serialization to invoke a new object creation when the export has no assigned object.
-            var objects = packageLinker
-                .EnumerateObjects<UObject>()
+            var objects = package
+                .EnumerateObjects()
+                .Where(obj => obj.PackageIndex.IsExport)
+                .Where(obj => obj.DeserializationState == 0)
+                // Skip unknown objects.
+                .Where(obj => obj is not UnknownObject)
                 .ToList();
 
             // Let's serialize all supported objects and re-serialize them.
             foreach (var obj in objects)
             {
-                if (obj is null or UnknownObject)
-                {
-                    continue; // Skip null and unknown objects.
-                }
-
-                if (obj.PackageIndex.IsExport == false)
-                {
-                    continue;
-                }
-
-                if (obj.DeserializationState != UObject.ObjectState.Deserialized)
-                {
-                    continue;
-                }
-
                 if (s_incompleteTypes.Contains(obj.GetType()))
                 {
                     continue;
@@ -736,8 +741,8 @@ namespace Eliot.UELib.Test.Builds
                     continue;
                 }
 
-                int serialOffset = obj.ExportResource!.SerialOffset;
-                int serialSize = obj.ExportResource!.SerialSize;
+                int serialOffset = obj.ExportResource.SerialOffset;
+                int serialSize = obj.ExportResource.SerialSize;
 
                 var tokenSizes = new List<(short, short)>();
                 if (obj is UStruct { Script.Tokens.Count: 0 } uStruct)
@@ -760,21 +765,21 @@ namespace Eliot.UELib.Test.Builds
                     for (int i = 0; i < tokenSizes.Count; i++)
                     {
                         var token = uStruct.Script!.Tokens[i];
-                        Assert.AreEqual(tokenSizes[i].Item1, token.Size, $"Mismatch token memory size {uStruct.GetReferencePath()}:{token.GetExprToken()}");
-                        Assert.AreEqual(tokenSizes[i].Item2, token.StorageSize, $"Mismatch token storage size {uStruct.GetReferencePath()}:{token.GetExprToken()}");
+                        Assert.AreEqual(tokenSizes[i].Item1, token.Size, $"Mismatch token memory size {uStruct}:{token.GetExprToken()}");
+                        Assert.AreEqual(tokenSizes[i].Item2, token.StorageSize, $"Mismatch token storage size {uStruct}:{token.GetExprToken()}");
                     }
                 }
 
                 if (obj.Properties.Count > 0)
                 {
-                    //Console.WriteLine($@"Skipped size validation for object with properties {obj.GetReferencePath()}");
+                    //Console.WriteLine($@"Skipped size validation for object with properties {obj}");
                     //continue; // Skip objects with properties, because they are not serializable yet.
                 }
 
                 Assert.AreEqual(
                     serialSize,
                     (int)tempStream.Position - serialOffset,
-                    $"Saving object size mismatch {obj.GetReferencePath()}"
+                    $"Saving object size mismatch {obj}"
                 );
 
                 // Let's see if we can deserialize the object back.
@@ -783,10 +788,10 @@ namespace Eliot.UELib.Test.Builds
                 Assert.AreEqual(
                     serialSize,
                     (int)tempStream.Position - serialOffset,
-                    $"Loading object size mismatch {obj.GetReferencePath()}"
+                    $"Loading object size mismatch {obj}"
                 );
 
-                //Console.WriteLine($@"Successfully saved object {obj.GetReferencePath()}");
+                //Console.WriteLine($@"Successfully saved object {obj}");
             }
         }
     }

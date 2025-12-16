@@ -4,6 +4,10 @@ using UELib.Flags;
 
 namespace UELib.ObjectModel.Annotations;
 
+/// <summary>
+/// Specifies class flags for internal use to determine how a class and its objects should be handled.
+/// The attributed flags are inherited by derived classes unless overridden.
+/// </summary>
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class UnrealClassFlagsAttribute : Attribute
 {
@@ -29,7 +33,7 @@ public sealed class UnrealClassFlagsAttribute : Attribute
 [Flags]
 public enum InternalClassFlags
 {
-    Default = LazyLoad,
+    Default = LazyLoad | Intrinsic,
 
     /// <summary>
     /// The object should not be preloaded, instead a manual call to <see cref="UObject.Load"/> is required.
@@ -42,14 +46,14 @@ public enum InternalClassFlags
     Preload = 1 << 0,
 
     /// <summary>
-    /// The object tagged properties should be linked <see cref="UDefaultProperty.Property"/> to the equivalent class <see cref="UProperty"/>.
+    /// The object tagged properties should be linked to the corresponding struct/class properties i.e. a <see cref="UProperty"/>.
     /// </summary>
     LinkTaggedProperties = 1 << 1,
 
     /// <summary>
-    /// The object tagged properties should be linked <see cref="UDefaultProperty._InternalValuePtr"/> to the equivalent attributed property using <see cref="UnrealPropertyAttribute"/>.
+    /// The object tagged properties should be linked to the corresponding attributed properties with a <see cref="UnrealPropertyAttribute"/>.
     ///
-    /// TODO: NOT IMPLEMENTED; Merge code from new property binding branch.
+    /// FIXME: NOT IMPLEMENTED IN THIS BRANCH YET.
     /// </summary>
     LinkAttributedProperties = 1 << 2,
 
@@ -61,7 +65,8 @@ public enum InternalClassFlags
     /// <summary>
     /// An intrinsic class, objects of this class are crucial to the inner-workings of objects, and must be preloaded.
     /// </summary>
-    Intrinsic = Preload,
-
-    Inherit = LinkAttributedProperties | LinkTaggedProperties | PreloadTaggedProperties,
+    Intrinsic = 1 << 4,
+    
+    Preloadable = Intrinsic | Preload,
+    Inherit = Preload | LinkAttributedProperties | LinkTaggedProperties | PreloadTaggedProperties,
 }

@@ -129,7 +129,9 @@ namespace UELib
                 ? UPackageIndex.Null // RootPackage is always null
                 : @object.Outer;
 
-            ClassIndex = @object.Class;
+            ClassIndex = @object is not UClass
+                ? @object.Class
+                : UPackageIndex.Null; // user-class
             if (@object is UStruct uStruct)
             {
                 SuperIndex = uStruct.Super;
@@ -553,7 +555,7 @@ namespace UELib
 
         public override string ToString()
         {
-            return $"{ObjectName}({Index + 1})";
+            return $"{GetReferencePath()}({Index + 1})";
         }
 
         /// <summary>

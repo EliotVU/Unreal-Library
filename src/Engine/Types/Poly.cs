@@ -104,17 +104,17 @@ namespace UELib.Engine
                 PolyFlags |= 0xe00;
             }
 
-            Actor = stream.ReadObject<UObject>();
+            Actor = stream.ReadObject<UObject?>();
             if (stream.Version < (uint)PackageObjectLegacyVersion.TextureDeprecatedFromPoly)
             {
-                Material = stream.ReadObject<UObject>();
+                Material = stream.ReadObject<UObject?>();
             }
 
             ItemName = stream.ReadName();
             // The fact this is serialized after ItemName indicates we may have had both (A texture and material) at one point.
             if (stream.Version >= (uint)PackageObjectLegacyVersion.MaterialAddedToPoly)
             {
-                Material = stream.ReadObject<UObject>();
+                Material = stream.ReadObject<UObject?>();
             }
 
             Link = stream.ReadIndex();

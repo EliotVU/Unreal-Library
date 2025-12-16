@@ -40,8 +40,8 @@ namespace UELib
                 ? UPackageIndex.Null // RootPackage is always null
                 : @object.Outer;
 
-            ClassPackageName = @object.Class?.Package.RootPackage.Name ?? UnrealName.Core;
-            ClassName = @object.Class?.Name ?? UnrealName.Class;
+            ClassPackageName = @object.Class.Package.RootPackage.Name;
+            ClassName = @object.Class.Name;
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace UELib
 
         public override string ToString()
         {
-            return $"{ObjectName}({-(Index + 1)})";
+            return $"{GetReferencePath()}({-(Index + 1)})";
         }
 
         public static explicit operator int(UImportTableItem item)

@@ -18,14 +18,26 @@ public class TestLogService : ILogService
 #endif
     }
 
-    public void SilentException(Exception exception)
+    public void LogTrace(object? value)
     {
-        Assert.Fail(exception.ToString());
+        System.Diagnostics.Trace.WriteLine(value);
     }
 
-    public void SilentAssert(bool assert, string? message)
+    public void LogTrace(string format, params object?[] arg)
     {
-        if (!assert) Console.Error.WriteLine(message);
+        ArgumentNullException.ThrowIfNull(arg);
+
+        System.Diagnostics.Trace.WriteLine(string.Format(format, arg));
+    }
+
+    public void SilentException(Exception exception)
+    {
+        throw exception;
+    }
+
+    public void SilentAssert(bool condition, string? message)
+    {
+        if (!condition) Console.Error.WriteLine(message);
         //Assert.IsTrue(assert, message);
     }
 }

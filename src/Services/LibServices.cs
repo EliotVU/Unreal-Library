@@ -17,4 +17,22 @@ public static class LibServices
     {
         LogService.Log(format, arg);
     }
+
+    [Conditional("TRACE")]
+    public static void Trace(string text)
+    {
+        LogService.LogTrace(text);
+    }
+
+    [Conditional("TRACE")]
+    public static void Trace(object? value)
+    {
+        LogService.LogTrace(value);
+    }
+
+    [Conditional("TRACE")]
+    public static void Trace(string format, params object?[] arg)
+    {
+        LogService.LogTrace(string.Format(format, arg));
+    }
 }

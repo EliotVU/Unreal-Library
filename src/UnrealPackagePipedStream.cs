@@ -62,10 +62,10 @@ public abstract class UnrealPackagePipedStream : PipedStream, IUnrealStream
     {
     }
 
-    public T? ReadObject<T>() where T : UObject
+    public T ReadObject<T>() where T : UObject?
     {
         int index = Reader.ReadIndex();
-        return (T?)Package.IndexToObject(index);
+        return Package.Linker.IndexToObject<T>(index);
     }
 
     public void WriteObject<T>(T? value) where T : UObject => Writer.WriteIndex((int)value);

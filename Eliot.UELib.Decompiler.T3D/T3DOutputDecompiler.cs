@@ -1,8 +1,5 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using System.Linq;
+﻿using System.Diagnostics.Contracts;
 using System.Reflection;
-using System.Threading;
 using UELib.Core;
 using UELib.Decompiler.Common;
 using UELib.Decompiler.Common.Nodes;
@@ -72,16 +69,9 @@ public class T3DOutputDecompiler(TextOutputStream outputStream, IVisitor<Node>[]
             return;
         }
 
-        if (node.Value.Class != null)
-        {
-            outputStream.WriteReference(node.Value.Class, node.Value.Class.Name, node);
-        }
-        else if (node.Value.ImportTable != null)
-        {
-            outputStream.WriteToken(node.Value.ImportTable.ClassName);
-        }
-
+        outputStream.WriteReference(node.Value.Class, node.Value.Class.Name, node);
         outputStream.WriteSingleQuote();
+
         node.Value.GetPath(out var chain);
         for (int i = chain.Count - 1; i >= 1; i--)
         {

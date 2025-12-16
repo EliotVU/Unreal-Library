@@ -24,7 +24,7 @@ namespace UELib.Core
     public partial class UObject : IUnrealSerializableClass, IAcceptable, IContainsTable, IBinaryData, IDisposable,
                                    IComparable
     {
-        internal InternalClassFlags InternalFlags { get; set; } = InternalClassFlags.Default;
+        internal InternalClassFlags InternalFlags { get; set; } = InternalClassFlags.LazyLoad;
 
         /// <summary>
         ///     The name for this object.
@@ -219,7 +219,7 @@ namespace UELib.Core
             // non-export objects cannot be deserialized!
             if ((int)this <= 0)
             {
-                LibServices.Debug("Attempted to load non-export {0}", GetReferencePath());
+                LibServices.Debug("Attempted to load non-export {0}", this);
 
                 return;
             }
@@ -241,18 +241,18 @@ namespace UELib.Core
 
             if (DeserializationState.HasFlag(ObjectState.Deserialized))
             {
-                LibServices.Debug("Re-loading {0}", GetReferencePath());
+                LibServices.Trace("Re-loading {0}", this);
             }
 
-            LibServices.Debug("Loading {0}", GetReferencePath());
+            LibServices.Trace("Loading {0}", this);
 
             try
             {
                 // Load the parent first, if it exists.
                 // We need this to properly link up tagged properties.
-                if (this is UStruct && Package.IndexToObject(ExportResource.SuperIndex) != null)
+                if (this is UStruct && Package.Linker.IndexToObject<UObject?>(ExportResource.SuperIndex) != null)
                 {
-                    LibServices.Debug("Loaded super struct {0}", ExportResource.Super);
+                    LibServices.Trace("Loaded super struct {0}", ExportResource.Super);
                 }
             }
             catch (DeserializationException exception)
@@ -274,7 +274,7 @@ namespace UELib.Core
                 DeserializationState |= ObjectState.Deserialized;
 
                 LibServices.LogService.SilentAssert(stream.Position == stream.Length,
-                                                    $"Trailing data for object {GetReferencePath()}");
+                                                    $"Trailing data for object {this}");
             }
             catch (DeserializationException
                    exception) // Only catch a deserialization error, not a stream loading error etc.
@@ -310,7 +310,7 @@ namespace UELib.Core
                 }
             }
 
-            LibServices.Debug("Loaded {0}", GetReferencePath());
+            LibServices.Trace("Loaded {0}", this);
         }
 
         /// <summary>
@@ -340,7 +340,7 @@ namespace UELib.Core
             catch (Exception exception)
             {
                 throw new DeserializationException(
-                    $"Couldn't load object {GetReferencePath()} as type {GetType()} due thrown exception {exception}",
+                    $"Couldn't load object {this} as type {GetType()} due thrown exception {exception}",
                     exception
                 );
             }
@@ -366,7 +366,7 @@ namespace UELib.Core
             catch (Exception exception)
             {
                 throw new SerializationException(
-                    $"Couldn't save object {GetReferencePath()} as type {GetType()} due thrown exception {exception}",
+                    $"Couldn't save object {this} as type {GetType()} due thrown exception {exception}",
                     exception
                 );
             }
@@ -799,11 +799,6 @@ namespace UELib.Core
         /// <returns>Full path of object e.g. "Struct'Core.Object.Vector'"</returns>
         public string GetReferencePath()
         {
-            if (ImportResource != null)
-            {
-                return $"{ImportResource.ClassName}'{GetPath()}'";
-            }
-
             Debug.Assert(Class != null, "Class cannot be null");
             return $"{Class.Name}'{GetPath()}'";
         }
@@ -881,7 +876,7 @@ namespace UELib.Core
 
         public override string ToString()
         {
-            return $"{Name}({(int)this})";
+            return $"{GetReferencePath()}({(int)this})";
         }
 
         public override int GetHashCode()
@@ -960,19 +955,19 @@ namespace UELib.Core
         [Obsolete("Use Class?.Name ?? \"Class\"")]
         public string GetClassName()
         {
-            return ImportResource?.ClassName ?? (Class?.Name ?? "Class");
+            return Class.Name;
         }
 
         [Obsolete("Use Class?.Name ?? \"Class\"")]
         public bool IsClassType(string className)
         {
-            return string.Compare(GetClassName(), className, StringComparison.OrdinalIgnoreCase) == 0;
+            return string.Compare(Class.Name, className, StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         [Obsolete("Use Package.IndexToObject", true)]
         protected UObject GetIndexObject(int index)
         {
-            return Package.IndexToObject(index);
+            return Package.Linker.IndexToObject<UObject>(index);
         }
 
         [Obsolete("Use stream.Record instead")]

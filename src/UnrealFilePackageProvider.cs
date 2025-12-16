@@ -44,28 +44,6 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
         }
     }
 
-    public UnrealFilePackageProvider(UnrealPackageEnvironment environment, string[] packageExtensions)
-    {
-        _Directories = environment.Directories;
-        _PackageExtensions = packageExtensions;
-
-        foreach (string extension in _PackageExtensions)
-        {
-            Contract.Assert(
-                extension.StartsWith("."),
-                $"Invalid extension '{extension}' passed to package provider using environment '{environment.Name}'."
-            );
-        }
-
-        foreach (string directory in _Directories)
-        {
-            Contract.Assert(
-                Directory.Exists(directory),
-                $"Invalid directory '{directory}' passed to package provider using environment '{environment.Name}'."
-            );
-        }
-    }
-
     public UPackage GetPackage(string packageName, UnrealPackageLinker sourceLinker)
     {
         if (_Directories.Length == 0)
@@ -77,6 +55,13 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
         string[] patterns = _PackageExtensions
                             .Select(ext => packageName + ext)
                             .ToArray();
+
+        LibServices.Trace(
+            "Scanning directories [{0}] for external package '{1}' invoked by package {2}",
+            _Directories.Aggregate("", (a, b) => a + "," + b),
+            packageName,
+            sourceLinker.Package.RootPackage
+        );
 
         foreach (string root in _Directories)
         {
@@ -92,11 +77,10 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
                 }
 
                 var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var package = new UnrealPackage(fileStream, filePath, sourceLinker.PackageEnvironment);
+                var otherPackage = new UnrealPackage(fileStream, filePath, sourceLinker.PackageEnvironment);
 
-                LibServices.Debug("Found import package '{0}' at '{1}'", packageName, filePath);
+                LibServices.Trace("Found import package '{0}' at '{1}'", packageName, filePath);
 
-                var otherPackage = package;
                 var otherRootPackage = otherPackage.RootPackage;
                 otherRootPackage.Package = otherPackage;
 

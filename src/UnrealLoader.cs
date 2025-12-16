@@ -90,14 +90,11 @@ namespace UELib
         {
             var package = LoadPackage(packagePath, fileAccess, environment);
 
-            string? packageDirectory = Path.GetDirectoryName(packagePath);
-            string[] packageDirectories = packageDirectory != null
-                ? package.Linker.PackageEnvironment.Directories.Concat([packageDirectory]).ToArray()
-                : package.Linker.PackageEnvironment.Directories;
-
             // TODO: Acquire extensions from the detected game build.
-
-            var packageProvider = new UnrealFilePackageProvider(packageDirectories, UnrealExtensions.Common);
+            string? packageDirectory = Path.GetDirectoryName(packagePath);
+            var packageProvider = packageDirectory != null
+                ? new UnrealFilePackageProvider([packageDirectory], UnrealExtensions.Common)
+                : null;
             package.InitializePackage(packageProvider);
 
             return package;

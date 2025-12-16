@@ -182,7 +182,7 @@ namespace UELib.Core
                 // hard-coded 0x9da3 (AAO 2.6)
                 uint v94 = stream.ReadUInt32();
                 stream.Record(nameof(v94), v94);
-                if (v94 != 0) LibServices.Debug(GetReferencePath() + ":v94", v94);
+                if (v94 != 0) LibServices.Debug(this + ":v94", v94);
             }
 #endif
 #if UE4
@@ -200,7 +200,7 @@ namespace UELib.Core
             {
                 uint v194 = stream.ReadUInt32();
                 stream.Record(nameof(v194), v194);
-                if (v194 != 0) LibServices.Debug(GetReferencePath() + ":v194", v194);
+                if (v194 != 0) LibServices.Debug(this + ":v194", v194);
             }
 #endif
 #if SPELLBORN
@@ -217,7 +217,7 @@ namespace UELib.Core
                     byte classPlatformFlags = stream.ReadByte();
                     stream.Record(nameof(classPlatformFlags), classPlatformFlags);
                     if (classPlatformFlags != 0)
-                        LibServices.Debug(GetReferencePath() + ":classPlatformFlags", classPlatformFlags);
+                        LibServices.Debug(this + ":classPlatformFlags", classPlatformFlags);
                 }
             }
             else
@@ -244,7 +244,7 @@ namespace UELib.Core
             {
                 stream.ReadArray(out UArray<UName> v100);
                 stream.Record(nameof(v100), v100);
-                if (v100.Count != 0) LibServices.Debug(GetReferencePath() + ":v100", v100);
+                if (v100.Count != 0) LibServices.Debug(this + ":v100", v100);
             }
 #endif
             if (stream.Version < (uint)PackageObjectLegacyVersion.ClassDependenciesDeprecated)
@@ -444,7 +444,7 @@ namespace UELib.Core
                 {
                     stream.ReadArray(out UArray<UName> bm4_v198);
                     stream.Record(nameof(bm4_v198), bm4_v198);
-                    if (bm4_v198.Count != 0) LibServices.Debug(GetReferencePath() + ":bm4_v198", bm4_v198);
+                    if (bm4_v198.Count != 0) LibServices.Debug(this + ":bm4_v198", bm4_v198);
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.ForceScriptOrderAddedToUClass
@@ -468,7 +468,7 @@ namespace UELib.Core
                 {
                     int dd2UnkInt32 = stream.ReadInt32();
                     stream.Record(nameof(dd2UnkInt32), dd2UnkInt32);
-                    if (dd2UnkInt32 != 0) LibServices.Debug(GetReferencePath() + ":dd2UnkInt32", dd2UnkInt32);
+                    if (dd2UnkInt32 != 0) LibServices.Debug(this + ":dd2UnkInt32", dd2UnkInt32);
                 }
 #endif
 #if BATTLEBORN
@@ -488,7 +488,7 @@ namespace UELib.Core
                     stream.Record("Unknown:Dishonored", unknownName);
                     if (unknownName.IsNone() == false)
                     {
-                        LibServices.Debug(GetReferencePath() + ":unknownName", unknownName);
+                        LibServices.Debug(this + ":unknownName", unknownName);
                     }
 
                     NativeHeaderName = stream.ReadString();
@@ -503,7 +503,7 @@ namespace UELib.Core
                 {
                     int v1d4 = stream.ReadInt32();
                     stream.Record(nameof(v1d4), v1d4);
-                    if (v1d4 != 0) LibServices.Debug(GetReferencePath() + ":v1d4 {0}", v1d4);
+                    if (v1d4 != 0) LibServices.Debug(this + ":v1d4 {0}", v1d4);
                 }
 #endif
 #if BATMAN
@@ -512,7 +512,7 @@ namespace UELib.Core
                 {
                     int bm_v174 = stream.ReadInt32();
                     stream.Record(nameof(bm_v174), bm_v174);
-                    if (bm_v174 != 0) LibServices.Debug(GetReferencePath() + ":bm_v174 {0}", bm_v174);
+                    if (bm_v174 != 0) LibServices.Debug(this + ":bm_v174 {0}", bm_v174);
                 }
 #endif
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedClassGroupsToUClass)
@@ -567,15 +567,15 @@ namespace UELib.Core
             {
                 string v298 = stream.ReadString();
                 stream.Record(nameof(v298), v298);
-                if (v298 != string.Empty) LibServices.Debug(GetReferencePath() + ":v298", v298);
+                if (v298 != string.Empty) LibServices.Debug(this + ":v298", v298);
 
                 int v2a8 = stream.ReadInt32();
                 stream.Record(nameof(v2a8), v2a8);
-                if (v2a8 != 0) LibServices.Debug(GetReferencePath() + ":v2a8", v2a8);
+                if (v2a8 != 0) LibServices.Debug(this + ":v2a8", v2a8);
 
                 stream.Read(out UArray<UName> v2b0);
                 stream.Record(nameof(v2b0), v2b0);
-                if (v2b0.Count != 0) LibServices.Debug(GetReferencePath() + ":v2b0", v2b0);
+                if (v2b0.Count != 0) LibServices.Debug(this + ":v2b0", v2b0);
             }
 #endif
             if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature &&
@@ -591,14 +591,14 @@ namespace UELib.Core
                 {
                     stream.Read(out int v40);
                     stream.Record(nameof(v40), v40);
-                    if (v40 != 0) LibServices.Debug(GetReferencePath() + ":v40", v40);
+                    if (v40 != 0) LibServices.Debug(this + ":v40", v40);
                 }
 
                 if (stream.LicenseeVersion >= 139)
                 {
                     stream.Read(out int v1ec);
                     stream.Record(nameof(v1ec), v1ec);
-                    if (v1ec != 0) LibServices.Debug(GetReferencePath() + ":v1ec", v1ec);
+                    if (v1ec != 0) LibServices.Debug(this + ":v1ec", v1ec);
                 }
             }
 #endif
@@ -607,7 +607,7 @@ namespace UELib.Core
             {
                 var v160 = stream.ReadName();
                 stream.Record(nameof(v160), v160);
-                if (v160 != UnrealName.None) LibServices.Debug(GetReferencePath() + ":v160", v160);
+                if (v160 != UnrealName.None) LibServices.Debug(this + ":v160", v160);
             }
 #endif
 #if DISHONORED
@@ -635,7 +635,7 @@ namespace UELib.Core
             {
                 stream.Read(out byte v1cc); // usually 0x01, sometimes 0x02?
                 stream.Record("v1cc", v1cc);
-                if (v1cc != 0) LibServices.Debug(GetReferencePath() + ":v1cc", v1cc);
+                if (v1cc != 0) LibServices.Debug(this + ":v1cc", v1cc);
             }
 #endif
 #if UNDYING
@@ -774,7 +774,7 @@ namespace UELib.Core
                 // StateMap; Seems to keep track of all declared states in the class.
                 stream.Read(out UMap<UName, UObject> v368);
                 stream.Record(nameof(v368), v368);
-                if (v368.Count != 0) LibServices.Debug(GetReferencePath() + ":v368", v368);
+                if (v368.Count != 0) LibServices.Debug(this + ":v368", v368);
             }
 #endif
             // version < 57

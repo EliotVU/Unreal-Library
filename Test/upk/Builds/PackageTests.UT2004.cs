@@ -86,7 +86,7 @@ namespace Eliot.UELib.Test.Builds
 
             void AssertFunctionDelegateTokens(UnrealPackageLinker packageLinker)
             {
-                var delegateTokensFunc = packageLinker.FindObject<UFunction>("DelegateTokens")!;
+                var delegateTokensFunc = packageLinker.PackageEnvironment.FindObject<UFunction>("DelegateTokens")!;
                 packageLinker.LoadObject(delegateTokensFunc);
 
                 var decompiler = new UStruct.UByteCodeDecompiler(delegateTokensFunc);
@@ -118,9 +118,9 @@ namespace Eliot.UELib.Test.Builds
             using var package = GetScriptPackage();
             package.InitializePackage(null);
 
-            AssertTestClass(package.Linker);
+            UnrealPackageUtilities.AssertTestClass(package);
 
-            var tokensClass = package.Linker.FindObject<UClass>("ExprTokens");
+            var tokensClass = package.Environment.FindObject<UClass>("ExprTokens");
             Assert.IsNotNull(tokensClass);
 
             // Test a series of expected tokens

@@ -140,7 +140,7 @@ namespace UELib.Core
 
             if (stream.Version >= (uint)PackageObjectLegacyVersion.SuperReferenceMovedToUStruct)
             {
-                Super = stream.ReadObject<UStruct>();
+                Super = stream.ReadObject<UStruct?>();
                 stream.Record(nameof(Super), Super);
 
                 // Weird bug in UDK (805 and 810), where the Super is set to Commandlet
@@ -308,7 +308,7 @@ namespace UELib.Core
                 stream.Record(nameof(vengeanceUnknownObject), vengeanceUnknownObject);
                 if (vengeanceUnknownObject != null)
                 {
-                    LibServices.Debug(GetReferencePath() + ":vengeanceUnknownObject", vengeanceUnknownObject);
+                    LibServices.Debug(this + ":vengeanceUnknownObject", vengeanceUnknownObject);
                 }
             }
 #endif
@@ -359,7 +359,7 @@ namespace UELib.Core
                 // Always zero in all the Core.u structs
                 int unknownInt32 = stream.ReadInt32();
                 stream.Record("Unknown:Unreal2", unknownInt32);
-                if (unknownInt32 != 0) LibServices.Debug(GetReferencePath() + ":unknownInt32", unknownInt32);
+                if (unknownInt32 != 0) LibServices.Debug(this + ":unknownInt32", unknownInt32);
             }
 #endif
 #if TRANSFORMERS
@@ -387,7 +387,7 @@ namespace UELib.Core
 
                 string v64 = stream.ReadString();
                 stream.Record(nameof(v64), v64);
-                if (v64 != string.Empty) LibServices.Debug(GetReferencePath() + ":v64", v64);
+                if (v64 != string.Empty) LibServices.Debug(this + ":v64", v64);
             }
 #endif
         serializeByteCode:

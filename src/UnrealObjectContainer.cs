@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using UELib.Core;
 
@@ -36,7 +33,7 @@ public sealed class UnrealObjectContainer : IDisposable
     public IEnumerable<UObject> Enumerate(UnrealPackage package)
     {
 #if NET8_0_OR_GREATER
-        ArgumentNullException.ThrowIfNull(package, nameof(package));
+        ArgumentNullException.ThrowIfNull(package);
 #endif
 
         foreach (var obj in _ObjectNameHashMap.Values.SelectMany(EnumerateObjectLink))
@@ -65,14 +62,14 @@ public sealed class UnrealObjectContainer : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? Find<T>(in UName objectName)
-        where T : UObject
+    public T Find<T>(in UName objectName)
+        where T : UObject?
     {
         return Find<T>(objectName.GetHashCode());
     }
 
-    internal T? Find<T>(int objectNameHash)
-        where T : UObject
+    internal T Find<T>(int objectNameHash)
+        where T : UObject?
     {
         _ObjectNameHashMap.TryGetValue(objectNameHash, out var objectLink);
 
@@ -81,8 +78,8 @@ public sealed class UnrealObjectContainer : IDisposable
             .FirstOrDefault(obj => obj.Name.GetHashCode() == objectNameHash);
     }
 
-    internal T? Find<T>(int objectNameHash, UClass @class)
-        where T : UObject
+    internal T Find<T>(int objectNameHash, UClass @class)
+        where T : UObject?
     {
         _ObjectNameHashMap.TryGetValue(objectNameHash, out var objectLink);
 
@@ -92,8 +89,8 @@ public sealed class UnrealObjectContainer : IDisposable
             .FirstOrDefault(obj => obj.Name.GetHashCode() == objectNameHash);
     }
 
-    public T? Find<T>(in UName objectName, in UName outerName)
-        where T : UObject
+    public T Find<T>(in UName objectName, in UName outerName)
+        where T : UObject?
     {
         int objectNameHash = objectName.GetHashCode();
         _ObjectNameOuterHashMap.TryGetValue(objectNameHash ^ outerName.GetHashCode(), out var objectLink);
@@ -103,8 +100,8 @@ public sealed class UnrealObjectContainer : IDisposable
             .FirstOrDefault(obj => obj.Name == objectNameHash);
     }
 
-    internal T? Find<T>(int objectNameHash, int outerNameHash, UClass @class)
-        where T : UObject
+    internal T Find<T>(int objectNameHash, int outerNameHash, UClass @class)
+        where T : UObject?
     {
         _ObjectNameOuterHashMap.TryGetValue(objectNameHash ^ outerNameHash, out var objectLink);
 
@@ -132,7 +129,7 @@ public sealed class UnrealObjectContainer : IDisposable
     public void Add(UObject newObject)
     {
 #if NET8_0_OR_GREATER
-        ArgumentNullException.ThrowIfNull(newObject, nameof(newObject));
+        ArgumentNullException.ThrowIfNull(newObject);
 #endif
         int objectHash = newObject.GetHashCode();
 
@@ -182,7 +179,7 @@ public sealed class UnrealObjectContainer : IDisposable
     public void Remove(UObject disposedObject)
     {
 #if NET8_0_OR_GREATER
-        ArgumentNullException.ThrowIfNull(disposedObject, nameof(disposedObject));
+        ArgumentNullException.ThrowIfNull(disposedObject);
 #endif
 
         int objectHash = disposedObject.GetHashCode();
@@ -247,11 +244,7 @@ public sealed class UnrealObjectContainer : IDisposable
         foreach (var obj in objectsToDisposeOf)
         {
             obj.Dispose();
-
-            if (obj.PackageResource != null)
-            {
-                obj.PackageResource.Object = null;
-            }
+            obj.PackageResource?.Object = null;
         }
 
         _ObjectNameHashMap.Clear();
@@ -266,11 +259,7 @@ public sealed class UnrealObjectContainer : IDisposable
         foreach (var obj in objectsToDisposeOf)
         {
             obj.Dispose();
-
-            if (obj.PackageResource != null)
-            {
-                obj.PackageResource.Object = null;
-            }
+            obj.PackageResource?.Object = null;
 
             // Remove one by one
             Remove(obj);

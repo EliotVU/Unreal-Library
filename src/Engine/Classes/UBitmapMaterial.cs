@@ -58,7 +58,7 @@ namespace UELib.Engine
             {
                 using (stream.Peek(paletteProperty._PropertyValuePosition))
                 {
-                    Palette = stream.ReadObject<UPalette>();
+                    Palette = stream.ReadObject<UPalette?>();
                 }
             }
         }

@@ -1,11 +1,10 @@
-﻿using System.IO;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using UELib;
 
 namespace Eliot.UELib.Benchmark
 {
     [BenchmarkCategory("UnrealPackage")]
-    public class UnrealPackageBenchmark
+    public class UnrealPackageBenchmark : IDisposable
     {
         private readonly UnrealPackage _Package;
 
@@ -17,10 +16,10 @@ namespace Eliot.UELib.Benchmark
                 FileAccess.Read
             );
 
-            _Package = new UnrealPackage(fileStream, fileStream.Name, null);
+            _Package = new UnrealPackage(fileStream, fileStream.Name);
             _Package.Deserialize();
 
-            _Package.BinaryMetaData?.Fields.Clear();
+            _Package.BinaryMetaData.Fields.Clear();
         }
 
         [Benchmark]
@@ -29,14 +28,21 @@ namespace Eliot.UELib.Benchmark
             _Package.Stream.Position = 0;
             _Package.Deserialize(_Package.Stream);
 
-            _Package.BinaryMetaData?.Fields.Clear();
+            _Package.BinaryMetaData.Fields.Clear();
         }
 
         [Benchmark]
         public void PackageInitialization()
         {
             _Package.InitializePackage(null);
-            _Package.Linker.PackageEnvironment.ObjectContainer.Dispose(_Package);
+            // Dispose whatever we have initialized - for the next run.
+            _Package.Environment.DisposeObjects(_Package);
+        }
+
+        public void Dispose()
+        {
+            // Full dispose, including the archive.
+            _Package.Dispose();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using UELib.Core;
+﻿using UELib;
+using UELib.Core;
 
 namespace Eliot.UELib.Test;
 
@@ -6,7 +7,7 @@ namespace Eliot.UELib.Test;
 public class UnrealObjectTests
 {
     [TestMethod]
-    public void TestStruct()
+    public void StructTest()
     {
         var uStruct = new UStruct();
 
@@ -24,41 +25,41 @@ public class UnrealObjectTests
 
         // Test order
         CollectionAssert.AreEqual(
+            new List<string> { "F1", "F2", "F3", "F4" },
             uStruct
                 .EnumerateFields()
-                .Select(uStruct => uStruct.Name.ToString())
-                .ToList(),
-            new List<string> { "F1", "F2", "F3", "F4" }
+                .Select(field => field.Name.ToString())
+                .ToList()
         );
 
         // Test removal of a field in-between
         uStruct.RemoveField(f2);
         CollectionAssert.AreEqual(
+            new List<string> { "F1", "F3", "F4" },
             uStruct
                 .EnumerateFields()
-                .Select(uStruct => uStruct.Name.ToString())
-                .ToList(),
-            new List<string> { "F1", "F3", "F4" }
+                .Select(field => field.Name.ToString())
+                .ToList()
         );
 
         // Test removal of the first field
         uStruct.RemoveField(f1);
         CollectionAssert.AreEqual(
+            new List<string> { "F3", "F4" },
             uStruct
                 .EnumerateFields()
-                .Select(uStruct => uStruct.Name.ToString())
-                .ToList(),
-            new List<string> { "F3", "F4" }
+                .Select(field => field.Name.ToString())
+                .ToList()
         );
 
         // Test removal of the last field.
         uStruct.RemoveField(f4);
         CollectionAssert.AreEqual(
+            new List<string> { "F3" },
             uStruct
                 .EnumerateFields()
-                .Select(uStruct => uStruct.Name.ToString())
-                .ToList(),
-            new List<string> { "F3" }
+                .Select(field => field.Name.ToString())
+                .ToList()
         );
     }
 }

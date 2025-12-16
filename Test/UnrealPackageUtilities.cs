@@ -25,7 +25,7 @@ namespace Eliot.UELib.Test
             ushort licenseeVersion = 0,
             UnrealPackageEnvironment? packageEnvironment = null)
         {
-            packageEnvironment ??= new UnrealPackageEnvironment("Temp", RegisterUnrealClassesStrategy.None);
+            packageEnvironment ??= new UnrealPackageEnvironment("Temp", RegisterUnrealClassesStrategy.EssentialClasses);
 
             var fileStream = CreateTempPackageStream();
             var package = new UnrealPackage(fileStream, fileStream.Name, packageEnvironment);
@@ -50,7 +50,7 @@ namespace Eliot.UELib.Test
             ushort licenseeVersion = 0,
             UnrealPackageEnvironment? packageEnvironment = null)
         {
-            packageEnvironment ??= new UnrealPackageEnvironment("Temp", RegisterUnrealClassesStrategy.None);
+            packageEnvironment ??= new UnrealPackageEnvironment("Temp", RegisterUnrealClassesStrategy.EssentialClasses);
 
             var memoryStream = new MemoryStream();
             var package = new UnrealPackage(memoryStream, "Transient", packageEnvironment);
@@ -74,7 +74,7 @@ namespace Eliot.UELib.Test
             catch (Exception ex)
             {
                 Assert.Fail(
-                    $"Token decompilation exception in script instance {scriptInstance.GetReferencePath()}: {ex.Message}");
+                    $"Token decompilation exception in script instance {scriptInstance}: {ex.Message}");
             }
 
             foreach (var subScriptInstance in scriptInstance
@@ -89,14 +89,14 @@ namespace Eliot.UELib.Test
                 }
                 catch (Exception ex)
                 {
-                    Assert.Fail($"Token decompilation exception in script instance {subScriptInstance.GetReferencePath()}: {ex.Message}");
+                    Assert.Fail($"Token decompilation exception in script instance {subScriptInstance}: {ex.Message}");
                 }
             }
         }
 
         internal static UObject AssertDefaultPropertiesClass(UnrealPackageLinker packageLinker)
         {
-            var testClass = packageLinker.FindObject<UClass>("DefaultProperties");
+            var testClass = packageLinker.PackageEnvironment.FindObject<UClass>("DefaultProperties");
             Assert.IsNotNull(testClass);
 
             var defaults = testClass.Default ?? testClass;
@@ -140,7 +140,7 @@ namespace Eliot.UELib.Test
                 obj.Load();
             }
 
-            Assert.AreEqual(UObject.ObjectState.Deserialized, obj.DeserializationState, obj.GetReferencePath());
+            Assert.AreEqual(UObject.ObjectState.Deserialized, obj.DeserializationState, obj.ToString());
         }
 
         internal static void AssertTokenType<T>(UStruct.UByteCodeDecompiler.Token token)
@@ -160,6 +160,31 @@ namespace Eliot.UELib.Test
             {
                 AssertTokenType(decompiler.NextToken, tokenType);
             }
+        }
+
+        internal static void AssertTestClass(UnrealPackage package)
+        {
+            var testClass = package.Environment.FindObject<UClass>("Test");
+            Assert.IsNotNull(testClass);
+
+            // Validate that Public/Protected/Private are correct and distinguishable.
+            var publicProperty = package.Environment.FindObject<UIntProperty>("Public");
+            Assert.IsNotNull(publicProperty);
+            Assert.IsTrue(publicProperty.IsPublic());
+            Assert.IsFalse(publicProperty.IsProtected());
+            Assert.IsFalse(publicProperty.IsPrivate());
+
+            var protectedProperty = package.Environment.FindObject<UIntProperty>("Protected");
+            Assert.IsNotNull(protectedProperty);
+            Assert.IsTrue(protectedProperty.IsPublic());
+            Assert.IsTrue(protectedProperty.IsProtected());
+            Assert.IsFalse(protectedProperty.IsPrivate());
+
+            var privateProperty = package.Environment.FindObject<UIntProperty>("Private");
+            Assert.IsNotNull(privateProperty);
+            Assert.IsFalse(privateProperty.IsPublic());
+            Assert.IsFalse(privateProperty.IsProtected());
+            Assert.IsTrue(privateProperty.IsPrivate());
         }
     }
 }

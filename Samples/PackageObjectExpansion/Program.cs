@@ -51,5 +51,5 @@ if (objectResult != null)
 
     fileStream.Flush(); // Ensure all changes are written to the file
 
-    Console.WriteLine($"Successfully expanded object {objectResult.GetReferencePath()} by {expansionSizeInBytes} bytes to a total size of {export.SerialSize}.");
+    Console.WriteLine($"Successfully expanded object {objectResult} by {expansionSizeInBytes} bytes to a total size of {export.SerialSize}.");
 }

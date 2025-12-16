@@ -49,7 +49,7 @@ namespace UELib.Core
 
                 if (_DelegateSourceName.Value.IsNone() == false)
                 {
-                    Delegate = Package.FindObject<UFunction>(_DelegateSourceName);
+                    Delegate = Package.Environment.FindObject<UFunction>(_DelegateSourceName);
                     // Cannot find imported delegates 
                     //Debug.Assert(Delegate != null, $"Couldn't retrieve delegate source '{_DelegateSourceName}'");
                 }
@@ -88,7 +88,7 @@ namespace UELib.Core
                 {
                     if (_DelegateSourceName.Value.IsNone() == false)
                     {
-                        Delegate = Package.FindObject<UFunction>(_DelegateSourceName);
+                        Delegate = Package.Environment.FindObject<UFunction>(_DelegateSourceName);
                         if (Delegate == null)
                         {
                             throw new NotImplementedException(

@@ -1,6 +1,7 @@
-﻿using System;
+﻿#if NET8_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+#endif
 
 namespace UELib.Services;
 
@@ -8,6 +9,10 @@ public interface ILogService
 {
     void Log(string text);
     void Log(string format, params object?[] arg);
+
+    void LogTrace(object? value);
+    void LogTrace(string format, params object?[] arg);
+
     void SilentException(Exception exception);
 
 #if NET8_0_OR_GREATER
@@ -27,6 +32,16 @@ public class DefaultLogService : ILogService
     public void Log(string format, params object?[] arg)
     {
         Console.WriteLine(format, arg);
+    }
+
+    public void LogTrace(object? value)
+    {
+        System.Diagnostics.Trace.WriteLine(value);
+    }
+
+    public void LogTrace(string format, params object?[] arg)
+    {
+        System.Diagnostics.Trace.WriteLine(string.Format(format, arg));
     }
 
     public void SilentException(Exception exception)

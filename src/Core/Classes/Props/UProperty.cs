@@ -11,6 +11,7 @@ namespace UELib.Core
     /// <summary>
     ///     Implements UProperty/Core.Property
     /// </summary>
+    [UnrealRegisterClass] // Never instantiated, but, we need to register this so that derived static classes can link correctly.
     public partial class UProperty : UField, IUnrealNetObject
     {
         public PropertyType Type { get; protected set; } = PropertyType.None;

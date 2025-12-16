@@ -511,7 +511,7 @@ namespace UELib.Core
                 case PropertyType.JsonRefProperty:
                     {
                         var jsonObjectName = stream.ReadName();
-                        var jsonObject = stream.ReadObject<UObject>();
+                        var jsonObject = stream.ReadObject<UObject?>();
 
                         if (jsonObject == null)
                         {
@@ -664,7 +664,7 @@ namespace UELib.Core
 
                 case PropertyType.ClassProperty:
                     {
-                        var classObject = stream.ReadObject<UClass>();
+                        var classObject = stream.ReadObject<UClass?>();
                         stream.Record(nameof(classObject), classObject);
                         propertyValue = PropertyDisplay.FormatLiteral(classObject);
                         break;
@@ -681,7 +681,7 @@ namespace UELib.Core
                 case PropertyType.DelegateProperty when stream.Version >= 100:
                     {
                         // Can by any object, usually a class.
-                        var functionOwner = stream.ReadObject();
+                        var functionOwner = stream.ReadObject<UObject?>();
                         stream.Record(nameof(functionOwner), functionOwner);
 
                         string functionName = stream.ReadName();
@@ -812,7 +812,7 @@ namespace UELib.Core
                         if (innerArrayType == PropertyType.None)
                         {
                             LibServices.LogService.Log(
-                                $"Couldn't acquire array type for property tag '{Name}' in {TagSource.GetReferencePath()}.");
+                                $"Couldn't acquire array type for property tag '{Name}' in {TagSource}.");
 
                             propertyValue = "/* Array type was not detected. */";
                             break;

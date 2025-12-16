@@ -28,7 +28,7 @@ namespace UELib.Core
         {
             base.Deserialize(stream);
 
-            Enum = stream.ReadObject<UEnum>();
+            Enum = stream.ReadObject<UEnum?>();
             stream.Record(nameof(Enum), Enum);
         }
 

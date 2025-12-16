@@ -159,7 +159,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
             int property = stream.ReadIndex();
             Script.AlignSize(sizeof(int));
 
-            PropertyContainer = stream.Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
+            PropertyContainer = stream.Package.Linker.IndexToObject<UStruct>((short)(property & 0xFFFF));
             PropertyIndex = property >> 16;
 
             Debug.Assert(PropertyContainer != null);
@@ -248,7 +248,7 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
             int property = stream.ReadIndex();
             Script.AlignSize(sizeof(int));
 
-            PropertyContainer = stream.Package.IndexToObject<UStruct>((short)(property & 0xFFFF));
+            PropertyContainer = stream.Package.Linker.IndexToObject<UStruct>((short)(property & 0xFFFF));
             PropertyIndex = property >> 16;
 
             Debug.Assert(PropertyContainer != null);

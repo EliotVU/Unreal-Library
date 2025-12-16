@@ -104,7 +104,7 @@ namespace UELib.Core
                     // TODO: version. Seen in version ~648(The Ball) may have been introduced earlier, but not prior 610.
                     if (stream.Version > 610)
                     {
-                        Property = stream.ReadObject<UDelegateProperty>();
+                        Property = stream.ReadObject<UDelegateProperty?>();
                         Script.AlignObjectSize();
                     }
                 }

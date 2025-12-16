@@ -40,10 +40,10 @@ public sealed class UnrealTestStream(UnrealTestArchive baseArchive, Stream baseS
 
     [Obsolete] public IBufferDecoder? Decoder { get; set; }
 
-    public IPackageSerializer? Serializer { get; set; }
+    public IPackageSerializer Serializer { get; set; }
 
     public UName ReadName() => UR.ReadName();
-    public void WriteName(in UName value) => UW.WriteName(value);
+    public void WriteName(in UName value) => UW.WriteName(in value);
 
     public void Skip(int bytes) => Position += bytes;
 
@@ -53,8 +53,8 @@ public sealed class UnrealTestStream(UnrealTestArchive baseArchive, Stream baseS
         set => Position = value;
     }
 
-    public T? ReadObject<T>() where T : UObject => (T?)baseArchive.Package.IndexToObject(UR.ReadIndex());
-    public void WriteObject<T>(T? value) where T : UObject => UW.WriteIndex(value?.PackageIndex ?? 0);
+    public T ReadObject<T>() where T : UObject? => baseArchive.Package.Linker.IndexToObject<T>(UR.ReadIndex());
+    public void WriteObject<T>(T value) where T : UObject? => UW.WriteIndex(value?.PackageIndex ?? 0);
 
     public IUnrealStream Record(string name, object? value) => this;
 
