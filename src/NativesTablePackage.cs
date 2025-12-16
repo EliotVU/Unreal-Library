@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-namespace UELib
+﻿namespace UELib
 {
     using Core;
 
     public sealed class NativeTableItem
     {
-        public string Name;
+        public UName Name;
         public byte OperPrecedence;
         public FunctionType Type;
         public int ByteToken;
@@ -98,7 +93,7 @@ namespace UELib
             {
                 var item = new NativeTableItem
                 {
-                    Name = binReader.ReadString(),
+                    Name = new UName(binReader.ReadString()),
                     OperPrecedence = binReader.ReadByte(),
                     Type = (FunctionType)binReader.ReadByte(),
                     ByteToken = binReader.ReadInt32()

@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
+﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UELib.Branch;
-using UELib.Flags;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -20,6 +16,13 @@ namespace UELib.Core
 
             public abstract class FunctionToken : Token
             {
+                /// <summary>
+                /// The function that is to be "invoked"
+                ///
+                /// May be null, in case of a virtual function and/or missing import.
+                /// </summary>
+                public abstract UFunction? FunctionCallee { get; }
+
                 public List<Token>? Arguments; // Includes the EndFunctionParmsToken.
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -147,58 +150,51 @@ namespace UELib.Core
                         decompiler._IsWithinClassContext = false;
                     }
 
-                    string arguments = DecompileParms(decompiler);
+                    string arguments = DecompileArguments(decompiler);
                     var output = $"{functionName}({arguments})";
 
                     return output;
                 }
 
-                private string DecompileParms(UByteCodeDecompiler decompiler)
+                private string DecompileArguments(UByteCodeDecompiler decompiler)
                 {
-                    var tokens = new List<Tuple<Token, string>>();
-                    {
-                    next:
-                        var token = NextToken(decompiler);
-                        tokens.Add(Tuple.Create(token, token.Decompile(decompiler)));
-                        if (!(token is EndFunctionParmsToken))
-                        {
-                            goto next;
-                        }
-                    }
+                    var callee = FunctionCallee;
+                    var parm = callee?._Children;
 
                     var output = new StringBuilder();
-                    for (var i = 0; i < tokens.Count; ++i)
+                    int argumentCount = Arguments.Count;
+                    for (int i = 0; i < argumentCount; ++i)
                     {
-                        var token = tokens[i].Item1; // Token
-                        string value = tokens[i].Item2; // Value
+                        // Pass the context so that we can resolve byte/int literals to their corresponding enum tag.
+                        if (parm != null)
+                        {
+                            decompiler._ObjectHint = parm;
+                            parm = parm.NextField;
+                        }
 
+                        var token = NextToken(decompiler);
                         switch (token)
                         {
-                            // Skipped optional parameters
-                            case EmptyParmToken _:
-                                output.Append(value);
+                            case EmptyParmToken:
+                                output.Append(',');
                                 break;
 
-                            // End ")"
-                            case EndFunctionParmsToken _:
-                                output = new StringBuilder(output.ToString().TrimEnd(','));
+                            // Don't append the ')', it will be handled by the caller.
+                            case EndFunctionParmsToken:
                                 break;
 
-                            // Any passed values
                             default:
+                                if (i > 0 && i + 1 < argumentCount)
                                 {
-                                    if (i != tokens.Count - 1 && i > 0) // Skipped optional parameters
-                                    {
-                                        output.Append(value == string.Empty ? "," : ", ");
-                                    }
-
-                                    output.Append(value);
-                                    break;
+                                    output.Append(", ");
                                 }
+
+                                output.Append(token.Decompile(decompiler));
+                                break;
                         }
                     }
 
-                    return output.ToString();
+                    return output.ToString().TrimEnd(','); // trim trailing arguments to optional parameters e.g. "SetFacingPolicy(1,,);"
                 }
             }
 
@@ -299,6 +295,8 @@ namespace UELib.Core
 
                     return output;
                 }
+
+                public override UFunction FunctionCallee => Function;
             }
 
             [ExprToken(ExprToken.VirtualFunction)]
@@ -343,6 +341,9 @@ namespace UELib.Core
 
                     return DecompileCall(FunctionName, decompiler);
                 }
+
+                // TODO: Maybe take the UState's virtual table into consideration?
+                public override UFunction? FunctionCallee => Script.Source.FindField<UFunction>(FunctionName);
             }
 
             [ExprToken(ExprToken.GlobalFunction)]
@@ -369,13 +370,16 @@ namespace UELib.Core
 
                     return $"global.{DecompileCall(FunctionName, decompiler)}";
                 }
+
+                // TODO: Maybe take the UState's virtual table into consideration?
+                public override UFunction? FunctionCallee => Script.Source.FindField<UFunction>(FunctionName);
             }
 
             [ExprToken(ExprToken.DelegateFunction)]
             public class DelegateFunctionToken : FunctionToken
             {
                 public byte? IsLocal;
-                public UProperty DelegateProperty;
+                public UDelegateProperty DelegateProperty;
                 public UName FunctionName;
 
                 public override void Deserialize(IUnrealStream stream)
@@ -387,7 +391,7 @@ namespace UELib.Core
                         Script.AlignSize(sizeof(byte));
                     }
 
-                    DelegateProperty = stream.ReadObject<UProperty>();
+                    DelegateProperty = stream.ReadObject<UDelegateProperty>();
                     Script.AlignObjectSize();
 
                     FunctionName = DeserializeFunctionName(stream);
@@ -421,6 +425,8 @@ namespace UELib.Core
 
                     return DecompileCall(FunctionName, decompiler);
                 }
+
+                public override UFunction? FunctionCallee => DelegateProperty.Function ?? Script.Source.FindField<UFunction>(FunctionName);
             }
 
             [ExprToken(ExprToken.NativeFunction)]
@@ -469,6 +475,9 @@ namespace UELib.Core
 
                     return output;
                 }
+
+                // No checks for 'native', after all the NTL definition may be dated.
+                public override UFunction? FunctionCallee => Script.Source.FindField<UFunction>(NativeItem.Name);
             }
         }
     }

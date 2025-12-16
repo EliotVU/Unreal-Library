@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
@@ -85,7 +83,7 @@ namespace UELib.Core.Tokens
             var token = (T)Activator.CreateInstance(tokenType);
             token.OpCode = GetOpCodeFromTokenType(tokenType);
 
-            return (T)token;
+            return token;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -111,9 +109,9 @@ namespace UELib.Core.Tokens
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string CreateGeneratedName(string id)
+        public static UName CreateGeneratedName(string id)
         {
-            return $"__{id}__";
+            return new UName($"__{id}__");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

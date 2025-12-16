@@ -91,33 +91,6 @@ namespace UELib.Core
             {
                 public byte Value;
 
-                private enum ENetRole
-                {
-                    ROLE_None = 0,
-                    ROLE_DumbProxy = 1,
-                    ROLE_SimulatedProxy = 2,
-                    ROLE_AutonomousProxy = 3,
-                    ROLE_Authority = 4
-                }
-
-                private enum ENetRole3
-                {
-                    ROLE_None = 0,
-                    ROLE_SimulatedProxy = 1,
-                    ROLE_AutonomousProxy = 2,
-                    ROLE_Authority = 3,
-                    ROLE_MAX = 4
-                }
-
-                private enum ENetMode
-                {
-                    NM_Standalone = 0,
-                    NM_DedicatedServer = 1,
-                    NM_ListenServer = 2,
-                    NM_Client = 3,
-                    NM_MAX = 4
-                }
-
                 public override void Deserialize(IUnrealStream stream)
                 {
                     Value = stream.ReadByte();
@@ -132,23 +105,17 @@ namespace UELib.Core
 
                 public override string Decompile(UByteCodeDecompiler decompiler)
                 {
-                    if (decompiler._ObjectHint != null)
+                    var enumHint = decompiler.ContextEnum;
+                    if (enumHint == null)
                     {
-                        switch (decompiler._ObjectHint.Outer.Name + decompiler._ObjectHint.Name)
-                        {
-                            case "ActorRemoteRole":
-                            case "ActorRole":
-                                return Enum.GetName(
-                                    decompiler.Package.Version >= 220 ? typeof(ENetRole3) : typeof(ENetRole),
-                                    Value);
-
-                            case "LevelInfoNetMode":
-                            case "WorldInfoNetMode":
-                                return Enum.GetName(typeof(ENetMode), Value);
-                        }
+                        return PropertyDisplay.FormatLiteral(Value);
                     }
 
-                    return PropertyDisplay.FormatLiteral(Value);
+                    // Safety, in case the value is no longer part of the enum (or we mismatched the enum)
+                    var enumTag = enumHint.Names.ElementAtOrDefault(Value);
+                    return enumTag != UnrealName.None
+                        ? $"{enumHint.Name}.{enumTag}"
+                        : PropertyDisplay.FormatLiteral(Value);
                 }
             }
 

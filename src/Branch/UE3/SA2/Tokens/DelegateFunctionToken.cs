@@ -8,12 +8,12 @@ namespace UELib.Branch.UE3.SA2.Tokens
     [ExprToken(ExprToken.DelegateFunction)]
     public class DelegateFunctionToken : UStruct.UByteCodeDecompiler.FunctionToken
     {
-        public UProperty DelegateProperty;
+        public UDelegateProperty DelegateProperty;
         public UName FunctionName;
 
         public override void Deserialize(IUnrealStream stream)
         {
-            DelegateProperty = stream.ReadObject<UProperty>();
+            DelegateProperty = stream.ReadObject<UDelegateProperty>();
             Script.AlignObjectSize();
 
             FunctionName = DeserializeFunctionName(stream);
@@ -38,5 +38,7 @@ namespace UELib.Branch.UE3.SA2.Tokens
 
             return DecompileCall(FunctionName, decompiler);
         }
+
+        public override UFunction? FunctionCallee => DelegateProperty.Function ?? Script.Source.FindField<UFunction>(FunctionName);
     }
 }

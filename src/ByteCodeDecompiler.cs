@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Diagnostics;
 using UELib.Flags;
 using UELib.Services;
 
@@ -30,6 +27,8 @@ namespace UELib.Core
             /// Context hint, a reference to the last relevant-object that was accessed during the decompilation.
             /// </summary>
             private UObject? _ObjectHint;
+
+            public UEnum? ContextEnum => (_ObjectHint as UByteProperty)?.Enum;
 
             public UByteCodeDecompiler(UStruct container) : this(
                 container,

@@ -25,5 +25,7 @@ namespace UELib.Branch.UE2.VG.Tokens
             // FIXME: Reverse-order of params?
             return DecompileCall("log", decompiler);
         }
+
+        public override UFunction? FunctionCallee => null;
     }
 }
