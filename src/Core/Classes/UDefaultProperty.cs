@@ -299,9 +299,11 @@ namespace UELib.Core
                 return;
             }
 
+
             // skip the value
             _PropertyValuePosition = stream.Position;
             stream.Seek(_PropertyValuePosition + Size, SeekOrigin.Begin); // lazy load, call DeserializeProperty to deserialize the value
+            stream.ConformRecordPosition();
         }
 
         /// <summary>
@@ -411,6 +413,7 @@ namespace UELib.Core
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             var stream = _TagSource.LoadBuffer();
             stream.Seek(_PropertyValuePosition, SeekOrigin.Begin);
+            stream.ConformRecordPosition();
 
             // Temporary, this should be handled in the linking phase during the construction of property tags.
             UProperty? tagProperty = Property ?? Type switch
@@ -762,8 +765,9 @@ namespace UELib.Core
                                 tagExpr += PropertyDisplay.FormatT3DElementAccess(scriptProperty.ArrayIndex.ToString(),
                                     stream.Version);
                             }
-
+                            
                             stream.Seek(scriptProperty._PropertyValuePosition, SeekOrigin.Begin);
+                            stream.ConformRecordPosition();
                             string value = scriptProperty.TryLegacyDeserializeDefaultPropertyValue(
                                 stream, scriptProperty.Type,
                                 deserializeFlags, structMemberProperty);
