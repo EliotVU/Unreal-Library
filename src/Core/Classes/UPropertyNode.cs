@@ -8,18 +8,15 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, nameof(UProperty));
-            var propertyFlagsNode = AddTextNode(_ParentNode,
-                $"Property Flags:{(ulong)PropertyFlags:X8}"
-            );
-            propertyFlagsNode.ToolTipText = PropertyFlags.ToString(Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
+            base.InitNodes(node);
 
-            if (RepOffset > 0)
+            if (PropertyFlags != 0)
             {
-                AddTextNode(_ParentNode, $"Replication Offset:{RepOffset}");
+                var propertyFlagsNode = AddTextNode(node,
+                    $"Property Flags:{(ulong)PropertyFlags:X8}"
+                );
+                propertyFlagsNode.ToolTipText = PropertyFlags.ToString(Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
             }
-
-            base.InitNodes(_ParentNode);
         }
 
         public override string GetImageName()

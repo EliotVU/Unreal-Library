@@ -1,5 +1,4 @@
 ﻿#if Forms
-using System.Linq;
 using System.Windows.Forms;
 using UELib.Flags;
 
@@ -9,15 +8,13 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, nameof(UState));
+            base.InitNodes(node);
 
-            if (GetType() == typeof(UState))
+            if (StateFlags != 0)
             {
-                var stateFlagsNode = AddTextNode(_ParentNode, $"State Flags:{(ulong)StateFlags:X8}");
+                var stateFlagsNode = AddTextNode(node, $"State Flags:{(ulong)StateFlags:X8}");
                 stateFlagsNode.ToolTipText = StateFlags.ToString(Package.Branch.EnumFlagsMap[typeof(StateFlag)]);
             }
-
-            base.InitNodes(_ParentNode);
         }
 
         protected override void AddChildren(TreeNode node)

@@ -1,6 +1,4 @@
 ﻿#if Forms
-using System;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Windows.Forms;
@@ -11,9 +9,9 @@ namespace UELib.Core
     [System.Runtime.InteropServices.ComVisible(false)]
     public class ObjectNode : TreeNode, IDecompilableObject
     {
-        public IUnrealDecompilable Object { get; private set; }
+        public IUnrealDecompilable? Object { get; set; }
 
-        public ObjectNode(IUnrealDecompilable objectRef)
+        public ObjectNode(IUnrealDecompilable? objectRef)
         {
             Object = objectRef;
         }
@@ -28,7 +26,7 @@ namespace UELib.Core
             try
             {
                 UDecompilingState.ResetTabs();
-                return Object.Decompile();
+                return Object?.Decompile();
             }
             catch (Exception e)
             {

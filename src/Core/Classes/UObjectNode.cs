@@ -38,14 +38,10 @@ namespace UELib.Core
 
         protected virtual void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, nameof(UObject));
-            var flagNode = AddTextNode(_ParentNode, $"ObjectFlags:{(ulong)ObjectFlags:X8}");
-            flagNode.ToolTipText = ObjectFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)]);
-
-            if (PackageResource is UExportTableItem exportResource)
+            if (ObjectFlags != 0)
             {
-                AddTextNode(_ParentNode, $"Size:{exportResource.SerialSize}");
-                AddTextNode(_ParentNode, $"Offset:{exportResource.SerialOffset}");
+                var flagNode = AddTextNode(node, $"ObjectFlags:{(ulong)ObjectFlags:X8}");
+                flagNode.ToolTipText = ObjectFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)]);
             }
         }
 

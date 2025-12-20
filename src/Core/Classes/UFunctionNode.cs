@@ -1,5 +1,4 @@
 ﻿#if Forms
-using System.Linq;
 using System.Windows.Forms;
 using UELib.Flags;
 
@@ -9,18 +8,15 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
+            base.InitNodes(node);
+
             node.ToolTipText = FormatHeader();
-            _ParentNode = AddSectionNode(node, nameof(UFunction));
 
-            var funcFlagsNode = AddTextNode(_ParentNode, $"FunctionFlags:{(ulong)FunctionFlags:X8}");
-            funcFlagsNode.ToolTipText = FunctionFlags.ToString(Package.Branch.EnumFlagsMap[typeof(FunctionFlag)]);
-
-            if (RepOffset > 0)
+            if (FunctionFlags != 0)
             {
-                AddTextNode(_ParentNode, $"Replication Offset:{RepOffset}");
+                var funcFlagsNode = AddTextNode(node, $"FunctionFlags:{(ulong)FunctionFlags:X8}");
+                funcFlagsNode.ToolTipText = FunctionFlags.ToString(Package.Branch.EnumFlagsMap[typeof(FunctionFlag)]);
             }
-
-            base.InitNodes(_ParentNode);
         }
 
         protected override void AddChildren(TreeNode node)

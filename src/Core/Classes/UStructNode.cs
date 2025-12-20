@@ -1,5 +1,4 @@
 ﻿#if Forms
-using System.Linq;
 using System.Windows.Forms;
 using UELib.Flags;
 
@@ -9,15 +8,13 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, nameof(UStruct));
-            if (IsPureStruct())
+            base.InitNodes(node);
+
+            if (StructFlags != 0)
             {
-                var sFlagsNode = AddTextNode(_ParentNode, $"Struct Flags:{(ulong)StructFlags:X8}");
+                var sFlagsNode = AddTextNode(node, $"Struct Flags:{(ulong)StructFlags:X8}");
                 sFlagsNode.ToolTipText = StructFlags.ToString(Package.Branch.EnumFlagsMap[typeof(StructFlag)]);
             }
-
-            AddTextNode(_ParentNode, $"Script Size:{ScriptSize}");
-            base.InitNodes(_ParentNode);
         }
 
         protected override void AddChildren(TreeNode node)
@@ -50,7 +47,7 @@ namespace UELib.Core
 
         protected override void PostAddChildren(TreeNode node)
         {
-            if (Properties == null || Properties.Count <= 0)
+            if (Properties.Count == 0)
                 return;
 
             var defNode = new ObjectListNode

@@ -1,5 +1,4 @@
 ﻿#if Forms
-using System.Linq;
 using System.Windows.Forms;
 using UELib.Flags;
 
@@ -9,13 +8,18 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, nameof(UClass));
-            AddSimpleObjectNode(_ParentNode, ClassWithin, "Within", ClassWithin != null ? ClassWithin.GetImageName() : "");
+            base.InitNodes(node);
 
-            var classFlagsNode = AddTextNode(_ParentNode, $"Class Flags:{(ulong)ClassFlags:X8}");
-            classFlagsNode.ToolTipText = ClassFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ClassFlag)]);
+            if (ClassFlags != 0)
+            {
+                var classFlagsNode = AddTextNode(node, $"Class Flags:{(ulong)ClassFlags:X8}");
+                classFlagsNode.ToolTipText = ClassFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ClassFlag)]);
+            }
 
-            base.InitNodes(_ParentNode);
+            if (ClassWithin != null)
+            {
+                AddSimpleObjectNode(node, ClassWithin, "Within", ClassWithin.GetImageName());
+            }
         }
 
         protected override void AddChildren(TreeNode node)

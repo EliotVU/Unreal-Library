@@ -7,10 +7,16 @@ namespace UELib.Core
     {
         protected override void InitNodes(TreeNode node)
         {
-            _ParentNode = AddSectionNode(node, nameof(UField));
-            AddSimpleObjectNode(_ParentNode, Super, "SuperField", Super != null ? Super.GetImageName() : "");
-            AddSimpleObjectNode(_ParentNode, NextField, "NextField", NextField != null ? NextField.GetImageName() : "");
-            base.InitNodes(_ParentNode);
+            base.InitNodes(node);
+
+            if (Super != null)
+            {
+                AddSimpleObjectNode(node, Super, "SuperStruct", Super.GetImageName());
+            }
+            if (NextField != null)
+            {
+                AddSimpleObjectNode(node, NextField, "NextField", NextField.GetImageName());
+            }
         }
     }
 }
