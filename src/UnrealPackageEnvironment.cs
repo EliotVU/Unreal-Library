@@ -80,12 +80,12 @@ public sealed class UnrealPackageEnvironment : IDisposable
     }
 
     // TODO: Source generator
-    private static IEnumerable<(Type, UnrealRegisterClassAttribute)> GetRegisteredClassAttributes(Assembly assembly)
+    private static IEnumerable<(Type, UnrealClassAttribute)> GetRegisteredClassAttributes(Assembly assembly)
     {
         var types = assembly
             .GetExportedTypes()
             .Where(type => type.IsClass && type is { IsAbstract: false, IsPublic: true })
-            .Select(type => (type, type.GetCustomAttribute<UnrealRegisterClassAttribute>(false)))
+            .Select(type => (type, (UnrealClassAttribute)type.GetCustomAttribute<UnrealRegisterClassAttribute>(false)))
             .Where(t => t.Item2 != null);
 
         return types;
@@ -146,7 +146,7 @@ public sealed class UnrealPackageEnvironment : IDisposable
         AddUnrealClasses(staticClassesInfo);
     }
 
-    private void AddUnrealClasses(List<(Type, UnrealRegisterClassAttribute)> staticClassesInfo)
+    internal void AddUnrealClasses(List<(Type, UnrealClassAttribute)> staticClassesInfo)
     {
         // Initialize the environment, setup in stages to workaround re-cursive dependency issues.
         var packageNames = new HashSet<UName>();
