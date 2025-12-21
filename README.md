@@ -129,7 +129,8 @@ UELib supports these kinds of content, but may vary from game to game:
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | | ✅ | ✅ |
 | Killing Floor | 3369 | 128/029 | | ✅ | ✅ |
-| Shadow Ops: Red Mercury | 2110 | 129/010 | | ✅ |
+| Shadow Ops: Red Mercury | 2110 | 129/010 | | ✅ | ✅ | ✅ |
+| World War II Combat: Road to Berlin | 2110 | 129/010 | | ✅ | ✅ | ✅ |
 | Vanguard: Saga of Heroes | 2226 | 129/035 | | ✅ |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) | ✅ |
 | Shrek 2 | 2226 | 129 | | ✅ |
