@@ -95,9 +95,10 @@ UELib supports these kinds of content, but may vary from game to game:
 | Unreal Tournament | 338-436 | 68-69/000 | | ✅ | ✅ | ✅ |
 | Deus Ex | 400-436 | 68/000 | | ✅ |
 | Jazz Jackrabbit 3D | 400 | 68/000 | | ✅ |
-| Duke Nukem Forever (2001) | 613 | 68/002 | UStruct offsets are off leading to bad output code | ✅ |
+| Duke Nukem Forever (2001) | 613 | 68/002 | UStruct offsets are off leading to bad output code | ✅ ||
 | Rune | 400 | 69/000 | | ✅ |
 | Unrealty | 405 | 69/000 | | ✅ |
+| Adventure Pinball: Forgotten Island | 420 | 69/000 | | ✅ | ✅ | ✅ 
 | X-COM: Enforcer | 420 | 69/000 | | ✅ |
 | Tactical Ops: Assault on Terror | 436 | 69/000 | | ✅ |
 | Star Trek: Deep Space Nine: The Fallen | 338 | 73/000 | | ✅ |
