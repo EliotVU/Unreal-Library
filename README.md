@@ -88,7 +88,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Unreal | 100-226 | 61/000 | | ✅ | ✅ | ✅ |
 | [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | 219 | 61/000 | | ✅ |
 | X-COM: Alliance | 200-220 | 61/000 | Bad output at the start of functions (BeginFunctionToken) | ✅ |
-| Dr. Brain: Action Reaction | 224 | 63-68/000 | | ✅ |
+| Dr. Brain: Action Reaction | 224 | 63-68/000 | | ✅ | ✅ | ✅ |
 | Nerf Arena Blast | 225 | 63-68/000 | | ✅ |
 | The Wheel of Time | 225:WoT | 63-68/000 | | ✅ |
 | Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | | ✅ |
@@ -131,8 +131,10 @@ UELib supports these kinds of content, but may vary from game to game:
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | | ✅ | ✅ |
 | Killing Floor | 3369 | 128/029 | | ✅ | ✅ |
+| Combat: Task Force 121 | 2110 | 129/010 | | ✅ | ✅ | ✅ |
 | Shadow Ops: Red Mercury | 2110 | 129/010 | | ✅ | ✅ | ✅ |
 | World War II Combat: Road to Berlin | 2110 | 129/010 | | ✅ | ✅ | ✅ |
+| World War II Combat: Iwo Jima | 2110 | 129/010 | | ✅ | ✅ | ✅ |
 | Vanguard: Saga of Heroes | 2226 | 129/035 | | ✅ |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) | ✅ |
 | Shrek 2 | 2226 | 129 | | ✅ |
