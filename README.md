@@ -129,20 +129,25 @@ UELib supports these kinds of content, but may vary from game to game:
 | Marine Heavy Gunner: Vietnam | 2226 | 126/000 | | ✅ | ✅ | ✅ |
 | Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | | ✅ |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | | ✅ | ✅ | ✅ |
-| America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 | ✅ |
-| America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | | ✅ | ✅ |
 | Killing Floor | 3369 | 128/029 | | ✅ | ✅ |
-| Combat: Task Force 121 | 2110 | 129/010 | | ✅ | ✅ | ✅ |
-| Shadow Ops: Red Mercury | 2110 | 129/010 | | ✅ | ✅ | ✅ |
-| World War II Combat: Road to Berlin | 2110 | 129/010 | | ✅ | ✅ | ✅ |
-| World War II Combat: Iwo Jima | 2110 | 129/010 | | ✅ | ✅ | ✅ |
-| Vanguard: Saga of Heroes | 2226 | 129/035 | | ✅ |
+| D.M.Z.: North Korea | 3369 | 128/029 | | ✅ | ✅ | ✅ |
+| Close Quarters Conflict | 3369 | 128/029 | | ✅ | ✅ | ✅ |
+| Outlaw Chopper | 3369 | 128/029 | | ✅ | ✅ | ✅ |
+| Marine Sharpshooter 3 | 3369 | 128/029 | | ✅ | ✅ | ✅ |
+| Marine Sharpshooter 4: Locked and Loaded | 3369 | 128/029 | | ✅ | ✅ | ✅ |
+| America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 | ✅ |
+| America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) | ✅ |
 | Shrek 2 | 2226 | 129 | | ✅ |
 | Shark Tale | 2226 | 129/003 | | ✅ |
 | Lemony Snicket's A Series of Unfortunate Events | 2226 | 129/003 | | ✅ |
+| Combat: Task Force 121 | 2110 | 129/010 | | ✅ | ✅ | ✅ |
+| Shadow Ops: Red Mercury | 2110 | 129/010 | | ✅ | ✅ | ✅ |
+| World War II Combat: Road to Berlin | 2110 | 129/010 | | ✅ | ✅ | ✅ |
+| World War II Combat: Iwo Jima | 2110 | 129/010 | | ✅ | ✅ | ✅ |
 | Swat 4 | 2226:Vengeance | 129/027 | | ✅ |
+| Vanguard: Saga of Heroes | 2226 | 129/035 | | ✅ |
 | Stargate SG1: The Alliance | 4180 | 130/004 | | ✅ |
 | Tribes: Vengeance | 2226:Vengeance | 130/027 | | ✅ |
 | Bioshock | 2226:Vengeance | 130-141/056 | | ✅ |
