@@ -126,6 +126,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Unreal II: The Awakening | 829-2001 | 126/2609 | | ✅ |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled | ✅ |
 | Desert Thunder | 2226 | 126/000 | | ✅ |
+| Marine Heavy Gunner: Vietnam | 2226 | 126/000 | | ✅ | ✅ | ✅ |
 | Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | | ✅ |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | | ✅ | ✅ | ✅ |
 | America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 | ✅ |
