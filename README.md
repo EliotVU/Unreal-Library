@@ -86,6 +86,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | **Unreal Engine 1**    |     |     |     | ✅ | ✅ | ✅ |
 |     |     |     |     |
 | Unreal | 100-226 | 61/000 | | ✅ | ✅ | ✅ |
+| Hired Guns | 216 | 61/000 | | ✅ | ✅ | ✅ |
 | [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | 219 | 61/000 | | ✅ |
 | X-COM: Alliance | 200-220 | 61/000 | Bad output at the start of functions (BeginFunctionToken) | ✅ |
 | Dr. Brain: Action Reaction | 224 | 63-68/000 | | ✅ | ✅ | ✅ |
