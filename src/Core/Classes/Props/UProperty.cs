@@ -111,7 +111,8 @@ namespace UELib.Core
                 Record(nameof(CategoryName), CategoryName);
 
                 // FIXME: Unknown version, attested without a version check since SC3 and SC4.
-                if (_Buffer.LicenseeVersion > 17) // 17 = newer than SC1
+                if (Package.Build.Name != UnrealPackage.GameBuild.BuildName.SCPT_Offline
+                    && _Buffer.LicenseeVersion > 17) // 17 = newer than SC1
                 {
                     // Music? Some kind of alternative to category name
                     _Buffer.Read(out UName v68);

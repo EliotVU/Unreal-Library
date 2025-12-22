@@ -264,6 +264,13 @@ namespace UELib
                 SCDA_Offline,
 
                 /// <summary>
+                /// Tom Clancy's Splinter Cell: Pandora Tomorrow
+                ///
+                /// 102/028
+                /// </summary>
+                [Build(102, 28, BuildGeneration.SCX)] SCPT_Offline,
+
+                /// <summary>
                 /// Tom Clancy's Splinter Cell: Blacklist
                 ///
                 /// 102/116

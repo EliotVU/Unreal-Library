@@ -113,6 +113,7 @@ UELib supports these kinds of content, but may vary from game to game:
 |     |     |     |     |
 | XIII | 829 | 100/058 |     | ✅ |
 | Tom Clancy's Splinter Cell | 829 | 100/017 | | ✅ |
+| Tom Clancy's Splinter Cell: Pandora Tomorrow | 829 | 102/028:SCX | PC offline version | ✅ |
 | Tom Clancy's Splinter Cell: Chaos Theory | 829 | 100/120:SCX, 175/000:ShadowStrike | (PC) demo version, Versus mode not supported | ✅ |
 | Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX, 275/000:ShadowStrike | (PC) Offline mode version, Online mode not supported | ✅ |
 | Tom Clancy's Splinter Cell: Blacklist | 829 | 102/116:LEAD | In part thanks to @shryder. Third-party decompression is required | ✅ |
