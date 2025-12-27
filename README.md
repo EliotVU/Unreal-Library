@@ -127,7 +127,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled | ✅ |
 | Desert Thunder | 2226 | 126/000 | | ✅ |
 | Marine Heavy Gunner: Vietnam | 2226 | 126/000 | | ✅ | ✅ | ✅ |
-| Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | | ✅ |
+| Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | | ✅ | ✅ | ✅ |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | | ✅ | ✅ | ✅ |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | | ✅ | ✅ |
 | Killing Floor | 3369 | 128/029 | | ✅ | ✅ |
