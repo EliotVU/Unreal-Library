@@ -189,6 +189,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | CrimeCraft | 4701 | 576/005 | | ✅ |
 | Batman: Arkham Asylum | 4701 | 576/21 | Contributed by @etkramer | ✅ |
 | Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes | ✅ |
+| Saw | 4869 | 584/003 | | ✅ | ✅ | ✅ |
 | Singularity | 4869 | 584/126 | | ✅ |
 | MoonBase Alpha | 4947 | 587/000 | | ✅ |
 | Saw | Unknown | 584/003 | | ✅ |
