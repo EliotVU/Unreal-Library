@@ -26,7 +26,7 @@ namespace UELib.Core
             try
             {
                 UDecompilingState.ResetTabs();
-                return Object?.Decompile();
+                return Object?.Decompile() ?? string.Empty;
             }
             catch (Exception e)
             {

@@ -11,12 +11,6 @@ namespace UELib.Engine
     [BuildGeneration(BuildGeneration.UE3)]
     public class UTexture2DComposite : UTexture
     {
-        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate void _Deserialize(IUnrealStream stream);
-
-        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate void _Serialize(IUnrealStream stream);
-
         public override void Deserialize(IUnrealStream stream)
         {
             // Deserialize from UTexture instead of UTexture2D

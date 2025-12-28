@@ -50,7 +50,15 @@ namespace UELib.Branch.UE3.RSS
                 PropertyFlags[(int)PropertyFlag.EditFixedSize] = 0; // ??
 
                 PropertyFlags[(int)PropertyFlag.Net] = PropertyFlags[(int)PropertyFlag.Interp];
-                PropertyFlags[(int)PropertyFlag.Interp] = 0; // ??
+                PropertyFlags[(int)PropertyFlag.Interp] = 0x00000100UL; // displaced 'archetype'
+                //PropertyFlags[(int)PropertyFlag.Archetype] = 0x00000008UL; // displaced 'editoronly'
+
+                // Might still be correct.
+                //PropertyFlags[(int)PropertyFlag.ExportObject] = 0; // ??
+
+                PropertyFlags[(int)PropertyFlag.NonTransactional] = 0; // ??
+
+                PropertyFlags[(int)PropertyFlag.NoImport] = 0x10000000UL;
             }
         }
 

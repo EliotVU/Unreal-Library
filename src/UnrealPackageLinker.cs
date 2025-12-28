@@ -92,6 +92,8 @@ public sealed class UnrealPackageLinker
     {
         switch (packageIndex)
         {
+            case 0: return null;
+
             case < 0:
                 {
                     var import = Package.Imports[packageIndex.ImportIndex];
@@ -103,9 +105,6 @@ public sealed class UnrealPackageLinker
                     var export = Package.Exports[packageIndex.ExportIndex];
                     return (T?)export.Object ?? (T)CreateObject(export);
                 }
-
-            default:
-                return null;
         }
     }
 
@@ -116,6 +115,9 @@ public sealed class UnrealPackageLinker
         if (import.OuterIndex.IsNull)
         {
             LibServices.Trace("Root import {0}", import);
+
+            Debug.Assert(import.ClassPackageName == UnrealName.Core);
+            Debug.Assert(import.ClassName == UnrealName.Package);
 
             var otherRootPackage = ImportExternalRootPackage(import.ObjectName);
             Contract.Assert(otherRootPackage != null, "Imported root package cannot be null");
@@ -155,8 +157,25 @@ public sealed class UnrealPackageLinker
 
         var objName = import.ObjectName;
         var crossObject = PackageEnvironment.FindObject<UObject?>(objName, objClass, objOuter);
+        if (crossObject == null)
+        {
+            LibServices.Trace("Attempting to find the missing object using the object redirector class for import {0}", import);
+
+            var objectRedirectorClass = PackageEnvironment.GetStaticClass(UnrealName.ObjectRedirector);
+
+            // Re-run the find operation, but with the object redirector class.
+            crossObject = PackageEnvironment.FindObject<UObject?>(objName, objectRedirectorClass, objOuter);
+            if (crossObject is UObjectRedirector objectRedirector)
+            {
+                crossObject = objectRedirector.Other;
+            }
+        }
+
         if (crossObject != null)
         {
+            import.Object = crossObject;
+            LibServices.Trace("Cross-reference found {0} for import {1}", crossObject, import);
+
             if (objClass.Name != UnrealName.Class)
             {
                 Debug.Assert(
@@ -165,8 +184,13 @@ public sealed class UnrealPackageLinker
                 );
             }
 
-            LibServices.Trace("Cross-reference found {0} for import {1}", crossObject, import);
-            import.Object = crossObject;
+            // Don't use IsPublic() here, because for intrinsic classes it may return false positives.
+            // We have to use this linker's internal object flags map.
+            //if (crossObject.PackageIndex.IsExport &&
+            //    crossObject.ObjectFlags.HasFlag(GetInternalObjectFlagsMap(), ObjectFlag.Public))
+            //{
+            //    LibServices.Trace("Cross-reference found to a non-public export for import {0}", import);
+            //}
 
             return crossObject;
         }
@@ -212,6 +236,9 @@ public sealed class UnrealPackageLinker
         if (export.OuterIndex.IsNull && (export.ExportFlags & (uint)ExportFlags.ForcedExport) != 0)
         {
             LibServices.Trace("Root export {0}", export);
+
+            Debug.Assert(export.Class?.ObjectName == UnrealName.Package);
+            Debug.Assert(export.Class.Outer?.ObjectName == UnrealName.Core);
 
             var pkg = PackageEnvironment.FindObject<UPackage?>(objName);
             if (pkg == null)

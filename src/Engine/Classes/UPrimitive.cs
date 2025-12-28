@@ -34,5 +34,13 @@ namespace UELib.Engine
             BoundingSphere = stream.ReadStruct<USphere>();
             stream.Record(nameof(BoundingSphere), BoundingSphere);
         }
+
+        public override void Serialize(IUnrealStream stream)
+        {
+            base.Deserialize(stream);
+
+            stream.WriteStruct(BoundingBox);
+            stream.WriteStruct(BoundingSphere);
+        }
     }
 }

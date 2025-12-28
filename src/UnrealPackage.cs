@@ -188,14 +188,14 @@ namespace UELib
 
                 /// <summary>
                 /// Standard
-                /// 
+                ///
                 /// 61/000
                 /// </summary>
                 [Build(61, 0, BuildGeneration.UE1)] Unreal1,
 
                 /// <summary>
                 /// Standard, Unreal Tournament & Deus Ex
-                /// 
+                ///
                 /// 68:69/000
                 /// </summary>
                 [Build(68, 69, 0u, 0u, BuildGeneration.UE1)]
@@ -214,7 +214,7 @@ namespace UELib
 
                 /// <summary>
                 /// Deus Ex: Invisible War
-                /// 
+                ///
                 /// Missing support for custom classes such as BitfieldProperty and BitfieldEnum among others.
                 /// 95/69
                 /// </summary>
@@ -222,7 +222,7 @@ namespace UELib
 
                 /// <summary>
                 /// Thief: Deadly Shadows
-                /// 
+                ///
                 /// 95/133
                 /// </summary>
                 [Build(95, 133, BuildGeneration.Flesh)]
@@ -292,7 +292,7 @@ namespace UELib
 
                 /// <summary>
                 /// Tom Clancy's Rainbow Six 3: Raven Shield
-                /// 
+                ///
                 /// 118/011:014
                 /// extensions: [.rsm, .u, .uxx, .utx, .uax, .umx, .usx, .ukx, .uvx]
                 /// </summary>
@@ -300,7 +300,7 @@ namespace UELib
 
                 /// <summary>
                 /// Unreal II: eXpanded MultiPlayer
-                /// 
+                ///
                 /// 126/000
                 /// </summary>
                 [Build(123, 126, 0u, 0u)] Unreal2XMP,
@@ -318,7 +318,7 @@ namespace UELib
                 ///
                 /// Built on UT2004
                 /// 128/032:033
-                /// 
+                ///
                 /// For now we have three AA2 versions defined here to help us distinguish the byte-code token map.
                 /// </summary>
                 [Build(128, 32u, BuildGeneration.AGP)]
@@ -335,7 +335,7 @@ namespace UELib
 
                 /// <summary>
                 /// Vanguard: Saga of Heroes
-                /// 
+                ///
                 /// 129/035
                 /// Some packages have 128/025 but those are in conflict with UT2004.
                 /// </summary>
@@ -369,21 +369,21 @@ namespace UELib
 
                 /// <summary>
                 /// Lemony Snicket's A Series of Unfortunate Events
-                /// 
+                ///
                 /// 129/003
                 /// </summary>
                 [Build(129, 3, BuildGeneration.UE2)] LSGame,
 
                 /// <summary>
                 /// Stargate SG-1: The Alliance
-                /// 
+                ///
                 /// 130/004
                 /// </summary>
                 [Build(130, 4, BuildGeneration.UE2_5)] SG1_TA,
 
                 /// <summary>
                 /// BioShock 1 & 2
-                /// 
+                ///
                 /// 130:143/056:059
                 /// </summary>
                 [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)]
@@ -391,7 +391,7 @@ namespace UELib
 
                 /// <summary>
                 /// Arctic Combat aka Battle Territory: Battery
-                /// 
+                ///
                 /// 134/038:039
                 /// </summary>
                 [Build(134, 134, 38u, 39u, BuildGeneration.UE2_5)]
@@ -399,7 +399,7 @@ namespace UELib
 
                 /// <summary>
                 /// Men of Valor
-                /// 
+                ///
                 /// 137/000
                 /// </summary>
                 [Build(137, 0u, BuildGeneration.UE2_5)]
@@ -407,7 +407,7 @@ namespace UELib
 
                 /// <summary>
                 /// Advent Rising
-                /// 
+                ///
                 /// 146/61447 (HO: GPlatform, LO: Licensee 007)
                 /// </summary>
                 [Build(143, 61447u)]
@@ -428,7 +428,7 @@ namespace UELib
 
                 /// <summary>
                 /// The Chronicles of Spellborn
-                /// 
+                ///
                 /// Built on UT2004
                 /// 159/029
                 /// Comes with several new non-standard UnrealScript features, these are however not supported.
@@ -531,6 +531,15 @@ namespace UELib
                 /// 433/052
                 /// </summary>
                 [Build(433, 52)] FFoW,
+
+                /// <summary>
+                /// Army of Two
+                ///
+                /// 444/079
+                ///
+                /// No special support.
+                /// </summary>
+                [Build(445, 79)] AO2,
 
                 /// <summary>
                 /// 472/046
@@ -1565,7 +1574,7 @@ namespace UELib
 #endif
                    )
                 {
-                    stream.Write(ImportExportGuidsOffset);
+                    stream.Write(ImportExportGuidsOffset == 0 ? -1 : ImportExportGuidsOffset);
                     stream.Write(ImportGuidsCount);
                     stream.Write(ExportGuidsCount);
                 }
@@ -2202,6 +2211,9 @@ namespace UELib
                 {
                     ImportExportGuidsOffset = stream.ReadInt32();
                     //Debug.Assert(ImportExportGuidsOffset <= HeaderSize);
+
+                    // Remove the negative bit (so that 0 represents no table as opposed to -1)
+                    ImportExportGuidsOffset &= (int)~uint.MaxValue;
 
                     ImportGuidsCount = stream.ReadInt32();
                     ExportGuidsCount = stream.ReadInt32();

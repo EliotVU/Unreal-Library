@@ -225,6 +225,8 @@ public sealed class UnrealPackageEnvironment : IDisposable
 
             staticClass.Outer = package;
             staticClass.Class = staticClass;
+            // Likely the TransientPackage, but in some cases the package may have already been constructed, in that case, link to that.
+            staticClass.Package = package.Package;
             _ObjectContainer.Add(staticClass);
         }
 
@@ -277,9 +279,9 @@ public sealed class UnrealPackageEnvironment : IDisposable
 
     public T CreateObject<T>(UnrealPackage package, in UName name, UClass @class, UObject? outer)
         where T : UObject, new() =>
-        CreateObject<T>(package, name, @class, outer, new UnrealFlags<ObjectFlag>(new ulong[(int)ObjectFlag.Max]));
+        CreateObject<T>(package, name, @class, outer, [ObjectFlag.Public]);
 
-    public T CreateObject<T>(UnrealPackage package, in UName name, UClass @class, UObject? outer, UnrealFlags<ObjectFlag> objectFlags)
+    public T CreateObject<T>(UnrealPackage package, in UName name, UClass @class, UObject? outer, ObjectFlag[] objectFlags)
         where T : UObject, new()
     {
 #if NET8_0_OR_GREATER
@@ -288,7 +290,8 @@ public sealed class UnrealPackageEnvironment : IDisposable
 
         var newObject = new T
         {
-            ObjectFlags = objectFlags,
+            // TODO: Doesn't actually map to anything without a branch link.
+            ObjectFlags = new UnrealFlags<ObjectFlag>(new ulong[(int)ObjectFlag.Max], objectFlags),
 
             Package = package,
             PackageIndex = UPackageIndex.Null,

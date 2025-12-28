@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.IO;
@@ -933,6 +934,12 @@ namespace UELib.Core
         {
             return obj?.Name ?? "none";
         }
+
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        protected delegate void _Deserialize(IUnrealStream stream);
+
+        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+        protected delegate void _Serialize(IUnrealStream stream);
 
         [Obsolete("Use PackageResource instead")]
         public UObjectTableItem? Table => PackageResource;

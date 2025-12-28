@@ -183,7 +183,7 @@ public class UnrealPackageSerializationTests
         sourcePackage.Summary.ImportOffset = 0;
         sourcePackage.Summary.ExportOffset = 0;
         sourcePackage.Summary.DependsOffset = 0;
-        sourcePackage.Summary.ImportExportGuidsOffset = 0;
+        sourcePackage.Summary.ImportExportGuidsOffset = -1;
         sourcePackage.Summary.ThumbnailTableOffset = 0;
 
         // Copy the entire package to the temp stream (minus objects)

@@ -260,6 +260,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Dishonored,
             BuildPlatform.Undetermined
         )]
+        [DataRow(@"DungeonDefenders\",
+            BuildName.DD2,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Remember Me\",
             BuildName.RememberMe,
             BuildPlatform.Undetermined,
