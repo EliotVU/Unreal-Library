@@ -905,6 +905,15 @@ namespace UELib
                 [Build(870, 870, 108u, 109u, BuildGeneration.UE3)]
                 [BuildEngineBranch(typeof(EngineBranchSA2))]
                 SA2,
+                /// <summary>
+                /// Lost Ark
+                ///
+                /// 868/016
+                /// EngineVersion: 12097 (as reported by UE Viewer/UModel)
+                /// </summary>
+                [Build(868, 16u, BuildGeneration.UE3)]
+                LostArk,
+
 
                 /// <summary>
                 /// Battleborn
