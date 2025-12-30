@@ -192,12 +192,12 @@ UELib supports these kinds of content, but may vary from game to game:
 | Saw | 4869 | 584/003 | | ✅ | ✅ | ✅ |
 | Singularity | 4869 | 584/126 | | ✅ |
 | MoonBase Alpha | 4947 | 587/000 | | ✅ |
-| Saw | Unknown | 584/003 | | ✅ |
 | The Exiled Realm of Arborea or TERA | 4206 | 610/014 |     | ✅ |
 | Monday Night Combat | 5697 | 638/000 |     | ✅ |
 | DC Universe Online | 5859 | 638/6405 | Contributed by @theFoof | ✅ |
 | Unreal Development Kit | 5860-12791 | 664-868 | | ✅ | ✅ | ✅ |
 | Blacklight: Tango Down | 6165 | 673/002 | | ✅ |
+| Saw II | 6165 | 673/004 | Unsupported, but loadable | ❌ | ❌ | ❌ |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | | ✅ |
 | Dungeon Defenders | 6262 | 678/002 | | ✅ | ✅ |
 | Mass Effect 3 (Windows) | 6383 | 684/194 | PC (platform must be set to `Console`) | ✅ |
