@@ -1,66 +1,17 @@
 ﻿#if Forms
 using System.Windows.Forms;
-using UELib.Flags;
 
 namespace UELib.Core
 {
     public partial class UStruct
     {
-        protected override void InitNodes(TreeNode node)
-        {
-            base.InitNodes(node);
-
-            if (StructFlags != 0)
-            {
-                var sFlagsNode = AddTextNode(node, $"Struct Flags:{(ulong)StructFlags:X8}");
-                sFlagsNode.ToolTipText = StructFlags.ToString(Package.Branch.EnumFlagsMap[typeof(StructFlag)]);
-            }
-        }
-
         protected override void AddChildren(TreeNode node)
         {
-            if (ScriptText != null)
-            {
-                AddObjectNode(node, ScriptText, nameof(UObject));
-            }
+            base.AddChildren(node);
 
-            if (CppText != null)
+            if (this is not UClass)
             {
-                AddObjectNode(node, CppText, nameof(UObject));
-            }
-
-            if (ProcessedText != null)
-            {
-                AddObjectNode(node, ProcessedText, nameof(UObject));
-            }
-
-            AddObjectListNode(node, "Children", EnumerateFields().Reverse(), nameof(UObject));
-            AddObjectListNode(node, "Constants", EnumerateFields<UConst>().Reverse(), nameof(UConst));
-            AddObjectListNode(node, "Enumerations", EnumerateFields<UEnum>().Reverse(), nameof(UEnum));
-            AddObjectListNode(node, "Structures", EnumerateFields<UStruct>().Where(field => field.IsPureStruct()).Reverse(), nameof(UStruct));
-            // Not if the upper class is a function; UFunction adds locals and parameters instead
-            if (GetType() != typeof(UFunction))
-            {
-                AddObjectListNode(node, "Variables", EnumerateFields<UProperty>(), nameof(UProperty));
-            }
-        }
-
-        protected override void PostAddChildren(TreeNode node)
-        {
-            if (Properties.Count == 0)
-                return;
-
-            var defNode = new ObjectListNode
-            {
-                Text = "Default Values",
-                ImageKey = "UDefaultProperty",
-                SelectedImageKey = "UDefaultProperty"
-            };
-            node.Nodes.Add(defNode);
-            foreach (var def in Properties)
-            {
-                var objN = new DefaultObjectNode(def) { Text = def.Name };
-                defNode.Nodes.Add(objN);
+                AddObjectNodes(node, EnumerateFields().Reverse().ToList());
             }
         }
     }

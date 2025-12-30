@@ -8,7 +8,7 @@ namespace UELib.Core
     ///     Implements UFixedArrayProperty/Core.FixedArrayProperty
     /// </summary>
     [UnrealRegisterClass]
-    public class UFixedArrayProperty : UProperty
+    public partial class UFixedArrayProperty : UProperty
     {
         #region Serialized Members
 

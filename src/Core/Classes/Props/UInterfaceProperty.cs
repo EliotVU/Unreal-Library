@@ -11,7 +11,7 @@ namespace UELib.Core
     /// </summary>
     [UnrealRegisterClass]
     [BuildGenerationRange(BuildGeneration.UE3, BuildGeneration.UE4)]
-    public class UInterfaceProperty : UProperty
+    public partial class UInterfaceProperty : UProperty
     {
         #region Serialized Members
 

@@ -7,7 +7,7 @@ namespace UELib.Core
     ///     Implements UMapProperty/Core.MapProperty
     /// </summary>
     [UnrealRegisterClass]
-    public class UMapProperty : UProperty
+    public partial class UMapProperty : UProperty
     {
         #region Serialized Members
 

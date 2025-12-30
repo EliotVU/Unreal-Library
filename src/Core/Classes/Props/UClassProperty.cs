@@ -8,7 +8,7 @@ namespace UELib.Core
     ///     Implements UClassProperty/Core.ClassProperty
     /// </summary>
     [UnrealRegisterClass]
-    public class UClassProperty : UObjectProperty
+    public partial class UClassProperty : UObjectProperty
     {
         #region Serialized Members
 

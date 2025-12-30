@@ -11,19 +11,6 @@ namespace UELib.Core
             base.InitNodes(node);
 
             node.ToolTipText = FormatHeader();
-
-            if (FunctionFlags != 0)
-            {
-                var funcFlagsNode = AddTextNode(node, $"FunctionFlags:{(ulong)FunctionFlags:X8}");
-                funcFlagsNode.ToolTipText = FunctionFlags.ToString(Package.Branch.EnumFlagsMap[typeof(FunctionFlag)]);
-            }
-        }
-
-        protected override void AddChildren(TreeNode node)
-        {
-            base.AddChildren(node);
-            AddObjectListNode(node, "Parameters", EnumerateFields<UProperty>().Where(field => field.IsParm()), nameof(UProperty));
-            AddObjectListNode(node, "Locals", EnumerateFields<UProperty>().Where(field => !field.IsParm()), nameof(UProperty));
         }
 
         public override string GetImageName()

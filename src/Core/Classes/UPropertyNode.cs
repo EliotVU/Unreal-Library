@@ -6,19 +6,6 @@ namespace UELib.Core
 {
     public partial class UProperty
     {
-        protected override void InitNodes(TreeNode node)
-        {
-            base.InitNodes(node);
-
-            if (PropertyFlags != 0)
-            {
-                var propertyFlagsNode = AddTextNode(node,
-                    $"Property Flags:{(ulong)PropertyFlags:X8}"
-                );
-                propertyFlagsNode.ToolTipText = PropertyFlags.ToString(Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
-            }
-        }
-
         public override string GetImageName()
         {
             if (HasPropertyFlag(PropertyFlag.ReturnParm))
@@ -36,6 +23,37 @@ namespace UELib.Core
                 return $"{which}-Private";
             }
             return which;
+        }
+    }
+
+    public partial class UArrayProperty
+    {
+        protected override void AddChildren(TreeNode node)
+        {
+            base.AddChildren(node);
+
+            if (InnerProperty != null) AddObjectNodes(node, [InnerProperty]);
+        }
+    }
+
+    public partial class UFixedArrayProperty
+    {
+        protected override void AddChildren(TreeNode node)
+        {
+            base.AddChildren(node);
+
+            if (InnerProperty != null) AddObjectNodes(node, [InnerProperty]);
+        }
+    }
+
+    public partial class UMapProperty
+    {
+        protected override void AddChildren(TreeNode node)
+        {
+            base.AddChildren(node);
+
+            if (KeyProperty != null) AddObjectNodes(node, [KeyProperty]);
+            if (ValueProperty != null) AddObjectNodes(node, [ValueProperty]);
         }
     }
 }

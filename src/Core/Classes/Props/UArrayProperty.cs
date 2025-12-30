@@ -10,7 +10,7 @@ namespace UELib.Core
     ///     Implements UArrayProperty/Core.ArrayProperty
     /// </summary>
     [UnrealRegisterClass]
-    public class UArrayProperty : UProperty
+    public partial class UArrayProperty : UProperty
     {
         #region Serialized Members
 

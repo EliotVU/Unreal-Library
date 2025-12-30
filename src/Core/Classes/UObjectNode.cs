@@ -1,14 +1,10 @@
 ﻿#if Forms
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
-using UELib.Flags;
 
 namespace UELib.Core
 {
     public partial class UObject
     {
-        protected TreeNode _ParentNode;
         public bool HasInitializedNodes;
 
         public void InitializeNodes(TreeNode node)
@@ -38,96 +34,68 @@ namespace UELib.Core
 
         protected virtual void InitNodes(TreeNode node)
         {
-            if (ObjectFlags != 0)
-            {
-                var flagNode = AddTextNode(node, $"ObjectFlags:{(ulong)ObjectFlags:X8}");
-                flagNode.ToolTipText = ObjectFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ObjectFlag)]);
-            }
         }
 
         protected virtual void AddChildren(TreeNode node)
         {
         }
 
-        protected virtual void PostAddChildren(TreeNode node)
+        private void PostAddChildren(TreeNode node)
         {
+            if (Properties.Count == 0)
+                return;
+
+            var defaultsNode = new ObjectListNode
+            {
+                Text = "Default Values",
+                ImageKey = "UDefaultProperty",
+                SelectedImageKey = "UDefaultProperty"
+            };
+
+            var tagNodes = Properties.Select(tag => new DefaultObjectNode(tag) { Text = tag.Name });
+            defaultsNode.Nodes.AddRange(tagNodes.ToArray<TreeNode>());
+            node.Nodes.Add(defaultsNode);
         }
 
-        protected static TreeNode AddSectionNode(TreeNode p, string n)
+        private static TreeNode CreateObjectNode(UObject obj, string imageName = "")
         {
-            var nn = new TreeNode(n) { ImageKey = "Extend" };
-            nn.SelectedImageKey = nn.ImageKey;
-            p.Nodes.Add(nn);
-            return nn;
-        }
-
-        protected static TreeNode AddTextNode(TreeNode p, string n)
-        {
-            var nn = new TreeNode(n) { ImageKey = "Info" };
-            nn.SelectedImageKey = nn.ImageKey;
-            p.Nodes.Add(nn);
-            return nn;
-        }
-
-        protected static ObjectNode AddObjectNode(TreeNode parentNode, UObject unrealObject, string imageName = "")
-        {
-            if (unrealObject == null)
-                return null;
-
-            var objN = new ObjectNode(unrealObject) { Text = unrealObject.Name };
-            unrealObject.InitializeNodes(objN);
+            var objectNode = new ObjectNode(obj) { Text = obj.Name };
+            obj.InitializeNodes(objectNode);
             if (imageName != string.Empty)
             {
-                objN.ImageKey = imageName;
-                objN.SelectedImageKey = imageName;
+                objectNode.ImageKey = imageName;
+                objectNode.SelectedImageKey = imageName;
             }
 
-            if (unrealObject.DeserializationState.HasFlag(ObjectState.Errorlized))
+            if (obj.DeserializationState.HasFlag(ObjectState.Errorlized))
             {
-                objN.ForeColor = System.Drawing.Color.Red;
+                objectNode.ForeColor = System.Drawing.Color.Red;
             }
 
-            parentNode.Nodes.Add(objN);
-            return objN;
+            return objectNode;
         }
 
-        protected static ObjectNode AddSimpleObjectNode(TreeNode parentNode, UObject unrealObject, string text,
-            string imageName = "")
-        {
-            if (unrealObject == null)
-                return null;
-
-            var objN = new ObjectNode(unrealObject) { Text = $"{text}:{unrealObject.Name}" };
-            if (imageName != string.Empty)
-            {
-                objN.ImageKey = imageName;
-                objN.SelectedImageKey = imageName;
-            }
-
-            parentNode.Nodes.Add(objN);
-            return objN;
-        }
-
-        protected static ObjectListNode AddObjectListNode<T>
-        (
+        protected static void AddObjectListNode<T>(
             TreeNode parentNode,
-            string title,
+            string text,
             IEnumerable<T> objects,
-            string imageName = "TreeView"
-        ) where T : UObject
+            string imageKey = "TreeView") where T : UObject
         {
             var children = objects.ToList();
-            if (!children.Any())
-                return null;
+            if (!children.Any()) return;
 
-            var listNode = new ObjectListNode(imageName) { Text = title };
-            foreach (var child in children)
-            {
-                AddObjectNode(listNode, child, child.GetImageName());
-            }
+            var objectListNode = new ObjectListNode(imageKey) { Text = text };
+            AddObjectNodes(objectListNode, children);
+            parentNode.Nodes.Add(objectListNode);
+        }
 
-            parentNode.Nodes.Add(listNode);
-            return listNode;
+        protected static void AddObjectNodes<T>(
+            TreeNode parentNode,
+            List<T> objects
+        ) where T : UObject
+        {
+            var nodes = objects.Select(child => CreateObjectNode(child, child.GetImageName()));
+            parentNode.Nodes.AddRange(nodes.ToArray());
         }
     }
 }

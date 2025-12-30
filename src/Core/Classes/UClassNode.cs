@@ -1,30 +1,19 @@
 ﻿#if Forms
 using System.Windows.Forms;
-using UELib.Flags;
 
 namespace UELib.Core
 {
     public partial class UClass
     {
-        protected override void InitNodes(TreeNode node)
-        {
-            base.InitNodes(node);
-
-            if (ClassFlags != 0)
-            {
-                var classFlagsNode = AddTextNode(node, $"Class Flags:{(ulong)ClassFlags:X8}");
-                classFlagsNode.ToolTipText = ClassFlags.ToString(Package.Branch.EnumFlagsMap[typeof(ClassFlag)]);
-            }
-
-            if (ClassWithin != null)
-            {
-                AddSimpleObjectNode(node, ClassWithin, "Within", ClassWithin.GetImageName());
-            }
-        }
-
         protected override void AddChildren(TreeNode node)
         {
             base.AddChildren(node);
+
+            AddObjectListNode(node, "Constants", EnumerateFields<UConst>().Reverse(), nameof(UConst));
+            AddObjectListNode(node, "Enumerations", EnumerateFields<UEnum>().Reverse(), nameof(UEnum));
+            AddObjectListNode(node, "Structures", EnumerateFields<UStruct>().Where(field => field.IsPureStruct()).Reverse(), nameof(UStruct));
+            AddObjectListNode(node, "Variables", EnumerateFields<UProperty>(), nameof(UProperty));
+            AddObjectListNode(node, "Functions", EnumerateFields<UFunction>().Reverse(), nameof(UFunction));
             AddObjectListNode(node, "States", EnumerateFields<UState>().Reverse(), nameof(UState));
         }
 
