@@ -23,9 +23,7 @@ namespace UELib.Branch.UE2.VG.Tokens
             decompiler.MarkSemicolon();
 
             // FIXME: Reverse-order of params?
-            return DecompileCall("log", decompiler);
+            return DecompileCall("log", decompiler, null); // Log function is not defined.
         }
-
-        public override UFunction? FunctionCallee => null;
     }
 }

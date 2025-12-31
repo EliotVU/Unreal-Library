@@ -36,9 +36,7 @@ namespace UELib.Branch.UE3.SA2.Tokens
         {
             decompiler.MarkSemicolon();
 
-            return DecompileCall(FunctionName, decompiler);
+            return DecompileCall(FunctionName, decompiler, DelegateProperty.Function ?? FindFunctionCallee(decompiler, FunctionName));
         }
-
-        public override UFunction? FunctionCallee => DelegateProperty.Function ?? Script.Source.FindField<UFunction>(FunctionName);
     }
 }

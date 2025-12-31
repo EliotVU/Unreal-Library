@@ -16,13 +16,6 @@ namespace UELib.Core
 
             public abstract class FunctionToken : Token
             {
-                /// <summary>
-                /// The function that is to be "invoked"
-                ///
-                /// May be null, in case of a virtual function and/or missing import.
-                /// </summary>
-                public abstract UFunction? FunctionCallee { get; }
-
                 public List<Token>? Arguments; // Includes the EndFunctionParmsToken.
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -138,7 +131,7 @@ namespace UELib.Core
                         : $"{operand}{operatorName}";
                 }
 
-                protected string DecompileCall(string functionName, UByteCodeDecompiler decompiler)
+                protected string DecompileCall(string functionName, UByteCodeDecompiler decompiler, UFunction? callee = null)
                 {
                     if (decompiler.Context.IsStatic)
                     {
@@ -150,15 +143,14 @@ namespace UELib.Core
                         decompiler.Context.IsStatic = false;
                     }
 
-                    string arguments = DecompileArguments(decompiler);
+                    string arguments = DecompileArguments(decompiler, callee);
                     var output = $"{functionName}({arguments})";
 
                     return output;
                 }
 
-                private string DecompileArguments(UByteCodeDecompiler decompiler)
+                private string DecompileArguments(UByteCodeDecompiler decompiler, UFunction? callee)
                 {
-                    var callee = FunctionCallee;
                     var parm = callee?._Children;
 
                     var output = new StringBuilder();
@@ -195,6 +187,18 @@ namespace UELib.Core
                     }
 
                     return output.ToString().TrimEnd(','); // trim trailing arguments to optional parameters e.g. "SetFacingPolicy(1,,);"
+                }
+
+                /// <summary>
+                /// Find the function that is to be "invoked"
+                ///
+                /// May be null, in case of a missing import.
+                /// </summary>
+                protected static UFunction? FindFunctionCallee(UByteCodeDecompiler decompiler, UName functionName)
+                {
+                    // Context.State is set by the last decompiled 'FieldToken' (which usually precedes the function call decompilation)
+                    var state = decompiler.Context.State;
+                    return state?.FindField<UFunction>(functionName);
                 }
             }
 
@@ -288,15 +292,13 @@ namespace UELib.Core
                             output += ".";
                         }
 
-                        output += DecompileCall(Function.Name, decompiler);
+                        output += DecompileCall(Function.Name, decompiler, Function);
                     }
 
                     decompiler.MarkSemicolon();
 
                     return output;
                 }
-
-                public override UFunction FunctionCallee => Function;
             }
 
             [ExprToken(ExprToken.VirtualFunction)]
@@ -339,11 +341,8 @@ namespace UELib.Core
                 {
                     decompiler.MarkSemicolon();
 
-                    return DecompileCall(FunctionName, decompiler);
+                    return DecompileCall(FunctionName, decompiler, FindFunctionCallee(decompiler, FunctionName));
                 }
-
-                // TODO: Maybe take the UState's virtual table into consideration?
-                public override UFunction? FunctionCallee => Script.Source.FindField<UFunction>(FunctionName);
             }
 
             [ExprToken(ExprToken.GlobalFunction)]
@@ -368,11 +367,8 @@ namespace UELib.Core
                 {
                     decompiler.MarkSemicolon();
 
-                    return $"global.{DecompileCall(FunctionName, decompiler)}";
+                    return $"global.{DecompileCall(FunctionName, decompiler, FindFunctionCallee(decompiler, FunctionName))}";
                 }
-
-                // TODO: Maybe take the UState's virtual table into consideration?
-                public override UFunction? FunctionCallee => Script.Source.FindField<UFunction>(FunctionName);
             }
 
             [ExprToken(ExprToken.DelegateFunction)]
@@ -423,10 +419,8 @@ namespace UELib.Core
                 {
                     decompiler.MarkSemicolon();
 
-                    return DecompileCall(FunctionName, decompiler);
+                    return DecompileCall(FunctionName, decompiler, DelegateProperty.Function ?? FindFunctionCallee(decompiler, FunctionName));
                 }
-
-                public override UFunction? FunctionCallee => DelegateProperty.Function ?? Script.Source.FindField<UFunction>(FunctionName);
             }
 
             [ExprToken(ExprToken.NativeFunction)]
@@ -451,7 +445,7 @@ namespace UELib.Core
                     switch (NativeItem.Type)
                     {
                         case FunctionType.Function:
-                            output = DecompileCall(NativeItem.Name, decompiler);
+                            output = DecompileCall(NativeItem.Name, decompiler, FindFunctionCallee(decompiler, NativeItem.Name));
                             break;
 
                         case FunctionType.Operator:
@@ -467,7 +461,7 @@ namespace UELib.Core
                             break;
 
                         default:
-                            output = DecompileCall(NativeItem.Name, decompiler);
+                            output = DecompileCall(NativeItem.Name, decompiler, FindFunctionCallee(decompiler, NativeItem.Name));
                             break;
                     }
 
@@ -475,9 +469,6 @@ namespace UELib.Core
 
                     return output;
                 }
-
-                // No checks for 'native', after all the NTL definition may be dated.
-                public override UFunction? FunctionCallee => Script.Source.FindField<UFunction>(NativeItem.Name);
             }
         }
     }

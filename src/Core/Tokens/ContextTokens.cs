@@ -119,14 +119,18 @@ namespace UELib.Core
 
                 public override string Decompile(UByteCodeDecompiler decompiler)
                 {
+                    string contextText = DecompileNext(decompiler);
+
                     if (Property is UConst uConst)
                     {
                         decompiler.PreComment = $"Const:{uConst.Value}";
 
-                        return $"{DecompileNext(decompiler)}.{Property.Name}";
+                        return $"{contextText}.{Property.Name}";
                     }
 
-                    return $"{DecompileNext(decompiler)}.{DecompileNext(decompiler)}";
+                    string contextMemberText = DecompileNext(decompiler);
+
+                    return $"{contextText}.{contextMemberText}";
                 }
             }
 

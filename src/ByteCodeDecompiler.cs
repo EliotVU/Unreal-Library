@@ -28,6 +28,11 @@ namespace UELib.Core
                 public UObject? Object { get; set; } = @object;
 
                 /// <summary>
+                /// The current state in this context, if any.
+                /// </summary>
+                public UState? State => (Object as UState);
+
+                /// <summary>
                 /// The current enum in this context, if any.
                 /// </summary>
                 public UEnum? Enum => (Object as UByteProperty)?.Enum;

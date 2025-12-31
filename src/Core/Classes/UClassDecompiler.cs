@@ -534,6 +534,7 @@ namespace UELib.Core
 
             var decompiler = new UByteCodeDecompiler(this);
             decompiler.Deserialize();
+            decompiler.InitDecompile();
 
             foreach (var statement in statements)
             {
