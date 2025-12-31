@@ -416,8 +416,10 @@ namespace UELib.Core
             stream.ConformRecordPosition();
 
             // Temporary, this should be handled in the linking phase during the construction of property tags.
-            UProperty? tagProperty = Property ?? Type switch
+            var tagProperty = Property ?? Type switch
             {
+                // Resolve for byte property, so that we can re-construct the enum tag for older package builds.
+                PropertyType.ByteProperty => _PropertySource?.FindProperty<UByteProperty?>(Name),
                 PropertyType.StructProperty => _PropertySource?.FindProperty<UStructProperty?>(Name),
                 PropertyType.ArrayProperty => _PropertySource?.FindProperty<UArrayProperty?>(Name),
                 PropertyType.FixedArrayProperty => _PropertySource?.FindProperty<UFixedArrayProperty?>(Name),
@@ -593,7 +595,20 @@ namespace UELib.Core
                         {
                             byte value = stream.ReadByte();
                             stream.Record(nameof(value), value);
-                            propertyValue = PropertyDisplay.FormatLiteral(value);
+
+                            var byteProperty = property as UByteProperty; // Use 'as', because it is possible for types to mismatch.
+                            if (byteProperty?.Enum != null)
+                            {
+                                var enumTag = byteProperty.Enum.Names.ElementAtOrDefault(value);
+                                propertyValue = EnumName.IsNone()
+                                                // Could also use Enum.Outer.Name, but older UnrealScript generations do not allow for a qualified enum tag.
+                                                ? $"{enumTag}"
+                                                : $"{EnumName}.{enumTag}";
+                            }
+                            else
+                            {
+                                propertyValue = PropertyDisplay.FormatLiteral(value);
+                            }
                         }
 
                         break;
@@ -765,7 +780,7 @@ namespace UELib.Core
                                 tagExpr += PropertyDisplay.FormatT3DElementAccess(scriptProperty.ArrayIndex.ToString(),
                                     stream.Version);
                             }
-                            
+
                             stream.Seek(scriptProperty._PropertyValuePosition, SeekOrigin.Begin);
                             stream.ConformRecordPosition();
                             string value = scriptProperty.TryLegacyDeserializeDefaultPropertyValue(
