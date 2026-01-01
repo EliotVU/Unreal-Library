@@ -11,7 +11,7 @@ namespace UELib.Branch.UE3.SFX.Tokens
         {
             decompiler.MarkSemicolon();
 
-            return DecompileCall($"'{FunctionName}'", decompiler);
+            return DecompileCall($"'{FunctionName}'", decompiler, FindFunctionCallee(decompiler, FunctionName));
         }
     }
 }
