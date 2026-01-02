@@ -536,6 +536,9 @@ namespace UELib.Core
             decompiler.Deserialize();
             decompiler.InitDecompile();
 
+            var scriptState = this;
+            var topContext = new UByteCodeDecompiler.DecompilationContext(null, scriptState);
+
             foreach (var statement in statements)
             {
                 try
@@ -553,7 +556,8 @@ namespace UELib.Core
                     string statementCode;
                     try
                     {
-                        statementCode = decompiler.CurrentToken.Decompile(decompiler);
+                        var statementContext = new UByteCodeDecompiler.DecompilationContext(topContext, scriptState);
+                        statementCode = decompiler.CurrentToken.Decompile(decompiler, statementContext);
                     }
                     catch (EndOfStreamException)
                     {

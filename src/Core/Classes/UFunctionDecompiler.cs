@@ -296,6 +296,9 @@ namespace UELib.Core
             {
                 decompiler = new UByteCodeDecompiler(this);
                 decompiler.Deserialize();
+                decompiler.InitDecompile();
+
+                decompiler.PushContext(new UByteCodeDecompiler.DecompilationContext(decompiler.Context, OuterMost<UClass>()));
             }
 
             var output = string.Empty;
@@ -308,7 +311,9 @@ namespace UELib.Core
                     var defaultToken = decompiler.NextToken;
                     if (defaultToken is UByteCodeDecompiler.DefaultParameterToken)
                     {
-                        string defaultExpr = defaultToken.Decompile(decompiler);
+                        var paramContext = new UByteCodeDecompiler.DecompilationContext(decompiler.Context, parm);
+
+                        string defaultExpr = defaultToken.Decompile(decompiler, paramContext);
                         parmCode += $" = {defaultExpr}";
                     }
                 }

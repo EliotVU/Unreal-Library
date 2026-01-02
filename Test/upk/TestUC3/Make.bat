@@ -2,7 +2,7 @@
 
 set projn=MyMod
 set workDir=%cd%
-set RootDir="D:\Games\UDK\Custom"
+set RootDir="D:\Games\Unreal Engine\UDK-2015-02"
 set UCCDir="%RootDir%\Binaries\Win64"
 set ScriptDir="%RootDir%\Development\Src"
 set DestDir="%RootDir%\UDKGame\Script"

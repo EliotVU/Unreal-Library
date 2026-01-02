@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using UELib.Flags;
 using UELib.Services;
 
@@ -6,6 +7,7 @@ namespace UELib.Core
 {
     using System.Linq;
     using System.Text;
+    using UELib;
 
     public partial class UStruct
     {
@@ -15,10 +17,21 @@ namespace UELib.Core
             public enum ContextFlags
             {
                 Static = 1 << 0,
+                BinaryOperator = 1 << 1,
+
+                /// <summary>
+                /// In a context expression i.e. a <see cref="ContextToken"/>
+                /// </summary>
+                ContextExpression = 1 << 2,
             }
 
-            public class DecompilationContext(UObject? @object, ContextFlags contextFlags = 0)
+            public class DecompilationContext(DecompilationContext? parent, UObject? @object = null, ContextFlags contextFlags = 0)
             {
+                /// <summary>
+                /// The parent context of this context.
+                /// </summary>
+                public readonly DecompilationContext? Parent = parent;
+
                 /// <summary>
                 /// The current object of this context.
                 ///
@@ -28,14 +41,25 @@ namespace UELib.Core
                 public UObject? Object { get; set; } = @object;
 
                 /// <summary>
-                /// The current state in this context, if any.
+                /// The current state in this context or a parent context, if any.
+                ///
+                /// TODO: Ugly, property resolver?
                 /// </summary>
-                public UState? State => (Object as UState);
+                public UState? State => Object as UState
+                                    ?? (Object as UClassProperty)?.MetaClass
+                                    ?? (Object as UObjectProperty)?.Object as UState
+                                    ?? (Object as UInterfaceProperty)?.InterfaceClass
+                                    ?? Parent?.State;
 
                 /// <summary>
                 /// The current enum in this context, if any.
                 /// </summary>
                 public UEnum? Enum => (Object as UByteProperty)?.Enum;
+
+                /// <summary>
+                /// The current function callee in this context, if any.
+                /// </summary>
+                public UFunction? Callee => Object as UFunction;
 
                 /// <summary>
                 /// The current context flags.
@@ -64,6 +88,28 @@ namespace UELib.Core
                         }
                     }
                 }
+
+                /// <summary>
+                /// Whether the decompilation context is within a binary operator.
+                /// </summary>
+                public bool IsBinaryOperator
+                {
+                    get
+                    {
+                        return (Flags & ContextFlags.BinaryOperator) != 0;
+                    }
+                }
+
+                /// <summary>
+                /// Whether the decompilation context is within the property context of a <see cref="ContextToken"/>.
+                /// </summary>
+                public bool IsContextExpression
+                {
+                    get
+                    {
+                        return (Flags & ContextFlags.ContextExpression) != 0;
+                    }
+                }
             }
 
             private readonly UStruct _Container = container;
@@ -82,9 +128,13 @@ namespace UELib.Core
             public Token PreviousToken => DeserializedTokens[CurrentTokenIndex - 1];
             public Token CurrentToken => DeserializedTokens[CurrentTokenIndex];
 
-            private DecompilationContext Context => _Contexts.Peek();
+            public DecompilationContext Context => _Contexts.Peek();
             public UObject? ContextObject => Context.Object;
             public UEnum? ContextEnum => Context.Enum;
+
+            public DecompilationContext? PoppedContext { get; private set; }
+
+            private UnrealNativeFunctionResolver? _NativeFunctionResolver;
 
             public UByteCodeDecompiler(UStruct container) : this(
                 container,
@@ -162,10 +212,6 @@ namespace UELib.Core
                 {
                     public override string Decompile(UByteCodeDecompiler decompiler)
                     {
-                        if (Type == NestType.Case)
-                        {
-                            decompiler.PushContext(new DecompilationContext(null));
-                        }
 #if DEBUG_NESTS
                         return "\r\n" + UDecompilingState.Tabs + "//<" + Type + ">";
 #else
@@ -182,10 +228,6 @@ namespace UELib.Core
 
                     public override string Decompile(UByteCodeDecompiler decompiler)
                     {
-                        if (Type == NestType.Case)
-                        {
-                            decompiler.PopContext();
-                        }
 #if DEBUG_NESTS
                         return "\r\n" + UDecompilingState.Tabs + "//</" + Type + ">";
 #else
@@ -263,8 +305,11 @@ namespace UELib.Core
                 _Nester = new NestManager { Decompiler = this };
                 CurrentTokenIndex = -1;
 
+                PoppedContext = null;
                 _Contexts.Clear();
-                _Contexts.Push(new DecompilationContext(null));
+                _Contexts.Push(new DecompilationContext(null, _Container));
+
+                _NativeFunctionResolver = Package.Branch.NativeFunctionResolver;
 
                 // Reset these, in case of a loop in the Decompile function that did not finish due exception errors!
                 _CanAddSemicolon = false;
@@ -388,13 +433,28 @@ namespace UELib.Core
 
             public void PushContext(DecompilationContext context)
             {
+                Debug.Assert(_Contexts.Peek() != context, "Should not push the same context more than once.");
                 _Contexts.Push(context);
             }
 
             public void PopContext()
             {
-                _Contexts.Pop();
-                Debug.Assert(_Contexts.Count > 0); // Never pop the first context.
+                PoppedContext = _Contexts.Pop();
+                Contract.Assert(_Contexts.Count > 0); // Never pop the first context.
+            }
+
+            public T WrapContext<T>(DecompilationContext context, Func<T> contextAction)
+            {
+                try
+                {
+                    PushContext(context);
+
+                    return contextAction();
+                }
+                finally
+                {
+                    PopContext();
+                }
             }
 
             public string Decompile()
@@ -467,6 +527,12 @@ namespace UELib.Core
                         --CurrentTokenIndex;
                     }
 #endif
+
+                    var scriptState = _Container.OuterMost<UState>();
+                    // if we're ever to re-factor the entire chain,
+                    // we should have immutable contexts instead.
+                    var topContext = new DecompilationContext(null, scriptState);
+                    DecompilationContext? switchContext = null;
                     while (CurrentTokenIndex + 1 < DeserializedTokens.Count)
                     {
                         //Decompile chain==========
@@ -504,7 +570,40 @@ namespace UELib.Core
 
                             try
                             {
-                                statementText = statementToken.Decompile(this);
+                                // Start afresh
+                                var statementContext = new DecompilationContext(topContext, scriptState);
+
+                                // Use the switch context for a case token (so that it can access the enum, if any)
+                                if (statementToken is CaseToken)
+                                {
+                                    statementContext = switchContext;
+                                }
+
+                                statementText = statementToken.Decompile(this, statementContext);
+
+                                switch (statementToken)
+                                {
+                                    // Preserve the context object for the next case statements that will proceed.
+                                    // Cannot restrict this 'enum' switches, otherwise we may run into undo issues when popping the switch.
+                                    case SwitchToken:
+                                        {
+                                            var switchFieldContext = statementContext.Object;
+                                            switchContext = new DecompilationContext(switchContext, switchFieldContext);
+                                            //PushContext(switchContext); // make this accessible, so that we can pop it in NestEnd
+
+                                            // Ideally, it would be nice, if we could just run this function re-cursively, and then handle the nest ending right here?
+                                            // < {
+                                            // < DecompileTokensUntil(endOffset);
+                                            // < }
+                                            break;
+                                        }
+
+                                    case CaseToken { IsDefault: true }:
+                                        // "Pop"
+                                        switchContext = switchContext.Parent;
+                                        break;
+                                }
+
                                 // Hide the compiler-inserted 'return' token.
                                 if (CurrentTokenIndex + 1 < DeserializedTokens.Count &&
                                     PeekToken is EndOfScriptToken)

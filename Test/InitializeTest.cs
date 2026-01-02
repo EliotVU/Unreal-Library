@@ -1,4 +1,5 @@
-﻿using UELib.Services;
+﻿using UELib;
+using UELib.Services;
 
 namespace Eliot.UELib.Test;
 
@@ -9,5 +10,9 @@ public class InitializeTest
     public static void AssemblyInit(TestContext context)
     {
         LibServices.LogService = new TestLogService();
+
+        // Decompilation defaults.
+        UnrealConfig.Indention = "    ";
+        UnrealConfig.SuppressComments = true;
     }
 }

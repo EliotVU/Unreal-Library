@@ -189,7 +189,7 @@ public sealed class UByteCodeScript(UStruct source, int memorySize, int storageS
         }
         else
         {
-            int opCode = nativeFunctionToken.NativeItem.ByteToken;
+            int opCode = nativeFunctionToken.NativeToken;
             if (opCode < 256)
             {
                 stream.Write((byte)opCode);

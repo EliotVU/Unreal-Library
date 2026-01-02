@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UELib;
 using UELib.Core.Tokens;
 using UELib.Decoding;
 using UELib.Flags;
@@ -11,7 +12,7 @@ namespace UELib.Branch
     /// <summary>
     /// EngineBranch lets you override the common serialization methods to assist with particular engine branches or generations.
     /// Some games or engine generations may drift away from the main UE branch too much, therefor it is useful to separate specialized logic as much as possible.
-    /// 
+    ///
     /// For UE1, 2, and 3 see <see cref="DefaultEngineBranch"/>.
     /// For UE4 see <see cref="UE4.EngineBranchUE4"/>.
     /// </summary>
@@ -48,6 +49,12 @@ namespace UELib.Branch
         protected ulong[] FunctionFlags => EnumFlagsMap[typeof(FunctionFlag)];
         protected ulong[] StateFlags => EnumFlagsMap[typeof(StateFlag)];
         protected ulong[] ClassFlags => EnumFlagsMap[typeof(ClassFlag)];
+
+        public UnrealNativeFunctionResolver? NativeFunctionResolver
+        {
+            get => field ??= new UnrealNativeFunctionResolver();
+            set;
+        }
 
         public EngineBranch()
         {

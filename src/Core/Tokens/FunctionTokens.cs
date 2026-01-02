@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using UELib.Branch;
+using UELib.Core.Tokens;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 
@@ -69,30 +70,6 @@ namespace UELib.Core
                     }
                 }
 
-                private static string PrecedenceToken(Token token, UByteCodeDecompiler decompiler)
-                {
-                    if (token is not FunctionToken)
-                    {
-                        return token.Decompile(decompiler);
-                    }
-
-                    // Always add ( and ) unless the conditions below are not met, in case of a VirtualFunctionCall.
-                    var addParenthesis = true;
-                    switch (token)
-                    {
-                        case NativeFunctionToken nativeToken:
-                            addParenthesis = nativeToken.NativeItem.Type == FunctionType.Operator;
-                            break;
-                        case FinalFunctionToken finalToken:
-                            addParenthesis = finalToken.Function.IsOperator();
-                            break;
-                    }
-
-                    return addParenthesis
-                        ? $"({token.Decompile(decompiler)})"
-                        : token.Decompile(decompiler);
-                }
-
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 private bool NeedsSpace(string operatorName)
                 {
@@ -100,35 +77,73 @@ namespace UELib.Core
                            || char.IsLower(operatorName[0]);
                 }
 
-                protected string DecompilePreOperator(string operatorName, UByteCodeDecompiler decompiler)
+                protected string DecompilePreOperator(string operatorName, UByteCodeDecompiler decompiler, UFunction? callee = null)
                 {
-                    string operand = DecompileNext(decompiler);
+                    var context = decompiler.Context;
+
+                    string operandText = DecompileNext(decompiler);
                     AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+
+                    // Are we wrapping a binary operator?
+                    if (decompiler.PoppedContext?.Parent == context &&
+                        decompiler.PoppedContext.IsBinaryOperator)
+                    {
+                        operandText = $"({operandText})";
+                    }
 
                     // Only space out if we have a non-symbol operator name.
-                    return NeedsSpace(operatorName)
-                        ? $"{operatorName} {operand}"
-                        : $"{operatorName}{operand}";
+                    string operatorOutputText = NeedsSpace(operatorName)
+                        ? $"{operatorName} {operandText}"
+                        : $"{operatorName}{operandText}";
+
+                    return operatorOutputText;
                 }
 
-                protected string DecompileOperator(string operatorName, UByteCodeDecompiler decompiler)
+                protected string DecompileOperator(string operatorName, UByteCodeDecompiler decompiler, UFunction? callee = null)
                 {
-                    var output =
-                        $"{PrecedenceToken(NextToken(decompiler), decompiler)} {operatorName} {PrecedenceToken(NextToken(decompiler), decompiler)}";
-                    AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+                    bool parentIsBinaryOperator = decompiler.Context.IsBinaryOperator;
+                    byte parentBinaryPrecedence = decompiler.Context.Callee?.OperPrecedence ?? byte.MaxValue;
 
-                    return output;
+                    return decompiler.WrapContext(new DecompilationContext(decompiler.Context, callee, ContextFlags.BinaryOperator), () =>
+                    {
+                        string leftOperandText = DecompileNext(decompiler);
+                        string rightOperandText = DecompileNext(decompiler);
+                        AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+
+                        string operatorOutputText = $"{leftOperandText} {operatorName} {rightOperandText}";
+
+                        byte thisBinaryPrecedence = callee?.OperPrecedence ?? byte.MaxValue;
+                        bool hasPrecedence = parentIsBinaryOperator && (
+                            thisBinaryPrecedence > parentBinaryPrecedence
+                            ||
+                            // Otherwise, always output a parenthesis for unresolved operators.
+                            thisBinaryPrecedence == byte.MaxValue
+                        );
+
+                        return hasPrecedence ? $"({operatorOutputText})" : operatorOutputText;
+                    });
                 }
 
-                protected string DecompilePostOperator(string operatorName, UByteCodeDecompiler decompiler)
+                protected string DecompilePostOperator(string operatorName, UByteCodeDecompiler decompiler, UFunction? callee = null)
                 {
-                    string operand = DecompileNext(decompiler);
+                    var context = decompiler.Context;
+
+                    string operandText = DecompileNext(decompiler);
                     AssertSkipCurrentToken<EndFunctionParmsToken>(decompiler);
+
+                    // Are we wrapping a binary operator?
+                    if (decompiler.PoppedContext?.Parent == context &&
+                        decompiler.PoppedContext.IsBinaryOperator)
+                    {
+                        operandText = $"({operandText})";
+                    }
 
                     // Only space out if we have a non-symbol operator name.
-                    return NeedsSpace(operatorName)
-                        ? $"{operand} {operatorName}"
-                        : $"{operand}{operatorName}";
+                    string operatorOutputText = NeedsSpace(operatorName)
+                        ? $"{operandText} {operatorName}"
+                        : $"{operandText}{operatorName}";
+
+                    return operatorOutputText;
                 }
 
                 protected string DecompileCall(string functionName, UByteCodeDecompiler decompiler, UFunction? callee = null)
@@ -143,10 +158,17 @@ namespace UELib.Core
                         decompiler.Context.IsStatic = false;
                     }
 
-                    string arguments = DecompileArguments(decompiler, callee);
-                    var output = $"{functionName}({arguments})";
+                    // Create a new context to cancel out the parent's BinaryOperator state.
+                    // e.g. We want to avoid this piece of code "VSize(1 + 1) + 100"
+                    // could be decompiled as "VSize((1 + 1)) + 100", note the double parenthesis.
 
-                    return output;
+                    // Maybe just mutate the BinaryOperator flag??
+                    string argumentsText = decompiler.WrapContext(
+                        new DecompilationContext(decompiler.Context, callee),
+                        () => DecompileArguments(decompiler, callee)
+                    );
+
+                    return $"{functionName}({argumentsText})";
                 }
 
                 private string DecompileArguments(UByteCodeDecompiler decompiler, UFunction? callee)
@@ -176,12 +198,15 @@ namespace UELib.Core
                                 break;
 
                             default:
+                                string argumentText = token.Decompile(decompiler);
                                 if (i > 0 && i + 1 < argumentCount)
                                 {
-                                    output.Append(", ");
+                                    // Older builds don't have the EmptyParamToken (NothingToken?)
+                                    // So, also check for length.
+                                    output.Append(argumentText.Length != 0 ? ", " : ",");
                                 }
 
-                                output.Append(token.Decompile(decompiler));
+                                output.Append(argumentText);
                                 break;
                         }
                     }
@@ -244,19 +269,21 @@ namespace UELib.Core
 
                 public override string Decompile(UByteCodeDecompiler decompiler)
                 {
+                    decompiler.MarkSemicolon();
+
                     var output = string.Empty;
-                    // Support for non native operators.
+                    // Support for non-native operators.
                     if (Function.IsPost())
                     {
-                        output = DecompilePreOperator(Function.FriendlyName, decompiler);
+                        output = DecompilePreOperator(Function.FriendlyName, decompiler, Function);
                     }
                     else if (Function.IsPre())
                     {
-                        output = DecompilePostOperator(Function.FriendlyName, decompiler);
+                        output = DecompilePostOperator(Function.FriendlyName, decompiler, Function);
                     }
                     else if (Function.IsOperator())
                     {
-                        output = DecompileOperator(Function.FriendlyName, decompiler);
+                        output = DecompileOperator(Function.FriendlyName, decompiler, Function);
                     }
                     else
                     {
@@ -294,8 +321,6 @@ namespace UELib.Core
 
                         output += DecompileCall(Function.Name, decompiler, Function);
                     }
-
-                    decompiler.MarkSemicolon();
 
                     return output;
                 }
@@ -426,7 +451,7 @@ namespace UELib.Core
             [ExprToken(ExprToken.NativeFunction)]
             public class NativeFunctionToken : FunctionToken
             {
-                public NativeTableItem NativeItem;
+                public ushort NativeToken;
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -441,31 +466,70 @@ namespace UELib.Core
 
                 public override string Decompile(UByteCodeDecompiler decompiler)
                 {
+                    decompiler.MarkSemicolon();
+
+                    // Resolve the native function using a dynamic cache.
+                    var state = decompiler.Context.State;
+                    if (state != null && decompiler._NativeFunctionResolver
+                            .TryResolveNativeFunction(
+                                NativeToken,
+                                // Skip the UState definition, it won't have any native functions.
+                                state as UClass ?? state.OuterMost<UClass>(),
+                                out var functionCallee
+                            ))
+                    {
+                        if (functionCallee.IsOperator())
+                        {
+                            if (functionCallee.IsPre())
+                            {
+                                return DecompilePreOperator(functionCallee.FriendlyName, decompiler, functionCallee);
+                            }
+
+                            if (functionCallee.IsPost())
+                            {
+                                return DecompilePostOperator(functionCallee.FriendlyName, decompiler, functionCallee);
+                            }
+
+                            return DecompileOperator(functionCallee.FriendlyName, decompiler, functionCallee);
+                        }
+
+                        // Ordinary function call.
+                        return DecompileCall(functionCallee.FriendlyName, decompiler, functionCallee);
+                    }
+
+                    // Try the pre-cached NTL (dated) instead:
+                    var nativeItem = Script.Source.Package.Branch
+                        .GetTokenFactory(Script.Source.Package)
+                        .CreateNativeItem(NativeToken);
+                    string nativeFunctionName = nativeItem.Name.IsNone()
+                        // Perhaps it is not linked up or the function just doesn't exist, output a generated name instead:
+                        ? TokenFactory.CreateGeneratedName(NativeToken.ToString())
+                        : nativeItem.Name.ToString()
+                        ;
+
                     string output;
-                    switch (NativeItem.Type)
+                    switch (nativeItem.Type)
                     {
                         case FunctionType.Function:
-                            output = DecompileCall(NativeItem.Name, decompiler, FindFunctionCallee(decompiler, NativeItem.Name));
+                            output = DecompileCall(nativeFunctionName, decompiler);
                             break;
 
                         case FunctionType.Operator:
-                            output = DecompileOperator(NativeItem.Name, decompiler);
+                            output = DecompileOperator(nativeFunctionName, decompiler);
                             break;
 
                         case FunctionType.PostOperator:
-                            output = DecompilePostOperator(NativeItem.Name, decompiler);
+                            output = DecompilePostOperator(nativeFunctionName, decompiler);
                             break;
 
                         case FunctionType.PreOperator:
-                            output = DecompilePreOperator(NativeItem.Name, decompiler);
+                            output = DecompilePreOperator(nativeFunctionName, decompiler);
                             break;
 
                         default:
-                            output = DecompileCall(NativeItem.Name, decompiler, FindFunctionCallee(decompiler, NativeItem.Name));
+                            output = DecompileCall(nativeFunctionName, decompiler);
                             break;
                     }
-
-                    decompiler.MarkSemicolon();
 
                     return output;
                 }

@@ -128,9 +128,15 @@ namespace UELib.Core
                         return $"{contextText}.{Property.Name}";
                     }
 
-                    string contextMemberText = DecompileNext(decompiler);
+                    return decompiler.WrapContext(new DecompilationContext(decompiler.Context, decompiler.ContextObject, ContextFlags.ContextExpression), () =>
+                    {
+                        string contextMemberText = DecompileNext(decompiler);
 
-                    return $"{contextText}.{contextMemberText}";
+                        // Ugly, but w/e
+                        decompiler.Context.Parent?.Object = decompiler.ContextObject;
+
+                        return $"{contextText}.{contextMemberText}";
+                    });
                 }
             }
 

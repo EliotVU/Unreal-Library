@@ -44,13 +44,18 @@ namespace UELib.Core
                 }
 
                 [Obsolete("No longer of use")]
-                public virtual void PostDeserialized()
+                public void PostDeserialized()
                 {
                 }
 
                 public virtual string Decompile(UByteCodeDecompiler decompiler)
                 {
                     return string.Empty;
+                }
+
+                public string Decompile(UByteCodeDecompiler decompiler, DecompilationContext context)
+                {
+                    return decompiler.WrapContext(context, () => Decompile(decompiler));
                 }
 
                 protected string DecompileNext(UByteCodeDecompiler decompiler)
@@ -60,6 +65,15 @@ namespace UELib.Core
                     if (token is DebugInfoToken) goto tryNext;
 
                     return token.Decompile(decompiler);
+                }
+
+                protected string DecompileNext(UByteCodeDecompiler decompiler, DecompilationContext context)
+                {
+                tryNext:
+                    var token = decompiler.NextToken;
+                    if (token is DebugInfoToken) goto tryNext;
+
+                    return token.Decompile(decompiler, context);
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]

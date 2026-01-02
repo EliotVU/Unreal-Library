@@ -885,13 +885,19 @@ namespace UELib.Core
             }
         }
 
+        /// <inheritdoc cref="FindField{T}(in UELib.Core.UName)"/>
+        public T FindField<T>(in string name) where T : UField?
+        {
+            return FindField<T>(new UName(name));
+        }
+
         /// <summary>
         ///     Looks for a field with a matching name in this struct and its super structs.
         /// </summary>
         /// <param name="name">the name of the field.</param>
         /// <typeparam name="T">the type to limit the search to.</typeparam>
         /// <returns>the field with a matching name and type.</returns>
-        public T? FindField<T>(in UName name) where T : UField
+        public T FindField<T>(in UName name) where T : UField?
         {
             foreach (var super in EnumerateSuper(this))
             {
@@ -907,13 +913,19 @@ namespace UELib.Core
             return null;
         }
 
+        /// <inheritdoc cref="FindProperty{T}(in UELib.Core.UName)"/>
+        public T FindProperty<T>(in string name) where T : UProperty?
+        {
+            return FindProperty<T>(new UName(name));
+        }
+
         /// <summary>
         ///     Looks for a property with a matching name in this struct and its super structs.
         /// </summary>
         /// <param name="name">the name of the property.</param>
         /// <typeparam name="T">the type to limit the search to.</typeparam>
         /// <returns>the property with a matching name and type.</returns>
-        public T? FindProperty<T>(in UName name) where T : UProperty
+        public T FindProperty<T>(in UName name) where T : UProperty?
         {
             foreach (var super in EnumerateSuper(this))
             {
@@ -981,7 +993,7 @@ namespace UELib.Core
             throw new InvalidOperationException("Attempted to remove a field from a struct that is not part of the struct.");
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use Package.Branch.GetTokenFactory instead; although that will be re-factored at some point.")]
         public TokenFactory GetTokenFactory()
         {
             return Package.Branch.GetTokenFactory(Package);

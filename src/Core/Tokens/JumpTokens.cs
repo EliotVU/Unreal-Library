@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using UELib.Branch;
+using UELib.Flags;
 using UELib.IO;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
@@ -52,9 +52,14 @@ namespace UELib.Core
                         return "return";
                     }
 
-                    string returnValue = DecompileNext(decompiler);
-                    return "return" + (returnValue.Length != 0
-                        ? " " + returnValue
+                    var returnProperty = Script.Source
+                        .EnumerateFields<UProperty>()
+                        .FirstOrDefault(prop => prop.PropertyFlags.HasFlag(PropertyFlag.ReturnParm));
+
+                    string returnExpressionText = DecompileNext(decompiler, new DecompilationContext(decompiler.Context, returnProperty));
+
+                    return "return" + (returnExpressionText.Length != 0
+                        ? " " + returnExpressionText
                         : string.Empty);
 
                     // FIXME: Transport the emitted "ReturnValue = Expression" over here.
@@ -155,9 +160,9 @@ namespace UELib.Core
                 ///         {
                 ///             continue;
                 ///         }
-                /// 
+                ///
                 ///         // Actual code
-                /// 
+                ///
                 ///         -> Decompiled
                 ///         if( continueCodition )
                 ///         {
@@ -166,14 +171,14 @@ namespace UELib.Core
                 ///         {
                 ///             // Actual code
                 ///         }
-                /// 
-                /// 
+                ///
+                ///
                 ///     2:(-> ...)  ...
                 ///         -> Original
                 ///             ...
                 ///         -> Decompiled
                 ///             ...
-                /// 
+                ///
                 /// </summary>
                 /// <param name="decompiler"></param>
                 public override string Decompile(UByteCodeDecompiler decompiler)
@@ -419,7 +424,7 @@ namespace UELib.Core
                     {
                         string labelName = UDecompilingState.OffsetLabelName(CodeOffset);
                         var gotoStatement = $"{UDecompilingState.Tabs}{UnrealConfig.Indention}goto {labelName}";
-                        // Inverse condition only here as we're explicitly jumping while other cases create proper scopes 
+                        // Inverse condition only here as we're explicitly jumping while other cases create proper scopes
                         output = $"if(!({condition}))\r\n{gotoStatement}";
                         decompiler.MarkSemicolon();
                         return output;
@@ -581,16 +586,16 @@ namespace UELib.Core
                 /// FORMATION ISSUESSES:
                 ///     1:(-> ...)  NestEnd is based upon the break in a default case, however a case does not always break/return,
                 ///         causing that there will be no default with a break detected, thus no ending for the Switch block.
-                /// 
+                ///
                 ///         -> Original
                 ///             Switch( A )
                 ///             {
                 ///                 case 0:
                 ///                     CallA();
                 ///             }
-                /// 
+                ///
                 ///             CallB();
-                /// 
+                ///
                 ///         -> Decompiled
                 ///             Switch( A )
                 ///             {

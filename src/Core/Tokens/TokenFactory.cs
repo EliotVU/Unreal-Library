@@ -89,29 +89,31 @@ namespace UELib.Core.Tokens
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeFunctionToken CreateNativeToken(ushort nativeIndex)
         {
-            if (NativeTokenMap.TryGetValue(nativeIndex, out var item))
-            {
-                return new NativeFunctionToken
-                {
-                    NativeItem = item,
-                };
-            }
-
             return new NativeFunctionToken
             {
-                NativeItem = new NativeTableItem
-                {
-                    Type = FunctionType.Function,
-                    Name = CreateGeneratedName($"NFUN_{nativeIndex}"),
-                    ByteToken = nativeIndex
-                },
+                NativeToken = nativeIndex
+            };
+        }
+
+        public NativeTableItem CreateNativeItem(ushort nativeIndex)
+        {
+            if (NativeTokenMap.TryGetValue(nativeIndex, out var item))
+            {
+                return item;
+            }
+
+            return new NativeTableItem
+            {
+                Type = FunctionType.Function,
+                Name = UnrealName.None,
+                ByteToken = nativeIndex
             };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UName CreateGeneratedName(string id)
+        public static string CreateGeneratedName(string id)
         {
-            return new UName($"__{id}__");
+            return $"__{id}__";
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
