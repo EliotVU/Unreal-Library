@@ -17,6 +17,7 @@ namespace UELib
 
         public static bool SuppressComments;
         public static bool SuppressSignature;
+        public static bool ShouldOutputTokenMemoryPosition;
 
         public static string PreBeginBracket = "\r\n{0}";
         public static string PreEndBracket = "\r\n{0}";

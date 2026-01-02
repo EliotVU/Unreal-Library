@@ -414,9 +414,12 @@ namespace UELib.Core
                 // Original indention, so that we can restore it later, necessary if decompilation fails to reduce nesting indention.
                 string initTabs = UDecompilingState.Tabs;
 
-#if DEBUG_TOKENPOSITIONS
-                UDecompilingState.AddTabs(3);
-#endif
+                if (UnrealConfig.ShouldOutputTokenMemoryPosition)
+                {
+                    UDecompilingState.AddTabs(3);
+                    UDecompilingState.Tabs += " ";
+                }
+
                 try
                 {
                     //Initialize==========
@@ -468,8 +471,8 @@ namespace UELib.Core
                     {
                         //Decompile chain==========
                         {
-                            string tokenOutput;
-                            var newToken = NextToken;
+                            string statementText;
+                            var statementToken = NextToken;
                             int tokenBeginIndex = CurrentTokenIndex;
 
                             // To ensure we print generated labels within a nesting block.
@@ -479,7 +482,7 @@ namespace UELib.Core
                             try
                             {
                                 // FIX: Formatting issue on debug-compiled packages
-                                if (newToken is DebugInfoToken)
+                                if (statementToken is DebugInfoToken)
                                 {
                                     string nestsOutput = DecompileNests();
                                     if (nestsOutput != string.Empty)
@@ -501,15 +504,16 @@ namespace UELib.Core
 
                             try
                             {
-                                tokenOutput = newToken.Decompile(this);
+                                statementText = statementToken.Decompile(this);
+                                // Hide the compiler-inserted 'return' token.
                                 if (CurrentTokenIndex + 1 < DeserializedTokens.Count &&
                                     PeekToken is EndOfScriptToken)
                                 {
-                                    var firstToken = newToken is DebugInfoToken ? lastStatementToken : newToken;
+                                    var firstToken = statementToken is DebugInfoToken ? lastStatementToken : statementToken;
                                     if (firstToken is ReturnToken)
                                     {
-                                        var lastToken = newToken is DebugInfoToken ? PreviousToken : CurrentToken;
-                                        if (lastToken is NothingToken || lastToken is ReturnNothingToken)
+                                        var lastToken = statementToken is DebugInfoToken ? PreviousToken : CurrentToken;
+                                        if (lastToken is NothingToken or ReturnNothingToken)
                                             _MustCommentStatement = true;
                                     }
                                 }
@@ -530,7 +534,7 @@ namespace UELib.Core
                                                   + UDecompilingState.Tabs
                                                   + "*/");
 
-                                tokenOutput = "/*@Error*/";
+                                statementText = "/*@Error*/";
 
                                 LibServices.LogService.SilentException(exception);
                             }
@@ -552,25 +556,27 @@ namespace UELib.Core
                                 _PreIncrementTabs = 0;
                             }
 
-                            if (_MustCommentStatement && UnrealConfig.SuppressComments)
-                                continue;
-
                             if (!UnrealConfig.SuppressComments)
                             {
                                 if (PreComment != string.Empty)
                                 {
-                                    tokenOutput = PreComment + (string.IsNullOrEmpty(tokenOutput)
-                                        ? tokenOutput
-                                        : "\r\n" + UDecompilingState.Tabs + tokenOutput);
+                                    output.Append("\r\n");
+                                    output.Append(UDecompilingState.Tabs);
+                                    output.Append(PreComment);
+                                    spewOutput = true;
 
                                     PreComment = string.Empty;
                                 }
 
                                 if (PostComment != string.Empty)
                                 {
-                                    tokenOutput += PostComment;
+                                    statementText += PostComment;
                                     PostComment = string.Empty;
                                 }
+                            }
+                            else if (_MustCommentStatement)
+                            {
+                                continue;
                             }
 
                             //Preprocess output==========
@@ -578,46 +584,51 @@ namespace UELib.Core
 #if DEBUG_HIDDENTOKENS
                                 if (tokenOutput.Length == 0) tokenOutput = ";";
 #endif
-#if DEBUG_TOKENPOSITIONS
-#endif
                                 // Previous did spew and this one spews? then a new line is required!
-                                if (tokenOutput != string.Empty)
+                                if (statementText != string.Empty)
                                 {
                                     // Spew before?
                                     if (spewOutput)
                                         output.Append("\r\n");
                                     else spewOutput = true;
                                 }
+                                else if (UnrealConfig.ShouldOutputTokenMemoryPosition)
+                                {
+                                    output.Append("\r\n");
+                                }
 
-#if DEBUG_TOKENPOSITIONS
                                 string orgTabs = UDecompilingState.Tabs;
-                                int spaces = Math.Max(3 * UnrealConfig.Indention.Length, 4);
-                                UDecompilingState.RemoveSpaces(spaces);
+                                if (UnrealConfig.ShouldOutputTokenMemoryPosition)
+                                {
+                                    int spaces = initTabs.Length + "(+000h 000h) ".Length;
+                                    UDecompilingState.RemoveSpaces(spaces);
+#if DEBUG_HIDDENTOKENS
+                                    var tokens = DeserializedTokens
+                                        .GetRange(tokenBeginIndex, tokenEndIndex - tokenBeginIndex + 1)
+                                        .Select(FormatTokenInfo);
+                                    string tokensInfo = string.Join(", ", tokens);
 
-                                var tokens = DeserializedTokens
-                                    .GetRange(tokenBeginIndex, tokenEndIndex - tokenBeginIndex + 1)
-                                    .Select(FormatTokenInfo);
-                                string tokensInfo = string.Join(", ", tokens);
-
-                                output.Append(UDecompilingState.Tabs);
-                                output.AppendLine($"  [{tokensInfo}] ");
-                                output.Append(UDecompilingState.Tabs);
-                                output.Append(
-                                    $"  (+{newToken.Position:X3}  {CurrentToken.Position + CurrentToken.Size:X3}) ");
+                                    output.Append(UDecompilingState.Tabs);
+                                    output.AppendLine($"  [{tokensInfo}] ");
 #endif
+                                    // Single indention.
+                                    output.Append(initTabs);
+                                    output.Append(
+                                        $"(+{statementToken.Position:X3}h {CurrentToken.Position + CurrentToken.Size:X3}h) ");
+
+                                    // Remove statement padding
+                                }
+
                                 if (spewOutput)
                                 {
+                                    output.Append(UDecompilingState.Tabs);
                                     if (_MustCommentStatement)
                                     {
-                                        output.Append(UDecompilingState.Tabs);
-                                        output.Append($"//{tokenOutput}");
+                                        output.Append("//");
                                         _MustCommentStatement = false;
                                     }
-                                    else
-                                    {
-                                        output.Append(UDecompilingState.Tabs);
-                                        output.Append(tokenOutput);
-                                    }
+
+                                    output.Append(statementText);
 
                                     // One of the decompiled tokens wanted to be ended.
                                     if (_CanAddSemicolon)
@@ -626,11 +637,13 @@ namespace UELib.Core
                                         _CanAddSemicolon = false;
                                     }
                                 }
-#if DEBUG_TOKENPOSITIONS
-                                UDecompilingState.Tabs = orgTabs;
-#endif
+
+                                if (UnrealConfig.ShouldOutputTokenMemoryPosition)
+                                {
+                                    UDecompilingState.Tabs = orgTabs;
+                                }
                             }
-                            lastStatementToken = newToken;
+                            lastStatementToken = statementToken;
                         }
 
                         //Postprocess output==========
