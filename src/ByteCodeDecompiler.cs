@@ -659,7 +659,11 @@ namespace UELib.Core
                             {
                                 if (PreComment != string.Empty)
                                 {
-                                    output.Append("\r\n");
+                                    if (spewOutput)
+                                    {
+                                        output.Append("\r\n");
+                                    }
+
                                     output.Append(UDecompilingState.Tabs);
                                     output.Append(PreComment);
                                     spewOutput = true;
@@ -739,6 +743,12 @@ namespace UELib.Core
 
                                 if (UnrealConfig.ShouldOutputTokenMemoryPosition)
                                 {
+                                    if (statementText.Length == 0)
+                                    {
+                                        output.Append("//");
+                                        output.Append(FormatTokenInfo(statementToken));
+                                    }
+
                                     UDecompilingState.Tabs = orgTabs;
                                 }
                             }
