@@ -123,11 +123,13 @@ UELib supports these kinds of content, but may vary from game to game:
 | Postal 2: Paradise Lost | 1417 | 118/002 | | ✅ |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | | ✅ | ✅ | ✅ |
 | Devastation | 600-? | 118-120/004-008 | | ✅ |
+| Dead Man's Hand | 2110 | 123/002 | | ✅ | ✅ | ✅ |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | | ✅ |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled | ✅ |
 | Desert Thunder | 2226 | 126/000 | | ✅ |
 | Marine Heavy Gunner: Vietnam | 2226 | 126/000 | | ✅ | ✅ | ✅ |
 | Land of the Dead: Road to Fiddler's Green | 2226 | 126/001 | | ✅ | ✅ | ✅ |
+| Netherworld: Beyond Time I Stand | 2226 | 127/002 | Bad property deserialization | ✅ | ✅ | ✅ |
 | Unreal Tournament 2004 | 3120-3369 | 128/029 | | ✅ | ✅ | ✅ |
 | Red Orchestra: Ostfront 41-45 | 3323-3369 | 128/029 | | ✅ | ✅ |
 | Killing Floor | 3369 | 128/029 | | ✅ | ✅ |
@@ -157,8 +159,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Bioshock 2 | 2226:Vengeance | 143/059 | | ✅ |
 | Advent Rising | 2226 | 143-146/007 | | ✅ | ✅ |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) | ✅ |
-| The Chronicles of Spellborn | 3323 | 159/029 | | ✅ |
-| Duke Nukem Forever (2011) | Unknown | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) | ✅ |
+| Duke Nukem Forever (2011) | Originally UE1 and upgraded to UE2&3 | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) | ✅ | ❌ | ✅ |
 |     |     |     |     |
 | **Unreal Engine 3**    |     |     |     | ✅ | ✅ | ✅ |
 |     |     |     |     |
