@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UELib.UnrealScript;
@@ -76,7 +77,7 @@ namespace UELib.Core
 
             // HACK: Start with a fresh scope.
             var oldState = UDecompilingState.s_inlinedSubObjects;
-            UDecompilingState.s_inlinedSubObjects = new Dictionary<UObject, bool>();
+            UDecompilingState.s_inlinedSubObjects = new ConcurrentDictionary<UObject, bool>(new Dictionary<UObject, bool>());
 
             try
             {

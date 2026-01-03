@@ -1,11 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UELib.Branch;
+using UELib.Flags;
 using UELib.IO;
 using UELib.ObjectModel.Annotations;
 using UELib.Services;
@@ -420,6 +418,8 @@ namespace UELib.Core
             {
                 // Resolve for byte property, so that we can re-construct the enum tag for older package builds.
                 PropertyType.ByteProperty => _PropertySource?.FindProperty<UByteProperty?>(Name),
+                // Resolve, so that we can check if the property has 'export'
+                PropertyType.ObjectProperty => _PropertySource?.FindProperty<UObjectProperty?>(Name),
                 PropertyType.StructProperty => _PropertySource?.FindProperty<UStructProperty?>(Name),
                 PropertyType.ArrayProperty => _PropertySource?.FindProperty<UArrayProperty?>(Name),
                 PropertyType.FixedArrayProperty => _PropertySource?.FindProperty<UFixedArrayProperty?>(Name),
@@ -625,8 +625,9 @@ namespace UELib.Core
                 case PropertyType.ComponentProperty:
                 case PropertyType.ObjectProperty:
                     {
-                        var constantObject = stream.ReadObject();
+                        var constantObject = stream.ReadObject<UObject?>();
                         stream.Record(nameof(constantObject), constantObject);
+
                         if (constantObject == null)
                         {
                             // =none
@@ -637,17 +638,25 @@ namespace UELib.Core
                         Debug.Assert(UDecompilingState.s_inlinedSubObjects != null,
                             "UDecompilingState.s_inlinedSubObjects != null");
 
-                        bool isPendingInline =
-                            UDecompilingState.s_inlinedSubObjects.TryGetValue(constantObject, out bool isInlined);
+                        bool isPendingInline = UDecompilingState
+                            .s_inlinedSubObjects
+                            .TryGetValue(constantObject, out bool isInlined);
+                        bool shouldExport = (property as UObjectProperty)?.HasPropertyFlag(PropertyFlag.ExportObject) == true;
                         // If the object is part of the current container, then it probably was an inlined declaration.
-                        bool shouldInline = constantObject.Outer == _TagSource
+                        bool shouldInline = (constantObject.Outer == _TagSource || shouldExport)
                                             && !isPendingInline
                                             && !isInlined;
                         if (shouldInline && (deserializeFlags & DeserializeFlags.Decompiling) != 0)
                         {
+                            // Preload if needed.
+                            if (constantObject.DeserializationState == 0)
+                            {
+                                constantObject.Load();
+                            }
+
                             if ((deserializeFlags & DeserializeFlags.WithinStruct) == 0)
                             {
-                                UDecompilingState.s_inlinedSubObjects.Add(constantObject, true);
+                                UDecompilingState.s_inlinedSubObjects.TryAdd(constantObject, true);
 
                                 propertyValue = constantObject.Decompile() + "\r\n";
 
@@ -666,7 +675,7 @@ namespace UELib.Core
                             }
 
                             // Within a struct, to be inlined later on!
-                            UDecompilingState.s_inlinedSubObjects.Add(constantObject, false);
+                            UDecompilingState.s_inlinedSubObjects.TryAdd(constantObject, false);
                             propertyValue = $"{Name}={constantObject.Name}";
 
                             break;

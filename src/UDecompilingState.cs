@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using UELib.Core;
 
 namespace UELib
@@ -12,9 +12,9 @@ namespace UELib
         /// <summary>
         /// Objects that have been inlined (if true) in the current decompiling state.
         ///
-        /// Internal because this is a hack patch to fix an issue where each object is inlined for every reference. 
+        /// Internal because this is a hack patch to fix an issue where each object is inlined for every reference.
         /// </summary>
-        internal static Dictionary<UObject, bool>? s_inlinedSubObjects = new Dictionary<UObject, bool>();
+        internal static ConcurrentDictionary<UObject, bool>? s_inlinedSubObjects = new();
 
         public static void AddTabs(int count)
         {
