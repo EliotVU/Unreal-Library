@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using UELib.Branch;
 using UELib.Core;
 using UELib.Flags;
 using UELib.ObjectModel.Annotations;
@@ -160,15 +161,19 @@ public sealed class UnrealPackageLinker
         if (crossObject == null)
         {
             LibServices.Trace("Attempting to find the missing object using the object redirector class for import {0}", import);
-
-            var objectRedirectorClass = PackageEnvironment.GetStaticClass(UnrealName.ObjectRedirector);
-
-            // Re-run the find operation, but with the object redirector class.
-            crossObject = PackageEnvironment.FindObject<UObject?>(objName, objectRedirectorClass, objOuter);
-            if (crossObject is UObjectRedirector objectRedirector)
+#if UE3
+            if (Package.Version >= (uint)PackageObjectLegacyVersion.UE3)
             {
-                crossObject = objectRedirector.Other;
+                var objectRedirectorClass = PackageEnvironment.GetStaticClass(UnrealName.ObjectRedirector);
+
+                // Re-run the find operation, but with the object redirector class.
+                crossObject = PackageEnvironment.FindObject<UObject?>(objName, objectRedirectorClass, objOuter);
+                if (crossObject is UObjectRedirector objectRedirector)
+                {
+                    crossObject = objectRedirector.Other;
+                }
             }
+#endif
         }
 
         if (crossObject != null)

@@ -23,14 +23,15 @@ namespace UELib.Branch.UE2.Lead
             //PropertyFlags[(int)PropertyFlag.] = 0x20000; // ??
         }
         
-        protected override void SetupSerializer(UnrealPackage linker)
+        protected override void SetupSerializer(UnrealPackage package)
         {
             SetupSerializer<PackageSerializerLead>();
         }
 
-        public override void PostDeserializeSummary(UnrealPackage linker, IUnrealStream stream, ref UnrealPackage.PackageFileSummary summary)
+        public override void PostDeserializeSummary(UnrealPackage package, IUnrealStream stream,
+            ref UnrealPackage.PackageFileSummary summary)
         {
-            base.PostDeserializeSummary(linker, stream, ref summary);
+            base.PostDeserializeSummary(package, stream, ref summary);
 
             summary.NameOffset += 4;
         }

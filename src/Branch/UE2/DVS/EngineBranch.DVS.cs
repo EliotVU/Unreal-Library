@@ -14,9 +14,9 @@ namespace UELib.Branch.UE2.DVS
         {
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
             tokenMap[0x05] = typeof(SwitchToken);
             tokenMap[0x12] = typeof(ClassContextToken);
             tokenMap[0x19] = typeof(ContextToken);

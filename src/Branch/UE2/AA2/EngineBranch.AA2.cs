@@ -15,20 +15,20 @@ namespace UELib.Branch.UE2.AA2
         {
         }
 
-        protected override void SetupSerializer(UnrealPackage linker)
+        protected override void SetupSerializer(UnrealPackage package)
         {
-            if (linker.LicenseeVersion < 33)
+            if (package.LicenseeVersion < 33)
             {
-                base.SetupSerializer(linker);
+                base.SetupSerializer(package);
                 return;
             }
 
             SetupSerializer<PackageSerializerAA2>();
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            if (linker.Build == GameBuild.BuildName.AA2_2_6)
+            if (package.Build == GameBuild.BuildName.AA2_2_6)
             {
                 var tokenMap = new TokenMap
                 {
@@ -126,7 +126,7 @@ namespace UELib.Branch.UE2.AA2
                 return tokenMap;
             }
 
-            if (linker.LicenseeVersion >= 33)
+            if (package.LicenseeVersion >= 33)
             {
                 var tokenMap = new TokenMap
                 {
@@ -226,12 +226,12 @@ namespace UELib.Branch.UE2.AA2
                 return tokenMap;
             }
 
-            return base.BuildTokenMap(linker);
+            return base.BuildTokenMap(package);
         }
 
-        public override void PostSerializePackage(UnrealPackage linker, IUnrealStream stream)
+        public override void PostSerializePackage(UnrealPackage package, IUnrealStream stream)
         {
-            base.PostSerializePackage(linker, stream);
+            base.PostSerializePackage(package, stream);
 
             if (stream.LicenseeVersion < 19) return;
 
@@ -245,11 +245,11 @@ namespace UELib.Branch.UE2.AA2
             }
         }
 
-        public override void PostDeserializeSummary(UnrealPackage linker,
+        public override void PostDeserializeSummary(UnrealPackage package,
             IUnrealStream stream,
             ref PackageFileSummary summary)
         {
-            base.PostDeserializeSummary(linker, stream, ref summary);
+            base.PostDeserializeSummary(package, stream, ref summary);
 
             // Note: Never true, AA2 is not a detected build for packages with LicenseeVersion 27 or less
             // But we'll preserve this nonetheless
@@ -261,14 +261,14 @@ namespace UELib.Branch.UE2.AA2
                 if (stream.LicenseeVersion >= 33)
                 {
                     var decoder = new CryptoDecoderAA2();
-                    linker.Archive.Decoder = decoder;
-                    linker.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
+                    package.Archive.Decoder = decoder;
+                    package.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
                 }
                 else
                 {
                     var decoder = new CryptoDecoderWithKeyAA2();
-                    linker.Archive.Decoder = decoder;
-                    linker.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
+                    package.Archive.Decoder = decoder;
+                    package.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
 
                     long nonePosition = summary.NameOffset;
                     stream.Seek(nonePosition, SeekOrigin.Begin);

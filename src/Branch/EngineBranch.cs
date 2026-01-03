@@ -97,35 +97,35 @@ namespace UELib.Branch
         /// <summary>
         /// Called right after the EngineBranch has been constructed.
         /// </summary>
-        public abstract void Setup(UnrealPackage linker);
+        public abstract void Setup(UnrealPackage package);
 
         /// <summary>
         /// Provides an opportunity to swap the serializer instance based on any linker's condition.
         /// </summary>
-        protected abstract void SetupSerializer(UnrealPackage linker);
+        protected abstract void SetupSerializer(UnrealPackage package);
 
         /// <summary>
         /// Provides an opportunity to swap the token factory instance based on any linker's condition.
         /// </summary>
-        protected virtual void SetupTokenFactory(UnrealPackage linker)
+        protected virtual void SetupTokenFactory(UnrealPackage package)
         {
             SetupTokenFactory<TokenFactory>(
-                BuildTokenMap(linker),
-                TokenFactory.FromPackage(linker.NTLPackage),
+                BuildTokenMap(package),
+                TokenFactory.FromPackage(package.NTLPackage),
                 (byte)ExprToken.ExtendedNative,
                 (byte)ExprToken.FirstNative);
         }
 
-        public TokenFactory GetTokenFactory(UnrealPackage linker)
+        public TokenFactory GetTokenFactory(UnrealPackage package)
         {
             if (_TokenFactory != null) return _TokenFactory;
-            SetupTokenFactory(linker);
+            SetupTokenFactory(package);
             // Sanity check for derived branches
             Debug.Assert(_TokenFactory != null, "Branch.TokenFactory cannot be null");
             return _TokenFactory;
         }
 
-        protected virtual TokenMap BuildTokenMap(UnrealPackage linker)
+        protected virtual TokenMap BuildTokenMap(UnrealPackage package)
         {
             return new TokenMap();
         }
@@ -133,16 +133,16 @@ namespace UELib.Branch
         /// <summary>
         /// Called right after the <see cref="UnrealPackage.PackageFileSummary"/> has been serialized.
         /// </summary>
-        /// <param name="linker"></param>
+        /// <param name="package"></param>
         /// <param name="stream">the output stream.</param>
         /// <param name="summary">A reference to the deserialized summary.</param>
-        public virtual void PostSerializeSummary(UnrealPackage linker,
+        public virtual void PostSerializeSummary(UnrealPackage package,
             IUnrealStream stream,
             ref UnrealPackage.PackageFileSummary summary)
         {
             if (Serializer == null)
             {
-                SetupSerializer(linker);
+                SetupSerializer(package);
             }
 
             stream.Serializer = Serializer;
@@ -151,16 +151,16 @@ namespace UELib.Branch
         /// <summary>
         /// Called right after the <see cref="UnrealPackage.PackageFileSummary"/> has been deserialized.
         /// </summary>
-        /// <param name="linker"></param>
+        /// <param name="package"></param>
         /// <param name="stream">the input stream.</param>
         /// <param name="summary">A reference to the deserialized summary.</param>
-        public virtual void PostDeserializeSummary(UnrealPackage linker,
+        public virtual void PostDeserializeSummary(UnrealPackage package,
             IUnrealStream stream,
             ref UnrealPackage.PackageFileSummary summary)
         {
             if (Serializer == null)
             {
-                SetupSerializer(linker);
+                SetupSerializer(package);
             }
 
             stream.Serializer = Serializer;
@@ -169,18 +169,18 @@ namespace UELib.Branch
         /// <summary>
         /// Called right after the package's tables (Names, Imports, and Exports, etc) have been serialized.
         /// </summary>
-        /// <param name="linker"></param>
+        /// <param name="package"></param>
         /// <param name="stream">the output stream.</param>
-        public virtual void PostSerializePackage(UnrealPackage linker, IUnrealStream stream)
+        public virtual void PostSerializePackage(UnrealPackage package, IUnrealStream stream)
         {
         }
 
         /// <summary>
         /// Called right after the package's tables (Names, Imports, and Exports, etc) have been deserialized.
         /// </summary>
-        /// <param name="linker"></param>
+        /// <param name="package"></param>
         /// <param name="stream">the input stream.</param>
-        public virtual void PostDeserializePackage(UnrealPackage linker, IUnrealStream stream)
+        public virtual void PostDeserializePackage(UnrealPackage package, IUnrealStream stream)
         {
         }
     }

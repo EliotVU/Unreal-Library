@@ -124,15 +124,15 @@ namespace UELib.Branch
         {
         }
 
-        public override void Setup(UnrealPackage linker)
+        public override void Setup(UnrealPackage package)
         {
-            SetupEnumPackageFlags(linker);
-            SetupEnumObjectFlags(linker);
-            SetupEnumPropertyFlags(linker);
-            SetupEnumStructFlags(linker);
-            SetupEnumFunctionFlags(linker);
-            SetupEnumStateFlags(linker);
-            SetupEnumClassFlags(linker);
+            SetupEnumPackageFlags(package);
+            SetupEnumObjectFlags(package);
+            SetupEnumPropertyFlags(package);
+            SetupEnumStructFlags(package);
+            SetupEnumFunctionFlags(package);
+            SetupEnumStateFlags(package);
+            SetupEnumClassFlags(package);
         }
 
         protected virtual void SetupEnumPackageFlags(UnrealPackage linker)
@@ -575,7 +575,7 @@ namespace UELib.Branch
             }
         }
 
-        protected override void SetupSerializer(UnrealPackage linker)
+        protected override void SetupSerializer(UnrealPackage package)
         {
             SetupSerializer<DefaultPackageSerializer>();
         }
@@ -587,7 +587,7 @@ namespace UELib.Branch
         /// FYI: Any version is not actually correct, in most cases changes that have been made to the UnrealScript byte-code are not versioned.
         /// -- Any version here is an approximation that works best for most packages.
         /// </summary>
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
             var tokenMap = new TokenMap((byte)ExprToken.ExtendedNative)
             {
@@ -606,7 +606,7 @@ namespace UELib.Branch
                 { 0x0C, typeof(LabelTableToken) },
                 { 0x0D, typeof(GotoLabelToken) },
                 {
-                    0x0E, linker.Version < 62
+                    0x0E, package.Version < 62
                         // Serialized but never emitted, must have been a really old expression.
                         ? typeof(ValidateObjectToken)
                         : typeof(EatStringToken)
@@ -616,22 +616,22 @@ namespace UELib.Branch
 
                 // Bad expr in UE1 v61
                 {
-                    0x11, linker.Version < 62
+                    0x11, package.Version < 62
                         ? typeof(BadToken)
                         : typeof(NewToken)
                 },
                 { 0x12, typeof(ClassContextToken) },
                 { 0x13, typeof(MetaClassCastToken) },
                 {
-                    0x14, linker.Version < 62
+                    0x14, package.Version < 62
                         ? typeof(BeginFunctionToken)
                         : typeof(LetBoolToken)
                 },
                 {
-                    0x15, linker.Version < 62
+                    0x15, package.Version < 62
                         ? typeof(EndOfScriptToken)
                         // Attested in UE2 builds such as Unreal2 and Unreal2XMP, but not in any UE1 or UE2.5 builds, nor RS3 (UE2)
-                        : linker.Version < (uint)PackageObjectLegacyVersion.UE3
+                        : package.Version < (uint)PackageObjectLegacyVersion.UE3
                             ? typeof(LineNumberToken)
                             : typeof(BadToken)
                 },
@@ -657,7 +657,7 @@ namespace UELib.Branch
                 { 0x29, typeof(NativeParameterToken) },
                 { 0x2A, typeof(NoObjectToken) },
                 {
-                    0x2B, linker.Version < (uint)PackageObjectLegacyVersion.CastStringSizeTokenDeprecated
+                    0x2B, package.Version < (uint)PackageObjectLegacyVersion.CastStringSizeTokenDeprecated
                         ? typeof(ResizeStringToken)
                         : typeof(BadToken)
                 },
@@ -670,17 +670,17 @@ namespace UELib.Branch
                 { 0x32, typeof(StructCmpEqToken) },
                 { 0x33, typeof(StructCmpNeToken) },
                 {
-                    0x34, linker.Version < 62
+                    0x34, package.Version < 62
                         // Actually a StructConstToken but is not implemented in the VM.
                         ? typeof(BadToken)
                         : typeof(UnicodeStringConstToken)
                 },
                 {
-                    0x35, linker.Version < 62
+                    0x35, package.Version < 62
                         ? typeof(BadToken)
                         // Defined and emitted but ignored by the VM in UE2,
                         // -- however some builds do serialize this token, so we'll keep it
-                        : linker.Build == BuildGeneration.UE2
+                        : package.Build == BuildGeneration.UE2
                             ? typeof(RangeConstToken)
                             : typeof(BadToken)
                 },
@@ -693,7 +693,7 @@ namespace UELib.Branch
 
                 // PrimitiveCast:ByteToInt (UE1)
                 {
-                    0x3A, linker.Version < (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded
+                    0x3A, package.Version < (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded
                         ? typeof(BadToken) // will be overridden down if UE1
                         : typeof(ReturnNothingToken)
                 },
@@ -748,20 +748,20 @@ namespace UELib.Branch
                 { 0x5F, typeof(BadToken) },
             };
 
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayTokensAdded)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayTokensAdded)
             {
                 tokenMap[0x10] = typeof(DynamicArrayElementToken);
                 // Added in a later engine build, but some UE1 games (or special builds) do allow this token.
                 tokenMap[0x37] = typeof(DynamicArrayLengthToken);
             }
 
-            if (linker.Version < (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded)
+            if (package.Version < (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded)
             {
                 DowngradePrimitiveCasts(tokenMap);
             }
             else
             {
-                if (linker.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayInsertTokenAdded)
+                if (package.Version >= (uint)PackageObjectLegacyVersion.DynamicArrayInsertTokenAdded)
                 {
                     // Beware! these will be shifted down, see UnshiftTokens3
                     tokenMap[0x40] = typeof(DynamicArrayInsertToken);
@@ -775,11 +775,11 @@ namespace UELib.Branch
             }
 #if UE3
             // RangeConst was deprecated to add new tokens, and as a result all op codes past it were shifted around.
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.RangeConstTokenDeprecated)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.RangeConstTokenDeprecated)
                 UnshiftTokens3(tokenMap);
 #endif
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
-            switch (linker.Build.Name)
+            switch (package.Build.Name)
             {
 #if BIOSHOCK
                 case UnrealPackage.GameBuild.BuildName.BioShock:
@@ -900,13 +900,13 @@ namespace UELib.Branch
             tokenMap[0x5A] = typeof(FilterEditorOnlyToken);
         }
 #endif
-        public override void PostDeserializePackage(UnrealPackage linker, IUnrealStream stream)
+        public override void PostDeserializePackage(UnrealPackage package, IUnrealStream stream)
         {
-            base.PostDeserializePackage(linker, stream);
+            base.PostDeserializePackage(package, stream);
 #if BULLETSTORM
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm_FCE)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm_FCE)
             {
-                linker.AddClassType("CppCopyStructProperty", typeof(UStructProperty));
+                package.AddClassType("CppCopyStructProperty", typeof(UStructProperty));
             }
 #endif
         }

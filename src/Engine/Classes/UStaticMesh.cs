@@ -32,7 +32,7 @@ public class UStaticMesh : UPrimitive
 
         public void Deserialize(IUnrealStream stream)
         {
-            Material = stream.ReadObject<UObject>();
+            Material = stream.ReadObject<UObject?>();
             EnableCollision = stream.ReadIndex() > 0;
             _OldEnableCollision = stream.ReadIndex() > 0;
         }
@@ -47,8 +47,6 @@ public class UStaticMesh : UPrimitive
 
     public override void Deserialize(IUnrealStream stream)
     {
-        base.Deserialize(stream);
-
         if (stream.Version >= 85)
         {
             // Inherit from UPrimitive::Deserialize
@@ -65,8 +63,6 @@ public class UStaticMesh : UPrimitive
 
     public override void Serialize(IUnrealStream stream)
     {
-        base.Serialize(stream);
-
         if (stream.Version >= 85)
         {
             // Inherit from UPrimitive::Serialize

@@ -9,9 +9,9 @@ namespace UELib.Branch.UE3.APB
         {
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            if (linker.LicenseeVersion < 32) return base.BuildTokenMap(linker);
+            if (package.LicenseeVersion < 32) return base.BuildTokenMap(package);
 
             // FIXME: Incomplete
             var tokenMap = new TokenMap

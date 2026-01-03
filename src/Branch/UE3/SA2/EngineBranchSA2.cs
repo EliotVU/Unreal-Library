@@ -10,9 +10,9 @@ namespace UELib.Branch.UE3.SA2
         {
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
 
             tokenMap[0x2B] = typeof(Int64ConstToken);
             tokenMap[0x4C] = typeof(Tokens.DelegateFunctionToken);

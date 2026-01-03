@@ -80,7 +80,7 @@ public sealed class UnrealPackageEnvironment : IDisposable
     }
 
     // TODO: Source generator
-    private static IEnumerable<(Type, UnrealClassAttribute)> GetRegisteredClassAttributes(Assembly assembly)
+    internal static IEnumerable<(Type, UnrealClassAttribute)> GetUnrealClassAttributes(Assembly assembly)
     {
         var types = assembly
             .GetExportedTypes()
@@ -140,7 +140,7 @@ public sealed class UnrealPackageEnvironment : IDisposable
         ArgumentNullException.ThrowIfNull(classesAssembly);
 #endif
 
-        var staticClassesInfo = GetRegisteredClassAttributes(classesAssembly).ToList();
+        var staticClassesInfo = GetUnrealClassAttributes(classesAssembly).ToList();
         Debug.Assert(staticClassesInfo.Any());
 
         AddUnrealClasses(staticClassesInfo);

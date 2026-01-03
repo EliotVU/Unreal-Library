@@ -213,7 +213,7 @@ public static class UnrealStreamImplementations
     public static int ReadIndex(this IUnrealStream stream) => stream.UR.ReadIndex();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static UObject ReadObject(this IUnrealStream stream) => stream.ReadObject<UObject?>();
+    public static UObject? ReadObject(this IUnrealStream stream) => stream.ReadObject<UObject?>();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T ReadObject<T>(this IUnrealStream stream)

@@ -12,7 +12,7 @@ public class CTEngineBranch(BuildGeneration generation) : DefaultEngineBranch(ge
         PropertyFlags[(int)PropertyFlag.DuplicateTransient] = 0x00; // Disable, collides with Static
     }
 
-    protected override void SetupSerializer(UnrealPackage linker) => SetupSerializer<CTPackageSerializer>();
+    protected override void SetupSerializer(UnrealPackage package) => SetupSerializer<CTPackageSerializer>();
 
     [Flags]
     public enum CTPropertyFlags : uint

@@ -19,11 +19,11 @@ public class EonEngineBranch(BuildGeneration generation) : DefaultEngineBranch(g
         PropertyFlags[(int)PropertyFlag.DuplicateTransient] = 0x00; // 0x00200000U = Saved
     }
 
-    protected override void SetupSerializer(UnrealPackage linker) => SetupSerializer<EonPackageSerializer>();
+    protected override void SetupSerializer(UnrealPackage package) => SetupSerializer<EonPackageSerializer>();
 
-    protected override TokenMap BuildTokenMap(UnrealPackage linker)
+    protected override TokenMap BuildTokenMap(UnrealPackage package)
     {
-        var tokenMap = base.BuildTokenMap(linker);
+        var tokenMap = base.BuildTokenMap(package);
 
         tokenMap[0x00] = typeof(LocalVariableToken);
         tokenMap[0x01] = typeof(InstanceVariableToken);

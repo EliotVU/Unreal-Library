@@ -39,10 +39,10 @@ public class EngineBranchUE4 : EngineBranch
     /// <summary>
     ///     We re-map all PackageFlags because they are no longer a match with those of UE3 or older.
     /// </summary>
-    public override void Setup(UnrealPackage linker)
+    public override void Setup(UnrealPackage package)
     {
-        SetupEnumPackageFlags(linker);
-        SetupEnumObjectFlags(linker);
+        SetupEnumPackageFlags(package);
+        SetupEnumObjectFlags(package);
         //SetupEnumPropertyFlags(linker);
         //SetupEnumStructFlags(linker);
         //SetupEnumFunctionFlags(linker);
@@ -83,9 +83,9 @@ public class EngineBranchUE4 : EngineBranch
 #endif
     }
 
-    protected override void SetupSerializer(UnrealPackage linker) => SetupSerializer<PackageSerializerUE4>();
+    protected override void SetupSerializer(UnrealPackage package) => SetupSerializer<PackageSerializerUE4>();
 
-    protected override TokenMap BuildTokenMap(UnrealPackage linker)
+    protected override TokenMap BuildTokenMap(UnrealPackage package)
     {
         var tokenMap = new TokenMap { { 0x00, typeof(LocalVariableToken) } };
 

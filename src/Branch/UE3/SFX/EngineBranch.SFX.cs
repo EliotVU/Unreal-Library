@@ -12,29 +12,29 @@ namespace UELib.Branch.UE3.SFX
         {
         }
 
-        public override void Setup(UnrealPackage linker)
+        public override void Setup(UnrealPackage package)
         {
-            base.Setup(linker);
+            base.Setup(package);
 
             // FIXME: Temporary workaround
-            if (linker.LicenseeVersion == 1008)
+            if (package.LicenseeVersion == 1008)
             {
-                linker.Summary.LicenseeVersion = 112;
+                package.Summary.LicenseeVersion = 112;
             }
         }
 
-        protected override void SetupSerializer(UnrealPackage linker)
+        protected override void SetupSerializer(UnrealPackage package)
         {
             SetupSerializer<PackageSerializerSFX>();
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
 
             // Xenon
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.ME1 &&
-                linker.Version == 391 && linker.LicenseeVersion == 92)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.ME1 &&
+                package.Version == 391 && package.LicenseeVersion == 92)
             {
                 tokenMap[0x4A] = typeof(StringRefConstToken);
                 tokenMap[0x4B] = typeof(DynamicArrayAddToken);
@@ -42,7 +42,7 @@ namespace UELib.Branch.UE3.SFX
 
             tokenMap[0x4F] = typeof(StringRefConstToken);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.ME1)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.ME1)
             {
                 return tokenMap;
             }
@@ -73,20 +73,20 @@ namespace UELib.Branch.UE3.SFX
             return tokenMap;
         }
 
-        protected override void SetupTokenFactory(UnrealPackage linker)
+        protected override void SetupTokenFactory(UnrealPackage package)
         {
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.ME1)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.ME1)
             {
-                base.SetupTokenFactory(linker);
+                base.SetupTokenFactory(package);
 
                 return;
             }
 
-            var tokenMap = BuildTokenMap(linker);
+            var tokenMap = BuildTokenMap(package);
 
             SetupTokenFactory<TokenFactory>(
                 tokenMap,
-                TokenFactory.FromPackage(linker.NTLPackage),
+                TokenFactory.FromPackage(package.NTLPackage),
                 0x70,
                 0x80);
         }

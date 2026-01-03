@@ -9,11 +9,11 @@ namespace UELib.Branch.UE2.ShadowStrike
         {
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.SCDA_Online)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.SCDA_Online)
             {
                 // TODO: All tokens
                 tokenMap[0x28] = typeof(UStruct.UByteCodeDecompiler.NativeParameterToken);
@@ -22,7 +22,7 @@ namespace UELib.Branch.UE2.ShadowStrike
             return tokenMap;
         }
 
-        protected override void SetupSerializer(UnrealPackage linker)
+        protected override void SetupSerializer(UnrealPackage package)
         {
             SetupSerializer<PackageSerializerShadowStrike>();
         }

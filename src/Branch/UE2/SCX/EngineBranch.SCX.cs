@@ -6,11 +6,11 @@
         {
         }
 
-        protected override void SetupSerializer(UnrealPackage linker)
+        protected override void SetupSerializer(UnrealPackage package)
         {
-            if (linker.LicenseeVersion < 85)
+            if (package.LicenseeVersion < 85)
             {
-                base.SetupSerializer(linker);
+                base.SetupSerializer(package);
                 return;
             }
 

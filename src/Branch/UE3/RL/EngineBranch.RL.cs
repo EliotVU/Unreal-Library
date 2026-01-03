@@ -17,11 +17,11 @@ namespace UELib.Branch.UE3.RL
         {
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            if (linker.LicenseeVersion < 32)
+            if (package.LicenseeVersion < 32)
             {
-                return base.BuildTokenMap(linker);
+                return base.BuildTokenMap(package);
             }
 
             var tokenMap = new TokenMap((byte)ExprToken.ExtendedNative)
@@ -144,12 +144,12 @@ namespace UELib.Branch.UE3.RL
             return tokenMap;
         }
 
-        protected override void SetupTokenFactory(UnrealPackage linker)
+        protected override void SetupTokenFactory(UnrealPackage package)
         {
-            var tokenMap = BuildTokenMap(linker);
+            var tokenMap = BuildTokenMap(package);
             SetupTokenFactory<TokenFactory>(
                 tokenMap,
-                TokenFactory.FromPackage(linker.NTLPackage),
+                TokenFactory.FromPackage(package.NTLPackage),
                 0x70,
                 0x80);
         }

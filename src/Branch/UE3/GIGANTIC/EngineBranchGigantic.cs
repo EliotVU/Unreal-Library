@@ -23,16 +23,16 @@ namespace UELib.Branch.UE3.GIGANTIC
         {
         }
 
-        public override void PostDeserializePackage(UnrealPackage linker, IUnrealStream stream)
+        public override void PostDeserializePackage(UnrealPackage package, IUnrealStream stream)
         {
-            base.PostDeserializePackage(linker, stream);
+            base.PostDeserializePackage(package, stream);
 
-            linker.AddClassType("JsonNodeRoot", typeof(UJsonNodeRoot));
+            package.AddClassType("JsonNodeRoot", typeof(UJsonNodeRoot));
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
             tokenMap[0x4D] = typeof(JsonRefVariableToken);
 
             return tokenMap;

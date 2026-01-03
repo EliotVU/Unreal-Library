@@ -10,9 +10,9 @@ namespace UELib.Branch.UE3.MOH
         {
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
             // FIXME: Incomplete
             var newTokenMap = new TokenMap
             {

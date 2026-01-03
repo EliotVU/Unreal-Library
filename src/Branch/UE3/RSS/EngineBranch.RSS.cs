@@ -62,14 +62,14 @@ namespace UELib.Branch.UE3.RSS
             }
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
 
             // Identical to ContextToken and ClassContextToken. Spotted in BM 1, 2, and 4
             tokenMap[0x50] = typeof(RSSContextToken);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Batman4)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
                 // FIXME: NameConst but without the Int32 number at the end
                 tokenMap[0x2B] = typeof(NameConstNoNumberToken);

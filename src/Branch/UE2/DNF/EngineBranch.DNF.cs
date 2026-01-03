@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using UELib.Branch.UE2.DNF.Tokens;
 using UELib.Core;
 using UELib.Core.Tokens;
 using UELib.Flags;
+using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
 
@@ -173,18 +176,64 @@ namespace UELib.Branch.UE2.DNF
                 { 0x7F, typeof(BadToken) }
             };
 
-        protected override void SetupTokenFactory(UnrealPackage linker)
+        protected override void SetupTokenFactory(UnrealPackage package)
         {
-            var tokenMap = BuildTokenMap(linker);
+            var tokenMap = BuildTokenMap(package);
             // DNF uses UE1 casting byte-codes (probably because under the hood the engine was upgraded from UE1 to UE2)
             DowngradePrimitiveCasts(tokenMap);
             // Undo downgrade, now this raises the question, which byte-code is set for DelegateToString if there is one?
             tokenMap[(byte)CastToken.DelegateToString] = typeof(DynamicArrayLengthToken);
             SetupTokenFactory<TokenFactory>(
                 tokenMap,
-                TokenFactory.FromPackage(linker.NTLPackage),
+                TokenFactory.FromPackage(package.NTLPackage),
                 0x80,
                 0x90);
+        }
+
+        public override void PostDeserializePackage(UnrealPackage package, IUnrealStream stream)
+        {
+            base.PostDeserializePackage(package, stream);
+
+            var environment = package.Environment;
+            var packageStaticClass = environment.GetStaticClass<UPackage>();
+            if (packageStaticClass.Outer?.Name != UnrealName.Core)
+            {
+                return;
+            }
+
+            // Point the root to /Engine/
+            packageStaticClass.Outer.Name = UnrealName.Engine;
+
+            // Add a copy of every /Core/ class to /Engine/
+            // TODO: Find a less wasteful solution to this problem.
+            var libClasses = UnrealPackageEnvironment
+                .GetUnrealClassAttributes(Assembly.GetExecutingAssembly())
+                .Where(tuple =>
+                {
+                    var (internalClassType, classAttribute) = tuple;
+
+                    var packageName = classAttribute.ClassPackageName.IsNone()
+                        ? internalClassType.Namespace != null
+                            ? new UName(internalClassType.Namespace.Substring(internalClassType.Namespace.LastIndexOf('.') + 1))
+                            : UnrealName.Core
+                        : classAttribute.ClassPackageName;
+
+                    return packageName == UnrealName.Core;
+                })
+                .Select(tuple =>
+                {
+                    tuple.Item2 = new UnrealClassAttribute(
+                        tuple.Item2.ClassName,
+                        UnrealName.Engine,
+                        tuple.Item2.SuperClassName,
+                        tuple.Item2.InternalClassFlags,
+                        tuple.Item2.ClassFlags);
+
+                    return tuple;
+                })
+                .ToList();
+
+            environment.AddUnrealClasses(libClasses);
         }
     }
 }

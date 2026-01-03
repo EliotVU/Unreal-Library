@@ -20,17 +20,17 @@ namespace UELib.Branch.UE3.Willow
 
         // TODO: AttributeNotify flag?
 
-        public override void PostDeserializePackage(UnrealPackage linker, IUnrealStream stream)
+        public override void PostDeserializePackage(UnrealPackage package, IUnrealStream stream)
         {
-            base.PostDeserializePackage(linker, stream);
+            base.PostDeserializePackage(package, stream);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
-                linker.Build == UnrealPackage.GameBuild.BuildName.ACM)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                package.Build == UnrealPackage.GameBuild.BuildName.ACM)
             {
-                linker.AddClassType("ByteAttributeProperty", typeof(UByteAttributeProperty));
-                linker.AddClassType("FloatAttributeProperty", typeof(UFloatAttributeProperty));
-                linker.AddClassType("IntAttributeProperty", typeof(UIntAttributeProperty));
+                package.AddClassType("ByteAttributeProperty", typeof(UByteAttributeProperty));
+                package.AddClassType("FloatAttributeProperty", typeof(UFloatAttributeProperty));
+                package.AddClassType("IntAttributeProperty", typeof(UIntAttributeProperty));
             }
         }
 
@@ -46,26 +46,26 @@ namespace UELib.Branch.UE3.Willow
             }
         }
 
-        protected override TokenMap BuildTokenMap(UnrealPackage linker)
+        protected override TokenMap BuildTokenMap(UnrealPackage package)
         {
-            var tokenMap = base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(package);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.Borderlands)
             {
                 // Replaces DynamicArraySortToken
                 tokenMap[0x59] = typeof(AttributeVariableToken);
                 // Replaces FilterEditorOnlyToken
                 tokenMap[0x5A] = typeof(LetAttributeToken);
             }
-            else if (linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE)
+            else if (package.Build == UnrealPackage.GameBuild.BuildName.Borderlands_GOTYE)
             {
                 tokenMap[0x5B] = typeof(AttributeVariableToken);
                 tokenMap[0x5C] = typeof(LetAttributeToken);
             }
             else if (
-                linker.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
-                linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
-                linker.Build == UnrealPackage.GameBuild.BuildName.ACM)
+                package.Build == UnrealPackage.GameBuild.BuildName.Borderlands2 ||
+                package.Build == UnrealPackage.GameBuild.BuildName.Battleborn ||
+                package.Build == UnrealPackage.GameBuild.BuildName.ACM)
             {
                 tokenMap[0x4C] = typeof(LocalVariableToken<int>);
                 tokenMap[0x4D] = typeof(LocalVariableToken<float>);
@@ -80,7 +80,7 @@ namespace UELib.Branch.UE3.Willow
                 tokenMap[0x5F] = typeof(LetAttributeToken);
             }
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.Battleborn)
             {
                 // 0x5A = FilterEditorOnlyToken
                 tokenMap[0x5B] = typeof(ScriptConversionConstToken);

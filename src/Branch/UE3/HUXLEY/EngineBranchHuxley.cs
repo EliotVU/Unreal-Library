@@ -15,18 +15,19 @@ namespace UELib.Branch.UE3.HUXLEY
         {
         }
 
-        public override void PostDeserializeSummary(UnrealPackage linker, IUnrealStream stream, ref UnrealPackage.PackageFileSummary summary)
+        public override void PostDeserializeSummary(UnrealPackage package, IUnrealStream stream,
+            ref UnrealPackage.PackageFileSummary summary)
         {
-            base.PostDeserializeSummary(linker, stream, ref summary);
+            base.PostDeserializeSummary(package, stream, ref summary);
 
             if (summary.PackageFlags.HasFlags((uint)PackageFlags.UseCrypt))
             {
-                var decoder = linker.Summary.LicenseeVersion >= 23
-                    ? new CryptoDecoderHuxley(linker.PackageName)
-                    : new CryptoDecoderHuxley(linker.Summary.Guid.A);
+                var decoder = package.Summary.LicenseeVersion >= 23
+                    ? new CryptoDecoderHuxley(package.PackageName)
+                    : new CryptoDecoderHuxley(package.Summary.Guid.A);
 
-                linker.Archive.Decoder = decoder;
-                linker.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
+                package.Archive.Decoder = decoder;
+                package.Stream.SwapReaderBaseStream(new EncodedStream(stream.UR._BaseReader.BaseStream, decoder));
             }
         }
     }
