@@ -1,6 +1,5 @@
 using System.Diagnostics.Contracts;
-using System.IO;
-using System.Linq;
+using Microsoft.Extensions.FileSystemGlobbing;
 using UELib.Core;
 using UELib.Services;
 
@@ -11,10 +10,10 @@ public interface IUnrealPackageProvider
     /// <summary>
     ///     Resolves and returns a package by name, using the provided linker to resolve any dependencies.
     /// </summary>
-    /// <param name="packageName">The package name to look for (may include the relative path)</param>
+    /// <param name="packageName">The package name to look for (may include the relative path to root e.g. "/Script/Engine")</param>
     /// <param name="packageLinker">The linker to use to retrieve or construct (and load the <see cref="UPackage"/>) instance.</param>
     /// <returns>The constructed and (possibly) loaded <see cref="UPackage"/>.</returns>
-    public UPackage GetPackage(string packageName, UnrealPackageLinker packageLinker);
+    public UPackage GetPackage(in UName packageName, UnrealPackageLinker packageLinker);
 }
 
 public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
@@ -22,18 +21,12 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
     private readonly string[] _Directories;
     private readonly string[] _PackageExtensions;
 
+    private Dictionary<UName, List<string>>? _VirtualFileIndex;
+
     public UnrealFilePackageProvider(string[] directories, string[] packageExtensions)
     {
         _Directories = directories;
         _PackageExtensions = packageExtensions;
-
-        foreach (string extension in _PackageExtensions)
-        {
-            Contract.Assert(
-                extension.StartsWith("."),
-                $"Invalid extension '{extension}' passed to package provider."
-            );
-        }
 
         foreach (string directory in _Directories)
         {
@@ -42,19 +35,27 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
                 $"Invalid directory '{directory}' passed to package provider."
             );
         }
+
+        // Include all extensions for any file.
+        foreach (string extension in packageExtensions)
+        {
+            Contract.Assert(
+                extension.StartsWith("."),
+                $"Invalid extension '{extension}' passed to package provider."
+            );
+        }
     }
 
-    public UPackage GetPackage(string packageName, UnrealPackageLinker sourceLinker)
+    /// <inheritdoc/>
+    public UPackage GetPackage(in UName packageName, UnrealPackageLinker sourceLinker)
     {
         if (_Directories.Length == 0)
         {
-            return sourceLinker.GetRootPackage(new UName(packageName));
+            return sourceLinker.GetRootPackage(packageName);
         }
 
-        // Build search patterns for each extension, e.g. "Core.u", "Core.upk"
-        string[] patterns = _PackageExtensions
-                            .Select(ext => packageName + ext)
-                            .ToArray();
+        // Make all directories accessible.
+        _VirtualFileIndex ??= BuildIndex(_Directories, _PackageExtensions);
 
         LibServices.Trace(
             "Scanning directories [{0}] for external package '{1}' invoked by package {2}",
@@ -63,38 +64,26 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
             sourceLinker.Package.RootPackage
         );
 
-        foreach (string root in _Directories)
+        if (TryResolve(_VirtualFileIndex, packageName, out string filePath))
         {
-            foreach (string pattern in patterns)
-            {
-                // Search recursively for files matching the pattern
-                var files = Directory.EnumerateFiles(root, pattern, SearchOption.AllDirectories);
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var otherPackage = new UnrealPackage(fileStream, filePath, sourceLinker.PackageEnvironment);
 
-                string? filePath = files.FirstOrDefault();
-                if (filePath == null)
-                {
-                    continue;
-                }
+            LibServices.Trace("Found import package '{0}' at '{1}'", packageName, filePath);
 
-                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var otherPackage = new UnrealPackage(fileStream, filePath, sourceLinker.PackageEnvironment);
+            var otherRootPackage = otherPackage.RootPackage;
+            otherRootPackage.Package = otherPackage;
 
-                LibServices.Trace("Found import package '{0}' at '{1}'", packageName, filePath);
+            otherPackage.NTLPackage = sourceLinker.Package.NTLPackage;
 
-                var otherRootPackage = otherPackage.RootPackage;
-                otherRootPackage.Package = otherPackage;
+            // Load the package's header and tables
+            otherPackage.Deserialize();
 
-                otherPackage.NTLPackage = sourceLinker.Package.NTLPackage;
+            otherPackage.Linker.EventEmitter = sourceLinker.EventEmitter;
+            // TODO: We shouldn't have to do this, instead we should retrieve the dependency and lazy-link it as well.
+            otherPackage.InitializePackage(this);
 
-                // Load the package's header and tables
-                otherPackage.Deserialize();
-
-                otherPackage.Linker.EventEmitter = sourceLinker.EventEmitter;
-                // TODO: We shouldn't have to do this, instead we should retrieve the dependency and lazy-link it as well.
-                otherPackage.InitializePackage(this);
-
-                return otherRootPackage;
-            }
+            return otherRootPackage;
         }
 
         LibServices.Debug("Couldn't find import package '{0}'", packageName);
@@ -103,6 +92,54 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
             LibServices.Debug("  Searched in '{0}'", directory);
         }
 
-        return sourceLinker.GetRootPackage(new UName(packageName));
+        return sourceLinker.GetRootPackage(packageName);
+    }
+
+    private static Dictionary<UName, List<string>> BuildIndex(
+        string[] directoryRoots,
+        string[] includeExtensions)
+    {
+        var index = new Dictionary<UName, List<string>>();
+
+        var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+        // **/*.{u,upk,etc}
+        //string fileGlobPattern = $"**/*.{{{string.Join(",", includeExtensions.Select(e => e.Substring(1)))}}}";
+        //matcher.AddInclude(fileGlobPattern);
+        matcher.AddIncludePatterns(includeExtensions.Select(ext => $"**/*{ext}"));
+
+        foreach (string directoryRoot in directoryRoots)
+        {
+            var files = matcher.GetResultsInFullPath(directoryRoot);
+            foreach (string file in files)
+            {
+                var key = new UName(Path.GetFileNameWithoutExtension(file));
+                if (!index.TryGetValue(key, out var list))
+                {
+                    list = [];
+                    index[key] = list;
+                }
+
+                list.Add(file);
+            }
+        }
+
+        return index;
+    }
+
+    private static bool TryResolve(
+        Dictionary<UName, List<string>> index,
+        in UName packageName,
+        out string resolvedPath)
+    {
+        if (!index.TryGetValue(packageName, out var matches))
+        {
+            resolvedPath = null;
+            return false;
+        }
+
+        // Policy decision:
+        // pick first, shortest, preferred folder, etc.
+        resolvedPath = matches[0];
+        return true;
     }
 }

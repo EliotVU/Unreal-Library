@@ -6,6 +6,7 @@
   <!-- Core UELib -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.1" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.0" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Numerics.Vectors" Version="4.6.1" />
@@ -26,6 +27,6 @@
   <ItemGroup>
     <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
     <PackageVersion Include="ErrorProne.NET.Structs" Version="0.6.1-beta.1" />
-    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.9.50"/>
+    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.9.50" />
   </ItemGroup>
 </Project>
