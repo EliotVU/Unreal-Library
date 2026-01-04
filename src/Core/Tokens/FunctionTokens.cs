@@ -17,7 +17,7 @@ namespace UELib.Core
 
             public abstract class FunctionToken : Token
             {
-                public List<Token>? Arguments; // Includes the EndFunctionParmsToken.
+                public TokenList? Arguments; // Includes the EndFunctionParmsToken.
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 protected UName DeserializeFunctionName(IUnrealStream stream)
@@ -112,15 +112,13 @@ namespace UELib.Core
 
                         string operatorOutputText = $"{leftOperandText} {operatorName} {rightOperandText}";
 
-                        byte thisBinaryPrecedence = callee?.OperPrecedence ?? byte.MaxValue;
-                        bool hasPrecedence = parentIsBinaryOperator && (
-                            thisBinaryPrecedence > parentBinaryPrecedence
-                            ||
-                            // Otherwise, always output a parenthesis for unresolved operators.
-                            thisBinaryPrecedence == byte.MaxValue
-                        );
-
-                        return hasPrecedence ? $"({operatorOutputText})" : operatorOutputText;
+                        //        precedence
+                        //         +20 *16
+                        // e.g. "1 + 1 * 2" => "(1 + 1) * 2" when '*' is a parent to '+' in the token tree.
+                        short thisBinaryPrecedence = callee?.OperPrecedence ?? short.MaxValue;
+                        // --use short instead of byte, to ensure that > is greater than a parent with no known precedence.
+                        bool shouldHavePrecedence = parentIsBinaryOperator && thisBinaryPrecedence > parentBinaryPrecedence;
+                        return shouldHavePrecedence ? $"({operatorOutputText})" : operatorOutputText;
                     });
                 }
 
@@ -448,10 +446,9 @@ namespace UELib.Core
                 }
             }
 
-            [ExprToken(ExprToken.NativeFunction)]
-            public class NativeFunctionToken : FunctionToken
+            public abstract class NativeFunctionToken : FunctionToken
             {
-                public ushort NativeToken;
+                public virtual ushort NativeToken => throw new NotImplementedException();
 
                 public override void Deserialize(IUnrealStream stream)
                 {
@@ -466,35 +463,52 @@ namespace UELib.Core
 
                 public override string Decompile(UByteCodeDecompiler decompiler)
                 {
+                    throw new NotImplementedException();
+                }
+
+                protected string DecompileFunction(UByteCodeDecompiler decompiler, UFunction function)
+                {
                     decompiler.MarkSemicolon();
 
+                    if (function.IsOperator())
+                    {
+                        if (function.IsPre())
+                        {
+                            return DecompilePreOperator(function.FriendlyName, decompiler, function);
+                        }
+
+                        if (function.IsPost())
+                        {
+                            return DecompilePostOperator(function.FriendlyName, decompiler, function);
+                        }
+
+                        return DecompileOperator(function.FriendlyName, decompiler, function);
+                    }
+
+                    // Ordinary function call.
+                    return DecompileCall(function.FriendlyName, decompiler, function);
+                }
+            }
+
+            [ExprToken(ExprToken.NativeFunction)]
+            public sealed class NativeUnresolvedFunctionToken(ushort nativeToken) : NativeFunctionToken
+            {
+                public override ushort NativeToken => nativeToken;
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
                     // Resolve the native function using a dynamic cache.
                     var state = decompiler.Context.State;
-                    if (state != null && decompiler._NativeFunctionResolver
-                            .TryResolveNativeFunction(
+                    if (state != null && decompiler.Package.Branch
+                            .GetTokenFactory(state.Package)
+                            .TryResolveNativeToken(
                                 NativeToken,
                                 // Skip the UState definition, it won't have any native functions.
                                 state as UClass ?? state.OuterMost<UClass>(),
-                                out var functionCallee
+                                out var function
                             ))
                     {
-                        if (functionCallee.IsOperator())
-                        {
-                            if (functionCallee.IsPre())
-                            {
-                                return DecompilePreOperator(functionCallee.FriendlyName, decompiler, functionCallee);
-                            }
-
-                            if (functionCallee.IsPost())
-                            {
-                                return DecompilePostOperator(functionCallee.FriendlyName, decompiler, functionCallee);
-                            }
-
-                            return DecompileOperator(functionCallee.FriendlyName, decompiler, functionCallee);
-                        }
-
-                        // Ordinary function call.
-                        return DecompileCall(functionCallee.FriendlyName, decompiler, functionCallee);
+                        return DecompileFunction(decompiler, function);
                     }
 
                     // Try the pre-cached NTL (dated) instead:
@@ -502,9 +516,9 @@ namespace UELib.Core
                         .GetTokenFactory(Script.Source.Package)
                         .CreateNativeItem(NativeToken);
                     string nativeFunctionName = nativeItem.Name.IsNone()
-                        // Perhaps it is not linked up or the function just doesn't exist, output a generated name instead:
-                        ? TokenFactory.CreateGeneratedName(NativeToken.ToString())
-                        : nativeItem.Name.ToString()
+                            // Perhaps it is not linked up or the function just doesn't exist, output a generated name instead:
+                            ? TokenFactory.CreateGeneratedName(NativeToken.ToString())
+                            : nativeItem.Name.ToString()
                         ;
 
                     string output;
@@ -532,6 +546,19 @@ namespace UELib.Core
                     }
 
                     return output;
+                }
+            }
+
+            [ExprToken(ExprToken.NativeFunction)]
+            public sealed class NativeFinalFunctionToken(UFunction function) : NativeFunctionToken
+            {
+                public readonly UFunction Function = function;
+
+                public override ushort NativeToken => Function.NativeToken;
+
+                public override string Decompile(UByteCodeDecompiler decompiler)
+                {
+                    return DecompileFunction(decompiler, function);
                 }
             }
         }

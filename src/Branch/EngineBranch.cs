@@ -20,8 +20,6 @@ namespace UELib.Branch
     {
         public readonly BuildGeneration Generation;
 
-        public IBufferDecoder? Decoder;
-
         // TODO: Re-factor this as a factory where we can retrieve the correct type-specific serializer.
         public IPackageSerializer? Serializer;
         private TokenFactory? _TokenFactory;
@@ -49,12 +47,6 @@ namespace UELib.Branch
         protected ulong[] FunctionFlags => EnumFlagsMap[typeof(FunctionFlag)];
         protected ulong[] StateFlags => EnumFlagsMap[typeof(StateFlag)];
         protected ulong[] ClassFlags => EnumFlagsMap[typeof(ClassFlag)];
-
-        public UnrealNativeFunctionResolver? NativeFunctionResolver
-        {
-            get => field ??= new UnrealNativeFunctionResolver();
-            set;
-        }
 
         public EngineBranch()
         {

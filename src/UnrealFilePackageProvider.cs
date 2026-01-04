@@ -23,6 +23,14 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
 
     private Dictionary<UName, List<string>>? _VirtualFileIndex;
 
+    private readonly
+#if NET5_0_OR_GREATER
+        Lock
+#else
+        object
+#endif
+        _FileIndexLock = new();
+
     public UnrealFilePackageProvider(string[] directories, string[] packageExtensions)
     {
         _Directories = directories;
@@ -55,7 +63,10 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
         }
 
         // Make all directories accessible.
-        _VirtualFileIndex ??= BuildIndex(_Directories, _PackageExtensions);
+        lock (_FileIndexLock)
+        {
+            _VirtualFileIndex ??= BuildIndex(_Directories, _PackageExtensions);
+        }
 
         LibServices.Trace(
             "Scanning directories [{0}] for external package '{1}' invoked by package {2}",
@@ -75,6 +86,11 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
             otherRootPackage.Package = otherPackage;
 
             otherPackage.NTLPackage = sourceLinker.Package.NTLPackage;
+            // Would be nice for non-auto-detected builds, but also easily fatal,
+            // for some games we don't want to apply the build-specific logic to its linked packages.
+            //otherPackage.Build = sourceLinker.Package.Build;
+            // TODO: Branch cache, pick the same one if they are determined a 'match'
+            otherPackage.Branch = sourceLinker.Package.Branch; // Could be fatal if the package is not actually compatible.
 
             // Load the package's header and tables
             otherPackage.Deserialize();

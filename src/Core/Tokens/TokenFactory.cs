@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using UELib.Annotations;
 using static UELib.Core.UStruct.UByteCodeDecompiler;
@@ -8,6 +9,8 @@ namespace UELib.Core.Tokens
     [UsedImplicitly]
     public class TokenFactory
     {
+        private NativeTokenResolver NativeTokenFunctionResolver => field ??= new NativeTokenResolver();
+
         protected readonly TokenMap TokenMap;
         protected readonly Dictionary<ushort, NativeTableItem> NativeTokenMap;
 
@@ -87,17 +90,23 @@ namespace UELib.Core.Tokens
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeFunctionToken CreateNativeToken(ushort nativeIndex)
+        public NativeUnresolvedFunctionToken CreateNativeToken(ushort nativeToken)
         {
-            return new NativeFunctionToken
-            {
-                NativeToken = nativeIndex
-            };
+            return new NativeUnresolvedFunctionToken(nativeToken);
         }
 
-        public NativeTableItem CreateNativeItem(ushort nativeIndex)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeFinalFunctionToken CreateNativeToken(UFunction nativeFunction)
         {
-            if (NativeTokenMap.TryGetValue(nativeIndex, out var item))
+            Contract.Assert(nativeFunction.NativeToken != 0);
+
+            return new NativeFinalFunctionToken(nativeFunction);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeTableItem CreateNativeItem(ushort nativeToken)
+        {
+            if (NativeTokenMap.TryGetValue(nativeToken, out var item))
             {
                 return item;
             }
@@ -106,8 +115,15 @@ namespace UELib.Core.Tokens
             {
                 Type = FunctionType.Function,
                 Name = UnrealName.None,
-                ByteToken = nativeIndex
+                ByteToken = nativeToken
             };
+        }
+
+        /// <inheritdoc cref="NativeTokenResolver.TryResolveNativeToken"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryResolveNativeToken(ushort nativeToken, UState state, out UFunction function)
+        {
+            return NativeTokenFunctionResolver.TryResolveNativeToken(nativeToken, state, out function);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -116,10 +132,91 @@ namespace UELib.Core.Tokens
             return $"__{id}__";
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete]
         public static Dictionary<ushort, NativeTableItem> FromPackage(NativesTablePackage? package)
         {
             return package?.NativeTokenMap ?? new Dictionary<ushort, NativeTableItem>();
+        }
+
+        private sealed class NativeTokenResolver
+        {
+            private readonly Dictionary<UStruct, Dictionary<ushort, UFunction>?> _FunctionCache = new(64);
+            private readonly
+#if NET5_0_OR_GREATER
+                Lock
+#else
+        object
+#endif
+            _FunctionLock = new();
+
+            /// <summary>
+            /// Resolve a native token to a native <see cref="UFunction"/> lazily.
+            ///
+            /// i.e. On the first lookup of a token, the entire set of native functions in any <see cref="UState"/> will be collected and hashed.
+            /// </summary>
+            /// <param name="nativeToken">The native token to lookup.</param>
+            /// <param name="state">The state and its inherited states to search through.</param>
+            /// <param name="function">The resolved function, if any.</param>
+            /// <returns><see langword="true"/> if successful, <see langword="false"/> otherwise.</returns>
+            public bool TryResolveNativeToken(ushort nativeToken, UState state, out UFunction function)
+            {
+                // Reverse because it most likely to be found in /Core/Object.uc
+                foreach (var superStruct in ((UState[])[state]).Concat(state.EnumerateSuper()).Reverse())
+                {
+                    // Lock caching for multithreaded decompilation.
+                    lock (_FunctionLock)
+                    {
+                        UFunction? cachedNativeFunction;
+
+                        if (_FunctionCache.TryGetValue(superStruct, out var stateFunctionCache))
+                        {
+                            // Pass it to the superStruct, this one didn't have any native functions in the last caching event.
+                            if (stateFunctionCache == null)
+                            {
+                                continue;
+                            }
+
+                            if (stateFunctionCache.TryGetValue(nativeToken, out cachedNativeFunction) && cachedNativeFunction.NativeToken == nativeToken)
+                            {
+                                function = cachedNativeFunction;
+                                return true;
+                            }
+
+                            continue;
+                        }
+
+                        var nativeFunctions = superStruct
+                            .EnumerateFields<UFunction>()
+                            .Where(field => field.NativeToken != 0)
+                            .ToDictionary(field => field.NativeToken);
+
+                        // Use null as an indicator for an empty cache.
+                        if (nativeFunctions.Count == 0)
+                        {
+                            _FunctionCache.Add(superStruct, null);
+
+                            continue;
+                        }
+
+                        _FunctionCache.Add(superStruct, nativeFunctions);
+                        if (_FunctionCache[superStruct].TryGetValue(nativeToken, out cachedNativeFunction))
+                        {
+                            function = cachedNativeFunction;
+                            return true;
+                        }
+                    }
+                }
+
+                // Search the outer class of a UState as well.
+                // Eh, state never have any native(000) declarations...
+                //if (state.Outer is UClass outerClass)
+                //{
+                //    ResolveNativeFunction(nativeToken, outerClass);
+                //}
+
+                function = null;
+                return false;
+            }
         }
     }
 }

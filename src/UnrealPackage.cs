@@ -2701,6 +2701,7 @@ namespace UELib
         [Obsolete("Use EnumerateObjects()")]
         public IEnumerable<UObject> Objects => EnumerateObjects();
 
+        [Obsolete("No longer necessary, UELib will instead lazy-resolve any native function in the existing environment.")]
         public NativesTablePackage? NTLPackage;
 
         [Obsolete("Replaced with an encoded stream", true)]
@@ -2735,7 +2736,7 @@ namespace UELib
             RootPackage = Linker.GetRootPackage(rootPackageName);
         }
 
-        // For transient and testing packages. 
+        // For transient and testing packages.
         public UnrealPackage(
             string packageName,
             UnrealPackageEnvironment? packageEnvironment = null

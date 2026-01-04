@@ -134,8 +134,6 @@ namespace UELib.Core
 
             public DecompilationContext? PoppedContext { get; private set; }
 
-            private UnrealNativeFunctionResolver? _NativeFunctionResolver;
-
             public UByteCodeDecompiler(UStruct container) : this(
                 container,
                 // Only ever null if the container has no script, but create one anyway, so that this construction is always safe.
@@ -308,8 +306,6 @@ namespace UELib.Core
                 PoppedContext = null;
                 _Contexts.Clear();
                 _Contexts.Push(new DecompilationContext(null, _Container));
-
-                _NativeFunctionResolver = Package.Branch.NativeFunctionResolver;
 
                 // Reset these, in case of a loop in the Decompile function that did not finish due exception errors!
                 _CanAddSemicolon = false;

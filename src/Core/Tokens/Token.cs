@@ -153,6 +153,8 @@ namespace UELib.Core
                 }
             }
 
+            public sealed class TokenList : List<Token>;
+
             public sealed class BadToken : Token
             {
                 public override void Deserialize(IUnrealStream stream)
