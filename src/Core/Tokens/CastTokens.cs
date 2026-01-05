@@ -4,6 +4,7 @@ using UELib.Branch;
 using UELib.IO;
 using UELib.ObjectModel.Annotations;
 using UELib.Tokens;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -119,6 +120,32 @@ namespace UELib.Core
                         case CastToken.InterfaceToObject:
                         case CastToken.ObjectToInterface:
                             return DecompileNext(decompiler);
+                    }
+
+                    var expressionToken = NextToken(decompiler);
+                    // Suppress the casting if possible.
+                    switch (CastOpCode)
+                    {
+                        case CastToken.IntToFloat when expressionToken is IntZeroToken _:
+                            return PropertyDisplay.FormatLiteral(0.0f);
+
+                        case CastToken.IntToFloat when expressionToken is IntOneToken _:
+                            return PropertyDisplay.FormatLiteral(1.0f);
+
+                        case CastToken.IntToFloat when expressionToken is IntConstToken constToken:
+                            return PropertyDisplay.FormatLiteral((float)constToken.Value);
+
+                        case CastToken.IntToFloat when expressionToken is ByteConstToken constToken:
+                            return PropertyDisplay.FormatLiteral((float)constToken.Value);
+
+                        case CastToken.IntToFloat when expressionToken is IntConstByteToken constToken:
+                            return PropertyDisplay.FormatLiteral((float)constToken.Value);
+
+                        case CastToken.ByteToFloat when expressionToken is ByteConstToken constToken:
+                            return PropertyDisplay.FormatLiteral((float)constToken.Value);
+
+                        case CastToken.IntToByte when expressionToken is IntConstByteToken byteConst:
+                            return PropertyDisplay.FormatLiteral(byteConst.Value);
                     }
 
                     GetFriendlyCastName(out string? castTypeName);
@@ -286,7 +313,7 @@ namespace UELib.Core
                     }
 
                     Services.LibServices.LogService.SilentAssert(castTypeName != null, $"Detected an unresolved token '0x{CastOpCode:X}'.");
-                    return $"{castTypeName}({DecompileNext(decompiler)})";
+                    return $"{castTypeName}({expressionToken.Decompile(decompiler)})";
                 }
             }
 
