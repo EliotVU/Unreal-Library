@@ -477,10 +477,10 @@ namespace UELib.Core
                 // Original indention, so that we can restore it later, necessary if decompilation fails to reduce nesting indention.
                 string initTabs = UDecompilingState.Tabs;
 
+                const string tokenPositionFormat = "(J000h:000h) ";
                 if (UnrealConfig.ShouldOutputTokenMemoryPosition)
                 {
-                    UDecompilingState.AddTabs(3);
-                    UDecompilingState.Tabs += " ";
+                    UDecompilingState.Tabs += " ".PadLeft(tokenPositionFormat.Length);
                 }
 
                 try
@@ -715,7 +715,7 @@ namespace UELib.Core
                                 string orgTabs = UDecompilingState.Tabs;
                                 if (UnrealConfig.ShouldOutputTokenMemoryPosition)
                                 {
-                                    int spaces = initTabs.Length + "(J000h:000h) ".Length;
+                                    int spaces = initTabs.Length + tokenPositionFormat.Length;
                                     UDecompilingState.RemoveSpaces(spaces);
 #if DEBUG_HIDDENTOKENS
                                     var tokens = DeserializedTokens
