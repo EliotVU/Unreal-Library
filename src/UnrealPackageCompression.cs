@@ -90,7 +90,7 @@ namespace UELib
             stream.Write(Tag);
             stream.Write(ChunkSize);
             stream.Write(ref Summary);
-            stream.Write(Chunks);
+            stream.WriteArray(Chunks, Chunks.Count);
         }
 
         public void Deserialize(IUnrealStream stream)

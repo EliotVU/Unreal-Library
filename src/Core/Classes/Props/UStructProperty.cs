@@ -106,7 +106,7 @@ namespace UELib.Core
             {
 #if UT
                 // Added with UT2004.
-                if (stream.Package.Build == BuildGeneration.UE2_5 &&
+                if (stream.Build == BuildGeneration.UE2_5 &&
                     stream.LicenseeVersion >= 28) // Are there any packages with version < 118 but licensee version >= 28?
                 {
                     return true;
@@ -119,7 +119,7 @@ namespace UELib.Core
             {
 #if DNF
                 // All structs are serialized using tags.
-                if (stream.Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                if (stream.Build == UnrealPackage.GameBuild.BuildName.DNF)
                 {
                     return false;
                 }
@@ -140,11 +140,11 @@ namespace UELib.Core
             {
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.StructsShouldNotInheritImmutable)
                 {
-                    if (uStruct != null && ((UPackageIndex)uStruct).IsExport)
+                    if (uStruct is { PackageIndex.IsExport: true })
                     {
                         return uStruct.StructFlags.HasFlag(StructFlag.Immutable)
                             || (uStruct.StructFlags.HasFlag(StructFlag.ImmutableWhenCooked)
-                                && stream.Package.Summary.PackageFlags.HasFlag(PackageFlag.Cooked))
+                                && stream.IsCooked())
                         ;
                     }
 
@@ -154,7 +154,7 @@ namespace UELib.Core
 
                 if (stream.Version >= (uint)PackageObjectLegacyVersion.AddedImmutableStructs)
                 {
-                    if (uStruct != null && ((UPackageIndex)uStruct).IsExport)
+                    if (uStruct is { PackageIndex.IsExport: true })
                     {
                         return uStruct.EnumerateSuper().Any(super => super.StructFlags.HasFlag(StructFlag.Immutable));
                     }

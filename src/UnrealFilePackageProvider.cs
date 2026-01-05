@@ -69,7 +69,7 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
         }
 
         LibServices.Trace(
-            "Scanning directories [{0}] for external package '{1}' invoked by package {2}",
+            "Scanning directories [{0}] for external package '{1}' invoked by package '{2}'",
             _Directories.Aggregate("", (a, b) => a + "," + b),
             packageName,
             sourceLinker.Package.RootPackage
@@ -78,6 +78,13 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
         if (TryResolve(_VirtualFileIndex, packageName, out string filePath))
         {
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (fileStream.Length == 0)
+            {
+                LibServices.LogService.Log("Corrupt package '{0}' at '{1}'", packageName, filePath);
+
+                return sourceLinker.GetRootPackage(packageName);
+            }
+
             var otherPackage = new UnrealPackage(fileStream, filePath, sourceLinker.PackageEnvironment);
 
             LibServices.Trace("Found import package '{0}' at '{1}'", packageName, filePath);
@@ -131,8 +138,7 @@ public sealed class UnrealFilePackageProvider : IUnrealPackageProvider
                 var key = new UName(Path.GetFileNameWithoutExtension(file));
                 if (!index.TryGetValue(key, out var list))
                 {
-                    list = [];
-                    index[key] = list;
+                    index[key] = list = [];
                 }
 
                 list.Add(file);

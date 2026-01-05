@@ -344,7 +344,7 @@ namespace UELib.Engine
                 && stream.LicenseeVersion is >= 6 and < 8)
             {
                 // l14
-                stream.Write(Likelihood.Value);
+                stream.Write(Likelihood.GetValueOrDefault(1.0f));
             }
 #endif
 #if UT
@@ -352,7 +352,7 @@ namespace UELib.Engine
                  stream.Build == UnrealPackage.GameBuild.BuildName.UT2003)
                 && stream.LicenseeVersion >= 2)
             {
-                stream.Write(Likelihood.Value);
+                stream.Write(Likelihood.GetValueOrDefault(1.0f));
             }
 #endif
             stream.WriteStruct(RawData);

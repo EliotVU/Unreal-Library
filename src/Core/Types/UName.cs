@@ -290,6 +290,7 @@ public static class UnrealName
     public static readonly UName TextBuffer = new("TextBuffer");
     public static readonly UName Commandlet = new("Commandlet");
     public static readonly UName ObjectRedirector = new("ObjectRedirector");
+    public static readonly UName MetaData = new("MetaData");
     public static readonly UName OrderIndex = new("OrderIndex");
     public static readonly UName Tooltip = new("Tooltip");
 

@@ -14,4 +14,9 @@ public enum UnrealArchiveFlags
     ///     The archive is encoded and should pipe to an <see cref="EncodedStream"/>
     /// </summary>
     Encoded = 1 << 1,
+
+    /// <summary>
+    ///     The archive requires local bulk data to be preloaded.
+    /// </summary>
+    LoadBulkData = 1 << 2,
 }

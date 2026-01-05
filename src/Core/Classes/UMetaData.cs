@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using System.Linq;
+﻿using System.Diagnostics.Contracts;
 using UELib.Branch;
 using UELib.ObjectModel.Annotations;
 
@@ -9,7 +7,7 @@ namespace UELib.Core
     /// <summary>
     ///     Implements UMetaData/Core.MetaData
     /// </summary>
-    [UnrealRegisterClass]
+    [UnrealRegisterClass(InternalClassFlags.Preload)]
     [BuildGeneration(BuildGeneration.UE3)]
     public sealed class UMetaData : UObject
     {
@@ -42,8 +40,6 @@ namespace UELib.Core
 
         public override string Decompile()
         {
-            if (ShouldDeserializeOnDemand) Load();
-
             return string.Join("\r\n", ObjectTagsMap.Select(pair => pair.Key + pair.Value.Decompile()));
         }
 
@@ -52,7 +48,7 @@ namespace UELib.Core
             public UObject Object { get; private set; }
 
             /// <summary>
-            ///     A path to the object, e.g. "Core.Object.X".
+            ///     The path to the object, e.g. "Core.Object:Vector.X".
             ///     Legacy support for versions before <see cref="PackageObjectLegacyVersion.ChangedUMetaDataObjectPathToReference" />
             /// </summary>
             private string? _LegacyObjectPath;
@@ -85,6 +81,7 @@ namespace UELib.Core
                     return;
                 }
 
+                // FIXME: GetPath produces "Core.Object.Vector.X" instead of "Core.Object:Vector.X"
                 stream.WriteString(_LegacyObjectPath ?? Object.GetPath());
             }
 
@@ -119,7 +116,9 @@ namespace UELib.Core
 
                 // Filter out compiler-generated tags
                 var tags = Tags
-                           .Where(tag => tag.Key != UnrealName.OrderIndex && tag.Key != UnrealName.Tooltip)
+                           .Where(tag =>
+                                  tag.Key != UnrealName.OrderIndex &&
+                                  tag.Key != UnrealName.Tooltip)
                            .ToList()
                            .ConvertAll(tag => $"{tag.Key}={tag.Value}");
 

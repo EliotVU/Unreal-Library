@@ -873,12 +873,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (var element in array)
         {
             element.Serialize(stream);
@@ -907,12 +907,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         Write(stream, array.ToArray());
     }
 
@@ -921,12 +921,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (short element in array)
         {
             stream.Write(element);
@@ -938,12 +938,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (ushort element in array)
         {
             stream.Write(element);
@@ -955,12 +955,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (int element in array)
         {
             stream.Write(element);
@@ -972,12 +972,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (uint element in array)
         {
             stream.Write(element);
@@ -989,12 +989,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (long element in array)
         {
             stream.Write(element);
@@ -1006,12 +1006,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (ulong element in array)
         {
             stream.Write(element);
@@ -1023,12 +1023,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (float element in array)
         {
             stream.Write(element);
@@ -1040,12 +1040,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (bool element in array)
         {
             stream.Write(element);
@@ -1057,12 +1057,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (string element in array)
         {
             stream.Write(element);
@@ -1074,12 +1074,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (var element in array)
         {
             stream.Write(element);
@@ -1091,12 +1091,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (var element in array)
         {
             stream.Write(element);
@@ -1108,12 +1108,12 @@ public static class UnrealStreamImplementations
     {
         if (array == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, array.Count);
+        WriteLength(stream, array.Count);
         foreach (var element in array)
         {
             valueWriter(element);
@@ -1125,12 +1125,12 @@ public static class UnrealStreamImplementations
     {
         if (map == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, map.Count);
+        WriteLength(stream, map.Count);
         foreach (var pair in map)
         {
             stream.Write(pair.Key);
@@ -1144,12 +1144,12 @@ public static class UnrealStreamImplementations
     {
         if (map == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, map.Count);
+        WriteLength(stream, map.Count);
         foreach (var pair in map)
         {
             stream.Write(pair.Key);
@@ -1164,12 +1164,12 @@ public static class UnrealStreamImplementations
     {
         if (map == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, map.Count);
+        WriteLength(stream, map.Count);
         foreach (var pair in map)
         {
             stream.Write(pair.Key);
@@ -1185,12 +1185,12 @@ public static class UnrealStreamImplementations
     {
         if (map == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, map.Count);
+        WriteLength(stream, map.Count);
         foreach (var pair in map)
         {
             stream.WriteTyped(pair.Key);
@@ -1205,12 +1205,12 @@ public static class UnrealStreamImplementations
     {
         if (map == null)
         {
-            WriteIndex(stream, 0);
+            WriteLength(stream, 0);
 
             return;
         }
 
-        WriteIndex(stream, map.Count);
+        WriteLength(stream, map.Count);
         foreach (var pair in map)
         {
             keyWriter(pair.Key);
@@ -1410,6 +1410,20 @@ public static class UnrealStreamImplementations
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteIndex(this IUnrealStream stream, int index) => stream.UW.WriteIndex(index);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteLength(this IUnrealStream stream, int index)
+    {
+#if VANGUARD
+        if (stream.Build == UnrealPackage.GameBuild.BuildName.Vanguard_SOH)
+        {
+            stream.UW._BaseWriter.Write(index);
+
+            return;
+        }
+#endif
+        stream.UW.WriteIndex(index);
+    }
 
     private readonly struct Peeker(IUnrealStream stream, long position) : IDisposable
     {

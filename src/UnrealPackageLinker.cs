@@ -220,6 +220,7 @@ public sealed class UnrealPackageLinker
 
         var objFlags = new UnrealFlags<ObjectFlag>(GetInternalObjectFlagsMap(), ObjectFlag.Public);
 
+        obj.InternalFlags |= objClass.InternalFlags & InternalClassFlags.Inherit;
         obj.Name = objName;
         obj.ObjectFlags = objFlags;
         obj.Package = Package;
@@ -493,7 +494,7 @@ public sealed class UnrealPackageLinker
 
         var exports = Package
             .Exports
-            .Where(exp => exp.Object != null && (exp.Object.Class.InternalFlags & loadFlags) != 0)
+            .Where(exp => exp.Object != null && (exp.Object.InternalFlags & loadFlags) != 0)
             .Select<UExportTableItem, UObject>(exp => exp.Object)
             ;
         LoadExports(exports);

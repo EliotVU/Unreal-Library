@@ -2698,6 +2698,11 @@ namespace UELib
         public IEnumerable<T> EnumerateObjects<T>() where T : UObject
             => EnumerateObjects().OfType<T>();
 
+        /// <summary>
+        /// Dynamically lookup the <see cref="UMetaData"/> object in this package, if any.
+        /// </summary>
+        public UMetaData? MetaData => field ??= Environment.FindObject<UMetaData?>(UnrealName.MetaData, RootPackage);
+
         [Obsolete("Use EnumerateObjects()")]
         public IEnumerable<UObject> Objects => EnumerateObjects();
 
