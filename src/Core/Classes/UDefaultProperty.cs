@@ -625,14 +625,23 @@ namespace UELib.Core
                 case PropertyType.ComponentProperty:
                 case PropertyType.ObjectProperty:
                     {
-                        var constantObject = stream.ReadObject<UObject?>();
-                        stream.Record(nameof(constantObject), constantObject);
+                        var objectReference = stream.ReadObject<UObject?>();
+                        stream.Record(nameof(objectReference), objectReference);
 
-                        if (constantObject == null)
+                        if (objectReference == null)
                         {
-                            // =none
                             propertyValue = "none";
+
                             break;
+                        }
+
+                        string valueText = objectReference.Name;
+
+                        // Wrap it in quotes if it has illegal characters.
+                        if (char.IsDigit(valueText[0]) || char.IsSymbol(valueText[0]))
+                        {
+                            // (Actually the UE-T3D parser allows it, but in general this is problem for third-party parsers and highlighting etc.)
+                            valueText = $"\"{valueText}\"";
                         }
 
                         Debug.Assert(UDecompilingState.s_inlinedSubObjects != null,
@@ -640,51 +649,26 @@ namespace UELib.Core
 
                         bool isPendingInline = UDecompilingState
                             .s_inlinedSubObjects
-                            .TryGetValue(constantObject, out bool isInlined);
+                            .TryGetValue(objectReference, out bool isInlined);
                         bool shouldExport = (property as UObjectProperty)?.HasPropertyFlag(PropertyFlag.ExportObject) == true;
                         // If the object is part of the current container, then it probably was an inlined declaration.
-                        bool shouldInline = (constantObject.Outer == _TagSource || shouldExport)
+                        bool shouldInline = (deserializeFlags & DeserializeFlags.Decompiling) != 0
+                                            && (objectReference.Outer == _TagSource || shouldExport)
                                             && !isPendingInline
                                             && !isInlined;
-                        if (shouldInline && (deserializeFlags & DeserializeFlags.Decompiling) != 0)
+                        if (shouldInline)
                         {
-                            // Preload if needed.
-                            if (constantObject.DeserializationState == 0)
-                            {
-                                constantObject.Load();
-                            }
-
-                            if ((deserializeFlags & DeserializeFlags.WithinStruct) == 0)
-                            {
-                                UDecompilingState.s_inlinedSubObjects.TryAdd(constantObject, true);
-
-                                propertyValue = constantObject.Decompile() + "\r\n";
-
-                                _TempFlags |= DoNotAppendName;
-                                if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
-                                {
-                                    _TempFlags |= ReplaceNameMarker;
-                                    propertyValue += $"{UDecompilingState.Tabs}%ARRAYNAME%={constantObject.Name}";
-
-                                    break;
-                                }
-
-                                propertyValue += $"{UDecompilingState.Tabs}{Name}={constantObject.Name}";
-
-                                break;
-                            }
-
-                            // Within a struct, to be inlined later on!
-                            UDecompilingState.s_inlinedSubObjects.TryAdd(constantObject, false);
-                            propertyValue = $"{Name}={constantObject.Name}";
+                            // Register this object to be inlined.
+                            UDecompilingState.s_inlinedSubObjects.TryAdd(objectReference, false);
+                            propertyValue = valueText;
 
                             break;
                         }
 
                         // Use shorthand for inlined objects.
                         propertyValue = isInlined
-                            ? constantObject.Name
-                            : PropertyDisplay.FormatLiteral(constantObject);
+                            ? valueText
+                            : PropertyDisplay.FormatLiteral(objectReference);
 
                         break;
                     }
@@ -733,75 +717,81 @@ namespace UELib.Core
                         {
                             // Some structs are serialized using tags.
                             // Let's find out if this is one of them.
-                            Enum.TryParse(StructName,
+                            Enum.TryParse(StructName, true,
                                 out UStructProperty.PropertyValueSerializer.BinaryStructType binaryStructType);
                             if (UStructProperty.PropertyValueSerializer.IsStructImmutable(stream, structPropertySource,
                                     binaryStructType))
                             {
                                 // Deserialize using the atomic serializer.
-                                propertyValue +=
-                                    LegacyDeserializeDefaultBinaryStructValue(stream, binaryStructType,
-                                        deserializeFlags);
+                                propertyValue =
+                                    $"({LegacyDeserializeDefaultBinaryStructValue(stream, binaryStructType,
+                                        deserializeFlags)})";
 
-                                goto output;
+                                break;
                             }
 
                             // fall-back to non-atomic struct deserialization; may fail if the struct is an unknown immutable/atomic struct.
                         }
 
-                    nonAtomic:
-                        var scriptProperty =
-                            UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource);
-                        if (scriptProperty == null)
+                        var nextScriptProperty = UStruct.DeserializeNextScriptProperty(
+                            stream,
+                            structPropertySource,
+                            TagSource
+                        );
+                        if (nextScriptProperty == null)
                         {
                             return "()";
                         }
 
-                        propertyValue += DecompileTag(scriptProperty);
-                        while ((scriptProperty =
-                                   UStruct.DeserializeNextScriptProperty(stream, structPropertySource, TagSource)) !=
-                               null)
+                        propertyValue = DecompileTag(nextScriptProperty);
+                        while ((nextScriptProperty = UStruct.DeserializeNextScriptProperty(
+                                stream,
+                                structPropertySource,
+                                TagSource
+                        )) != null)
                         {
                             propertyValue += ",";
-                            propertyValue += DecompileTag(scriptProperty);
+                            propertyValue += DecompileTag(nextScriptProperty);
                         }
 
-                        string DecompileTag(UDefaultProperty scriptProperty)
-                        {
-                            scriptProperty.Deserialize(stream);
+                        propertyValue = $"({propertyValue})";
 
-                            UProperty? structMemberProperty = scriptProperty.Type switch
+                        break;
+
+                        string DecompileTag(UDefaultProperty structScriptProperty)
+                        {
+                            structScriptProperty.Deserialize(stream);
+
+                            UProperty? structMemberProperty = structScriptProperty.Type switch
                             {
                                 PropertyType.StructProperty => structPropertySource?.FindProperty<UStructProperty?>(
-                                    scriptProperty.Name),
+                                    structScriptProperty.Name),
                                 PropertyType.ArrayProperty => structPropertySource?.FindProperty<UArrayProperty?>(
-                                    scriptProperty.Name),
+                                    structScriptProperty.Name),
                                 PropertyType.FixedArrayProperty => structPropertySource
-                                    ?.FindProperty<UFixedArrayProperty?>(scriptProperty.Name),
+                                    ?.FindProperty<UFixedArrayProperty?>(structScriptProperty.Name),
                                 PropertyType.MapProperty => structPropertySource?.FindProperty<UMapProperty?>(
-                                    scriptProperty.Name),
+                                    structScriptProperty.Name),
                                 _ => null
                             };
 
-                            string tagExpr = scriptProperty.Name;
-                            if (structMemberProperty?.ElementSize > 1 || scriptProperty.ArrayIndex > 0)
+                            string tagExpr = structScriptProperty.Name;
+                            if (structMemberProperty?.ElementSize > 1 || structScriptProperty.ArrayIndex > 0)
                             {
-                                tagExpr += PropertyDisplay.FormatT3DElementAccess(scriptProperty.ArrayIndex.ToString(),
-                                    stream.Version);
+                                tagExpr += PropertyDisplay.FormatT3DElementAccess(
+                                    structScriptProperty.ArrayIndex.ToString(),
+                                    stream.Version
+                                );
                             }
 
-                            stream.Seek(scriptProperty._PropertyValuePosition, SeekOrigin.Begin);
+                            stream.Seek(structScriptProperty._PropertyValuePosition, SeekOrigin.Begin);
                             stream.ConformRecordPosition();
-                            string value = scriptProperty.TryLegacyDeserializeDefaultPropertyValue(
-                                stream, scriptProperty.Type,
+                            string value = structScriptProperty.TryLegacyDeserializeDefaultPropertyValue(
+                                stream, structScriptProperty.Type,
                                 deserializeFlags, structMemberProperty);
 
                             return $"{tagExpr}={value}";
                         }
-
-                    output:
-                        propertyValue = $"({propertyValue})";
-                        break;
                     }
 
                 case PropertyType.ArrayProperty:
@@ -815,7 +805,7 @@ namespace UELib.Core
                         }
 
                         var innerArrayType = PropertyType.None;
-                        if (!InnerTypeName.IsNone() && !Enum.TryParse(InnerTypeName, out innerArrayType))
+                        if (!InnerTypeName.IsNone() && !Enum.TryParse(InnerTypeName, true, out innerArrayType))
                         {
                             throw new Exception(
                                 $"Couldn't convert InnerTypeName \"{InnerTypeName}\" to PropertyType");
@@ -864,18 +854,39 @@ namespace UELib.Core
                             {
                                 string elementAccessText =
                                     PropertyDisplay.FormatT3DElementAccess(i.ToString(), stream.Version);
+
                                 string elementValue =
                                     LegacyDeserializeDefaultPropertyValue(stream, innerArrayType, deserializeFlags,
                                         innerArrayProperty);
-                                if ((_TempFlags & ReplaceNameMarker) != 0)
+
+                                if ((deserializeFlags & DeserializeFlags.Decompiling) != 0)
                                 {
-                                    propertyValue += elementValue.Replace("%ARRAYNAME%", $"{Name}{elementAccessText}");
-                                    _TempFlags = 0x00;
+                                    var inlinedObjectsState = UDecompilingState.s_inlinedSubObjects!;
+                                    var objectsToInline = inlinedObjectsState
+                                        .Where((k, _) => !k.Value)
+                                        .Select(k => k.Key)
+                                        .ToList();
+
+                                    // Mark pending objects as inlined.
+                                    foreach (var pendingObject in objectsToInline)
+                                    {
+                                        inlinedObjectsState[pendingObject] = true;
+                                    }
+
+                                    string inlinedObjectsText = objectsToInline
+                                        .Select(obj => obj.Decompile())
+                                        .Aggregate("", (current, objectText) => current + $"{objectText}\r\n{UDecompilingState.Tabs}");
+
+                                    // Append the inlined right above the element assignment, so that we get the following output:
+                                    // Components[0]=MyObj
+                                    // begin object name=MyObj
+                                    // end object
+                                    // Components[1]=MyObj
+                                    // etc...
+                                    propertyValue += inlinedObjectsText;
                                 }
-                                else
-                                {
-                                    propertyValue += $"{Name}{elementAccessText}={elementValue}";
-                                }
+
+                                propertyValue += $"{Name}{elementAccessText}={elementValue}";
 
                                 if (i != arraySize - 1)
                                 {

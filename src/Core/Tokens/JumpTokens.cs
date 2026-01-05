@@ -318,7 +318,7 @@ namespace UELib.Core
                     // This is an implicit GoToToken.
                     decompiler.MarkSemicolon();
 
-                    return $"goto {UDecompilingState.OffsetLabelName(CodeOffset)}";
+                    return $"goto {CreateLabelName(CodeOffset)}";
                 }
 
                 public bool JumpsOutOfSwitch(UByteCodeDecompiler decompiler)
@@ -355,7 +355,7 @@ namespace UELib.Core
 
                 private void NoJumpLabel(UByteCodeDecompiler decompiler)
                 {
-                    int i = decompiler._TempLabels.FindIndex(p => p.entry.Position == CodeOffset);
+                    int i = decompiler._TempLabels.FindIndex(p => p.entry.CodeOffset == CodeOffset);
                     if (i == -1)
                     {
                         return;
@@ -422,7 +422,7 @@ namespace UELib.Core
                     string output;
                     if ((CodeOffset & ushort.MaxValue) < Position)
                     {
-                        string labelName = UDecompilingState.OffsetLabelName(CodeOffset);
+                        string labelName = CreateLabelName(CodeOffset);
                         var gotoStatement = $"{UDecompilingState.Tabs}{UnrealConfig.Indention}goto {labelName}";
                         // Inverse condition only here as we're explicitly jumping while other cases create proper scopes
                         output = $"if(!({condition}))\r\n{gotoStatement}";
@@ -813,7 +813,7 @@ namespace UELib.Core
                             Labels.Add(new ULabelEntry
                             {
                                 Name = label,
-                                Position = labelPos
+                                CodeOffset = labelPos
                             });
                         }
 
@@ -832,7 +832,7 @@ namespace UELib.Core
                     {
                         stream.WriteName(label.Name);
                         Script.AlignNameSize();
-                        stream.Write(label.Position);
+                        stream.Write(label.CodeOffset);
                         Script.AlignSize(sizeof(int));
                     }
 

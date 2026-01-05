@@ -248,19 +248,10 @@ namespace UELib.Core
 
         public string FormatDefaultProperties()
         {
-            if (Default != null && Default != this)
-            {
-                Default.Load();
-                Properties = Default.Properties;
-            }
-
-            if (Properties == null || !Properties.Any())
-                return string.Empty;
-
             var output = string.Empty;
             string innerOutput;
 
-            if (ExportResource.ClassIndex == 0)
+            if (this is UClass)
             {
                 output += "\r\n" +
                           "defaultproperties" +
@@ -281,11 +272,6 @@ namespace UELib.Core
             try
             {
                 innerOutput = DecompileProperties();
-            }
-            catch (Exception e)
-            {
-                innerOutput = $"{UDecompilingState.Tabs}/* {e} */ // occurred while decompiling properties!" +
-                              "\r\n";
             }
             finally
             {

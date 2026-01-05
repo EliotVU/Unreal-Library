@@ -11,15 +11,14 @@ namespace UELib.Core
         public string FormatTooltipMetaData()
         {
             string tooltipValue = null;
-            MetaData?.Tags.TryGetValue(UnrealName.Tooltip, out tooltipValue);
-            if (tooltipValue == null)
+            if (MetaData?.Tags?.TryGetValue(UnrealName.Tooltip, out tooltipValue) != true)
             {
                 return string.Empty;
             }
 
-            var comment = $"{UDecompilingState.Tabs}/** ";
+            string comment = $"{UDecompilingState.Tabs}/** ";
             // Multiline comment?
-            if (tooltipValue.IndexOf('\n') != -1)
+            if (tooltipValue!.IndexOf('\n') != -1)
             {
                 comment +=
                     " \r\n" +
@@ -32,6 +31,7 @@ namespace UELib.Core
             }
 
             return $"{comment} */\r\n";
+
         }
 
         // Introduction of the change from intrinsic to native.
@@ -39,7 +39,6 @@ namespace UELib.Core
 
         // Introduction of the change from expands to extends.
         private const uint ExtendsVersion = 69;
-        protected const uint PlaceableVersion = 69;
 
         protected string FormatNative()
         {

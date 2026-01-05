@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.IO;
@@ -10,8 +8,15 @@ namespace UELib.Core
 {
     public struct ULabelEntry
     {
+        /// <summary>
+        /// The label name, may be set to a generated name.
+        /// </summary>
         public UName Name;
-        public int Position;
+
+        /// <summary>
+        /// The label position in memory relative to the script.
+        /// </summary>
+        public int CodeOffset;
     }
 
     /// <summary>

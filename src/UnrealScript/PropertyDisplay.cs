@@ -137,6 +137,12 @@ namespace UELib.UnrealScript
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string FormatOffset(ushort input)
+        {
+            return $"{input:X3}h";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string FormatOffset(int input)
         {
             return $"{input:X4}h";

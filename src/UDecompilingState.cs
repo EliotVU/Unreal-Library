@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using UELib.Core;
+using UELib.UnrealScript;
 
 namespace UELib
 {
@@ -58,11 +59,6 @@ namespace UELib
         public static void ResetTabs()
         {
             Tabs = string.Empty;
-        }
-
-        public static UName OffsetLabelName(uint offset)
-        {
-            return new UName($"J0x{offset:X2}");
         }
     }
 }

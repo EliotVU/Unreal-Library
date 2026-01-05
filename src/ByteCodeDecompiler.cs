@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using UELib.Flags;
 using UELib.Services;
+using UELib.UnrealScript;
 
 namespace UELib.Core
 {
@@ -296,6 +297,12 @@ namespace UELib.Core
                 return _NestChain[i].Type == nestType ? _NestChain[i] : null;
             }
 
+            private static string CreateLabelName(ushort offset)
+            {
+                // Must start with a 'J' for 'Jump', because a label has to begin with a letter.
+                return $"J{PropertyDisplay.FormatOffset(offset)}";
+            }
+
             public void InitDecompile()
             {
                 _NestChain.Clear();
@@ -334,8 +341,8 @@ namespace UELib.Core
                                     (
                                         new ULabelEntry
                                         {
-                                            Name = UDecompilingState.OffsetLabelName(jumpIfNotToken.CodeOffset),
-                                            Position = jumpIfNotToken.CodeOffset
+                                            Name = new UName(CreateLabelName(jumpIfNotToken.CodeOffset)),
+                                            CodeOffset = jumpIfNotToken.CodeOffset
                                         }
                                     );
                                 }
@@ -351,8 +358,8 @@ namespace UELib.Core
                                     (
                                         new ULabelEntry
                                         {
-                                            Name = UDecompilingState.OffsetLabelName(jumpToken.CodeOffset),
-                                            Position = jumpToken.CodeOffset
+                                            Name = new UName(CreateLabelName(jumpToken.CodeOffset)),
+                                            CodeOffset = jumpToken.CodeOffset
                                         }
                                     );
                                 }
@@ -373,7 +380,7 @@ namespace UELib.Core
                 for (var i = 0; i < _Labels.Count; ++i)
                 {
                     // No duplicates, caused by having multiple goto statements with the same destination
-                    int index = _TempLabels.FindIndex(p => p.entry.Position == _Labels[i].Position);
+                    int index = _TempLabels.FindIndex(p => p.entry.CodeOffset == _Labels[i].CodeOffset);
                     if (index == -1)
                     {
                         _TempLabels.Add((_Labels[i], 1));
@@ -538,8 +545,17 @@ namespace UELib.Core
                             int tokenBeginIndex = CurrentTokenIndex;
 
                             // To ensure we print generated labels within a nesting block.
-                            string labelsOutput = DecompileLabelForToken(CurrentToken, spewOutput);
-                            if (labelsOutput != string.Empty) output.AppendLine(labelsOutput);
+                            string labelsOutput = DecompileLabelForToken(CurrentToken);
+                            if (labelsOutput != string.Empty)
+                            {
+                                if (spewOutput)
+                                {
+                                    output.Append("\r\n");
+                                }
+
+                                spewOutput = true;
+                                output.Append(labelsOutput);
+                            }
 
                             try
                             {
@@ -699,7 +715,7 @@ namespace UELib.Core
                                 string orgTabs = UDecompilingState.Tabs;
                                 if (UnrealConfig.ShouldOutputTokenMemoryPosition)
                                 {
-                                    int spaces = initTabs.Length + "(+000h 000h) ".Length;
+                                    int spaces = initTabs.Length + "(J000h:000h) ".Length;
                                     UDecompilingState.RemoveSpaces(spaces);
 #if DEBUG_HIDDENTOKENS
                                     var tokens = DeserializedTokens
@@ -713,7 +729,7 @@ namespace UELib.Core
                                     // Single indention.
                                     output.Append(initTabs);
                                     output.Append(
-                                        $"(+{statementToken.Position:X3}h {CurrentToken.Position + CurrentToken.Size:X3}h) ");
+                                        $"(J{statementToken.Position:X3}h:{CurrentToken.Position + CurrentToken.Size:X3}h) ");
 
                                     // Remove statement padding
                                 }
@@ -870,23 +886,21 @@ namespace UELib.Core
                 return output;
             }
 
-            private string DecompileLabelForToken(Token token, bool appendNewline)
+            private string DecompileLabelForToken(Token token)
             {
-                var output = new StringBuilder();
-                int labelIndex = _TempLabels.FindIndex(l => l.entry.Position == token.Position);
+                int labelIndex = _TempLabels.FindIndex(l => l.entry.CodeOffset == token.Position);
                 if (labelIndex == -1) return string.Empty;
 
                 var labelEntry = _TempLabels[labelIndex].entry;
-                bool isStateLabel = !labelEntry.Name.ToString().StartsWith("J0x", StringComparison.Ordinal);
-                string statementOutput = isStateLabel
-                    ? $"{labelEntry.Name}:\r\n"
-                    : $"{UDecompilingState.Tabs}{labelEntry.Name}:";
-                if (appendNewline) output.Append("\r\n");
+                string defaultIndention = UDecompilingState.Tabs;
+                string labelName = labelEntry.Name;
+                UDecompilingState.RemoveSpaces(labelName.Length + 1);
+                string statementOutput = $"{UDecompilingState.Tabs}{labelName}:";
+                UDecompilingState.Tabs = defaultIndention;
 
-                output.Append(statementOutput);
 
                 _TempLabels.RemoveAt(labelIndex);
-                return output.ToString();
+                return statementOutput;
             }
 
             private string DecompileNests(bool outputAllRemainingNests = false)
