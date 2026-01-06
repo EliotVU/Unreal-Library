@@ -261,6 +261,12 @@ namespace UELib.Core
             }
             else
             {
+                // Output nothing for an empty 'structdefaultproperties' block.
+                if (Properties.Count == 0)
+                {
+                    return string.Empty;
+                }
+
                 output += "\r\n" +
                           $"{UDecompilingState.Tabs}structdefaultproperties" +
                           "\r\n" +

@@ -78,14 +78,15 @@ namespace UELib.Core
 
         protected string DecompileProperties()
         {
+            // Ensure that the script properties have been loaded (in most cases these are lazy-loaded)
+            if (DeserializationState == 0)
+            {
+                Load();
+            }
+
             // Re-direct to the default
             if (Default != null && Default != this)
             {
-                if (Default is { DeserializationState: 0 })
-                {
-                    Default.Load();
-                }
-
                 return Default.DecompileProperties();
             }
 
