@@ -120,6 +120,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX, 275/000:ShadowStrike | (PC) Offline mode version, Online mode not supported | ✅ |
 | Tom Clancy's Splinter Cell: Blacklist | 829 | 102/116:LEAD | In part thanks to @shryder. Third-party decompression is required | ✅ |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | | ✅ | ✅ |
+| Magic: The Gathering - Battlegrounds | 926 | 118/000 | | ✅ | ✅ | ✅ 
 | Postal 2: Paradise Lost | 1417 | 118/002 | | ✅ |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | | ✅ | ✅ | ✅ |
 | Devastation | 600-? | 118-120/004-008 | | ✅ |
