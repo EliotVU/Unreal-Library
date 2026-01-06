@@ -141,7 +141,8 @@ namespace UELib.Core
                 stream.Record(nameof(CategoryName), CategoryName);
 
                 // FIXME: Unknown version, attested without a version check since SC3 and SC4.
-                if (stream.LicenseeVersion > 17) // 17 = newer than SC1
+                if (stream.Build != UnrealPackage.GameBuild.BuildName.SCPT_Offline &&
+                    stream.LicenseeVersion > 17) // 17 = newer than SC1
                 {
                     // Music? Some kind of alternative to category name
                     stream.Read(out UName v68);
@@ -536,7 +537,8 @@ namespace UELib.Core
                 stream.Write(_PropertyFlags);
                 stream.Write(_CategoryName);
 
-                if (stream.LicenseeVersion > 17)
+                if (stream.Build != UnrealPackage.GameBuild.BuildName.SCPT_Offline &&
+                    stream.LicenseeVersion > 17)
                 {
                     // Music? Some kind of alternative to category name
                     UName v68 = default;
