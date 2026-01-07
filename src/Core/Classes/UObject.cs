@@ -18,7 +18,7 @@ namespace UELib.Core
 {
     /// <summary>
     ///     Implements UObject/Core.Object
-    /// 
+    ///
     ///     Instances of this class are deserialized from the exports table entries.
     /// </summary>
     [UnrealRegisterClass]
@@ -107,7 +107,7 @@ namespace UELib.Core
 
         /// <summary>
         ///     The networking index for this object.
-        /// 
+        ///
         ///     Serialized if version is lower than <see cref="PackageObjectLegacyVersion.NetObjectCountAdded"/> or UE4Version is equal or greater than 196
         /// </summary>
         [StreamRecord]
@@ -115,7 +115,7 @@ namespace UELib.Core
 
         /// <summary>
         ///     The state frame for this object.
-        /// 
+        ///
         ///     Serialized if the object is marked with <see cref="ObjectFlag.HasStack" />.
         /// </summary>
         [StreamRecord]
@@ -936,10 +936,24 @@ namespace UELib.Core
         }
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        protected delegate void _Deserialize(IUnrealStream stream);
+        private delegate void _Deserialize(IUnrealStream stream);
+
+        protected void DeserializeBase(IUnrealStream stream, Type type)
+        {
+            IntPtr ptr = type.GetMethod(nameof(DeserializeBase)).MethodHandle.GetFunctionPointer();
+            var deserializeFunc = Marshal.GetDelegateForFunctionPointer<_Deserialize>(ptr);
+            deserializeFunc(stream);
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        protected delegate void _Serialize(IUnrealStream stream);
+        private delegate void _Serialize(IUnrealStream stream);
+
+        protected void SerializeBase(IUnrealStream stream, Type type)
+        {
+            IntPtr ptr = type.GetMethod(nameof(SerializeBase)).MethodHandle.GetFunctionPointer();
+            var serializeFunc = Marshal.GetDelegateForFunctionPointer<_Serialize>(ptr);
+            serializeFunc(stream);
+        }
 
         [Obsolete("Use PackageResource instead")]
         public UObjectTableItem? Table => PackageResource;

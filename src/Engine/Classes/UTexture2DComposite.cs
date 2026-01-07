@@ -9,16 +9,14 @@ namespace UELib.Engine
     /// </summary>
     [UnrealRegisterClass]
     [BuildGeneration(BuildGeneration.UE3)]
-    public class UTexture2DComposite : UTexture
+    public class UTexture2DComposite : UTexture2D // Actually UTexture, but we need to keep this inheritance for older builds.
     {
         public override void Deserialize(IUnrealStream stream)
         {
             // Deserialize from UTexture instead of UTexture2D
-            if (stream.Version >= 600)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.LightmassAdded)
             {
-                var ptr = typeof(UTexture).GetMethod(nameof(Deserialize)).MethodHandle.GetFunctionPointer();
-                var deserializeFunc = Marshal.GetDelegateForFunctionPointer<_Deserialize>(ptr);
-                deserializeFunc(stream);
+                DeserializeBase(stream, typeof(UTexture));
 
                 return;
             }
@@ -29,11 +27,9 @@ namespace UELib.Engine
         public override void Serialize(IUnrealStream stream)
         {
             // Serialize from UTexture instead of UTexture2D
-            if (stream.Version >= 600)
+            if (stream.Version >= (uint)PackageObjectLegacyVersion.LightmassAdded)
             {
-                var ptr = typeof(UTexture).GetMethod(nameof(Serialize)).MethodHandle.GetFunctionPointer();
-                var deserializeFunc = Marshal.GetDelegateForFunctionPointer<_Serialize>(ptr);
-                deserializeFunc(stream);
+                SerializeBase(stream, typeof(UTexture));
 
                 return;
             }

@@ -54,8 +54,7 @@ public class UStaticMesh : UPrimitive
         }
         else
         {
-            var ptr = typeof(UObject).GetMethod(nameof(Deserialize))!.MethodHandle.GetFunctionPointer();
-            Marshal.GetDelegateForFunctionPointer<_Deserialize>(ptr)(stream);
+            DeserializeBase(stream, typeof(UObject));
         }
 
         // Not implemented.
@@ -70,8 +69,7 @@ public class UStaticMesh : UPrimitive
         }
         else
         {
-            var ptr = typeof(UObject).GetMethod(nameof(Serialize))!.MethodHandle.GetFunctionPointer();
-            Marshal.GetDelegateForFunctionPointer<_Deserialize>(ptr)(stream);
+            SerializeBase(stream, typeof(UObject));
         }
 
         // Not implemented.
