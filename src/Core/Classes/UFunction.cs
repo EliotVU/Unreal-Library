@@ -189,7 +189,10 @@ namespace UELib.Core
             {
 #if TRANSFORMERS
                 // Cooked, but not stripped, However FriendlyName got stripped or deprecated.
-                if (stream.Build == BuildGeneration.HMS) return;
+                if (stream.Build == BuildGeneration.HMS)
+                {
+                    goto constructFriendlyName;
+                }
 #endif
                 FriendlyName = stream.ReadName();
                 stream.Record(nameof(FriendlyName), FriendlyName);
@@ -197,11 +200,75 @@ namespace UELib.Core
                 // Debug.Assert here, because we can work without a FriendlyName, but it is not expected.
                 Debug.Assert(FriendlyName.IsNone() == false, "FriendlyName should not be 'None'");
             }
-            else
+
+        constructFriendlyName:
+            if (FriendlyName.IsNone() && IsOperator())
             {
-                // HACK: Workaround for packages that have stripped FriendlyName data.
-                // FIXME: Operator names need to be translated.
-                if (FriendlyName.IsNone()) FriendlyName = Name;
+                // Re-construct the friendly name, if possible.
+                var symbolMap = new Dictionary<string, char>
+                {
+                    { "Not", '!' },
+                    { "DoubleQuote", '"' },
+                    { "Pound", '#' },
+                    { "Percent", '%' },
+                    { "And", '&' },
+                    { "SingleQuote", '\'' },
+                    { "OpenParen", '(' },
+                    { "CloseParen", ')' },
+                    { "Multiply", '*' },
+                    { "Add", '+' },
+                    { "Comma", ',' },
+                    { "Subtract", '-' },
+                    //{ "Dot", '.' },
+                    { "Divide", '/' },
+                    { "Colon", ':' },
+                    { "Semicolon", ';' },
+                    { "Less", '<' },
+                    { "Equal", '=' },
+                    { "Greater", '>' },
+                    { "Question", '?' },
+                    { "At", '@' },
+                    { "Concat", '$' },
+                    { "OpenBracket", '[' },
+                    { "Backslash", '\\' },
+                    { "CloseBracket", ']' },
+                    { "Xor", '^' },
+                    { "OpenBrace", '{' },
+                    { "Or", '|' },
+                    { "CloseBrace", '}' },
+                    { "Complement", '~' }
+                };
+
+                // Should look something like: "a NotEqual_BoolBool b" => "a != b"
+                string name = Name.ToString();
+                int underscoreIndex = name.IndexOf('_');
+                if (underscoreIndex <= 0)
+                {
+                    // Invalid operator name.
+                    return;
+                }
+
+                string friendlyName = string.Empty;
+                int startIndex = 0;
+                for (int i = 1; i <= underscoreIndex; i++)
+                {
+                    if (!char.IsUpper(name[i]) && i != underscoreIndex)
+                        continue;
+
+                    string token = name.Substring(startIndex, i - startIndex);
+                    if (symbolMap.TryGetValue(token, out char symbolChar))
+                    {
+                        friendlyName += symbolChar;
+                    }
+                    else
+                    {
+                        friendlyName += token;
+                    }
+
+                    startIndex = i;
+                }
+
+                FriendlyName = new UName(friendlyName);
             }
         }
 

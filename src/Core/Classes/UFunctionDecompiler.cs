@@ -270,8 +270,9 @@ namespace UELib.Core
                 ? ReturnProperty.GetFriendlyType() + " "
                 : string.Empty;
 
+            var friendlyName = !FriendlyName.IsNone() ? FriendlyName : Name;
             output += comment +
-                      FormatFlags() + returnCode + FriendlyName + FormatParms();
+                      FormatFlags() + returnCode + friendlyName + FormatParms();
             if (FunctionFlags.HasFlag(FunctionFlag.Const))
             {
                 output += " const";

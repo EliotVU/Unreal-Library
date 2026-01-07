@@ -470,23 +470,25 @@ namespace UELib.Core
                 {
                     decompiler.MarkSemicolon();
 
+                    // In some builds (usually cooked) FriendlyName may equal 'None', so fallback to the non-friendly name instead.
+                    var friendlyName = !function.FriendlyName.IsNone() ? function.FriendlyName : function.Name ;
                     if (function.IsOperator())
                     {
                         if (function.IsPre())
                         {
-                            return DecompilePreOperator(function.FriendlyName, decompiler, function);
+                            return DecompilePreOperator(friendlyName, decompiler, function);
                         }
 
                         if (function.IsPost())
                         {
-                            return DecompilePostOperator(function.FriendlyName, decompiler, function);
+                            return DecompilePostOperator(friendlyName, decompiler, function);
                         }
 
-                        return DecompileOperator(function.FriendlyName, decompiler, function);
+                        return DecompileOperator(friendlyName, decompiler, function);
                     }
 
                     // Ordinary function call.
-                    return DecompileCall(function.FriendlyName, decompiler, function);
+                    return DecompileCall(friendlyName, decompiler, function);
                 }
             }
 
