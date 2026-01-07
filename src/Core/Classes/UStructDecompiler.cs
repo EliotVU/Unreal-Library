@@ -72,54 +72,52 @@ namespace UELib.Core
                 return string.Empty;
             }
 
-            if ((StructFlags & (uint)Flags.StructFlags.Native) != 0)
+            if (HasStructFlag(Flags.StructFlag.Native))
             {
                 output += "native ";
             }
 
-            if ((StructFlags & (uint)Flags.StructFlags.Export) != 0)
+            if (HasStructFlag(Flags.StructFlag.Export))
             {
                 output += "export ";
             }
 
-            if (Package.Version <= 128)
+            if (HasStructFlag(Flags.StructFlag.Long))
             {
-                if ((StructFlags & (uint)Flags.StructFlags.Long) != 0)
-                {
-                    output += "long ";
-                }
+                output += "long ";
             }
 
-            if ((StructFlags & (uint)Flags.StructFlags.Init) != 0 && Package.Version < 222)
+            if (HasStructFlag(Flags.StructFlag.Init))
             {
                 output += "init ";
             }
-            else if (HasStructFlag(Flags.StructFlags.Transient))
+
+            if (HasStructFlag(Flags.StructFlag.Transient))
             {
                 output += "transient ";
             }
 
-            if (HasStructFlag(Flags.StructFlags.Atomic))
+            if (HasStructFlag(Flags.StructFlag.Atomic))
             {
                 output += "atomic ";
             }
 
-            if (HasStructFlag(Flags.StructFlags.AtomicWhenCooked))
+            if (HasStructFlag(Flags.StructFlag.AtomicWhenCooked))
             {
                 output += "atomicwhencooked ";
             }
 
-            if (HasStructFlag(Flags.StructFlags.Immutable))
+            if (HasStructFlag(Flags.StructFlag.Immutable))
             {
                 output += "immutable ";
             }
 
-            if (HasStructFlag(Flags.StructFlags.ImmutableWhenCooked))
+            if (HasStructFlag(Flags.StructFlag.ImmutableWhenCooked))
             {
                 output += "immutablewhencooked ";
             }
 
-            if (HasStructFlag(Flags.StructFlags.StrictConfig))
+            if (HasStructFlag(Flags.StructFlag.StrictConfig))
             {
                 output += "strictconfig ";
             }

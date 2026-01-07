@@ -21,12 +21,16 @@ namespace UELib.Flags
 
         public UnrealFlags(ulong rawValue, ulong[] flagsMap)
         {
+            Debug.Assert(flagsMap != null);
+
             _RawValue = rawValue;
             FlagsMap = flagsMap;
         }
 
         public UnrealFlags(ulong[] flagsMap, params TEnum[] flagIndices)
         {
+            Debug.Assert(flagsMap != null);
+
             ulong flags = 0;
 
             foreach (var flagIndex in flagIndices)
@@ -53,14 +57,14 @@ namespace UELib.Flags
 
         private ulong GetFlag(int flagIndex)
         {
-            Debug.Assert(FlagsMap != null);
-
-            return GetFlag(FlagsMap, flagIndex);
+            return FlagsMap != null ? GetFlag(FlagsMap, flagIndex) : 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ulong GetFlag(ulong[] flagsMap, int flagIndex)
         {
+            Debug.Assert(flagsMap != null);
+
             ulong flag = flagsMap[flagIndex];
             return flag;
         }
@@ -77,6 +81,8 @@ namespace UELib.Flags
 
         public ulong GetFlags(ulong[] flagsMap, params TEnum[] flagIndices)
         {
+            Debug.Assert(flagsMap != null);
+
             ulong flags = 0;
 
             foreach (var flagIndex in flagIndices)
@@ -96,6 +102,8 @@ namespace UELib.Flags
 
         private bool HasFlag(ulong[] flagsMap, int flagIndex)
         {
+            Debug.Assert(flagsMap != null);
+
             ulong flag = flagsMap[flagIndex];
             return (_RawValue & flag) != 0;
         }
@@ -157,14 +165,12 @@ namespace UELib.Flags
         /// <returns>the indices to the flags map.</returns>
         public IEnumerable<int> EnumerateFlags()
         {
-            Debug.Assert(FlagsMap != null);
-
-            return EnumerateFlags(FlagsMap);
+            return FlagsMap != null ? EnumerateFlags(FlagsMap) : [];
         }
 
         public IEnumerable<int> EnumerateFlags(ulong[] flagsMap)
         {
-            Debug.Assert(FlagsMap != null);
+            Debug.Assert(flagsMap != null);
 
             for (var flagIndex = 0; flagIndex < flagsMap.Length - 1; ++flagIndex)
             {
@@ -181,6 +187,8 @@ namespace UELib.Flags
 
         public string ToString(ulong[] flagsMap)
         {
+            Debug.Assert(flagsMap != null);
+
             var stringBuilder = new StringBuilder();
             var values = Enum.GetValues(typeof(TEnum));
             ulong flags = _RawValue;
@@ -214,17 +222,15 @@ namespace UELib.Flags
 
         public override string ToString()
         {
-            Debug.Assert(FlagsMap != null);
-
-            return ToString(FlagsMap);
+            return FlagsMap != null ? ToString(FlagsMap) : "";
         }
     }
 
     /// <summary>
     /// Flags describing an instance of any <see cref="UnrealPackage"/>.
-    /// 
+    ///
     /// <see cref="Branch.DefaultEngineBranch.PackageFlagsDefault"/>
-    /// 
+    ///
     /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE1"/>
     /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE2"/>
     /// <seealso cref="Branch.DefaultEngineBranch.PackageFlagsUE3"/>
@@ -243,10 +249,10 @@ namespace UELib.Flags
 #if UT
         /// <summary>
         /// The package is official and cannot be overriden.
-        /// 
+        ///
         /// Can be enabled in 'System\Official.ini' [Packages] SavePackagesAsOfficial=true
         /// or in 'Package\Classes\Package.UPKG' [Flags] Official=true
-        /// 
+        ///
         /// Exclusive to UE2.5 (UT2004)
         /// </summary>
         Official,
@@ -877,6 +883,9 @@ namespace UELib.Flags
         /// </summary>
         Editable,
 
+        /// <summary>
+        /// The property is marked with the modifier 'EditConst'
+        /// </summary>
         EditConst,
 
         /// <summary>
@@ -1366,6 +1375,10 @@ namespace UELib.Flags
     {
         Native,
         Export,
+
+        // UE2.5
+        Long,
+        Init,
 
         HasComponents,
         Transient,

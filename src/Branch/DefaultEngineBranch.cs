@@ -174,8 +174,8 @@ namespace UELib.Branch
             // Commented out, seen in X-Com
             //if (linker.Version >= (uint)PackageObjectLegacyVersion.Release62)
             //{
-                ObjectFlags[(int)ObjectFlag.Standalone] = (uint)ObjectFlagsLO.Standalone;
-                ObjectFlags[(int)ObjectFlag.Public] = (uint)ObjectFlagsLO.Public;
+            ObjectFlags[(int)ObjectFlag.Standalone] = (uint)ObjectFlagsLO.Standalone;
+            ObjectFlags[(int)ObjectFlag.Public] = (uint)ObjectFlagsLO.Public;
             //}
 
             ObjectFlags[(int)ObjectFlag.LoadForClient] = (uint)ObjectFlagsLO.LoadForClient;
@@ -370,6 +370,12 @@ namespace UELib.Branch
             {
                 StructFlags[(int)StructFlag.Transient] = (ulong)Flags.StructFlags.Transient;
             }
+            else if (linker.Version >= 118)
+            {
+                // UE2.5 (Many UE1 games have other flags here, but we do not know of no boundaries :)
+                StructFlags[(int)StructFlag.Long] = (ulong)Flags.StructFlags.Long;
+                StructFlags[(int)StructFlag.Init] = (ulong)Flags.StructFlags.Init;
+            }
 
             // FIXME: Just a guess, it's sort of related.
             if (linker.Version >= (uint)PackageObjectLegacyVersion.DisplacedScriptPropertiesWithClassDefaultObject)
@@ -386,6 +392,8 @@ namespace UELib.Branch
             // FIXME: Added way after cooking was introduced...
             if (linker.Version > 375)
             {
+                StructFlags[(int)StructFlag.StrictConfig] = (ulong)Flags.StructFlags.StrictConfig;
+
                 StructFlags[(int)StructFlag.AtomicWhenCooked] = (ulong)Flags.StructFlags.AtomicWhenCooked;
                 StructFlags[(int)StructFlag.ImmutableWhenCooked] = (ulong)Flags.StructFlags.ImmutableWhenCooked;
             }
