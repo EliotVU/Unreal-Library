@@ -18,6 +18,7 @@ using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE2.ShadowStrike;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
+using UELib.Branch.UE3.AHIT;
 using UELib.Branch.UE3.GIGANTIC;
 using UELib.Branch.UE3.HUXLEY;
 using UELib.Branch.UE3.MOH;
@@ -928,8 +929,9 @@ namespace UELib
                 ///
                 /// EngineVersion and CookerVersion are packed with the respective Licensee version.
                 /// </summary>
+                [Build(874, 78u)]
                 [BuildEngineBranch(typeof(EngineBranchWillow))]
-                [Build(874, 78u)] Battleborn,
+                Battleborn,
 
                 /// <summary>
                 /// A Hat in Time
@@ -938,7 +940,9 @@ namespace UELib
                 ///
                 /// The earliest available version with any custom specifiers is 1.0 (877) - Un-Drew.
                 /// </summary>
-                [Build(877, 893, 5, 5)] AHIT,
+                [Build(877, 893, 5, 5)]
+                [BuildEngineBranch(typeof(EngineBranchAHIT))]
+                AHIT,
 
                 /// <summary>
                 /// Bulletstorm: Full Clip Edition

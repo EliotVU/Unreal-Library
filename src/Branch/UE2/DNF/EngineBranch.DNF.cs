@@ -34,6 +34,22 @@ namespace UELib.Branch.UE2.DNF
             }
         }
 
+        protected override void SetupEnumPropertyFlags(UnrealPackage package)
+        {
+            base.SetupEnumPropertyFlags(package);
+
+            PropertyFlags[(int)PropertyFlag.CommentString] = 0x00800000;
+            PropertyFlags[(int)PropertyFlag.NonTransactional] = 0x01000000; // as 'nontrans'
+            PropertyFlags[(int)PropertyFlag.EditInline] = 0x10000000;
+            PropertyFlags[(int)PropertyFlag.EdFindable] = 0x20000000;
+            PropertyFlags[(int)PropertyFlag.EditInlineUse] = 0x40000000;
+            PropertyFlags[(int)PropertyFlag.EditInlineNotify] = 0x80000000;
+
+            // These either don't exist, or are wrong:
+            PropertyFlags[(int)PropertyFlag.NoExport] = 0;
+            PropertyFlags[(int)PropertyFlag.Deprecated] = 0;
+        }
+
         protected override void SetupEnumFunctionFlags(UnrealPackage linker)
         {
             base.SetupEnumFunctionFlags(linker);

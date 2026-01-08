@@ -77,7 +77,6 @@ namespace UELib.Core
 
         public string FormatFlags()
         {
-            // TODO: Just enumerate the flags and return them as a string.
             ulong copyFlags = PropertyFlags;
             var output = string.Empty;
 
@@ -92,7 +91,7 @@ namespace UELib.Core
             }
 
             /** Flags that are valid as parameters only */
-            if (Outer is UFunction && HasPropertyFlag(PropertyFlag.Parm))
+            if (HasPropertyFlag(PropertyFlag.Parm))
             {
                 // Oldest attestation for R6 v241
                 if (Package.Version > (uint)PackageObjectLegacyVersion.UE3)
@@ -126,7 +125,6 @@ namespace UELib.Core
             else /** Not a function param. */
             {
                 output += FormatAccess();
-
 
                 if (HasPropertyFlag(PropertyFlag.PrivateWrite))
                 {
@@ -181,7 +179,16 @@ namespace UELib.Core
 
                 if (HasPropertyFlag(PropertyFlag.NonTransactional))
                 {
-                    output += "nontransactional ";
+#if DNF
+                    if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                    {
+                        output += "nontrans ";
+                    }
+                    else
+#endif
+                    {
+                        output += "nontransactional ";
+                    }
                 }
 
                 if (HasPropertyFlag(PropertyFlag.DuplicateTransient))
@@ -245,6 +252,7 @@ namespace UELib.Core
                     {
                         // jsonserialize?
                         output += "jsontransient ";
+                        copyFlags &= ~(ulong)Branch.UE3.GIGANTIC.EngineBranchGigantic.PropertyFlags.JsonTransient;
                     }
                 }
 #endif
@@ -289,8 +297,13 @@ namespace UELib.Core
                     output += "editconst ";
                 }
 
+                if (HasPropertyFlag(PropertyFlag.NoExport))
+                {
+                    output += "noexport ";
+                }
+
 #if UE2 && UT
-                // Properties flagged with automated, automatically get those flags added by the compiler.
+                // 'Automated' also applies 'EditInline*' variants.
                 if (Package.Build == BuildGeneration.UE2_5 && (PropertyFlags & (ulong)PropertyFlagsLO.Automated) != 0)
                 {
                     output += "automated ";
@@ -298,80 +311,39 @@ namespace UELib.Core
                 else // Not Automated
 #endif
                 {
-                    if (HasPropertyFlag(PropertyFlag.NoExport)
-#if DNF
-                        // 0x00800000 is CPF_Comment in DNF
-                        && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
-#endif
-                       )
+                    if (HasPropertyFlag(PropertyFlag.ExportObject))
                     {
-                        output += "noexport ";
-                    }
-                    else if (HasPropertyFlag(PropertyFlag.ExportObject))
-                    {
-                        if (!HasPropertyFlag(PropertyFlag.DuplicateTransient))
-                        {
-                            output += "export ";
-                        }
+                        output += "export ";
                     }
 
-                    ulong editInline = PropertyFlags.GetFlag(PropertyFlag.EditInline);
-                    ulong editInlineUse = PropertyFlags.GetFlag(PropertyFlag.EditInlineUse);
-                    ulong editInlineNotify = PropertyFlags.GetFlag(PropertyFlag.EditInlineNotify);
-
-#if DNF
-                    if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
+                    if (HasPropertyFlag(PropertyFlag.EditInline))
                     {
-                        editInline = 0x10000000;
-                        editInlineUse = 0x40000000;
-                        editInlineNotify = 0x80000000;
-                    }
-#endif
-
-                    if ((PropertyFlags & editInline) != 0)
-                    {
-                        if ((PropertyFlags & editInlineUse) != 0)
-                        {
-                            copyFlags &= ~editInlineUse;
-                            output += "editinlineuse ";
-                        }
-                        else if ((PropertyFlags & editInlineNotify) != 0)
-                        {
-                            copyFlags &= ~editInlineNotify;
-                            output += "editinlinenotify ";
-                        }
-                        else if (!HasPropertyFlag(PropertyFlag.DuplicateTransient))
+                        if (HasPropertyFlag(PropertyFlag.EditInlineUse))
                         {
                             output += "editinline ";
                         }
-
-                        copyFlags &= ~editInline;
+                        else if (HasPropertyFlag(PropertyFlag.EditInlineNotify))
+                        {
+                            output += "editinlinenotify ";
+                        }
+                        else
+                        {
+                            output += "editinlineuse ";
+                        }
                     }
                 }
 
-                if (HasPropertyFlag(PropertyFlag.EdFindable)
-#if AHIT
-                    && Package.Build != UnrealPackage.GameBuild.BuildName.AHIT
-#endif
-#if DNF
-                    && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
-#endif
-                   )
+                if (HasPropertyFlag(PropertyFlag.EdFindable))
                 {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EdFindable);
                     output += "edfindable ";
                 }
 
-                if (HasPropertyFlag(PropertyFlag.Deprecated)
-#if DNF
-                    && Package.Build != UnrealPackage.GameBuild.BuildName.DNF
-#endif
-                   )
+                if (HasPropertyFlag(PropertyFlag.Deprecated))
                 {
                     output += "deprecated ";
                 }
 
-                // It is important to check for global before checking config! first
+                // 'GlobalConfig' also applies 'Config'
                 if (HasPropertyFlag(PropertyFlag.GlobalConfig))
                 {
                     output += "globalconfig ";
@@ -381,15 +353,13 @@ namespace UELib.Core
 #if XCOM2
                     if (ConfigName != null && !ConfigName.Value.IsNone())
                     {
-                        output += "config(" + ConfigName + ") ";
+                        output += $"config({ConfigName}) ";
                     }
                     else
+#endif
                     {
-#endif
                         output += "config ";
-#if XCOM2
                     }
-#endif
                 }
 
                 if (HasPropertyFlag(PropertyFlag.Localized))
@@ -426,21 +396,6 @@ namespace UELib.Core
 #if DNF
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
                 {
-                    // Always erase 'CommentString'
-                    copyFlags &= ~(uint)0x00800000;
-
-                    if (HasAnyPropertyFlags(0x20000000))
-                    {
-                        output += "edfindable ";
-                        copyFlags &= ~(uint)0x20000000;
-                    }
-
-                    if (HasAnyPropertyFlags(0x1000000))
-                    {
-                        output += "nontrans ";
-                        copyFlags &= ~(uint)0x1000000;
-                    }
-
                     if (HasAnyPropertyFlags(0x8000000))
                     {
                         output += "nocompress ";

@@ -475,15 +475,6 @@ namespace UELib.Branch
                 FunctionFlags[(int)FunctionFlag.K2Call] = (ulong)Flags.FunctionFlags.K2Call;
                 FunctionFlags[(int)FunctionFlag.K2Override] = (ulong)Flags.FunctionFlags.K2Override;
                 FunctionFlags[(int)FunctionFlag.K2Pure] = (ulong)Flags.FunctionFlags.K2Pure;
-#if AHIT
-                // For AHIT, don't write these K2 specifiers, since they overlap with its custom flags.
-                if (linker.Build == UnrealPackage.GameBuild.BuildName.AHIT)
-                {
-                    FunctionFlags[(int)FunctionFlag.K2Call] = 0;
-                    FunctionFlags[(int)FunctionFlag.K2Override] = 0;
-                    FunctionFlags[(int)FunctionFlag.K2Pure] = 0;
-                }
-#endif
             }
         }
 
