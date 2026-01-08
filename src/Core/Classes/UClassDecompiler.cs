@@ -1,8 +1,5 @@
 using System.Text;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using UELib.Branch;
 using UELib.Flags;
 using UELib.UnrealScript;
 
@@ -172,26 +169,20 @@ namespace UELib.Core
 
         private string FormatFlags()
         {
+            ulong copyFlags = ClassFlags;
             var output = string.Empty;
+            var parentClass = (UClass?)Super;
 
             if (HasClassFlag(ClassFlag.Abstract))
             {
                 output += "\r\n\tabstract";
             }
 
-            if (HasClassFlag(ClassFlag.Transient))
-            {
-                output += "\r\n\ttransient";
-            }
-            else
-            {
-                // Only do if parent had Transient
-                var parentClass = (UClass)Super;
-                if (parentClass != null && parentClass.HasClassFlag(ClassFlag.Transient))
-                {
-                    output += "\r\n\tnotransient";
-                }
-            }
+            ToggleClassModifier(
+                ClassFlag.Transient, "transient", "nontransient",
+                // oldest game I know with this modifier.
+                () => Package.Version >= (uint)PackageObjectLegacyVersion.GameGOW
+            );
 
             if (HasObjectFlag(ObjectFlag.Native))
             {
@@ -212,17 +203,12 @@ namespace UELib.Core
                 output += "\r\n\tnativereplication";
             }
 
-            // BTClient.Menu.uc has Config(ClientBtimes) and this flag is not true???
             if (HasClassFlag(ClassFlag.Config))
             {
-                string inner = ClassConfigName;
-                if (ClassConfigName == UnrealName.None || ClassConfigName == UnrealName.System)
+                output += "\r\n\tconfig";
+                if (ClassConfigName != UnrealName.None && ClassConfigName != UnrealName.System)
                 {
-                    output += "\r\n\tconfig";
-                }
-                else
-                {
-                    output += $"\r\n\tconfig({inner})";
+                    output += $"({ClassConfigName})";
                 }
             }
 
@@ -231,19 +217,7 @@ namespace UELib.Core
                 output += "\r\n\tparseconfig";
             }
 
-            if (HasClassFlag(ClassFlag.PerObjectConfig))
-            {
-                output += "\r\n\tperobjectconfig";
-            }
-            else
-            {
-                // Only do if parent had PerObjectConfig
-                var parentClass = (UClass)Super;
-                if (parentClass != null && parentClass.HasClassFlag(ClassFlag.PerObjectConfig))
-                {
-                    output += "\r\n\tnoperobjectconfig";
-                }
-            }
+            ToggleClassModifier(ClassFlag.Transient, "perobjectconfig", "noperobjectconfig");
 
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
@@ -251,29 +225,13 @@ namespace UELib.Core
                 if (HasAnyClassFlags(0x00001000U))
                 {
                     output += "\r\n\tobsolete";
+                    copyFlags &= ~0x00001000U;
                 }
             }
             else
 #endif
             {
-                if (HasClassFlag(ClassFlag.EditInlineNew))
-                {
-                    output += "\r\n\teditinlinenew";
-                }
-                else
-                {
-                    // Only do if parent had EditInlineNew
-                    var parentClass = (UClass)Super;
-                    if (parentClass != null && parentClass.HasClassFlag(ClassFlag.EditInlineNew))
-                    {
-                        output += "\r\n\tnoteditinlinenew";
-                    }
-                }
-            }
-
-            if (HasClassFlag(ClassFlag.CollapseCategories))
-            {
-                output += "\r\n\tcollapsecategories";
+                ToggleClassModifier(ClassFlag.Transient, "editinlinenew", "noteditinlinenew");
             }
 
 #if DNF
@@ -282,24 +240,25 @@ namespace UELib.Core
                 if (HasAnyClassFlags(0x00004000))
                 {
                     output += "\r\n\teditinlinenew";
+                    copyFlags &= ~0x00004000UL;
                 }
                 else
                 {
                     // Only do if parent had EditInlineNew
-                    var parentClass = (UClass)Super;
                     if (parentClass != null && parentClass.HasAnyClassFlags(0x00004000))
                     {
                         output += "\r\n\tnoteditinlinenew";
+                        copyFlags &= ~0x00004000UL;
                     }
                 }
             }
             else
 #endif
                 // TODO: Might indicate "Interface" in later versions
-            if (HasClassFlag(ClassFlag.ExportStructs))
-            {
-                output += "\r\n\texportstructs";
-            }
+                if (HasClassFlag(ClassFlag.ExportStructs))
+                {
+                    output += "\r\n\texportstructs";
+                }
 
             if (HasClassFlag(ClassFlag.NoExport))
             {
@@ -314,6 +273,7 @@ namespace UELib.Core
                     if (HasAnyClassFlags(0x02000))
                     {
                         output += "\r\n\tplaceable";
+                        copyFlags &= ~0x02000UL;
                     }
                     else
                     {
@@ -329,9 +289,7 @@ namespace UELib.Core
                     }
                     else
                     {
-                        output += HasClassFlag(ClassFlag.Placeable)
-                            ? "\r\n\tplaceable"
-                            : "\r\n\tnotplaceable";
+                        ToggleClassModifier(ClassFlag.Placeable, "placeable", "notplaceable");
                     }
                 }
             }
@@ -395,6 +353,7 @@ namespace UELib.Core
             //    }
             //}
 
+            ToggleClassModifier(ClassFlag.CollapseCategories, "collapsecategories", "dontcollapsecategories");
             output += FormatNameGroup("dontsortcategories", DontSortCategories);
             output += FormatNameGroup("hidecategories", HideCategories);
             // TODO: Decompile ShowCategories (but this is not possible without traversing the super chain)
@@ -414,15 +373,16 @@ namespace UELib.Core
                 if (HasAnyClassFlags(0x2000000))
                 {
                     output += "\r\n\tnativedestructor";
+                    copyFlags &= ~0x2000000UL;
                 }
 
                 if (HasAnyClassFlags(0x1000000))
                 {
                     output += "\r\n\tnotlistable";
+                    copyFlags &= ~0x1000000UL;
                 }
                 else
                 {
-                    var parentClass = (UClass)Super;
                     if (parentClass != null && parentClass.HasAnyClassFlags(0x1000000))
                     {
                         output += "\r\n\tlistable";
@@ -436,6 +396,7 @@ namespace UELib.Core
                 if ((ClassFlags & (ulong)Branch.UE3.GIGANTIC.EngineBranchGigantic.ClassFlags.JsonImport) != 0)
                 {
                     output += "\r\n\tjsonimport";
+                    copyFlags &= ~(ulong)Branch.UE3.GIGANTIC.EngineBranchGigantic.ClassFlags.JsonImport;
                 }
             }
 #endif
@@ -445,11 +406,13 @@ namespace UELib.Core
                 if ((ClassFlags & (uint)Flags.ClassFlags.AHIT_AlwaysLoaded) != 0)
                 {
                     output += "\r\n\tAlwaysLoaded";
+                    copyFlags &= ~(ulong)Flags.ClassFlags.AHIT_AlwaysLoaded;
                 }
 
                 if ((ClassFlags & (uint)Flags.ClassFlags.AHIT_IterOptimized) != 0)
                 {
                     output += "\r\n\tIterationOptimized";
+                    copyFlags &= ~(ulong)Flags.ClassFlags.AHIT_IterOptimized;
                 }
             }
 #endif
@@ -471,7 +434,44 @@ namespace UELib.Core
                         ?.Select(UObject (scriptInterface) => scriptInterface.InterfaceClass)
                         .ToList());
 
+
+            if (!UnrealConfig.SuppressComments && TryGetUnknownFlags(copyFlags, ClassFlags, out string undescribedFlags))
+            {
+                output += "\r\n\t" + undescribedFlags;
+            }
+
             return output + ";\r\n";
+
+            void ToggleClassModifier(ClassFlag flagIndex, string applyModifier, string undoModifier, Func<bool>? undoGuard = null)
+            {
+                // Only if the flag is compatible with this build.
+                // It shouldn't exist in the flags map if it is not.
+                if (ClassFlags.FlagsMap[(int)flagIndex] == 0)
+                {
+                    return;
+                }
+
+                // If applied, check if the super class doesn't have it already applied.
+                if (HasClassFlag(flagIndex))
+                {
+                    // Reduce clutter, transient is inheritable after all.
+                    if (parentClass?.HasClassFlag(flagIndex) != true)
+                    {
+                        output += $"\r\n\t{applyModifier}";
+                    }
+                }
+                // Not applied, see if it can be undone,
+                else if (undoGuard == null || undoGuard())
+                {
+                    // See if the super class had it applied,
+                    // but this class doesn't, then it must have been undone.
+                    // Or if the super class doesn't exist, then assume nothing.
+                    if (parentClass?.HasClassFlag(flagIndex) == true)
+                    {
+                        output += $"\r\n\t{undoModifier}";
+                    }
+                }
+            }
         }
 
         const ushort VReliableDeprecation = 189;

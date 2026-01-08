@@ -1,7 +1,4 @@
 ﻿#if DECOMPILE
-using System;
-using System.Linq;
-using UELib.Branch;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -31,6 +28,7 @@ namespace UELib.Core
 
         private string FormatFlags()
         {
+            ulong copyFlags = FunctionFlags;
             var output = string.Empty;
             var isNormalFunction = true;
 
@@ -43,8 +41,7 @@ namespace UELib.Core
                 output += "protected ";
             }
 
-            if (Package.Version >= (uint)PackageObjectLegacyVersion.AddedDLLBindFeature &&
-                HasFunctionFlag(FunctionFlag.DLLImport))
+            if (HasFunctionFlag(FunctionFlag.DLLImport))
             {
                 output += "dllimport ";
             }
@@ -91,13 +88,11 @@ namespace UELib.Core
                 if (HasAnyFunctionFlags((ulong)Flags.FunctionFlags.VG_Overloaded))
                 {
                     output += "overloaded ";
+                    copyFlags &= ~(ulong)Flags.FunctionFlags.VG_Overloaded;
                 }
             }
 #endif
-            // NoExport is no longer available in UE3+ builds,
-            // - instead it is replaced with (FunctionFlags.OptionalParameters)
-            // - as an indicator that the function has optional parameters.
-            if (HasFunctionFlag(FunctionFlag.NoExport) && Package.Version <= 220)
+            if (HasFunctionFlag(FunctionFlag.NoExport))
             {
                 output += "noexport ";
             }
@@ -108,42 +103,35 @@ namespace UELib.Core
                 if (HasAnyFunctionFlags((ulong)Flags.FunctionFlags.AHIT_Optional))
                 {
                     output += "optional "; // optional interface functions use this.
+                    copyFlags &= ~(ulong)Flags.FunctionFlags.AHIT_Optional;
                 }
 
                 if (HasAnyFunctionFlags((ulong)Flags.FunctionFlags.AHIT_Multicast))
                 {
                     output += "multicast ";
+                    copyFlags &= ~(ulong)Flags.FunctionFlags.AHIT_Multicast;
                 }
 
                 if (HasAnyFunctionFlags((ulong)Flags.FunctionFlags.AHIT_NoOwnerRepl))
                 {
                     output += "NoOwnerReplication ";
+                    copyFlags &= ~(ulong)Flags.FunctionFlags.AHIT_NoOwnerRepl;
                 }
             }
 #endif
-
-            // FIXME: Version, added with one of the later UDK builds.
-            if (Package.Version >= 500
-#if AHIT
-                // For AHIT, don't write these K2 specifiers, since they overlap with its custom flags.
-                && Package.Build != UnrealPackage.GameBuild.BuildName.AHIT
-#endif
-               )
+            if (HasFunctionFlag(FunctionFlag.K2Call))
             {
-                if (HasFunctionFlag(FunctionFlag.K2Call))
-                {
-                    output += "k2call ";
-                }
+                output += "k2call ";
+            }
 
-                if (HasFunctionFlag(FunctionFlag.K2Override))
-                {
-                    output += "k2override ";
-                }
+            if (HasFunctionFlag(FunctionFlag.K2Override))
+            {
+                output += "k2override ";
+            }
 
-                if (HasFunctionFlag(FunctionFlag.K2Pure))
-                {
-                    output += "k2pure ";
-                }
+            if (HasFunctionFlag(FunctionFlag.K2Pure))
+            {
+                output += "k2pure ";
             }
 #if DNF
             if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
@@ -151,21 +139,25 @@ namespace UELib.Core
                 if (HasAnyFunctionFlags(0x20000000))
                 {
                     output += "devexec ";
+                    copyFlags &= ~(ulong)0x20000000;
                 }
 
                 if (HasAnyFunctionFlags(0x4000000))
                 {
                     output += "animevent ";
+                    copyFlags &= ~(ulong)0x4000000;
                 }
 
                 if (HasAnyFunctionFlags(0x1000000))
                 {
                     output += "cached ";
+                    copyFlags &= ~(ulong)0x1000000;
                 }
 
                 if (HasAnyFunctionFlags(0x2000000))
                 {
                     output += "encrypted ";
+                    copyFlags &= ~(ulong)0x2000000;
                 }
 
                 // Only if non-static?
@@ -173,6 +165,7 @@ namespace UELib.Core
                 {
                     // Along with an implicit "native"
                     output += "indexed ";
+                    copyFlags &= ~(ulong)0x800000;
                 }
             }
 #endif
@@ -244,12 +237,20 @@ namespace UELib.Core
 
 #if AHIT
             // Needs to be after function/event/operator/etc.
-            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT &&
-                HasAnyFunctionFlags((ulong)Flags.FunctionFlags.AHIT_EditorOnly))
+            if (Package.Build == UnrealPackage.GameBuild.BuildName.AHIT)
             {
-                output += "editoronly ";
+                if (HasAnyFunctionFlags((ulong)Flags.FunctionFlags.AHIT_EditorOnly))
+                {
+                    output += "editoronly ";
+                    copyFlags &= ~(ulong)Flags.FunctionFlags.AHIT_EditorOnly;
+                }
             }
 #endif
+            if (!UnrealConfig.SuppressComments && TryGetUnknownFlags(copyFlags, FunctionFlags, out string undescribedFlags))
+            {
+                // Bring the flags to the front.
+                output = undescribedFlags + output;
+            }
 
             return output;
         }

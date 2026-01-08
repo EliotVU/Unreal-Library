@@ -1,6 +1,4 @@
 ﻿#if DECOMPILE
-using System;
-using System.Linq;
 using UELib.Branch;
 using UELib.Decompiler;
 
@@ -67,6 +65,7 @@ namespace UELib.Core
 
         private string FormatFlags()
         {
+            ulong copyFlags = StructFlags;
             var output = string.Empty;
             if (StructFlags == 0)
             {
@@ -123,6 +122,11 @@ namespace UELib.Core
             if (HasStructFlag(Flags.StructFlags.StrictConfig))
             {
                 output += "strictconfig ";
+            }
+
+            if (!UnrealConfig.SuppressComments && TryGetUnknownFlags(copyFlags, StructFlags, out string undescribedFlags))
+            {
+                output += undescribedFlags;
             }
 
             return output;

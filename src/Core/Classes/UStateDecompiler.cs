@@ -1,6 +1,4 @@
 ﻿#if DECOMPILE
-using System;
-using System.Linq;
 using UELib.Flags;
 
 namespace UELib.Core
@@ -55,9 +53,27 @@ namespace UELib.Core
             return HasStateFlag(StateFlag.Editable) ? "()" : string.Empty;
         }
 
+        private string FormatStateFlags()
+        {
+            ulong copyFlags = StateFlags;
+            if (copyFlags == 0)
+            {
+                return string.Empty;
+            }
+
+            string output = $"{GetAuto()}{GetSimulated()}";
+
+            if (!UnrealConfig.SuppressComments && TryGetUnknownFlags(copyFlags, StateFlags, out string undescribedFlags))
+            {
+                output += undescribedFlags;
+            }
+
+            return output;
+        }
+
         public override string FormatHeader()
         {
-            var output = $"{GetAuto()}{GetSimulated()}state{GetEdit()} {Name}";
+            var output = $"{FormatStateFlags()}state{GetEdit()} {Name}";
             if (Super != null && Super.Name != Name
                 /* Not the same because when overriding states it automatic extends the parent state */)
             {

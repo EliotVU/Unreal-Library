@@ -135,25 +135,25 @@ namespace UELib.Branch
             SetupEnumClassFlags(package);
         }
 
-        protected virtual void SetupEnumPackageFlags(UnrealPackage linker)
+        protected virtual void SetupEnumPackageFlags(UnrealPackage package)
         {
             PackageFlags[(int)PackageFlag.AllowDownload] = (uint)PackageFlagsDefault.AllowDownload;
             PackageFlags[(int)PackageFlag.ClientOptional] = (uint)PackageFlagsDefault.ClientOptional;
             PackageFlags[(int)PackageFlag.ServerSideOnly] = (uint)PackageFlagsDefault.ServerSideOnly;
 #if UE1
             // FIXME: Version
-            if (linker.Version > 61 && linker.Version <= 69) // <= UT99
+            if (package.Version > 61 && package.Version <= 69) // <= UT99
                 PackageFlags[(int)PackageFlag.Encrypted] = (uint)PackageFlagsUE1.Encrypted;
 #endif
 #if UE2 && UT
-            if (linker.Build == BuildGeneration.UE2_5)
+            if (package.Build == BuildGeneration.UE2_5)
                 PackageFlags[(int)PackageFlag.Official] = (uint)PackageFlagsUE2.Official;
 #endif
 #if UE3
             // Map the new PackageFlags, but the version is nothing but a guess!
-            if (linker.Version >= 180)
+            if (package.Version >= 180)
             {
-                if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedCookerVersion)
+                if (package.Version >= (uint)PackageObjectLegacyVersion.AddedCookerVersion)
                     PackageFlags[(int)PackageFlag.Cooked] = (uint)PackageFlagsUE3.Cooked;
 
                 PackageFlags[(int)PackageFlag.ContainsMap] = (uint)PackageFlagsUE3.ContainsMap;
@@ -164,7 +164,7 @@ namespace UELib.Branch
 #endif
         }
 
-        protected virtual void SetupEnumObjectFlags(UnrealPackage linker)
+        protected virtual void SetupEnumObjectFlags(UnrealPackage package)
         {
             ObjectFlags[(int)ObjectFlag.Transactional] = (uint)ObjectFlagsLO.Transactional;
 
@@ -189,7 +189,7 @@ namespace UELib.Branch
             ObjectFlags[(int)ObjectFlag.Transient] = (uint)ObjectFlagsLO.Transient;
 
             // UE2? Let's just restrict it to anything after UT99
-            if (linker.Version > 69)
+            if (package.Version > 69)
             {
                 // New flags with UE2
                 ObjectFlags[(int)ObjectFlag.Protected] = (uint)ObjectFlagsLO.Protected;
@@ -197,7 +197,7 @@ namespace UELib.Branch
                 ObjectFlags[(int)ObjectFlag.PerObjectLocalized] = (uint)ObjectFlagsLO.PerObjectLocalized;
             }
 
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.ObjectFlagsSizeExpandedTo64Bits)
             {
                 // Shifted from 0x800 to 0x100 and moved to higher bits.
                 ObjectFlags[(int)ObjectFlag.Protected] = (ulong)ObjectFlagsHO.Protected << 32;
@@ -208,14 +208,14 @@ namespace UELib.Branch
             }
 
             // Could be earlier, but we'll just assume it's introduced with the separating of a class's defaults.
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.DisplacedScriptPropertiesWithClassDefaultObject)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.DisplacedScriptPropertiesWithClassDefaultObject)
             {
                 ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = (ulong)ObjectFlagsHO.PropertiesObject << 32;
                 ObjectFlags[(int)ObjectFlag.TemplateObject] = ObjectFlags[(int)ObjectFlag.ClassDefaultObject];
             }
 
             // Assumption
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.ArchetypeAddedToExports)
             {
                 ObjectFlags[(int)ObjectFlag.ArchetypeObject] = (ulong)ObjectFlagsHO.ArchetypeObject << 32;
                 // FIXME: The flag check was added later (Not checked for in GoW), no known version.
@@ -223,7 +223,7 @@ namespace UELib.Branch
             }
 #if BULLETSTORM
             // FIXME: Figure out if this is only specific to Bulletstorm or if it is a general UE3 thing.
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm)
+            if (package.Build == UnrealPackage.GameBuild.BuildName.Bulletstorm)
             {
                 ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = 0x80UL << 32; // (same bit as Batman Ak)
                 ObjectFlags[(int)ObjectFlag.ArchetypeObject] = 0x100UL << 32; // assumed to come next after ClassDefaultObject.
@@ -232,7 +232,7 @@ namespace UELib.Branch
 #endif
         }
 
-        protected virtual void SetupEnumPropertyFlags(UnrealPackage linker)
+        protected virtual void SetupEnumPropertyFlags(UnrealPackage package)
         {
             PropertyFlags[(int)PropertyFlag.Editable] = (ulong)PropertyFlagsLO.Editable;
             PropertyFlags[(int)PropertyFlag.Input] = (ulong)PropertyFlagsLO.Input;
@@ -257,7 +257,7 @@ namespace UELib.Branch
 
             PropertyFlags[(int)PropertyFlag.CtorLink] = (ulong)PropertyFlagsLO.NeedCtorLink;
 
-            if (linker.Version > 68)
+            if (package.Version > 68)
             {
                 PropertyFlags[(int)PropertyFlag.NoExport] = (ulong)PropertyFlagsLO.NoExport;
                 PropertyFlags[(int)PropertyFlag.EditConst] = (ulong)PropertyFlagsLO.EditConst;
@@ -267,10 +267,10 @@ namespace UELib.Branch
                 PropertyFlags[(int)PropertyFlag.Deprecated] = (ulong)PropertyFlagsLO.Deprecated;
             }
 
-            if (linker.Version > 68)
+            if (package.Version > 68)
             {
                 // between GoW and UT3
-                if (linker.Version > 225)
+                if (package.Version > 225)
                 {
                     // Displaced EditConstArray
                     PropertyFlags[(int)PropertyFlag.EditFixedSize] = (ulong)PropertyFlagsLO.EditFixedSize;
@@ -282,7 +282,7 @@ namespace UELib.Branch
                 }
             }
 
-            if (linker.Version > 68 && linker.Version < (uint)PackageObjectLegacyVersion.UE3)
+            if (package.Version > 68 && package.Version < (uint)PackageObjectLegacyVersion.UE3)
             {
                 // Overlaps with 'Cache' ( > 120)
                 PropertyFlags[(int)PropertyFlag.Button] = (ulong)PropertyFlagsLO.Button;
@@ -297,12 +297,12 @@ namespace UELib.Branch
             }
 
             // > UT2003, added between 121-128 removed between 159-178
-            if (linker.Version > 120 && linker.Version < (uint)PackageObjectLegacyVersion.UE3)
+            if (package.Version > 120 && package.Version < (uint)PackageObjectLegacyVersion.UE3)
             {
                 // Automated
             }
 
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.UE3)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.UE3)
             {
                 PropertyFlags[(int)PropertyFlag.Component] = (ulong)PropertyFlagsLO.Component;
 
@@ -312,7 +312,7 @@ namespace UELib.Branch
                 PropertyFlags[(int)PropertyFlag.NoClear] = (ulong)PropertyFlagsLO.NoClear;
             }
 
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits)
             {
                 PropertyFlags[(int)PropertyFlag.RepNotify] = (ulong)PropertyFlagsHO.RepNotify << 32;
                 PropertyFlags[(int)PropertyFlag.Interp] = (ulong)PropertyFlagsHO.Interp << 32;
@@ -320,7 +320,7 @@ namespace UELib.Branch
             }
 
             // Most Gow-UT3
-            if (linker.Version > 225)
+            if (package.Version > 225)
             {
                 PropertyFlags[(int)PropertyFlag.EditorOnly] = (ulong)PropertyFlagsHO.EditorOnly << 32;
                 PropertyFlags[(int)PropertyFlag.NotForConsole] = (ulong)PropertyFlagsHO.NotForConsole << 32;
@@ -347,7 +347,7 @@ namespace UELib.Branch
                 PropertyFlags[(int)PropertyFlag.EditTextBox] = (ulong)PropertyFlagsHO.EditTextBox << 32;
             }
 
-            if (linker.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable)
+            if (package.Version >= (uint)PackageObjectLegacyVersion.AddedImportExportGuidsTable)
             {
                 PropertyFlags[(int)PropertyFlag.CrossLevelPassive] = (ulong)PropertyFlagsHO.CrossLevelPassive << 32;
                 PropertyFlags[(int)PropertyFlag.CrossLevelActive] = (ulong)PropertyFlagsHO.CrossLevelActive << 32;
@@ -467,6 +467,15 @@ namespace UELib.Branch
                 FunctionFlags[(int)FunctionFlag.K2Call] = (ulong)Flags.FunctionFlags.K2Call;
                 FunctionFlags[(int)FunctionFlag.K2Override] = (ulong)Flags.FunctionFlags.K2Override;
                 FunctionFlags[(int)FunctionFlag.K2Pure] = (ulong)Flags.FunctionFlags.K2Pure;
+#if AHIT
+                // For AHIT, don't write these K2 specifiers, since they overlap with its custom flags.
+                if (linker.Build == UnrealPackage.GameBuild.BuildName.AHIT)
+                {
+                    FunctionFlags[(int)FunctionFlag.K2Call] = 0;
+                    FunctionFlags[(int)FunctionFlag.K2Override] = 0;
+                    FunctionFlags[(int)FunctionFlag.K2Pure] = 0;
+                }
+#endif
             }
         }
 

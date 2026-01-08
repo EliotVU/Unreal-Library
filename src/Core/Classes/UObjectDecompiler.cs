@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using UELib.Flags;
 using UELib.UnrealScript;
 
 namespace UELib.Core
@@ -149,6 +150,24 @@ namespace UELib.Core
             }
 
             return output;
+        }
+
+        protected static bool TryGetUnknownFlags<T>(ulong remainingFlags, UnrealFlags<T> mappedFlags, out string? output) where T : Enum
+        {
+            ulong undescribedFlags = mappedFlags
+                .EnumerateFlags()
+                .Aggregate(remainingFlags, (flags, flagIndex) => flags & ~mappedFlags.FlagsMap[flagIndex]);
+
+            if (undescribedFlags != 0)
+            {
+                // Get all the undescribed flags.
+                output = $"/*0x{undescribedFlags:X}*/ ";
+
+                return true;
+            }
+
+            output = null;
+            return false;
         }
     }
 }

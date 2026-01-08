@@ -1,6 +1,4 @@
-﻿using System;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using UELib.Branch;
 using UELib.Flags;
 using UELib.UnrealScript;
@@ -80,7 +78,6 @@ namespace UELib.Core
         public string FormatFlags()
         {
             // TODO: Just enumerate the flags and return them as a string.
-
             ulong copyFlags = PropertyFlags;
             var output = string.Empty;
 
@@ -89,95 +86,41 @@ namespace UELib.Core
                 return FormatAccess();
             }
 
-            if (HasPropertyFlag(PropertyFlag.CommentString))
-            {
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.CommentString);
-            }
-
-            if (HasPropertyFlag(PropertyFlag.Net))
-            {
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Net);
-            }
-
-            if (HasPropertyFlag(PropertyFlag.DuplicateTransient))
-            {
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.DuplicateTransient);
-            }
-
-            // Decompiling of this flag is put elsewhere.
-            if (HasPropertyFlag(PropertyFlag.Editable))
-            {
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Editable);
-            }
-
-            if (HasPropertyFlag(PropertyFlag.Component))
-            {
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Component);
-            }
-
             if (HasPropertyFlag(PropertyFlag.AlwaysInit))
             {
                 output += "init ";
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.AlwaysInit);
-            }
-
-            if (HasPropertyFlag(PropertyFlag.CtorLink))
-            {
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.CtorLink);
             }
 
             /** Flags that are valid as parameters only */
             if (Outer is UFunction && HasPropertyFlag(PropertyFlag.Parm))
             {
-                copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Parm);
                 // Oldest attestation for R6 v241
                 if (Package.Version > (uint)PackageObjectLegacyVersion.UE3)
                 {
                     if (HasPropertyFlag(PropertyFlag.Const))
                     {
                         output += "const ";
-                        copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Const);
                     }
                 }
 
                 if (HasPropertyFlag(PropertyFlag.CoerceParm))
                 {
                     output += "coerce ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.CoerceParm);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.OptionalParm))
                 {
                     output += "optional ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.OptionalParm);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.OutParm))
                 {
                     output += "out ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.OutParm);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.SkipParm))
                 {
                     output += "skip ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.SkipParm);
-                }
-
-                if (HasPropertyFlag(PropertyFlag.ReturnParm))
-                {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.ReturnParm);
-                }
-
-                // Remove implied flags from GUIComponents
-                if (HasPropertyFlag(PropertyFlag.ExportObject))
-                {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.ExportObject);
-                }
-
-                if (HasPropertyFlag(PropertyFlag.EditInline))
-                {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditInline);
                 }
             }
             else /** Not a function param. */
@@ -188,19 +131,16 @@ namespace UELib.Core
                 if (HasPropertyFlag(PropertyFlag.PrivateWrite))
                 {
                     output += "privatewrite ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.PrivateWrite);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.ProtectedWrite))
                 {
                     output += "protectedwrite ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.ProtectedWrite);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.RepNotify))
                 {
                     output += "repnotify ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.RepNotify);
 
                     // (pseudo syntax) For BattleBorn, and possible other builds?
                     if (RepNotifyFuncName.IsNone() == false)
@@ -212,87 +152,77 @@ namespace UELib.Core
                 if (HasPropertyFlag(PropertyFlag.NoClear))
                 {
                     output += "noclear ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.NoClear);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.NoImport))
                 {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.NoImport);
                     output += "noimport ";
                 }
 
                 if (HasPropertyFlag(PropertyFlag.DataBinding))
                 {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.DataBinding);
                     output += "databinding ";
                 }
 
                 if (HasPropertyFlag(PropertyFlag.EditHide))
                 {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditHide);
                     output += "edithide ";
                 }
 
                 if (HasPropertyFlag(PropertyFlag.EditTextBox))
                 {
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditTextBox);
                     output += "edittextbox ";
                 }
 
                 if (HasPropertyFlag(PropertyFlag.Interp))
                 {
                     output += "interp ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Interp);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.NonTransactional))
                 {
                     output += "nontransactional ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.NonTransactional);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.DuplicateTransient))
                 {
                     output += "duplicatetransient ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.DuplicateTransient);
-
                     // Implies: Export, EditInline
                 }
 
                 if (HasPropertyFlag(PropertyFlag.EditorOnly))
                 {
                     output += "editoronly ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditorOnly);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.CrossLevelPassive))
                 {
                     output += "crosslevelpassive ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.CrossLevelPassive);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.CrossLevelActive))
                 {
                     output += "crosslevelactive ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.CrossLevelActive);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.Archetype))
                 {
                     output += "archetype ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Archetype);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.NotForConsole))
                 {
                     output += "notforconsole ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.NotForConsole);
+                }
+
+                if (HasPropertyFlag(PropertyFlag.NotForFinalRelease))
+                {
+                    output += "notforfinalrelease ";
                 }
 
                 if (HasPropertyFlag(PropertyFlag.RepRetry))
                 {
                     output += "repretry ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.RepRetry);
                 }
 
                 // Instanced is only an alias for Export and EditInline.
@@ -307,7 +237,6 @@ namespace UELib.Core
                 if (HasPropertyFlag(PropertyFlag.SerializeText))
                 {
                     output += "serializetext ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.SerializeText);
                 }
 #if GIGANTIC
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.Gigantic)
@@ -316,7 +245,6 @@ namespace UELib.Core
                     {
                         // jsonserialize?
                         output += "jsontransient ";
-                        copyFlags &= ~(ulong)Branch.UE3.GIGANTIC.EngineBranchGigantic.PropertyFlags.JsonTransient;
                     }
                 }
 #endif
@@ -339,31 +267,26 @@ namespace UELib.Core
                 if (HasPropertyFlag(PropertyFlag.Native))
                 {
                     output += FormatNative() + " ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Native);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.Const))
                 {
                     output += "const ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Const);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.EditFixedSize))
                 {
                     output += "editfixedsize ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditFixedSize);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.EditConstArray))
                 {
                     output += "editconstarray ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditConstArray);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.EditConst))
                 {
                     output += "editconst ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.EditConst);
                 }
 
 #if UE2 && UT
@@ -371,12 +294,6 @@ namespace UELib.Core
                 if (Package.Build == BuildGeneration.UE2_5 && (PropertyFlags & (ulong)PropertyFlagsLO.Automated) != 0)
                 {
                     output += "automated ";
-                    copyFlags &= ~((ulong)PropertyFlagsLO.Automated
-                                   | (ulong)PropertyFlagsLO.EditInlineUse
-                                   | (ulong)PropertyFlagsLO.EditInlineNotify
-                                   | (ulong)PropertyFlagsLO.EditInline
-                                   | (ulong)PropertyFlagsLO.NoExport
-                                   | (ulong)PropertyFlagsLO.ExportObject);
                 }
                 else // Not Automated
 #endif
@@ -389,7 +306,6 @@ namespace UELib.Core
                        )
                     {
                         output += "noexport ";
-                        copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.NoExport);
                     }
                     else if (HasPropertyFlag(PropertyFlag.ExportObject))
                     {
@@ -397,13 +313,11 @@ namespace UELib.Core
                         {
                             output += "export ";
                         }
-
-                        copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.ExportObject);
                     }
 
-                    ulong editInline = (ulong)PropertyFlagsLO.EditInline;
-                    ulong editInlineUse = (ulong)PropertyFlagsLO.EditInlineUse;
-                    ulong editInlineNotify = (ulong)PropertyFlagsLO.EditInlineNotify;
+                    ulong editInline = PropertyFlags.GetFlag(PropertyFlag.EditInline);
+                    ulong editInlineUse = PropertyFlags.GetFlag(PropertyFlag.EditInlineUse);
+                    ulong editInlineNotify = PropertyFlags.GetFlag(PropertyFlag.EditInlineNotify);
 
 #if DNF
                     if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
@@ -455,15 +369,12 @@ namespace UELib.Core
                    )
                 {
                     output += "deprecated ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Deprecated);
                 }
 
                 // It is important to check for global before checking config! first
                 if (HasPropertyFlag(PropertyFlag.GlobalConfig))
                 {
                     output += "globalconfig ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.GlobalConfig);
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Config);
                 }
                 else if (HasPropertyFlag(PropertyFlag.Config))
                 {
@@ -475,17 +386,15 @@ namespace UELib.Core
                     else
                     {
 #endif
-                    output += "config ";
+                        output += "config ";
 #if XCOM2
                     }
 #endif
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Config);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.Localized))
                 {
                     output += "localized ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Localized);
                 }
 
 #if UE2 && UT
@@ -503,19 +412,16 @@ namespace UELib.Core
                 if (HasPropertyFlag(PropertyFlag.Transient))
                 {
                     output += "transient ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Transient);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.Travel))
                 {
                     output += "travel ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Travel);
                 }
 
                 if (HasPropertyFlag(PropertyFlag.Input))
                 {
                     output += "input ";
-                    copyFlags &= ~PropertyFlags.GetFlag(PropertyFlag.Input);
                 }
 #if DNF
                 if (Package.Build == UnrealPackage.GameBuild.BuildName.DNF)
@@ -562,16 +468,13 @@ namespace UELib.Core
 #endif
             }
 
-            // Local's may never output any of their implied flags!
-            if (!IsParm() && Super != null
-                          && string.Compare(Super.GetClassName(), "Function", StringComparison.OrdinalIgnoreCase) == 0)
+            if (!UnrealConfig.SuppressComments && TryGetUnknownFlags(copyFlags, PropertyFlags, out string undescribedFlags))
             {
-                return string.Empty;
+                // Bring the flags to the front.
+                output = undescribedFlags + output;
             }
 
-            // alright...
-            //return "/*" + UnrealMethods.FlagToString( PropertyFlags ) + "*/ " + output;
-            return copyFlags != 0 ? "/*" + UnrealMethods.FlagToString(copyFlags) + "*/ " + output : output;
+            return output;
         }
 #else
         public string FormatFlags() => string.Empty;

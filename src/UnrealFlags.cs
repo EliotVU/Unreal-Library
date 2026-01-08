@@ -972,6 +972,11 @@ namespace UELib.Flags
         NotForConsole,
 
         /// <summary>
+        /// The property is marked with the modifier 'NotForFinalRelease'
+        /// </summary>
+        NotForFinalRelease,
+
+        /// <summary>
         /// The property is marked with the modifier 'PrivateWrite'
         /// 
         /// Introduced with UE3
