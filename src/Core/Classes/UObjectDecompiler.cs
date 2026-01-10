@@ -93,7 +93,9 @@ namespace UELib.Core
 
             if (Properties.Count == 0)
             {
-                return $"{UDecompilingState.Tabs}// No script properties available.\r\n";
+                return UnrealConfig.SuppressComments
+                    ? ""
+                    : $"{UDecompilingState.Tabs}// No script properties available.\r\n";
             }
 
             string output = string.Empty;
