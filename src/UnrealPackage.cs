@@ -16,6 +16,7 @@ using UELib.Branch.UE2.Eon;
 using UELib.Branch.UE2.Lead;
 using UELib.Branch.UE2.SCX;
 using UELib.Branch.UE2.ShadowStrike;
+using UELib.Branch.UE2.VG;
 using UELib.Branch.UE3.APB;
 using UELib.Branch.UE3.DD2;
 using UELib.Branch.UE3.AHIT;
@@ -32,9 +33,9 @@ using UELib.Branch.UE4;
 using UELib.Core;
 using UELib.Decoding;
 using UELib.Flags;
-using UELib.Services;
 using UELib.IO;
 using UELib.ObjectModel.Annotations;
+using UELib.Services;
 
 namespace UELib
 {
@@ -367,12 +368,14 @@ namespace UELib
                 /// 130/027
                 /// </summary>
                 [Build(130, 27, BuildGeneration.Vengeance)]
+                [BuildEngineBranch(typeof(VengeanceEngineBranch))]
                 Tribes_VG,
 
                 /// <summary>
                 /// 129/027
                 /// </summary>
                 [Build(129, 27, BuildGeneration.Vengeance)]
+                [BuildEngineBranch(typeof(VengeanceEngineBranch))]
                 Swat4,
 
                 /// <summary>
@@ -395,6 +398,7 @@ namespace UELib
                 /// 130:143/056:059
                 /// </summary>
                 [Build(130, 143, 56u, 59u, BuildGeneration.Vengeance)]
+                [BuildEngineBranch(typeof(VengeanceEngineBranch))]
                 BioShock,
 
                 /// <summary>

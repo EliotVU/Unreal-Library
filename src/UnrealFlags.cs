@@ -1317,12 +1317,7 @@ namespace UELib.Flags
         /// Replaced by UE3 <seealso cref="Deprecated"/>
         /// </summary>
         ParseConfig         = 0x01000000U,
-#if VENGEANCE
-        /// <summary>
-        /// The class is marked with the modifier 'Interface'
-        /// </summary>
-        VG_Interface        = 0x01000000U,
-#endif
+
         /// <summary>
         /// The class is marked with the modifier 'Deprecated' and won't be serialized.
         /// 

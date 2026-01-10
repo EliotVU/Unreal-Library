@@ -1335,13 +1335,6 @@ namespace UELib.Core
 
         public bool IsClassInterface()
         {
-#if VENGEANCE
-            // TODO: Move to EngineBranch
-            if (HasAnyClassFlags((ulong)Flags.ClassFlags.VG_Interface))
-            {
-                return true;
-            }
-#endif
             return HasClassFlag(ClassFlag.Interface);
         }
 
