@@ -87,43 +87,43 @@ UELib supports these kinds of content, but may vary from game to game:
 |     |     |     |     |
 | Unreal | 100-226 | 61/000 | | ✅ | ✅ | ✅ |
 | Hired Guns | 216 | 61/000 | | ✅ | ✅ | ✅ |
-| [Star Trek: The Next Generation: Klingon Honor Guard](Star%20Trek:%20The%20Next%20Generation:%20Klingon%20Honor%20Guard) | 219 | 61/000 | | ✅ |
-| X-COM: Alliance | 200-220 | 61/000 | Bad output at the start of functions (BeginFunctionToken) | ✅ |
+| Star Trek: The Next Generation: Klingon Honor Guard | 219 | 61/000 | | ✅ | ✅ | ✅ |
+| X-COM: Alliance | 200-220 | 61/000 | Bad output at the start of functions (BeginFunctionToken) | ✅ | ✅ | ✅ |
 | Dr. Brain: Action Reaction | 224 | 63-68/000 | | ✅ | ✅ | ✅ |
 | Nerf Arena Blast | 225 | 63-68/000 | | ✅ |
-| The Wheel of Time | 225:WoT | 63-68/000 | | ✅ |
-| Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | | ✅ |
+| The Wheel of Time | 225:WoT | 63-68/000 | | ✅ | ✅ | ✅ |
+| Unreal Mission Pack: Return to Na Pali | 226b | 68/000 | | ✅ | ✅ | ✅ |
 | Unreal Tournament | 338-436 | 68-69/000 | | ✅ | ✅ | ✅ |
 | Deus Ex | 400-436 | 68/000 | | ✅ |
-| Jazz Jackrabbit 3D | 400 | 68/000 | | ✅ |
+| Jazz Jackrabbit 3D | 400 | 68/000 | | ✅ | ✅ | ✅ |
 | Duke Nukem Forever (2001) | 613 | 68/002 | UStruct offsets are off leading to bad output code | ✅ ||
 | Rune | 400 | 69/000 | | ✅ |
 | Unrealty | 405 | 69/000 | | ✅ |
 | Adventure Pinball: Forgotten Island | 420 | 69/000 | | ✅ | ✅ | ✅ 
-| X-COM: Enforcer | 420 | 69/000 | | ✅ |
+| X-COM: Enforcer | 420 | 69/000 | | ✅ | ✅ | ✅ |
 | Tactical Ops: Assault on Terror | 436 | 69/000 | | ✅ |
 | Star Trek: Deep Space Nine: The Fallen | 338 | 73/000 | | ✅ |
 | Harry Potter and the Sorcerer's Stone | 436 | 76/000 | | ✅ |
 | Harry Potter and the Chamber of Secrets | 433 | 79/000 | | ✅ |
 | Disney's Brother Bear | 433 | 80/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#other-kw-games) | ✅ |
 | Mobile Forces | 436 | 81-83/000, 69 | | ✅ |
-| Clive Barker's Undying | 420 | 72-85/000 | Versions 72 to 83 are not auto detected. | ✅ | ✅ |
-| Thief: Deadly Shadows | 777:Flesh | 95/133 | Thanks in part to @hanfling; LinkedData not supported | ✅ |
+| Clive Barker's Undying | 420 | 72-85/000 | Versions 72 to 83 are not auto detected. | ✅ | ✅ | ✅ |
 | Deus Ex: Invisible War | 777:Flesh | 95/069 | Thanks in part to @hanfling; LinkedData not supported | ✅ |
+| Thief: Deadly Shadows | 777:Flesh | 95/133 | Thanks in part to @hanfling; LinkedData not supported | ✅ | | ❌ |
 |     |     |     |     |
 | **Unreal Engine 2**    |     |     |     | ✅ | ✅ | ✅ |
 |     |     |     |     |
 | XIII | 829 | 100/058 |     | ✅ |
 | Tom Clancy's Splinter Cell | 829 | 100/017 | | ✅ |
 | Tom Clancy's Splinter Cell: Pandora Tomorrow | 829 | 102/028:SCX | PC offline version | ✅ |
-| Tom Clancy's Splinter Cell: Chaos Theory | 829 | 100/120:SCX, 175/000:ShadowStrike | (PC) demo version, Versus mode not supported | ✅ |
+| Tom Clancy's Splinter Cell: Chaos Theory | 829 | 100/120:SCX, 175/000:ShadowStrike | (PS3) version and (PC) demo version, , Versus mode not supported | ✅ | | ✅ |
 | Tom Clancy's Splinter Cell: Double Agent | 829 | 100/167:SCX, 275/000:ShadowStrike | (PC) Offline mode version, Online mode not supported | ✅ |
 | Tom Clancy's Splinter Cell: Blacklist | 829 | 102/116:LEAD | In part thanks to @shryder. Third-party decompression is required | ✅ |
 | Tom Clancy's Rainbow Six 3: Raven Shield | 600-927 | 118/012-014 | | ✅ | ✅ |
 | Magic: The Gathering - Battlegrounds | 926 | 118/000 | | ✅ | ✅ | ✅ 
 | Postal 2: Paradise Lost | 1417 | 118/002 | | ✅ |
 | Unreal Tournament 2003 | 1077-2225 | 119/025 | | ✅ | ✅ | ✅ |
-| Devastation | 600-? | 118-120/004-008 | | ✅ |
+| Devastation | 600-? | 118-120/004-008 | | ✅ | ✅ | ✅ |
 | Dead Man's Hand | 2110 | 123/002 | | ✅ | ✅ | ✅ |
 | Unreal II: The Awakening | 829-2001 | 126/2609 | | ✅ |
 | Unreal II: eXpanded MultiPlayer | 2226 | 126/000 | Custom features are not decompiled | ✅ |
@@ -142,7 +142,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 | ✅ |
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) | ✅ |
-| Shrek 2 | 2226 | 129 | | ✅ |
+| Shrek 2 | 2226 | 129/000 | | ✅ |
 | Shark Tale | 2226 | 129/003 | | ✅ |
 | Lemony Snicket's A Series of Unfortunate Events | 2226 | 129/003 | | ✅ |
 | Combat: Task Force 121 | 2110 | 129/010 | | ✅ | ✅ | ✅ |
@@ -158,21 +158,21 @@ UELib supports these kinds of content, but may vary from game to game:
 | Star Wars: Republic Commando | 2226 | 134-159/001 | | ✅ |
 | Men of Valor | 926 | 137/000 | PC | ✅ |
 | Bioshock 2 | 2226:Vengeance | 143/059 | | ✅ |
-| Advent Rising | 2226 | 143-146/007 | | ✅ | ✅ |
+| Advent Rising | 2226 | 143-146/007 | | ✅ | ✅ | ✅ |
 | Unreal Championship 2: Liandri Conflict | 3323 | 151/002 | [Third-party](https://forums.beyondunreal.com/threads/unreal-championship-2-script-decompiler-release.206036/) | ✅ |
 | Duke Nukem Forever (2011) | Originally UE1 and upgraded to UE2&3 | 156/036 | [Extraction is required](https://github.com/DaZombieKiller/MegaPackageExtractor) | ✅ | ❌ | ✅ |
 |     |     |     |     |
 | **Unreal Engine 3**    |     |     |     | ✅ | ✅ | ✅ |
 |     |     |     |     |
-| RoboHordes | Unknown | 198-200/000 | | ✅ | ✅ |
+| RoboHordes | Unknown | 198-200/000 | | ✅ | ✅ | ✅ |
 | Tom Clancy's Rainbow Six: Vegas | Unknown | 241/066 | | ✅ |
 | Tom Clancy's Rainbow Six: Vegas 2 | Unknown | 241/071 | | ✅ |
 | Tom Clancy's EndWar | Unknown | 329/000 | | ✅ |
-| Roboblitz | 2306 | 369/006 |     | ✅ | ✅ |
+| Roboblitz | 2306 | 369/006 |     | ✅ | ✅ | ✅ |
 | Stranglehold | 2605 | 375/025 | | ✅ |
 | Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon | ✅ |
 | Warmonger: Operation Downtown Destruction | 2859 | 419/003 | | ✅ |
-| Medal of Honor: Airborne | 2859 | 421/011 |     | ✅ |
+| Medal of Honor: Airborne | 2859 | 421/011 |     | ✅ | | ✅ |
 | Frontlines: Fuel of War | 2917 | 433/052 | | ✅ |
 | Army of Two | 3004 | 445/079 | Overall quality has not been verified | ✅ |
 | Mortal Kombat Komplete Edition | 2605 | 472/046 |     | ✅ |
@@ -190,7 +190,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Gears of War 2 | 4638 | 575/000 | | ✅ |
 | CrimeCraft | 4701 | 576/005 | | ✅ |
 | Batman: Arkham Asylum | 4701 | 576/21 | Contributed by @etkramer | ✅ |
-| Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes | ✅ |
+| Medal of Honor (2010) | 100075??? | 581/058 | Bad byte-codes | ✅ | | ❌ |
 | Saw | 4869 | 584/003 | | ✅ | ✅ | ✅ |
 | Singularity | 4869 | 584/126 | | ✅ |
 | MoonBase Alpha | 4947 | 587/000 | | ✅ |
@@ -198,7 +198,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Monday Night Combat | 5697 | 638/000 |     | ✅ |
 | DC Universe Online | 5859 | 638/6405 | Contributed by @theFoof | ✅ |
 | Unreal Development Kit | 5860-12791 | 664-868 | | ✅ | ✅ | ✅ |
-| Blacklight: Tango Down | 6165 | 673/002 | | ✅ |
+| Blacklight: Tango Down | 6165 | 673/002 | | ✅ | | ✅ |
 | Saw II | 6165 | 673/004 | Unsupported, but loadable | ❌ | ❌ | ❌ |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | | ✅ |
 | Dungeon Defenders | 6262 | 678/002 | | ✅ | ✅ |
@@ -233,7 +233,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Gears of War: Reloaded | 3340 | 835/076 | Actual package version is 490; thanks to @PaoloTK | ✅ |
 | The Haunted: Hells Reach | 8788 | 841/000 |     | ✅ |
 | Asura's Wrath | 8788 | 841/000 | -zlib; platform needs to be set to console. | ✅ |
-| Blacklight Retribution | 8788-10499 | 841-864/002 |     | ✅ |
+| Blacklight Retribution | 8788-10499 | 841-864/002 | | ✅ | | ✅ |
 | Infinity Blade 2 | 9059 | 842-864/001 | Console | ✅ |
 | Q.U.B.E | 8916 | 845/000 |     | ✅ |
 | DmC: Devil May Cry | 8916 | 845/004 | | ✅ |
