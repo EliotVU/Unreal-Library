@@ -294,6 +294,7 @@ Want to add support for a game? See [adding support for new Unreal classes](http
 * [UE3 Shader Cache Patcher](https://github.com/tuokri/UE3ShaderCachePatcher)
 * [UnrealFlagEditor](https://github.com/Un-Drew/UnrealFlagEditor)
 * [Mir Eternal](https://github.com/mir-ethernity/mir-eternal) - Modified UELib with support for saving properties.
+* [Unreal Dependencies (UnrealDeps)](https://unrealadmin.org/forums/showthread.php?t=30406) - A tool to recursively-analyze package dependencies made by **Mc.Gugi**
 
 ## Special thanks to
 
