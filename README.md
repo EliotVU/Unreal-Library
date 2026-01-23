@@ -156,6 +156,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Bioshock | 2226:Vengeance | 130-141/056 | | ✅ |
 | Arctic Combat | 3369 | 134/038-039 | Thanks to @EDITzDev. Third-party decompression is required | ✅ | ✅ | ✅ |
 | Star Wars: Republic Commando | 2226 | 134-159/001 | | ✅ |
+| The Regiment | 2226 | 136/000 | | ✅ | ✅ | ✅ |
 | Men of Valor | 926 | 137/000 | PC | ✅ |
 | Bioshock 2 | 2226:Vengeance | 143/059 | | ✅ |
 | Advent Rising | 2226 | 143-146/007 | | ✅ | ✅ | ✅ |
@@ -199,7 +200,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | DC Universe Online | 5859 | 638/6405 | Contributed by @theFoof | ✅ |
 | Unreal Development Kit | 5860-12791 | 664-868 | | ✅ | ✅ | ✅ |
 | Blacklight: Tango Down | 6165 | 673/002 | | ✅ | | ✅ |
-| Saw II | 6165 | 673/004 | Unsupported, but loadable | ❌ | ❌ | ❌ |
+| Saw II: Flesh & Blood | 6165 | 673/004 | Unsupported, but loadable | ❌ | ❌ | ❌ |
 | Dungeons & Dragons: Daggerdale | 6165 | 674/000 | | ✅ |
 | Dungeon Defenders | 6262 | 678/002 | | ✅ | ✅ |
 | Mass Effect 3 (Windows) | 6383 | 684/194 | PC (platform must be set to `Console`) | ✅ |
