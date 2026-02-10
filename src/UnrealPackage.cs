@@ -720,6 +720,7 @@ namespace UELib
                 ///
                 /// 687-688/111-117
                 /// </summary>
+                [Build(687, 101)] // Dungeon Defenders Eternity
                 [Build(687, 688, 111, 117)]
                 [BuildEngineBranch(typeof(EngineBranchDD2))]
                 DD2,
