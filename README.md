@@ -253,9 +253,10 @@ UELib supports these kinds of content, but may vary from game to game:
 | Painkiller HD | 9953 | 860/000 |     | ✅ |
 | Chivalry: Medieval Warfare | 10246 | 860/000 | | ✅ |
 | Hawken | 10681 | 860/004 | | ✅ |
-| Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) | ✅ |
 | Styx: Master of Shadows | 10499 | 860/004 | | ✅ |
+| Abyss Odyssey | 10246 | 861/000 | | ✅ | ✅ | ✅ |
 | Batman: Arkham Knight | | 863/32995 | Not verified  | ✅ |
+| Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) | ✅ |
 | Gigantic: Rampage Edition | 19100 | 867/010 | Contributed by @HyenaCoding | ✅ |
 | Infinity Blade 3 | | 868/000 | Console | ✅ |
 | Guilty Gear Xrd | 10246 | 868/003 | [Decryption required](https://github.com/gdkchan/GGXrdRevelatorDec) | ✅ |
