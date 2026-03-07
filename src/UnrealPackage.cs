@@ -945,30 +945,94 @@ namespace UELib
             }
 
             public BuildName Name { get; }
+            public BuildGeneration Generation { get; internal set; }
 
-            [Obsolete] public uint Version { get; }
+            [Obsolete("Use OverrideVersion", true)]
+            public uint Version => 0;
 
-            [Obsolete] public uint LicenseeVersion { get; }
+            [Obsolete("Use OverrideLicenseeVersion", true)]
+            public uint LicenseeVersion => 0;
 
             public uint? OverrideVersion { get; }
             public ushort? OverrideLicenseeVersion { get; }
 
-            public BuildGeneration Generation { get; internal set; }
             public readonly Type? EngineBranchType;
 
-            [Obsolete("To be deprecated")] public readonly BuildFlags Flags;
+            [Obsolete("To be deprecated")]
+            public readonly BuildFlags Flags;
 
-            public GameBuild(uint overrideVersion, ushort overrideLicenseeVersion, BuildGeneration generation,
-                Type engineBranchType,
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GameBuild"/> class based on the specified build name.
+            /// </summary>
+            public GameBuild(BuildName name)
+            {
+                Name = name;
+
+                var buildFieldInfo = typeof(BuildName).GetField(name.ToString());
+                Contract.Assert(buildFieldInfo != null);
+
+                // Pick the last attribute.
+                var buildAttributes = buildFieldInfo.GetCustomAttributes<BuildAttribute>(false).Last();
+                if (buildAttributes != null)
+                {
+                    Generation = buildAttributes.Generation;
+                    Flags = buildAttributes.Flags;
+                }
+
+                var overrideAttribute = buildFieldInfo.GetCustomAttribute<OverridePackageVersionAttribute>(false);
+                if (overrideAttribute != null)
+                {
+                    if (overrideAttribute.FixedVersion != 0) OverrideVersion = overrideAttribute.FixedVersion;
+                    OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                }
+
+                var engineBranchAttribute = buildFieldInfo.GetCustomAttribute<BuildEngineBranchAttribute>(false);
+                if (engineBranchAttribute != null)
+                {
+                    // We cannot create the instance here, because the instance itself may be dependent on a valid GameBuild reference.
+                    EngineBranchType = engineBranchAttribute.EngineBranchType;
+                }
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GameBuild"/> class with the specified parameters.
+            /// </summary>
+            [Obsolete("Use the overload with the BuildName parameter.")]
+            public GameBuild(
+                uint? overrideVersion,
+                ushort? overrideLicenseeVersion,
+                BuildGeneration generation,
+                Type? engineBranchType,
+                BuildFlags flags) : this(overrideVersion, overrideLicenseeVersion, BuildName.Unknown, generation, engineBranchType, flags)
+            { }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GameBuild"/> class with the specified parameters.
+            /// </summary>
+            public GameBuild(
+                uint? overrideVersion,
+                ushort? overrideLicenseeVersion,
+                BuildName name,
+                BuildGeneration generation,
+                Type? engineBranchType,
                 BuildFlags flags)
             {
                 OverrideVersion = overrideVersion;
                 OverrideLicenseeVersion = overrideLicenseeVersion;
+                Name = name;
                 Generation = generation;
                 EngineBranchType = engineBranchType;
                 Flags = flags;
             }
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GameBuild"/> class based on the deserialized data from the specified package.
+            ///
+            /// This construction will consider all the following build attributes:
+            ///     * <see cref="BuildAttribute"/> for auto-detection or explicit build information.
+            ///     * <see cref="BuildEngineBranchAttribute"/> The engine branch type to use if the build is detected.
+            ///     * <see cref="OverridePackageVersionAttribute"/> The version to use instead of the one specified in the package if the build is detected, used for back-ported engine versions or when the version is not correctly updated.
+            /// </summary>
             public GameBuild(UnrealPackage package)
             {
                 // If UE Explorer's PlatformMenuItem is equal to "Console", set ConsoleCooked flag.
@@ -988,20 +1052,37 @@ namespace UELib
                 }
 
                 Name = (BuildName)Enum.Parse(typeof(BuildName), buildInfo.Name);
-                Version = package.Summary.Version;
-                LicenseeVersion = package.Summary.LicenseeVersion;
-
-                if (buildAttribute != null)
-                {
-                    Generation = buildAttribute.Generation;
-                    Flags = buildAttribute.Flags;
-                }
 
                 var overrideAttribute = buildInfo.GetCustomAttribute<OverridePackageVersionAttribute>(false);
                 if (overrideAttribute != null)
                 {
                     if (overrideAttribute.FixedVersion != 0) OverrideVersion = overrideAttribute.FixedVersion;
-                    if (overrideAttribute.FixedLicenseeVersion != 0) OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                    OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
+                }
+
+                if (buildAttribute != null)
+                {
+                    if (buildAttribute.Generation == BuildGeneration.Undefined)
+                    {
+                        uint version = OverrideVersion.GetValueOrDefault(package.Summary.Version);
+                        if (package.Summary.UE4Version > 0)
+                        {
+                            Generation = BuildGeneration.UE4;
+                        }
+                        else
+                            Generation = version switch
+                            {
+                                >= (uint)PackageObjectLegacyVersion.UE3 => BuildGeneration.UE3,
+                                >= (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded => BuildGeneration.UE2,
+                                _ => BuildGeneration.UE1
+                            };
+                    }
+                    else
+                    {
+                        Generation = buildAttribute.Generation;
+                    }
+
+                    Flags = buildAttribute.Flags;
                 }
 
                 var engineBranchAttribute = buildInfo.GetCustomAttribute<BuildEngineBranchAttribute>(false);
@@ -1035,7 +1116,7 @@ namespace UELib
 
                 if (linker.BuildTarget != BuildName.Unknown)
                 {
-                    string buildName = Enum.GetName(typeof(BuildName), linker.BuildTarget);
+                    string buildName = Enum.GetName(typeof(BuildName), linker.BuildTarget)!;
                     var build = typeof(BuildName).GetField(buildName);
                     return build;
                 }
@@ -1064,7 +1145,7 @@ namespace UELib
             }
 
             /// <inheritdoc/>
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
             {
                 return Name == (BuildName)obj;
             }
@@ -1081,16 +1162,43 @@ namespace UELib
             }
         }
 
-        public GameBuild.BuildName BuildTarget = GameBuild.BuildName.Unset;
+        /// <summary>
+        /// The package build to target, if not <see cref="GameBuild.BuildName.Unset"/>
+        /// </summary>
+        public GameBuild.BuildName BuildTarget
+        {
+            get
+            {
+                return Build?.Name ?? GameBuild.BuildName.Unset;
+            }
+
+            set
+            {
+                if (value == GameBuild.BuildName.Unset)
+                {
+                    return;
+                }
+
+                Contract.Assert(Build == null, "Cannot set BuildTarget once Build has been assigned.");
+                Build = new GameBuild(value);
+            }
+        }
 
         /// <summary>
-        /// The auto-detected (can be set before deserialization to override auto-detection).
-        /// This needs to be set to the correct build in order to load some game-specific data from packages.
+        /// The package build to use for this package.
+        /// This is crucial in order to deserialize the package's format in case of a customized package format.
+        ///
+        /// Null if not manually assigned or if the package has not yet been loaded.
+        /// If null, the instance will be constructed and auto-detected during the deserialization of its <see cref="Summary"/>
         /// </summary>
         public GameBuild Build;
 
         /// <summary>
-        /// The branch that we are using to load the data contained within this package.
+        /// The engine branch specifics to use for this package.
+        ///
+        /// Null if not manually assigned or if the package has not yet been loaded.
+        /// If null, the instance will be constructed and <see cref="EngineBranch.Setup"/> will be called during the deserialization of its <see cref="Summary"/>
+        /// Otherwise, <see cref="EngineBranch.Setup"/>  still be called soon after validating the branch during the summary's deserialization.
         /// </summary>
         public EngineBranch Branch;
 
@@ -1217,7 +1325,7 @@ namespace UELib
             private void SetupBuild(UnrealPackage package)
             {
                 // Auto-detect
-                if (package.Build == null)
+                if ((GameBuild?)package.Build == null)
                 {
                     package.Build = new GameBuild(package);
 
@@ -1227,7 +1335,8 @@ namespace UELib
                     }
                 }
 
-                if (package.CookerPlatform == BuildPlatform.Undetermined)
+                if (package.CookerPlatform == BuildPlatform.Undetermined &&
+                    package.PackageDirectory != string.Empty)
                 {
                     string packageFolderName = new DirectoryInfo(package.PackageDirectory).Name;
                     if (string.Compare(
@@ -1287,9 +1396,15 @@ namespace UELib
             // TODO: Re-use an instantiated branch if available and if the package's version and licensee are an identical match.
             private void SetupBranch(UnrealPackage package)
             {
+                if ((EngineBranch?)package.Branch != null)
+                {
+                    return;
+                }
+
                 if (package.Build.EngineBranchType != null)
                 {
-                    package.Branch = (EngineBranch)Activator.CreateInstance(package.Build.EngineBranchType,
+                    package.Branch = (EngineBranch)Activator.CreateInstance(
+                        package.Build.EngineBranchType,
                         package.Build.Generation);
 
                     // The branch may override the generation. (Especially in unit-tests this is useful)

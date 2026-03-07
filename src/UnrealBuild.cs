@@ -24,7 +24,7 @@ namespace UELib
 
         /// <summary>
         /// Unreal Engine 2
-        /// 
+        ///
         /// Not in use yet.
         /// </summary>
         UE2,
@@ -43,7 +43,7 @@ namespace UELib
         /// Unreal Engine 2 based, online version for the Splinter Cell series.
         /// </summary>
         ShadowStrike,
-        
+
         /// <summary>
         /// Unreal Engine 2 with some early UE3 upgrades.
         /// </summary>
@@ -82,7 +82,7 @@ namespace UELib
         /// A modified Unreal Engine 3 for the Mass Effect series.
         /// </summary>
         SFX,
-        
+
         /// <summary>
         /// Rocksteady Studios
         ///
@@ -113,7 +113,7 @@ namespace UELib
 
         /// <summary>
         /// Unreal Engine 4
-        /// 
+        ///
         /// Not in use yet.
         /// </summary>
         UE4
@@ -143,7 +143,7 @@ namespace UELib
 
         /// <summary>
         /// The package is optimized for PC.
-        /// 
+        ///
         /// Auto-detected if the package is located within a directory named "CookedPC"
         /// </summary>
         PC,
@@ -152,7 +152,7 @@ namespace UELib
         /// The package is optimized for console.
         /// All editor-data is assumed to have been stripped out.
         /// This may also even be true for some pc games, such as Mass Effect: LE
-        /// 
+        ///
         /// Auto-detected if the package is located within a directory named "CookedPCConsole"
         /// </summary>
         Console
@@ -161,14 +161,24 @@ namespace UELib
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class OverridePackageVersionAttribute : Attribute
     {
+        /// <summary>
+        /// The version to override the <see cref="UnrealPackage.PackageFileSummary.Version"/> with.
+        /// If set to 0, no override will be performed and the version will be auto-detected.
+        /// </summary>
         public readonly uint FixedVersion;
+
+        /// <summary>
+        /// The licensee version to override the <see cref="UnrealPackage.PackageFileSummary.LicenseeVersion"/> with.
+        ///
+        /// If set to null (not 0), no override will be performed and the licensee version will be auto-detected.
+        /// </summary>
         public readonly ushort? FixedLicenseeVersion;
-        
+
         public OverridePackageVersionAttribute(uint fixedVersion)
         {
             FixedVersion = fixedVersion;
         }
-        
+
         public OverridePackageVersionAttribute(uint fixedVersion, ushort fixedLicenseeVersion)
         {
             FixedVersion = fixedVersion;
