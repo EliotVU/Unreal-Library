@@ -139,6 +139,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Outlaw Chopper | 3369 | 128/029 | | ✅ | ✅ | ✅ |
 | Marine Sharpshooter 3 | 3369 | 128/029 | | ✅ | ✅ | ✅ |
 | Marine Sharpshooter 4: Locked and Loaded | 3369 | 128/029 | | ✅ | ✅ | ✅ |
+| Mission Biotech | 3369 | 128/029 | | ✅ | ✅ | ✅ |
 | America's Army 2 | 3339 | 128/032:033 | 2.5, 2.6, 2.8 | ✅ |
 | America's Army (Arcade) | 3339 | 128/032 | 2.6 | ✅ |
 | Harry Potter and the Prisoner of Azkaban | 2226 | 129/000 | [Link](https://github.com/metallicafan212/HarryPotterUnrealWiki/wiki/Main-Resources#hp3) | ✅ |
