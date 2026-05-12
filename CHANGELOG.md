@@ -1,5 +1,12 @@
 #
 
+##
+
+* Fixed #138, unit test and document things regarding build overriding.
+* Fixed https://github.com/UE-Explorer/UE-Explorer/issues/100; Detection for "Dungeon Defenders Eternity"
+
+* Improved support for Sudden Attack 2 (#127, #129); "Supper newer version" and "Fixes trailing data for old package OnlineSubsystemPC.u"
+
 ## [1.12.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.12.1)
 
 * Fixed support for Alien: Colonial Marines

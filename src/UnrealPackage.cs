@@ -972,7 +972,7 @@ namespace UELib
                 Contract.Assert(buildFieldInfo != null);
 
                 // Pick the last attribute.
-                var buildAttributes = buildFieldInfo.GetCustomAttributes<BuildAttribute>(false).Last();
+                var buildAttributes = buildFieldInfo.GetCustomAttributes<BuildAttribute>(false).LastOrDefault();
                 if (buildAttributes != null)
                 {
                     Generation = buildAttributes.Generation;
@@ -1048,6 +1048,9 @@ namespace UELib
                     Name = package.Summary.LicenseeVersion == 0
                         ? BuildName.Default
                         : BuildName.Unknown;
+
+                    DetermineGeneration(package.Summary.Version);
+
                     return;
                 }
 
@@ -1060,28 +1063,14 @@ namespace UELib
                     OverrideLicenseeVersion = overrideAttribute.FixedLicenseeVersion;
                 }
 
-                if (buildAttribute != null)
+                if (buildAttribute is { Generation: BuildGeneration.Undefined } or null)
                 {
-                    if (buildAttribute.Generation == BuildGeneration.Undefined)
-                    {
-                        uint version = OverrideVersion.GetValueOrDefault(package.Summary.Version);
-                        if (package.Summary.UE4Version > 0)
-                        {
-                            Generation = BuildGeneration.UE4;
-                        }
-                        else
-                            Generation = version switch
-                            {
-                                >= (uint)PackageObjectLegacyVersion.UE3 => BuildGeneration.UE3,
-                                >= (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded => BuildGeneration.UE2,
-                                _ => BuildGeneration.UE1
-                            };
-                    }
-                    else
-                    {
-                        Generation = buildAttribute.Generation;
-                    }
-
+                    uint version = OverrideVersion.GetValueOrDefault(package.Summary.Version);
+                    DetermineGeneration(version);
+                }
+                else
+                {
+                    Generation = buildAttribute.Generation;
                     Flags = buildAttribute.Flags;
                 }
 
@@ -1090,6 +1079,25 @@ namespace UELib
                 {
                     // We cannot create the instance here, because the instance itself may be dependent on GameBuild.
                     EngineBranchType = engineBranchAttribute.EngineBranchType;
+                }
+
+                return;
+
+                void DetermineGeneration(uint version)
+                {
+                    if (package.Summary.UE4Version > 0)
+                    {
+                        Generation = BuildGeneration.UE4;
+                    }
+                    else
+                    {
+                        Generation = version switch
+                        {
+                            >= (uint)PackageObjectLegacyVersion.UE3 => BuildGeneration.UE3,
+                            >= (uint)PackageObjectLegacyVersion.PrimitiveCastTokenAdded => BuildGeneration.UE2,
+                            _ => BuildGeneration.UE1
+                        };
+                    }
                 }
             }
 
@@ -1408,7 +1416,10 @@ namespace UELib
                         package.Build.Generation);
 
                     // The branch may override the generation. (Especially in unit-tests this is useful)
-                    package.Build.Generation = package.Branch.Generation;
+                    if (package.Branch.Generation != BuildGeneration.Undefined)
+                    {
+                        package.Build.Generation = package.Branch.Generation;
+                    }
                 }
                 else if (package.Summary.UE4Version > 0)
                 {
