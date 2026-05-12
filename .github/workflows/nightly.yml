@@ -1,0 +1,79 @@
+name: Publish UELib Nightly
+
+on:
+  push:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Compute Version
+      run: |
+        $latestTag = git tag --list "[0-9]*.[0-9]*.[0-9]*" --sort=-version:refname | Select-Object -First 1
+
+        if (-not $latestTag) {
+          $latestTag = "0.0.0"
+        }
+
+        $parts = $latestTag.Split('.')
+
+        $major = [int]$parts[0]
+        $minor = [int]$parts[1]
+        $patch = [int]$parts[2]
+
+        $runNumber = "${{ github.run_number }}"
+        $sha = "${{ github.sha }}".Substring(0,7)
+
+        $version = "$major.$minor.$patch-nightly.$runNumber"
+
+        Write-Host "Version: $version"
+
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Restore
+      run: dotnet restore src/Eliot.UELib.csproj
+
+    - name: Build
+      run: dotnet build src/Eliot.UELib.csproj -c Release --no-restore
+
+    - name: Setup NBGV
+      uses: dotnet/nbgv@master
+      id: nbgv
+
+    - name: Pack
+      run: |
+        dotnet pack src/Eliot.UELib.csproj `
+          -c Release `
+          -o artifacts
+      shell: pwsh
+
+    - name: Push Nightly to NuGet
+      run: |
+        Get-ChildItem "artifacts/*.nupkg" | ForEach-Object {
+          dotnet nuget push $_.FullName `
+            --api-key "${{ secrets.NUGET_API_KEY }}" `
+            --source "https://api.nuget.org/v3/index.json" `
+            --skip-duplicate
+        }
+      shell: pwsh
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nightly-package
+        path: artifacts/*.nupkg

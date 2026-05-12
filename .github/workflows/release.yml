@@ -1,0 +1,61 @@
+name: Publish UELib
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: windows-2022
+
+    permissions:
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore
+      run: dotnet restore src/Eliot.UELib.csproj
+
+    - name: Build
+      run: dotnet build src/Eliot.UELib.csproj -c Release --no-restore
+
+    - name: Setup NBGV
+      uses: dotnet/nbgv@master
+      id: nbgv
+
+    - name: Pack
+      run: |
+        dotnet pack src/Eliot.UELib.csproj `
+          -c Release `
+          -o artifacts
+      shell: pwsh
+
+    - name: Push to NuGet
+      run: |
+        dotnet nuget push "artifacts/*.nupkg" `
+          --api-key "${{ secrets.NUGET_API_KEY }}" `
+          --source "https://api.nuget.org/v3/index.json" `
+          --skip-duplicate
+      shell: pwsh
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: packages
+        path: artifacts/*.nupkg
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts/*.nupkg
+        generate_release_notes: true
