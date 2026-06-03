@@ -520,6 +520,15 @@ namespace UELib
                 Stranglehold,
 
                 /// <summary>
+                /// TNA Impact!
+                ///
+                /// 380/035
+                /// </summary>
+                [Build(380, 35, BuildGeneration.Midway3)]
+                [Build(398, 37, BuildGeneration.Midway3)] // WWE All Stars
+                TNA,
+
+                /// <summary>
                 /// Medal of Honor: Airborne
                 ///
                 /// 421/011
@@ -1340,6 +1349,13 @@ namespace UELib
                     if (package.Build.Flags.HasFlag(BuildFlags.ConsoleCooked))
                     {
                         package.CookerPlatform = BuildPlatform.Console;
+                    }
+
+                    // Special case, this Xenon only game was cooked for PC???
+                    if (package.CookerPlatform == BuildPlatform.Undetermined &&
+                        package.Build == GameBuild.BuildName.TNA)
+                    {
+                        package.CookerPlatform = BuildPlatform.PC;
                     }
                 }
 

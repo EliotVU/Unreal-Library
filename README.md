@@ -171,7 +171,8 @@ UELib supports these kinds of content, but may vary from game to game:
 | Tom Clancy's Rainbow Six: Vegas 2 | Unknown | 241/071 | | ✅ |
 | Tom Clancy's EndWar | Unknown | 329/000 | | ✅ |
 | Roboblitz | 2306 | 369/006 |     | ✅ | ✅ | ✅ |
-| Stranglehold | 2605 | 375/025 | | ✅ |
+| Stranglehold | 2605 | 375/025 | | ✅ | | ✅ |
+| TNA Impact! | 2605 | 380/035 | Xenon (platform must be set to `PC`) | ✅ | | ✅ |
 | Mass Effect (Xbox 360) | 2674 | 391/092 | Xenon | ✅ |
 | Warmonger: Operation Downtown Destruction | 2859 | 419/003 | | ✅ |
 | Medal of Honor: Airborne | 2859 | 421/011 |     | ✅ | | ✅ |
@@ -255,6 +256,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Painkiller HD | 9953 | 860/000 |     | ✅ |
 | Chivalry: Medieval Warfare | 10246 | 860/000 | | ✅ |
 | Hawken | 10681 | 860/004 | | ✅ |
+| Rocket League | 10897 | 867/009 (868/032 has not been tested) | [Decryption required](https://github.com/AltimorTASDK/RLUPKTool) | ✅ |
 | Styx: Master of Shadows | 10499 | 860/004 | | ✅ |
 | Abyss Odyssey | 10246 | 861/000 | | ✅ | ✅ | ✅ |
 | Batman: Arkham Knight | | 863/32995 | Not verified  | ✅ |
