@@ -317,7 +317,7 @@ namespace UELib.Core
                 // If previous is the same as the one now then format the params as one line until another type is reached
                 if (curType == lastType)
                 {
-                    output += locals[i].Name +
+                    output += locals[i].FormatVariable() +
                               (
                                   curType == nextType
                                       ? ((numParms >= 5 && numParms % 5 == 0)
