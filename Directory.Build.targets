@@ -1,0 +1,8 @@
+<Project>
+  
+  <PropertyGroup>
+    <Product>$(AssemblyName)</Product>
+    <EnableVSTestReferences>false</EnableVSTestReferences>
+  </PropertyGroup>
+  
+</Project>

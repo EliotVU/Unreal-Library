@@ -303,6 +303,7 @@ namespace UELib.Core
                 if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.AddedArrayEnumToUProperty
 #if MIDWAY
                     || Package.Build == UnrealPackage.GameBuild.BuildName.Stranglehold
+                    || Package.Build == UnrealPackage.GameBuild.BuildName.TNA
 #endif
                     )
                 {

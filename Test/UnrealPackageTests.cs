@@ -11,13 +11,13 @@ namespace Eliot.UELib.Test
     public class UnrealPackageTests
     {
         public class MyUModel : UModel;
-        
+
         [TestMethod]
         public void TestClassTypeOverride()
         {
             using var stream = UnrealPackageUtilities.CreateTempPackageStream();
             using var linker = new UnrealPackage(stream);
-            
+
             Assert.IsTrue(linker.GetClassType("Model") == typeof(UnknownObject));
             linker.AddClassType("Model", typeof(MyUModel));
             Assert.IsTrue(linker.GetClassType("Model") == typeof(MyUModel));
@@ -34,7 +34,7 @@ namespace Eliot.UELib.Test
             linker2.AddClassType("Model", typeof(MyUModel));
             Assert.IsTrue(linker2.GetClassType("Model") == typeof(MyUModel));
         }
-        
+
         internal static void AssertTestClass(UnrealPackage linker)
         {
             var testClass = linker.FindObject<UClass>("Test");
@@ -73,13 +73,13 @@ namespace Eliot.UELib.Test
                     Assert.Fail($"Token decompilation exception in script instance {scriptInstance.GetReferencePath()}: {ex.Message}");
                 }
             }
-            
+
             foreach (var subScriptInstance in scriptInstance
                          .EnumerateFields()
                          .OfType<UStruct>())
             {
                 if (subScriptInstance.ByteCodeManager == null) continue;
-                
+
                 try
                 {
                     subScriptInstance.ByteCodeManager.Decompile();
@@ -122,7 +122,7 @@ namespace Eliot.UELib.Test
             Assert.IsTrue(textures.Any());
             textures.ForEach(AssertObjectDeserialization);
         }
-        
+
         internal static void AssertExports(IEnumerable<UObject> objects)
         {
             var compatibleExports = objects.Where(exp => exp is not UnknownObject)
@@ -130,7 +130,7 @@ namespace Eliot.UELib.Test
             Assert.IsTrue(compatibleExports.Any());
             compatibleExports.ForEach(AssertObjectDeserialization);
         }
-        
+
         internal static void AssertObjectDeserialization(UObject obj)
         {
             if (obj.DeserializationState == 0)
@@ -158,6 +158,31 @@ namespace Eliot.UELib.Test
             {
                 AssertTokenType(script.NextToken, tokenType);
             }
+        }
+
+        [TestMethod]
+        public void TestPackageBuildOverride()
+        {
+            string filePath = Path.GetTempFileName();
+            var stream = new UPackageStream(filePath, FileMode.OpenOrCreate, FileAccess.Write);
+            using var dummyPackage = new UnrealPackage(stream);
+
+            // Required in order to serialize anything at all.
+            dummyPackage.Summary.Tag = UnrealFile.Signature;
+            dummyPackage.Summary.Version = 72; // Let's pretend to be an undying package (this is one version that is not being auto-detected)
+            dummyPackage.Build = new UnrealPackage.GameBuild(dummyPackage); // required to serialize
+            dummyPackage.Summary.Serialize(dummyPackage.Stream); // dummy data
+            stream.Flush();
+            stream.Dispose();
+
+            stream = new UPackageStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            stream.Seek(0, SeekOrigin.Begin);
+            using var undyingPackage = new UnrealPackage(stream);
+            undyingPackage.Build = new UnrealPackage.GameBuild(UnrealPackage.GameBuild.BuildName.Undying);
+            undyingPackage.Deserialize(stream);
+
+            Assert.AreEqual(UnrealPackage.GameBuild.BuildName.Undying, undyingPackage.Build.Name);
+            Assert.AreEqual(BuildGeneration.UE1, undyingPackage.Build.Generation);
         }
     }
 }

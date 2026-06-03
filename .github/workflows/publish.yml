@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        dotnet: [ '8.0.x' ]
+        dotnet: [ '10.0.x' ]
     permissions:
       packages: write
       contents: read

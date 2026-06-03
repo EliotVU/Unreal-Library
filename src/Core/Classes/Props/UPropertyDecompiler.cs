@@ -18,11 +18,24 @@ namespace UELib.Core
 
         public override string Decompile()
         {
-            return FormatFlags() + GetFriendlyType()
-                                 + " " + Name
-                                 + FormatSize()
-                                 + DecompileEditorData()
-                                 + DecompileMeta();
+            // Decompile without the declaring keyword, as the caller will handle that.
+            return FormatDeclaration();
+        }
+
+        private string FormatDeclaration()
+        {
+            return FormatFlags()
+                + GetFriendlyType()
+                + " "
+                + FormatVariable();
+        }
+
+        internal string FormatVariable()
+        {
+            return Name
+                + FormatSize()
+                + DecompileEditorData()
+                + DecompileMeta();
         }
 
         // Post semicolon ";".

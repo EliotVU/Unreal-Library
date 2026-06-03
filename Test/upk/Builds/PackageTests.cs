@@ -186,6 +186,10 @@ namespace Eliot.UELib.Test.Builds
             BuildName.Stranglehold,
             BuildPlatform.PC
         )]
+        [DataRow(@"TNAImpact\",
+            BuildName.TNA,
+            BuildPlatform.Undetermined
+        )]
         [DataRow(@"Tera\",
             BuildName.Tera,
             BuildPlatform.Undetermined

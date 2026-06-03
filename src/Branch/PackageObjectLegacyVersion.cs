@@ -219,6 +219,7 @@ namespace UELib.Branch
 
         [Discardable] GameGOW = 374, // Engine Version: 2451
         [Discardable] GameStranglehold = 375, // Engine Version: 2605
+        [Discardable] GameTNA = 380, // Engine Version: 2605
 
         /// <summary>
         ///     Possibly attested first with Stranglehold (v375)
@@ -242,7 +243,7 @@ namespace UELib.Branch
         ///     Oldest attest MOHA (v421), but not MKKE (v472, non standard)
         ///     FIXME: Unknown version
         /// </summary>
-        IsCopyAddedToStructMember = GameStranglehold + 1,
+        IsCopyAddedToStructMember = GameTNA + 1,
 
         AddedPS3SoundData = 376,
 

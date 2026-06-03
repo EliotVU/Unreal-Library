@@ -1,5 +1,17 @@
 #
 
+## [1.13.0](https://github.com/EliotVU/Unreal-Library/releases/tag/1.13.0)
+
+* Upgraded .NET to 10.0 from 9.0
+
+* Fixed #138, unit test and document things regarding build overriding.
+* Fixed https://github.com/UE-Explorer/UE-Explorer/issues/100; Detection for "Dungeon Defenders Eternity"
+* Fixed an issue where the specified array dim (e.g. `local string a, b[6];`) of a local variable would not be written if it is grouped along with another local variable of the same type.
+
+* Added support for "TNA Impact!"
+
+* Improved support for Sudden Attack 2 (#127, #129); "Supper newer version" and "Fixes trailing data for old package OnlineSubsystemPC.u"
+
 ## [1.12.1](https://github.com/EliotVU/Unreal-Library/releases/tag/1.12.1)
 
 * Fixed support for Alien: Colonial Marines
