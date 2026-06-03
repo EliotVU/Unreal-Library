@@ -41,12 +41,13 @@ jobs:
       shell: pwsh
 
     - name: Push to NuGet
+      shell: pwsh
       run: |
-        dotnet nuget push "artifacts/*.nupkg" `
+        dotnet nuget push `
+          "artifacts/Eliot.UELib.${{ steps.nbgv.outputs.SemVer2 }}.nupkg" `
           --api-key "${{ secrets.NUGET_API_KEY }}" `
           --source "https://api.nuget.org/v3/index.json" `
           --skip-duplicate
-      shell: pwsh
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
