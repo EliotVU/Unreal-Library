@@ -11,6 +11,11 @@ namespace UELib.Core
         /// <returns></returns>
         public override string Decompile()
         {
+            if (!DeserializationState.HasFlag(ObjectState.Deserialized))
+            {
+                try { Load(); } catch { }
+            }
+            if (Value == null) return $"const {Name} = none;";
             return $"const {Name} = {Value.Trim()};";
         }
     }

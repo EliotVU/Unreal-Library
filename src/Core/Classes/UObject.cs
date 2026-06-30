@@ -193,9 +193,19 @@ namespace UELib.Core
             {
                 // Load the parent first, if it exists.
                 // We need this to properly link up tagged properties.
-                if (this is UStruct && Package.IndexToObject(ExportTable.SuperIndex) != null)
+                if (this is UStruct && ExportTable != null && ExportTable.SuperIndex != 0)
                 {
-                    LibServices.Debug("Loaded super struct {0}", ExportTable.Super);
+                    var superObject = Package.IndexToObject(ExportTable.SuperIndex);
+                    if (superObject is UStruct superStruct
+                        && !superStruct.DeserializationState.HasFlag(ObjectState.Deserialized))
+                    {
+                        try
+                        {
+                            superStruct.Load();
+                        }
+                        catch { }
+                    }
+                    LibServices.Debug("Loaded super struct {0}", ExportTable?.Super);
                 }
             }
             catch (DeserializationException exception)
@@ -224,7 +234,7 @@ namespace UELib.Core
                 ThrownException = exception;
                 ExceptionPosition = _Buffer.Position;
 
-                LibServices.LogService.SilentException(ThrownException);
+                LibServices.LogService.Log($"[DeserializationError] {ThrownException.Message}");
             }
             finally
             {
@@ -258,7 +268,18 @@ namespace UELib.Core
                     Deserialize(stream);
                 }
 
-                LibServices.LogService.SilentAssert(_Buffer.Position == _Buffer.Length, $"Trailing data for object {GetReferencePath()}");
+                if (_Buffer.Position < _Buffer.Length)
+                {
+                    LibServices.LogService.SilentAssert(false,
+                        $"Trailing data for object {GetReferencePath()} — skipping {_Buffer.Length - _Buffer.Position} bytes at [{_Buffer.Position}..{_Buffer.Length})");
+                    _Buffer.Position = _Buffer.Length;
+                }
+            }
+            catch (EndOfStreamException eos)
+            {
+                LibServices.LogService.Log(
+                    $"End of stream at position {_Buffer.Position}/{_Buffer.Length} while deserializing {GetReferencePath()}: {eos.Message}");
+                _Buffer.Position = _Buffer.Length;
             }
             catch (Exception exception)
             {

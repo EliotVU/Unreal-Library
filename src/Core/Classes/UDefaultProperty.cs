@@ -119,7 +119,7 @@ namespace UELib.Core
                              .EnumerateFields()
                              .OfType<UProperty>())
                 {
-                    if (field.Name != Name)
+                    if ((string)field.Name != (string)Name)
                     {
                         continue;
                     }
@@ -398,7 +398,13 @@ namespace UELib.Core
 
             string typeName = _Buffer.ReadName();
             Record(nameof(typeName), typeName);
-            Type = (PropertyType)Enum.Parse(typeof(PropertyType), typeName);
+            if (!Enum.TryParse<PropertyType>(typeName, out Type))
+            {
+                // Type name is not a recognized PropertyType (e.g. "*", "-", "04_png").
+                // This can happen in cooked/stripped packages where type info is obfuscated.
+                // Still read Size and ArrayIndex so the buffer stays aligned, then skip the value.
+                Type = PropertyType.None;
+            }
 
             Size = _Buffer.ReadInt32();
             Record(nameof(Size), Size);
@@ -407,7 +413,11 @@ namespace UELib.Core
             ArrayIndex = _Buffer.ReadInt32();
             Record(nameof(ArrayIndex), ArrayIndex);
 
-            DeserializeTypeDataUE3();
+            if (Type != PropertyType.None)
+            {
+                DeserializeTypeDataUE3();
+            }
+
             return false;
         }
 #if BATMAN
@@ -596,8 +606,16 @@ namespace UELib.Core
             _Buffer.Seek(_PropertyValuePosition, SeekOrigin.Begin);
             string output = TryDeserializeDefaultPropertyValue(Type, deserializeFlags);
 
-            LibServices.LogService.SilentAssert(_Buffer.Position == _PropertyValuePosition + Size,
-                $"PropertyTag value size error for '{_Outer?.GetPath()}.{Name}: Expected: {Size}, Actual: {_Buffer.Position - _PropertyValuePosition}");
+            // Force-align the buffer to the end of this property's value.
+            // The Size field from the cooked tag is authoritative. If we misread the
+            // type (e.g. struct serialized as object refs, or tag-based deserialization
+            // of binary data), we must still advance past the value to keep subsequent
+            // properties aligned.
+            if (_Buffer.Position != _PropertyValuePosition + Size)
+            {
+                _Buffer.Position = _PropertyValuePosition + Size;
+            }
+            _Buffer.ConformRecordPosition();
 
             return output;
         }
@@ -610,14 +628,38 @@ namespace UELib.Core
             }
             catch (EndOfStreamException)
             {
-                // Abort decompilation
                 throw;
             }
             catch (Exception exception)
             {
-                LibServices.LogService.SilentException(new DeserializationException($"PropertyTag value deserialization error for '{Name}", exception));
+                var path = _Outer?.GetPath();
+                long valuePos = _PropertyValuePosition;
+                long valueEnd = valuePos + Size;
+                long currentPos = _Buffer.Position;
+                long bytesRead = currentPos - valuePos;
 
-                return $"/* ERROR: {exception.GetType()} */";
+                // Read first 32 bytes of the value as hex for debugging binary format
+                string hexPreview = "";
+                try
+                {
+                    _Buffer.Seek(valuePos, SeekOrigin.Begin);
+                    int previewLen = Math.Min(32, Size);
+                    var preview = new byte[previewLen];
+                    for (int i = 0; i < previewLen; i++)
+                        preview[i] = _Buffer.ReadByte();
+                    hexPreview = BitConverter.ToString(preview).Replace("-", " ");
+                    _Buffer.Seek(currentPos, SeekOrigin.Begin);
+                }
+                catch { }
+
+                LibServices.LogService.Log(
+                    $"Property deserialization failed for '{path}.{Name}'\r\n" +
+                    $"  Type={type}  Range=[{valuePos}..{valueEnd})  Size={Size}\r\n" +
+                    $"  BytesRead={bytesRead}  Flags={deserializeFlags}\r\n" +
+                    $"  Exception: {exception.GetType().Name}: {exception.Message}\r\n" +
+                    $"  Hex[{Math.Min(32, Size)}]: {hexPreview}");
+
+                return $"/* ERROR: {exception.GetType().Name} */";
             }
         }
 
@@ -742,14 +784,32 @@ namespace UELib.Core
 
                 case PropertyType.ByteProperty:
                     {
+                        // Determine whether this byte value is serialized as an enum name reference (8 bytes)
+                        // or a raw byte (1 byte).
+                        bool isEnumName = false;
                         if (_Buffer.Version >= (uint)PackageObjectLegacyVersion.EnumTagNameAddedToBytePropertyTag
-                            && Type == PropertyType.ByteProperty
-                            // Cannot compare size with 1 because this byte value may be part of a struct.
-                            && _Buffer.Position + 1 != _PropertyValuePosition + Size)
+                            && type == PropertyType.ByteProperty)
+                        {
+                            if ((deserializeFlags & DeserializeFlags.WithinArray) != 0)
+                            {
+                                // In array context: enum name stored in _TypeData.EnumName by the array handler.
+                                // Byte values are stored as name references (8 bytes) only when the array
+                                // element size indicates it. Size==1 always means raw byte.
+                                isEnumName = _TypeData.EnumName != null && Size != 1;
+                            }
+                            else
+                            {
+                                // Standalone: use size check to distinguish raw byte (Size==1) from name ref (Size>1).
+                                // Cannot compare size with 1 because this byte value may be part of a struct.
+                                isEnumName = _Buffer.Position + 1 != _PropertyValuePosition + Size;
+                            }
+                        }
+
+                        if (isEnumName)
                         {
                             string enumTagName = _Buffer.ReadName();
                             Record(nameof(enumTagName), enumTagName);
-                            propertyValue = _TypeData.EnumName != null
+                            propertyValue = (_TypeData.EnumName != null && _TypeData.EnumName.Length > 0)
                                 ? $"{_TypeData.EnumName}.{enumTagName}"
                                 : enumTagName;
                         }
@@ -869,6 +929,14 @@ namespace UELib.Core
                         deserializeFlags |= DeserializeFlags.WithinStruct;
                         FindProperty<UProperty>(_Outer, out var propertySource);
 
+                        // Cross-package fallback: look up the UStruct from the global registry.
+                        if (propertySource == null
+                            && UnrealConfig.ArrayStructTypes != null
+                            && UnrealConfig.ArrayStructTypes.ContainsKey(Name))
+                        {
+                            propertySource = UnrealConfig.ArrayStructTypes[Name];
+                        }
+
                         if (UStructProperty.PropertyValueSerializer.CanSerializeStructUsingBinary(_Buffer))
                         {
                             // Some structs are serialized using tags.
@@ -891,17 +959,24 @@ namespace UELib.Core
                         }
 
                     nonAtomic:
-                        var tag = new UDefaultProperty(_Container, propertySource ?? _Outer);
-                        if (!tag.Deserialize())
+                        try
                         {
-                            return "()";
-                        }
+                            var tag = new UDefaultProperty(_Container, propertySource ?? _Outer);
+                            if (!tag.Deserialize())
+                            {
+                                return "()";
+                            }
 
-                        propertyValue += DecompileTag(tag);
-                        while (tag.Deserialize())
-                        {
-                            propertyValue += ",";
                             propertyValue += DecompileTag(tag);
+                            while (tag.Deserialize())
+                            {
+                                propertyValue += ",";
+                                propertyValue += DecompileTag(tag);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            throw;
                         }
 
                         string DecompileTag(UDefaultProperty tag)
@@ -937,19 +1012,21 @@ namespace UELib.Core
                         var arrayType = PropertyType.None;
                         if (_TypeData.InnerTypeName != null && !Enum.TryParse(_TypeData.InnerTypeName, out arrayType))
                         {
-                            throw new Exception(
-                                $"Couldn't convert InnerTypeName \"{_TypeData.InnerTypeName}\" to PropertyType");
+                            // InnerTypeName is an enum or unknown type name (e.g. "EPropertyValueMappingType"),
+                            // not a PropertyType. Fall through to FindProperty/VariableTypes lookup.
+                            arrayType = PropertyType.None;
                         }
 
                         // Find the property within the outer/owner or its inheritances.
                         // If found it has to modify the outer so structs within this array can find their array variables.
                         // Additionally we need to know the property to determine the array's type.
+                        UArrayProperty? foundArrayProperty = null;
                         if (arrayType == PropertyType.None)
                         {
-                            var property = FindProperty<UArrayProperty>(_Outer, out _);
-                            if (property?.InnerProperty != null)
+                            foundArrayProperty = FindProperty<UArrayProperty>(_Outer, out _);
+                            if (foundArrayProperty?.InnerProperty != null)
                             {
-                                arrayType = property.InnerProperty.Type;
+                                arrayType = foundArrayProperty.InnerProperty.Type;
                             }
                             // If we did not find a reference to the associated property(because of imports)
                             // then try to determine the array's type by scanning the defined array types.
@@ -963,6 +1040,64 @@ namespace UELib.Core
                             }
                         }
 
+                        // Universal fallback: if the array type resolved to ObjectProperty but the
+                        // element size is > 8 bytes, it must be a StructProperty. In UE3, object
+                        // references are always 4 bytes. No other scalar type exceeds 8 bytes.
+                        if (arrayType == PropertyType.ObjectProperty
+                            && arraySize > 0)
+                        {
+                            int elementSize = (Size - sizeof(int)) / arraySize;
+                            if (elementSize > 8)
+                                arrayType = PropertyType.StructProperty;
+                        }
+
+                        // If the array element type is ByteProperty with an enum, store the enum name
+                        // so the ByteProperty deserializer knows to read name references (8 bytes each)
+                        // instead of raw bytes (1 byte each).
+                        if (arrayType == PropertyType.ByteProperty && _TypeData.EnumName == null)
+                        {
+                            foundArrayProperty ??= FindProperty<UArrayProperty>(_Outer, out _);
+                            if (foundArrayProperty?.InnerProperty is UByteProperty byteProp && byteProp.Enum != null)
+                            {
+                                _TypeData.EnumName = byteProp.Enum.Name;
+                            }
+                            else
+                            {
+                                // Cross-package: try VariableTypes for enum name.
+                                if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey(Name))
+                                {
+                                    var enumName = UnrealConfig.VariableTypes[Name].Item1;
+                                    if (!string.IsNullOrEmpty(enumName) && enumName != "ByteProperty")
+                                        _TypeData.EnumName = new UName(enumName);
+                                }
+
+                                // Still unknown: detect by element size.
+                                if (_TypeData.EnumName == null)
+                                {
+                                    int elementSize = arraySize > 0 ? (Size - sizeof(int)) / arraySize : 0;
+                                    if (elementSize == 8)
+                                        _TypeData.EnumName = new UName("");
+                                }
+                            }
+                        }
+
+                        // If the array element type is StructProperty, ensure the struct name is available
+                        // for binary struct detection. Cross-package structs won't be found by FindProperty.
+                        if (arrayType == PropertyType.StructProperty && _TypeData.StructName == null)
+                        {
+                            foundArrayProperty ??= FindProperty<UArrayProperty>(_Outer, out _);
+                            if (foundArrayProperty?.InnerProperty is UStructProperty structProp && structProp.Struct != null)
+                            {
+                                _TypeData.StructName = structProp.Struct.Name;
+                            }
+                            else if (UnrealConfig.VariableTypes != null && UnrealConfig.VariableTypes.ContainsKey(Name))
+                            {
+                                var structName = UnrealConfig.VariableTypes[Name].Item1;
+                                if (!string.IsNullOrEmpty(structName) && structName != "StructProperty")
+                                    _TypeData.StructName = new UName(structName);
+                            }
+                        }
+
                         // Hardcoded fix for InterpCurve and InterpCurvePoint.
                         if (arrayType == PropertyType.None
                             && (deserializeFlags & DeserializeFlags.WithinStruct) != 0
@@ -973,12 +1108,31 @@ namespace UELib.Core
 
                         if (arrayType == PropertyType.None)
                         {
+                            // Last resort: if element size is > 8 bytes, it must be a struct.
+                            if (arraySize > 0)
+                            {
+                                int elementSize = (Size - sizeof(int)) / arraySize;
+                                if (elementSize > 8)
+                                    arrayType = PropertyType.StructProperty;
+                            }
+                        }
+
+                        if (arrayType == PropertyType.None)
+                        {
                             LibServices.LogService.Log(
                                 $"Couldn't acquire array type for property tag '{Name}' in {_Outer.GetReferencePath()}.");
+
+                            int bytesRead = (int)(_Buffer.Position - _PropertyValuePosition);
+                            int bytesToSkip = Size - bytesRead;
+                            if (bytesToSkip > 0)
+                            {
+                                _Buffer.Position += bytesToSkip;
+                            }
 
                             propertyValue = "/* Array type was not detected. */";
                             break;
                         }
+
 
                         deserializeFlags |= DeserializeFlags.WithinArray;
                         if ((deserializeFlags & DeserializeFlags.WithinStruct) != 0)
@@ -1030,6 +1184,13 @@ namespace UELib.Core
                         var property = FindProperty<UMapProperty>(_Outer, out _);
                         if (property == null)
                         {
+                            int bytesRead = (int)(_Buffer.Position - _PropertyValuePosition);
+                            int bytesToSkip = Size - bytesRead;
+                            if (bytesToSkip > 0)
+                            {
+                                _Buffer.Position += bytesToSkip;
+                            }
+
                             propertyValue = "// Unable to decompile Map data.";
                             break;
                         }
@@ -1055,6 +1216,13 @@ namespace UELib.Core
                         var property = FindProperty<UFixedArrayProperty>(_Outer, out _);
                         if (property == null)
                         {
+                            int bytesRead = (int)(_Buffer.Position - _PropertyValuePosition);
+                            int bytesToSkip = Size - bytesRead;
+                            if (bytesToSkip > 0)
+                            {
+                                _Buffer.Position += bytesToSkip;
+                            }
+
                             propertyValue = "// Unable to decompile FixedArray data.";
                             break;
                         }
@@ -1129,6 +1297,13 @@ namespace UELib.Core
                         break;
                     }
 #endif
+                case PropertyType.None:
+                    {
+                        // Unknown type name (cooked/stripped). Skip the value bytes to keep buffer aligned.
+                        _Buffer.Skip(Size);
+                        propertyValue = $"/* unknown type */";
+                        break;
+                    }
                 default:
                     throw new Exception($"Unsupported property tag type {Type}");
             }

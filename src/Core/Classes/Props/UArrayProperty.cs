@@ -35,6 +35,12 @@ namespace UELib.Core
 #endif
             InnerProperty = _Buffer.ReadObject<UProperty>();
             Record(nameof(InnerProperty), InnerProperty);
+            // Deserialize the inner property so its fields (e.g. UByteProperty.Enum) are populated.
+            if (InnerProperty != null && InnerProperty.DeserializationState == 0)
+            {
+                try { InnerProperty.Load(); }
+                catch { }
+            }
         }
 
         /// <inheritdoc/>

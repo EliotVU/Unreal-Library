@@ -127,6 +127,20 @@ namespace UELib.Core
             Children = _Buffer.ReadObject<UField>();
             Record(nameof(Children), Children);
         skipChildren:
+            // Preload child fields so that their deserialized data (e.g. UArrayProperty.InnerProperty,
+            // UProperty.PropertyFlags, UEnum.Names, etc.) is available for later property resolution.
+            // Without this, FindProperty<UArrayProperty> returns objects with null InnerProperty.
+            if (Children != null)
+            {
+                for (var field = Children; field != null; field = field.NextField)
+                {
+                    if (field.DeserializationState == 0)
+                    {
+                        try { field.Load(); }
+                        catch { }
+                    }
+                }
+            }
 #if BATMAN
             if (Package.Build == UnrealPackage.GameBuild.BuildName.Batman4)
             {
@@ -408,7 +422,7 @@ namespace UELib.Core
             {
                 foreach (var field in super.EnumerateFields<T>())
                 {
-                    if (field.Name == name)
+                    if ((string)field.Name != (string)name)
                     {
                         return field;
                     }

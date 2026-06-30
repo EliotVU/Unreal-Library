@@ -34,6 +34,11 @@ namespace UELib.Core
 
             Struct = _Buffer.ReadObject<UStruct>();
             Record(nameof(Struct), Struct);
+            if (Struct != null && Struct.DeserializationState == 0)
+            {
+                try { Struct.Load(); }
+                catch { }
+            }
         }
 
         /// <inheritdoc/>

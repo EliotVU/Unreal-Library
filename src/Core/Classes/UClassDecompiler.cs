@@ -65,16 +65,16 @@ namespace UELib.Core
          */
         public override string Decompile()
         {
-            string content = FormatHeader() +
-                       FormatCPPText() +
-                       FormatConstants() +
-                       FormatEnums() +
-                       FormatStructs() +
-                       FormatProperties() +
-                       FormatReplication() +
-                       FormatFunctions() +
-                       FormatStates() +
-                       FormatDefaultProperties();
+            var content = FormatHeader();
+            try { content += FormatCPPText(); } catch { }
+            try { content += FormatConstants(); } catch { }
+            try { content += FormatEnums(); } catch { }
+            try { content += FormatStructs(); } catch { }
+            try { content += FormatProperties(); } catch { }
+            try { content += FormatReplication(); } catch { }
+            try { content += FormatFunctions(); } catch { }
+            try { content += FormatStates(); } catch { }
+            try { content += FormatDefaultProperties(); } catch { }
 
             return content;
         }

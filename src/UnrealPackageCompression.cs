@@ -68,9 +68,9 @@ namespace UELib
             }
 #endif
             _UncompressedOffset = stream.ReadInt32();
-            _CompressedOffset = stream.ReadInt32();
-        streamStandardSize:
             _UncompressedSize = stream.ReadInt32();
+        streamStandardSize:
+            _CompressedOffset = stream.ReadInt32();
             _CompressedSize = stream.ReadInt32();
         }
     }

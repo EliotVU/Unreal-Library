@@ -27,6 +27,12 @@ namespace UELib.Core
 
         private string FormatNames()
         {
+            if (!DeserializationState.HasFlag(ObjectState.Deserialized))
+            {
+                try { Load(); } catch { }
+            }
+            if (Names == null || Names.Count == 0) return string.Empty;
+
             string output = string.Empty;
             UDecompilingState.AddTabs(1);
 

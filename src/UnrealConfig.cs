@@ -32,6 +32,12 @@ namespace UELib
         public static CookedPlatform Platform;
         public static Dictionary<string, Tuple<string, PropertyType>> VariableTypes;
 
+        /// <summary>
+        /// Maps array property names to their inner UStruct (for cross-package struct array resolution).
+        /// Populated progressively as packages are decompiled.
+        /// </summary>
+        public static Dictionary<string, UELib.Core.UStruct> ArrayStructTypes;
+
         #endregion
 
         public static string PrintBeginBracket()

@@ -3064,11 +3064,14 @@ namespace UELib
             {
                 if (Summary.CompressionFlags != 0)
                 {
-                    return;
+                    stream = DecompressPackageStream(stream);
+                    PackageFlags = (uint)Summary.PackageFlags;
                 }
-
-                // Flags 0? Let's pretend that we no longer possess any chunks.
-                Summary.CompressedChunks.Clear();
+                else
+                {
+                    // Flags 0? Let's pretend that we no longer possess any chunks.
+                    Summary.CompressedChunks.Clear();
+                }
             }
 
             // Read the heritages
@@ -3160,6 +3163,72 @@ namespace UELib
             {
                 //LibServices.LogService.SilentException(new UnrealException("Missing package header data, serialization may fail."));
             }
+        }
+
+        private IUnrealStream DecompressPackageStream(IUnrealStream originalStream)
+        {
+            var filePath = FullPackageName;
+            Console.WriteLine($"  Decompressing package from: {filePath}");
+
+            var decompressed = PackageDecompressor.DecompressPackage(
+                filePath,
+                Summary.CompressedChunks!,
+                Summary.HeaderSize,
+                Summary.CompressionFlags);
+
+            // Zero out the CompressionFlags and CompressedChunks array count
+            // in the header so re-reading the temp file doesn't re-trigger decompression.
+            // Scan for the known CompressionFlags value (uint32) in the uncompressed header.
+            ZeroCompressionFlags(decompressed, Summary.CompressedChunks![0].UncompressedOffset, Summary.CompressionFlags);
+
+            var tempPath = Path.GetTempFileName();
+            File.WriteAllBytes(tempPath, decompressed);
+            Console.WriteLine($"  Wrote decompressed data to: {tempPath} ({decompressed.Length} bytes)");
+
+            // Save serializer before disposing
+            var serializer = originalStream.Serializer;
+
+            // Close the original file-backed stream
+            originalStream.Dispose();
+
+            // Open a new stream from the decompressed temp file
+            var newStream = new UPackageStream(tempPath, FileMode.Open, FileAccess.Read);
+            newStream.PostInit(this);
+            newStream.Serializer = serializer;
+            Stream = newStream;
+
+            return newStream;
+        }
+
+        private static void ZeroCompressionFlags(byte[] data, long uncompressedOffset, uint compressionFlags)
+        {
+            // Scan the uncompressed header (0 to first UncompressedOffset) for
+            // the CompressionFlags uint32 value followed by the array count.
+            byte[] flagsBytes = BitConverter.GetBytes(compressionFlags);
+            int searchLimit = (int)Math.Min(uncompressedOffset, 512);
+
+            for (int i = 0; i <= searchLimit - 8; i++)
+            {
+                // Look for CompressionFlags value in the first 4 bytes
+                if (data[i] == flagsBytes[0] && data[i+1] == flagsBytes[1] &&
+                    data[i+2] == flagsBytes[2] && data[i+3] == flagsBytes[3])
+                {
+                    // Check that the next 4 bytes aren't also all zeros (which would
+                    // be an empty array, meaning no compressed chunks - unlikely pattern)
+                    int candidateCount = BitConverter.ToInt32(data, i + 4);
+                    if (candidateCount > 0 && candidateCount < 100)
+                    {
+                        Console.WriteLine($"  Zeroing CompressionFlags at offset {i}, count was {candidateCount}");
+                        // Zero out CompressionFlags
+                        data[i] = data[i+1] = data[i+2] = data[i+3] = 0;
+                        // Zero out the array count (4 bytes of int32)
+                        data[i+4] = data[i+5] = data[i+6] = data[i+7] = 0;
+                        return;
+                    }
+                }
+            }
+
+            Console.Error.WriteLine($"  WARNING: Could not find CompressionFlags in header to zero out (flags={compressionFlags})");
         }
 
         /// <summary>
