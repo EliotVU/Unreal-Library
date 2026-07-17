@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UELib.Branch;
 using UELib.ObjectModel.Annotations;
@@ -421,7 +421,10 @@ namespace UELib.Core
                                 ifEndJump.MarkedAsSwitchBreak = true;
                             }
                             else if (elseStartToken.Position == CodeOffset &&
-                                     ifEndJump.CodeOffset != elseStartToken.Position)
+                                     ifEndJump.CodeOffset != elseStartToken.Position &&
+                                     ifEndJump.CodeOffset > elseStartToken.Position &&
+                                     !ifEndJump.MarkedAsSwitchBreak &&
+                                     !HasInnerJumpToOffset(CodeOffset, i))
                             {
                                 // Most likely an if-else, mark it as such and let the rest of the logic figure it out further
                                 int begin = Position;
@@ -455,6 +458,21 @@ namespace UELib.Core
                         Position, CodeOffset, this
                     );
                     return output;
+                }
+
+                private bool HasInnerJumpToOffset(int targetOffset, int elseStartTokenIndex)
+                {
+                    int startIndex = Decompiler.DeserializedTokens.IndexOf(this) + 1;
+                    for (int tokenIndex = startIndex; tokenIndex < elseStartTokenIndex; ++tokenIndex)
+                    {
+                        if (Decompiler.DeserializedTokens[tokenIndex] is JumpToken jump
+                            && jump.CodeOffset == targetOffset)
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 }
             }
 
