@@ -273,6 +273,7 @@ UELib supports these kinds of content, but may vary from game to game:
 | Battleborn | 8623/1055 | 874/078 | | ✅ |
 | A Hat in Time | 12097 | 877-893/005 | Contributed by @Un-Drew | ✅ |
 | Bulletstorm: Full Clip Edition | 12212 | 877/041 | | ✅ |
+| D4: Dark Dreams Don't Die | 10246 | 888(~861)/001 | PC | ✅ | ✅ | ✅ |
 | Blue Estate The Game | 10246 | 893/000 | | ✅ |
 | Shadow Complex Remastered | 10897 | 893/001 | | ✅ |
 | Borderlands 2 VR | 8637/0029 | 895/046 | | ✅ |
