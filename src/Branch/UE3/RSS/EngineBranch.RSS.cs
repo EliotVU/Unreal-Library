@@ -17,7 +17,7 @@ namespace UELib.Branch.UE3.RSS
             if (linker.LicenseeVersion >= 101)
             {
                 ObjectFlags[(int)ObjectFlag.Public] = 0x10000000000000UL; // Fixes false 'Private' modifier on properties.
-                ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = 0x80UL << 32;
+                ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = 0x80UL << 32; // << 1 0x80, (same bit as BulletStorm)
                 ObjectFlags[(int)ObjectFlag.TemplateObject] = ObjectFlags[(int)ObjectFlag.ClassDefaultObject] | ObjectFlags[(int)ObjectFlag.ArchetypeObject];
             }
         }
@@ -37,8 +37,12 @@ namespace UELib.Branch.UE3.RSS
 
             if (linker.LicenseeVersion >= 101)
             {
+                PropertyFlags[(int)PropertyFlag.EditInline] = 0; // ??
+
                 PropertyFlags[(int)PropertyFlag.Editable] = PropertyFlags[(int)PropertyFlag.EditFixedSize];
                 PropertyFlags[(int)PropertyFlag.EditFixedSize] = 0; // ??
+
+                PropertyFlags[(int)PropertyFlag.Interp] = 0; // ??
             }
         }
 
