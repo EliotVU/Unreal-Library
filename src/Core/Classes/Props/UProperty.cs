@@ -37,7 +37,7 @@ namespace UELib.Core
 
         public UName? RepNotifyFuncName;
         public ushort RepOffset { get; set; }
-        public bool RepReliable => HasPropertyFlag(PropertyFlagsLO.Net);
+        public bool RepReliable => HasPropertyFlag(PropertyFlag.Net);
         public uint RepKey => RepOffset | ((uint)Convert.ToByte(RepReliable) << 16);
 
         /// <summary>
@@ -229,45 +229,6 @@ namespace UELib.Core
             var propertyFlags = Package.Version >= (uint)PackageObjectLegacyVersion.PropertyFlagsSizeExpandedTo64Bits
                 ? _Buffer.ReadUInt64()
                 : _Buffer.ReadUInt32();
-#if BATMAN
-            if (Package.Build == BuildGeneration.RSS)
-            {
-                if (_Buffer.LicenseeVersion >= 101)
-                {
-                    // DAT_14313fdc0
-                    ulong[] flagMasks =
-                    [
-                        0x0000000000000002, 0x0000000000000004, 0x0000000000000008, 0x0000000000000080,
-                        0x0000000000000010, 0x0000000000000100, 0x0000000000000200, 0x0000000000000400,
-                        0x0000000000000800, 0x0000000000001000, 0x0000000000002000, 0x0000000000004000,
-                        0x0000000000008000, 0x0000000000040000, 0x0000000000080000, 0x0000000000200000,
-                        0x0000000000400000, 0x0000000000800000, 0x0000000010000000, 0x0000000200000000,
-                        0x0000000400000000, 0x0000000800000000, 0x0000004000000000, 0x0000010000000000,
-                        0x0000020000000000, 0x0000000000000000, 0x0000000000000020, 0x0000000010000000,
-                        0x0000000100000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000001,
-                        0x0000000000000040, 0x0000000000020000, 0x0000000000200000, 0x0000004000000000,
-                        0x0000008000000000, 0x0000000040000000, 0x0000000000000000, 0x0000002000000000,
-                        0x0000010000000000, 0x0000001000000000, 0x0000000080000000, 0x0000000000000000,
-                        0x0000000400000000, 0x0000000800000000, 0x0000000000000000
-                    ];
-
-                    ulong originalFlags = 0;
-                    ulong bitMask = 1;
-
-                    foreach (ulong flag in flagMasks)
-                    {
-                        if ((propertyFlags & bitMask) != 0)
-                        {
-                            originalFlags |= flag;
-                        }
-
-                        bitMask <<= 1;
-                    }
-
-                    propertyFlags = originalFlags;
-                }
-            }
-#endif
             PropertyFlags = new UnrealFlags<PropertyFlag>(propertyFlags, _Buffer.Package.Branch.EnumFlagsMap[typeof(PropertyFlag)]);
             Record(nameof(PropertyFlags), PropertyFlags);
 #if XCOM2
