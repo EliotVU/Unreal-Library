@@ -14,18 +14,10 @@ namespace UELib.Branch.UE3.RSS
         {
             base.SetupEnumObjectFlags(linker);
 
-            if (linker.Build == UnrealPackage.GameBuild.BuildName.Batman2)
+            if (linker.LicenseeVersion >= 101)
             {
                 ObjectFlags[(int)ObjectFlag.Public] = 0x10000000000000UL; // Fixes false 'Private' modifier on properties.
-                ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = 0x80UL << 32; // << 1 0x80, (same bit as BulletStorm)
-                ObjectFlags[(int)ObjectFlag.TemplateObject] = ObjectFlags[(int)ObjectFlag.ClassDefaultObject] | ObjectFlags[(int)ObjectFlag.ArchetypeObject];
-            }
-            else if (linker.Build == UnrealPackage.GameBuild.BuildName.Batman4)
-            {
-                ObjectFlags[(int)ObjectFlag.Public] = 0x1000U;
-
-                ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = 0x80UL << 32; // << 1 0x80, (same bit as BulletStorm)
-                ObjectFlags[(int)ObjectFlag.ArchetypeObject] = 0x10000000UL;
+                ObjectFlags[(int)ObjectFlag.ClassDefaultObject] = 0x80UL << 32;
                 ObjectFlags[(int)ObjectFlag.TemplateObject] = ObjectFlags[(int)ObjectFlag.ClassDefaultObject] | ObjectFlags[(int)ObjectFlag.ArchetypeObject];
             }
         }
