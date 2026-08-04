@@ -14,7 +14,7 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
@@ -41,21 +41,22 @@ jobs:
       shell: pwsh
 
     - name: Push to NuGet
+      shell: pwsh
       run: |
-        dotnet nuget push "artifacts/*.nupkg" `
+        dotnet nuget push `
+          "artifacts/Eliot.UELib.${{ steps.nbgv.outputs.SemVer2 }}.nupkg" `
           --api-key "${{ secrets.NUGET_API_KEY }}" `
           --source "https://api.nuget.org/v3/index.json" `
           --skip-duplicate
-      shell: pwsh
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: packages
         path: artifacts/*.nupkg
 
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         files: artifacts/*.nupkg
         generate_release_notes: true

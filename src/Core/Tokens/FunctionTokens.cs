@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -39,26 +39,52 @@ namespace UELib.Core
 #pragma warning restore 642
                 }
 
-                private static string PrecedenceToken(Token t)
+                private static byte GetInfixOperPrecedence(Token t)
+                {
+                    switch (t)
+                    {
+                        case NativeFunctionToken token when token.NativeItem.Type == FunctionType.Operator:
+                            return token.NativeItem.OperPrecedence;
+
+                        case FinalFunctionToken token when token.Function.IsOperator()
+                                                            && !token.Function.IsPre()
+                                                            && !token.Function.IsPost():
+                            return token.Function.OperPrecedence;
+
+                        default:
+                            return 0;
+                    }
+                }
+
+                private static string PrecedenceToken(Token t, byte parentPrecedence)
                 {
                     if (!(t is FunctionToken))
                         return t.Decompile();
 
-                    // Always add ( and ) unless the conditions below are not met, in case of a VirtualFunctionCall.
-                    var addParenthesis = true;
-                    switch (t)
-                    {
-                        case NativeFunctionToken token:
-                            addParenthesis = token.NativeItem.Type == FunctionType.Operator;
-                            break;
-                        case FinalFunctionToken token:
-                            addParenthesis = token.Function.IsOperator();
-                            break;
-                    }
+                    byte childPrecedence = GetInfixOperPrecedence(t);
+                    if (childPrecedence == 0)
+                        return t.Decompile();
 
-                    return addParenthesis 
-                        ? $"({t.Decompile()})" 
+                    return childPrecedence > parentPrecedence
+                        ? $"({t.Decompile()})"
                         : t.Decompile();
+                }
+
+                private static bool UnaryOperandNeedsParentheses(Token t)
+                {
+                    return t switch
+                    {
+                        NativeFunctionToken { NativeItem.Type: FunctionType.Operator or FunctionType.Function } => true,
+                        FinalFunctionToken { Function: var function } when function.IsOperator() => true,
+                        _ => GetInfixOperPrecedence(t) > 0
+                    };
+                }
+
+                private static string DecompileUnaryOperand(Token t)
+                {
+                    return UnaryOperandNeedsParentheses(t)
+                        ? $"({t.Decompile()})"
+                        : PrecedenceToken(t, 0);
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,7 +96,8 @@ namespace UELib.Core
 
                 protected string DecompilePreOperator(string operatorName)
                 {
-                    string operand = DecompileNext();
+                    var operandToken = NextToken();
+                    string operand = DecompileUnaryOperand(operandToken);
                     AssertSkipCurrentToken<EndFunctionParmsToken>();
 
                     // Only space out if we have a non-symbol operator name.
@@ -79,17 +106,18 @@ namespace UELib.Core
                         : $"{operatorName}{operand}";
                 }
 
-                protected string DecompileOperator(string operatorName)
+                protected string DecompileOperator(string operatorName, byte operPrecedence = byte.MaxValue)
                 {
                     var output =
-                        $"{PrecedenceToken(NextToken())} {operatorName} {PrecedenceToken(NextToken())}";
+                        $"{PrecedenceToken(NextToken(), operPrecedence)} {operatorName} {PrecedenceToken(NextToken(), operPrecedence)}";
                     AssertSkipCurrentToken<EndFunctionParmsToken>();
                     return output;
                 }
 
                 protected string DecompilePostOperator(string operatorName)
                 {
-                    string operand = DecompileNext();
+                    var operandToken = NextToken();
+                    string operand = DecompileUnaryOperand(operandToken);
                     AssertSkipCurrentToken<EndFunctionParmsToken>();
 
                     // Only space out if we have a non-symbol operator name.
@@ -181,15 +209,15 @@ namespace UELib.Core
                     // Support for non native operators.
                     if (Function.IsPost())
                     {
-                        output = DecompilePreOperator(Function.FriendlyName);
+                        output = DecompilePostOperator(Function.FriendlyName);
                     }
                     else if (Function.IsPre())
                     {
-                        output = DecompilePostOperator(Function.FriendlyName);
+                        output = DecompilePreOperator(Function.FriendlyName);
                     }
                     else if (Function.IsOperator())
                     {
-                        output = DecompileOperator(Function.FriendlyName);
+                        output = DecompileOperator(Function.FriendlyName, Function.OperPrecedence);
                     }
                     else
                     {
@@ -327,7 +355,7 @@ namespace UELib.Core
                             break;
 
                         case FunctionType.Operator:
-                            output = DecompileOperator(NativeItem.Name);
+                            output = DecompileOperator(NativeItem.Name, NativeItem.OperPrecedence);
                             break;
 
                         case FunctionType.PostOperator:
