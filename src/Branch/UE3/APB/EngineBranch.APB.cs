@@ -11,18 +11,20 @@ namespace UELib.Branch.UE3.APB
 
         protected override TokenMap BuildTokenMap(UnrealPackage linker)
         {
-            if (linker.LicenseeVersion < 32) return base.BuildTokenMap(linker);
+            var tokenMap = base.BuildTokenMap(linker);
+            if (linker.LicenseeVersion < 32) return tokenMap;
 
-            // FIXME: Incomplete
-            var tokenMap = new TokenMap
-            {
-                { 0x00, typeof(ReturnToken) },
-                { 0x04, typeof(LocalVariableToken) },
-                { 0x06, typeof(JumpIfNotToken) },
-                { 0x07, typeof(JumpToken) },
-                { 0x0A, typeof(NothingToken) },
-                { 0x0B, typeof(CaseToken) }
-            };
+            // Verified against the GNatives table of APB 1.9.0 (547/032):
+            // the layout is the regular UE3 one, except for three swapped pairs.
+            tokenMap[0x00] = typeof(ReturnToken);
+            tokenMap[0x04] = typeof(LocalVariableToken);
+
+            tokenMap[0x06] = typeof(JumpIfNotToken);
+            tokenMap[0x07] = typeof(JumpToken);
+
+            tokenMap[0x0A] = typeof(NothingToken);
+            tokenMap[0x0B] = typeof(CaseToken);
+
             return tokenMap;
         }
     }
