@@ -211,6 +211,14 @@ namespace UELib
         /// </summary>
         public void WriteName(in UName value)
         {
+#if LEAD
+            if (Archive.Package.Build == BuildGeneration.Lead)
+            {
+                Write((uint)value.Index | ((uint)(value.Number + 1) << 19));
+
+                return;
+            }
+#endif
 #if R6
             if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {
@@ -484,9 +492,20 @@ namespace UELib
         public UName ReadName()
         {
             int index, number;
-#if R6 || LEAD
-            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas ||
-                Archive.Package.Build == BuildGeneration.Lead)
+#if LEAD
+            if (Archive.Package.Build == BuildGeneration.Lead)
+            {
+                // Blacklist_DX11_game.exe: UObject::GetName 0x432250, FName load 0x4D2530. Base 0x400000
+                // bit 18 is some kind of engine flag, actual number starts at bit 19
+                uint packed = ReadUInt32();
+                number = (int)(packed >> 19) - 1;
+                index = (int)(packed & 0x3FFFF);
+
+                return new UName(Archive.Package.Names[index], number);
+            }
+#endif
+#if R6
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {
                 // Some changes were made with licensee version 71, but I couldn't make much sense of it.
                 index = ReadInt32();
@@ -524,9 +543,17 @@ namespace UELib
         public int ReadNameIndex(out int num)
         {
             int index;
-#if R6 || LEAD
-            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas ||
-                Archive.Package.Build == BuildGeneration.Lead)
+#if LEAD
+            if (Archive.Package.Build == BuildGeneration.Lead)
+            {
+                uint packed = ReadUInt32();
+                num = (int)(packed >> 19) - 1;
+
+                return (int)(packed & 0x3FFFF);
+            }
+#endif
+#if R6
+            if (Archive.Package.Build == UnrealPackage.GameBuild.BuildName.R6Vegas)
             {
                 // Some changes were made with licensee version 71, but I couldn't make much sense of it.
                 index = ReadInt32();
