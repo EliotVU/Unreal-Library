@@ -12,10 +12,12 @@ namespace UELib.Branch.UE3.APB
         protected override TokenMap BuildTokenMap(UnrealPackage linker)
         {
             var tokenMap = base.BuildTokenMap(linker);
-            if (linker.LicenseeVersion < 32) return tokenMap;
+            if (linker.LicenseeVersion < 32) 
+            {
+                return tokenMap;
+            }
 
-            // Verified against the GNatives table of APB 1.9.0 (547/032):
-            // the layout is the regular UE3 one, except for three swapped pairs.
+            // Mapped for APB 1.9.0 (547/032)
             tokenMap[0x00] = typeof(ReturnToken);
             tokenMap[0x04] = typeof(LocalVariableToken);
 
